@@ -15,7 +15,7 @@
 
 , debug              ? false # Debug Build
 , useClang           ? false # Use Clang over GCC
-, useJemalloc        ? true  # Use the Dynamic Memory Allocator
+, useJemalloc        ? false # Use the Dynamic Memory Allocator
 , withGraphicsMagick ? true  # Allow Media Thumbnails
 }:
 
@@ -25,8 +25,8 @@ let
 
   source = let
     srcFilter = n: t: (lib.hasSuffix ".cc" n || lib.hasSuffix ".h" n || lib.hasSuffix ".S" n
-                    || lib.hasSuffix ".md" n || t == "directory") && lib.cleanSourceFilter n t;
-    repo = lib.cleanSourceWith { filter = srcFilter; src = ./.; };
+                    || lib.hasSuffix ".md" n || t == "directory");
+    repo = lib.cleanSourceWith { filter = srcFilter; src = lib.cleanSource ./.; };
 
     buildFileWith = root: name: type: rec {
       inherit name; file = "${root}/${name}";
@@ -47,34 +47,35 @@ let
 
   VERSION_COMMIT_CMD = "git rev-parse --short HEAD";
   VERSION_BRANCH_CMD = "git rev-parse --abbrev-ref HEAD";
-  VERSION_TAG_CMD = "git describe --tags --abbrev=0 --dirty --always";
-  VERSION_CMD = "git describe --tags --always";
+  VERSION_TAG_CMD = "git describe --tags --abbrev=0 --dirty --always --broken";
+  VERSION_CMD = "git describe --tags --always --broken";
   runWithGit = id: cmd: lib.removeSuffix "\n" (builtins.readFile (pkgs.runCommandNoCCLocal "construct-${id}" {
     buildInputs = [ pkgs.git ];
   } "cd ${./.} && ${cmd} > $out"));
+in stdenv.mkDerivation rec {
+  inherit pname version;
+  src = source;
+
+  buildPhase = with pkgs; ''
+  '';
 
   CXXOPTS = "-pipe -mtune=generic -O3 -fgcse-sm -fgcse-las -fsched-stalled-insns=0 -fsched-pressure -fsched-spec-load -fira-hoist-pressure -fbranch-target-load-optimize -frerun-loop-opt -fdevirtualize-at-ltrans -fipa-pta -fmodulo-sched -fmodulo-sched-allow-regmoves -ftracer -ftree-loop-im -ftree-switch-conversion -g -ggdb -frecord-gcc-switches -fstack-protector-explicit -fvtable-verify=none -fvisibility-inlines-hidden -fnothrow-opt -fno-threadsafe-statics -fverbose-asm -fsigned-char";
   WARNOPTS = "-Wall -Wextra -Wpointer-arith -Wcast-align -Wcast-qual -Wfloat-equal -Wwrite-strings -Wparentheses -Wundef -Wpacked -Wformat -Wformat-y2k -Wformat-nonliteral -Wstrict-aliasing=2 -Wstrict-overflow=5 -Wdisabled-optimization -Winvalid-pch -Winit-self -Wuninitialized -Wunreachable-code -Wno-overloaded-virtual -Wnon-virtual-dtor -Wnoexcept -Wsized-deallocation -Wctor-dtor-privacy -Wsign-promo -Wtrampolines -Wduplicated-cond -Wrestrict -Wnull-dereference -Wplacement-new=2 -Wundef -Wodr -Werror=return-type -Wno-missing-field-initializers -Wno-unused -Wno-unused-function -Wno-unused-label -Wno-unused-value -Wno-unused-variable -Wno-unused-parameter -Wno-endif-labels -Wmissing-noreturn -Wno-unknown-attributes -Wno-unknown-pragmas -Wlogical-op -Wformat-security -Wstack-usage=16384 -Wframe-larger-than=8192 -Walloca";
+
+  nativeBuildInputs = with pkgs; [
+    libtool makeWrapper
+  ] ++ lib.optional useClang llvmPackages_latest.llvm;
+  buildInputs = with pkgs; [
+    libsodium openssl file boost gmp zlib jemalloc rocksdb-pinned
+  ] ++ lib.optional withGraphicsMagick graphicsmagick;
 
   includes = stdenv.mkDerivation rec {
     name = "${pname}-includes";
     src = "${source}/include/";
 
     configHeader = with pkgs; writeText "config.h" ''
-      /* Current package */
       #define BRANDING_NAME "construct"
-
-      /* Current version */
-      #define BRANDING_VERSION "${runWithGit "version" VERSION_CMD}"
-
-      /* Define this if you are profiling. */
-      /* #undef CHARYBDIS_PROFILE */
-
-      /* Define if custom branding is enabled. */
       /* #undef CUSTOM_BRANDING */
-
-      /* Define to 1 if your C++ compiler doesn't accept -c and -o together. */
-      /* #undef CXX_NO_MINUS_C_MINUS_O */
 
       #define HAVE_ALGORITHM 1
       #define HAVE_ARRAY 1
@@ -248,10 +249,10 @@ let
       #define HAVE___UINT128_T 1
 
       /* Use the default allocator */
-      #define IRCD_ALLOCATOR_USE_DEFAULT 1
+      ${if useJemalloc then "" else "#define IRCD_ALLOCATOR_USE_DEFAULT 1"}
 
       /* Use jemalloc as the allocator */
-      /* #undef IRCD_ALLOCATOR_USE_JEMALLOC */
+      ${if useJemalloc then "#define IRCD_ALLOCATOR_USE_JEMALLOC 1" else ""}
 
       /* Linux AIO is supported and will be used */
       #define IRCD_USE_AIO 1
@@ -431,7 +432,7 @@ let
       #define RB_LOG_DIR "@out@/var/log/construct"
       #define RB_LOG_LEVEL 4
       #define RB_MAGIC_FILE "${file.out}/share/misc/magic.mgc"
-      #define RB_MODULE_DIR "@out@/lib/modules/construct"
+      #define RB_MODULE_DIR "@out@/lib/modules"
       #define RB_MXID_MAXLEN 255
       #define RB_OPTIMIZE_LEVEL 3
       #define RB_OS "${stdenv.system}"
@@ -439,11 +440,7 @@ let
       #define RB_RUN_DIR "/construct"
       #define RB_TIME_CONFIGURED 0
       /* #undef RB_UNTUNED */
-      #define RB_VERSION "${runWithGit "version" VERSION_CMD}"
-      #define RB_VERSION_BRANCH "${runWithGit "version-branch" VERSION_BRANCH_CMD}"
-      #define RB_VERSION_COMMIT "${runWithGit "version-commit" VERSION_COMMIT_CMD}"
-      #define RB_VERSION_TAG "${runWithGit "version-tag" VERSION_TAG_CMD}"
-      #define RB_WEBAPP_DIR "@out@/share/construct/webapp"
+      #define RB_WEBAPP_DIR "@out@/share/webapp"
 
       #define SIZEOF_CHAR 1
       #define SIZEOF_DOUBLE 8
@@ -495,37 +492,6 @@ let
       /* #  undef WORDS_BIGENDIAN */
       # endif
       #endif
-
-      /* Define to 2 if the system does not provide POSIX.1 features except with
-         this defined. */
-      /* #undef _POSIX_1_SOURCE */
-
-      /* Define to 1 if you need to in order for `stat' and other things to work. */
-      /* #undef _POSIX_SOURCE */
-
-      /* Define to empty if `const' does not conform to ANSI C. */
-      /* #undef const */
-
-      /* Define to `int' if <sys/types.h> doesn't define. */
-      /* #undef gid_t */
-
-      /* Define to `__inline__' or `__inline' if that's what the C compiler
-         calls it, or to nothing if 'inline' is not supported under any name.  */
-      #ifndef __cplusplus
-      /* #undef inline */
-      #endif
-
-      /* Define to `int' if <sys/types.h> does not define. */
-      /* #undef pid_t */
-
-      /* Define to `unsigned int' if <sys/types.h> does not define. */
-      /* #undef size_t */
-
-      /* Define to `int' if <sys/types.h> does not define. */
-      /* #undef ssize_t */
-
-      /* Define to `int' if <sys/types.h> doesn't define. */
-      /* #undef uid_t */
     '';
     buildInputs = with pkgs; [
       boost openssl
@@ -547,601 +513,695 @@ let
     '';
 
     installPhase = "true";
+    dontStrip = true;
   };
-in stdenv.mkDerivation rec {
-  inherit pname version;
-  src = source;
 
-  buildPhase = with pkgs; ''
-    WORK=$(pwd)
-    set +x
+  installPhase = let
+    ircdUnitCXX = ccFile: loFile: extraArgs: "${pkgs.runCommandCC (lib.strings.sanitizeDerivationName loFile) { inherit buildInputs nativeBuildInputs; } ''
+      libtool --tag=CXX --mode=compile $CXX -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT                    ${extraArgs} \
+        -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} \
+        -c -o $out/${loFile} ${source}/ircd/${ccFile}
+    ''}/${loFile}";
+    ircdUnitCC  = asFile: loFile: extraArgs: "${pkgs.runCommandCC (lib.strings.sanitizeDerivationName loFile) { inherit buildInputs nativeBuildInputs; } ''
+      libtool --tag=CC  --mode=compile $CC               -DHAVE_CONFIG_H -DIRCD_UNIT                    ${extraArgs} \
+        -I${includes}                          -DPCH -DNDEBUG ${WARNOPTS}                                              \
+        -c -o $out/${loFile} ${source}/ircd/${asFile}
+    ''}/${loFile}";
+    ircdLD = loFiles: laFile: extraArgs: "${pkgs.runCommandCC (lib.strings.sanitizeDerivationName laFile) { inherit buildInputs nativeBuildInputs; } ''
+      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=initial-exec -pthread ${CXXOPTS} -version-info 3:2:0 \
+        -Wl,--no-undefined-version -Wl,--weak-unresolved-symbols -Wl,--unresolved-symbols=ignore-in-shared-libs -Wl,-z,nodelete -Wl,-z,nodlopen -Wl,-z,lazy -L${pkgs.boost.out}/lib \
+        -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment \
+        -o $out/${laFile} ${lib.concatStringsSep " " loFiles} ${extraArgs} \
+        -lrocksdb -lboost_coroutine -lboost_context -lboost_thread -lboost_filesystem -lboost_chrono -lboost_system -lssl -lcrypto -L${pkgs.libsodium.out}/lib -lsodium -lmagic -lz -lpthread -latomic -lrocksdb -ldl 
+    ''}/${laFile}";
+    matrixUnitCXX = ccFile: loFile: extraArgs: "${pkgs.runCommandCC (lib.strings.sanitizeDerivationName loFile) { inherit buildInputs nativeBuildInputs; } ''
+      libtool --tag=CXX --mode=compile $CXX -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT ${extraArgs} \
+        -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=local-dynamic -pthread ${CXXOPTS} \
+        -c -o $out/${loFile} ${source}/matrix/${ccFile}
+    ''}/${loFile}";
+    matrixLD = loFiles: laFile: extraArgs: "${pkgs.runCommandCC (lib.strings.sanitizeDerivationName laFile) { inherit buildInputs nativeBuildInputs; } ''
+      libtool --tag=CXX --mode=link g++ -std=gnu++17 -pthread -ftls-model=local-dynamic ${CXXOPTS} -version-info 0:1:0 \
+        -Wl,--no-undefined-version -Wl,--allow-shlib-undefined -Wl,--unresolved-symbols=ignore-in-shared-libs -Wl,-z,lazy -L${dirOf ircd}/ \
+        -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment \
+        -o $out/${laFile} ${lib.concatStringsSep " " loFiles} ${extraArgs} -lrocksdb -ldl ${if useJemalloc then "-ljemalloc" else ""}
+    ''}/${laFile}";
+    moduleUnitCXX = subdir: ccFile: loFile: extraArgs: "${pkgs.runCommandCC (lib.strings.sanitizeDerivationName loFile) { inherit buildInputs nativeBuildInputs; } ''
+      libtool --tag=CXX --mode=compile $CXX -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE ${extraArgs} \
+        -I${includes} -include ${includes}/ircd/matrix.pic.h -include ${includes}/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} \
+        -I ${source}/modules/${lib.concatStringsSep "/" subdir} -c -o $out/${loFile} ${source}/modules/${lib.concatStringsSep "/" subdir}/${ccFile}
+    ''}/${loFile}";
+    moduleLD = loFiles: laFile: extraArgs: "${pkgs.runCommandCC (lib.strings.sanitizeDerivationName laFile) { inherit buildInputs nativeBuildInputs; } ''
+      libtool --tag=CXX --mode=link    $CXX -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version \
+        -Wl,--allow-shlib-undefined -Wl,-z,lazy -L${dirOf ircd}/ -L${dirOf matrix}/ \
+        -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment \
+        -o $out/${laFile} ${lib.concatStringsSep " " loFiles} -lrocksdb -ldl ${extraArgs}
+    ''}/${laFile}";
+    constructUnitCXX = ccFile: obFile: extraArgs: "${pkgs.runCommandCC (lib.strings.sanitizeDerivationName obFile) { inherit buildInputs nativeBuildInputs; } ''
+      mkdir -p $out
+      $CXX -std=gnu++17 -DHAVE_CONFIG_H -I${includes} -I${pkgs.boost.dev}/include -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} \
+        -c -o $out/${obFile} ${source}/construct/${ccFile} ${extraArgs}
+    ''}/${obFile}";
+    constructLD = obFiles: exFile: "${pkgs.runCommandCC (lib.strings.sanitizeDerivationName exFile) { inherit buildInputs nativeBuildInputs; } ''
+      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=initial-exec -pthread ${CXXOPTS} -dlopen self \
+        -Wl,--warn-execstack -Wl,--warn-common -Wl,--detect-odr-violations -Wl,--unresolved-symbols=report-all -Wl,--allow-shlib-undefined -Wl,--dynamic-list-data -Wl,--dynamic-list-cpp-new -Wl,--dynamic-list-cpp-typeinfo -Wl,--rosegment -Wl,-z,noexecstack \
+        -L${dirOf ircd}/ ${lib.concatMapStringsSep " " (mod: "-L${dirOf mod}/") modules} -L${pkgs.boost.out}/lib \
+        -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment \
+        -o $out/bin/${exFile} ${lib.concatStringsSep " " obFiles} -lircd -lboost_coroutine -lboost_context -lboost_thread -lboost_filesystem -lboost_chrono -lboost_system -lssl -lcrypto -lpthread -latomic -lrocksdb -ldl 
+    ''}/bin/${exFile}";
 
-    cd $WORK/ircd
-    . ${pkgs.writeScript "build-ircd" ''
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o assert.lo assert.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o allocator_gnu.lo allocator_gnu.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o allocator_je.lo allocator_je.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o vg.lo vg.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/asio.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o exception.lo exception.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o util.lo util.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o demangle.lo demangle.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o backtrace.lo backtrace.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o locale.lo locale.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o timedate.lo timedate.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o lex_cast.lo lex_cast.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o stringops.lo stringops.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o globular.lo globular.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o tokens.lo tokens.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/spirit.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -fno-var-tracking -fno-var-tracking-assignments -femit-struct-debug-baseonly -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o parse.lo parse.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o rand.lo rand.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o base.lo base.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o crh.lo crh.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/spirit.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -fno-var-tracking -fno-var-tracking-assignments -femit-struct-debug-baseonly -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o fmt.lo fmt.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/spirit.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -fno-var-tracking -fno-var-tracking-assignments -femit-struct-debug-baseonly -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o json.lo json.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o cbor.lo cbor.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o allocator.lo allocator.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o conf.lo conf.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o logger.lo logger.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o stats.lo stats.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o info.lo info.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o run.lo run.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o magic.lo magic.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o sodium.lo sodium.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/spirit.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -fno-var-tracking -fno-var-tracking-assignments -femit-struct-debug-baseonly -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o rfc3986.lo rfc3986.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o rfc1035.lo rfc1035.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/spirit.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -fno-var-tracking -fno-var-tracking-assignments -femit-struct-debug-baseonly -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o http.lo http.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o http2.lo http2.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o prof.lo prof.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o prof_linux.lo prof_linux.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/asio.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o fs.lo fs.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/asio.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o fs_path.lo fs_path.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/asio.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o ios.lo ios.cc
-      libtool --tag=CC --mode=compile gcc -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -DPCH -DNDEBUG ${WARNOPTS} -pipe -c -o ctx_x86_64.lo ctx_x86_64.S
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/asio.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o ctx.lo ctx.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/asio.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o ctx_eh.lo ctx_eh.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/asio.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o ctx_ole.lo ctx_ole.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/asio.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o fs_aio.lo fs_aio.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/asio.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o fs_iou.lo fs_iou.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/asio.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o mods.lo mods.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o mods_ldso.lo mods_ldso.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -I${rocksdb-pinned.out}/include -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o db_write_thread.lo db_write_thread.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -I${rocksdb-pinned.out}/include -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o db_crc32.lo db_crc32.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o db_port.lo db_port.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o db_env.lo db_env.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o db.lo db.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/asio.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o net.lo net.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/asio.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o net_addrs.lo net_addrs.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/asio.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o net_dns.lo net_dns.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o net_dns_netdb.lo net_dns_netdb.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o net_dns_cache.lo net_dns_cache.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/asio.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o net_dns_resolver.lo net_dns_resolver.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/asio.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o net_listener.lo net_listener.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/spirit.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -fno-var-tracking -fno-var-tracking-assignments -femit-struct-debug-baseonly -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o rfc1459.lo rfc1459.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o openssl.lo openssl.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/asio.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o client.lo client.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/asio.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o server.lo server.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o resource.lo resource.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${boost.dev}/include -include ircd/asio.h -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o net_listener_udp.lo net_listener_udp.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -I${includes} -include ircd/ircd.pic.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o ircd.lo ircd.cc
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=initial-exec -pthread ${CXXOPTS} -version-info 3:2:0 -Wl,--no-undefined-version -Wl,--weak-unresolved-symbols -Wl,--unresolved-symbols=ignore-in-shared-libs -Wl,-z,nodelete -Wl,-z,nodlopen -Wl,-z,lazy -L${boost.out}/lib -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o libircd.la -rpath $out/lib assert.lo info.lo allocator.lo allocator_gnu.lo allocator_je.lo vg.lo exception.lo util.lo demangle.lo backtrace.lo locale.lo timedate.lo lex_cast.lo stringops.lo globular.lo tokens.lo parse.lo rand.lo base.lo crh.lo fmt.lo json.lo cbor.lo conf.lo stats.lo logger.lo run.lo magic.lo sodium.lo openssl.lo rfc1459.lo rfc3986.lo rfc1035.lo http.lo http2.lo prof.lo prof_linux.lo fs.lo fs_path.lo ios.lo ctx_x86_64.lo ctx.lo ctx_eh.lo ctx_ole.lo fs_aio.lo fs_iou.lo mods.lo mods_ldso.lo db_write_thread.lo db_crc32.lo db_port.lo db_env.lo db.lo net.lo net_addrs.lo net_dns.lo net_dns_netdb.lo net_dns_cache.lo net_dns_resolver.lo net_listener.lo net_listener_udp.lo server.lo client.lo resource.lo ircd.lo -lrocksdb -lboost_coroutine -lboost_context -lboost_thread -lboost_filesystem -lboost_chrono -lboost_system -lssl -lcrypto -L${libsodium.out}/lib -lsodium -lmagic -lpthread -latomic -lrocksdb -ldl 
-    ''}
+    versionDefs = let
+      versions = {
+        BRANDING_VERSION = "${runWithGit "version" VERSION_CMD}";
+        RB_VERSION = "${runWithGit "version" VERSION_CMD}";
+        RB_VERSION_BRANCH = "${runWithGit "version-branch" VERSION_BRANCH_CMD}";
+        RB_VERSION_COMMIT = "${runWithGit "version-commit" VERSION_COMMIT_CMD}";
+        RB_VERSION_TAG = "${runWithGit "version-tag" VERSION_TAG_CMD}";
+      };
+    in lib.concatStringsSep " " (lib.mapAttrsToList (k: v: "-U${k} -D'${k}=\"${v}\"'") versions);
 
-    cd $WORK/matrix
-    . ${pkgs.writeScript "build-matrix" ''
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o name.lo name.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o dbs_event_idx.lo dbs_event_idx.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o dbs_event_json.lo dbs_event_json.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o dbs_event_column.lo dbs_event_column.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o dbs.lo dbs.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o dbs_event_refs.lo dbs_event_refs.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o dbs_event_horizon.lo dbs_event_horizon.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o dbs_event_type.lo dbs_event_type.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o dbs_event_state.lo dbs_event_state.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o dbs_event_sender.lo dbs_event_sender.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o dbs_room_events.lo dbs_room_events.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${boost.dev}/include -include ircd/spirit.h -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -fno-var-tracking -fno-var-tracking-assignments -femit-struct-debug-baseonly -pthread -ftls-model=local-dynamic -c -o id.lo id.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o dbs_room_type.lo dbs_room_type.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o dbs_room_state.lo dbs_room_state.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o dbs_room_state_space.lo dbs_room_state_space.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o dbs_room_joined.lo dbs_room_joined.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o dbs_room_head.lo dbs_room_head.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o dbs_desc.lo dbs_desc.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o hook.lo hook.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o event_conforms.lo event_conforms.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o event_fetch.lo event_fetch.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o event_cached.lo event_cached.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o event_get.lo event_get.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o event_id.lo event_id.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o event_index.lo event_index.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o event_prefetch.lo event_prefetch.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o event_prev.lo event_prev.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o event_refs.lo event_refs.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o room.lo room.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o room_aliases.lo room_aliases.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o room_bootstrap.lo room_bootstrap.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o room_create.lo room_create.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o room_events.lo room_events.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o room_head.lo room_head.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o room_join.lo room_join.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o room_leave.lo room_leave.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o room_visible.lo room_visible.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o room_members.lo room_members.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o room_origins.lo room_origins.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o room_type.lo room_type.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o room_power.lo room_power.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o room_state.lo room_state.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o room_state_history.lo room_state_history.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o room_state_space.lo room_state_space.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o room_server_acl.lo room_server_acl.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o room_stats.lo room_stats.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o user.lo user.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o user_account_data.lo user_account_data.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o user_devices.lo user_devices.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o user_events.lo user_events.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o user_filter.lo user_filter.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o user_ignores.lo user_ignores.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o user_mitsein.lo user_mitsein.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o user_notifications.lo user_notifications.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o user_profile.lo user_profile.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o user_pushers.lo user_pushers.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o user_pushrules.lo user_pushrules.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o user_register.lo user_register.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o user_room_account_data.lo user_room_account_data.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o user_room_tags.lo user_room_tags.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o user_rooms.lo user_rooms.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o user_tokens.lo user_tokens.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o bridge.lo bridge.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o breadcrumb_rooms.lo breadcrumb_rooms.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o burst.lo burst.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o display_name.lo display_name.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o event_append.lo event_append.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o event_horizon.lo event_horizon.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o events.lo events.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o fed.lo fed.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o feds.lo feds.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o fetch.lo fetch.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o gossip.lo gossip.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o request.lo request.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o keys.lo keys.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o node.lo node.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o presence.lo presence.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o pretty.lo pretty.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o receipt.lo receipt.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o rooms.lo rooms.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o membership.lo membership.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o rooms_summary.lo rooms_summary.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o sync.lo sync.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o typing.lo typing.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o users.lo users.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o users_servers.lo users_servers.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o error.lo error.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o push.lo push.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o filter.lo filter.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o room_auth.lo room_auth.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o txn.lo txn.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o event.lo event.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o vm.lo vm.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o vm_eval.lo vm_eval.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o vm_inject.lo vm_inject.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o homeserver.lo homeserver.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o resource.lo resource.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o matrix.lo matrix.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o init_backfill.lo init_backfill.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_MATRIX_UNIT -I${includes} -include ircd/matrix.pic.h -include ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -pthread -ftls-model=local-dynamic ${CXXOPTS} -c -o vm_execute.lo vm_execute.cc
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -pthread -ftls-model=local-dynamic ${CXXOPTS} -version-info 0:1:0 -Wl,--no-undefined-version -Wl,--allow-shlib-undefined -Wl,--unresolved-symbols=ignore-in-shared-libs -Wl,-z,lazy -L$WORK/ircd -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o libircd_matrix.la -rpath $out/lib name.lo id.lo dbs.lo dbs_event_idx.lo dbs_event_json.lo dbs_event_column.lo dbs_event_refs.lo dbs_event_horizon.lo dbs_event_sender.lo dbs_event_type.lo dbs_event_state.lo dbs_room_events.lo dbs_room_type.lo dbs_room_state.lo dbs_room_state_space.lo dbs_room_joined.lo dbs_room_head.lo dbs_desc.lo hook.lo event.lo event_cached.lo event_conforms.lo event_fetch.lo event_get.lo event_id.lo event_index.lo event_prefetch.lo event_prev.lo event_refs.lo room.lo room_auth.lo room_aliases.lo room_bootstrap.lo room_create.lo room_events.lo room_head.lo room_join.lo room_leave.lo room_visible.lo room_members.lo room_origins.lo room_type.lo room_power.lo room_state.lo room_state_history.lo room_state_space.lo room_server_acl.lo room_stats.lo user.lo user_account_data.lo user_devices.lo user_events.lo user_filter.lo user_ignores.lo user_mitsein.lo user_notifications.lo user_profile.lo user_pushers.lo user_pushrules.lo user_register.lo user_room_account_data.lo user_room_tags.lo user_rooms.lo user_tokens.lo bridge.lo breadcrumb_rooms.lo burst.lo display_name.lo event_append.lo event_horizon.lo events.lo fed.lo feds.lo fetch.lo gossip.lo request.lo keys.lo node.lo presence.lo pretty.lo receipt.lo rooms.lo membership.lo rooms_summary.lo sync.lo typing.lo users.lo users_servers.lo error.lo push.lo filter.lo txn.lo vm.lo vm_eval.lo vm_inject.lo vm_execute.lo init_backfill.lo homeserver.lo resource.lo matrix.lo -lrocksdb -ldl 
-    ''}
+    ircd = with pkgs; ircdLD [
+      "${ircdUnitCXX "assert.cc"        "assert.lo"        ""}"
+      "${ircdUnitCXX "info.cc"          "info.lo"          "${versionDefs}"}"
+      "${ircdUnitCXX "allocator.cc"     "allocator.lo"     ""}"
+      "${ircdUnitCXX "allocator_gnu.cc" "allocator_gnu.lo" ""}"
+      "${ircdUnitCXX "allocator_je.cc"  "allocator_je.lo"  ""}"
+      "${ircdUnitCXX "vg.cc"            "vg.lo"            ""}"
+      "${ircdUnitCXX "exception.cc"        "exception.lo"        "-I${boost.dev}/include -include ircd/asio.h"}"
+      "${ircdUnitCXX "util.cc"          "util.lo"          ""}"
+      "${ircdUnitCXX "demangle.cc"      "demangle.lo"      ""}"
+      "${ircdUnitCXX "backtrace.cc"     "backtrace.lo"     ""}"
+      "${ircdUnitCXX "locale.cc"   "locale.lo"   "-I${boost.dev}/include"}"
+      "${ircdUnitCXX "timedate.cc"      "timedate.lo"      ""}"
+      "${ircdUnitCXX "lex_cast.cc" "lex_cast.lo" "-I${boost.dev}/include"}"
+      "${ircdUnitCXX "stringops.cc"     "stringops.lo"     ""}"
+      "${ircdUnitCXX "globular.cc"      "globular.lo"      ""}"
+      "${ircdUnitCXX "tokens.cc"   "tokens.lo"   "-I${boost.dev}/include"}"
+      "${ircdUnitCXX "parse.cc"   "parse.lo"   "-I${boost.dev}/include -include ircd/spirit.h -fno-var-tracking -fno-var-tracking-assignments -femit-struct-debug-baseonly"}"
+      "${ircdUnitCXX "rand.cc"          "rand.lo"          ""}"
+      "${ircdUnitCXX "base.cc"     "base.lo"     "-I${boost.dev}/include"}"
+      "${ircdUnitCXX "crh.cc"           "crh.lo"           ""}"
+      "${ircdUnitCXX "fmt.cc"     "fmt.lo"     "-I${boost.dev}/include -include ircd/spirit.h -fno-var-tracking -fno-var-tracking-assignments -femit-struct-debug-baseonly"}"
+      "${ircdUnitCXX "json.cc"    "json.lo"    "-I${boost.dev}/include -include ircd/spirit.h -fno-var-tracking -fno-var-tracking-assignments -femit-struct-debug-baseonly"}"
+      "${ircdUnitCXX "cbor.cc"          "cbor.lo"          ""}"
+      "${ircdUnitCXX "conf.cc"          "conf.lo"          ""}"
+      "${ircdUnitCXX "stats.cc"         "stats.lo"         ""}"
+      "${ircdUnitCXX "logger.cc"        "logger.lo"        ""}"
+      "${ircdUnitCXX "run.cc"           "run.lo"           ""}"
+      "${ircdUnitCXX "magic.cc"         "magic.lo"         ""}"
+      "${ircdUnitCXX "sodium.cc"        "sodium.lo"        ""}"
+       # pbc.cc would go here
+      "${ircdUnitCXX "openssl.cc"       "openssl.lo"       ""}"
+      "${ircdUnitCXX "rfc1459.cc" "rfc1459.lo" "-I${boost.dev}/include -include ircd/spirit.h -fno-var-tracking -fno-var-tracking-assignments -femit-struct-debug-baseonly"}"
+      "${ircdUnitCXX "rfc3986.cc" "rfc3986.lo" "-I${boost.dev}/include -include ircd/spirit.h -fno-var-tracking -fno-var-tracking-assignments -femit-struct-debug-baseonly"}"
+      "${ircdUnitCXX "rfc1035.cc"       "rfc1035.lo"       ""}"
+      "${ircdUnitCXX "http.cc"    "http.lo"    "-I${boost.dev}/include -include ircd/spirit.h -fno-var-tracking -fno-var-tracking-assignments -femit-struct-debug-baseonly"}"
+      "${ircdUnitCXX "http2.cc"         "http2.lo"         ""}"
+      "${ircdUnitCXX "prof.cc"     "prof.lo"     "-I${boost.dev}/include"}"
+      "${ircdUnitCXX "prof_linux.cc"    "prof_linux.lo"    ""}"
+      "${ircdUnitCXX "fs.cc"               "fs.lo"               "-I${boost.dev}/include -include ircd/asio.h"}"
+      "${ircdUnitCXX "fs_path.cc"          "fs_path.lo"          "-I${boost.dev}/include -include ircd/asio.h"}"
+      "${ircdUnitCXX "ios.cc"              "ios.lo"              "-I${boost.dev}/include -include ircd/asio.h"}"
+      "${ircdUnitCC  "ctx_x86_64.S" "ctx_x86_64.lo " "-pipe"}"
+      "${ircdUnitCXX "ctx.cc"              "ctx.lo"              "-I${boost.dev}/include -include ircd/asio.h"}"
+      "${ircdUnitCXX "ctx_eh.cc"           "ctx_eh.lo"           "-I${boost.dev}/include -include ircd/asio.h"}"
+      "${ircdUnitCXX "ctx_ole.cc"          "ctx_ole.lo"          "-I${boost.dev}/include -include ircd/asio.h"}"
+      "${ircdUnitCXX "fs_aio.cc"           "fs_aio.lo"           "-I${boost.dev}/include -include ircd/asio.h"}"
+      "${ircdUnitCXX "fs_iou.cc"           "fs_iou.lo"           "-I${boost.dev}/include -include ircd/asio.h"}"
+      "${ircdUnitCXX "mods.cc"             "mods.lo"             "-I${boost.dev}/include -include ircd/asio.h"}"
+      "${ircdUnitCXX "mods_ldso.cc"     "mods_ldso.lo"     ""}"
+      "${ircdUnitCXX "db_write_thread.cc" "db_write_thread.lo" "-I${rocksdb-pinned.out}/include"}"
+      "${ircdUnitCXX "db_crc32.cc"        "db_crc32.lo"        "-I${rocksdb-pinned.out}/include"}"
+      "${ircdUnitCXX "db_port.cc"       "db_port.lo"       ""}"
+      "${ircdUnitCXX "db_env.cc"        "db_env.lo"        ""}"
+      "${ircdUnitCXX "db.cc"            "db.lo"            ""}"
+      "${ircdUnitCXX "net.cc"              "net.lo"              "-I${boost.dev}/include -include ircd/asio.h"}"
+      "${ircdUnitCXX "net_addrs.cc"        "net_addrs.lo"        "-I${boost.dev}/include -include ircd/asio.h"}"
+      "${ircdUnitCXX "net_dns.cc"          "net_dns.lo"          "-I${boost.dev}/include -include ircd/asio.h"}"
+      "${ircdUnitCXX "net_dns_netdb.cc" "net_dns_netdb.lo" ""}"
+      "${ircdUnitCXX "net_dns_cache.cc" "net_dns_cache.lo" ""}"
+      "${ircdUnitCXX "net_dns_resolver.cc" "net_dns_resolver.lo" "-I${boost.dev}/include -include ircd/asio.h"}"
+      "${ircdUnitCXX "net_listener.cc"     "net_listener.lo"     "-I${boost.dev}/include -include ircd/asio.h"}"
+      "${ircdUnitCXX "net_listener_udp.cc" "net_listener_udp.lo" "-I${boost.dev}/include -include ircd/asio.h"}"
+      "${ircdUnitCXX "server.cc"           "server.lo"           "-I${boost.dev}/include -include ircd/asio.h"}"
+      "${ircdUnitCXX "client.cc"           "client.lo"           "-I${boost.dev}/include -include ircd/asio.h"}"
+      "${ircdUnitCXX "resource.cc"      "resource.lo"      ""}"
+       # js.cc would go here
+      "${ircdUnitCXX "ircd.cc"          "ircd.lo"          "${versionDefs}"}"
+    ] "libircd.la" "-rpath $out/lib";
 
-    cd $WORK/modules
-    . ${pkgs.writeScript "build-modules" ''
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_breadcrumb_rooms.lo m_breadcrumb_rooms.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_bridge.lo m_bridge.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_control.lo m_control.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_device.lo m_device.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_device_list_update.lo m_device_list_update.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_direct.lo m_direct.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_direct_to_device.lo m_direct_to_device.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_ignored_user_list.lo m_ignored_user_list.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_listen.lo m_listen.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_noop.lo m_noop.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_presence.lo m_presence.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_profile.lo m_profile.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_push.lo m_push.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_receipt.lo m_receipt.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_relation.lo m_relation.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_room_aliases.lo m_room_aliases.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_room_canonical_alias.lo m_room_canonical_alias.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_room_create.lo m_room_create.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_room_history_visibility.lo m_room_history_visibility.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_room_join_rules.lo m_room_join_rules.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_room_member.lo m_room_member.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_room_message.lo m_room_message.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_room_name.lo m_room_name.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_room_power_levels.lo m_room_power_levels.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_room_redaction.lo m_room_redaction.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_room_server_acl.lo m_room_server_acl.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_room_third_party_invite.lo m_room_third_party_invite.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_vm_fetch.lo m_vm_fetch.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o net_dns_cache.lo net_dns_cache.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o stats.lo stats.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o console.lo console.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o web_root.lo web_root.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o m_command.lo m_command.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o web_hook.lo web_hook.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o well_known.lo well_known.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -I${graphicsmagick.out}/include/GraphicsMagick -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o magick_la-magick.lo `test -f 'magick.cc' || echo './'`magick.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/versions.lo client/versions.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/events.lo client/events.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/logout.lo client/logout.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/sync.lo client/sync.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/presence.lo client/presence.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/profile.lo client/profile.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/devices.lo client/devices.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/pushers.lo client/pushers.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/publicrooms.lo client/publicrooms.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/createroom.lo client/createroom.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/pushrules.lo client/pushrules.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/join.lo client/join.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/publicised_groups.lo client/publicised_groups.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/initialsync.lo client/initialsync.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/search.lo client/search.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/joined_groups.lo client/joined_groups.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/register_available.lo client/register_available.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/capabilities.lo client/capabilities.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/send_to_device.lo client/send_to_device.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/delete_devices.lo client/delete_devices.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/notifications.lo client/notifications.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/register_email.lo client/register_email.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/messages.lo client/rooms/messages.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/state.lo client/rooms/state.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/members.lo client/rooms/members.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/context.lo client/rooms/context.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/event.lo client/rooms/event.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/send.lo client/rooms/send.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/typing.lo client/rooms/typing.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/redact.lo client/rooms/redact.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/receipt.lo client/rooms/receipt.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/join.lo client/rooms/join.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/invite.lo client/rooms/invite.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/leave.lo client/rooms/leave.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/forget.lo client/rooms/forget.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/kick.lo client/rooms/kick.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/ban.lo client/rooms/ban.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/unban.lo client/rooms/unban.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/read_markers.lo client/rooms/read_markers.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/initialsync.lo client/rooms/initialsync.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/report.lo client/rooms/report.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/relations.lo client/rooms/relations.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/upgrade.lo client/rooms/upgrade.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/rooms/rooms.lo client/rooms/rooms.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/user/openid.lo client/user/openid.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/user/filter.lo client/user/filter.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/user/account_data.lo client/user/account_data.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/user/rooms.lo client/user/rooms.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/user/user.lo client/user/user.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/login.lo client/login.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/account/whoami.lo client/account/whoami.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/account/password.lo client/account/password.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/account/deactivate.lo client/account/deactivate.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/account/account.lo client/account/account.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/directory/room.lo client/directory/room.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/directory/user.lo client/directory/user.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/directory/list/room.lo client/directory/list/room.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/directory/list/appservice.lo client/directory/list/appservice.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/voip/turnserver.lo client/voip/turnserver.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/thirdparty/protocols.lo client/thirdparty/protocols.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/sync/account_data.lo client/sync/account_data.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/sync/presence.lo client/sync/presence.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/sync/rooms.lo client/sync/rooms.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/sync/to_device.lo client/sync/to_device.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/sync/device_lists.lo client/sync/device_lists.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/sync/device_one_time_keys_count.lo client/sync/device_one_time_keys_count.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/sync/rooms/account_data.lo client/sync/rooms/account_data.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/sync/rooms/ephemeral.lo client/sync/rooms/ephemeral.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/sync/rooms/state.lo client/sync/rooms/state.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/sync/rooms/timeline.lo client/sync/rooms/timeline.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/sync/rooms/unread_notifications.lo client/sync/rooms/unread_notifications.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/sync/rooms/summary.lo client/sync/rooms/summary.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/sync/rooms/ephemeral/receipt.lo client/sync/rooms/ephemeral/receipt.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/sync/rooms/ephemeral/typing.lo client/sync/rooms/ephemeral/typing.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/keys/upload.lo client/keys/upload.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/keys/query.lo client/keys/query.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/keys/claim.lo client/keys/claim.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/keys/changes.lo client/keys/changes.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/keys/signatures/upload.lo client/keys/signatures/upload.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/keys/device_signing/upload.lo client/keys/device_signing/upload.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/room_keys/version.lo client/room_keys/version.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/room_keys/keys.lo client/room_keys/keys.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/send.lo federation/send.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/event.lo federation/event.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/get_missing_events.lo federation/get_missing_events.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/get_groups_publicised.lo federation/get_groups_publicised.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/version.lo federation/version.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/sender.lo federation/sender.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/query.lo federation/query.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/invite.lo federation/invite.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/invite2.lo federation/invite2.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/make_join.lo federation/make_join.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/send_join.lo federation/send_join.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/state_ids.lo federation/state_ids.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/state.lo federation/state.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/make_leave.lo federation/make_leave.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/send_leave.lo federation/send_leave.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/backfill.lo federation/backfill.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/backfill_ids.lo federation/backfill_ids.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/event_auth.lo federation/event_auth.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/query_auth.lo federation/query_auth.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/publicrooms.lo federation/publicrooms.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/user_devices.lo federation/user_devices.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/user_keys_query.lo federation/user_keys_query.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/user_keys_claim.lo federation/user_keys_claim.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o federation/rooms.lo federation/rooms.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o identity/v1.lo identity/v1.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o identity/pubkey.lo identity/pubkey.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o key/server.lo key/server.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o key/query.lo key/query.cc
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_breadcrumb_rooms.la -rpath $out/lib/modules/construct m_breadcrumb_rooms.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_bridge.la -rpath $out/lib/modules/construct m_bridge.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_command.la -rpath $out/lib/modules/construct m_command.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_control.la -rpath $out/lib/modules/construct m_control.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_device.la -rpath $out/lib/modules/construct m_device.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_device_list_update.la -rpath $out/lib/modules/construct m_device_list_update.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_direct.la -rpath $out/lib/modules/construct m_direct.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_direct_to_device.la -rpath $out/lib/modules/construct m_direct_to_device.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_ignored_user_list.la -rpath $out/lib/modules/construct m_ignored_user_list.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_listen.la -rpath $out/lib/modules/construct m_listen.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_noop.la -rpath $out/lib/modules/construct m_noop.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_presence.la -rpath $out/lib/modules/construct m_presence.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_profile.la -rpath $out/lib/modules/construct m_profile.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_push.la -rpath $out/lib/modules/construct m_push.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_receipt.la -rpath $out/lib/modules/construct m_receipt.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_relation.la -rpath $out/lib/modules/construct m_relation.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_room_aliases.la -rpath $out/lib/modules/construct m_room_aliases.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_room_canonical_alias.la -rpath $out/lib/modules/construct m_room_canonical_alias.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_room_create.la -rpath $out/lib/modules/construct m_room_create.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_room_history_visibility.la -rpath $out/lib/modules/construct m_room_history_visibility.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_room_join_rules.la -rpath $out/lib/modules/construct m_room_join_rules.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_room_member.la -rpath $out/lib/modules/construct m_room_member.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_room_message.la -rpath $out/lib/modules/construct m_room_message.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_room_name.la -rpath $out/lib/modules/construct m_room_name.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_room_power_levels.la -rpath $out/lib/modules/construct m_room_power_levels.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_room_redaction.la -rpath $out/lib/modules/construct m_room_redaction.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_room_server_acl.la -rpath $out/lib/modules/construct m_room_server_acl.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_room_third_party_invite.la -rpath $out/lib/modules/construct m_room_third_party_invite.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o m_vm_fetch.la -rpath $out/lib/modules/construct m_vm_fetch.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o media/download.lo media/download.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o media/upload.lo media/upload.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o media/thumbnail.lo media/thumbnail.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o media/preview_url.lo media/preview_url.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o media/config.lo media/config.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o media/media.lo media/media.cc
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o net_dns_cache.la -rpath $out/lib/modules/construct net_dns_cache.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o stats.la -rpath $out/lib/modules/construct stats.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o console.la -rpath $out/lib/modules/construct console.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o web_root.la -rpath $out/lib/modules/construct web_root.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o web_hook.la -rpath $out/lib/modules/construct web_hook.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o well_known.la -rpath $out/lib/modules/construct well_known.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o magick.la -rpath $out/lib/modules/construct magick_la-magick.lo -lGraphicsMagick++ -lGraphicsMagickWand -lGraphicsMagick -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_versions.la -rpath $out/lib/modules/construct client/versions.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_events.la -rpath $out/lib/modules/construct client/events.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_login.la -rpath $out/lib/modules/construct client/login.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_logout.la -rpath $out/lib/modules/construct client/logout.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_sync.la -rpath $out/lib/modules/construct client/sync.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_presence.la -rpath $out/lib/modules/construct client/presence.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_profile.la -rpath $out/lib/modules/construct client/profile.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_devices.la -rpath $out/lib/modules/construct client/devices.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_pushers.la -rpath $out/lib/modules/construct client/pushers.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_publicrooms.la -rpath $out/lib/modules/construct client/publicrooms.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_createroom.la -rpath $out/lib/modules/construct client/createroom.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_pushrules.la -rpath $out/lib/modules/construct client/pushrules.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_join.la -rpath $out/lib/modules/construct client/join.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_publicised_groups.la -rpath $out/lib/modules/construct client/publicised_groups.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_initialsync.la -rpath $out/lib/modules/construct client/initialsync.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_search.la -rpath $out/lib/modules/construct client/search.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_joined_groups.la -rpath $out/lib/modules/construct client/joined_groups.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_register_available.la -rpath $out/lib/modules/construct client/register_available.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_capabilities.la -rpath $out/lib/modules/construct client/capabilities.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_send_to_device.la -rpath $out/lib/modules/construct client/send_to_device.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_delete_devices.la -rpath $out/lib/modules/construct client/delete_devices.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_notifications.la -rpath $out/lib/modules/construct client/notifications.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_register_email.la -rpath $out/lib/modules/construct client/register_email.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_rooms.la -rpath $out/lib/modules/construct client/rooms/messages.lo client/rooms/state.lo client/rooms/members.lo client/rooms/context.lo client/rooms/event.lo client/rooms/send.lo client/rooms/typing.lo client/rooms/redact.lo client/rooms/receipt.lo client/rooms/join.lo client/rooms/invite.lo client/rooms/leave.lo client/rooms/forget.lo client/rooms/kick.lo client/rooms/ban.lo client/rooms/unban.lo client/rooms/read_markers.lo client/rooms/initialsync.lo client/rooms/report.lo client/rooms/relations.lo client/rooms/upgrade.lo client/rooms/rooms.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_user.la -rpath $out/lib/modules/construct client/user/openid.lo client/user/filter.lo client/user/account_data.lo client/user/rooms.lo client/user/user.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_directory_room.la -rpath $out/lib/modules/construct client/directory/room.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_directory_user.la -rpath $out/lib/modules/construct client/directory/user.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_directory_list_room.la -rpath $out/lib/modules/construct client/directory/list/room.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_directory_list_appservice.la -rpath $out/lib/modules/construct client/directory/list/appservice.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_voip_turnserver.la -rpath $out/lib/modules/construct client/voip/turnserver.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_thirdparty_protocols.la -rpath $out/lib/modules/construct client/thirdparty/protocols.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_sync_account_data.la -rpath $out/lib/modules/construct client/sync/account_data.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_sync_presence.la -rpath $out/lib/modules/construct client/sync/presence.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_sync_rooms.la -rpath $out/lib/modules/construct client/sync/rooms.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_sync_to_device.la -rpath $out/lib/modules/construct client/sync/to_device.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_sync_device_lists.la -rpath $out/lib/modules/construct client/sync/device_lists.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_sync_device_one_time_keys_count.la -rpath $out/lib/modules/construct client/sync/device_one_time_keys_count.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_sync_rooms_account_data.la -rpath $out/lib/modules/construct client/sync/rooms/account_data.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_sync_rooms_ephemeral.la -rpath $out/lib/modules/construct client/sync/rooms/ephemeral.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_sync_rooms_state.la -rpath $out/lib/modules/construct client/sync/rooms/state.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_sync_rooms_timeline.la -rpath $out/lib/modules/construct client/sync/rooms/timeline.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_sync_rooms_unread_notifications.la -rpath $out/lib/modules/construct client/sync/rooms/unread_notifications.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_sync_rooms_summary.la -rpath $out/lib/modules/construct client/sync/rooms/summary.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_sync_rooms_ephemeral_receipt.la -rpath $out/lib/modules/construct client/sync/rooms/ephemeral/receipt.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_sync_rooms_ephemeral_typing.la -rpath $out/lib/modules/construct client/sync/rooms/ephemeral/typing.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_keys_upload.la -rpath $out/lib/modules/construct client/keys/upload.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_keys_query.la -rpath $out/lib/modules/construct client/keys/query.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_keys_claim.la -rpath $out/lib/modules/construct client/keys/claim.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_keys_changes.la -rpath $out/lib/modules/construct client/keys/changes.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_keys_signatures_upload.la -rpath $out/lib/modules/construct client/keys/signatures/upload.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_keys_device_signing_upload.la -rpath $out/lib/modules/construct client/keys/device_signing/upload.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_room_keys_version.la -rpath $out/lib/modules/construct client/room_keys/version.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_room_keys_keys.la -rpath $out/lib/modules/construct client/room_keys/keys.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_send.la -rpath $out/lib/modules/construct federation/send.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_event.la -rpath $out/lib/modules/construct federation/event.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_get_missing_events.la -rpath $out/lib/modules/construct federation/get_missing_events.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_get_groups_publicised.la -rpath $out/lib/modules/construct federation/get_groups_publicised.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_version.la -rpath $out/lib/modules/construct federation/version.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_sender.la -rpath $out/lib/modules/construct federation/sender.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_query.la -rpath $out/lib/modules/construct federation/query.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_invite.la -rpath $out/lib/modules/construct federation/invite.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_invite2.la -rpath $out/lib/modules/construct federation/invite2.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_make_join.la -rpath $out/lib/modules/construct federation/make_join.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_send_join.la -rpath $out/lib/modules/construct federation/send_join.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_state_ids.la -rpath $out/lib/modules/construct federation/state_ids.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_state.la -rpath $out/lib/modules/construct federation/state.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_make_leave.la -rpath $out/lib/modules/construct federation/make_leave.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_send_leave.la -rpath $out/lib/modules/construct federation/send_leave.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_backfill.la -rpath $out/lib/modules/construct federation/backfill.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_backfill_ids.la -rpath $out/lib/modules/construct federation/backfill_ids.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_event_auth.la -rpath $out/lib/modules/construct federation/event_auth.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_query_auth.la -rpath $out/lib/modules/construct federation/query_auth.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_publicrooms.la -rpath $out/lib/modules/construct federation/publicrooms.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_user_devices.la -rpath $out/lib/modules/construct federation/user_devices.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_user_keys_query.la -rpath $out/lib/modules/construct federation/user_keys_query.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_user_keys_claim.la -rpath $out/lib/modules/construct federation/user_keys_claim.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o federation/federation_rooms.la -rpath $out/lib/modules/construct federation/rooms.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o identity/identity_v1.la -rpath $out/lib/modules/construct identity/v1.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o identity/identity_pubkey.la -rpath $out/lib/modules/construct identity/pubkey.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o key/key_server.la -rpath $out/lib/modules/construct key/server.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o key/key_query.la -rpath $out/lib/modules/construct key/query.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o media/media_media.la -rpath $out/lib/modules/construct media/download.lo media/upload.lo media/thumbnail.lo media/preview_url.lo media/config.lo media/media.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/account/3pid.lo client/account/3pid.cc
-      libtool --tag=CXX --mode=compile g++ -std=gnu++17 -DHAVE_CONFIG_H -DIRCD_UNIT -DIRCD_UNIT_MODULE -I${includes} -include ../include/ircd/matrix.pic.h -include ../include/ircd/mods/mapi.h -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=global-dynamic -pthread ${CXXOPTS} -c -o client/register.lo client/register.cc
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_account.la -rpath $out/lib/modules/construct client/account/3pid.lo client/account/whoami.lo client/account/password.lo client/account/deactivate.lo client/account/account.lo -lrocksdb -ldl 
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=global-dynamic -pthread ${CXXOPTS} -module -avoid-version -Wl,--allow-shlib-undefined -Wl,-z,lazy -L$WORK/ircd -L$WORK/matrix -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o client/client_register.la -rpath $out/lib/modules/construct client/register.lo -lrocksdb -ldl 
-    ''}
+    matrix = with pkgs; matrixLD [
+      "${matrixUnitCXX "name.cc"                   "name.lo"                   ""}"
+      "${matrixUnitCXX "id.cc" "id.lo" "-I${boost.dev}/include -include ircd/spirit.h"}"
+      "${matrixUnitCXX "dbs.cc"                    "dbs.lo"                    ""}"
+      "${matrixUnitCXX "dbs_event_idx.cc"          "dbs_event_idx.lo"          ""}"
+      "${matrixUnitCXX "dbs_event_json.cc"         "dbs_event_json.lo"         ""}"
+      "${matrixUnitCXX "dbs_event_column.cc"       "dbs_event_column.lo"       ""}"
+      "${matrixUnitCXX "dbs_event_refs.cc"         "dbs_event_refs.lo"         ""}"
+      "${matrixUnitCXX "dbs_event_horizon.cc"      "dbs_event_horizon.lo"      ""}"
+      "${matrixUnitCXX "dbs_event_sender.cc"       "dbs_event_sender.lo"       ""}"
+      "${matrixUnitCXX "dbs_event_type.cc"         "dbs_event_type.lo"         ""}"
+      "${matrixUnitCXX "dbs_event_state.cc"        "dbs_event_state.lo"        ""}"
+      "${matrixUnitCXX "dbs_room_events.cc"        "dbs_room_events.lo"        ""}"
+      "${matrixUnitCXX "dbs_room_type.cc"          "dbs_room_type.lo"          ""}"
+      "${matrixUnitCXX "dbs_room_state.cc"         "dbs_room_state.lo"         ""}"
+      "${matrixUnitCXX "dbs_room_state_space.cc"   "dbs_room_state_space.lo"   ""}"
+      "${matrixUnitCXX "dbs_room_joined.cc"        "dbs_room_joined.lo"        ""}"
+      "${matrixUnitCXX "dbs_room_head.cc"          "dbs_room_head.lo"          ""}"
+      "${matrixUnitCXX "dbs_desc.cc"               "dbs_desc.lo"               ""}"
+      "${matrixUnitCXX "hook.cc"                   "hook.lo"                   ""}"
+      "${matrixUnitCXX "event.cc"                  "event.lo"                  ""}"
+      "${matrixUnitCXX "event_cached.cc"           "event_cached.lo"           ""}"
+      "${matrixUnitCXX "event_conforms.cc"         "event_conforms.lo"         ""}"
+      "${matrixUnitCXX "event_fetch.cc"            "event_fetch.lo"            ""}"
+      "${matrixUnitCXX "event_get.cc"              "event_get.lo"              ""}"
+      "${matrixUnitCXX "event_id.cc"               "event_id.lo"               ""}"
+      "${matrixUnitCXX "event_index.cc"            "event_index.lo"            ""}"
+      "${matrixUnitCXX "event_prefetch.cc"         "event_prefetch.lo"         ""}"
+      "${matrixUnitCXX "event_prev.cc"             "event_prev.lo"             ""}"
+      "${matrixUnitCXX "event_refs.cc"             "event_refs.lo"             ""}"
+      "${matrixUnitCXX "room.cc"                   "room.lo"                   ""}"
+      "${matrixUnitCXX "room_auth.cc"              "room_auth.lo"              ""}"
+      "${matrixUnitCXX "room_aliases.cc"           "room_aliases.lo"           ""}"
+      "${matrixUnitCXX "room_bootstrap.cc"         "room_bootstrap.lo"         ""}"
+      "${matrixUnitCXX "room_create.cc"            "room_create.lo"            ""}"
+      "${matrixUnitCXX "room_events.cc"            "room_events.lo"            ""}"
+      "${matrixUnitCXX "room_head.cc"              "room_head.lo"              ""}"
+      "${matrixUnitCXX "room_join.cc"              "room_join.lo"              ""}"
+      "${matrixUnitCXX "room_leave.cc"             "room_leave.lo"             ""}"
+      "${matrixUnitCXX "room_visible.cc"           "room_visible.lo"           ""}"
+      "${matrixUnitCXX "room_members.cc"           "room_members.lo"           ""}"
+      "${matrixUnitCXX "room_origins.cc"           "room_origins.lo"           ""}"
+      "${matrixUnitCXX "room_type.cc"              "room_type.lo"              ""}"
+      "${matrixUnitCXX "room_power.cc"             "room_power.lo"             ""}"
+      "${matrixUnitCXX "room_state.cc"             "room_state.lo"             ""}"
+      "${matrixUnitCXX "room_state_history.cc"     "room_state_history.lo"     ""}"
+      "${matrixUnitCXX "room_state_space.cc"       "room_state_space.lo"       ""}"
+      "${matrixUnitCXX "room_server_acl.cc"        "room_server_acl.lo"        ""}"
+      "${matrixUnitCXX "room_stats.cc"             "room_stats.lo"             ""}"
+      "${matrixUnitCXX "user.cc"                   "user.lo"                   ""}"
+      "${matrixUnitCXX "user_account_data.cc"      "user_account_data.lo"      ""}"
+      "${matrixUnitCXX "user_devices.cc"           "user_devices.lo"           ""}"
+      "${matrixUnitCXX "user_events.cc"            "user_events.lo"            ""}"
+      "${matrixUnitCXX "user_filter.cc"            "user_filter.lo"            ""}"
+      "${matrixUnitCXX "user_ignores.cc"           "user_ignores.lo"           ""}"
+      "${matrixUnitCXX "user_mitsein.cc"           "user_mitsein.lo"           ""}"
+      "${matrixUnitCXX "user_notifications.cc"     "user_notifications.lo"     ""}"
+      "${matrixUnitCXX "user_profile.cc"           "user_profile.lo"           ""}"
+      "${matrixUnitCXX "user_pushers.cc"           "user_pushers.lo"           ""}"
+      "${matrixUnitCXX "user_pushrules.cc"         "user_pushrules.lo"         ""}"
+      "${matrixUnitCXX "user_register.cc"          "user_register.lo"          ""}"
+      "${matrixUnitCXX "user_room_account_data.cc" "user_room_account_data.lo" ""}"
+      "${matrixUnitCXX "user_room_tags.cc"         "user_room_tags.lo"         ""}"
+      "${matrixUnitCXX "user_rooms.cc"             "user_rooms.lo"             ""}"
+      "${matrixUnitCXX "user_tokens.cc"            "user_tokens.lo"            ""}"
+      "${matrixUnitCXX "acquire.cc"                "acquire.lo"                ""}"
+      "${matrixUnitCXX "bridge.cc"                 "bridge.lo"                 ""}"
+      "${matrixUnitCXX "breadcrumb_rooms.cc"       "breadcrumb_rooms.lo"       ""}"
+      "${matrixUnitCXX "burst.cc"                  "burst.lo"                  ""}"
+      "${matrixUnitCXX "display_name.cc"           "display_name.lo"           ""}"
+      "${matrixUnitCXX "event_append.cc"           "event_append.lo"           ""}"
+      "${matrixUnitCXX "event_horizon.cc"          "event_horizon.lo"          ""}"
+      "${matrixUnitCXX "events.cc"                 "events.lo"                 ""}"
+      "${matrixUnitCXX "fed.cc"                    "fed.lo"                    ""}"
+      "${matrixUnitCXX "feds.cc"                   "feds.lo"                   ""}"
+      "${matrixUnitCXX "fetch.cc"                  "fetch.lo"                  ""}"
+      "${matrixUnitCXX "gossip.cc"                 "gossip.lo"                 ""}"
+      "${matrixUnitCXX "request.cc"                "request.lo"                ""}"
+      "${matrixUnitCXX "keys.cc"                   "keys.lo"                   ""}"
+      "${matrixUnitCXX "node.cc"                   "node.lo"                   ""}"
+      "${matrixUnitCXX "presence.cc"               "presence.lo"               ""}"
+      "${matrixUnitCXX "pretty.cc"                 "pretty.lo"                 ""}"
+      "${matrixUnitCXX "receipt.cc"                "receipt.lo"                ""}"
+      "${matrixUnitCXX "rooms.cc"                  "rooms.lo"                  ""}"
+      "${matrixUnitCXX "membership.cc"             "membership.lo"             ""}"
+      "${matrixUnitCXX "rooms_summary.cc"          "rooms_summary.lo"          ""}"
+      "${matrixUnitCXX "sync.cc"                   "sync.lo"                   ""}"
+      "${matrixUnitCXX "typing.cc"                 "typing.lo"                 ""}"
+      "${matrixUnitCXX "users.cc"                  "users.lo"                  ""}"
+      "${matrixUnitCXX "users_servers.cc"          "users_servers.lo"          ""}"
+      "${matrixUnitCXX "error.cc"                  "error.lo"                  ""}"
+      "${matrixUnitCXX "push.cc"                   "push.lo"                   ""}"
+      "${matrixUnitCXX "filter.cc"                 "filter.lo"                 ""}"
+      "${matrixUnitCXX "txn.cc"                    "txn.lo"                    ""}"
+      "${matrixUnitCXX "vm.cc"                     "vm.lo"                     ""}"
+      "${matrixUnitCXX "vm_eval.cc"                "vm_eval.lo"                ""}"
+      "${matrixUnitCXX "vm_inject.cc"              "vm_inject.lo"              ""}"
+      "${matrixUnitCXX "vm_execute.cc"             "vm_execute.lo"             ""}"
+      "${matrixUnitCXX "init_backfill.cc"          "init_backfill.lo"          ""}"
+      "${matrixUnitCXX "homeserver.cc"             "homeserver.lo"             ""}"
+      "${matrixUnitCXX "resource.cc"               "resource.lo"               ""}"
+      "${matrixUnitCXX "matrix.cc"                 "matrix.lo"                 ""}"
+    ] "libircd_matrix.la" "-rpath $out/lib";
 
-    cd $WORK/construct
-    . ${pkgs.writeScript "build-construct" ''
-      $CXX -std=gnu++17 -DHAVE_CONFIG_H -I${includes} -I${boost.dev}/include -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o construct.o construct.cc
-      $CXX -std=gnu++17 -DHAVE_CONFIG_H -I${includes} -I${boost.dev}/include -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o lgetopt.o lgetopt.cc
-      $CXX -std=gnu++17 -DHAVE_CONFIG_H -I${includes} -I${boost.dev}/include -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o console.o console.cc
-      $CXX -std=gnu++17 -DHAVE_CONFIG_H -I${includes} -I${boost.dev}/include -DPCH -DNDEBUG ${WARNOPTS} -ftls-model=initial-exec -pthread ${CXXOPTS} -c -o signals.o signals.cc
-      libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=initial-exec -pthread ${CXXOPTS} -dlopen self -Wl,--warn-execstack -Wl,--warn-common -Wl,--detect-odr-violations -Wl,--unresolved-symbols=report-all -Wl,--allow-shlib-undefined -Wl,--dynamic-list-data -Wl,--dynamic-list-cpp-new -Wl,--dynamic-list-cpp-typeinfo -Wl,--rosegment -Wl,-z,noexecstack -L$WORK/ircd -L../modules -L${boost.out}/lib -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment -o construct construct.o signals.o console.o lgetopt.o -lircd -lboost_coroutine -lboost_context -lboost_thread -lboost_filesystem -lboost_chrono -lboost_system -lssl -lcrypto -lpthread -latomic -lrocksdb -ldl 
-    ''}
+    modules = with pkgs; [
+      (moduleLD [
+        "${moduleUnitCXX [] "m_breadcrumb_rooms.cc"                     "m_breadcrumb_rooms.lo"                     ""}"
+      ] "m_breadcrumb_rooms.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_bridge.cc"                               "m_bridge.lo"                               ""}"
+      ] "m_bridge.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_command.cc"                              "m_command.lo"                              ""}"
+      ] "m_command.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_control.cc"                              "m_control.lo"                              ""}"
+      ] "m_control.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_device.cc"                               "m_device.lo"                               ""}"
+      ] "m_device.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_device_list_update.cc"                   "m_device_list_update.lo"                   ""}"
+      ] "m_device_list_update.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_direct.cc"                               "m_direct.lo"                               ""}"
+      ] "m_direct.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_direct_to_device.cc"                     "m_direct_to_device.lo"                     ""}"
+      ] "m_direct_to_device.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_ignored_user_list.cc"                    "m_ignored_user_list.lo"                    ""}"
+      ] "m_ignored_user_list.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_listen.cc"                               "m_listen.lo"                               ""}"
+      ] "m_listen.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_noop.cc"                                 "m_noop.lo"                                 ""}"
+      ] "m_noop.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_presence.cc"                             "m_presence.lo"                             ""}"
+      ] "m_presence.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_profile.cc"                              "m_profile.lo"                              ""}"
+      ] "m_profile.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_push.cc"                                 "m_push.lo"                                 ""}"
+      ] "m_push.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_receipt.cc"                              "m_receipt.lo"                              ""}"
+      ] "m_receipt.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_relation.cc"                             "m_relation.lo"                             ""}"
+      ] "m_relation.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_room_aliases.cc"                         "m_room_aliases.lo"                         ""}"
+      ] "m_room_aliases.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_room_canonical_alias.cc"                 "m_room_canonical_alias.lo"                 ""}"
+      ] "m_room_canonical_alias.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_room_create.cc"                          "m_room_create.lo"                          ""}"
+      ] "m_room_create.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_room_history_visibility.cc"              "m_room_history_visibility.lo"              ""}"
+      ] "m_room_history_visibility.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_room_join_rules.cc"                      "m_room_join_rules.lo"                      ""}"
+      ] "m_room_join_rules.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_room_member.cc"                          "m_room_member.lo"                          ""}"
+      ] "m_room_member.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_room_message.cc"                         "m_room_message.lo"                         ""}"
+      ] "m_room_message.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_room_name.cc"                            "m_room_name.lo"                            ""}"
+      ] "m_room_name.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_room_power_levels.cc"                    "m_room_power_levels.lo"                    ""}"
+      ] "m_room_power_levels.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_room_redaction.cc"                       "m_room_redaction.lo"                       ""}"
+      ] "m_room_redaction.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_room_server_acl.cc"                      "m_room_server_acl.lo"                      ""}"
+      ] "m_room_server_acl.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_room_third_party_invite.cc"              "m_room_third_party_invite.lo"              ""}"
+      ] "m_room_third_party_invite.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "m_vm_fetch.cc"                             "m_vm_fetch.lo"                             ""}"
+      ] "m_vm_fetch.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "net_dns_cache.cc"                          "net_dns_cache.lo"                          ""}"
+      ] "net_dns_cache.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "stats.cc"                                  "stats.lo"                                  ""}"
+      ] "stats.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "console.cc"                                "console.lo"                                "${versionDefs}"}"
+      ] "console.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "web_root.cc"                               "web_root.lo"                               ""}"
+      ] "web_root.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "web_hook.cc"                               "web_hook.lo"                               ""}"
+      ] "web_hook.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "well_known.cc"                             "well_known.lo"                             ""}"
+      ] "well_known.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "versions.cc"                        "versions.lo"                        ""}"
+      ] "client/client_versions.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "events.cc"                          "events.lo"                          ""}"
+      ] "client/client_events.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "login.cc"                           "login.lo"                           ""}"
+      ] "client/client_login.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "logout.cc"                          "logout.lo"                          ""}"
+      ] "client/client_logout.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "sync.cc"                            "sync.lo"                            ""}"
+      ] "client/client_sync.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "presence.cc"                        "presence.lo"                        ""}"
+      ] "client/client_presence.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "profile.cc"                         "profile.lo"                         ""}"
+      ] "client/client_profile.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "devices.cc"                         "devices.lo"                         ""}"
+      ] "client/client_devices.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "pushers.cc"                         "pushers.lo"                         ""}"
+      ] "client/client_pushers.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "publicrooms.cc"                     "publicrooms.lo"                     ""}"
+      ] "client/client_publicrooms.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "createroom.cc"                      "createroom.lo"                      ""}"
+      ] "client/client_createroom.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "pushrules.cc"                       "pushrules.lo"                       ""}"
+      ] "client/client_pushrules.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "join.cc"                            "join.lo"                            ""}"
+      ] "client/client_join.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "publicised_groups.cc"               "publicised_groups.lo"               ""}"
+      ] "client/client_publicised_groups.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "initialsync.cc"                     "initialsync.lo"                     ""}"
+      ] "client/client_initialsync.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "search.cc"                          "search.lo"                          ""}"
+      ] "client/client_search.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "joined_groups.cc"                   "joined_groups.lo"                   ""}"
+      ] "client/client_joined_groups.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "register_available.cc"              "register_available.lo"              ""}"
+      ] "client/client_register_available.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "capabilities.cc"                    "capabilities.lo"                    ""}"
+      ] "client/client_capabilities.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "send_to_device.cc"                  "send_to_device.lo"                  ""}"
+      ] "client/client_send_to_device.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "delete_devices.cc"                  "delete_devices.lo"                  ""}"
+      ] "client/client_delete_devices.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "notifications.cc"                   "notifications.lo"                   ""}"
+      ] "client/client_notifications.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "register_email.cc"                  "register_email.lo"                  ""}"
+      ] "client/client_register_email.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" ] "register.cc"                        "register.lo"                        ""}"
+      ] "client/client_register.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "rooms" ] "messages.cc"                  "messages.lo"                   ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "state.cc"                     "state.lo"                      ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "members.cc"                   "members.lo"                    ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "context.cc"                   "context.lo"                    ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "event.cc"                     "event.lo"                      ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "send.cc"                      "send.lo"                       ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "typing.cc"                    "typing.lo"                     ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "redact.cc"                    "redact.lo"                     ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "receipt.cc"                   "receipt.lo"                    ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "join.cc"                      "join.lo"                       ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "invite.cc"                    "invite.lo"                     ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "leave.cc"                     "leave.lo"                      ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "forget.cc"                    "forget.lo"                     ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "kick.cc"                      "kick.lo"                       ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "ban.cc"                       "ban.lo"                        ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "unban.cc"                     "unban.lo"                      ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "read_markers.cc"              "read_markers.lo"               ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "initialsync.cc"               "initialsync.lo"                ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "report.cc"                    "report.lo"                     ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "relations.cc"                 "relations.lo"                  ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "upgrade.cc"                   "upgrade.lo"                    ""}"
+        "${moduleUnitCXX [ "client" "rooms" ] "rooms.cc"                     "rooms.lo"                      ""}"
+      ] "client/client_rooms.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "user" ] "openid.cc"                     "openid.lo"                     ""}"
+        "${moduleUnitCXX [ "client" "user" ] "filter.cc"                     "filter.lo"                     ""}"
+        "${moduleUnitCXX [ "client" "user" ] "account_data.cc"               "account_data.lo"               ""}"
+        "${moduleUnitCXX [ "client" "user" ] "rooms.cc"                      "rooms.lo"                      ""}"
+        "${moduleUnitCXX [ "client" "user" ] "user.cc"                       "user.lo"                       ""}"
+      ] "client/client_user.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "directory" ] "room.cc"                  "room.lo"                       ""}"
+      ] "client/client_directory_room.la" "-rpath $out/lib/modules")                                                          
+      (moduleLD [                                                                                       
+        "${moduleUnitCXX [ "client" "directory" ] "user.cc"                  "user.lo"                       ""}"
+      ] "client/client_directory_user.la" "-rpath $out/lib/modules")                                                          
+      (moduleLD [                                                                                       
+        "${moduleUnitCXX [ "client" "directory" "list" ] "room.cc"           "room.lo"                       ""}"
+      ] "client/client_directory_list_room.la" "-rpath $out/lib/modules")                                                     
+      (moduleLD [                                                                                       
+        "${moduleUnitCXX [ "client" "directory" "list" ] "appservice.cc"     "appservice.lo"                 ""}"
+      ] "client/client_directory_list_appservice.la" "-rpath $out/lib/modules")                                               
+      (moduleLD [                                                                                       
+        "${moduleUnitCXX [ "client" "voip" ] "turnserver.cc"                 "turnserver.lo"                 ""}"
+      ] "client/client_voip_turnserver.la" "-rpath $out/lib/modules")                                                         
+      (moduleLD [                                                                                       
+        "${moduleUnitCXX [ "client" "thirdparty" ] "protocols.cc"            "protocols.lo"                  ""}"
+      ] "client/client_thirdparty_protocols.la" "-rpath $out/lib/modules")                                                    
+      (moduleLD [                                                                                       
+        "${moduleUnitCXX [ "client" "sync" ] "account_data.cc"               "account_data.lo"               ""}"
+      ] "client/client_sync_account_data.la" "-rpath $out/lib/modules")                                                       
+      (moduleLD [                                                                                       
+        "${moduleUnitCXX [ "client" "sync" ] "presence.cc"                   "presence.lo"                   ""}"
+      ] "client/client_sync_presence.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "sync" ] "rooms.cc"                      "rooms.lo"                      ""}"
+      ] "client/client_sync_rooms.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "sync" ] "to_device.cc"                  "to_device.lo"                  ""}"
+      ] "client/client_sync_to_device.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "sync" ] "device_lists.cc"               "device_lists.lo"               ""}"
+      ] "client/client_sync_device_lists.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "sync" ] "device_one_time_keys_count.cc" "device_one_time_keys_count.lo" ""}"
+      ] "client/client_sync_device_one_time_keys_count.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "sync" "rooms" ] "account_data.cc"         "account_data.lo"         ""}"
+      ] "client/client_sync_rooms_account_data.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "sync" "rooms" ] "ephemeral.cc"            "ephemeral.lo"            ""}"
+      ] "client/client_sync_rooms_ephemeral.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "sync" "rooms" ] "state.cc"                "state.lo"                ""}"
+      ] "client/client_sync_rooms_state.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "sync" "rooms" ] "timeline.cc"             "timeline.lo"             ""}"
+      ] "client/client_sync_rooms_timeline.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "sync" "rooms" ] "unread_notifications.cc" "unread_notifications.lo" ""}"
+      ] "client/client_sync_rooms_unread_notifications.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "sync" "rooms" ] "summary.cc"              "summary.lo"              ""}"
+      ] "client/client_sync_rooms_summary.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "sync" "rooms" ] "ephemeral/receipt.cc"    "ephemeral/receipt.lo"    ""}"
+      ] "client/client_sync_rooms_ephemeral_receipt.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "sync" "rooms" ] "ephemeral/typing.cc"     "ephemeral/typing.lo"     ""}"
+      ] "client/client_sync_rooms_ephemeral_typing.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "keys" ] "upload.cc"                     "upload.lo"                     ""}"
+      ] "client/client_keys_upload.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "keys" ] "query.cc"                      "query.lo"                      ""}"
+      ] "client/client_keys_query.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "keys" ] "claim.cc"                      "claim.lo"                      ""}"
+      ] "client/client_keys_claim.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "keys" ] "changes.cc"                    "changes.lo"                    ""}"
+      ] "client/client_keys_changes.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "keys" ] "signatures/upload.cc"          "signatures/upload.lo"          ""}"
+      ] "client/client_keys_signatures_upload.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "keys" ] "device_signing/upload.cc"      "device_signing/upload.lo"      ""}"
+      ] "client/client_keys_device_signing_upload.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "room_keys" ] "version.cc"               "version.lo"                    ""}"
+      ] "client/client_room_keys_version.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "room_keys" ] "keys.cc"                  "keys.lo"                       ""}"
+      ] "client/client_room_keys_keys.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "client" "account" ] "3pid.cc"                    "3pid.lo"                       ""}"
+        "${moduleUnitCXX [ "client" "account" ] "whoami.cc"                  "whoami.lo"                     ""}"
+        "${moduleUnitCXX [ "client" "account" ] "password.cc"                "password.lo"                   ""}"
+        "${moduleUnitCXX [ "client" "account" ] "deactivate.cc"              "deactivate.lo"                 ""}"
+        "${moduleUnitCXX [ "client" "account" ] "account.cc"                 "account.lo"                    ""}"
+      ] "client/client_account.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "send.cc"                        "send.lo"                        ""}"
+      ] "federation/federation_send.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "event.cc"                       "event.lo"                       ""}"
+      ] "federation/federation_event.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "get_missing_events.cc"          "get_missing_events.lo"          ""}"
+      ] "federation/federation_get_missing_events.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "get_groups_publicised.cc"       "get_groups_publicised.lo"       ""}"
+      ] "federation/federation_get_groups_publicised.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "version.cc"                     "version.lo"                     ""}"
+      ] "federation/federation_version.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "sender.cc"                      "sender.lo"                      ""}"
+      ] "federation/federation_sender.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "query.cc"                       "query.lo"                       ""}"
+      ] "federation/federation_query.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "invite.cc"                      "invite.lo"                      ""}"
+      ] "federation/federation_invite.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "invite2.cc"                     "invite2.lo"                     ""}"
+      ] "federation/federation_invite2.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "make_join.cc"                   "make_join.lo"                   ""}"
+      ] "federation/federation_make_join.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "send_join.cc"                   "send_join.lo"                   ""}"
+      ] "federation/federation_send_join.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "state_ids.cc"                   "state_ids.lo"                   ""}"
+      ] "federation/federation_state_ids.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "state.cc"                       "state.lo"                       ""}"
+      ] "federation/federation_state.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "make_leave.cc"                  "make_leave.lo"                  ""}"
+      ] "federation/federation_make_leave.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "send_leave.cc"                  "send_leave.lo"                  ""}"
+      ] "federation/federation_send_leave.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "backfill.cc"                    "backfill.lo"                    ""}"
+      ] "federation/federation_backfill.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "backfill_ids.cc"                "backfill_ids.lo"                ""}"
+      ] "federation/federation_backfill_ids.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "event_auth.cc"                  "event_auth.lo"                  ""}"
+      ] "federation/federation_event_auth.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "query_auth.cc"                  "query_auth.lo"                  ""}"
+      ] "federation/federation_query_auth.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "publicrooms.cc"                 "publicrooms.lo"                 ""}"
+      ] "federation/federation_publicrooms.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "user_devices.cc"                "user_devices.lo"                ""}"
+      ] "federation/federation_user_devices.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "user_keys_query.cc"             "user_keys_query.lo"             ""}"
+      ] "federation/federation_user_keys_query.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "user_keys_claim.cc"             "user_keys_claim.lo"             ""}"
+      ] "federation/federation_user_keys_claim.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "federation" ] "rooms.cc"                       "rooms.lo"                       ""}"
+      ] "federation/federation_rooms.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "identity" ] "v1.cc"                            "v1.lo"                          ""}"
+      ] "identity/identity_v1.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "identity" ] "pubkey.cc"                        "pubkey.lo"                      ""}"
+      ] "identity/identity_pubkey.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "key" ] "server.cc"                             "server.lo"                      ""}"
+      ] "key/key_server.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "key" ] "query.cc"                              "query.lo"                       ""}"
+      ] "key/key_query.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [ "media" ] "download.cc"                         "download.lo"                    ""}"
+        "${moduleUnitCXX [ "media" ] "upload.cc"                           "upload.lo"                      ""}"
+        "${moduleUnitCXX [ "media" ] "thumbnail.cc"                        "thumbnail.lo"                   ""}"
+        "${moduleUnitCXX [ "media" ] "preview_url.cc"                      "preview_url.lo"                 ""}"
+        "${moduleUnitCXX [ "media" ] "config.cc"                           "config.lo"                      ""}"
+        "${moduleUnitCXX [ "media" ] "media.cc"                            "media.lo"                       ""}"
+      ] "media/media_media.la" "-rpath $out/lib/modules") 
+      (moduleLD [
+        "${moduleUnitCXX [] "magick.cc" "magick_la-magick.lo" "-I${graphicsmagick.out}/include/GraphicsMagick"}"
+      ] "magick.la" "-rpath $out/lib/modules -lGraphicsMagick++ -lGraphicsMagickWand -lGraphicsMagick")
+    ];
 
-    cd $WORK
-  '';
+    construct = with pkgs; constructLD [
+      "${constructUnitCXX "construct.cc" "construct.o" "${versionDefs}"}"
+      "${constructUnitCXX "lgetopt.cc"   "lgetopt.o" ""}"
+      "${constructUnitCXX "console.cc"   "console.o" ""}"
+      "${constructUnitCXX "signals.cc"   "signals.o" ""}"
+    ] "construct";
+  in with pkgs; ''
+    mkdir -p $out
+    ln -s ${includes} $out/include
 
-  installPhase = with pkgs; ''
-    WORK=$(pwd)
-    set +x
+    mkdir -p $out/share
+    ln -s ${source}/share/webapp $out/share/webapp
 
-    cd ${includes}/ircd
-    mkdir -p $out/include/ircd
-    cp -r ./README.md $out/include/ircd/
-    cp -r ./allocator.h $out/include/ircd/
-    cp -r ./asio.h $out/include/ircd/
-    cp -r ./assert.h $out/include/ircd/
-    cp -r ./backtrace.h $out/include/ircd/
-    cp -r ./base.h $out/include/ircd/
-    cp -r ./buffer $out/include/ircd/
-    cp -r ./byte_view.h $out/include/ircd/
-    cp -r ./cbor $out/include/ircd/
-    cp -r ./client.h $out/include/ircd/
-    cp -r ./cmp.h $out/include/ircd/
-    cp -r ./color.h $out/include/ircd/
-    cp -r ./conf.h $out/include/ircd/
-    cp -r ./config.h $out/include/ircd/
-    cp -r ./crh.h $out/include/ircd/
-    cp -r ./ctx $out/include/ircd/
-    cp -r ./db $out/include/ircd/
-    cp -r ./demangle.h $out/include/ircd/
-    cp -r ./ed25519.h $out/include/ircd/
-    cp -r ./exception.h $out/include/ircd/
-    cp -r ./fmt.h $out/include/ircd/
-    cp -r ./fs $out/include/ircd/
-    cp -r ./globular.h $out/include/ircd/
-    cp -r ./grammar.h $out/include/ircd/
-    cp -r ./http.h $out/include/ircd/
-    cp -r ./http2 $out/include/ircd/
-    cp -r ./info.h $out/include/ircd/
-    cp -r ./ios.h $out/include/ircd/
-    cp -r ./iov.h $out/include/ircd/
-    cp -r ./ircd.h $out/include/ircd/
-    cp -r ./ircd.pic.h $out/include/ircd/
-    cp -r ./js $out/include/ircd/
-    cp -r ./js.h $out/include/ircd/
-    cp -r ./json $out/include/ircd/
-    cp -r ./leb128.h $out/include/ircd/
-    cp -r ./lex_cast.h $out/include/ircd/
-    cp -r ./locale.h $out/include/ircd/
-    cp -r ./logger.h $out/include/ircd/
-    cp -r ./m $out/include/ircd/
-    cp -r ./magic.h $out/include/ircd/
-    cp -r ./magick.h $out/include/ircd/
-    cp -r ./matrix.h $out/include/ircd/
-    cp -r ./matrix.pic.h $out/include/ircd/
-    cp -r ./mods $out/include/ircd/
-    cp -r ./nacl.h $out/include/ircd/
-    cp -r ./net $out/include/ircd/
-    cp -r ./openssl.h $out/include/ircd/
-    cp -r ./panic.h $out/include/ircd/
-    cp -r ./parse.h $out/include/ircd/
-    cp -r ./pbc.h $out/include/ircd/
-    cp -r ./portable.h $out/include/ircd/
-    cp -r ./prof $out/include/ircd/
-    cp -r ./rand.h $out/include/ircd/
-    cp -r ./resource $out/include/ircd/
-    cp -r ./rfc1035.h $out/include/ircd/
-    cp -r ./rfc1459.h $out/include/ircd/
-    cp -r ./rfc3986.h $out/include/ircd/
-    cp -r ./run.h $out/include/ircd/
-    cp -r ./server $out/include/ircd/
-    cp -r ./simd.h $out/include/ircd/
-    cp -r ./spirit.h $out/include/ircd/
-    cp -r ./stamp-h1 $out/include/ircd/
-    cp -r ./stats.h $out/include/ircd/
-    cp -r ./stdinc.h $out/include/ircd/
-    cp -r ./string_view.h $out/include/ircd/
-    cp -r ./stringops.h $out/include/ircd/
-    cp -r ./strl.h $out/include/ircd/
-    cp -r ./strn.h $out/include/ircd/
-    cp -r ./time.h $out/include/ircd/
-    cp -r ./tokens.h $out/include/ircd/
-    cp -r ./util $out/include/ircd/
-    cp -r ./vector_view.h $out/include/ircd/
-
-    cd $WORK/ircd
     mkdir -p $out/lib
-    libtool   --mode=install ${coreutils.out}/bin/install -c   libircd.la $out/lib
+    libtool --mode=install ${coreutils.out}/bin/install -c ${ircd} $out/lib
+    libtool --mode=install ${coreutils.out}/bin/install -c ${matrix} $out/lib
 
-    cd $WORK/matrix
-    mkdir -p $out/lib
-    libtool   --mode=install ${coreutils.out}/bin/install -c   libircd_matrix.la $out/lib
+    mkdir -p $out/lib/modules
+    libtool --mode=install ${coreutils.out}/bin/install -c ${lib.concatStringsSep " " modules} $out/lib/modules
 
-    cd $WORK/modules
-    mkdir -p $out/lib/modules/construct
-    libtool   --mode=install ${coreutils.out}/bin/install -c   client/client_versions.la client/client_events.la client/client_register.la client/client_login.la client/client_logout.la client/client_sync.la client/client_presence.la client/client_profile.la client/client_devices.la client/client_pushers.la client/client_publicrooms.la client/client_createroom.la client/client_pushrules.la client/client_join.la client/client_publicised_groups.la client/client_initialsync.la client/client_search.la client/client_joined_groups.la client/client_register_available.la client/client_capabilities.la client/client_send_to_device.la client/client_delete_devices.la client/client_notifications.la client/client_register_email.la client/client_rooms.la client/client_user.la client/client_account.la client/client_directory_room.la client/client_directory_user.la client/client_directory_list_room.la client/client_directory_list_appservice.la client/client_voip_turnserver.la client/client_thirdparty_protocols.la client/client_sync_account_data.la client/client_sync_presence.la client/client_sync_rooms.la client/client_sync_to_device.la client/client_sync_device_lists.la client/client_sync_device_one_time_keys_count.la client/client_sync_rooms_account_data.la client/client_sync_rooms_ephemeral.la client/client_sync_rooms_state.la client/client_sync_rooms_timeline.la client/client_sync_rooms_unread_notifications.la client/client_sync_rooms_summary.la client/client_sync_rooms_ephemeral_receipt.la client/client_sync_rooms_ephemeral_typing.la client/client_keys_upload.la client/client_keys_query.la client/client_keys_claim.la client/client_keys_changes.la client/client_keys_signatures_upload.la client/client_keys_device_signing_upload.la client/client_room_keys_version.la client/client_room_keys_keys.la $out/lib/modules/construct
-    mkdir -p $out/lib/modules/construct
-    libtool   --mode=install ${coreutils.out}/bin/install -c   federation/federation_send.la federation/federation_event.la federation/federation_get_missing_events.la federation/federation_get_groups_publicised.la federation/federation_version.la federation/federation_sender.la federation/federation_query.la federation/federation_invite.la federation/federation_invite2.la federation/federation_make_join.la federation/federation_send_join.la federation/federation_state_ids.la federation/federation_state.la federation/federation_make_leave.la federation/federation_send_leave.la federation/federation_backfill.la federation/federation_backfill_ids.la federation/federation_event_auth.la federation/federation_query_auth.la federation/federation_publicrooms.la federation/federation_user_devices.la federation/federation_user_keys_query.la federation/federation_user_keys_claim.la federation/federation_rooms.la $out/lib/modules/construct
-    mkdir -p $out/lib/modules/construct
-    libtool   --mode=install ${coreutils.out}/bin/install -c   identity/identity_v1.la identity/identity_pubkey.la $out/lib/modules/construct
-    mkdir -p $out/lib/modules/construct
-    libtool   --mode=install ${coreutils.out}/bin/install -c   key/key_server.la key/key_query.la $out/lib/modules/construct
-    mkdir -p $out/lib/modules/construct
-    libtool   --mode=install ${coreutils.out}/bin/install -c   m_breadcrumb_rooms.la m_bridge.la m_command.la m_control.la m_device.la m_device_list_update.la m_direct.la m_direct_to_device.la m_ignored_user_list.la m_listen.la m_noop.la m_presence.la m_profile.la m_push.la m_receipt.la m_relation.la m_room_aliases.la m_room_canonical_alias.la m_room_create.la m_room_history_visibility.la m_room_join_rules.la m_room_member.la m_room_message.la m_room_name.la m_room_power_levels.la m_room_redaction.la m_room_server_acl.la m_room_third_party_invite.la m_vm_fetch.la $out/lib/modules/construct
-    mkdir -p $out/lib/modules/construct
-    libtool   --mode=install ${coreutils.out}/bin/install -c   media/media_media.la $out/lib/modules/construct
-    mkdir -p $out/lib/modules/construct
-    libtool   --mode=install ${coreutils.out}/bin/install -c   net_dns_cache.la stats.la console.la web_root.la web_hook.la well_known.la magick.la $out/lib/modules/construct
-
-    cd $WORK/share
-    mkdir -p $out/share/construct/construct
-    cp -r ./webapp $out/share/construct/construct/
-
-    cd $WORK/construct
     mkdir -p $out/bin
-    libtool   --mode=install ${coreutils.out}/bin/install -c construct $out/bin
+    libtool --mode=install ${coreutils.out}/bin/install -c ${construct} $out/bin
 
-    cd $WORK
+    wrapProgram $out/bin/construct \
+      --set-default ircd_web_root_path ${riot-web.out} \
+      --set-default ircd_fs_base_prefix $out \
+      --set-default ircd_fs_base_bin $out/bin \
+      --set-default ircd_fs_base_lib $out/lib \
+      --set-default ircd_fs_base_modules $out/lib/modules \
+      --argv0 $out/bin/construct
+
+    makeWrapper ${gdb}/bin/gdb $out/bin/construct-gdb \
+      --set-default ircd_web_root_path $out/share/webapp \
+      --set-default ircd_fs_base_prefix $out \
+      --set-default ircd_fs_base_bin $out/bin \
+      --set-default ircd_fs_base_lib $out/lib \
+      --set-default ircd_fs_base_modules $out/lib/modules \
+      --add-flags "$out/bin/.construct-wrapped"
   '';
 
-  enableParallelBuilding = true;
+  doInstallCheck = true;
+  installCheckPhase = ''
+    chmod -R a-w $out
+    mkdir -p /tmp/cache/construct
+    export RUNTIME_DIRECTORY=/tmp/run/construct
+    export STATE_DIRECTORY=/tmp/lib/construct
+    export LOGS_DIRECTORY=/tmp/log/construct
+    cd /tmp/cache/construct
+    $out/bin/construct -smoketest localhost
+  '';
 
-  nativeBuildInputs = with pkgs; [
-    libtool pkg-config
-  ] ++ lib.optional useClang llvmPackages_latest.llvm
-    ++ lib.optional useJemalloc jemalloc;
-  buildInputs = with pkgs; [
-    libsodium openssl file boost gmp rocksdb-pinned
-  ] ++ lib.optional withGraphicsMagick graphicsmagick;
+  #outputs = [ "bin" "dev" "out" "doc" ];
+  #separateDebugInfo = true;
+  enableParallelBuilding = true;
 }
