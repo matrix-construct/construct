@@ -8,8 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include "../args.h"
-
 namespace ircd::m::sync
 {
 	static bool room_state_append(data &, json::stack::array &, const m::event &, const m::event::idx &, const bool &query_prev);
