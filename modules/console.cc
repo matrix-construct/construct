@@ -13623,6 +13623,7 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 	vmopts.debuglog_accept = true;
 	vmopts.fetch_prev = false;
 	vmopts.fetch_state = false;
+	vmopts.notify_servers = false;
 	char rembuf[256];
 	vmopts.node_id = string(rembuf, remote);
 	m::vm::eval eval
@@ -13739,6 +13740,7 @@ console_cmd__fed__state(opt &out, const string_view &line)
 	vmopts.nothrows = -1;
 	vmopts.fetch_state = false;
 	vmopts.fetch_prev = false;
+	vmopts.notify_servers = false;
 
 	m::vm::eval
 	{
@@ -13923,6 +13925,7 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 	vmopts.fetch_state = false;
 	char rembuf[256];
 	vmopts.node_id = string(rembuf, remote);
+	vmopts.notify_servers = false;
 	m::vm::eval eval
 	{
 		pdus, vmopts
@@ -14100,6 +14103,8 @@ console_cmd__fed__event(opt &out, const string_view &line)
 
 	m::vm::opts vmopts;
 	vmopts.fetch_prev = has(op, "prev");
+	vmopts.fetch_state = false;
+	vmopts.notify_servers = false;
 	m::vm::eval eval
 	{
 		event, vmopts

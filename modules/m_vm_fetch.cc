@@ -335,6 +335,7 @@ try
 	opts.fetch_auth = false;
 	opts.infolog_accept = true;
 	opts.warnlog &= ~vm::fault::EXISTS;
+	opts.notify_servers = false;
 	log::debug
 	{
 		log, "Evaluating auth chain for %s in %s events:%zu",
@@ -445,6 +446,7 @@ try
 		auto opts(*eval.opts);
 		opts.fetch_prev = false;
 		opts.fetch_state = false;
+		opts.notify_servers = false;
 		vm::eval
 		{
 			pdus, opts
@@ -673,6 +675,7 @@ ircd::m::vm::fetch::prev(const event &event,
 		auto opts(*eval.opts);
 		opts.fetch_prev = false;
 		opts.fetch_state = false;
+		opts.notify_servers = false;
 		log::debug
 		{
 			log, "%s fetched %zu pdus; evaluating...",
