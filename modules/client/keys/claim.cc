@@ -271,13 +271,26 @@ send_request(const string_view &remote,
              query_map &ret)
 try
 {
-	m::fed::user::keys::claim::opts opts;
-	opts.remote = remote;
-	const auto &buffer
+	static const size_t buffer_unit_size
 	{
-		buffers.emplace_back(8_KiB)
+		m::user::id::MAX_SIZE + 1     // 256
+		+ 128                         // device_id
+		+ 128                         // algorithm
 	};
 
+	static_assert(is_powerof2(buffer_unit_size));
+	const size_t buffer_size
+	{
+		buffer_unit_size * queries.size()
+	};
+
+	const auto &buffer
+	{
+		buffers.emplace_back(buffer_size)
+	};
+
+	m::fed::user::keys::claim::opts opts;
+	opts.remote = remote;
 	ret.emplace
 	(
 		std::piecewise_construct,
