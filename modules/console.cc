@@ -8010,7 +8010,7 @@ console_cmd__eval(opt &out, const string_view &line)
 
 	const auto &args
 	{
-		param[1]
+		tokens_after(line, ' ', 1)
 	};
 
 	const m::event::fetch event
@@ -8019,8 +8019,6 @@ console_cmd__eval(opt &out, const string_view &line)
 	};
 
 	m::vm::opts opts;
-	opts.errorlog = 0;
-	opts.warnlog = 0;
 	opts.nothrows = 0;
 
 	tokens(args, ' ', [&opts](const auto &arg)
@@ -8031,16 +8029,28 @@ console_cmd__eval(opt &out, const string_view &line)
 				opts.replays = true;
 				break;
 
+			case "nowrite"_:
+				opts.write = false;
+				break;
+
 			case "noverify"_:
 				opts.verify = false;
 				break;
 		}
 	});
 
-	m::vm::eval eval{opts};
-	out << pretty(event) << std::endl;
-	eval(event);
-	out << "done" << std::endl;
+	out
+	<< pretty(event)
+	<< std::endl;
+
+	m::vm::eval
+	{
+		event, opts
+	};
+
+	out
+	<< "done"
+	<< std::endl;
 	return true;
 }
 
