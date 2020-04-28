@@ -1731,7 +1731,6 @@ try
 	const bool expired
 	{
 		ircd::now<system_point>() > expires
-		|| empty(cached)
 	};
 
 	// Crucial value that will provide us with a return string for this
@@ -1740,10 +1739,9 @@ try
 	// when a network query needs to be made, otherwise we can return the
 	// cached value. If the network query fails, this value is still defaulted
 	// as the origin string to return and we'll also cache that too.
-	assert(expired || !empty(cached));
 	const string_view delegated
 	{
-		expired?
+		empty(cached) || expired?
 			fetch_well_known(buf, origin):
 
 			// Move the returned string to the front of the buffer; this overwrites
@@ -1755,9 +1753,9 @@ try
 	};
 
 	// Branch on valid cache hit to return result.
-	if(!expired)
+	if(!empty(cached) && !expired)
 	{
-		thread_local char tmbuf[48];
+		char tmbuf[48];
 		log::debug
 		{
 			well_known_log, "%s found in cache delegated to %s event_idx:%u expires %s",
@@ -1768,6 +1766,25 @@ try
 		};
 
 		return delegated;
+	}
+
+	// Branch on query failure to fallback on existing expired record
+	if(expired && !empty(cached) && delegated == origin)
+	{
+		char tmbuf[48];
+		log::debug
+		{
+			well_known_log, "%s fallback to cached delegation to %s event_idx:%u expired %s",
+			origin,
+			cached,
+			event_idx,
+			timef(tmbuf, expires, localtime),
+		};
+
+		return string_view
+		{
+			data(buf), move(buf, cached)
+		};
 	}
 
 	// Any time the well-known result is the same as the origin (that
