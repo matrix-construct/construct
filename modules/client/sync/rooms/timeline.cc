@@ -111,11 +111,24 @@ ircd::m::sync::room_timeline_linear(data &data)
 			0UL
 	};
 
-	const bool is_own_rejoin
+	char last_membership_buf[room::MEMBERSHIP_MAX_SIZE];
+	const auto &last_membership
 	{
 		last_membership_state_idx?
-			m::membership(last_membership_state_idx, "join"):
-			false
+			m::membership(last_membership_buf, last_membership_state_idx):
+			string_view{}
+	};
+
+	const bool is_own_rejoin
+	{
+		is_own_join
+		&& last_membership == "join"
+	};
+
+	const bool is_invite_accept
+	{
+		is_own_join
+		&& last_membership == "invite"
 	};
 
 	json::stack::object membership_
@@ -141,9 +154,9 @@ ircd::m::sync::room_timeline_linear(data &data)
 	{
 		const event::idx range_first
 		{
-			last_membership_state_idx?
+			!is_invite_accept && last_membership_state_idx?
 				last_membership_state_idx + 1: // start after last state
-				last_membership_state_idx      // 0 (full initial sync).
+				0UL
 		};
 
 		const scope_restore data_range_first
