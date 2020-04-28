@@ -776,7 +776,7 @@ ircd::m::vm::write_append(eval &eval,
 			const auto &[pass, fail]
 			{
 				opts.auth && !eval.room_internal?
-					room::auth::check(event, room):
+					room::auth::check_present(event):
 					room::auth::passfail{true, {}}
 			};
 
