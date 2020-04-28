@@ -15330,31 +15330,51 @@ console_cmd__redact(opt &out, const string_view &line)
 		"event_id", "sender", "reason"
 	}};
 
-	const m::event::id &redacts
+	const params param_alt{line, " ",
 	{
-		param.at("event_id")
+		"room_id", "type", "state_key", "sender", "reason"
+	}};
+
+	const m::room::id::buf room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const auto state_idx
+	{
+		!valid(m::id::EVENT, param["event_id"])?
+			room.get(param_alt["type"], param_alt["state_key"]):
+			0UL
+	};
+
+	const m::event::id::buf redacts
+	{
+		valid(m::id::EVENT, param["event_id"])?
+			param["event_id"]:
+			m::event_id(state_idx)
 	};
 
 	const m::user::id &sender
 	{
-		param["sender"]?
+		state_idx && param_alt["sender"]?
+			param_alt["sender"]:
+		!state_idx && param["sender"]?
 			param["sender"]:
 			m::me()
 	};
 
 	const string_view reason
 	{
-		param["reason"]
-	};
-
-	const auto room_id
-	{
-		m::room_id(redacts)
-	};
-
-	const m::room room
-	{
-		room_id
+		state_idx && param_alt["reason"]?
+			param_alt["reason"]:
+		!state_idx && param["reason"]?
+			param["reason"]:
+			string_view{}
 	};
 
 	const auto event_id
