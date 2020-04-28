@@ -11,10 +11,10 @@
 namespace ircd::m::bootstrap
 {
 	struct pkg;
-	using send_join1_response = std::tuple<json::object, unique_buffer<mutable_buffer>>;
+	using send_join_response = std::tuple<json::object, unique_buffer<mutable_buffer>>;
 
 	static event::id::buf make_join(const string_view &host, const room::id &, const user::id &, const mutable_buffer &);
-	static send_join1_response send_join(const string_view &host, const room::id &, const event::id &, const json::object &event);
+	static send_join_response send_join(const string_view &host, const room::id &, const event::id &, const json::object &event);
 	static void broadcast_join(const room &, const event &, const string_view &exclude);
 	static void fetch_keys(const json::array &events);
 	static void eval_auth_chain(const json::array &auth_chain, vm::opts);
@@ -612,7 +612,7 @@ catch(const std::exception &e)
 	//throw;
 }
 
-ircd::m::bootstrap::send_join1_response
+ircd::m::bootstrap::send_join_response
 ircd::m::bootstrap::send_join(const string_view &host,
                               const m::room::id &room_id,
                               const m::event::id &event_id,
