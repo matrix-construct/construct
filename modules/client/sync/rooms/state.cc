@@ -160,6 +160,11 @@ ircd::m::sync::room_state_linear_events(data &data)
 			data.range.first, 0UL
 		};
 
+		const scope_restore data_range_second
+		{
+			data.range.second, std::max(data.event_idx + 1, data.range.second)
+		};
+
 		return room_state_polylog_events(data);
 	}
 

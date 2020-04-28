@@ -164,6 +164,11 @@ ircd::m::sync::room_timeline_linear(data &data)
 			data.range.first, range_first
 		};
 
+		const scope_restore data_range_second
+		{
+			data.range.second, std::max(data.event_idx + 1, data.range.second)
+		};
+
 		bool ret{false}, limited{false};
 		const auto prev_batch
 		{
