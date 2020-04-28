@@ -243,6 +243,9 @@ ircd::m::sync::_room_state_polylog(data &data)
 			if(!apropos(data, data.room_head))
 				return false;
 
+	if(data.phased && data.range.first == 0)
+		return room_state_phased_events(data);
+
 	return room_state_polylog_events(data);
 }
 
@@ -264,9 +267,6 @@ ircd::m::sync::crazyload_historical_members
 bool
 ircd::m::sync::room_state_polylog_events(data &data)
 {
-	if(data.phased && data.range.first == 0)
-		return room_state_phased_events(data);
-
 	bool ret{false};
 	ctx::mutex mutex;
 	json::stack::array array
