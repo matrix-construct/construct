@@ -142,7 +142,7 @@ ircd::m::room::auth::check(const event &event)
 
 	const bool check_relative
 	{
-		m::exists(event.event_id)
+		true
 	};
 
 	const bool check_present
@@ -208,12 +208,28 @@ try
 {
 	using json::at;
 
-	const m::room room
+	if(at<"type"_>(event) == "m.room.create")
+		return {true, {}};
+
+	if(!m::exists(event.event_id))
+		return {true, {}};
+
+	const auto &room_id
 	{
-		at<"room_id"_>(event), event.event_id
+		at<"room_id"_>(event)
 	};
 
-	return check(event, room);
+	const m::room room
+	{
+		room_id, event.event_id
+	};
+
+	const auto idxs
+	{
+		relative_idx(event, room)
+	};
+
+	return check(event, idxs);
 }
 catch(const ctx::interrupted &)
 {
@@ -250,7 +266,12 @@ try
 		at<"room_id"_>(event)
 	};
 
-	return check(event, room);
+	const auto idxs
+	{
+		relative_idx(event, room)
+	};
+
+	return check(event, idxs);
 }
 catch(const ctx::interrupted &)
 {
@@ -268,35 +289,12 @@ ircd::m::room::auth::passfail
 ircd::m::room::auth::check_static(const event &event)
 try
 {
-	using json::at;
-
-	const m::event::prev refs
+	const auto idx
 	{
-		event
+		static_idx(event)
 	};
 
-	const auto count
-	{
-		refs.auth_events_count()
-	};
-
-	if(count > 4)
-		log::dwarning
-		{
-			"Event %s has an unexpected %zu auth_events references",
-			string_view{event.event_id},
-			count,
-		};
-
-	m::event::idx idx[4]
-	{
-		count > 0? m::index(refs.auth_event(0)): 0UL,
-		count > 1? m::index(refs.auth_event(1)): 0UL,
-		count > 2? m::index(refs.auth_event(2)): 0UL,
-		count > 3? m::index(refs.auth_event(3)): 0UL,
-	};
-
-	return check(event, vector_view<event::idx>{idx, count});
+	return check(event, idx);
 }
 catch(const ctx::interrupted &)
 {
@@ -308,31 +306,6 @@ catch(const std::exception &)
 	{
 		false, std::current_exception()
 	};
-}
-
-ircd::m::room::auth::passfail
-ircd::m::room::auth::check(const event &event,
-                           const room &room)
-{
-	using json::at;
-
-	m::event::idx idx[5]
-	{
-		room.get(std::nothrow, "m.room.create", ""),
-		room.get(std::nothrow, "m.room.power_levels", ""),
-		room.get(std::nothrow, "m.room.member", at<"sender"_>(event)),
-
-		at<"type"_>(event) == "m.room.member" &&
-		(membership(event) == "join" || membership(event) == "invite")?
-			room.get(std::nothrow, "m.room.join_rules", ""): 0UL,
-
-		at<"type"_>(event) == "m.room.member" &&
-		at<"sender"_>(event) != json::get<"state_key"_>(event) &&
-		valid(m::id::USER, json::get<"state_key"_>(event))?
-			room.get(std::nothrow, "m.room.member", at<"state_key"_>(event)): 0UL,
-	};
-
-	return check(event, vector_view<event::idx>{idx, 5});
 }
 
 ircd::m::room::auth::passfail
@@ -578,6 +551,61 @@ ircd::m::check_room_auth_rule_9(const m::event &event,
 			{
 				"sender cannot set another user's mxid in a state_key."
 			};
+}
+
+std::array<ircd::m::event::idx, 4>
+ircd::m::room::auth::static_idx(const event &event)
+{
+	const m::event::prev refs
+	{
+		event
+	};
+
+	const auto count
+	{
+		refs.auth_events_count()
+	};
+
+	if(count > 4)
+		log::dwarning
+		{
+			"Event %s has an unexpected %zu auth_events references",
+			string_view{event.event_id},
+			count,
+		};
+
+	return
+	{
+		count > 0? m::index(refs.auth_event(0)): 0UL,
+		count > 1? m::index(refs.auth_event(1)): 0UL,
+		count > 2? m::index(refs.auth_event(2)): 0UL,
+		count > 3? m::index(refs.auth_event(3)): 0UL,
+	};
+}
+
+std::array<ircd::m::event::idx, 5>
+ircd::m::room::auth::relative_idx(const event &event,
+                                  const room &room)
+{
+	using json::at;
+
+	return
+	{
+		room.get(std::nothrow, "m.room.create", ""),
+
+		room.get(std::nothrow, "m.room.power_levels", ""),
+
+		room.get(std::nothrow, "m.room.member", at<"sender"_>(event)),
+
+		at<"type"_>(event) == "m.room.member" &&
+		(membership(event) == "join" || membership(event) == "invite")?
+			room.get(std::nothrow, "m.room.join_rules", ""): 0UL,
+
+		at<"type"_>(event) == "m.room.member" &&
+		at<"sender"_>(event) != json::get<"state_key"_>(event) &&
+		valid(m::id::USER, json::get<"state_key"_>(event))?
+			room.get(std::nothrow, "m.room.member", at<"state_key"_>(event)): 0UL,
+	};
 }
 
 bool

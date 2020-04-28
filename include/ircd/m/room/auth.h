@@ -26,10 +26,12 @@ struct ircd::m::room::auth
 	using FAIL = AUTH_FAIL;
 
 	static bool is_power_event(const event &);
+	static std::array<event::idx, 5> relative_idx(const event &, const room &);
+	static std::array<event::idx, 4> static_idx(const event &);
 
 	static passfail check(const event &, hookdata &);
 	static passfail check(const event &, const vector_view<event::idx> &);
-	static passfail check(const event &, const room &);
+
 	static passfail check_static(const event &);
 	static passfail check_present(const event &);
 	static passfail check_relative(const event &);
