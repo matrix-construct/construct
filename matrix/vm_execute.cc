@@ -596,11 +596,8 @@ ircd::m::vm::execute_pdu(eval &eval,
 	assert(sequence::retired < sequence::get(eval));
 	sequence::committed = sequence::get(eval);
 
-	if(likely(opts.write))
-		write_prepare(eval, event);
-
-	if(likely(opts.write))
-		write_append(eval, event);
+	write_prepare(eval, event);
+	write_append(eval, event);
 
 	// Generate post-eval/pre-notify effects. This function may conduct
 	// an entire eval of several more events recursively before returning.
