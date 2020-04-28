@@ -534,7 +534,19 @@ ircd::m::vm::execute_pdu(eval &eval,
 
 	// Evaluation by auth system; throws
 	if(likely(authenticate))
-		room::auth::check_static(event);
+	{
+		const auto &[pass, fail]
+		{
+			room::auth::check_static(event)
+		};
+
+		if(!pass)
+			throw error
+			{
+				fault::AUTH, "Fails against provided auth_events :%s",
+				what(fail)
+			};
+	}
 
 	// Obtain sequence number here.
 	const auto *const &top(eval::seqmax());
@@ -559,7 +571,19 @@ ircd::m::vm::execute_pdu(eval &eval,
 	});
 
 	if(likely(authenticate))
-		room::auth::check_relative(event);
+	{
+		const auto &[pass, fail]
+		{
+			room::auth::check_relative(event)
+		};
+
+		if(!pass)
+			throw error
+			{
+				fault::AUTH, "Fails relative to the state at the event :%s",
+				what(fail)
+			};
+	}
 
 	log::debug
 	{
