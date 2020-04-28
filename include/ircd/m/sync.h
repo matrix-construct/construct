@@ -202,3 +202,25 @@ struct ircd::m::sync::args
 	/// Constructed by the GET /sync request method handler on its stack.
 	args(const ircd::resource::request &request);
 };
+
+inline bool
+ircd::m::sync::apropos(const data &d,
+                       const event &event)
+{
+	return apropos(d, index(std::nothrow, event));
+}
+
+inline bool
+ircd::m::sync::apropos(const data &d,
+                       const event::id &event_id)
+{
+	return apropos(d, index(std::nothrow, event_id));
+}
+
+inline bool
+ircd::m::sync::apropos(const data &d,
+                       const event::idx &event_idx)
+{
+	return d.phased ||
+	(event_idx >= d.range.first && event_idx < d.range.second);
+}

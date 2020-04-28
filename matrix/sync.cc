@@ -103,28 +103,6 @@ ircd::m::sync::for_each(const string_view &prefix,
 	return true;
 }
 
-bool
-ircd::m::sync::apropos(const data &d,
-                       const event &event)
-{
-	return apropos(d, index(std::nothrow, event));
-}
-
-bool
-ircd::m::sync::apropos(const data &d,
-                       const event::id &event_id)
-{
-	return apropos(d, index(std::nothrow, event_id));
-}
-
-bool
-ircd::m::sync::apropos(const data &d,
-                       const event::idx &event_idx)
-{
-	return d.phased ||
-	       (event_idx >= d.range.first && event_idx < d.range.second);
-}
-
 ircd::string_view
 ircd::m::sync::make_since(const mutable_buffer &buf,
                           const int64_t &val)
