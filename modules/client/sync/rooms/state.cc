@@ -126,16 +126,6 @@ ircd::m::sync::room_state_linear_events(data &data)
 			return false;
 	}
 
-	if(is_own_membership && data.membership == "join")
-	{
-		const scope_restore data_range_first
-		{
-			data.range.first, 0UL
-		};
-
-		return room_state_polylog_events(data);
-	}
-
 	json::stack::object rooms
 	{
 		*data.out, "rooms"
@@ -162,6 +152,16 @@ ircd::m::sync::room_state_linear_events(data &data)
 	{
 		*data.out, state_member_name
 	};
+
+	if(is_own_membership && data.membership == "join")
+	{
+		const scope_restore data_range_first
+		{
+			data.range.first, 0UL
+		};
+
+		return room_state_polylog_events(data);
+	}
 
 	json::stack::array array
 	{
