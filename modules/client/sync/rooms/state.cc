@@ -23,7 +23,7 @@ namespace ircd::m::sync
 	static bool room_invite_state_linear(data &);
 	static bool room_state_linear(data &);
 
-	extern conf::item<bool> lazyload_members;
+	extern conf::item<bool> lazyload_members_enable;
 	extern conf::item<bool> crazyload_historical_members;
 
 	extern item room_invite_state;
@@ -246,8 +246,8 @@ ircd::m::sync::_room_state_polylog(data &data)
 	return room_state_polylog_events(data);
 }
 
-decltype(ircd::m::sync::lazyload_members)
-ircd::m::sync::lazyload_members
+decltype(ircd::m::sync::lazyload_members_enable)
+ircd::m::sync::lazyload_members_enable
 {
 	{ "name",         "ircd.client.sync.rooms.state.members.lazyload" },
 	{ "default",      true                                            },
@@ -310,8 +310,28 @@ ircd::m::sync::room_state_polylog_events(data &data)
 		}
 	};
 
-	const room::state state{*data.room};
-	state.for_each([&data, &concurrent]
+	const auto &room_filter
+	{
+		json::get<"room"_>(data.filter)
+	};
+
+	const auto &state_filter
+	{
+		json::get<"state"_>(room_filter)
+	};
+
+	const auto &lazyload_members
+	{
+		lazyload_members_enable &&
+		json::get<"lazy_load_members"_>(state_filter)
+	};
+
+	const room::state state
+	{
+		*data.room
+	};
+
+	state.for_each([&data, &concurrent, &lazyload_members]
 	(const string_view &type, const string_view &state_key, const event::idx &event_idx)
 	{
 		// Skip this event if it's not in the sync range, except
