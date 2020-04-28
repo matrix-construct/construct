@@ -92,21 +92,6 @@ ircd::m::sync::room_timeline_linear(data &data)
 		if(json::get<"depth"_>(*data.event) + viewport_size < data.room_depth)
 			return false;
 
-	json::stack::object membership_
-	{
-		*data.out, data.membership
-	};
-
-	json::stack::object room_
-	{
-		*data.out, data.room->room_id
-	};
-
-	json::stack::object timeline
-	{
-		*data.out, "timeline"
-	};
-
 	const bool is_own_membership
 	{
 		json::get<"type"_>(*data.event) == "m.room.member"
@@ -131,6 +116,21 @@ ircd::m::sync::room_timeline_linear(data &data)
 		last_membership_state_idx?
 			m::membership(last_membership_state_idx, "join"):
 			false
+	};
+
+	json::stack::object membership_
+	{
+		*data.out, data.membership
+	};
+
+	json::stack::object room_
+	{
+		*data.out, data.room->room_id
+	};
+
+	json::stack::object timeline
+	{
+		*data.out, "timeline"
 	};
 
 	// Branch to backfill the user's timeline before their own join event to
