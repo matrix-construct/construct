@@ -16,6 +16,14 @@
 	#include "table/block_fetcher.h"
 #endif
 
+#if __has_include("util/delete_scheduler.h")
+	#include "util/delete_scheduler.h"
+#endif
+
+#if __has_include("util/file_util.h")
+	#include "util/file_util.h"
+#endif
+
 #if __has_include("db/write_thread.h")
 	#include "db/write_thread.h"
 #endif
@@ -75,6 +83,50 @@ rocksdb::WriteThread::BlockingAwaitState(Writer *const w,
 }
 #else
 #warning "RocksDB source is not available. Cannot interpose bugfixes."
+#endif
+
+#if __has_include("util/delete_scheduler.h")
+rocksdb::DeleteScheduler::DeleteScheduler(Env* env,
+                                          int64_t rate_bytes_per_sec,
+                                          Logger* info_log,
+                                          SstFileManagerImpl* sst_file_manager,
+                                          double max_trash_db_ratio,
+                                          uint64_t bytes_max_delete_chunk)
+:env_(env),
+total_trash_size_(0),
+rate_bytes_per_sec_(rate_bytes_per_sec),
+pending_files_(0),
+bytes_max_delete_chunk_(bytes_max_delete_chunk),
+closing_(false),
+cv_(&mu_),
+info_log_(info_log),
+sst_file_manager_(sst_file_manager),
+max_trash_db_ratio_(max_trash_db_ratio)
+{
+	assert(sst_file_manager != nullptr);
+	assert(max_trash_db_ratio >= 0);
+//	bg_thread_.reset(
+//		new port::Thread(&DeleteScheduler::BackgroundEmptyTrash, this));
+}
+
+rocksdb::DeleteScheduler::~DeleteScheduler()
+{
+
+}
+#else
+#warning "RocksDB source is not available. Cannot interpose bugfixes."
+#endif
+
+#if __has_include("util/file_util.h")
+rocksdb::Status
+rocksdb::DeleteSSTFile(const ImmutableDBOptions *db_options,
+                       const std::string& fname,
+                       const std::string& dir_to_sync)
+{
+	assert(db_options);
+	assert(db_options->env);
+	return db_options->env->DeleteFile(fname);
+}
 #endif
 
 #if __has_include("table/block_fetcher.h") && defined(IRCD_DB_BYPASS_CHECKSUM)
