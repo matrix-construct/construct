@@ -67,3 +67,7 @@ to point at Riot's `webapp/` directory by entering the following:
 * If you are employing a reverse-proxy you must review the apropos section in
 the [TROUBLESHOOTING](TROUBLESHOOTING.md#trouble-with-reverse-proxies-and-middlewares)
 guide or the server may not operate correctly.
+
+* Logging to files is only enabled by default for CRITICAL, ERROR, and WARNING.
+It is not enabled by default for the INFO level. To enable, use `conf set
+ircd.log.info.file.enable true`.
