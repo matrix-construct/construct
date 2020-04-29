@@ -8557,15 +8557,6 @@ console_cmd__room__top(opt &out, const string_view &line)
 }
 
 bool
-console_id__room(opt &out,
-                 const m::room::id &id,
-                 const string_view &line)
-{
-	//TODO: XXX more detailed summary
-	return console_cmd__room__top(out, line);
-}
-
-bool
 console_cmd__room__version(opt &out, const string_view &line)
 {
 	const params param{line, " ",
@@ -11183,6 +11174,24 @@ console_cmd__room__power__revoke(opt &out, const string_view &line)
 	<< "by " << event_id << ' '
 	<< std::endl;
 	return true;
+}
+
+bool
+console_id__room(opt &out,
+                 const m::room::id &id,
+                 const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "type", "state_key"
+	}};
+
+	// Delegate to allow direct command "#foo:bar.com ircd.test fookey"
+	if(param["type"] && param["state_key"])
+		return console_cmd__room__get(out, line);
+
+	//TODO: XXX more detailed summary
+	return console_cmd__room__top(out, line);
 }
 
 //
