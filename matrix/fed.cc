@@ -1773,22 +1773,6 @@ try
 		return delegated;
 	}
 
-	// Branch on query failure to fallback on existing expired record
-	if(expired && valid && delegated == origin)
-	{
-		char tmbuf[48];
-		log::debug
-		{
-			well_known_log, "%s fallback to cached delegation to %s event_idx:%u expired %s",
-			origin,
-			cached,
-			event_idx,
-			timef(tmbuf, expires, localtime),
-		};
-
-		return delegated;
-	}
-
 	// Any time the well-known result is the same as the origin (that
 	// includes legitimate errors where fetch_well_known() returns the
 	// origin to default) we consider that an error and use the error
