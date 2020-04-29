@@ -1845,13 +1845,25 @@ namespace ircd::m::fed
 }
 
 ircd::string_view
-ircd::m::fed::fetch_well_known(const mutable_buffer &buf,
+ircd::m::fed::fetch_well_known(const mutable_buffer &user_buf,
                                const string_view &origin)
 try
 {
 	static const string_view path
 	{
 		"/.well-known/matrix/server"
+	};
+
+	// If the supplied buffer isn't large enough to make the full
+	// HTTP request, allocate one that is.
+	const unique_mutable_buffer req_buf
+	{
+		size(user_buf) < 8_KiB? 8_KiB: 0UL
+	};
+
+	const mutable_buffer buf
+	{
+		req_buf? req_buf: user_buf
 	};
 
 	rfc3986::uri uri;
@@ -1918,7 +1930,7 @@ try
 	// any other incoming content to focus on just the unquoted string.
 	return string_view
 	{
-		data(buf), move(buf, m_server)
+		data(user_buf), move(user_buf, m_server)
 	};
 }
 catch(const ctx::interrupted &)
@@ -1954,7 +1966,11 @@ ircd::m::fed::fetch_well_known(const mutable_buffer &buf,
 		host(remote), "https", port(remote)
 	};
 
-	window_buffer wb{buf};
+	window_buffer wb
+	{
+		buf
+	};
+
 	http::request
 	{
 		wb, host(target), "GET", url
