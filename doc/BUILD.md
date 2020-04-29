@@ -5,20 +5,24 @@
 This section is intended to allow building with dependencies that have not
 made their way to mainstream systems. Important notes that may affect you:
 
-- GCC: Ubuntu Xenial (16.04) users must use a PPA to obtain GCC-7 or greater; don't
-forget to `export CXX=g++-7` before running `./configure` on that system.
-
 - Boost: The required version is available through `apt` as `libboost-all-dev` on
 Ubuntu Cosmic (18.10). All earlier releases (including 18.04 LTS) can configure
 with `--with-included-boost` as instructed below.
 
-- ~~RocksDB: The required version is available through `apt` as `librocksdb-dev` on
+- RocksDB: The required version is available through `apt` as `librocksdb-dev` on
 Ubuntu Disco (19.04). All earlier releases (including 18.04 LTS) can configure
-with `--with-included-rocksdb` as instructed below.~~
+with `--with-included-rocksdb` and skip the next bullet.
 
-- RocksDB: At this time we advise **all users** including those on 19.04 to
-configure with `--with-included-rocksdb` until regressions in your RocksDB
-package have been fixed.
+- RocksDB: THE COMPLETE SOURCE-CODE OF ROCKSDB MUST BE AVAILABLE TO BUILD CONSTRUCT.
+This is different from the `include/` and `lib/` files installed by `librocksdb-dev`
+with 19.04 or later (which is also required). If you are on 19.04, 19.10, or 20.04
+or later, provide the source-code with the following:
+```
+git submodule update --init deps/rocksdb
+cd deps/rocksdb
+git fetch --tags --force
+git checkout v5.17.2
+```
 
 ##### Installation Primer
 
@@ -42,12 +46,13 @@ an invocation of `git clean` will erase your database in $prefix/var/db/.
 
 ```
 ./autogen.sh
-./configure --prefix=$PWD/build --with-included-boost --with-included-rocksdb
+./configure --prefix=$PWD/build
 make install
 ```
 
 > The `--with-included-*` will fetch, configure **and build** the dependencies included
-as submodules. Please read the compatibility primer first to understand which options
+as submodules. The result will not be installable on the system without this repository
+remaining intact. Please read the compatibility primer first to understand which options
 you need or don't need on your system.
 
 
