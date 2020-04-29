@@ -1,4 +1,4 @@
-FROM jevolk/construct:ubuntu-18.04
+FROM jevolk/construct:ubuntu-20.04
 
 ENV CC clang-9
 ENV CXX clang++-9

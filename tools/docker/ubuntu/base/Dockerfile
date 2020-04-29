@@ -1,12 +1,10 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN \
     apt-get update && \
     apt-get install --no-install-recommends -y software-properties-common && \
-    add-apt-repository -y ppa:mhier/libboost-latest && \
-    add-apt-repository -y ppa:ubuntu-toolchain-r/test && \
     apt-get update && \
     apt-get install --no-install-recommends -y \
         autoconf \
@@ -14,7 +12,7 @@ RUN \
         autoconf2.13 \
         automake \
         autotools-dev \
-        boost1.68 \
+        boost1.71 \
         build-essential \
         cmake \
         curl \
@@ -26,6 +24,7 @@ RUN \
         liblz4-dev \
         libmagic-dev \
         libnss-db \
+        librocksdb-dev \
         libsodium-dev \
         libssl-dev \
         libtool \
@@ -36,25 +35,15 @@ RUN \
     apt-get autoremove --purge -y && \
     rm -rf /var/lib/apt/lists/*
 
-ENV ROCKSDB_VERSION=5.16.6
+ENV ROCKSDB_VERSION=5.17.2
 
 RUN \
-    mkdir -p /tmpbuild/rocksdb && \
-    cd /tmpbuild/rocksdb && \
+    cd /usr/src && \
     curl -sL https://github.com/facebook/rocksdb/archive/v${ROCKSDB_VERSION}.tar.gz -o rocksdb-${ROCKSDB_VERSION}.tar.gz && \
     tar xfvz rocksdb-${ROCKSDB_VERSION}.tar.gz && \
-    cd /tmpbuild/rocksdb/rocksdb-${ROCKSDB_VERSION} && \
-    cmake -H. -Bbuild \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DWITH_TESTS=0 \
-        -DWITH_TOOLS=0 \
-        -DUSE_RTTI=1 \
-        -DWITH_LZ4=1 \
-        -DBUILD_SHARED_LIBS=1 && \
-    cmake --build build --target install && \
-    rm -Rf /tmpbuild/
+    ln -s rocksdb-${ROCKSDB_VERSION} rocksdb && \
+    rm rocksdb-${ROCKSDB_VERSION}.tar.gz
 
 RUN mkdir /build
-
 WORKDIR /build
 
