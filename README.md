@@ -63,6 +63,9 @@ and use the latest head.
 See the [TROUBLESHOOTING](doc/TROUBLESHOOTING.md) guide for solutions to possible
 problems.
 
+See the [FREQUENTLY ASKED QUESTIONS](doc/FAQ.md) for answers to the most common
+perplexities.
+
 ## Developers
 
 ##### DOCUMENTATION
