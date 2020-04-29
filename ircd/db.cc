@@ -1150,14 +1150,17 @@ try
 {
 	std::make_unique<struct wal_filter>(this)
 }
-,ssts
-{
-	// note: the sst file manager cannot be used for now because it will spawn
-	// note: a pthread internally in rocksdb which does not use our callbacks
-	// note: we gave in the supplied env. we really don't want that.
-
-	//rocksdb::NewSstFileManager(env.get(), logger, {}, 0, true, nullptr, 0.05)
-}
+,ssts{rocksdb::NewSstFileManager
+(
+	env.get(),   // env
+	logger,      // logger
+	{},          // trash_dir
+	0,           // rate_bytes_per_sec
+	true,        // delete_existing_trash
+	nullptr,     // Status*
+	0.05,        // max_trash_db_ratio 0.25
+	64_MiB       // bytes_max_delete_chunk
+)}
 ,row_cache
 {
 	std::make_shared<database::cache>(this, this->stats, this->name, 16_MiB)
