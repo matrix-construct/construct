@@ -82,7 +82,7 @@ rocksdb::WriteThread::BlockingAwaitState(Writer *const w,
 	return state;
 }
 #else
-#warning "RocksDB source is not available. Cannot interpose bugfixes."
+	#error "RocksDB source is not available. Cannot interpose bugfixes."
 #endif
 
 #if __has_include("util/delete_scheduler.h")
@@ -114,7 +114,7 @@ rocksdb::DeleteScheduler::~DeleteScheduler()
 
 }
 #else
-#warning "RocksDB source is not available. Cannot interpose bugfixes."
+	#error "RocksDB source is not available. Cannot interpose bugfixes."
 #endif
 
 #if __has_include("util/file_util.h")
@@ -127,6 +127,8 @@ rocksdb::DeleteSSTFile(const ImmutableDBOptions *db_options,
 	assert(db_options->env);
 	return db_options->env->DeleteFile(fname);
 }
+#else
+	#error "RocksDB source is not available. Cannot interpose bugfixes."
 #endif
 
 #if __has_include("table/block_fetcher.h") && defined(IRCD_DB_BYPASS_CHECKSUM)
