@@ -113,7 +113,7 @@ ircd::buffer::unique_buffer<buffer>::operator
 bool()
 const
 {
-	return !this->buffer::null();
+	return !this->buffer::empty();
 }
 
 template<class buffer>
@@ -121,5 +121,5 @@ bool
 ircd::buffer::unique_buffer<buffer>::operator!()
 const
 {
-	return this->buffer::null();
+	return this->buffer::empty();
 }
