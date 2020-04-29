@@ -102,6 +102,12 @@ reliably. Please report bugs._
 Implied by `--enable-debug`. This is useful to specifically enable `assert()`
 statements when `--enable-debug` is not used.
 
+```
+--with-assert=trap
+```
+Recommended when using `--enable-assert` for debugging. This replaces the
+default mechanism of assertion with traps rather than aborts; allowing
+developers to explore an unterminated program.
 
 #### Manually enable optimization
 
