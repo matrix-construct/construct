@@ -1720,7 +1720,7 @@ try
 
 	const seconds ttl
 	{
-		content.get<time_t>("ttl", time_t(0))
+		content.get<time_t>("ttl", time_t(86400))
 	};
 
 	const system_point expires
