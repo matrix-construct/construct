@@ -1,36 +1,16 @@
-// Matrix Construct
+// The Construct
 //
-// Copyright (C) Matrix Construct Developers, Authors & Contributors
-// Copyright (C) 2016-2019 Jason Volk <jason@zemos.net>
+// Copyright (C) The Construct Developers, Authors & Contributors
+// Copyright (C) 2016-2020 Jason Volk <jason@zemos.net>
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#define ROCKSDB_PLATFORM_POSIX
-
-#if __has_include("table/block_fetcher.h")
-	//#define IRCD_DB_BYPASS_CHECKSUM
-	#define ZSTD_VERSION_NUMBER 0
-	#include "table/block_fetcher.h"
-#endif
-
-#if __has_include("util/delete_scheduler.h")
-	#include "util/delete_scheduler.h"
-#endif
-
-#if __has_include("util/file_util.h")
-	#include "util/file_util.h"
-#endif
-
-#if __has_include("db/write_thread.h")
-	#include "db/write_thread.h"
-#endif
-
-///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
 //
-// This section exists to mitigate an instance of a bug in RocksDB documented
+// This unit exists to mitigate instances of bugs in RocksDB documented
 // by https://github.com/facebook/rocksdb/issues/4654. In summary, some RocksDB
 // code makes direct use of std::mutex and std::condition_variable unlike the
 // rest of RocksDB code which uses the rocksdb::port and rocksdb::Env wrapper
@@ -42,7 +22,26 @@
 // of runtime interposition as stated in official documentation for this exact
 // purpose: overriding buggy functions in library dependencies.
 //
-// This unit overrides a class member function in rocksdb::WriteThread which
+
+#define ROCKSDB_PLATFORM_POSIX
+#define ZSTD_VERSION_NUMBER 0
+
+#if \
+__has_include("table/block_fetcher.h") && \
+__has_include("util/delete_scheduler.h") && \
+__has_include("util/file_util.h") && \
+__has_include("db/write_thread.h") && \
+__has_include("table/block_fetcher.h")
+	#include "table/block_fetcher.h"
+	#include "util/delete_scheduler.h"
+	#include "util/file_util.h"
+	#include "db/write_thread.h"
+	#define IRCD_DB_FIXES_ROCKSDB
+#else
+#warning "RocksDB source is not available. Cannot interpose bugfixes."
+#endif
+
+// This section overrides a class member function in rocksdb::WriteThread which
 // originally made use of pthread primitives to handle two threads contending
 // for write access in RocksDB's single-writer design. This function is entered
 // by additional threads after a first thread is an established "write leader."
@@ -51,7 +50,7 @@
 // which tells the kernel to stop the thread until satisfied. Since we are not
 // using kernel-driven threads, this is a deadlock.
 //
-#if __has_include("db/write_thread.h")
+#if defined(IRCD_DB_FIXES_ROCKSDB)
 uint8_t
 rocksdb::WriteThread::BlockingAwaitState(Writer *const w,
                                          uint8_t goal_mask)
@@ -81,11 +80,9 @@ rocksdb::WriteThread::BlockingAwaitState(Writer *const w,
 	assert((state & goal_mask) != 0);
 	return state;
 }
-#else
-	#error "RocksDB source is not available. Cannot interpose bugfixes."
 #endif
 
-#if __has_include("util/delete_scheduler.h")
+#if defined(IRCD_DB_FIXES_ROCKSDB)
 rocksdb::DeleteScheduler::DeleteScheduler(Env* env,
                                           int64_t rate_bytes_per_sec,
                                           Logger* info_log,
@@ -108,16 +105,15 @@ max_trash_db_ratio_(max_trash_db_ratio)
 //	bg_thread_.reset(
 //		new port::Thread(&DeleteScheduler::BackgroundEmptyTrash, this));
 }
-
-rocksdb::DeleteScheduler::~DeleteScheduler()
-{
-
-}
-#else
-	#error "RocksDB source is not available. Cannot interpose bugfixes."
 #endif
 
-#if __has_include("util/file_util.h")
+#if defined(IRCD_DB_FIXES_ROCKSDB)
+rocksdb::DeleteScheduler::~DeleteScheduler()
+{
+}
+#endif
+
+#if defined(IRCD_DB_FIXES_ROCKSDB)
 rocksdb::Status
 rocksdb::DeleteSSTFile(const ImmutableDBOptions *db_options,
                        const std::string& fname,
@@ -127,11 +123,9 @@ rocksdb::DeleteSSTFile(const ImmutableDBOptions *db_options,
 	assert(db_options->env);
 	return db_options->env->DeleteFile(fname);
 }
-#else
-	#error "RocksDB source is not available. Cannot interpose bugfixes."
 #endif
 
-#if __has_include("table/block_fetcher.h") && defined(IRCD_DB_BYPASS_CHECKSUM)
+#if defined(IRCD_DB_FIXES_ROCKSDB) && defined(IRCD_DB_BYPASS_CHECKSUM)
 void
 rocksdb::BlockFetcher::CheckBlockChecksum()
 {
