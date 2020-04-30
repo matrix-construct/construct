@@ -16,8 +16,9 @@ namespace ircd::m
 	struct user;
 
 	bool my(const user &);
-	bool exists(const user &);
 	bool exists(const id::user &);
+	bool exists(const user &);
+	bool is_oper(const user &);
 
 	user create(const id::user &, const json::members &args = {});
 }

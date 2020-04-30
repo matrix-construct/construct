@@ -15,21 +15,32 @@ namespace ircd::m
 }
 
 bool
-ircd::m::exists(const user::id &user_id)
+ircd::m::is_oper(const user &user)
 {
-	// The way we know a user exists is testing if their room exists.
-	const m::user::room user_room
+	const m::room::id::buf control_room_id
 	{
-		user_id
+		"!control", my_host()
 	};
 
-	return m::exists(user_room);
+	return m::membership(control_room_id, user, "join");
 }
 
 bool
 ircd::m::exists(const user &user)
 {
 	return exists(user.user_id);
+}
+
+bool
+ircd::m::exists(const user::id &user)
+{
+	// The way we know a user exists is testing if their room exists.
+	const user::room user_room
+	{
+		user
+	};
+
+	return m::exists(user_room);
 }
 
 bool
