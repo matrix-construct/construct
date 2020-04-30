@@ -15,14 +15,14 @@ decltype(ircd::net::dns::resolver::timeout)
 ircd::net::dns::resolver::timeout
 {
 	{ "name",     "ircd.net.dns.resolver.timeout" },
-	{ "default",   12500L                         },
+	{ "default",   5000L                          },
 };
 
 decltype(ircd::net::dns::resolver::send_rate)
 ircd::net::dns::resolver::send_rate
 {
 	{ "name",     "ircd.net.dns.resolver.send_rate" },
-	{ "default",   150L                             },
+	{ "default",   250L                             },
 };
 
 decltype(ircd::net::dns::resolver::send_burst)
@@ -36,7 +36,7 @@ decltype(ircd::net::dns::resolver::retry_max)
 ircd::net::dns::resolver::retry_max
 {
 	{ "name",     "ircd.net.dns.resolver.retry_max" },
-	{ "default",   4L                               },
+	{ "default",   24L                              },
 };
 
 decltype(ircd::net::dns::resolver::servers)
