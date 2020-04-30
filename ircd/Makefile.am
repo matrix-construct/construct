@@ -145,6 +145,7 @@ libircd_la_SOURCES += ctx_x86_64.S
 libircd_la_SOURCES += ctx.cc
 libircd_la_SOURCES += ctx_eh.cc
 libircd_la_SOURCES += ctx_ole.cc
+libircd_la_SOURCES += ctx_posix.cc
 if AIO
 libircd_la_SOURCES += fs_aio.cc
 endif
