@@ -614,9 +614,23 @@ console_cmd__log__level(opt &out, const string_view &line)
 		return true;
 	}
 
-	const auto level
+	const auto level_string
 	{
-		param.at<uint>(0)
+		param["level"]
+	};
+
+	uint level;
+	switch(hash(level_string))
+	{
+		case "CRITICAL"_:  level = 0U;   break;
+		case "ERROR"_:     level = 1U;   break;
+		case "WARNING"_:   level = 2U;   break;
+		case "NOTICE"_:    level = 3U;   break;
+		case "INFO"_:      level = 4U;   break;
+		case "DWARNING"_:  level = 5U;   break;
+		case "DERROR"_:    level = 6U;   break;
+		case "DEBUG"_:     level = 7U;   break;
+		default:           level = -1U;  break;
 	};
 
 	for(auto i(0U); i < num_of<log::level>(); ++i)
