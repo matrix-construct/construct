@@ -4969,6 +4969,7 @@ html__peer(opt &out, const string_view &line)
 
 bool
 console_cmd__peer(opt &out, const string_view &line)
+try
 {
 	if(out.html)
 		return html__peer(out, line);
@@ -5073,6 +5074,13 @@ console_cmd__peer(opt &out, const string_view &line)
 	}
 
 	return true;
+}
+catch(const std::out_of_range &)
+{
+	throw error
+	{
+		"Peer not found"
+	};
 }
 
 bool
