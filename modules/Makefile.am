@@ -514,8 +514,6 @@ client_module_LTLIBRARIES += \
 # /_synapse/admin/
 #
 
-# This puts the source in client/ but the installed
-# library is client_X.so in the main modules dir.
 admin_moduledir = @moduledir@
 
 admin_admin_users_la_SOURCES = admin/users.cc
