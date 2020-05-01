@@ -24,7 +24,7 @@ namespace ircd::ctx
 struct ircd::ctx::mutex
 {
 	dock q;
-	bool m;
+	ctx *m;
 
 	void deadlock_assertion() const noexcept;
 
@@ -51,7 +51,7 @@ struct ircd::ctx::mutex
 inline
 ircd::ctx::mutex::mutex()
 noexcept
-:m{false}
+:m{nullptr}
 {
 }
 
@@ -61,7 +61,7 @@ noexcept
 :q{std::move(o.q)}
 ,m{std::move(o.m)}
 {
-	o.m = false;
+	o.m = nullptr;
 }
 
 inline
@@ -72,7 +72,7 @@ noexcept
 	this->~mutex();
 	q = std::move(o.q);
 	m = std::move(o.m);
-	o.m = false;
+	o.m = nullptr;
 	return *this;
 }
 
@@ -86,8 +86,8 @@ noexcept
 inline void
 ircd::ctx::mutex::unlock()
 {
-	assert(m);
-	m = false;
+	assert(m == current);
+	m = nullptr;
 	q.notify_one();
 }
 
@@ -101,7 +101,7 @@ ircd::ctx::mutex::lock()
 		return !locked();
 	});
 
-	m = true;
+	m = current;
 }
 
 template<class duration>
@@ -126,7 +126,7 @@ ircd::ctx::mutex::try_lock_until(const time_point &tp)
 	};
 
 	if(likely(success))
-		m = true;
+		m = current;
 
 	return success;
 }
@@ -140,7 +140,7 @@ noexcept
 	if(locked())
 		return false;
 
-	m = true;
+	m = current;
 	return true;
 }
 
@@ -170,5 +170,5 @@ __attribute__((always_inline, artificial))
 ircd::ctx::mutex::deadlock_assertion()
 const noexcept
 {
-	assert(!locked() || !waiting(cur()));
+	assert(!locked() || m != current);
 }

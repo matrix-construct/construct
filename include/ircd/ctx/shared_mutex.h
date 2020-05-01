@@ -19,8 +19,8 @@ namespace ircd::ctx
 struct ircd::ctx::shared_mutex
 {
 	dock q;
+	ctx *u;
 	ssize_t s;
-	bool u;
 
   public:
 	bool unique() const;
@@ -78,8 +78,8 @@ struct ircd::ctx::shared_mutex
 
 inline
 ircd::ctx::shared_mutex::shared_mutex()
-:s{0}
-,u{false}
+:u{nullptr}
+,s{0}
 {
 }
 
@@ -87,11 +87,11 @@ inline
 ircd::ctx::shared_mutex::shared_mutex(shared_mutex &&o)
 noexcept
 :q{std::move(o.q)}
-,s{std::move(o.s)}
 ,u{std::move(o.u)}
+,s{std::move(o.s)}
 {
 	o.s = 0;
-	o.u = false;
+	o.u = nullptr;
 }
 
 inline
@@ -101,10 +101,10 @@ noexcept
 {
 	this->~shared_mutex();
 	q = std::move(o.q);
-	s = std::move(o.s);
 	u = std::move(o.u);
+	s = std::move(o.s);
 	o.s = 0;
-	o.u = false;
+	o.u = nullptr;
 	return *this;
 }
 
@@ -121,7 +121,7 @@ inline void
 ircd::ctx::shared_mutex::unlock_upgrade_and_lock_shared()
 {
 	++s;
-	u = false;
+	u = nullptr;
 	q.notify_one();
 }
 
@@ -129,14 +129,14 @@ inline void
 ircd::ctx::shared_mutex::unlock_upgrade_and_lock()
 {
 	s = std::numeric_limits<decltype(s)>::min();
-	u = false;
+	u = nullptr;
 }
 
 inline void
 ircd::ctx::shared_mutex::unlock_and_lock_upgrade()
 {
 	s = 0;
-	u = true;
+	u = current;
 }
 
 inline void
@@ -149,7 +149,7 @@ ircd::ctx::shared_mutex::unlock_and_lock_shared()
 inline void
 ircd::ctx::shared_mutex::unlock_upgrade()
 {
-	u = false;
+	u = nullptr;
 	q.notify_one();
 }
 
@@ -218,7 +218,7 @@ ircd::ctx::shared_mutex::try_unlock_upgrade_and_lock()
 	if(!try_lock())
 		return false;
 
-	u = false;
+	u = nullptr;
 	return true;
 }
 
@@ -250,7 +250,7 @@ ircd::ctx::shared_mutex::lock_upgrade()
 		return can_lock_upgrade();
 	});
 
-	u = true;
+	u = current;
 }
 
 inline void
@@ -309,7 +309,7 @@ ircd::ctx::shared_mutex::try_lock_upgrade_until(time_point&& tp)
 	};
 
 	if(can_lock_upgrade)
-		u = true;
+		u = current;
 
 	return can_lock_upgrade;
 }
@@ -355,7 +355,7 @@ ircd::ctx::shared_mutex::try_lock_upgrade()
 {
 	if(can_lock_upgrade())
 	{
-		u = true;
+		u = current;
 		return true;
 	}
 	else return false;
