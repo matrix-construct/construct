@@ -369,13 +369,6 @@ ircd::m::fed::state::state(const room::id &room_id,
                            opts opts)
 :request{[&]
 {
-	m::event::id::buf event_id_buf;
-	if(!opts.event_id)
-	{
-		event_id_buf = fetch_head(room_id, opts.remote);
-		opts.event_id = event_id_buf;
-	}
-
 	if(!opts.remote)
 		opts.remote = room_id.host();
 
@@ -385,14 +378,30 @@ ircd::m::fed::state::state(const room::id &room_id,
 	mutable_buffer buf{buf_};
 	if(likely(!defined(json::get<"uri"_>(opts.request))))
 	{
-		thread_local char ridbuf[768], eidbuf[768];
+		thread_local char eidbuf[768], eidqbuf[768];
+		const string_view event_id_query{fmt::sprintf
+		{
+			eidqbuf, "event_id=%s",
+			opts.event_id?
+				url::encode(eidbuf, opts.event_id):
+				string_view{}
+		}};
+
+		thread_local char ridbuf[768];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			buf, "/_matrix/federation/v1/%s/%s/?event_id=%s%s",
-			opts.ids_only? "state_ids" : "state",
+			buf, "/_matrix/federation/v1/%s/%s/?%s%s%s",
+			opts.ids_only? "state_ids"_sv : "state"_sv,
 			url::encode(ridbuf, room_id),
-			url::encode(eidbuf, opts.event_id),
-			opts.ids_only? "&auth_chain_ids=0"_sv : ""_sv,
+			opts.event_id?
+				event_id_query:
+				string_view{},
+			opts.event_id && opts.ids_only?
+				"&"_sv:
+				string_view{},
+			opts.ids_only?
+				"auth_chain_ids=0"_sv:
+				string_view{}
 		};
 
 		consume(buf, size(json::get<"uri"_>(opts.request)));
