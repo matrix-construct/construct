@@ -9,6 +9,211 @@
 // full license for this software is available in the LICENSE file.
 
 std::ostream &
+ircd::m::pretty_detailed(std::ostream &out,
+                         const event &event,
+                         const event::idx &event_idx)
+{
+	const bool cached
+	{
+		event_idx && m::cached(event_idx)
+	};
+
+	const auto cached_keys
+	{
+		event_idx?
+			m::cached_keys(event_idx, m::event::keys::selection{}):
+			m::event::keys::selection{}
+	};
+
+	const bool full_json
+	{
+		event_idx && has(m::dbs::event_json, byte_view<string_view>(event_idx))
+	};
+
+	out
+	<< pretty(event)
+	<< std::endl;
+
+	if(event_idx)
+		out
+		<< std::setw(16) << std::right << "SEQUENCE" << "  "
+		<< event_idx
+		<< std::endl;
+
+	if(event.source)
+	{
+		char pbuf[64];
+		out
+		<< std::setw(16) << std::right << "JSON SIZE" << "  "
+		<< pretty(pbuf, iec(size(string_view{event.source})))
+		<< std::endl;
+	}
+
+	if(cached || cached_keys.count())
+	{
+		out << std::setw(16) << std::right << "CACHED" << "  ";
+
+		if(cached)
+			out << " _json";
+
+		for(const auto &key : m::event::keys{cached_keys})
+			out << " " << key;
+
+		out << std::endl;
+	}
+
+	if(m::room::auth::is_power_event(event))
+		out
+		<< std::setw(16) << std::right << "POWER EVENT" << "  "
+		<< std::endl;
+
+	const m::event::prev prev{event};
+	if(prev.auth_events_count() || prev.prev_events_count())
+		out
+		<< std::setw(16) << std::right << "REFERENCES" << "  "
+		<< (prev.auth_events_count() + prev.prev_events_count())
+		<< std::endl;
+
+	const m::event::refs &refs{event_idx};
+	if(refs.count())
+		out
+		<< std::setw(16) << std::right << "REFERENCED BY" << "  "
+		<< refs.count()
+		<< std::endl;
+
+	out << std::endl;
+	for(size_t i(0); i < prev.auth_events_count(); ++i)
+	{
+		const m::event::id &id{prev.auth_event(i)};
+		const m::event::fetch event{std::nothrow, id};
+		if(!event.valid)
+		{
+			out
+			<< "x-> AUTH        "
+			<< id
+			<< std::endl;
+			continue;
+		}
+
+		out
+		<< "--> AUTH        "
+		<< " " << std::setw(9) << std::right << event.event_idx
+		<< " " << pretty_oneline(event, false) << std::endl;
+	}
+
+	for(size_t i(0); i < prev.prev_events_count(); ++i)
+	{
+		const m::event::id &id{prev.prev_event(i)};
+		const m::event::fetch event{std::nothrow, id};
+		if(!event.valid)
+		{
+			out
+			<< "x-> PREV        " << id
+			<< std::endl;
+			continue;
+		}
+
+		out
+		<< "--> PREV        "
+		<< " " << std::setw(9) << std::right << event.event_idx
+		<< " " << pretty_oneline(event, false)
+		<< std::endl;
+	}
+
+	if(event_idx)
+		out
+		<< std::setw(16) << std::left << "---"
+		<< " " << std::setw(9) << std::right << event_idx
+		<< " " << pretty_oneline(event, false)
+		<< std::endl;
+
+	const auto refcnt(refs.count());
+	if(refcnt)
+	{
+		refs.for_each([&out]
+		(const m::event::idx &idx, const auto &type)
+		{
+			const m::event::fetch event{idx};
+			out
+			<< "<-- " << std::setw(12) << std::left << trunc(reflect(type), 12)
+			<< " " << std::setw(9) << std::right << idx
+			<< " " << pretty_oneline(event, false)
+			<< std::endl;
+			return true;
+		});
+	}
+
+	out << std::endl;
+	if(event.source && !json::valid(event.source, std::nothrow))
+		out
+		<< std::setw(9) << std::left << "!!! ERROR" << "  "
+		<< "JSON SOURCE INVALID"
+		<< std::endl;
+
+	const m::event::conforms conforms
+	{
+		event
+	};
+
+	if(!conforms.clean())
+		out
+		<< std::setw(9) << std::left << "!!! ERROR" << "  "
+		<< conforms
+		<< std::endl;
+
+	if(!verify_hash(event))
+		out
+		<< std::setw(9) << std::left << "!!! ERROR" << "  "
+		<< "HASH MISMATCH :" << b64encode_unpadded(hash(event))
+		<< std::endl;
+
+	{
+		const auto &[authed, failmsg](m::room::auth::check_static(event));
+		if(!authed)
+			out
+			<< std::setw(9) << std::left << "!!! ERROR" << "  "
+			<< "STATICALLY UNAUTHORIZED :" << what(failmsg)
+			<< std::endl;
+	}
+
+	{
+		const auto &[authed, failmsg](m::room::auth::check_relative(event));
+		if(!authed)
+			out
+			<< std::setw(9) << std::left << "!!! ERROR" << "  "
+			<< "RELATIVELY UNAUTHORIZED :" << what(failmsg)
+			<< std::endl;
+	}
+
+	{
+		const auto &[authed, failmsg](m::room::auth::check_present(event));
+		if(!authed)
+			out
+			<< std::setw(9) << std::left << "!!! ERROR" << "  "
+			<< "PRESENTLY UNAUTHORIZED  :" << what(failmsg)
+			<< std::endl;
+	}
+
+	try
+	{
+		if(!verify(event))
+			out
+			<< std::setw(9) << std::left << "!!! ERROR" << "  "
+			<< "SIGNATURE FAILED"
+			<< std::endl;
+	}
+	catch(const std::exception &e)
+	{
+			out
+			<< std::setw(9) << std::left << "!!! ERROR" << "  "
+			<< "SIGNATURE FAILED :" << e.what()
+			<< std::endl;
+	}
+
+	return out;
+}
+
+std::ostream &
 ircd::m::pretty_stateline(std::ostream &out,
                           const event &event,
                           const event::idx &event_idx)
