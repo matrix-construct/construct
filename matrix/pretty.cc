@@ -382,6 +382,11 @@ ircd::m::pretty(std::ostream &s,
 
 	json::for_each(event, top_keys, out);
 
+	if(json::get<"type"_>(event) == "m.room.member")
+		s << std::setw(16) << std::right << "membership" << " :"
+		  << m::membership(event)
+		  << std::endl;
+
 	const auto &ts{json::get<"origin_server_ts"_>(event)};
 	{
 		thread_local char buf[128];
