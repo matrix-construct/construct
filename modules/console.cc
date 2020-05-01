@@ -10943,12 +10943,26 @@ console_cmd__room__restrap(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"event_id", "host"
+		"room_id", "host"
 	}};
 
-	const m::event::id &event_id
+	const auto room_id
 	{
-		param.at("event_id")
+		m::room_id(param.at("room_id"))
+	};
+
+	const m::user::id::buf user_id
+	{
+		valid(m::id::EVENT, param.at("room_id"))?
+			m::user::id::buf{}:
+			any_user(room_id, my_host(), "join")
+	};
+
+	const m::event::id::buf &event_id
+	{
+		valid(m::id::EVENT, param.at("room_id"))?
+			param.at("room_id"):
+			m::event_id(m::room(room_id).get("m.room.member", user_id))
 	};
 
 	const net::hostport &host_
