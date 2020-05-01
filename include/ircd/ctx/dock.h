@@ -50,6 +50,42 @@ class ircd::ctx::dock
 	void notify() noexcept;
 };
 
+inline void
+ircd::ctx::notify(dock &dock)
+noexcept
+{
+	dock.notify();
+}
+
+inline void
+ircd::ctx::interrupt(dock &dock)
+noexcept
+{
+	dock.interrupt_all();
+}
+
+inline void
+ircd::ctx::terminate(dock &dock)
+noexcept
+{
+	dock.terminate_all();
+}
+
+//
+// dock::dock
+//
+
+/// Wake up the next context waiting on the dock
+inline void
+ircd::ctx::dock::notify_one()
+noexcept
+{
+	if(q.empty())
+		return;
+
+	ircd::ctx::notify(*q.front());
+}
+
 /// Returns true if notified; false if timed out
 template<class duration>
 bool
@@ -164,36 +200,4 @@ ircd::ctx::dock::wait_until(time_point&& tp,
 			return false;
 	}
 	while(1);
-}
-
-/// Wake up the next context waiting on the dock
-inline void
-ircd::ctx::dock::notify_one()
-noexcept
-{
-	if(q.empty())
-		return;
-
-	ircd::ctx::notify(*q.front());
-}
-
-inline void
-ircd::ctx::notify(dock &dock)
-noexcept
-{
-	dock.notify();
-}
-
-inline void
-ircd::ctx::interrupt(dock &dock)
-noexcept
-{
-	dock.interrupt_all();
-}
-
-inline void
-ircd::ctx::terminate(dock &dock)
-noexcept
-{
-	dock.terminate_all();
 }
