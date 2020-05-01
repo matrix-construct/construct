@@ -131,6 +131,7 @@ ircd::ctx::shared_mutex::unlock_upgrade_and_lock_shared()
 inline void
 ircd::ctx::shared_mutex::unlock_upgrade_and_lock()
 {
+	assert(current);
 	assert(u == current);
 
 	q.wait([this]
@@ -144,6 +145,7 @@ ircd::ctx::shared_mutex::unlock_upgrade_and_lock()
 inline void
 ircd::ctx::shared_mutex::unlock_and_lock_upgrade()
 {
+	assert(current);
 	assert(u == current);
 	assert(s == std::numeric_limits<decltype(s)>::min());
 
@@ -153,6 +155,7 @@ ircd::ctx::shared_mutex::unlock_and_lock_upgrade()
 inline void
 ircd::ctx::shared_mutex::unlock_and_lock_shared()
 {
+	assert(current);
 	assert(u == current);
 	assert(s == std::numeric_limits<decltype(s)>::min());
 
@@ -163,6 +166,7 @@ ircd::ctx::shared_mutex::unlock_and_lock_shared()
 inline void
 ircd::ctx::shared_mutex::unlock_upgrade()
 {
+	assert(current);
 	assert(u == current);
 
 	u = nullptr;
@@ -181,6 +185,7 @@ ircd::ctx::shared_mutex::unlock_shared()
 inline void
 ircd::ctx::shared_mutex::unlock()
 {
+	assert(current);
 	assert(u == current);
 	assert(s == std::numeric_limits<decltype(s)>::min());
 
@@ -255,6 +260,7 @@ ircd::ctx::shared_mutex::try_unlock_shared_and_lock_upgrade()
 inline bool
 ircd::ctx::shared_mutex::try_unlock_shared_and_lock()
 {
+	assert(current);
 	if(s != 1)
 		return false;
 
@@ -267,6 +273,7 @@ ircd::ctx::shared_mutex::try_unlock_shared_and_lock()
 inline void
 ircd::ctx::shared_mutex::lock_upgrade()
 {
+	assert(current);
 	q.wait([this]
 	{
 		return can_lock_upgrade();
@@ -289,6 +296,7 @@ ircd::ctx::shared_mutex::lock_shared()
 inline void
 ircd::ctx::shared_mutex::lock()
 {
+	assert(current);
 	q.wait([this]
 	{
 		return can_lock();
@@ -323,6 +331,7 @@ template<class time_point>
 bool
 ircd::ctx::shared_mutex::try_lock_upgrade_until(time_point&& tp)
 {
+	assert(current);
 	const bool can_lock_upgrade
 	{
 		q.wait_until(tp, [this]
@@ -341,6 +350,7 @@ template<class time_point>
 bool
 ircd::ctx::shared_mutex::try_lock_shared_until(time_point&& tp)
 {
+	assert(current);
 	const bool can_lock_shared
 	{
 		q.wait_until(tp, [this]
@@ -359,6 +369,7 @@ template<class time_point>
 bool
 ircd::ctx::shared_mutex::try_lock_until(time_point&& tp)
 {
+	assert(current);
 	const bool can_lock
 	{
 		q.wait_until(tp, [this]
@@ -379,6 +390,7 @@ ircd::ctx::shared_mutex::try_lock_until(time_point&& tp)
 inline bool
 ircd::ctx::shared_mutex::try_lock_upgrade()
 {
+	assert(current);
 	if(can_lock_upgrade())
 	{
 		u = current;
@@ -397,6 +409,7 @@ ircd::ctx::shared_mutex::try_lock_shared()
 inline bool
 ircd::ctx::shared_mutex::try_lock()
 {
+	assert(current);
 	if(can_lock())
 	{
 		u = current;

@@ -94,6 +94,7 @@ ircd::ctx::mutex::unlock()
 inline void
 ircd::ctx::mutex::lock()
 {
+	assert(current);
 	deadlock_assertion();
 
 	q.wait([this]
@@ -115,6 +116,7 @@ template<class time_point>
 bool
 ircd::ctx::mutex::try_lock_until(const time_point &tp)
 {
+	assert(current);
 	deadlock_assertion();
 
 	const bool success
@@ -135,6 +137,7 @@ inline bool
 ircd::ctx::mutex::try_lock()
 noexcept
 {
+	assert(current);
 	deadlock_assertion();
 
 	if(locked())
