@@ -120,28 +120,42 @@ noexcept
 inline void
 ircd::ctx::shared_mutex::unlock_upgrade_and_lock_shared()
 {
-	++s;
+	assert(u == current);
+	assert(s >= 0);
+
 	u = nullptr;
+	++s;
 	q.notify_one();
 }
 
 inline void
 ircd::ctx::shared_mutex::unlock_upgrade_and_lock()
 {
+	assert(u == current);
+
+	q.wait([this]
+	{
+		return can_lock();
+	});
+
 	s = std::numeric_limits<decltype(s)>::min();
-	u = nullptr;
 }
 
 inline void
 ircd::ctx::shared_mutex::unlock_and_lock_upgrade()
 {
+	assert(u == current);
+	assert(s == std::numeric_limits<decltype(s)>::min());
+
 	s = 0;
-	u = current;
 }
 
 inline void
 ircd::ctx::shared_mutex::unlock_and_lock_shared()
 {
+	assert(u == current);
+	assert(s == std::numeric_limits<decltype(s)>::min());
+
 	s = 1;
 	q.notify_one();
 }
@@ -149,6 +163,8 @@ ircd::ctx::shared_mutex::unlock_and_lock_shared()
 inline void
 ircd::ctx::shared_mutex::unlock_upgrade()
 {
+	assert(u == current);
+
 	u = nullptr;
 	q.notify_one();
 }
@@ -156,6 +172,8 @@ ircd::ctx::shared_mutex::unlock_upgrade()
 inline void
 ircd::ctx::shared_mutex::unlock_shared()
 {
+	assert(s > 0);
+
 	--s;
 	q.notify_one();
 }
@@ -163,6 +181,9 @@ ircd::ctx::shared_mutex::unlock_shared()
 inline void
 ircd::ctx::shared_mutex::unlock()
 {
+	assert(u == current);
+	assert(s == std::numeric_limits<decltype(s)>::min());
+
 	s = 0;
 	q.notify_all();
 }
@@ -218,7 +239,6 @@ ircd::ctx::shared_mutex::try_unlock_upgrade_and_lock()
 	if(!try_lock())
 		return false;
 
-	u = nullptr;
 	return true;
 }
 
@@ -238,7 +258,9 @@ ircd::ctx::shared_mutex::try_unlock_shared_and_lock()
 	if(s != 1)
 		return false;
 
-	s = 1;
+	assert(!u);
+	u = current;
+	s = std::numeric_limits<decltype(s)>::min();
 	return true;
 }
 
@@ -272,6 +294,7 @@ ircd::ctx::shared_mutex::lock()
 		return can_lock();
 	});
 
+	u = current;
 	s = std::numeric_limits<decltype(s)>::min();
 }
 
@@ -345,7 +368,10 @@ ircd::ctx::shared_mutex::try_lock_until(time_point&& tp)
 	};
 
 	if(can_lock)
+	{
+		u = current;
 		s = std::numeric_limits<decltype(s)>::min();
+	}
 
 	return can_lock;
 }
@@ -373,6 +399,7 @@ ircd::ctx::shared_mutex::try_lock()
 {
 	if(can_lock())
 	{
+		u = current;
 		s = std::numeric_limits<decltype(s)>::min();
 		return true;
 	}
@@ -383,13 +410,8 @@ inline bool
 ircd::ctx::shared_mutex::can_lock_upgrade()
 const
 {
-	if(s < 0)
-		return false;
-
-	if(u)
-		return false;
-
-	return true;
+	assert(u || can_lock_shared());
+	return !u;
 }
 
 inline bool
@@ -403,7 +425,7 @@ inline bool
 ircd::ctx::shared_mutex::can_lock()
 const
 {
-	return s == 0;
+	return s == 0 && (!u || u == current);
 }
 
 inline size_t
