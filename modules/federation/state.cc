@@ -93,6 +93,13 @@ get__state(client &client,
 
 	json::stack::object top{out};
 
+	// MSC2314 added room_version
+	char version_buf[32];
+	json::stack::member
+	{
+		top, "room_version", m::version(version_buf, room)
+	};
+
 	// pdus
 	if(request.query.get<bool>("pdus", true))
 	{
