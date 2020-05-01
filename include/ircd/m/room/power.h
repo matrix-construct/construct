@@ -56,6 +56,9 @@ struct ircd::m::room::power
 	json::object power_event_content;
 	m::id::user room_creator_id;
 
+	static bool is_level(const json::string &) noexcept;
+	static int64_t as_level(const json::string &);
+	static int64_t as_level(const json::string &, const int64_t &def) noexcept;
 	bool view(const std::function<void (const json::object &)> &) const;
 
   public:

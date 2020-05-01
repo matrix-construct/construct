@@ -387,9 +387,9 @@ const try
 	const auto closure{[&user_id, &ret]
 	(const json::object &content)
 	{
-		const auto users_default
+		const json::string &users_default
 		{
-			content.get<int64_t>("users_default", default_user_level)
+			content.get("users_default")
 		};
 
 		const json::object &users
@@ -397,7 +397,12 @@ const try
 			content.get("users")
 		};
 
-		ret = users.get<int64_t>(user_id, users_default);
+		const json::string &value
+		{
+			users.get(user_id)
+		};
+
+		ret = as_level(value, as_level(users_default, default_user_level));
 	}};
 
 	const bool has_power_levels_event
@@ -433,9 +438,9 @@ const try
 	const auto closure{[&type, &ret]
 	(const json::object &content)
 	{
-		const auto &events_default
+		const json::string &events_default
 		{
-			content.get<int64_t>("events_default", default_event_level)
+			content.get("events_default")
 		};
 
 		const json::object &events
@@ -443,7 +448,12 @@ const try
 			content.get("events")
 		};
 
-		ret = events.get<int64_t>(type, events_default);
+		const json::string &value
+		{
+			events.get(type)
+		};
+
+		ret = as_level(value, as_level(events_default, default_event_level));
 	}};
 
 	const bool has_power_levels_event
@@ -474,9 +484,9 @@ const try
 	const auto closure{[&type, &ret]
 	(const json::object &content)
 	{
-		const auto &state_default
+		const json::string &state_default
 		{
-			content.get<int64_t>("state_default", default_power_level)
+			content.get("state_default")
 		};
 
 		const json::object &events
@@ -484,7 +494,12 @@ const try
 			content.get("events")
 		};
 
-		ret = events.get<int64_t>(type, state_default);
+		const json::string &value
+		{
+			events.get(type)
+		};
+
+		ret = as_level(value, as_level(state_default, default_power_level));
 	}};
 
 	const bool has_power_levels_event
@@ -511,7 +526,12 @@ const try
 	view([&prop, &ret]
 	(const json::object &content)
 	{
-		ret = content.at<int64_t>(prop);
+		const json::string &value
+		{
+			content.at(prop)
+		};
+
+		ret = as_level(value, ret);
 	});
 
 	return ret;
@@ -579,12 +599,12 @@ const try
 			content.at("events")
 		};
 
-		const json::string &level
+		const json::string &value
 		{
 			events.at(type)
 		};
 
-		ret = json::type(level) == json::NUMBER;
+		ret = is_level(value);
 	});
 
 	return ret;
@@ -607,12 +627,12 @@ const try
 			content.at("users")
 		};
 
-		const json::string &level
+		const json::string &value
 		{
 			users.at(user_id)
 		};
 
-		ret = json::type(level) == json::NUMBER;
+		ret = is_level(value);
 	});
 
 	return ret;
@@ -630,9 +650,12 @@ const
 	view([&prop, &ret]
 	(const json::object &content)
 	{
-		const auto &value{content.get(prop)};
-		if(value && json::type(value) == json::OBJECT)
-			ret = true;
+		const string_view &value
+		{
+			content.get(prop)
+		};
+
+		ret = json::type(value) == json::OBJECT;
 	});
 
 	return ret;
@@ -646,9 +669,12 @@ const
 	view([&prop, &ret]
 	(const json::object &content)
 	{
-		const json::string &value(content.get(prop));
-		if(value && json::type(value) == json::NUMBER)
-			ret = true;
+		const json::string &value
+		{
+			content.get(prop)
+		};
+
+		ret = is_level(value);
 	});
 
 	return ret;
@@ -662,12 +688,11 @@ const
 	view([&closure, &ret]
 	(const json::object &content)
 	{
-		for(const auto &[key_, val] : content)
+		for(const auto &[key, val] : content)
 		{
 			if(json::type(val) != json::OBJECT)
 				continue;
 
-			const json::string &key{key_};
 			if(!closure(key, std::numeric_limits<int64_t>::min()))
 			{
 				ret = false;
@@ -709,21 +734,15 @@ const
 
 		for(auto it(begin(collection)); it != end(collection) && ret; ++it)
 		{
-			const auto &[key_, val_] {*it};
-			if(json::type(unquote(val_)) != json::NUMBER)
+			const auto &[key, val]
+			{
+				*it
+			};
+
+			if(!is_level(val))
 				continue;
 
-			const json::string &key
-			{
-				key_
-			};
-
-			const auto &val
-			{
-				lex_cast<int64_t>(val_)
-			};
-
-			ret = closure(key, val);
+			ret = closure(key, as_level(val));
 		}
 	});
 
@@ -740,4 +759,27 @@ const
 
 	closure(power_event_content);
 	return !empty(power_event_content);
+}
+
+int64_t
+ircd::m::room::power::as_level(const json::string &value,
+                               const int64_t &default_)
+noexcept
+{
+	return is_level(value)?
+		as_level(value):
+		default_;
+}
+
+int64_t
+ircd::m::room::power::as_level(const json::string &value)
+{
+	return lex_cast<int64_t>(value);
+}
+
+bool
+ircd::m::room::power::is_level(const json::string &value)
+noexcept
+{
+	return lex_castable<int64_t>(value);
 }
