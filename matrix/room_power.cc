@@ -148,25 +148,29 @@ ircd::m::room::power::grant::grant(json::stack::object &out,
 decltype(ircd::m::room::power::default_creator_level)
 ircd::m::room::power::default_creator_level
 {
-	100
+	{ "name",     "ircd.m.room.power.default.creator_level" },
+	{ "default",  100L                                      },
 };
 
 decltype(ircd::m::room::power::default_power_level)
 ircd::m::room::power::default_power_level
 {
-	50
+	{ "name",     "ircd.m.room.power.default.power_level" },
+	{ "default",  50L                                     },
 };
 
 decltype(ircd::m::room::power::default_event_level)
 ircd::m::room::power::default_event_level
 {
-	0
+	{ "name",     "ircd.m.room.power.default.event_level" },
+	{ "default",  0L                                      },
 };
 
 decltype(ircd::m::room::power::default_user_level)
 ircd::m::room::power::default_user_level
 {
-	0
+	{ "name",     "ircd.m.room.power.default.user_level" },
+	{ "default",  0L                                     },
 };
 
 ircd::json::object

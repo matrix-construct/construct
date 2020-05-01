@@ -46,10 +46,10 @@ struct ircd::m::room::power
 	struct revoke;
 	using closure = std::function<bool (const string_view &, const int64_t &)>;
 
-	static const int64_t default_creator_level;
-	static const int64_t default_power_level;
-	static const int64_t default_event_level;
-	static const int64_t default_user_level;
+	static conf::item<int64_t> default_creator_level;
+	static conf::item<int64_t> default_power_level;
+	static conf::item<int64_t> default_event_level;
+	static conf::item<int64_t> default_user_level;
 
 	m::room room;
 	event::idx power_event_idx {0};
