@@ -13952,50 +13952,36 @@ console_cmd__fed__event(opt &out, const string_view &line)
 		request
 	};
 
+	if(has(op, "raw"))
+	{
+		out
+		<< string_view{response}
+		<< std::endl;
+		return true;
+	}
+
 	m::event::id::buf _event_id;
 	const m::event event
 	{
 		_event_id, response
 	};
 
-	out << pretty(event) << std::endl;
-
-	try
+	if(has(op, "eval"))
 	{
-		if(!verify(event))
-			out << "- SIGNATURE FAILED" << std::endl;
-	}
-	catch(const std::exception &e)
-	{
-		out << "- SIGNATURE FAILED: " << e.what() << std::endl;
-	}
+		m::vm::opts vmopts;
+		vmopts.fetch_prev = has(op, "prev");
+		vmopts.fetch_state = false;
+		vmopts.notify_servers = false;
+		m::vm::eval eval
+		{
+			event, vmopts
+		};
 
-	if(!verify_hash(event))
-		out << "- HASH MISMATCH: " << b64encode_unpadded(hash(event)) << std::endl;
-
-	const m::event::conforms conforms
-	{
-		event
-	};
-
-	if(!conforms.clean())
-		out << "- " << conforms << std::endl;
-
-	if(has(op, "raw"))
-		out << string_view{response} << std::endl;
-
-	if(!has(op, "eval"))
 		return true;
+	}
 
-	m::vm::opts vmopts;
-	vmopts.fetch_prev = has(op, "prev");
-	vmopts.fetch_state = false;
-	vmopts.notify_servers = false;
-	m::vm::eval eval
-	{
-		event, vmopts
-	};
-
+	m::pretty_detailed(out, event, 0UL);
+	out << std::endl;
 	return true;
 }
 
