@@ -27,7 +27,7 @@ struct ircd::m::room::auth
 
 	static bool is_power_event(const event &);
 	static std::array<event::idx, 5> relative_idx(const event &, const room &);
-	static std::array<event::idx, 4> static_idx(const event &);
+	static std::array<event::idx, 5> static_idx(const event &);
 
 	static passfail check(const event &, hookdata &);
 	static passfail check(const event &, const vector_view<event::idx> &);

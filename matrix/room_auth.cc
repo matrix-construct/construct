@@ -553,7 +553,7 @@ ircd::m::check_room_auth_rule_9(const m::event &event,
 			};
 }
 
-std::array<ircd::m::event::idx, 4>
+std::array<ircd::m::event::idx, 5>
 ircd::m::room::auth::static_idx(const event &event)
 {
 	const m::event::prev refs
@@ -580,6 +580,7 @@ ircd::m::room::auth::static_idx(const event &event)
 		count > 1? m::index(refs.auth_event(1)): 0UL,
 		count > 2? m::index(refs.auth_event(2)): 0UL,
 		count > 3? m::index(refs.auth_event(3)): 0UL,
+		count > 4? m::index(refs.auth_event(4)): 0UL,
 	};
 }
 
