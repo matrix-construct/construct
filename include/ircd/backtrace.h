@@ -26,9 +26,15 @@ struct ircd::backtrace
 	const size_t &size() const;
 
 	backtrace(const void **const &, const size_t &);
+	template<size_t SIZE> backtrace(const void *(&)[SIZE]);
 	backtrace(const mutable_buffer &);
 	backtrace();
 };
+
+template<size_t SIZE>
+ircd::backtrace::backtrace(const void *(&buf)[SIZE])
+:backtrace{buf, SIZE}
+{}
 
 inline const void *
 ircd::backtrace::operator[](const size_t &i)
