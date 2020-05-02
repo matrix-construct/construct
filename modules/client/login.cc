@@ -96,7 +96,7 @@ post__login_password(client &client,
 			"Access denied."
 		};
 
-	if(!user.is_active())
+	if(!active(user))
 		throw m::FORBIDDEN
 		{
 			"Access denied."

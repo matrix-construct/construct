@@ -11173,7 +11173,7 @@ console_cmd__user__active(opt &out, const string_view &line)
 	};
 
 	out << user.user_id << " is "
-	    << (user.is_active()? "active" : "inactive")
+	    << (active(user)? "active" : "inactive")
 	    << std::endl;
 
 	return true;
@@ -11195,7 +11195,7 @@ console_cmd__user__activate(opt &out, const string_view &line)
 		param.at(0)
 	};
 
-	if(user.is_active())
+	if(active(user))
 	{
 		out << user.user_id << " is already active" << std::endl;
 		return true;
@@ -11226,7 +11226,7 @@ console_cmd__user__deactivate(opt &out, const string_view &line)
 		param.at(0)
 	};
 
-	if(!user.is_active())
+	if(!active(user))
 	{
 		out << user.user_id << " is already inactive" << std::endl;
 		return true;

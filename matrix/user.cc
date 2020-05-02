@@ -26,6 +26,26 @@ ircd::m::is_oper(const user &user)
 }
 
 bool
+ircd::m::active(const user &user)
+{
+	const m::user::room user_room
+	{
+		user.user_id
+	};
+
+	const m::event::idx &event_idx
+	{
+		user_room.get(std::nothrow, "ircd.account", "active")
+	};
+
+	return m::query(std::nothrow, event_idx, "content", []
+	(const json::object &content)
+	{
+		return content.get<bool>("value", false);
+	});
+}
+
+bool
 ircd::m::exists(const user &user)
 {
 	return exists(user.user_id);
@@ -154,27 +174,6 @@ ircd::m::user::deactivate()
 	return send(user_room, m::me(), "ircd.account", "active", json::members
 	{
 		{ "value", false }
-	});
-}
-
-bool
-ircd::m::user::is_active()
-const
-{
-	const m::user::room user_room
-	{
-		user_id
-	};
-
-	const m::event::idx &event_idx
-	{
-		user_room.get(std::nothrow, "ircd.account", "active")
-	};
-
-	return m::query(std::nothrow, event_idx, "content", []
-	(const json::object &content)
-	{
-		return content.get<bool>("value", false);
 	});
 }
 

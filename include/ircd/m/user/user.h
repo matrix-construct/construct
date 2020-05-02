@@ -18,6 +18,7 @@ namespace ircd::m
 	bool my(const user &);
 	bool exists(const id::user &);
 	bool exists(const user &);
+	bool active(const user &);
 	bool is_oper(const user &);
 
 	user create(const id::user &, const json::members &args = {});
@@ -63,7 +64,6 @@ struct ircd::m::user
 	bool is_password(const string_view &password) const;
 	event::id::buf password(const string_view &password);
 
-	bool is_active() const;
 	event::id::buf deactivate();
 	event::id::buf activate();
 
