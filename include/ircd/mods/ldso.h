@@ -55,6 +55,7 @@ namespace ircd::mods::ldso
 	struct link_map &get(const string_view &name);
 
 	// Query link
+	const char *strtab(const struct link_map &);
 	string_view string(const struct link_map &, const size_t &idx);
 	bool for_each_needed(const struct link_map &, const string_closure &);
 

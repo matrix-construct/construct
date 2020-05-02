@@ -99,16 +99,10 @@ ircd::string_view
 ircd::mods::ldso::string(const struct link_map &map,
                          const size_t &idx)
 {
-	const char *str {nullptr};
-	for(auto d(map.l_ld); d->d_tag != DT_NULL; ++d)
-		if(d->d_tag == DT_STRTAB)
-		{
-			str = reinterpret_cast<const char *>(d->d_un.d_ptr);
-			break;
-		}
-
-	if(!str)
-		return {};
+	const char *str
+	{
+		strtab(map)
+	};
 
 	size_t i(1);
 	for(++str; *str && i < idx; str += strlen(str) + 1)
@@ -117,6 +111,22 @@ ircd::mods::ldso::string(const struct link_map &map,
 	return i == idx?
 		string_view{str}:
 		string_view{};
+}
+#endif
+
+#if __has_include(<elf.h>)
+const char *
+ircd::mods::ldso::strtab(const struct link_map &map)
+{
+	const char *str {nullptr};
+	for(auto d(map.l_ld); d->d_tag != DT_NULL; ++d)
+		if(d->d_tag == DT_STRTAB)
+		{
+			str = reinterpret_cast<const char *>(d->d_un.d_ptr);
+			break;
+		}
+
+	return str;
 }
 #endif
 
