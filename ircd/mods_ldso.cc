@@ -22,6 +22,17 @@
 //
 #if defined(HAVE_DLFCN_H)
 
+ircd::mods::ldso::info::info(const void *const &addr)
+{
+	::Dl_info info;
+	syscall(::dladdr, addr, &info);
+
+	fname = info.dli_fname;
+	fbase = info.dli_fbase;
+	sname = info.dli_sname;
+	saddr = info.dli_saddr;
+}
+
 bool
 ircd::mods::ldso::loaded(const string_view &name_)
 try

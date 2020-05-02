@@ -24,6 +24,8 @@ extern "C"
 /// Platform-dependent interface on ELF+ld.so supporting compilations.
 namespace ircd::mods::ldso
 {
+	struct info;
+
 	IRCD_EXCEPTION(mods::error, error)
 	IRCD_EXCEPTION(error, not_found);
 
@@ -58,3 +60,14 @@ namespace ircd::mods::ldso
 	// dlfcn suite
 	bool loaded(const string_view &name);
 }
+
+struct ircd::mods::ldso::info
+{
+	string_view fname;
+	const void *fbase {nullptr};
+	string_view sname;
+	const void *saddr {nullptr};
+
+	info(const void *const &addr);
+	info() = default;
+};
