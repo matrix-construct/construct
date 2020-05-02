@@ -169,6 +169,7 @@ ircd::m::matrix::module_names
 	"client_capabilities",
 
 	"admin_users",
+	"admin_deactivate",
 };
 
 /// This is a list of modules that are considered "optional" and any loading

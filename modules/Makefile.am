@@ -517,9 +517,11 @@ client_module_LTLIBRARIES += \
 admin_moduledir = @moduledir@
 
 admin_admin_users_la_SOURCES = admin/users.cc
+admin_admin_deactivate_la_SOURCES = admin/deactivate.cc
 
 admin_module_LTLIBRARIES = \
 	admin/admin_users.la \
+	admin/admin_deactivate.la \
 	###
 
 ###############################################################################
