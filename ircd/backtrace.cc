@@ -15,7 +15,7 @@
 	#define IRCD_BACKTRACE_SUPPORT
 #endif
 
-#if defined(IRCD_BACKTRACE_SUPPORT) && defined(HAVE_SYS_MMAN_H)
+#if defined(IRCD_BACKTRACE_SUPPORT) && defined(HAVE_SYS_MMAN_H) && !defined(__clang__)
 	#define IRCD_BACKTRACE_GLIBC_WORKAROUND
 #endif
 
