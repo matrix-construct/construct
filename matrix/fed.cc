@@ -1782,6 +1782,34 @@ try
 		return delegated;
 	}
 
+	// Conditions for valid expired cache hit w/ failure to reacquire.
+	const bool fallback
+	{
+		valid
+		&& expired
+		&& cached != delegated
+		&& origin == delegated
+		&& now<system_point>() < expires + seconds(well_known_cache_max)
+	};
+
+	if(fallback)
+	{
+		char tmbuf[48];
+		log::debug
+		{
+			well_known_log, "%s found in cache delegated to %s event_idx:%u expired %s",
+			origin,
+			cached,
+			event_idx,
+			timef(tmbuf, expires, localtime),
+		};
+
+		return string_view
+		{
+			data(buf), move(buf, cached)
+		};
+	}
+
 	// Any time the well-known result is the same as the origin (that
 	// includes legitimate errors where fetch_well_known() returns the
 	// origin to default) we consider that an error and use the error
