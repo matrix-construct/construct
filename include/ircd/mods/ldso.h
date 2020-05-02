@@ -41,6 +41,7 @@ namespace ircd::mods::ldso
 	string_view name(const struct link_map &);              // z
 	semantic_version version(const string_view &soname);    // 1.0.0
 	semantic_version version(const struct link_map &map);   // 1.0.0
+	const void *addr(const struct link_map &);              // 0x7ffff...
 
 	// Iteration
 	bool for_each(const link_closure &);

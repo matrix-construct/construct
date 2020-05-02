@@ -223,6 +223,12 @@ ircd::mods::ldso::for_each(const link_closure &closure)
 	return true;
 }
 
+const void *
+ircd::mods::ldso::addr(const struct link_map &map)
+{
+	return reinterpret_cast<const void *>(map.l_addr);
+}
+
 ircd::mods::ldso::semantic_version
 ircd::mods::ldso::version(const struct link_map &map)
 {
