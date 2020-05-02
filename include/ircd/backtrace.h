@@ -18,19 +18,19 @@ namespace ircd
 
 struct ircd::backtrace
 {
-	void **array;
+	const void **array;
 	size_t count;
 
   public:
-	void *operator[](const size_t &) const;
+	const void *operator[](const size_t &) const;
 	const size_t &size() const;
 
-	backtrace(void **const &, const size_t &);
+	backtrace(const void **const &, const size_t &);
 	backtrace(const mutable_buffer &);
 	backtrace();
 };
 
-inline void *
+inline const void *
 ircd::backtrace::operator[](const size_t &i)
 const
 {

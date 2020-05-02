@@ -57,7 +57,7 @@ ircd_backtrace_allow_libc_fix()
 
 namespace ircd
 {
-	thread_local std::array<void *, 512> backtrace_buffer;
+	thread_local std::array<const void *, 512> backtrace_buffer;
 }
 
 ircd::backtrace::backtrace()
@@ -72,9 +72,9 @@ ircd::backtrace::backtrace()
 ircd::backtrace::backtrace(const mutable_buffer &buf)
 :backtrace
 {
-	reinterpret_cast<void **>
+	reinterpret_cast<const void **>
 	(
-		const_cast<char **>
+		const_cast<const char **>
 		(
 			std::addressof(data(buf))
 		)
@@ -84,7 +84,7 @@ ircd::backtrace::backtrace(const mutable_buffer &buf)
 {
 }
 
-ircd::backtrace::backtrace(void **const &array,
+ircd::backtrace::backtrace(const void **const &array,
                            const size_t &count)
 :array
 {
@@ -103,6 +103,6 @@ ircd::backtrace::backtrace(void **const &array,
 	#endif
 
 	#if defined(IRCD_BACKTRACE_SUPPORT)
-	this->count = ::backtrace(this->array, count);
+	this->count = ::backtrace(const_cast<void **>(this->array), count);
 	#endif
 }
