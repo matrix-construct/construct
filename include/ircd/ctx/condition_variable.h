@@ -20,71 +20,37 @@ class ircd::ctx::condition_variable
 {
 	list q;
 
-	void notify(ctx &) noexcept;
-
   public:
 	bool empty() const;
 	size_t size() const;
+	bool waiting(const ctx &) const noexcept;
 
-	template<class lock, class time_point, class predicate> bool wait_until(lock &, time_point&& tp, predicate&& pred);
-	template<class lock, class time_point> std::cv_status wait_until(lock &, time_point&& tp);
+	template<class lock, class time_point, class predicate> bool wait_until(lock &, time_point&&, predicate&&);
+	template<class lock, class time_point> std::cv_status wait_until(lock &, time_point&&);
 
-	template<class lock, class duration, class predicate> bool wait_for(lock &, const duration &dur, predicate&& pred);
-	template<class lock, class duration> std::cv_status wait_for(lock &, const duration &dur);
+	template<class lock, class duration, class predicate> bool wait_for(lock &, const duration &, predicate&&);
+	template<class lock, class duration> std::cv_status wait_for(lock &, const duration &);
 
-	template<class lock, class predicate> void wait(lock &, predicate&& pred);
+	template<class lock, class predicate> void wait(lock &, predicate&&);
 	template<class lock> void wait(lock &);
 
+	void terminate_all() noexcept;
+	void interrupt_all() noexcept;
 	void notify_all() noexcept;
 	void notify_one() noexcept;
 	void notify() noexcept;
 };
-
-/// Wake up the next context waiting on the condition_variable
-///
-/// Unlike notify_one(), the next context in the queue is repositioned in the
-/// back before being woken up for fairness.
-inline void
-ircd::ctx::condition_variable::notify()
-noexcept
-{
-	ctx *c;
-	if(!(c = q.pop_front()))
-		return;
-
-	q.push_back(c);
-	notify(*c);
-}
-
-/// Wake up the next context waiting on the condition_variable
-inline void
-ircd::ctx::condition_variable::notify_one()
-noexcept
-{
-	if(!q.empty())
-		notify(*q.front());
-}
-
-/// Wake up all contexts waiting on the condition_variable.
-///
-/// We post all notifications without requesting direct context
-/// switches. This ensures everyone gets notified in a single
-/// transaction without any interleaving during this process.
-inline void
-ircd::ctx::condition_variable::notify_all()
-noexcept
-{
-	q.for_each([](ctx &c)
-	{
-		ircd::ctx::notify(c);
-	});
-}
 
 template<class lock>
 void
 ircd::ctx::condition_variable::wait(lock &l)
 {
 	assert(current);
+	const unwind_exceptional renotify{[this]
+	{
+		notify_one();
+	}};
+
 	const unwind remove{[this]
 	{
 		q.remove(current);
@@ -105,6 +71,11 @@ ircd::ctx::condition_variable::wait(lock &l,
 		return;
 
 	assert(current);
+	const unwind_exceptional renotify{[this]
+	{
+		notify_one();
+	}};
+
 	const unwind remove{[this]
 	{
 		q.remove(current);
@@ -128,6 +99,11 @@ ircd::ctx::condition_variable::wait_for(lock &l,
 	static const duration zero(0);
 
 	assert(current);
+	const unwind_exceptional renotify{[this]
+	{
+		notify_one();
+	}};
+
 	const unwind remove{[this]
 	{
 		q.remove(current);
@@ -155,6 +131,11 @@ ircd::ctx::condition_variable::wait_for(lock &l,
 		return true;
 
 	assert(current);
+	const unwind_exceptional renotify{[this]
+	{
+		notify_one();
+	}};
+
 	const unwind remove{[this]
 	{
 		q.remove(current);
@@ -185,6 +166,11 @@ ircd::ctx::condition_variable::wait_until(lock &l,
                                           time_point&& tp)
 {
 	assert(current);
+	const unwind_exceptional renotify{[this]
+	{
+		notify_one();
+	}};
+
 	const unwind remove{[this]
 	{
 		q.remove(current);
@@ -210,6 +196,11 @@ ircd::ctx::condition_variable::wait_until(lock &l,
 		return true;
 
 	assert(current);
+	const unwind_exceptional renotify{[this]
+	{
+		notify_one();
+	}};
+
 	const unwind remove{[this]
 	{
 		q.remove(current);
@@ -230,20 +221,6 @@ ircd::ctx::condition_variable::wait_until(lock &l,
 			return false;
 	}
 	while(1);
-}
-
-inline void
-ircd::ctx::condition_variable::notify(ctx &ctx)
-noexcept
-{
-	// This branch handles condition_variable.notify() being called from outside
-	// the context system. If a context is currently running we can make a direct
-	// context-switch with yield(ctx), otherwise notify(ctx) enqueues the context.
-
-	if(current)
-		ircd::ctx::yield(ctx);
-	else
-		ircd::ctx::notify(ctx);
 }
 
 /// The number of contexts waiting in the queue.

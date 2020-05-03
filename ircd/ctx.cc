@@ -2658,6 +2658,91 @@ ircd::ctx::invalidate_promises(shared_state_base &st)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// condition_variable
+//
+
+/// Wake up the next context waiting on the condition_variable
+///
+/// Unlike notify_one(), the next context in the queue is repositioned in the
+/// back before being woken up for fairness.
+void
+ircd::ctx::condition_variable::notify()
+noexcept
+{
+	ctx *c;
+	if(!(c = q.pop_front()))
+		return;
+
+	q.push_back(c);
+	ircd::ctx::notify(*c);
+}
+
+/// Wake up the next context waiting on the dock
+void
+ircd::ctx::condition_variable::notify_one()
+noexcept
+{
+	if(q.empty())
+		return;
+
+	ircd::ctx::notify(*q.front());
+}
+
+/// Wake up all contexts waiting on the condition_variable.
+///
+/// We post all notifications without requesting direct context
+/// switches. This ensures everyone gets notified in a single
+/// transaction without any interleaving during this process.
+void
+ircd::ctx::condition_variable::notify_all()
+noexcept
+{
+	q.for_each([this](ctx &c)
+	{
+		ircd::ctx::notify(c);
+	});
+}
+
+/// Wake up all contexts waiting on the condition_variable to throw an
+/// interrupt exception.
+void
+ircd::ctx::condition_variable::interrupt_all()
+noexcept
+{
+	q.for_each([this](ctx &c)
+	{
+		ircd::ctx::interrupt(c);
+	});
+}
+
+/// Wake up all contexts waiting on the condition_variable to throw an
+/// interrupt exception.
+void
+ircd::ctx::condition_variable::terminate_all()
+noexcept
+{
+	q.for_each([this](ctx &c)
+	{
+		ircd::ctx::terminate(c);
+	});
+}
+
+/// The number of contexts waiting in the queue.
+bool
+ircd::ctx::condition_variable::waiting(const ctx &a)
+const noexcept
+{
+	// for_each returns false if a was found
+	return !q.for_each(list::closure_bool_const{[&a]
+	(const ctx &b)
+	{
+		// return false to break on equal
+		return std::addressof(a) != std::addressof(b);
+	}});
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // dock.h
 //
 
