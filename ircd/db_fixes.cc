@@ -10,17 +10,9 @@
 
 /////////////////////////////////////////////////////////////////////////////////
 //
-// This unit exists to mitigate instances of bugs in RocksDB documented
-// by https://github.com/facebook/rocksdb/issues/4654. In summary, some RocksDB
-// code makes direct use of std::mutex and std::condition_variable unlike the
-// rest of RocksDB code which uses the rocksdb::port and rocksdb::Env wrapper
-// interfaces. We have adapted the latter to work with ircd::ctx userspace
-// threading (see: db_port.cc and db_env.cc), but the former is a direct
-// interface to kernel pthreads which are incompatible in this context.
-//
-// Our mitigation is made possible by dynamic linking. It is a legitimate use
-// of runtime interposition as stated in official documentation for this exact
-// purpose: overriding buggy functions in library dependencies.
+// This unit exists to mitigate instances of bugs in RocksDB and its builds.
+// It requires a complete copy of the rocksdb sourcecode to operate; though
+// said source does not have to be built.
 //
 
 #define ROCKSDB_PLATFORM_POSIX
@@ -41,6 +33,18 @@ __has_include("table/block_fetcher.h")
 #warning "RocksDB source is not available. Cannot interpose bugfixes."
 #endif
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// https://github.com/facebook/rocksdb/issues/4654. In summary, some RocksDB
+// code makes direct use of std::mutex and std::condition_variable unlike the
+// rest of RocksDB code which uses the rocksdb::port and rocksdb::Env wrapper
+// interfaces. We have adapted the latter to work with ircd::ctx userspace
+// threading (see: db_port.cc and db_env.cc), but the former is a direct
+// interface to kernel pthreads which are incompatible in this context.
+//
+// Our mitigation is made possible by dynamic linking. It is a legitimate use
+// of runtime interposition as stated in official documentation for this exact
+// purpose: overriding buggy functions in library dependencies.
 // This section overrides a class member function in rocksdb::WriteThread which
 // originally made use of pthread primitives to handle two threads contending
 // for write access in RocksDB's single-writer design. This function is entered
@@ -50,6 +54,7 @@ __has_include("table/block_fetcher.h")
 // which tells the kernel to stop the thread until satisfied. Since we are not
 // using kernel-driven threads, this is a deadlock.
 //
+
 #if defined(IRCD_DB_FIXES_ROCKSDB)
 uint8_t
 rocksdb::WriteThread::BlockingAwaitState(Writer *const w,
@@ -82,6 +87,13 @@ rocksdb::WriteThread::BlockingAwaitState(Writer *const w,
 }
 #endif
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// DeleteScheduler unconditionally starts an std::thread (pthread_create)
+// rather than using the rocksdb::Env system. We override this function to
+// simply not start that thread.
+//
+
 #if defined(IRCD_DB_FIXES_ROCKSDB)
 rocksdb::DeleteScheduler::DeleteScheduler(Env* env,
                                           int64_t rate_bytes_per_sec,
@@ -113,6 +125,12 @@ rocksdb::DeleteScheduler::~DeleteScheduler()
 }
 #endif
 
+//
+// To effectively employ the DeleteScheduler bypass we also interpose the
+// function which dispatches deletions to the scheduler to remove the branch
+// and directly conduct the deletion.
+//
+
 #if defined(IRCD_DB_FIXES_ROCKSDB)
 rocksdb::Status
 rocksdb::DeleteSSTFile(const ImmutableDBOptions *db_options,
@@ -124,6 +142,16 @@ rocksdb::DeleteSSTFile(const ImmutableDBOptions *db_options,
 	return db_options->env->DeleteFile(fname);
 }
 #endif
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// On platforms where hardware crc32 acceleration is not available and for
+// use with valgrind, the crc32 checks over the data can be cumbersome. While
+// rocksdb offers options in several places to disable checksum checking, these
+// options are not honored in several places internally within rocksdb. Thus
+// in case a developer wants to manually bypass the checksumming this stub is
+// available.
+//
 
 #if defined(IRCD_DB_FIXES_ROCKSDB) && defined(IRCD_DB_BYPASS_CHECKSUM)
 void
