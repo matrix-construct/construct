@@ -8,11 +8,8 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include "db.h"
 
-//
-// Misc / General linkages
-//
+#include "db.h"
 
 /// Dedicated logging facility for the database subsystem
 decltype(ircd::db::log)
@@ -26,6 +23,21 @@ decltype(ircd::db::rog)
 ircd::db::rog
 {
 	"db.rocksdb"
+};
+
+decltype(ircd::db::version_api)
+ircd::db::version_api
+{
+	"RocksDB", info::versions::API, 0,
+	{
+		ROCKSDB_MAJOR, ROCKSDB_MINOR, ROCKSDB_PATCH,
+	}
+};
+
+decltype(ircd::db::version_abi)
+ircd::db::version_abi
+{
+	"RocksDB", info::versions::ABI //TODO: get this
 };
 
 ircd::conf::item<size_t>
@@ -81,30 +93,6 @@ ircd::db::write_mutex;
 ///////////////////////////////////////////////////////////////////////////////
 //
 // init
-//
-
-namespace ircd::db
-{
-	static std::string direct_io_test_file_path();
-}
-
-decltype(ircd::db::version_api)
-ircd::db::version_api
-{
-	"RocksDB", info::versions::API, 0,
-	{
-		ROCKSDB_MAJOR, ROCKSDB_MINOR, ROCKSDB_PATCH,
-	}
-};
-
-decltype(ircd::db::version_abi)
-ircd::db::version_abi
-{
-	"RocksDB", info::versions::ABI //TODO: get this
-};
-
-//
-// init::init
 //
 
 ircd::db::init::init()
@@ -193,6 +181,11 @@ catch(const fs::error &e)
 	};
 
 	throw;
+}
+
+namespace ircd::db
+{
+	static std::string direct_io_test_file_path();
 }
 
 void
