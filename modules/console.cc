@@ -11341,6 +11341,33 @@ console_cmd__user__rooms(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__user__rooms__count(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "[membership]"
+	}};
+
+	const m::user &user
+	{
+		param.at(0)
+	};
+
+	const string_view &membership
+	{
+		param[1]
+	};
+
+	const m::user::rooms rooms
+	{
+		user
+	};
+
+	out << rooms.count(membership) << std::endl;
+	return true;
+}
+
+bool
 console_cmd__user__rooms__origins(opt &out, const string_view &line)
 {
 	const params param{line, " ",
