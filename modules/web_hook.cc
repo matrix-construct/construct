@@ -110,6 +110,10 @@ static std::pair<json::string, json::string>
 github_find_party(const json::object &content);
 
 static bool
+github_handle__gollum(std::ostream &,
+                      const json::object &content);
+
+static bool
 github_handle__push(std::ostream &,
                     const json::object &content);
 
@@ -240,6 +244,8 @@ github_handle(client &client,
 			github_handle__create(out, request.content):
 		type == "delete"?
 			github_handle__delete(out, request.content):
+		type == "gollum"?
+			github_handle__gollum(out, request.content):
 
 		true // unhandled will just show heading
 	};
@@ -347,6 +353,86 @@ github_heading(std::ostream &out,
 	    << "</a>";
 
 	return out;
+}
+
+bool
+github_handle__gollum(std::ostream &out,
+                      const json::object &content)
+{
+	const json::array pages
+	{
+		content["pages"]
+	};
+
+	const auto count
+	{
+		size(pages)
+	};
+
+	out
+	<< " to "
+	<< "<b>"
+	<< count
+	<< "</b>"
+	<< " page" << (count != 1? "s" : "")
+	<< ":"
+	;
+
+	for(const json::object &page : pages)
+	{
+		const json::string &action
+		{
+			page["action"]
+		};
+
+		const json::string sha
+		{
+			page["sha"]
+		};
+
+		out
+		<< "<br />"
+		<< "<b>"
+		<< sha.substr(0, 8)
+		<< "</b>"
+		<< " " << action << " "
+		<< "<a href=" << page["html_url"] << ">"
+		<< "<b>"
+		<< json::string(page["title"])
+		<< "</b>"
+		<< "</a>"
+		;
+
+		if(page["summary"] && page["summary"] != "null")
+		{
+			out
+			<< " "
+			<< "<blockquote>"
+			<< "<pre><code>"
+			;
+
+			static const auto delim("\\r\\n");
+			const json::string body(page["summary"]);
+			auto lines(split(body, delim)); do
+			{
+				out
+				<< lines.first
+				<< "<br />"
+				;
+
+				lines = split(lines.second, delim);
+			}
+			while(!empty(lines.second));
+
+			out
+			<< ""
+			<< "</code></pre>"
+			<< "</blockquote>"
+			;
+		}
+	}
+
+	return true;
 }
 
 bool
