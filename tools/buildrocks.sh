@@ -55,6 +55,7 @@ NJOBS=`nproc`
 export CFLAGS="$CFLAGS -fPIC"
 export CFLAGS="$CFLAGS -ftls-model=initial-exec"
 export CFLAGS="$CFLAGS -Wno-error"
+export CFLAGS="$CFLAGS -mtune=native"
 export DISABLE_JEMALLOC=1
 run make -j$NJOBS $LINKAGE
 run cd $USERDIR         # Return to user's original directory
