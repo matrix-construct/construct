@@ -42,6 +42,8 @@ namespace ircd::ctx
 	struct terminated {};                           // Special exception
 
 	IRCD_OVERLOAD(threadsafe)
+	bool is_main_thread() noexcept;
+	void assert_main_thread();
 
 	const uint64_t &id(const ctx &) noexcept;       // Unique ID for context
 	string_view name(const ctx &) noexcept;         // User's optional label for context
@@ -128,4 +130,23 @@ namespace ircd
 
 	using ctx::critical_assertion;
 	using ctx::critical_indicator;
+
+	using ctx::is_main_thread;
+	using ctx::assert_main_thread;
+}
+
+inline void
+__attribute__((always_inline))
+ircd::ctx::assert_main_thread()
+{
+	assert(is_main_thread());
+}
+
+inline bool
+__attribute__((always_inline))
+ircd::ctx::is_main_thread()
+noexcept
+{
+	return current ||
+	std::this_thread::get_id() == ios::main_thread_id;
 }

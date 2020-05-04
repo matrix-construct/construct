@@ -281,11 +281,6 @@ void
 ircd::main()
 noexcept try
 {
-	// Resamples the thread this context was executed on which should be where
-	// the user ran ios.run(). The user may have invoked ios.run() on multiple
-	// threads, but we consider this one thread a main thread for now...
-	ircd::ios::main_thread_id = std::this_thread::get_id();
-
 	// When this function completes without exception, subsystems are done shutting down and IRCd
 	// transitions to HALT.
 	const unwind_defer halted{[]

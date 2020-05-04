@@ -48,8 +48,6 @@ namespace ircd::ios
 	extern asio::executor main;
 
 	bool available() noexcept;
-	bool is_main_thread() noexcept;
-	void assert_main_thread();
 
 	const string_view &name(const descriptor &);
 	const string_view &name(const handler &);
@@ -63,8 +61,6 @@ namespace ircd::ios
 
 namespace ircd
 {
-	using ios::assert_main_thread;
-	using ios::is_main_thread;
 	using ios::dispatch;
 	using ios::defer;
 	using ios::post;
@@ -273,20 +269,4 @@ ircd::ios::epoch()
 noexcept
 {
 	return handler::epoch;
-}
-
-inline void
-__attribute__((always_inline))
-ircd::ios::assert_main_thread()
-{
-	assert(is_main_thread());
-}
-
-inline bool
-__attribute__((always_inline))
-ircd::ios::is_main_thread()
-noexcept
-{
-	return std::this_thread::get_id() == main_thread_id ||
-	       main_thread_id == std::thread::id();
 }

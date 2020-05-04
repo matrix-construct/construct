@@ -47,8 +47,7 @@ ircd::ios::init(asio::executor &&user)
 	// Sample the ID of this thread. Since this is the first transfer of
 	// control to libircd after static initialization we have nothing to
 	// consider a main thread yet. We need something set for many assertions
-	// to pass until ircd::main() is entered which will reset this to where
-	// ios.run() is really running.
+	// to pass.
 	main_thread_id = std::this_thread::get_id();
 
 	// Set a reference to the user's ios_service
