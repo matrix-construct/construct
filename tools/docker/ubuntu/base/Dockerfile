@@ -24,7 +24,6 @@ RUN \
         liblz4-dev \
         libmagic-dev \
         libnss-db \
-        librocksdb-dev \
         libsodium-dev \
         libssl-dev \
         libtool \
@@ -41,9 +40,18 @@ RUN \
     cd /usr/src && \
     curl -sL https://github.com/facebook/rocksdb/archive/v${ROCKSDB_VERSION}.tar.gz -o rocksdb-${ROCKSDB_VERSION}.tar.gz && \
     tar xfvz rocksdb-${ROCKSDB_VERSION}.tar.gz && \
-    ln -s rocksdb-${ROCKSDB_VERSION} rocksdb && \
-    rm rocksdb-${ROCKSDB_VERSION}.tar.gz
+    rm rocksdb-${ROCKSDB_VERSION}.tar.gz && \
+    ln -s /usr/src/rocksdb-${ROCKSDB_VERSION} /usr/src/rocksdb && \
+    cd /usr/src/rocksdb-${ROCKSDB_VERSION} && \
+    cmake -H. -Bbuild \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DWITH_TESTS=0 \
+        -DWITH_TOOLS=0 \
+        -DUSE_RTTI=1 \
+        -DWITH_LZ4=1 \
+        -DBUILD_SHARED_LIBS=1 && \
+    cmake --build build --target install && \
+    rm -rf build
 
 RUN mkdir /build
 WORKDIR /build
-
