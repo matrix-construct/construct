@@ -57,5 +57,5 @@ export CFLAGS="$CFLAGS -ftls-model=initial-exec"
 export CFLAGS="$CFLAGS -Wno-error"
 export CFLAGS="$CFLAGS -mtune=native"
 export DISABLE_JEMALLOC=1
-run make -j$NJOBS $LINKAGE
+run make V=1 -j$NJOBS $LINKAGE
 run cd $USERDIR         # Return to user's original directory
