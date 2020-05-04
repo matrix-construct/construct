@@ -15,11 +15,7 @@
 // this time, as we still want real parallel execution ability available to
 // the project and to other users of the address space.
 //
-// This unit is a work in progress. Its eventual goals are non-interference
-// with the rest of the address space, and may even implement the full
-// interface to offer actual functionality of ircd::ctx rather than focused
-// hacks and mitigations.
-//
+
 #include <pthread.h>
 #include <ircd/ctx/posix.h>
 
@@ -38,6 +34,71 @@ ircd::ctx::posix::log
 {
 	"ctx.posix"
 };
+
+//
+// Linker wraps/hooks; see ircd/Makefile.am LDFLAGS. These allow us to play
+// nice with legitimate uses of pthreads by the rest of the address space by
+// appropriately dispatching to either our implementation or the real one.
+//
+
+//
+// hook pthread_create
+//
+
+extern "C" int
+__real_pthread_create(pthread_t *const thread,
+                      const pthread_attr_t *const attr,
+                      void *(*const start_routine)(void *),
+                      void *const arg);
+
+extern "C" int
+__wrap_pthread_create(pthread_t *const thread,
+                      const pthread_attr_t *const attr,
+                      void *(*const start_routine)(void *),
+                      void *const arg)
+{
+	return ircd::ctx::current?
+		ircd_pthread_create(thread, attr, start_routine, arg):
+		__real_pthread_create(thread, attr, start_routine, arg);
+}
+
+//
+// hook pthread_join
+//
+
+extern "C" int
+__real_pthread_join(pthread_t __th,
+                    void **__thread_return);
+
+extern "C" int
+__wrap_pthread_join(pthread_t __th,
+                    void **__thread_return)
+{
+	return ircd::ctx::current?
+		ircd_pthread_join(__th, __thread_return):
+		__real_pthread_join(__th, __thread_return);
+}
+
+//
+// hook pthread_self
+//
+
+extern "C" pthread_t
+__real_pthread_self(void);
+
+extern "C" pthread_t
+__wrap_pthread_self(void)
+{
+	// Note that on the "main" ctx (id=1) we report the real pthread ID
+	return ircd::ctx::current?
+		ircd_pthread_self():
+		__real_pthread_self();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// pthread supplement
+//
 
 int
 ircd_pthread_create(pthread_t *const thread,

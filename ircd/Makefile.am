@@ -20,6 +20,9 @@ AM_LDFLAGS = \
 	-Wl,--no-undefined-version \
 	-Wl,--weak-unresolved-symbols \
 	-Wl,--unresolved-symbols=ignore-in-shared-libs \
+	-Wl,--wrap=pthread_create \
+	-Wl,--wrap=pthread_join \
+	-Wl,--wrap=pthread_self \
 	-Wl,-z,nodelete \
 	-Wl,-z,nodlopen \
 	-Wl,-z,lazy \
