@@ -9,20 +9,23 @@ made their way to mainstream systems. Important notes that may affect you:
 Ubuntu Cosmic (18.10). All earlier releases (including 18.04 LTS) can configure
 with `--with-included-boost` as instructed below.
 
-- RocksDB: The required version is available through `apt` as `librocksdb-dev` on
-Ubuntu Disco (19.04). All earlier releases (including 18.04 LTS) can configure
-with `--with-included-rocksdb` and skip the next bullet.
-
 - RocksDB: THE COMPLETE SOURCE-CODE OF ROCKSDB MUST BE AVAILABLE TO BUILD CONSTRUCT.
-This is different from the `include/` and `lib/` files installed by `librocksdb-dev`
-with 19.04 or later (which is also required). If you are on 19.04, 19.10, or 20.04
-or later, provide the source-code with the following:
+This is different from the `include/` and `lib/` files installed by your
+distribution's package system. You do not have to build the source, but it must
+be available. ALL UBUNTU USERS MUST BUILD THE SOURCE AS WELL (SKIP TO NEXT BULLET).
+
 ```
 git submodule update --init deps/rocksdb
 cd deps/rocksdb
 git fetch --tags --force
 git checkout v5.17.2
 ```
+
+- RocksDB: All Ubuntu users on all releases must configure Construct with the
+option `--with-included-rocksdb`. This will fetch and properly build rocksdb.
+
+> Ubuntu builds their library with `-Bsymbolic-functions`. This conflicts with
+the requirements of Construct's embedding.
 
 ##### Installation Primer
 
