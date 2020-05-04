@@ -21,6 +21,12 @@ namespace ircd::db
 	std::shared_ptr<database::column> shared_from(database::column &);
 }
 
+#if ROCKSDB_MAJOR > 6 \
+|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR > 4) \
+|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR == 4 && ROCKSDB_PATCH >= 6)
+	#define IRCD_DB_HAS_CACHE_GETCHARGE
+#endif
+
 struct ircd::db::database::cache final
 :std::enable_shared_from_this<ircd::db::database::cache>
 ,rocksdb::Cache
@@ -59,7 +65,9 @@ struct ircd::db::database::cache final
 	void ApplyToAllCacheEntries(callback, bool thread_safe) noexcept override;
 	void EraseUnRefEntries() noexcept override;
 	std::string GetPrintableOptions() const noexcept override;
-	void TEST_mark_as_data_block(const Slice &key, size_t charge) noexcept override;
+	#ifdef IRCD_DB_HAS_CACHE_GETCHARGE
+	size_t GetCharge(Handle *) const noexcept override;
+	#endif
 
 	cache(database *const &,
 	      std::shared_ptr<struct database::stats>,

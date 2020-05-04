@@ -1292,8 +1292,15 @@ try
 	opts->listeners.emplace_back(this->events);
 
 	// Setup histogram collecting
-	//this->stats->stats_level_ = rocksdb::kExceptTimeForMutex;
-	this->stats->stats_level_ = rocksdb::kAll;
+	#if ROCKSDB_MAJOR > 6 \
+	|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR >= 1)
+		//this->stats->set_stats_level(rocksdb::kExceptTimeForMutex);
+		this->stats->set_stats_level(rocksdb::kAll);
+	#else
+		//this->stats->stats_level_ = rocksdb::kExceptTimeForMutex;
+		this->stats->stats_level_ = rocksdb::kAll;
+	#endif
+
 	opts->statistics = this->stats;
 
 	// Setup performance metric options
@@ -3244,15 +3251,15 @@ const noexcept
 	return c->GetPrintableOptions();
 }
 
-void
-ircd::db::database::cache::TEST_mark_as_data_block(const Slice &key,
-                                                   size_t charge)
-noexcept
+#ifdef IRCD_DB_HAS_CACHE_GETCHARGE
+size_t
+ircd::db::database::cache::GetCharge(Handle *const handle)
+const noexcept
 {
 	assert(bool(c));
-	return c->TEST_mark_as_data_block(key, charge);
-
+	return c->GetCharge(handle);
 }
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //

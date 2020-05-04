@@ -34,7 +34,7 @@ RUN \
     apt-get autoremove --purge -y && \
     rm -rf /var/lib/apt/lists/*
 
-ENV ROCKSDB_VERSION=5.17.2
+ENV ROCKSDB_VERSION=6.6.4
 
 RUN \
     cd /usr/src && \
