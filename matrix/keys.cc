@@ -431,8 +431,25 @@ ircd::m::keys::get(const queries &queries,
 
 		opts.emplace_back();
 		opts.back().op = feds::op::keys;
+		opts.back().exclude_myself = true;
+		opts.back().closure_errors = false;
+		opts.back().nothrow_closure = true;
 		opts.back().arg[0] = server_name;
 		opts.back().arg[1] = key_id;
+	}
+	catch(const ctx::interrupted &)
+	{
+		throw;
+	}
+	catch(const std::exception &e)
+	{
+		log::error
+		{
+			log, "Failed to start request for key '%s' of '%s' :%s",
+			key_id,
+			server_name,
+			e.what(),
+		};
 	}
 
 	assert(opts.size() <= queries.size());
