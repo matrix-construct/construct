@@ -1940,7 +1940,6 @@ try
 		m_server
 	};
 
-	thread_local char rembuf[rfc3986::DOMAIN_BUFSIZE * 2];
 	log::debug
 	{
 		well_known_log, "%s query to %s found delegation to %s",
