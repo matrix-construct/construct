@@ -154,7 +154,7 @@ catch(const m::vm::error &e)
 }
 catch(const std::exception &e)
 {
-	log::critical
+	log::error
 	{
 		m::log, "Unhandled error processing txn '%s' from '%s' :%s",
 		txn_id,
