@@ -8583,6 +8583,9 @@ ircd::db::reflect(const rocksdb::Env::Priority &p)
 		case rocksdb::Env::Priority::BOTTOM:  return "BOTTOM"_sv;
 		case rocksdb::Env::Priority::LOW:     return "LOW"_sv;
 		case rocksdb::Env::Priority::HIGH:    return "HIGH"_sv;
+		#ifdef IRCD_DB_HAS_ENV_PRIO_USER
+		case rocksdb::Env::Priority::USER:    return "USER"_sv;
+		#endif
 		case rocksdb::Env::Priority::TOTAL:   assert(0); break;
 	}
 
