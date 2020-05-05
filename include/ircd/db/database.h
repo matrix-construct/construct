@@ -98,6 +98,7 @@ struct ircd::db::database
 	struct sst;
 	struct wal;
 	struct wal_filter;
+	struct allocator;
 
 	std::string name;
 	uint64_t checkpoint;
@@ -110,6 +111,7 @@ struct ircd::db::database
 	std::shared_ptr<struct events> events;
 	std::shared_ptr<struct mergeop> mergeop;
 	std::unique_ptr<struct wal_filter> wal_filter;
+	std::shared_ptr<struct allocator> allocator;
 	std::shared_ptr<rocksdb::SstFileManager> ssts;
 	std::shared_ptr<rocksdb::Cache> row_cache;
 	std::vector<descriptor> descriptors;

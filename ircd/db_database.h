@@ -27,6 +27,11 @@ namespace ircd::db
 	#define IRCD_DB_HAS_CACHE_GETCHARGE
 #endif
 
+#if ROCKSDB_MAJOR > 5 \
+|| (ROCKSDB_MAJOR == 5 && ROCKSDB_MINOR >= 18)
+	#define IRCD_DB_HAS_ALLOCATOR
+#endif
+
 struct ircd::db::database::cache final
 :std::enable_shared_from_this<ircd::db::database::cache>
 ,rocksdb::Cache
@@ -44,6 +49,7 @@ struct ircd::db::database::cache final
 	database *d;
 	std::string name;
 	std::shared_ptr<struct database::stats> stats;
+	std::shared_ptr<struct database::allocator> allocator;
 	std::shared_ptr<rocksdb::Cache> c;
 
 	const char *Name() const noexcept override;
@@ -71,6 +77,7 @@ struct ircd::db::database::cache final
 
 	cache(database *const &,
 	      std::shared_ptr<struct database::stats>,
+	      std::shared_ptr<struct database::allocator>,
 	      std::string name,
 	      const ssize_t &initial_capacity = -1);
 
@@ -160,6 +167,7 @@ struct ircd::db::database::column final
 	prefix_transform prefix;
 	compaction_filter cfilter;
 	std::shared_ptr<struct database::stats> stats;
+	std::shared_ptr<struct database::allocator> allocator;
 	rocksdb::BlockBasedTableOptions table_opts;
 	custom_ptr<rocksdb::ColumnFamilyHandle> handle;
 
@@ -282,3 +290,23 @@ struct ircd::db::database::wal_filter
 	wal_filter(database *const &);
 	~wal_filter() noexcept;
 };
+
+#ifdef IRCD_DB_HAS_ALLOCATOR
+/// Dynamic memory
+struct ircd::db::database::allocator
+:rocksdb::MemoryAllocator
+{
+	database *d {nullptr};
+	database::column *c{nullptr};
+
+	const char *Name() const noexcept override;
+	void *Allocate(size_t) noexcept override;
+	void Deallocate(void *) noexcept override;
+	size_t UsableSize(void *, size_t) const noexcept override;
+
+	allocator(database *const &,
+	          database::column *const & = nullptr);
+
+	~allocator() noexcept;
+};
+#endif

@@ -1143,6 +1143,12 @@ try
 {
 	std::make_unique<struct wal_filter>(this)
 }
+,allocator
+{
+	#ifdef IRCD_DB_HAS_ALLOCATOR
+	std::make_shared<struct allocator>(this)
+	#endif
+}
 ,ssts{rocksdb::NewSstFileManager
 (
 	env.get(),   // env
@@ -1156,7 +1162,10 @@ try
 )}
 ,row_cache
 {
-	std::make_shared<database::cache>(this, this->stats, this->name, 16_MiB)
+	std::make_shared<database::cache>
+	(
+		this, this->stats, this->allocator, this->name, 16_MiB
+	)
 }
 ,descriptors
 {
@@ -1879,7 +1888,16 @@ ircd::db::database::column::column(database &d,
 ,cmp{this->d, this->descriptor->cmp}
 ,prefix{this->d, this->descriptor->prefix}
 ,cfilter{this, this->descriptor->compactor}
-,stats{std::make_shared<struct database::stats>(this->d)}
+,stats
+{
+	std::make_shared<struct database::stats>(this->d)
+}
+,allocator
+{
+	#ifdef IRCD_DB_HAS_ALLOCATOR
+	std::make_shared<struct allocator>(this->d, this)
+	#endif
+}
 ,handle
 {
 	nullptr, [&d](rocksdb::ColumnFamilyHandle *const handle)
@@ -2045,7 +2063,7 @@ ircd::db::database::column::column(database &d,
 	// Setup the cache for assets.
 	const auto &cache_size(this->descriptor->cache_size);
 	if(cache_size != 0)
-		table_opts.block_cache = std::make_shared<database::cache>(this->d, this->stats, this->name, cache_size);
+		table_opts.block_cache = std::make_shared<database::cache>(this->d, this->stats, this->allocator, this->name, cache_size);
 
 	// RocksDB will create an 8_MiB block_cache if we don't create our own.
 	// To honor the user's desire for a zero-size cache, this must be set.
@@ -2058,7 +2076,7 @@ ircd::db::database::column::column(database &d,
 	// Setup the cache for compressed assets.
 	const auto &cache_size_comp(this->descriptor->cache_size_comp);
 	if(cache_size_comp != 0)
-		table_opts.block_cache_compressed = std::make_shared<database::cache>(this->d, this->stats, this->name, cache_size_comp);
+		table_opts.block_cache_compressed = std::make_shared<database::cache>(this->d, this->stats, this->allocator, this->name, cache_size_comp);
 
 	// Setup the bloom filter.
 	const auto &bloom_bits(this->descriptor->bloom_bits);
@@ -3031,11 +3049,13 @@ ircd::db::database::cache::DEFAULT_HI_PRIO
 
 ircd::db::database::cache::cache(database *const &d,
                                  std::shared_ptr<struct database::stats> stats,
+                                 std::shared_ptr<struct database::allocator> allocator,
                                  std::string name,
                                  const ssize_t &initial_capacity)
 :d{d}
 ,name{std::move(name)}
 ,stats{std::move(stats)}
+,allocator{std::move(allocator)}
 ,c
 {
 	rocksdb::NewLRUCache
@@ -3044,6 +3064,9 @@ ircd::db::database::cache::cache(database *const &d,
 		,DEFAULT_SHARD_BITS
 		,DEFAULT_STRICT
 		,DEFAULT_HI_PRIO
+		#ifdef IRCD_DB_HAS_ALLOCATOR
+		,d->allocator
+		#endif
 	)
 }
 {
@@ -3446,6 +3469,56 @@ const noexcept
 	return db::name(*d).c_str();
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// database::allocator
+//
+#ifdef IRCD_DB_HAS_ALLOCATOR
+
+ircd::db::database::allocator::allocator(database *const &d,
+                                         database::column *const &c)
+:d{d}
+,c{c}
+{
+}
+
+ircd::db::database::allocator::~allocator()
+noexcept
+{
+}
+
+size_t
+ircd::db::database::allocator::UsableSize(void *const ptr,
+                                          size_t allocation_size)
+const noexcept
+{
+	return allocation_size;
+}
+
+void
+ircd::db::database::allocator::Deallocate(void *const ptr)
+noexcept
+{
+	std::free(ptr);
+}
+
+void *
+ircd::db::database::allocator::Allocate(size_t size)
+noexcept
+{
+	return std::malloc(size);
+}
+
+const char *
+ircd::db::database::allocator::Name()
+const noexcept
+{
+	return c? db::name(*c).c_str():
+	       d? db::name(*d).c_str():
+	       "unaffiliated";
+}
+
+#endif IRCD_DB_HAS_ALLOCATOR
 
 ///////////////////////////////////////////////////////////////////////////////
 //
