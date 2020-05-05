@@ -1722,14 +1722,14 @@ try
 			const_buffer{}
 	};
 
-	const json::string cached
-	{
-		content["m.server"]
-	};
-
 	const seconds ttl
 	{
 		content.get<time_t>("ttl", time_t(86400))
+	};
+
+	const string_view cached
+	{
+		data(buf), move(buf, json::string(content["m.server"]))
 	};
 
 	const system_point expires
@@ -1756,14 +1756,8 @@ try
 	const string_view delegated
 	{
 		expired || !valid?
-			fetch_well_known(buf, origin):
-
-			// Move the returned string to the front of the buffer; this overwrites
-			// other data fetched by the cache query to focus on just the result.
-			string_view
-			{
-				data(buf), move(buf, cached)
-			}
+			fetch_well_known(buf + size(cached), origin):
+			cached
 	};
 
 	// Branch on valid cache hit to return result.
@@ -1804,10 +1798,7 @@ try
 			timef(tmbuf, expires, localtime),
 		};
 
-		return string_view
-		{
-			data(buf), move(buf, cached)
-		};
+		return cached;
 	}
 
 	// Any time the well-known result is the same as the origin (that
