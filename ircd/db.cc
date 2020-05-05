@@ -8502,6 +8502,7 @@ ircd::db::reflect(const rocksdb::FlushReason &r)
 		case FlushReason::kDeleteFiles:            return "DeleteFiles";
 		case FlushReason::kAutoCompaction:         return "AutoCompaction";
 		case FlushReason::kManualFlush:            return "ManualFlush";
+		case FlushReason::kErrorRecovery:          return "kErrorRecovery";
 	}
 
 	return "??????";
