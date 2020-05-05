@@ -8530,6 +8530,13 @@ ircd::db::reflect(const rocksdb::CompactionReason &r)
 		case CompactionReason::kTtl:                          return "Ttl";
 		case CompactionReason::kFlush:                        return "Flush";
 		case CompactionReason::kExternalSstIngestion:         return "ExternalSstIngestion";
+
+		#if ROCKSDB_MAJOR > 6 \
+		|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR > 6) \
+		|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR == 6 && ROCKSDB_PATCH >= 2)
+		case CompactionReason::kPeriodicCompaction:           return "kPeriodicCompaction";
+		#endif
+
 		case CompactionReason::kNumOfReasons:
 			break;
 	}
