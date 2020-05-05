@@ -391,7 +391,7 @@ ircd::m::keys::get(const queries &queries,
 	bool ret{true};
 	std::vector<m::feds::opts> opts;
 	opts.reserve(queries.size());
-	for(const auto &[server_name, key_id] : queries)
+	for(const auto &[server_name, key_id] : queries) try
 	{
 		assert(key_id);
 		assert(server_name);
@@ -461,29 +461,44 @@ ircd::m::keys::get(const queries &queries,
 			result.object["server_keys"]
 		};
 
-		if(empty(server_keys))
-			return true;
-
-		const m::keys keys
+		for(const json::object &keys : server_keys)
 		{
-			server_keys
-		};
-
-		if(!verify(keys, std::nothrow))
-		{
-			log::derror
+			const json::string &server_name
 			{
-				m::log, "Failed to verify key '%s' for '%s' from '%s'",
-				result.request->arg[0],
-				result.request->arg[1],
-				result.origin,
+				keys["server_name"]
 			};
 
-			return true;
+			if(server_name != result.request->arg[0] || server_name != result.origin)
+			{
+				log::derror
+				{
+					m::log, "Origin mismatch for '%s' got '%s' from '%s'",
+					result.request->arg[0],
+					server_name,
+					result.origin,
+				};
+
+				continue;
+			}
+
+			if(!verify(m::keys(keys), std::nothrow))
+			{
+				log::derror
+				{
+					m::log, "Failed to verify key '%s' for '%s' from '%s'",
+					result.request->arg[0],
+					result.request->arg[1],
+					result.origin,
+				};
+
+				continue;
+			}
+
+			cache::set(keys);
+			if(!(ret = closure(keys)))
+				return ret;
 		}
 
-		cache::set(result.object);
-		ret = closure(result.object);
 		return ret;
 	});
 
