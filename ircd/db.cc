@@ -8663,6 +8663,13 @@ ircd::db::reflect(const rocksdb::Status::Code &s)
 		case Code::kExpired:               return "Expired";
 		case Code::kTryAgain:              return "TryAgain";
 		case Code::kCompactionTooLarge:    return "CompactionTooLarge";
+
+		#if ROCKSDB_MAJOR > 6 \
+		|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR > 3) \
+		|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR == 3 && ROCKSDB_PATCH >= 6)
+		case Code::kColumnFamilyDropped:   return "ColumnFamilyDropped";
+		case Code::kMaxCode:               break;
+		#endif
 	}
 
 	return "?????";
