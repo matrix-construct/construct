@@ -7238,6 +7238,35 @@ ircd::db::for_each(const rocksdb::Cache &cache,
 	true);
 }
 
+#ifdef IRCD_DB_HAS_CACHE_GETCHARGE
+size_t
+ircd::db::charge(const rocksdb::Cache &cache_,
+                 const string_view &key)
+{
+	auto &cache
+	{
+		const_cast<rocksdb::Cache &>(cache_)
+	};
+
+	const custom_ptr<rocksdb::Cache::Handle> handle
+	{
+		cache.Lookup(slice(key)), [&cache](auto *const &handle)
+		{
+			cache.Release(handle);
+		}
+	};
+
+	return cache.GetCharge(handle);
+}
+#else
+size_t
+ircd::db::charge(const rocksdb::Cache &cache,
+                 const string_view &key)
+{
+	return 0UL;
+}
+#endif
+
 [[gnu::hot]]
 bool
 ircd::db::exists(const rocksdb::Cache &cache_,

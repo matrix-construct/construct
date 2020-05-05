@@ -45,6 +45,10 @@ namespace ircd::db
 	bool exists(const rocksdb::Cache &, const string_view &key);
 	bool exists(const rocksdb::Cache *const &, const string_view &key);
 
+	// Get charge value for key
+	size_t charge(const rocksdb::Cache &, const string_view &key);
+	size_t charge(const rocksdb::Cache *const &, const string_view &key);
+
 	// Iterate the cache entries.
 	using cache_closure = std::function<void (const const_buffer &)>;
 	void for_each(const rocksdb::Cache &, const cache_closure &);
@@ -109,6 +113,15 @@ ircd::db::for_each(const rocksdb::Cache *const &cache,
 {
 	if(cache)
 		for_each(*cache, closure);
+}
+
+inline size_t
+ircd::db::charge(const rocksdb::Cache *const &cache,
+                 const string_view &key)
+{
+	return cache?
+		charge(*cache, key):
+		0UL;
 }
 
 inline bool
