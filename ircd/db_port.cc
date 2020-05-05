@@ -98,10 +98,7 @@ void
 rocksdb::port::Mutex::AssertHeld()
 noexcept
 {
-	if(unlikely(!ctx::current))
-		return;
-
-	assert(mu.locked());
+	assert(!ctx::current || mu.locked());
 }
 
 //

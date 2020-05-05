@@ -89,7 +89,6 @@ __real_pthread_self(void);
 extern "C" pthread_t
 __wrap_pthread_self(void)
 {
-	// Note that on the "main" ctx (id=1) we report the real pthread ID
 	return ircd::ctx::current?
 		ircd_pthread_self():
 		__real_pthread_self();
@@ -198,7 +197,7 @@ pthread_t
 ircd_pthread_self(void)
 noexcept
 {
-	always_assert(ircd::ctx::current);
+	assert(ircd::ctx::current);
 	return id(ircd::ctx::cur());
 }
 
