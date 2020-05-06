@@ -20,6 +20,8 @@ cd deps/rocksdb
 git fetch --tags --force
 git checkout v5.17.2
 ```
+> For best performance and stability, please check for the version available on
+your system for the above `git checkout`.
 
 - RocksDB: All Ubuntu users on all releases must configure Construct with the
 option `--with-included-rocksdb`. This will fetch and properly build rocksdb.
