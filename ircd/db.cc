@@ -3375,7 +3375,8 @@ bool
 ircd::db::database::compaction_filter::IgnoreSnapshots()
 const noexcept
 {
-	return false;
+	// RocksDB >= 6.0.0 sez this must no longer be false.
+	return true;
 }
 
 const char *
