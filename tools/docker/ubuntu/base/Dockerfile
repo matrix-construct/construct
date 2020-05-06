@@ -18,7 +18,6 @@ RUN \
         curl \
         git \
         libbz2-dev \
-        libgflags-dev \
         libgraphicsmagick1-dev \
         libjemalloc-dev \
         liblz4-dev \
@@ -49,6 +48,7 @@ RUN \
         -DWITH_TOOLS=0 \
         -DUSE_RTTI=1 \
         -DWITH_LZ4=1 \
+        -DWITH_GFLAGS=0 \
         -DBUILD_SHARED_LIBS=1 && \
     cmake --build build --target install && \
     rm -rf build
