@@ -1007,19 +1007,19 @@ const
 size_t
 ircd::http::parser::content_length(const string_view &str)
 {
-	static const parser::rule<long> grammar
+	static const parser::rule<size_t> grammar
 	{
-		long_
+		ulong_
 	};
 
-	long ret;
+	size_t ret;
 	const char *start(str.data());
 	const bool parsed
 	{
 		qi::parse(start, start + str.size(), grammar, ret)
 	};
 
-	if(!parsed || ret < 0)
+	if(!parsed || ret >= 256_GiB)
 		throw error
 		{
 			BAD_REQUEST, "Invalid content-length value"
