@@ -225,7 +225,7 @@ ircd::m::dbs::room_joined_key(const mutable_buffer &out_,
 	mutable_buffer out{out_};
 	consume(out, copy(out, room_id));
 	consume(out, copy(out, '\0'));
-	consume(out, copy(out, origin));
+	consume(out, copy(out, trunc(origin, event::ORIGIN_MAX_SIZE)));
 	return { data(out_), data(out) };
 }
 
@@ -238,7 +238,7 @@ ircd::m::dbs::room_joined_key(const mutable_buffer &out_,
 	mutable_buffer out{out_};
 	consume(out, copy(out, room_id));
 	consume(out, copy(out, '\0'));
-	consume(out, copy(out, origin));
+	consume(out, copy(out, trunc(origin, event::ORIGIN_MAX_SIZE)));
 	consume(out, copy(out, member));
 	return { data(out_), data(out) };
 }
