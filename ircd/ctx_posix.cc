@@ -94,6 +94,37 @@ __wrap_pthread_self(void)
 		__real_pthread_self();
 }
 
+//
+// hook pthread_setname_np
+//
+
+extern "C" int
+__real_pthread_setname_np(pthread_t __target_thread,
+                          const char *__name);
+
+extern "C" int
+__wrap_pthread_setname_np(pthread_t __target_thread,
+                          const char *__name)
+{
+	const auto it
+	{
+		std::find_if(begin(ircd::ctx::posix::ctxs), end(ircd::ctx::posix::ctxs), [&]
+		(const auto &context)
+		{
+			return ircd::ctx::id(context) == __target_thread;
+		})
+	};
+
+	return it != end(ircd::ctx::posix::ctxs)?
+		ircd_pthread_setname_np(__target_thread, __name):
+		__real_pthread_setname_np(__target_thread, __name);
+}
+
+int
+pthread_setname_np(pthread_t __target_thread,
+                   const char *__name)
+__attribute__((weak, alias("__wrap_pthread_create")));
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // pthread supplement
@@ -327,8 +358,8 @@ ircd_pthread_setname_np(pthread_t __target_thread,
                         const char *__name)
 noexcept
 {
-	always_assert(false);
-	return EINVAL;
+	//TODO: settable names in ircd::ctx
+	return 0;
 }
 
 int

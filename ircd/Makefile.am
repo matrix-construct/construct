@@ -23,6 +23,7 @@ AM_LDFLAGS = \
 	-Wl,--wrap=pthread_create \
 	-Wl,--wrap=pthread_join \
 	-Wl,--wrap=pthread_self \
+	-Wl,--wrap=pthread_setname_np \
 	-Wl,-z,nodelete \
 	-Wl,-z,nodlopen \
 	-Wl,-z,lazy \
