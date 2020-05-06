@@ -92,6 +92,40 @@ pthread_join(pthread_t __th,
 __attribute__((weak, alias("__wrap_pthread_join")));
 
 //
+// hook pthread_timedjoin_np
+//
+
+extern "C" int
+__real_pthread_timedjoin_np(pthread_t __th,
+                            void **__thread_return,
+                            const struct timespec *__abstime);
+
+extern "C" int
+__wrap_pthread_timedjoin_np(pthread_t __th,
+                            void **__thread_return,
+                            const struct timespec *__abstime)
+{
+	const auto it
+	{
+		std::find_if(begin(ircd::ctx::posix::ctxs), end(ircd::ctx::posix::ctxs), [&]
+		(const auto &context)
+		{
+			return ircd::ctx::id(context) == __th;
+		})
+	};
+
+	return it != end(ircd::ctx::posix::ctxs)?
+		ircd_pthread_timedjoin_np(__th, __thread_return, __abstime):
+		__real_pthread_timedjoin_np(__th, __thread_return, __abstime);
+}
+
+extern "C" int
+pthread_timedjoin_np(pthread_t __th,
+                     void **__thread_return,
+                     const struct timespec *__abstime)
+__attribute__((weak, alias("__wrap_pthread_timedjoin_np")));
+
+//
 // hook pthread_self
 //
 
@@ -222,8 +256,9 @@ ircd_pthread_timedjoin_np(pthread_t __th,
                           void **__thread_return,
                           const struct timespec *__abstime)
 {
-	always_assert(false);
-	return EINVAL;
+	//TODO: XXX ctx timed join
+	ircd_pthread_join(__th, __thread_return);
+	return 0;
 }
 
 void
