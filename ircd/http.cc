@@ -161,9 +161,9 @@ struct ircd::http::grammar
 	rule<string_view> fragment         { pound >> -token                               ,"fragment" };
 	rule<string_view> version          { token                                          ,"version" };
 
-	rule<size_t> chunk_size
+	rule<uint32_t> chunk_size
 	{
-		qi::uint_parser<size_t, 16, 1, 8>{}
+		qi::uint_parser<uint32_t, 16, 1, 8>{}
 		,"chunk size"
 	};
 

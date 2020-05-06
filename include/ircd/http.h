@@ -296,7 +296,7 @@ struct ircd::http::response::head
 struct ircd::http::response::chunk
 :line
 {
-	size_t size {0};
+	uint32_t size {0};
 
 	chunk(parse::capstan &pc);
 	chunk() = default;
