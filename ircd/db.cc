@@ -34,10 +34,25 @@ ircd::db::version_api
 	}
 };
 
+extern "C" const char *
+rocksdb_build_git_sha;
+
+extern "C" const char *
+rocksdb_build_compile_date;
+
 decltype(ircd::db::version_abi)
 ircd::db::version_abi
 {
-	"RocksDB", info::versions::ABI //TODO: get this
+	"RocksDB", info::versions::ABI, 0, {0}, []
+	(auto &, const mutable_buffer &buf)
+	{
+		fmt::sprintf
+		{
+			buf, "%s (%s)\n",
+			lstrip(rocksdb_build_git_sha, "rocksdb_build_git_sha:"),
+			rocksdb_build_compile_date,
+		};
+	}
 };
 
 ircd::conf::item<size_t>
