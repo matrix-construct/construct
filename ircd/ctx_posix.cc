@@ -108,7 +108,6 @@ noexcept
 {
 	assert(thread);
 	assert(start_routine);
-	assert(arg);
 
 	ircd::ctx::posix::ctxs.emplace_back(ircd::context
 	{
