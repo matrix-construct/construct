@@ -62,6 +62,13 @@ __wrap_pthread_create(pthread_t *const thread,
 		__real_pthread_create(thread, attr, start_routine, arg);
 }
 
+extern "C" int
+pthread_create(pthread_t *const thread,
+               const pthread_attr_t *const attr,
+               void *(*const start_routine)(void *),
+               void *const arg)
+__attribute__((weak, alias("__wrap_pthread_create")));
+
 //
 // hook pthread_join
 //
@@ -79,6 +86,11 @@ __wrap_pthread_join(pthread_t __th,
 		__real_pthread_join(__th, __thread_return);
 }
 
+extern "C" int
+pthread_join(pthread_t __th,
+             void **__thread_return)
+__attribute__((weak, alias("__wrap_pthread_join")));
+
 //
 // hook pthread_self
 //
@@ -93,6 +105,12 @@ __wrap_pthread_self(void)
 		ircd_pthread_self():
 		__real_pthread_self();
 }
+
+#if 0
+extern "C" pthread_t
+pthread_self(void)
+__attribute__((weak, alias("__wrap_pthread_self")));
+#endif
 
 //
 // hook pthread_setname_np
@@ -120,10 +138,10 @@ __wrap_pthread_setname_np(pthread_t __target_thread,
 		__real_pthread_setname_np(__target_thread, __name);
 }
 
-int
+extern "C" int
 pthread_setname_np(pthread_t __target_thread,
                    const char *__name)
-__attribute__((weak, alias("__wrap_pthread_create")));
+__attribute__((weak, alias("__wrap_pthread_setname_np")));
 
 ///////////////////////////////////////////////////////////////////////////////
 //
