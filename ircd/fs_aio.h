@@ -144,14 +144,14 @@ struct ircd::fs::aio::request
 struct ircd::fs::aio::request::read
 :request
 {
-	read(const int &fd, const const_iovec_view &, const read_opts &);
+	read(const int &fd, const read_opts &, const const_iovec_view &);
 };
 
 /// Write request control block
 struct ircd::fs::aio::request::write
 :request
 {
-	write(const int &fd, const const_iovec_view &, const write_opts &);
+	write(const int &fd, const write_opts &, const const_iovec_view &);
 };
 
 /// fsync request control block

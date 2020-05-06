@@ -653,10 +653,10 @@ ircd::fs::flush(const fd &fd,
 	if(aio::system && opts.aio)
 	{
 		if(support::aio_fdsync && !opts.metadata)
-			return aio::fsync(fd, opts);
+			aio::fsync(fd, opts);
 
 		if(support::aio_fsync && opts.metadata)
-			return aio::fsync(fd, opts);
+			aio::fsync(fd, opts);
 	}
 	#endif
 

@@ -149,7 +149,10 @@ ircd::fs::aio::translate(const int &val)
 
 ircd::fs::aio::request::fsync::fsync(const int &fd,
                                      const sync_opts &opts)
-:request{fd, &opts}
+:request
+{
+	fd, &opts
+}
 {
 	assert(opts.op == op::SYNC);
 	aio_lio_opcode = opts.metadata? IOCB_CMD_FSYNC : IOCB_CMD_FDSYNC;
@@ -159,7 +162,7 @@ ircd::fs::aio::request::fsync::fsync(const int &fd,
 	aio_offset = 0;
 }
 
-void
+size_t
 ircd::fs::aio::fsync(const fd &fd,
                      const sync_opts &opts)
 {
@@ -168,7 +171,12 @@ ircd::fs::aio::fsync(const fd &fd,
 		fd, opts
 	};
 
-	request();
+	const size_t bytes
+	{
+		request()
+	};
+
+	return bytes;
 }
 
 //
@@ -176,9 +184,12 @@ ircd::fs::aio::fsync(const fd &fd,
 //
 
 ircd::fs::aio::request::read::read(const int &fd,
-                                   const const_iovec_view &iov,
-                                   const read_opts &opts)
-:request{fd, &opts}
+                                   const read_opts &opts,
+                                   const const_iovec_view &iov)
+:request
+{
+	fd, &opts
+}
 {
 	assert(opts.op == op::READ);
 	aio_lio_opcode = IOCB_CMD_PREADV;
@@ -195,13 +206,13 @@ ircd::fs::aio::read(const fd &fd,
 {
 	aio::request::read request
 	{
-		fd, bufs, opts
+		fd, opts, bufs
 	};
 
 	const scope_count cur_reads{stats.cur_reads};
 	stats.max_reads = std::max(stats.max_reads, stats.cur_reads);
 
-	size_t bytes
+	const size_t bytes
 	{
 		request()
 	};
@@ -216,9 +227,12 @@ ircd::fs::aio::read(const fd &fd,
 //
 
 ircd::fs::aio::request::write::write(const int &fd,
-                                     const const_iovec_view &iov,
-                                     const write_opts &opts)
-:request{fd, &opts}
+                                     const write_opts &opts,
+                                     const const_iovec_view &iov)
+:request
+{
+	fd, &opts
+}
 {
 	assert(opts.op == op::WRITE);
 	aio_lio_opcode = IOCB_CMD_PWRITEV;
@@ -259,7 +273,7 @@ ircd::fs::aio::write(const fd &fd,
 {
 	aio::request::write request
 	{
-		fd, bufs, opts
+		fd, opts, bufs
 	};
 
 	const size_t req_bytes
