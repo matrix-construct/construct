@@ -29,7 +29,7 @@ namespace ircd::fs::aio
 
 	size_t write(const fd &, const const_iovec_view &, const write_opts &);
 	size_t read(const fd &, const const_iovec_view &, const read_opts &);
-	void fsync(const fd &, const sync_opts &);
+	size_t fsync(const fd &, const sync_opts &);
 }
 
 /// AIO context instance from the system. Right now this is a singleton with
@@ -125,18 +125,21 @@ struct ircd::fs::aio::request
 	ssize_t retval {-2L};
 	ssize_t errcode {0L};
 	const struct opts *opts {nullptr};
-	ctx::dock waiter;
+	ctx::dock *waiter {nullptr};
+
+	bool wait();
 
   public:
 	const_iovec_view iovec() const;
 	bool completed() const;
 	bool queued() const;
-	bool wait();
 
-	size_t operator()();
+	size_t complete();
+	void submit();
 	bool cancel();
 
-	request(const int &fd, const struct opts *const &);
+	request(const int &fd, const struct opts *const &, ctx::dock *const &);
+	request() = default;
 	~request() noexcept;
 };
 
@@ -144,19 +147,22 @@ struct ircd::fs::aio::request
 struct ircd::fs::aio::request::read
 :request
 {
-	read(const int &fd, const read_opts &, const const_iovec_view &);
+	read(ctx::dock &, const int &fd, const read_opts &, const const_iovec_view &);
+	read() = default;
 };
 
 /// Write request control block
 struct ircd::fs::aio::request::write
 :request
 {
-	write(const int &fd, const write_opts &, const const_iovec_view &);
+	write(ctx::dock &, const int &fd, const write_opts &, const const_iovec_view &);
+	write() = default;
 };
 
 /// fsync request control block
 struct ircd::fs::aio::request::fsync
 :request
 {
-	fsync(const int &fd, const sync_opts &);
+	fsync(ctx::dock &, const int &fd, const sync_opts &);
+	fsync() = default;
 };

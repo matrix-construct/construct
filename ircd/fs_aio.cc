@@ -147,11 +147,12 @@ ircd::fs::aio::translate(const int &val)
 // request::fsync
 //
 
-ircd::fs::aio::request::fsync::fsync(const int &fd,
+ircd::fs::aio::request::fsync::fsync(ctx::dock &waiter,
+                                     const int &fd,
                                      const sync_opts &opts)
 :request
 {
-	fd, &opts
+	fd, &opts, &waiter
 }
 {
 	assert(opts.op == op::SYNC);
@@ -166,14 +167,16 @@ size_t
 ircd::fs::aio::fsync(const fd &fd,
                      const sync_opts &opts)
 {
+	ctx::dock waiter;
 	aio::request::fsync request
 	{
-		fd, opts
+		waiter, fd, opts
 	};
 
+	request.submit();
 	const size_t bytes
 	{
-		request()
+		request.complete()
 	};
 
 	return bytes;
@@ -183,12 +186,13 @@ ircd::fs::aio::fsync(const fd &fd,
 // request::read
 //
 
-ircd::fs::aio::request::read::read(const int &fd,
+ircd::fs::aio::request::read::read(ctx::dock &waiter,
+                                   const int &fd,
                                    const read_opts &opts,
                                    const const_iovec_view &iov)
 :request
 {
-	fd, &opts
+	fd, &opts, &waiter
 }
 {
 	assert(opts.op == op::READ);
@@ -204,17 +208,19 @@ ircd::fs::aio::read(const fd &fd,
                     const const_iovec_view &bufs,
                     const read_opts &opts)
 {
+	ctx::dock waiter;
 	aio::request::read request
 	{
-		fd, opts, bufs
+		waiter, fd, opts, bufs
 	};
 
 	const scope_count cur_reads{stats.cur_reads};
 	stats.max_reads = std::max(stats.max_reads, stats.cur_reads);
 
+	request.submit();
 	const size_t bytes
 	{
-		request()
+		request.complete()
 	};
 
 	stats.bytes_read += bytes;
@@ -226,12 +232,13 @@ ircd::fs::aio::read(const fd &fd,
 // request::write
 //
 
-ircd::fs::aio::request::write::write(const int &fd,
+ircd::fs::aio::request::write::write(ctx::dock &waiter,
+                                     const int &fd,
                                      const write_opts &opts,
                                      const const_iovec_view &iov)
 :request
 {
-	fd, &opts
+	fd, &opts, &waiter
 }
 {
 	assert(opts.op == op::WRITE);
@@ -271,9 +278,10 @@ ircd::fs::aio::write(const fd &fd,
                      const const_iovec_view &bufs,
                      const write_opts &opts)
 {
+	ctx::dock waiter;
 	aio::request::write request
 	{
-		fd, opts, bufs
+		waiter, fd, opts, bufs
 	};
 
 	const size_t req_bytes
@@ -293,9 +301,10 @@ ircd::fs::aio::write(const fd &fd,
 	}};
 
 	// Make the request; ircd::ctx blocks here. Throws on error
+	request.submit();
 	const size_t bytes
 	{
-		request()
+		request.complete()
 	};
 
 	// Does linux ever not complete all bytes for an AIO?
@@ -349,9 +358,11 @@ ircd::fs::aio::for_each_completed(const std::function<bool (const request &)> &c
 //
 
 ircd::fs::aio::request::request(const int &fd,
-                                const struct opts *const &opts)
+                                const struct opts *const &opts,
+                                ctx::dock *const &waiter)
 :iocb{0}
 ,opts{opts}
+,waiter{waiter}
 {
 	assert(system);
 	assert(ctx::current);
@@ -393,20 +404,14 @@ ircd::fs::aio::request::cancel()
 	return true;
 }
 
-/// Submit a request and properly yield the ircd::ctx. When this returns the
-/// result will be available or an exception will be thrown.
-size_t
-ircd::fs::aio::request::operator()()
+void
+ircd::fs::aio::request::submit()
 {
 	assert(system);
 	assert(ctx::current);
 
-	const size_t submitted_bytes
-	{
-		bytes(iovec())
-	};
-
 	// Update stats for submission phase
+	const size_t submitted_bytes(bytes(iovec()));
 	stats.bytes_requests += submitted_bytes;
 	stats.requests++;
 
@@ -421,14 +426,18 @@ ircd::fs::aio::request::operator()()
 
 	// Submit to system
 	system->submit(*this);
+}
 
+size_t
+ircd::fs::aio::request::complete()
+{
 	// Wait for completion
 	while(!wait());
-
 	assert(completed());
-	assert(retval <= ssize_t(submitted_bytes));
 
 	// Update stats for completion phase.
+	const size_t submitted_bytes(bytes(iovec()));
+	assert(retval <= ssize_t(submitted_bytes));
 	stats.bytes_complete += submitted_bytes;
 	stats.complete++;
 
@@ -480,7 +489,8 @@ bool
 ircd::fs::aio::request::wait()
 try
 {
-	waiter.wait([this]
+	assert(waiter);
+	waiter->wait([this]
 	{
 		return completed();
 	});
@@ -1162,7 +1172,8 @@ noexcept try
 
 	// Notify the waiting context. Note that we are on the main async stack
 	// but it is safe to notify from here.
-	request->waiter.notify_one();
+	assert(request->waiter);
+	request->waiter->notify_one();
 	stats.events++;
 }
 catch(const std::exception &e)
