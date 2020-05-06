@@ -23,8 +23,10 @@
 
 namespace ircd::ctx::posix
 {
+	static bool is(const pthread_t &) noexcept;
+
+	extern std::vector<context> ctxs;
 	extern log::log log;
-	std::vector<context> ctxs;
 }
 
 using ircd::always_assert;
@@ -34,6 +36,9 @@ ircd::ctx::posix::log
 {
 	"ctx.posix"
 };
+
+decltype(ircd::ctx::posix::ctxs)
+ircd::ctx::posix::ctxs;
 
 //
 // Linker wraps/hooks; see ircd/Makefile.am LDFLAGS. These allow us to play
@@ -81,7 +86,7 @@ extern "C" int
 __wrap_pthread_join(pthread_t __th,
                     void **__thread_return)
 {
-	return ircd::ctx::current?
+	return ircd::ctx::posix::is(__th)?
 		ircd_pthread_join(__th, __thread_return):
 		__real_pthread_join(__th, __thread_return);
 }
@@ -105,16 +110,7 @@ __wrap_pthread_timedjoin_np(pthread_t __th,
                             void **__thread_return,
                             const struct timespec *__abstime)
 {
-	const auto it
-	{
-		std::find_if(begin(ircd::ctx::posix::ctxs), end(ircd::ctx::posix::ctxs), [&]
-		(const auto &context)
-		{
-			return ircd::ctx::id(context) == __th;
-		})
-	};
-
-	return it != end(ircd::ctx::posix::ctxs)?
+	return ircd::ctx::posix::is(__th)?
 		ircd_pthread_timedjoin_np(__th, __thread_return, __abstime):
 		__real_pthread_timedjoin_np(__th, __thread_return, __abstime);
 }
@@ -158,16 +154,7 @@ extern "C" int
 __wrap_pthread_setname_np(pthread_t __target_thread,
                           const char *__name)
 {
-	const auto it
-	{
-		std::find_if(begin(ircd::ctx::posix::ctxs), end(ircd::ctx::posix::ctxs), [&]
-		(const auto &context)
-		{
-			return ircd::ctx::id(context) == __target_thread;
-		})
-	};
-
-	return it != end(ircd::ctx::posix::ctxs)?
+	return ircd::ctx::posix::is(__target_thread)?
 		ircd_pthread_setname_np(__target_thread, __name):
 		__real_pthread_setname_np(__target_thread, __name);
 }
@@ -176,6 +163,26 @@ extern "C" int
 pthread_setname_np(pthread_t __target_thread,
                    const char *__name)
 __attribute__((weak, alias("__wrap_pthread_setname_np")));
+
+//
+// util
+//
+
+bool
+ircd::ctx::posix::is(const pthread_t &target)
+noexcept
+{
+	const auto it
+	{
+		std::find_if(begin(ctxs), end(ctxs), [&]
+		(const auto &context)
+		{
+			return id(context) == target;
+		})
+	};
+
+	return it != end(ctxs);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
