@@ -42,6 +42,7 @@ RUN \
     rm rocksdb-${ROCKSDB_VERSION}.tar.gz && \
     ln -s /usr/src/rocksdb-${ROCKSDB_VERSION} /usr/src/rocksdb && \
     cd /usr/src/rocksdb-${ROCKSDB_VERSION} && \
+    CFLAGS="-g0" \
     cmake -H. -Bbuild \
         -DCMAKE_BUILD_TYPE=Release \
         -DWITH_TESTS=0 \
