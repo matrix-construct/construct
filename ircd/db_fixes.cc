@@ -46,6 +46,10 @@
 	#error "RocksDB file_util.h is not available. Cannot interpose bugfixes."
 #endif
 
+#if __has_include("file/sst_file_manager_impl.h")
+	#include "file/sst_file_manager_impl.h"
+#endif
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // https://github.com/facebook/rocksdb/issues/4654. In summary, some RocksDB
@@ -176,6 +180,20 @@ rocksdb::Status
 rocksdb::DeleteSSTFile(const ImmutableDBOptions *db_options,
                        const std::string& fname,
                        const std::string& dir_to_sync)
+{
+	assert(db_options);
+	assert(db_options->env);
+	return db_options->env->DeleteFile(fname);
+}
+#endif
+
+#if __has_include("file/file_util.h")
+rocksdb::Status
+rocksdb::DeleteDBFile(const ImmutableDBOptions *db_options,
+                      const std::string& fname,
+                      const std::string& dir_to_sync,
+                      const bool force_bg,
+                      const bool force_fg)
 {
 	assert(db_options);
 	assert(db_options->env);
