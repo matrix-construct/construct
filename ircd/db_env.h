@@ -20,6 +20,12 @@
 	#define IRCD_DB_HAS_ENV_MULTIREAD
 #endif
 
+#if ROCKSDB_MAJOR > 6 \
+|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR > 7) \
+|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR == 7 && ROCKSDB_PATCH >= 3)
+	#define IRCD_DB_HAS_ENV_FILESYSTEM
+#endif
+
 /// Internal environment hookup.
 ///
 struct ircd::db::database::env final

@@ -18,19 +18,32 @@
 #define ROCKSDB_PLATFORM_POSIX
 #define ZSTD_VERSION_NUMBER 0
 
-#if \
-__has_include("table/block_fetcher.h") && \
-__has_include("util/delete_scheduler.h") && \
-__has_include("util/file_util.h") && \
-__has_include("db/write_thread.h") && \
-__has_include("table/block_fetcher.h")
-	#include "table/block_fetcher.h"
-	#include "util/delete_scheduler.h"
-	#include "util/file_util.h"
+#if __has_include("db/write_thread.h")
 	#include "db/write_thread.h"
-	#define IRCD_DB_FIXES_ROCKSDB
 #else
-#warning "RocksDB source is not available. Cannot interpose bugfixes."
+	#error "RocksDB db/write_thread.h is not available. Cannot interpose bugfixes."
+#endif
+
+#if __has_include("table/block_fetcher.h")
+	#include "table/block_fetcher.h"
+#else
+	#error "RocksDB table/block_fetcher.h is not available. Cannot interpose bugfixes."
+#endif
+
+#if __has_include("util/delete_scheduler.h")
+	#include "util/delete_scheduler.h"
+#elif __has_include("file/delete_scheduler.h")
+	#include "file/delete_scheduler.h"
+#else
+	#error "RocksDB delete_scheduler.h is not available. Cannot interpose bugfixes."
+#endif
+
+#if __has_include("util/file_util.h")
+	#include "util/file_util.h"
+#elif __has_include("file/file_util.h")
+	#include "file/file_util.h"
+#else
+	#error "RocksDB file_util.h is not available. Cannot interpose bugfixes."
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -55,7 +68,7 @@ __has_include("table/block_fetcher.h")
 // using kernel-driven threads, this is a deadlock.
 //
 
-#if defined(IRCD_DB_FIXES_ROCKSDB)
+#if __has_include("db/write_thread.h")
 uint8_t
 rocksdb::WriteThread::BlockingAwaitState(Writer *const w,
                                          uint8_t goal_mask)
@@ -94,7 +107,7 @@ rocksdb::WriteThread::BlockingAwaitState(Writer *const w,
 // simply not start that thread.
 //
 
-#if defined(IRCD_DB_FIXES_ROCKSDB)
+#if __has_include("util/delete_scheduler.h")
 rocksdb::DeleteScheduler::DeleteScheduler(Env* env,
                                           int64_t rate_bytes_per_sec,
                                           Logger* info_log,
@@ -119,7 +132,34 @@ max_trash_db_ratio_(max_trash_db_ratio)
 }
 #endif
 
-#if defined(IRCD_DB_FIXES_ROCKSDB)
+#if __has_include("file/delete_scheduler.h") && defined(IRCD_DB_HAVE_ENV_FILESYSTEM)
+rocksdb::DeleteScheduler::DeleteScheduler(Env* env,
+                                          FileSystem *fs,
+                                          int64_t rate_bytes_per_sec,
+                                          Logger* info_log,
+                                          SstFileManagerImpl* sst_file_manager,
+                                          double max_trash_db_ratio,
+                                          uint64_t bytes_max_delete_chunk)
+:env_(env),
+fs_(fs),
+total_trash_size_(0),
+rate_bytes_per_sec_(rate_bytes_per_sec),
+pending_files_(0),
+bytes_max_delete_chunk_(bytes_max_delete_chunk),
+closing_(false),
+cv_(&mu_),
+info_log_(info_log),
+sst_file_manager_(sst_file_manager),
+max_trash_db_ratio_(max_trash_db_ratio)
+{
+	assert(sst_file_manager != nullptr);
+	assert(max_trash_db_ratio >= 0);
+//	bg_thread_.reset(
+//		new port::Thread(&DeleteScheduler::BackgroundEmptyTrash, this));
+}
+#endif
+
+#if __has_include("util/delete_scheduler.h") || __has_include("file/delete_scheduler.h")
 rocksdb::DeleteScheduler::~DeleteScheduler()
 {
 }
@@ -131,7 +171,7 @@ rocksdb::DeleteScheduler::~DeleteScheduler()
 // and directly conduct the deletion.
 //
 
-#if defined(IRCD_DB_FIXES_ROCKSDB)
+#if __has_include("util/delete_scheduler.h")
 rocksdb::Status
 rocksdb::DeleteSSTFile(const ImmutableDBOptions *db_options,
                        const std::string& fname,
@@ -153,7 +193,7 @@ rocksdb::DeleteSSTFile(const ImmutableDBOptions *db_options,
 // available.
 //
 
-#if defined(IRCD_DB_FIXES_ROCKSDB) && defined(IRCD_DB_BYPASS_CHECKSUM)
+#if (__has_include("util/file_util.h") || __has_include("file/file_util.h")) && defined(IRCD_DB_BYPASS_CHECKSUM)
 void
 rocksdb::BlockFetcher::CheckBlockChecksum()
 {
