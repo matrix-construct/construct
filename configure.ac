@@ -1799,7 +1799,7 @@ dnl RocksDB support
 dnl
 dnl
 
-ROCKSDB_VERSION_MIN="v6.6.4"
+ROCKSDB_VERSION_DEFAULT="v6.6.4"
 
 AC_SUBST(ROCKSDB_CPPFLAGS, [])
 AC_SUBST(ROCKSDB_LDFLAGS, [])
@@ -1819,20 +1819,24 @@ AC_HELP_STRING([--with-rocksdb-libs=[[[DIR]]]], [Path to RocksDB library directo
 
 AC_MSG_CHECKING([whether you asked to use the RocksDB included here])
 AC_ARG_WITH(included-rocksdb,
-AC_HELP_STRING([--with-included-rocksdb[[[=shared]]]], [Use the RocksDB sources from included submodule]),
+AC_HELP_STRING([--with-included-rocksdb[[[=version]]]], [Use the RocksDB sources from included submodule]),
 [
 	AC_MSG_RESULT([yes])
 	with_included_rocksdb="yes"
 
+	AC_MSG_NOTICE([Shared RocksDB linkage requires running charybdis with an intact build directory])
 	ROCKSDB_CPPFLAGS="-isystem $PWD/deps/rocksdb/include"
 	ROCKSDB_LDFLAGS="-L$PWD/deps/rocksdb/"
-
-	AC_MSG_NOTICE([Shared RocksDB linkage requires running charybdis with an intact build directory])
 	ROCKSDB_LDFLAGS+=" -Wl,-rpath=$PWD/deps/rocksdb"
 	ROCKSDB_LIBS="-lrocksdb"
-	rocksdb_linkage="shared_lib"
 
-	bash tools/buildrocks.sh $rocksdb_linkage "$ROCKSDB_VERSION_MIN"
+	rocksdb_linkage="shared_lib"
+	rocksdb_version="$withval"
+	if test -z $rocksdb_version; then
+		rocksdb_version="$ROCKSDB_VERSION_DEFAULT"
+	fi
+
+	bash tools/buildrocks.sh $rocksdb_linkage $rocksdb_version
 	AS_IF([ test $? != 0 ],
 	[
 		AC_MSG_ERROR([Failed to build RocksDB])
