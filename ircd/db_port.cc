@@ -24,6 +24,8 @@ static_assert
 rocksdb::port::Mutex::Mutex()
 noexcept
 {
+	memset(this, 0x0, sizeof(pthread_mutex_t));
+
 	#ifdef RB_DEBUG_DB_PORT_
 	if(unlikely(!ctx::current))
 		return;
@@ -115,6 +117,8 @@ static_assert
 rocksdb::port::RWMutex::RWMutex()
 noexcept
 {
+	memset(this, 0x0, sizeof(pthread_rwlock_t));
+
 	#ifdef RB_DEBUG_DB_PORT_
 	if(unlikely(!ctx::current))
 		return;
@@ -229,8 +233,10 @@ static_assert
 
 rocksdb::port::CondVar::CondVar(Mutex *mu)
 noexcept
-:mu{mu}
 {
+	memset(this, 0x0, sizeof(pthread_cond_t) + sizeof(Mutex *));
+	this->mu = mu;
+
 	#ifdef RB_DEBUG_DB_PORT_
 	if(unlikely(!ctx::current))
 		return;
