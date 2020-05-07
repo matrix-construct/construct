@@ -40,154 +40,27 @@ ircd::ctx::posix::log
 decltype(ircd::ctx::posix::ctxs)
 ircd::ctx::posix::ctxs;
 
-//
-// Linker wraps/hooks; see ircd/Makefile.am LDFLAGS. These allow us to play
-// nice with legitimate uses of pthreads by the rest of the address space by
-// appropriately dispatching to either our implementation or the real one.
-//
-
-//
-// hook pthread_create
-//
-
-extern "C" int
-__real_pthread_create(pthread_t *const thread,
-                      const pthread_attr_t *const attr,
-                      void *(*const start_routine)(void *),
-                      void *const arg);
-
-extern "C" int
-__wrap_pthread_create(pthread_t *const thread,
-                      const pthread_attr_t *const attr,
-                      void *(*const start_routine)(void *),
-                      void *const arg)
-{
-	return ircd::ctx::current?
-		ircd_pthread_create(thread, attr, start_routine, arg):
-		__real_pthread_create(thread, attr, start_routine, arg);
-}
-
-extern "C" int
-pthread_create(pthread_t *const thread,
-               const pthread_attr_t *const attr,
-               void *(*const start_routine)(void *),
-               void *const arg)
-__attribute__((weak, alias("__wrap_pthread_create")));
-
-//
-// hook pthread_join
-//
-
-extern "C" int
-__real_pthread_join(pthread_t __th,
-                    void **__thread_return);
-
-extern "C" int
-__wrap_pthread_join(pthread_t __th,
-                    void **__thread_return)
-{
-	return ircd::ctx::posix::is(__th)?
-		ircd_pthread_join(__th, __thread_return):
-		__real_pthread_join(__th, __thread_return);
-}
-
-extern "C" int
-pthread_join(pthread_t __th,
-             void **__thread_return)
-__attribute__((weak, alias("__wrap_pthread_join")));
-
-//
-// hook pthread_timedjoin_np
-//
-
-extern "C" int
-__real_pthread_timedjoin_np(pthread_t __th,
-                            void **__thread_return,
-                            const struct timespec *__abstime);
-
-extern "C" int
-__wrap_pthread_timedjoin_np(pthread_t __th,
-                            void **__thread_return,
-                            const struct timespec *__abstime)
-{
-	return ircd::ctx::posix::is(__th)?
-		ircd_pthread_timedjoin_np(__th, __thread_return, __abstime):
-		__real_pthread_timedjoin_np(__th, __thread_return, __abstime);
-}
-
-extern "C" int
-pthread_timedjoin_np(pthread_t __th,
-                     void **__thread_return,
-                     const struct timespec *__abstime)
-__attribute__((weak, alias("__wrap_pthread_timedjoin_np")));
-
-//
-// hook pthread_self
-//
-
-extern "C" pthread_t
-__real_pthread_self(void);
-
-extern "C" pthread_t
-__wrap_pthread_self(void)
-{
-	return ircd::ctx::current?
-		ircd_pthread_self():
-		__real_pthread_self();
-}
-
-#if 0
-extern "C" pthread_t
-pthread_self(void)
-__attribute__((weak, alias("__wrap_pthread_self")));
-#endif
-
-//
-// hook pthread_setname_np
-//
-
-extern "C" int
-__real_pthread_setname_np(pthread_t __target_thread,
-                          const char *__name);
-
-extern "C" int
-__wrap_pthread_setname_np(pthread_t __target_thread,
-                          const char *__name)
-{
-	return ircd::ctx::posix::is(__target_thread)?
-		ircd_pthread_setname_np(__target_thread, __name):
-		__real_pthread_setname_np(__target_thread, __name);
-}
-
-extern "C" int
-pthread_setname_np(pthread_t __target_thread,
-                   const char *__name)
-__attribute__((weak, alias("__wrap_pthread_setname_np")));
-
-//
-// util
-//
-
-bool
-ircd::ctx::posix::is(const pthread_t &target)
-noexcept
-{
-	const auto it
-	{
-		std::find_if(begin(ctxs), end(ctxs), [&]
-		(const auto &context)
-		{
-			return id(context) == target;
-		})
-	};
-
-	return it != end(ctxs);
-}
+#define IRCD_WRAP(symbol, target, prototype, body)                         \
+    extern "C" int __real_##symbol prototype;                              \
+    extern "C" int __wrap_##symbol prototype body                          \
+    extern "C" int symbol prototype __attribute__((weak, alias(target)));
 
 ///////////////////////////////////////////////////////////////////////////////
 //
 // pthread supplement
 //
+
+IRCD_WRAP(pthread_create, "__wrap_pthread_create",
+(
+	pthread_t *const thread,
+	const pthread_attr_t *const attr,
+	void *(*const start_routine)(void *),
+	void *const arg
+), {
+	return ircd::ctx::current?
+		ircd_pthread_create(thread, attr, start_routine, arg):
+		__real_pthread_create(thread, attr, start_routine, arg);
+})
 
 int
 ircd_pthread_create(pthread_t *const thread,
@@ -220,6 +93,16 @@ noexcept
 
 	return 0;
 }
+
+IRCD_WRAP(pthread_join, "__wrap_pthread_join",
+(
+	pthread_t __th,
+	void **__thread_return
+), {
+	return ircd::ctx::posix::is(__th)?
+		ircd_pthread_join(__th, __thread_return):
+		__real_pthread_join(__th, __thread_return);
+})
 
 int
 ircd_pthread_join(pthread_t __th,
@@ -258,6 +141,17 @@ ircd_pthread_tryjoin_np(pthread_t __th,
 	return EINVAL;
 }
 
+IRCD_WRAP(pthread_timedjoin_np, "__wrap_pthread_timedjoin_np",
+(
+	pthread_t __th,
+	void **__thread_return,
+	const struct timespec *__abstime
+), {
+	return ircd::ctx::posix::is(__th)?
+		ircd_pthread_timedjoin_np(__th, __thread_return, __abstime):
+		__real_pthread_timedjoin_np(__th, __thread_return, __abstime);
+});
+
 int
 ircd_pthread_timedjoin_np(pthread_t __th,
                           void **__thread_return,
@@ -282,6 +176,23 @@ noexcept
 	always_assert(false);
 	return EINVAL;
 }
+
+extern "C" pthread_t
+__real_pthread_self(void);
+
+extern "C" pthread_t
+__wrap_pthread_self(void)
+{
+	return ircd::ctx::current?
+		ircd_pthread_self():
+		__real_pthread_self();
+}
+
+#if 0
+extern "C" pthread_t
+pthread_self(void)
+__attribute__((weak, alias("__wrap_pthread_self")));
+#endif
 
 pthread_t
 ircd_pthread_self(void)
@@ -412,6 +323,16 @@ noexcept
 	always_assert(false);
 	return EINVAL;
 }
+
+IRCD_WRAP(pthread_setname_np, "__wrap_pthread_setname_np",
+(
+	pthread_t __target_thread,
+	const char *__name
+), {
+	return ircd::ctx::posix::is(__target_thread)?
+		ircd_pthread_setname_np(__target_thread, __name):
+		__real_pthread_setname_np(__target_thread, __name);
+})
 
 int
 ircd_pthread_setname_np(pthread_t __target_thread,
@@ -1556,4 +1477,24 @@ noexcept
 {
 	always_assert(false);
 	return EINVAL;
+}
+
+//
+// util
+//
+
+bool
+ircd::ctx::posix::is(const pthread_t &target)
+noexcept
+{
+	const auto it
+	{
+		std::find_if(begin(ctxs), end(ctxs), [&]
+		(const auto &context)
+		{
+			return id(context) == target;
+		})
+	};
+
+	return it != end(ctxs);
 }
