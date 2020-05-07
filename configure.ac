@@ -1827,22 +1827,10 @@ AC_HELP_STRING([--with-included-rocksdb[[[=shared]]]], [Use the RocksDB sources 
 	ROCKSDB_CPPFLAGS="-isystem $PWD/deps/rocksdb/include"
 	ROCKSDB_LDFLAGS="-L$PWD/deps/rocksdb/"
 
-	AC_MSG_CHECKING([whether to use shared RocksDB])
-	if [[ $withval = "static" ]]; then
-		AC_MSG_RESULT([no])
-		withval="static"
-		rocksdb_linkage="static_lib"
-		AC_MSG_NOTICE([static RocksDB linkage requires multiple dependencies])
-		AC_MSG_NOTICE([| You may need at least: bzip2, zlib, snappy, lz4])
-		ROCKSDB_LIBS="$PWD/deps/rocksdb/librocksdb.a"
-	else
-		AC_MSG_RESULT([yes])
-		withval="shared"
-		rocksdb_linkage="shared_lib"
-		AC_MSG_NOTICE([Shared RocksDB linkage requires running charybdis with an intact build directory])
-		ROCKSDB_LDFLAGS+=" -Wl,-rpath=$PWD/deps/rocksdb"
-		ROCKSDB_LIBS="-lrocksdb"
-	fi
+	AC_MSG_NOTICE([Shared RocksDB linkage requires running charybdis with an intact build directory])
+	ROCKSDB_LDFLAGS+=" -Wl,-rpath=$PWD/deps/rocksdb"
+	ROCKSDB_LIBS="-lrocksdb"
+	rocksdb_linkage="shared_lib"
 
 	bash tools/buildrocks.sh $rocksdb_linkage "$ROCKSDB_VERSION_MIN"
 	AS_IF([ test $? != 0 ],
