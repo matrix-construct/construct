@@ -240,7 +240,10 @@ ircd::m::get_room_keys_version(client &client,
 	if(!event_idx)
 		return resource::response
 		{
-			client, http::NOT_FOUND
+			client, json::members
+			{
+				{ "version", 0L },
+			}
 		};
 
 	if(m::room_id(event_idx) != user_room.room_id)
