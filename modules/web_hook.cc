@@ -110,6 +110,10 @@ static std::pair<json::string, json::string>
 github_find_party(const json::object &content);
 
 static bool
+github_handle__milestone(std::ostream &,
+                         const json::object &content);
+
+static bool
 github_handle__gollum(std::ostream &,
                       const json::object &content);
 
@@ -246,6 +250,8 @@ github_handle(client &client,
 			github_handle__delete(out, request.content):
 		type == "gollum"?
 			github_handle__gollum(out, request.content):
+		type == "milestone"?
+			github_handle__milestone(out, request.content):
 
 		true // unhandled will just show heading
 	};
@@ -431,6 +437,89 @@ github_handle__gollum(std::ostream &out,
 			;
 		}
 	}
+
+	return true;
+}
+
+bool
+github_handle__milestone(std::ostream &out,
+                         const json::object &content)
+{
+	const json::string &action
+	{
+		content["action"]
+	};
+
+	const json::object milestone
+	{
+		content["milestone"]
+	};
+
+	out
+	<< " "
+	<< action
+	<< " "
+	<< "<a href="
+	<< milestone["html_url"]
+	<< ">"
+	<< "<b>"
+	<< json::string(milestone["title"])
+	<< "</b>"
+	<< "</a>"
+	<< ' '
+	;
+
+	const json::string &state
+	{
+		milestone["state"]
+	};
+
+	if(state == "open")
+		out
+	    << "<font color=\"#FFFFFF\""
+	    << "data-mx-bg-color=\"#2cbe4e\">"
+		;
+	else if(state == "closed")
+		out
+	    << "<font color=\"#FFFFFF\""
+	    << "data-mx-bg-color=\"#cb2431\">"
+	    ;
+
+	out
+	<< "&nbsp;<b>"
+	<< state
+	<< "</b>&nbsp;"
+	<< "</font>"
+	;
+
+	out
+	<< ' '
+	<< "<pre><code>"
+	<< json::string(milestone["description"])
+	<< "</code></pre>"
+	;
+
+	out
+	<< ' '
+	<< "&nbsp;"
+	<< "Issues"
+	<< ' '
+	<< "open"
+	<< "&nbsp;"
+    << "<font color=\"#2cbe4e\">"
+	<< "<b>"
+	<< milestone["open_issues"]
+	<< "</b>"
+	<< "</font>"
+	<< ' '
+	<< "closed"
+	<< ' '
+    << "<font color=\"#cb2431\">"
+	<< "<b>"
+	<< milestone["closed_issues"]
+	<< "</b>"
+	<< "</font>"
+	;
 
 	return true;
 }
