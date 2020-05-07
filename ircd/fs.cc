@@ -825,6 +825,71 @@ ircd::fs::read(const string_view &path,
 	return read(fd, bufs, opts);
 }
 
+size_t
+ircd::fs::read(const vector_view<read_op> &op)
+{
+	// Use IOV_MAX as a sanity value for number of operations here
+	if(unlikely(op.size() > info::iov_max))
+		throw error
+		{
+			make_error_code(std::errc::invalid_argument),
+			"Read operation count:%zu exceeds max:%zu",
+			op.size(),
+			info::iov_max,
+		};
+
+	bool aio {true}, all {false};
+	for(size_t i(0); i < op.size(); ++i)
+	{
+		assert(op[i].opts);
+		assert(op[i].opts->aio);
+
+		// If any op isn't tolerant of less bytes actually read than they
+		// requested, they require us to perform the unix read loop, and
+		// that ruins things for everybody!
+		assert(!op[i].opts->all);
+		//all |= op[i].opts->all;
+
+		// If any op doesn't want AIO we have to fallback on sequential
+		// blocking reads for all ops.
+		assert(op[i].opts->aio);
+		//aio &= op[i].opts->aio;
+
+		// EINVAL for exceeding this system's IOV_MAX
+		if(unlikely(op[i].bufs.size() > info::iov_max))
+			throw error
+			{
+				make_error_code(std::errc::invalid_argument),
+				"op[%zu] :buffer count of %zu exceeds IOV_MAX of %zu",
+				i,
+				op[i].bufs.size(),
+				info::iov_max,
+			};
+	}
+
+	#ifdef IRCD_USE_AIO
+	if(likely(aio::system && aio && !all))
+		return aio::read(op);
+	#endif
+
+	// Fallback to sequential read operations
+	size_t ret(0);
+	for(size_t i(0); i < op.size(); ++i) try
+	{
+		assert(op[i].fd);
+		assert(op[i].opts);
+		op[i].ret = read(*op[i].fd, op[i].bufs, *op[i].opts);
+		ret += op[i].ret;
+	}
+	catch(const std::system_error &)
+	{
+		op[i].eptr = std::current_exception();
+		op[i].ret = 0;
+	}
+
+	return ret;
+}
+
 namespace ircd::fs
 {
 	static int flags(const read_opts &opts);

@@ -228,6 +228,72 @@ ircd::fs::aio::read(const fd &fd,
 	return bytes;
 }
 
+size_t
+ircd::fs::aio::read(const vector_view<read_op> &op)
+{
+	const size_t &num(op.size());
+	const size_t numbuf
+	{
+		std::accumulate(std::begin(op), std::end(op), 0UL, []
+		(auto ret, const auto &op)
+		{
+			return ret += op.bufs.size();
+		})
+	};
+
+	assert(num <=info::iov_max); // use as sanity limit on op count.
+	assert(numbuf <= num * info::iov_max);
+	aio::request::read request[num];
+	struct ::iovec buf[numbuf];
+	ctx::dock waiter;
+	for(size_t i(0), b(0); i < num; b += op[i].bufs.size(), ++i)
+	{
+		assert(op[i].bufs.size() <= info::iov_max);
+		assert(b + op[i].bufs.size() <= numbuf);
+		assert(b <= numbuf);
+		const iovec_view iov
+		{
+			buf + b, op[i].bufs.size()
+		};
+
+		assert(op[i].fd);
+		assert(op[i].opts);
+		request[i] =
+		{
+			waiter,
+			*op[i].fd,
+			*op[i].opts,
+			make_iov(iov, op[i].bufs)
+		};
+	}
+
+	// Update stats
+	const scope_count cur_reads{stats.cur_reads, ushort(num)};
+	stats.max_reads = std::max(stats.max_reads, stats.cur_reads);
+
+	// Send requests
+	for(size_t i(0); i < num; ++i)
+		request[i].submit();
+
+	// Recv results
+	size_t ret(0);
+	for(size_t i(0); i < num; ++i) try
+	{
+		op[i].ret = request[i].complete();
+		assert(op[i].ret == buffers::size(op[i].bufs) || !op[i].opts->blocking);
+		ret += op[i].ret;
+		stats.bytes_read += op[i].ret;
+		stats.reads++;
+	}
+	catch(const std::system_error &)
+	{
+		op[i].eptr = std::current_exception();
+		op[i].ret = 0;
+	}
+
+	return ret;
+}
+
 //
 // request::write
 //

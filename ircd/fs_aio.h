@@ -28,6 +28,7 @@ namespace ircd::fs::aio
 	struct request;
 
 	size_t write(const fd &, const const_iovec_view &, const write_opts &);
+	size_t read(const vector_view<read_op> &);
 	size_t read(const fd &, const const_iovec_view &, const read_opts &);
 	size_t fsync(const fd &, const sync_opts &);
 }

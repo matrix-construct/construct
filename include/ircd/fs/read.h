@@ -13,11 +13,13 @@
 
 namespace ircd::fs
 {
+	struct read_op;
 	struct read_opts extern const read_opts_default;
 
 	// Yields ircd::ctx for read into buffers; returns bytes read
 	size_t read(const fd &, const mutable_buffers &, const read_opts & = read_opts_default);
 	size_t read(const string_view &path, const mutable_buffers &, const read_opts & = read_opts_default);
+	size_t read(const vector_view<read_op> &); // parallel read
 
 	// Yields ircd::ctx for read into buffer; returns view of read portion.
 	const_buffer read(const fd &, const mutable_buffer &, const read_opts & = read_opts_default);
@@ -54,6 +56,19 @@ struct ircd::fs::read_opts
 	bool interruptible {true};
 
 	read_opts(const off_t & = 0);
+};
+
+/// Convenience aggregation for the parallel read() overload.
+struct ircd::fs::read_op
+{
+	// request
+	const fs::fd *fd {nullptr};
+	const read_opts *opts {nullptr};
+	mutable_buffers bufs;
+
+	// result
+	std::exception_ptr eptr;
+	size_t ret {0};
 };
 
 inline
