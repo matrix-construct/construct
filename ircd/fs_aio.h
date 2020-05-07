@@ -122,10 +122,10 @@ struct ircd::fs::aio::request
 	struct write;
 	struct fsync;
 
-	ssize_t retval {-2L};
-	ssize_t errcode {0L};
-	const struct opts *opts {nullptr};
-	ctx::dock *waiter {nullptr};
+	ssize_t retval;
+	ssize_t errcode;
+	const struct opts *opts;
+	ctx::dock *waiter;
 
 	bool wait();
 

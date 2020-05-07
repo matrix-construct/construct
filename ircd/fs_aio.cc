@@ -361,6 +361,8 @@ ircd::fs::aio::request::request(const int &fd,
                                 const struct opts *const &opts,
                                 ctx::dock *const &waiter)
 :iocb{0}
+,retval{-2L}
+,errcode{0L}
 ,opts{opts}
 ,waiter{waiter}
 {
