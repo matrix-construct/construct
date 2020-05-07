@@ -24,18 +24,21 @@ template<class T>
 struct ircd::util::scope_count
 {
 	T *count {nullptr};
+	T inc {1};
 
-	scope_count(T &count);
+	scope_count(T &count, const T & = 1);
 	scope_count(const scope_count &) = delete;
 	scope_count(scope_count &&) noexcept = delete;
 	~scope_count() noexcept;
 };
 
 template<class T>
-ircd::util::scope_count<T>::scope_count(T &count)
+ircd::util::scope_count<T>::scope_count(T &count,
+                                        const T &inc)
 :count{&count}
+,inc{inc}
 {
-	++count;
+	count += inc;
 }
 
 template<class T>
@@ -43,5 +46,5 @@ ircd::util::scope_count<T>::~scope_count()
 noexcept
 {
 	assert(count);
-	--(*count);
+	(*count) -= inc;
 }
