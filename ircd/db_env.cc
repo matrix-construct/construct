@@ -3340,6 +3340,106 @@ catch(const std::exception &e)
 	return error_to_status{e};
 }
 
+#ifdef IRCD_DB_HAS_ENV_MULTIREAD
+rocksdb::Status
+ircd::db::database::env::random_access_file::MultiRead(rocksdb::ReadRequest *const req,
+                                                       size_t num)
+noexcept try
+{
+	assert(req);
+	const ctx::uninterruptible::nothrow ui;
+
+	fs::read_op op[num];
+	mutable_buffer buf[num];
+	fs::read_opts opts[num];
+	for(size_t i(0); i < num; ++i)
+	{
+		opts[i].offset = req[i].offset;
+		opts[i].priority = ionice;
+		opts[i].aio = this->aio;
+		opts[i].all = false;
+		buf[i] =
+		{
+			req[i].scratch, req[i].len
+		};
+
+		op[i].fd = std::addressof(this->fd);
+		op[i].opts = opts + i;
+		op[i].bufs =
+		{
+			buf + i, 1
+		};
+
+		#ifdef RB_DEBUG_DB_ENV
+		log::debug
+		{
+			log, "[%s] rfile:%p multiread:%zu:%zu offset:%zu length:%zu scratch:%p",
+			d.name,
+			this,
+			i,
+			num,
+			req[i].offset,
+			req[i].len,
+			req[i].scratch,
+		};
+		#endif
+
+		assert(!this->opts.direct || buffer::aligned(buf[i], _buffer_align));
+	}
+
+	const auto bytes
+	{
+		fs::read({op, num})
+	};
+
+	for(size_t i(0); i < num; ++i) try
+	{
+		assert(op[i].ret <= size(buf[i]));
+		const const_buffer read(buf[i], op[i].ret);
+		req[i].result = slice(read);
+
+		if(op[i].eptr)
+			std::rethrow_exception(op[i].eptr);
+
+		req[i].status = Status::OK();
+	}
+	catch(const std::exception &e)
+	{
+		req[i].status = error_to_status{e};
+	}
+
+	return Status::OK();
+}
+catch(const std::system_error &e)
+{
+	log::error
+	{
+		log, "[%s] rfile:%p multiread:%p num:%zu :%s",
+		d.name,
+		this,
+		req,
+		num,
+		e.what(),
+	};
+
+	return error_to_status{e};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "[%s] rfile:%p multiread:%p num:%zu :%s",
+		d.name,
+		this,
+		req,
+		num,
+		e.what(),
+	};
+
+	return error_to_status{e};
+}
+#endif IRCD_DB_HAS_ENV_MULTIREAD
+
 rocksdb::Status
 ircd::db::database::env::random_access_file::Read(uint64_t offset,
                                                   size_t length,

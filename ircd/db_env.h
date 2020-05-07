@@ -14,6 +14,12 @@
 	#define IRCD_DB_HAS_ENV_PRIO_USER
 #endif
 
+#if ROCKSDB_MAJOR > 6 \
+|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR > 3) \
+|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR == 3 && ROCKSDB_PATCH >= 6)
+	#define IRCD_DB_HAS_ENV_MULTIREAD
+#endif
+
 /// Internal environment hookup.
 ///
 struct ircd::db::database::env final
@@ -143,6 +149,9 @@ struct ircd::db::database::env::random_access_file final
 	void Hint(AccessPattern pattern) noexcept override;
 	Status InvalidateCache(size_t offset, size_t length) noexcept override;
 	Status Read(uint64_t offset, size_t n, Slice *result, char *scratch) const noexcept override;
+	#ifdef IRCD_DB_HAS_ENV_MULTIREAD
+	Status MultiRead(rocksdb::ReadRequest *, size_t num) noexcept override;
+	#endif
 	Status Prefetch(uint64_t offset, size_t n) noexcept override;
 
 	random_access_file(database *const &d, const std::string &name, const EnvOptions &);
