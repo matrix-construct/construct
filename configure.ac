@@ -1832,7 +1832,7 @@ AC_HELP_STRING([--with-included-rocksdb[[[=version]]]], [Use the RocksDB sources
 
 	rocksdb_linkage="shared_lib"
 	rocksdb_version="$withval"
-	if test -z $rocksdb_version; then
+	if test x"$rocksdb_version" == x"yes"; then
 		rocksdb_version="$ROCKSDB_VERSION_DEFAULT"
 	fi
 
