@@ -38,7 +38,7 @@ ircd::m::user::filter::set(const mutable_buffer &idbuf,
 
 	//TODO: ABA
 	if(user_room.has("ircd.filter", filter_id))
-		return {};
+		return filter_id;
 
 	//TODO: ABA
 	send(user_room, user.user_id, "ircd.filter", filter_id, filter);
