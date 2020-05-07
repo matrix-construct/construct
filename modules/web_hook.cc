@@ -1014,6 +1014,21 @@ github_handle__issue_comment(std::ostream &out,
 		    ;
 	}
 
+	for(const json::object &label : json::array(issue["labels"]))
+		out
+		<< "<font color=\"#FFFFFF\""
+		<< "data-mx-bg-color=\"#"
+		<< json::string(label["color"])
+		<< "\">"
+		<< "<b>"
+		<< "&nbsp;"
+		<< json::string(label["name"])
+		<< "&nbsp;"
+		<< "</b>"
+		<< "</font>"
+		<< "&nbsp;"
+		;
+
 	return true;
 }
 
