@@ -50,6 +50,8 @@
 	#include "file/sst_file_manager_impl.h"
 #endif
 
+#include "db_env.h"
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // https://github.com/facebook/rocksdb/issues/4654. In summary, some RocksDB
@@ -111,7 +113,8 @@ rocksdb::WriteThread::BlockingAwaitState(Writer *const w,
 // simply not start that thread.
 //
 
-#if __has_include("util/delete_scheduler.h")
+#if !defined(IRCD_DB_HAS_ENV_FILESYSTEM) \
+&& (__has_include("util/delete_scheduler.h") || __has_include("file/delete_scheduler.h"))
 rocksdb::DeleteScheduler::DeleteScheduler(Env* env,
                                           int64_t rate_bytes_per_sec,
                                           Logger* info_log,
@@ -136,7 +139,8 @@ max_trash_db_ratio_(max_trash_db_ratio)
 }
 #endif
 
-#if __has_include("file/delete_scheduler.h") && defined(IRCD_DB_HAVE_ENV_FILESYSTEM)
+#if defined(IRCD_DB_HAS_ENV_FILESYSTEM) \
+&& __has_include("file/delete_scheduler.h")
 rocksdb::DeleteScheduler::DeleteScheduler(Env* env,
                                           FileSystem *fs,
                                           int64_t rate_bytes_per_sec,
