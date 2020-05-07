@@ -501,7 +501,6 @@ github_handle__milestone(std::ostream &out,
 
 	out
 	<< ' '
-	<< "&nbsp;"
 	<< "Issues"
 	<< ' '
 	<< "open"
@@ -942,6 +941,67 @@ github_handle__issues(std::ostream &out,
 		out << "</font>";
 		out << "</li>";
 		out << "</ul>";
+	}
+	else if(action == "milestoned")
+	{
+		const json::object &milestone
+		{
+			content["milestone"]
+		};
+
+		out
+		<< "<ul>"
+		<< "<li>"
+		<< "<a href="
+		<< milestone["html_url"]
+		<< ">"
+		<< json::string(milestone["title"])
+		<< "</a>"
+		<< ' '
+		;
+
+		const json::string &state{milestone["state"]};
+		if(state == "open")
+			out
+			<< "<font color=\"#FFFFFF\""
+			<< "data-mx-bg-color=\"#2cbe4e\">"
+			;
+		else if(state == "closed")
+			out
+			<< "<font color=\"#FFFFFF\""
+			<< "data-mx-bg-color=\"#cb2431\">"
+			;
+
+		out
+		<< "&nbsp;<b>"
+		<< state
+		<< "</b>&nbsp;"
+		<< "</font>"
+		;
+
+		out
+		<< ' '
+		<< "&nbsp;"
+		<< "Issues"
+		<< ' '
+		<< "<font color=\"#2cbe4e\">"
+		<< "<b>"
+		<< milestone["open_issues"]
+		<< "</b>"
+		<< "</font>"
+		<< ' '
+		<< "open"
+		<< ' '
+		<< "<font color=\"#cb2431\">"
+		<< "<b>"
+		<< milestone["closed_issues"]
+		<< "</b>"
+		<< "</font>"
+		<< ' '
+		<< "closed"
+		<< "</li>"
+		<< "</ul>"
+		;
 	}
 
 	return true;
