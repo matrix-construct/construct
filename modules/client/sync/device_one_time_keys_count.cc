@@ -60,6 +60,11 @@ ircd::m::sync::device_one_time_keys_count_linear(data &data)
 		json::get<"content"_>(*data.event)
 	};
 
+	json::stack::object object
+	{
+		*data.out, "device_one_time_keys_count"
+	};
+
 	return _device_one_time_keys_count(data);
 }
 
