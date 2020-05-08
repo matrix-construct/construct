@@ -36,9 +36,8 @@
 AC_DEFUN([AX_BOOST_CONTEXT],
 [
 	AC_ARG_WITH([boost-context],
-		AS_HELP_STRING([--with-boost-context@<:@=special-lib@:>@],
-		[use the Context library from boost - it is possible to specify a certain library for the linker
-			e.g. --with-boost-context=boost_context-gcc-mt ]), [
+		RB_HELP_STRING([--with-boost-context@<:@=special-lib@:>@],
+		[use the Context library from boost - it is possible to specify a certain library for the linker e.g. --with-boost-context=boost_context-gcc-mt ]), [
 		if test "$withval" = "no"; then
 			want_boost="no"
 		elif test "$withval" = "yes"; then

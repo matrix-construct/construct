@@ -121,7 +121,7 @@ dnl Debugging mode
 dnl
 
 AC_MSG_CHECKING(whether to enable debugging)
-AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug], [Enable debugging suite for development.]),
+AC_ARG_ENABLE(debug, RB_HELP_STRING([--enable-debug], [Enable debugging suite for development.]),
 [
 	debug="yes"
 	AC_MSG_RESULT([yes])
@@ -141,7 +141,7 @@ dnl Compactness
 dnl
 
 AC_MSG_CHECKING(Optimize for size; strip symbols; force no debugging)
-AC_ARG_ENABLE(compact, AC_HELP_STRING([--enable-compact], [Optimize for size and compactness]),
+AC_ARG_ENABLE(compact, RB_HELP_STRING([--enable-compact], [Optimize for size and compactness]),
 [
 	AC_MSG_RESULT([yes])
 	AC_SUBST(COMPACT, 1)
@@ -157,7 +157,7 @@ dnl Explicit assert switch for still using assert() without --enable-debug
 dnl
 
 AC_MSG_CHECKING(whether to explicitly enable assertions)
-AC_ARG_ENABLE(assert, AC_HELP_STRING([--enable-assert], [Enable assertions without --enable-debug]),
+AC_ARG_ENABLE(assert, RB_HELP_STRING([--enable-assert], [Enable assertions without --enable-debug]),
 [
 	AC_MSG_RESULT([yes])
 	AC_SUBST(ASSERT, 1)
@@ -187,7 +187,7 @@ dnl Switch to control the action of assert()
 dnl
 
 AC_MSG_CHECKING(whether to change the behavior of assertions)
-AC_ARG_WITH(assert, AC_HELP_STRING([--with-assert[[[=abort]]]], [Soften assertion behavior]),
+AC_ARG_WITH(assert, RB_HELP_STRING([--with-assert[[[=abort]]]], [Soften assertion behavior]),
 [
 	assert_type=$withval
 	AC_MSG_RESULT([yes, "$assert_type"])
@@ -216,7 +216,7 @@ dnl Explicit optimize switch for enabling optimization when using --enable-debug
 dnl
 
 AC_MSG_CHECKING(whether to explicitly enable optimized build)
-AC_ARG_ENABLE(optimize, AC_HELP_STRING([--enable-optimize], [Enable optimization even with --enable-debug]),
+AC_ARG_ENABLE(optimize, RB_HELP_STRING([--enable-optimize], [Enable optimization even with --enable-debug]),
 [
 	AC_MSG_RESULT([yes])
 	AC_SUBST(OPTIMIZE, 1)
@@ -237,7 +237,7 @@ dnl Explicit link-time-optimization switch
 dnl
 
 AC_MSG_CHECKING(whether to enable link-time optimization)
-AC_ARG_ENABLE(lto, AC_HELP_STRING([--disable-lto], [Enable link-time optimization]),
+AC_ARG_ENABLE(lto, RB_HELP_STRING([--disable-lto], [Enable link-time optimization]),
 [
 	lto="no"
 	AC_MSG_RESULT([no, explicitly disabled])
@@ -266,7 +266,7 @@ dnl Explicit optimization level switch
 dnl
 
 AC_MSG_CHECKING(whether to explicitly set the optimization level)
-AC_ARG_WITH(optimize-level, AC_HELP_STRING([--with-optimize-level[[[=3]]]], [Explicitly set the optimize level]),
+AC_ARG_WITH(optimize-level, RB_HELP_STRING([--with-optimize-level[[[=3]]]], [Explicitly set the optimize level]),
 [
 	optimize_level=$withval
 	AC_MSG_RESULT([yes, enabling optimization level -O$optimize_level])
@@ -310,7 +310,7 @@ dnl NOTE: Log levels here must be manually sync'ed with ircd/logger.h
 dnl
 
 AC_MSG_CHECKING(whether to explicitly set the logging level ceiling)
-AC_ARG_WITH(log-level, AC_HELP_STRING([--with-log-level[[[=INFO]]]], [Explicitly set the log level ceiling]),
+AC_ARG_WITH(log-level, RB_HELP_STRING([--with-log-level[[[=INFO]]]], [Explicitly set the log level ceiling]),
 [
 	AC_MSG_RESULT([yes, enabling log level $withval and below])
 
@@ -355,7 +355,7 @@ dnl Profiling mode
 dnl
 
 AC_MSG_CHECKING(whether to do a profile build)
-AC_ARG_ENABLE(profile, AC_HELP_STRING([--enable-profile], [Enable profiling]),
+AC_ARG_ENABLE(profile, RB_HELP_STRING([--enable-profile], [Enable profiling]),
 [
 	profiling="yes"
 	AM_COND_IF(GCC,
@@ -383,7 +383,7 @@ dnl Precompiled headers
 dnl
 
 AC_MSG_CHECKING(whether to disable precompiled headers)
-AC_ARG_ENABLE(pch, AC_HELP_STRING([--disable-pch], [Disable precompiled header generation]),
+AC_ARG_ENABLE(pch, RB_HELP_STRING([--disable-pch], [Disable precompiled header generation]),
 [
 	build_pch="no"
 	AC_MSG_RESULT([no])
@@ -400,7 +400,7 @@ dnl Generic Mode compilation
 dnl
 
 AC_MSG_CHECKING(whether to enable generic mode or tune for this host)
-AC_ARG_ENABLE(generic, AC_HELP_STRING([--enable-generic], [Emit more generic code for pkg binaries.]),
+AC_ARG_ENABLE(generic, RB_HELP_STRING([--enable-generic], [Emit more generic code for pkg binaries.]),
 [
 	enable_generic="yes"
 	AC_MSG_RESULT([yes])
@@ -426,7 +426,7 @@ dnl Untuned Mode compilation
 dnl
 
 AC_MSG_CHECKING(whether to enable fully untuned mode)
-AC_ARG_ENABLE(untuned, AC_HELP_STRING([--enable-untuned], [Emit no special feature instructions.]),
+AC_ARG_ENABLE(untuned, RB_HELP_STRING([--enable-untuned], [Emit no special feature instructions.]),
 [
 	enable_untuned="yes"
 	AC_MSG_RESULT([yes])
@@ -451,7 +451,7 @@ dnl Disable third-party allocators
 dnl
 
 AC_MSG_CHECKING(whether to prevent available third-party allocator libraries from being used)
-AC_ARG_ENABLE(malloc-libs, AC_HELP_STRING([--disable-malloc-libs], [Disable third-party dynamic memory libraries (jemalloc/tcmalloc/etc)]),
+AC_ARG_ENABLE(malloc-libs, RB_HELP_STRING([--disable-malloc-libs], [Disable third-party dynamic memory libraries (jemalloc/tcmalloc/etc)]),
 [
 	use_malloc_libs="no"
 	AC_MSG_RESULT([yes])
@@ -466,7 +466,7 @@ dnl
 dnl Low memory compilation mode
 dnl
 
-AC_ARG_ENABLE(lowmem-compile, AC_HELP_STRING([--enable-lowmem-compile], [Enable low-memory compilation options]),
+AC_ARG_ENABLE(lowmem-compile, RB_HELP_STRING([--enable-lowmem-compile], [Enable low-memory compilation options]),
 [
 	lowmem_compile="yes"
 ], [
@@ -677,7 +677,7 @@ FRAME_SIZE_WARNING=8192
 CWARNS=""
 AC_MSG_CHECKING(whether to disable warnings)
 AC_ARG_ENABLE(warnings,
-AC_HELP_STRING([--disable-warnings],[Disable all sorts of warnings like a rockstar]),
+RB_HELP_STRING([--disable-warnings], [Disable all sorts of warnings like a rockstar]),
 [],
 [
 
@@ -1014,7 +1014,7 @@ dnl
 dnl ip6
 dnl
 
-AC_ARG_ENABLE(ipv6, AC_HELP_STRING([--disable-ipv6], [Disable IPv6 support]),
+AC_ARG_ENABLE(ipv6, RB_HELP_STRING([--disable-ipv6], [Disable IPv6 support]),
 [
 	ipv6="no"
 ], [
@@ -1078,7 +1078,7 @@ dnl
 
 AM_COND_IF(LINUX,
 [
-	AC_ARG_ENABLE(aio, AC_HELP_STRING([--disable-aio], [Disable kernel AIO support]),
+	AC_ARG_ENABLE(aio, RB_HELP_STRING([--disable-aio], [Disable kernel AIO support]),
 	[
 		aio=$enableval
 	], [
@@ -1098,7 +1098,7 @@ dnl
 
 AM_COND_IF(LINUX,
 [
-	AC_ARG_ENABLE(io_uring, AC_HELP_STRING([--disable-io_uring], [Disable kernel io_uring support]),
+	AC_ARG_ENABLE(io_uring, RB_HELP_STRING([--disable-io_uring], [Disable kernel io_uring support]),
 	[
 		io_uring=$enableval
 	], [
@@ -1169,7 +1169,7 @@ dnl
 
 AC_SUBST_DIR([moduledir])
 AC_MSG_CHECKING([whether to modify moduledir])
-AC_ARG_WITH(moduledir, AC_HELP_STRING([--with-moduledir=DIR], [Directory to install modules.]),
+AC_ARG_WITH(moduledir, RB_HELP_STRING([--with-moduledir=DIR], [Directory to install modules.]),
 [
 	AC_MSG_RESULT(yes)
 	moduledir=`echo $withval | sed 's/\/$//'`
@@ -1204,7 +1204,7 @@ dnl Check for --with-webappdir
 dnl
 
 AC_MSG_CHECKING([whether to modify webappdir])
-AC_ARG_WITH(webappdir, AC_HELP_STRING([--with-webappdir=DIR], [Directory to install served assets]),
+AC_ARG_WITH(webappdir, RB_HELP_STRING([--with-webappdir=DIR], [Directory to install served assets]),
 [
 	AC_MSG_RESULT(yes)
 	webappdir=`echo $withval | sed 's/\/$//'`
@@ -1230,7 +1230,7 @@ dnl Check for --with-dbdir
 dnl
 
 AC_MSG_CHECKING([whether to modify database directory])
-AC_ARG_WITH(dbdir, AC_HELP_STRING([--with-dbdir=DIR], [Directory where databases are located]),
+AC_ARG_WITH(dbdir, RB_HELP_STRING([--with-dbdir=DIR], [Directory where databases are located]),
 [
 	AC_MSG_RESULT(yes)
 	dbdir=`echo $withval | sed 's/\/$//'`
@@ -1247,7 +1247,7 @@ dnl Check for --with-logdir
 dnl
 
 AC_MSG_CHECKING([whether to modify logdir])
-AC_ARG_WITH(logdir, AC_HELP_STRING([--with-logdir=DIR], [Directory where to write logfiles.]),
+AC_ARG_WITH(logdir, RB_HELP_STRING([--with-logdir=DIR], [Directory where to write logfiles.]),
 [
 	AC_MSG_RESULT(yes)
 	logdir=`echo $withval | sed 's/\/$//'`
@@ -1284,13 +1284,13 @@ AC_SUBST(SODIUM_LDFLAGS, [])
 AC_SUBST(SODIUM_LIBS, [])
 
 AC_ARG_WITH(sodium-includes,
-AC_HELP_STRING([--with-sodium-includes=[[[DIR]]]], [Path to sodium include directory]),
+RB_HELP_STRING([--with-sodium-includes=[[[DIR]]]], [Path to sodium include directory]),
 [
 	SODIUM_CPPFLAGS+=" -I$withval"
 ], [])
 
 AC_ARG_WITH(sodium-libs,
-AC_HELP_STRING([--with-sodium-libs=[[[DIR]]]], [Path to sodium library directory]),
+RB_HELP_STRING([--with-sodium-libs=[[[DIR]]]], [Path to sodium library directory]),
 [
 	SODIUM_LDFLAGS+=" -L$withval"
 ], [])
@@ -1331,20 +1331,20 @@ AC_SUBST(SSL_LDFLAGS, [])
 AC_SUBST(SSL_LIBS, [])
 
 AC_ARG_WITH(ssl,
-AC_HELP_STRING([--with-ssl=[[[DIR]]]], [Path to SSL source directory]),
+RB_HELP_STRING([--with-ssl=[[[DIR]]]], [Path to SSL source directory]),
 [
 	SSL_CPPFLAGS="-I$withval/include"
 	SSL_LDFLAGS="-L$withval"
 ], [])
 
 AC_ARG_WITH(ssl-includes,
-AC_HELP_STRING([--with-ssl-includes=[[[DIR]]]], [Path to SSL include directory]),
+RB_HELP_STRING([--with-ssl-includes=[[[DIR]]]], [Path to SSL include directory]),
 [
 	SSL_CPPFLAGS="-I$withval"
 ], [])
 
 AC_ARG_WITH(ssl-libs,
-AC_HELP_STRING([--with-ssl-libs=[[[DIR]]]], [Path to SSL library directory]),
+RB_HELP_STRING([--with-ssl-libs=[[[DIR]]]], [Path to SSL library directory]),
 [
 	SSL_LDFLAGS="-L$withval"
 ], [])
@@ -1399,19 +1399,19 @@ AC_SUBST(MAGIC_LDFLAGS, [])
 AC_SUBST(MAGIC_LIBS, [])
 
 AC_ARG_WITH(magic-includes,
-AC_HELP_STRING([--with-magic-includes=[[[DIR]]]], [Path to magic include directory]),
+RB_HELP_STRING([--with-magic-includes=[[[DIR]]]], [Path to magic include directory]),
 [
 	MAGIC_CPPFLAGS="-I$withval"
 ], [])
 
 AC_ARG_WITH(magic-libs,
-AC_HELP_STRING([--with-magic-libs=[[[DIR]]]], [Path to magic library directory]),
+RB_HELP_STRING([--with-magic-libs=[[[DIR]]]], [Path to magic library directory]),
 [
 	MAGIC_LDFLAGS="-L$withval"
 ], [])
 
 AC_ARG_WITH(magic-file,
-AC_HELP_STRING([--with-magic-file=[[[FILE]]]], [Path to magic database file]),
+RB_HELP_STRING([--with-magic-file=[[[FILE]]]], [Path to magic database file]),
 [
 	MAGIC_FILE="$withval"
 	RB_DEFINE_UNQUOTED([MAGIC_FILE], ["$MAGIC_FILE"], [Magic file path])
@@ -1442,13 +1442,13 @@ AC_SUBST(Z_LDFLAGS)
 AC_SUBST(Z_LIBS)
 
 AC_ARG_WITH(z-includes,
-AC_HELP_STRING([--with-z-includes=[[[DIR]]]], [Path to zlib include directory]),
+RB_HELP_STRING([--with-z-includes=[[[DIR]]]], [Path to zlib include directory]),
 [
 	Z_CPPFLAGS="-I$withval"
 ], [])
 
 AC_ARG_WITH(z-libs,
-AC_HELP_STRING([--with-z-libs=[[[DIR]]]], [Path to zlib library directory]),
+RB_HELP_STRING([--with-z-libs=[[[DIR]]]], [Path to zlib library directory]),
 [
 	Z_LDFLAGS="-L$withval"
 ], [])
@@ -1475,13 +1475,13 @@ AC_SUBST(LZ4_LDFLAGS)
 AC_SUBST(LZ4_LIBS)
 
 AC_ARG_WITH(lz4-includes,
-AC_HELP_STRING([--with-lz4-includes=[[[DIR]]]], [Path to LZ4 include directory]),
+RB_HELP_STRING([--with-lz4-includes=[[[DIR]]]], [Path to LZ4 include directory]),
 [
 	LZ4_CPPFLAGS="-I$withval"
 ], [])
 
 AC_ARG_WITH(lz4-libs,
-AC_HELP_STRING([--with-lz4-libs=[[[DIR]]]], [Path to LZ4 library directory]),
+RB_HELP_STRING([--with-lz4-libs=[[[DIR]]]], [Path to LZ4 library directory]),
 [
 	LZ4_LDFLAGS="-L$withval"
 ], [])
@@ -1508,13 +1508,13 @@ AC_SUBST(SNAPPY_LDFLAGS)
 AC_SUBST(SNAPPY_LIBS)
 
 AC_ARG_WITH(snappy-includes,
-AC_HELP_STRING([--with-snappy-includes=[[[DIR]]]], [Path to snappy include directory]),
+RB_HELP_STRING([--with-snappy-includes=[[[DIR]]]], [Path to snappy include directory]),
 [
 	SNAPPY_CPPFLAGS="-I$withval"
 ], [])
 
 AC_ARG_WITH(snappy-libs,
-AC_HELP_STRING([--with-snappy-libs=[[[DIR]]]], [Path to snappy library directory]),
+RB_HELP_STRING([--with-snappy-libs=[[[DIR]]]], [Path to snappy library directory]),
 [
 	SNAPPY_LDFLAGS="-L$withval"
 ], [])
@@ -1541,13 +1541,13 @@ AC_SUBST(GMP_LDFLAGS, [])
 AC_SUBST(GMP_LIBS, [])
 
 AC_ARG_WITH(gmp-includes,
-AC_HELP_STRING([--with-gmp-includes=[[[DIR]]]], [Path to libgmp include directory]),
+RB_HELP_STRING([--with-gmp-includes=[[[DIR]]]], [Path to libgmp include directory]),
 [
 	GMP_CPPFLAGS="-isystem $withval"
 ], [])
 
 AC_ARG_WITH(gmp-libs,
-AC_HELP_STRING([--with-gmp-libs=[[[DIR]]]], [Path to libgmp library directory]),
+RB_HELP_STRING([--with-gmp-libs=[[[DIR]]]], [Path to libgmp library directory]),
 [
 	GMP_LDFLAGS="-L$withval"
 ], [])
@@ -1574,20 +1574,20 @@ AC_SUBST(PBC_LDFLAGS, [])
 AC_SUBST(PBC_LIBS, [])
 
 AC_ARG_WITH(pbc-includes,
-AC_HELP_STRING([--with-pbc-includes=[[[DIR]]]], [Path to libpbc include directory]),
+RB_HELP_STRING([--with-pbc-includes=[[[DIR]]]], [Path to libpbc include directory]),
 [
 	PBC_CPPFLAGS="-isystem $withval"
 ], [])
 
 AC_ARG_WITH(pbc-libs,
-AC_HELP_STRING([--with-pbc-libs=[[[DIR]]]], [Path to libpbc library directory]),
+RB_HELP_STRING([--with-pbc-libs=[[[DIR]]]], [Path to libpbc library directory]),
 [
 	PBC_LDFLAGS="-L$withval"
 ], [])
 
 AC_MSG_CHECKING([whether you asked to use the Pairing-Based Cryptography library included here])
 AC_ARG_WITH(included-pbc,
-AC_HELP_STRING([--with-included-pbc], [Use the libpbc sources from included submodule]),
+RB_HELP_STRING([--with-included-pbc], [Use the libpbc sources from included submodule]),
 [
 	AC_MSG_RESULT([yes])
 	have_pbc="yes"
@@ -1629,7 +1629,7 @@ AC_SUBST(IMAGEMAGICK_LDFLAGS, [])
 AC_SUBST(IMAGEMAGICK_LIBS, [])
 
 AC_ARG_WITH(imagemagick-includes,
-AC_HELP_STRING([--with-imagemagick-includes=[[[DIR]]]], [Path to imagemagick include directory]),
+RB_HELP_STRING([--with-imagemagick-includes=[[[DIR]]]], [Path to imagemagick include directory]),
 [
 	IMAGEMAGICK_CPPFLAGS+="-I$withval"
 ], [
@@ -1637,7 +1637,7 @@ AC_HELP_STRING([--with-imagemagick-includes=[[[DIR]]]], [Path to imagemagick inc
 ])
 
 AC_ARG_WITH(imagemagick-libs,
-AC_HELP_STRING([--with-imagemagick-libs=[[[DIR]]]], [Path to imagemagick library directory]),
+RB_HELP_STRING([--with-imagemagick-libs=[[[DIR]]]], [Path to imagemagick library directory]),
 [
 	IMAGEMAGICK_LDFLAGS+="-L$withval"
 ], [])
@@ -1696,14 +1696,14 @@ AC_SUBST(BOOST_LDFLAGS, [])
 AC_SUBST(BOOST_LIBS, [])
 
 AC_ARG_WITH(boost-includes,
-AC_HELP_STRING([--with-boost-includes=[[[DIR]]]], [Path to boost include directory]),
+RB_HELP_STRING([--with-boost-includes=[[[DIR]]]], [Path to boost include directory]),
 [
 	boost_incdir="$withval"
 	BOOST_CPPFLAGS="-isystem $withval"
 ], [])
 
 AC_ARG_WITH(boost-libs,
-AC_HELP_STRING([--with-boost-libs=[[[DIR]]]], [Path to boost library directory]),
+RB_HELP_STRING([--with-boost-libs=[[[DIR]]]], [Path to boost library directory]),
 [
 	boost_libdir="$withval"
 	BOOST_LDFLAGS="-L$withval"
@@ -1711,7 +1711,7 @@ AC_HELP_STRING([--with-boost-libs=[[[DIR]]]], [Path to boost library directory])
 
 AC_MSG_CHECKING([whether you asked to use boost sources included here])
 AC_ARG_WITH(included-boost,
-AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from included submodule]),
+RB_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from included submodule]),
 [
 	AC_MSG_RESULT([yes])
 	AC_MSG_NOTICE([Bootstrapping boost])
@@ -1806,20 +1806,20 @@ AC_SUBST(ROCKSDB_LDFLAGS, [])
 AC_SUBST(ROCKSDB_LIBS, [])
 
 AC_ARG_WITH(rocksdb-includes,
-AC_HELP_STRING([--with-rocksdb-includes=[[[DIR]]]], [Path to RocksDB include directory]),
+RB_HELP_STRING([--with-rocksdb-includes=[[[DIR]]]], [Path to RocksDB include directory]),
 [
 	ROCKSDB_CPPFLAGS="-isystem $withval"
 ], [])
 
 AC_ARG_WITH(rocksdb-libs,
-AC_HELP_STRING([--with-rocksdb-libs=[[[DIR]]]], [Path to RocksDB library directory]),
+RB_HELP_STRING([--with-rocksdb-libs=[[[DIR]]]], [Path to RocksDB library directory]),
 [
 	ROCKSDB_LDFLAGS="-L$withval"
 ], [])
 
 AC_MSG_CHECKING([whether you asked to use the RocksDB included here])
 AC_ARG_WITH(included-rocksdb,
-AC_HELP_STRING([--with-included-rocksdb[[[=version]]]], [Use the RocksDB sources from included submodule]),
+RB_HELP_STRING([--with-included-rocksdb[[[=version]]]], [Use the RocksDB sources from included submodule]),
 [
 	AC_MSG_RESULT([yes])
 	with_included_rocksdb="yes"
@@ -1861,7 +1861,7 @@ dnl
 
 AC_MSG_CHECKING([whether you asked to use the JS engine included here])
 AC_ARG_WITH(included-js,
-AC_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonkey) sources we include here]),
+RB_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonkey) sources we include here]),
 [
 	AC_MSG_RESULT([yes])
 	with_included_js="yes"
@@ -1954,7 +1954,7 @@ PKG_CHECK_MODULES(JEMALLOC, [jemalloc],
 ])
 
 AC_MSG_CHECKING(whether to disable use of any found jemalloc)
-AC_ARG_ENABLE(jemalloc, AC_HELP_STRING([--disable-jemalloc], [Disable jemalloc as third-party dynamic memory manager.]),
+AC_ARG_ENABLE(jemalloc, RB_HELP_STRING([--disable-jemalloc], [Disable jemalloc as third-party dynamic memory manager.]),
 [
 	AC_MSG_RESULT([yes])
 	enable_jemalloc="no"
@@ -2003,7 +2003,7 @@ AC_SUBST(LLVM_LDFLAGS, [])
 AC_SUBST(LLVM_LIBS, [])
 
 AC_ARG_WITH(llvm-includes,
-AC_HELP_STRING([--with-llvm-includes=[[[DIR]]]], [Path to libllvm include directory]),
+RB_HELP_STRING([--with-llvm-includes=[[[DIR]]]], [Path to libllvm include directory]),
 [
 	LLVM_CPPFLAGS="-isystem $withval"
 ], [
@@ -2011,7 +2011,7 @@ AC_HELP_STRING([--with-llvm-includes=[[[DIR]]]], [Path to libllvm include direct
 ])
 
 AC_ARG_WITH(llvm-libs,
-AC_HELP_STRING([--with-llvm-libs=[[[DIR]]]], [Path to libllvm library directory]),
+RB_HELP_STRING([--with-llvm-libs=[[[DIR]]]], [Path to libllvm library directory]),
 [
 	LLVM_LDFLAGS="-L$withval"
 ], [
@@ -2074,7 +2074,7 @@ dnl --with-mxid-maxlen
 dnl
 
 AC_ARG_WITH(mxid-maxlen,
-AC_HELP_STRING([--with-mxid-maxlen=LENGTH],[Set the upper-bound mxid length to LENGTH (default 255, max 511)]),
+RB_HELP_STRING([--with-mxid-maxlen=LENGTH],[Set the upper-bound mxid length to LENGTH (default 255, max 511)]),
 [
   if ! expr "$withval" + 0 >/dev/null 2>&1; then
 	AC_ERROR([MXID_MAXLEN must be a numeric value])
@@ -2132,7 +2132,7 @@ dnl --with-custom-branding
 dnl
 
 AC_MSG_CHECKING([whether custom branding is requested])
-AC_ARG_WITH(custom-branding, AC_HELP_STRING([--with-custom-branding=NAME], [Custom branding name.]),
+AC_ARG_WITH(custom-branding, RB_HELP_STRING([--with-custom-branding=NAME], [Custom branding name.]),
 [
 	BRANDING_NAME="$withval"
 	AC_DEFINE_UNQUOTED(BRANDING_NAME, ["$BRANDING_NAME"], [Custom branding name.])
@@ -2149,7 +2149,7 @@ dnl --with-custom-version
 dnl
 
 AC_MSG_CHECKING([whether a custom version is requested])
-AC_ARG_WITH(custom-version, AC_HELP_STRING([--with-custom-version=NAME], [Custom version branding.]),
+AC_ARG_WITH(custom-version, RB_HELP_STRING([--with-custom-version=NAME], [Custom version branding.]),
 [
 	BRANDING_VERSION="$withval"
 	AC_DEFINE_UNQUOTED(BRANDING_VERSION, ["$BRANDING_VERSION"], [Custom branding version.])

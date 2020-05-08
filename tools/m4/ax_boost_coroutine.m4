@@ -36,9 +36,9 @@
 AC_DEFUN([AX_BOOST_COROUTINE],
 [
 	AC_ARG_WITH([boost-coroutine],
-		AS_HELP_STRING([--with-boost-coroutine@<:@=special-lib@:>@],
-		[use the Coroutine library from boost - it is possible to specify a certain library for the linker
-			e.g. --with-boost-coroutine=boost_coroutine-gcc-mt ]), [
+		RB_HELP_STRING([--with-boost-coroutine@<:@=special-lib@:>@],
+		[use the Coroutine library from boost - it is possible to specify a certain library for the linker e.g. --with-boost-coroutine=boost_coroutine-gcc-mt ]),
+		[
 		if test "$withval" = "no"; then
 			want_boost="no"
 		elif test "$withval" = "yes"; then

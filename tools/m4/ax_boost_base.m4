@@ -38,7 +38,7 @@
 AC_DEFUN([AX_BOOST_BASE],
 [
 AC_ARG_WITH([boost],
-  [AS_HELP_STRING([--with-boost@<:@=ARG@:>@],
+  [RB_HELP_STRING([--with-boost@<:@=ARG@:>@],
     [use Boost library from a standard location (ARG=yes),
      from the specified location (ARG=<path>),
      or disable it (ARG=no)
@@ -58,7 +58,7 @@ AC_ARG_WITH([boost],
 
 
 AC_ARG_WITH([boost-libdir],
-        AS_HELP_STRING([--with-boost-libdir=LIB_DIR],
+        RB_HELP_STRING([--with-boost-libdir=LIB_DIR],
         [Force given directory for boost libraries. Note that this will override library path detection, so use this parameter only if default library detection fails and you know exactly where your boost libraries are located.]),
         [
         if test -d "$withval"

@@ -35,9 +35,8 @@
 AC_DEFUN([AX_BOOST_ASIO],
 [
 	AC_ARG_WITH([boost-asio],
-	AS_HELP_STRING([--with-boost-asio@<:@=special-lib@:>@],
-                   [use the ASIO library from boost - it is possible to specify a certain library for the linker
-                        e.g. --with-boost-asio=boost_system-gcc41-mt-1_34 ]),
+	RB_HELP_STRING([--with-boost-asio@<:@=special-lib@:>@],
+                   [use the ASIO library from boost - it is possible to specify a certain library for the linker e.g. --with-boost-asio=boost_system-gcc41-mt-1_34 ]),
         [
         if test "$withval" = "no"; then
 			want_boost="no"
