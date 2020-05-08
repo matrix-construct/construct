@@ -8,6 +8,8 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <RB_INC_SYS_RESOURCE_H
+
 // Uncomment or -D this #define to enable our own crude but simple ability to
 // profile dynamic memory usage. Global `new` and `delete` will be captured
 // here by this definition file into thread_local counters accessible via
@@ -294,6 +296,62 @@ ircd::allocator::aligned_alloc(const size_t &alignment_,
 		reinterpret_cast<char *>(ret), &std::free
 	};
 }
+
+//
+// resource limits
+//
+
+#if defined(HAVE_SYS_RESOURCE_H) && defined(RLIMIT_MEMLOCK)
+size_t
+ircd::allocator::rlimit_memlock()
+{
+	rlimit rlim;
+	syscall(getrlimit, RLIMIT_MEMLOCK, &rlim);
+	return rlim.rlim_cur;
+}
+#else
+size_t
+ircd::allocator::rlimit_memlock()
+{
+	return 0;
+}
+#endif
+
+#if defined(HAVE_SYS_RESOURCE_H) && defined(RLIMIT_DATA)
+size_t
+ircd::allocator::rlimit_data()
+{
+	rlimit rlim;
+	syscall(getrlimit, RLIMIT_DATA, &rlim);
+	return rlim.rlim_cur;
+}
+#else
+size_t
+ircd::allocator::rlimit_data()
+{
+	return 0;
+}
+#endif
+
+#if defined(HAVE_SYS_RESOURCE_H) && defined(RLIMIT_AS)
+size_t
+ircd::allocator::rlimit_as()
+{
+	rlimit rlim;
+	syscall(getrlimit, RLIMIT_AS, &rlim);
+	return rlim.rlim_cur;
+}
+#else
+size_t
+ircd::allocator::rlimit_as()
+{
+	return 0;
+}
+#endif
+
+//
+// Developer profiling
+//
 
 #ifdef RB_PROF_ALLOC // --------------------------------------------------
 

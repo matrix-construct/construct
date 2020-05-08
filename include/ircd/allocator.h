@@ -28,6 +28,10 @@ namespace ircd::allocator
 	template<class T = char, size_t L0_SIZE = 512> struct twolevel;
 	template<class T> struct node;
 
+	size_t rlimit_as();
+	size_t rlimit_data();
+	size_t rlimit_memlock();
+
 	std::unique_ptr<char, decltype(&std::free)>
 	aligned_alloc(const size_t &align, const size_t &size);
 
