@@ -3067,7 +3067,8 @@ ircd::db::database::cache::cache(database *const &d,
                                  std::shared_ptr<struct database::allocator> allocator,
                                  std::string name,
                                  const ssize_t &initial_capacity)
-:d{d}
+:rocksdb::Cache{allocator}
+,d{d}
 ,name{std::move(name)}
 ,stats{std::move(stats)}
 ,allocator{std::move(allocator)}
