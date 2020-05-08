@@ -42,7 +42,7 @@ struct ircd::db::database::cache final
 	using callback = void (*)(void *, size_t);
 	using Statistics = rocksdb::Statistics;
 
-	static const ssize_t DEFAULT_SHARD_BITS;
+	static const int DEFAULT_SHARD_BITS;
 	static const double DEFAULT_HI_PRIO;
 	static const bool DEFAULT_STRICT;
 
@@ -293,7 +293,7 @@ struct ircd::db::database::wal_filter
 
 #ifdef IRCD_DB_HAS_ALLOCATOR
 /// Dynamic memory
-struct ircd::db::database::allocator
+struct ircd::db::database::allocator final
 :rocksdb::MemoryAllocator
 {
 	database *d {nullptr};

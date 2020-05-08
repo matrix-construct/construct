@@ -1910,7 +1910,7 @@ ircd::db::database::column::column(database &d,
 ,allocator
 {
 	#ifdef IRCD_DB_HAS_ALLOCATOR
-	std::make_shared<struct allocator>(this->d, this)
+	std::make_shared<struct database::allocator>(this->d, this)
 	#endif
 }
 ,handle
@@ -3071,21 +3071,19 @@ ircd::db::database::cache::cache(database *const &d,
 ,name{std::move(name)}
 ,stats{std::move(stats)}
 ,allocator{std::move(allocator)}
-,c
+,c{rocksdb::NewLRUCache(rocksdb::LRUCacheOptions
 {
-	rocksdb::NewLRUCache
-	(
-		std::max(initial_capacity, ssize_t(0))
-		,DEFAULT_SHARD_BITS
-		,DEFAULT_STRICT
-		,DEFAULT_HI_PRIO
-		#ifdef IRCD_DB_HAS_ALLOCATOR
-		,d->allocator
-		#endif
-	)
-}
+	size_t(std::max(initial_capacity, ssize_t(0)))
+	,DEFAULT_SHARD_BITS
+	,DEFAULT_STRICT
+	,DEFAULT_HI_PRIO
+	#ifdef IRCD_DB_HAS_ALLOCATOR
+	,this->allocator
+	#endif
+})}
 {
 	assert(bool(c));
+	assert(c->memory_allocator() == this->allocator.get());
 }
 
 ircd::db::database::cache::~cache()
