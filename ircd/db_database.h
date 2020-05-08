@@ -295,8 +295,11 @@ struct ircd::db::database::wal_filter
 struct ircd::db::database::allocator final
 :rocksdb::MemoryAllocator
 {
+	static const size_t ALIGN_DEFAULT;
+
 	database *d {nullptr};
-	database::column *c{nullptr};
+	database::column *c {nullptr};
+	size_t alignment {ALIGN_DEFAULT};
 
 	const char *Name() const noexcept override;
 	void *Allocate(size_t) noexcept override;
@@ -304,7 +307,8 @@ struct ircd::db::database::allocator final
 	size_t UsableSize(void *, size_t) const noexcept override;
 
 	allocator(database *const &,
-	          database::column *const & = nullptr);
+	          database::column *const &  = nullptr,
+	          const size_t &alignment    = ALIGN_DEFAULT);
 
 	~allocator() noexcept;
 };

@@ -3490,10 +3490,24 @@ const noexcept
 //
 #ifdef IRCD_DB_HAS_ALLOCATOR
 
+decltype(ircd::db::database::allocator::ALIGN_DEFAULT)
+ircd::db::database::allocator::ALIGN_DEFAULT
+{
+	#if defined(__AVX__)
+		32
+	#elif defined(__SSE__)
+		16
+	#else
+		sizeof(void *)
+	#endif
+};
+
 ircd::db::database::allocator::allocator(database *const &d,
-                                         database::column *const &c)
+                                         database::column *const &c,
+                                         const size_t &alignment)
 :d{d}
 ,c{c}
+,alignment{alignment}
 {
 }
 
@@ -3504,10 +3518,20 @@ noexcept
 
 size_t
 ircd::db::database::allocator::UsableSize(void *const ptr,
-                                          size_t allocation_size)
+                                          size_t size)
 const noexcept
 {
-	return allocation_size;
+	const size_t ret
+	{
+		size % alignment != 0?
+			size + (alignment - (size % alignment)):
+			size
+	};
+
+	assert(ret % alignment == 0);
+	assert(ret < size + alignment);
+	assert(alignment % sizeof(void *) == 0);
+	return ret;
 }
 
 void
@@ -3521,7 +3545,25 @@ void *
 ircd::db::database::allocator::Allocate(size_t size)
 noexcept
 {
-	return std::malloc(size);
+	auto ptr
+	{
+		ircd::allocator::aligned_alloc(alignment, size)
+	};
+
+	#ifdef RB_DEBUG_DB_ENV
+	assert(d);
+	log::debug
+	{
+		log, "[%s]'%s' allocate:%zu alignment:%zu %p",
+		db::name(*d),
+		c? string_view(db::name(*c)): string_view{},
+		size,
+		alignment,
+		ptr.get(),
+	};
+	#endif
+
+	return ptr.release();
 }
 
 const char *
