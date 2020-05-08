@@ -1845,11 +1845,16 @@ RB_HELP_STRING([--with-included-rocksdb[[[=version]]]], [Use the RocksDB sources
 	AC_MSG_RESULT([no])
 	with_included_rocksdb="no"
 
-	AC_CHECK_LIB(rocksdb, rocksdb_open,
+	PKG_CHECK_MODULES(ROCKSDB, [rocksdb],
 	[
 		ROCKSDB_LIBS="-lrocksdb"
 	], [
-		AC_MSG_ERROR([Unable to find required RocksDB package. Try apt-get install librocksdb-dev])
+		AC_CHECK_LIB(rocksdb, rocksdb_open,
+		[
+			ROCKSDB_LIBS="-lrocksdb"
+		], [
+			AC_MSG_ERROR([Unable to find required RocksDB package. Try apt-get install librocksdb-dev])
+		])
 	])
 ])
 
