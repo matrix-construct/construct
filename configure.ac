@@ -1941,20 +1941,25 @@ dnl
 dnl
 
 RB_CHK_SYSHEADER(jemalloc/jemalloc.h, [JEMALLOC_H])
-AC_CHECK_LIB(jemalloc, malloc,
+PKG_CHECK_MODULES(JEMALLOC, [jemalloc],
 [
 	have_jemalloc="yes"
 ], [
-	have_jemalloc="no"
+	AC_CHECK_LIB(jemalloc, malloc,
+	[
+		have_jemalloc="yes"
+	], 	[
+		have_jemalloc="no"
+	])
 ])
 
-AC_MSG_CHECKING(whether to enable use of any found jemalloc)
+AC_MSG_CHECKING(whether to disable use of any found jemalloc)
 AC_ARG_ENABLE(jemalloc, AC_HELP_STRING([--disable-jemalloc], [Disable jemalloc as third-party dynamic memory manager.]),
 [
-	AC_MSG_RESULT([no])
+	AC_MSG_RESULT([yes])
 	enable_jemalloc="no"
 ], [
-	AC_MSG_RESULT([yes])
+	AC_MSG_RESULT([no])
 	enable_jemalloc="yes"
 ])
 

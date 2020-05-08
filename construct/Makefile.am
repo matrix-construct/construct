@@ -38,6 +38,7 @@ construct_LDFLAGS = \
 	@BOOST_LDFLAGS@ \
 	@SSL_LDFLAGS@ \
 	@CRYPTO_LDFLAGS@ \
+	@MALLOC_LDFLAGS@ \
 	###
 
 construct_LDADD = \
