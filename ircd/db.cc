@@ -6558,7 +6558,8 @@ ircd::db::has(column &column,
 		auto opts(make_opts(gopts));
 		opts.read_tier = NON_BLOCKING;
 		thread_local std::string discard;
-		if(!d.d->KeyMayExist(opts, c, k, &discard, nullptr))
+		bool value_found;
+		if(!d.d->KeyMayExist(opts, c, k, &discard, &value_found))
 			return false;
 	}
 
