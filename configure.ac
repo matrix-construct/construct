@@ -1,4 +1,4 @@
-AC_PREREQ(2.63)
+AC_PREREQ([2.63])
 AUTOMAKE_OPTIONS = 1.11
 AC_INIT([construct], [1.0-dev])
 
@@ -1169,7 +1169,7 @@ dnl
 
 AC_SUBST_DIR([moduledir])
 AC_MSG_CHECKING([whether to modify moduledir])
-AC_ARG_WITH(moduledir, [AC_HELP_STRING([--with-moduledir=DIR], [Directory to install modules.])],
+AC_ARG_WITH(moduledir, AC_HELP_STRING([--with-moduledir=DIR], [Directory to install modules.]),
 [
 	AC_MSG_RESULT(yes)
 	moduledir=`echo $withval | sed 's/\/$//'`
@@ -1204,7 +1204,7 @@ dnl Check for --with-webappdir
 dnl
 
 AC_MSG_CHECKING([whether to modify webappdir])
-AC_ARG_WITH(webappdir, [AC_HELP_STRING([--with-webappdir=DIR], [Directory to install served assets])],
+AC_ARG_WITH(webappdir, AC_HELP_STRING([--with-webappdir=DIR], [Directory to install served assets]),
 [
 	AC_MSG_RESULT(yes)
 	webappdir=`echo $withval | sed 's/\/$//'`
