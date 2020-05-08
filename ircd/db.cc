@@ -8,7 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-
 #include "db.h"
 
 /// Dedicated logging facility for the database subsystem
@@ -3453,15 +3452,16 @@ noexcept
 {
 	assert(d && replace && replaced);
 
-	if(debug) log::debug
-	{
-		log, "[%s] WAL recovery record log:%lu '%s' wb[count:%zu size:%zu]",
-		db::name(*d),
-		log_nr,
-		name,
-		wb.Count(),
-		wb.GetDataSize(),
-	};
+	if(debug)
+		log::debug
+		{
+			log, "[%s] WAL recovery record log:%lu '%s' wb[count:%zu size:%zu]",
+			db::name(*d),
+			log_nr,
+			name,
+			wb.Count(),
+			wb.GetDataSize(),
+		};
 
 	*replaced = false;
 	return WalProcessingOption::kContinueProcessing;
