@@ -33,8 +33,7 @@ namespace ircd::db
 #endif
 
 struct ircd::db::database::cache final
-:std::enable_shared_from_this<ircd::db::database::cache>
-,rocksdb::Cache
+:rocksdb::Cache
 {
 	using Slice = rocksdb::Slice;
 	using Status = rocksdb::Status;
