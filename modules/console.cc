@@ -1278,9 +1278,33 @@ console_cmd__prof__psi(opt &out, const string_view &line)
 		out << std::endl;
 	}};
 
-	show_file("cpu", prof::psi::cpu);
-	show_file("mem", prof::psi::mem);
-	show_file("io ", prof::psi::io);
+	const params param{line, " ",
+	{
+		"file",
+	}};
+
+	string_view filename
+	{
+		param["file"]
+	};
+
+	if(filename == "wait")
+	{
+		auto &file(prof::psi::wait());
+		out << "Got: " << file.name;
+		out << std::endl << std::endl;
+		filename = file.name;
+	}
+
+	if(!filename || filename == "cpu")
+		show_file("cpu", prof::psi::cpu);
+
+	if(!filename || filename == "mem")
+		show_file("mem", prof::psi::mem);
+
+	if(!filename || filename == "io")
+		show_file("io ", prof::psi::io);
+
 	return true;
 }
 

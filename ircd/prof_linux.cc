@@ -188,6 +188,47 @@ ircd::prof::psi::io
 // prof::psi::metric::refresh
 //
 
+ircd::prof::psi::file &
+ircd::prof::psi::wait()
+try
+{
+	const fs::fd fd[3]
+	{
+		{ "/proc/pressure/cpu",    std::ios::in },
+		{ "/proc/pressure/memory", std::ios::in },
+		{ "/proc/pressure/io",     std::ios::in },
+	};
+
+	const size_t n
+	{
+		fs::select(fd)
+	};
+
+	switch(n)
+	{
+		case 0:  return cpu;
+		case 1:  return mem;
+		case 2:  return io;
+		default:
+			always_assert(false);
+			__builtin_unreachable();
+	}
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"Failed to poll pressure stall information :%s",
+		e.what(),
+	};
+
+	throw;
+}
+
 bool
 ircd::prof::psi::refresh(file &file)
 noexcept try

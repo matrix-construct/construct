@@ -17,7 +17,11 @@ namespace ircd::prof::psi
 	struct metric;
 	struct refresh;
 
+	// Read and update the referenced extern.
 	bool refresh(file &) noexcept;
+
+	// Yield ircd::ctx until event; returns unrefreshed
+	file &wait();
 
 	extern const bool supported;
 	extern file cpu, mem, io;
