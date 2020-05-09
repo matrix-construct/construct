@@ -42,8 +42,15 @@ struct ircd::prof::psi::metric
 		float pct;
 	};
 
+	struct
+	{
+		microseconds total;            // stall value direct from system
+		microseconds relative;         // value since last sample only
+		microseconds window;           // duration since last sample
+		float pct;                     // % of stall time since last sample
+	}
+	stall;
 	std::array<struct avg, 3> avg;
-	microseconds stall;
 };
 
 struct ircd::prof::psi::file

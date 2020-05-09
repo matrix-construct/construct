@@ -377,7 +377,7 @@ noexcept try
 		};
 
 		size_t i(0);
-		tokens(vals, ' ', [&metric, &i] // Read each key=value pair
+		tokens(vals, ' ', [&file, &metric, &i] // Read each key=value pair
 		(const string_view &key_val)
 		{
 			const auto &[key, val]
@@ -387,7 +387,14 @@ noexcept try
 
 			if(key == "total")
 			{
-				metric.stall = lex_cast<microseconds>(val);
+				const auto total(lex_cast<microseconds>(val));
+				metric.stall.relative = total - metric.stall.total;
+				metric.stall.window = duration_cast<microseconds>(now<system_point>() - file.sampled);
+				metric.stall.pct = metric.stall.window.count()?
+					metric.stall.relative.count() / double(metric.stall.window.count()):
+					0.0;
+				metric.stall.pct *= 100;
+				metric.stall.total = total;
 				return;
 			}
 			else if(startswith(key, "avg") && i < metric.avg.size())

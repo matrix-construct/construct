@@ -1235,47 +1235,54 @@ console_cmd__prof__psi(opt &out, const string_view &line)
 		if(!refresh(file))
 			return;
 
-		char pbuf[48];
-		out
-		<< std::left << name
-		<< " some stall    "
-		<< pretty(pbuf, file.some.stall)
-		<< " ("
-		<< file.some.stall.count()
-		<< ')'
-		<< std::endl
-		;
-		for(size_t i(0); i < file.some.avg.size(); i++)
+		const auto show_metric{[&out, &name]
+		(const auto &metric, const string_view &metric_name)
+		{
+			char pbuf[48];
 			out
-			<< std::left << name
-			<< " some  "
-			<< std::right << std::setw(3) << file.some.avg.at(i).window.count()
-			<< "s        "
-			<< std::right << std::setw(4) << file.some.avg.at(i).pct << '%'
-			<< std::endl
-			;
+			<< std::left << std::setw(6) << name
+			<< ' '
+			<< metric_name << " stall window   "
+			<< pretty(pbuf, metric.stall.window)
+			<< " ("
+			<< metric.stall.window.count()
+			<< ')'
+			<< std::endl;
 
-		out
-		<< std::endl
-		<< std::left << name
-		<< " full stall    "
-		<< pretty(pbuf, file.full.stall)
-		<< " ("
-		<< file.full.stall.count()
-		<< ')'
-		<< std::endl
-		;
-		for(size_t i(0); i < file.full.avg.size(); i++)
 			out
-			<< std::left << name
-			<< " full  "
-			<< std::right << std::setw(3) << file.full.avg.at(i).window.count()
-			<< "s        "
-			<< std::right << std::setw(4) << file.full.avg.at(i).pct << '%'
-			<< std::endl
-			;
+			<< std::left << std::setw(6) << name
+			<< ' '
+			<< metric_name << " stall last     "
+			<< pretty(pbuf, metric.stall.relative)
+			<< " ("
+			<< metric.stall.relative.count()
+			<< ") "
+			<< metric.stall.pct << '%'
+			<< std::endl;
 
-		out << std::endl;
+			out
+			<< std::left << std::setw(6) << name
+			<< ' '
+			<< metric_name << " stall total    "
+			<< pretty(pbuf, metric.stall.total)
+			<< " ("
+			<< metric.stall.total.count()
+			<< ')'
+			<< std::endl;
+
+			for(size_t i(0); i < metric.avg.size(); i++)
+				out
+				<< std::left << std::setw(6) << name
+				<< ' '
+				<< metric_name << " "
+				<< std::right << std::setw(4) << metric.avg.at(i).window.count()
+				<< "s          "
+				<< std::right << metric.avg.at(i).pct << '%'
+				<< std::endl;
+		}};
+
+		show_metric(file.some, "some");
+		show_metric(file.full, "full");
 	}};
 
 	const params param{line, " ",
