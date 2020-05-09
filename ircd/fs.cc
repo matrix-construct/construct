@@ -1914,6 +1914,7 @@ ircd::fs::fd::fd(const string_view &path)
 
 ircd::fs::fd::fd(const string_view &path,
                  const opts &opts)
+try
 :fdno{[&path, &opts]
 () -> int
 {
@@ -1936,6 +1937,15 @@ ircd::fs::fd::fd(const string_view &path,
 {
 	if(opts.ate)
 		syscall(::lseek, fdno, 0, SEEK_END);
+}
+catch(const std::system_error &e)
+{
+	log::derror
+	{
+		log, "`%s' :%s",
+		path,
+		e.what(),
+	};
 }
 
 ircd::fs::fd::fd(fd &&o)
