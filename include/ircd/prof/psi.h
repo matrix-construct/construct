@@ -15,17 +15,24 @@ namespace ircd::prof::psi
 {
 	struct file;
 	struct metric;
-	struct refresh;
+	struct trigger;
 
 	// Read and update the referenced extern.
 	bool refresh(file &) noexcept;
 
 	// Yield ircd::ctx until event; returns unrefreshed
-	file &wait();
+	file &wait(const vector_view<const trigger> & = {});
 
 	extern const bool supported;
+	extern const string_view path[3];
 	extern file cpu, mem, io;
 }
+
+struct ircd::prof::psi::trigger
+{
+	const psi::file &file;
+	string_view string;
+};
 
 struct ircd::prof::psi::metric
 {

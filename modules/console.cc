@@ -1280,7 +1280,7 @@ console_cmd__prof__psi(opt &out, const string_view &line)
 
 	const params param{line, " ",
 	{
-		"file",
+		"file", "metric", "threshold", "window"
 	}};
 
 	string_view filename
@@ -1288,19 +1288,67 @@ console_cmd__prof__psi(opt &out, const string_view &line)
 		param["file"]
 	};
 
-	if(filename == "wait")
+	const string_view &metric
 	{
-		auto &file(prof::psi::wait());
-		out << "Got: " << file.name;
-		out << std::endl << std::endl;
+		param["metric"]
+	};
+
+	const string_view &threshold
+	{
+		param["threshold"]
+	};
+
+	const string_view &window
+	{
+		param["window"]
+	};
+
+	if(metric && threshold && window)
+	{
+		const fmt::bsprintf<64> trigger
+		{
+			"%s %s %s",
+			metric,
+			threshold,
+			window,
+		};
+
+		auto *const trigfile
+		{
+			filename == "cpu"?     &prof::psi::cpu:
+			filename == "memory"?  &prof::psi::mem:
+			filename == "io"?      &prof::psi::io:
+			                       nullptr
+		};
+
+		if(!trigfile)
+			throw error
+			{
+				"Unknown file '%s'",
+				filename
+			};
+
+		prof::psi::trigger trig[1]
+		{
+			{ *trigfile, trigger }
+		};
+
+		auto &file
+		{
+			prof::psi::wait(trig)
+		};
+
+		out
+		<< "Got: " << file.name
+		<< std::endl << std::endl;
 		filename = file.name;
 	}
 
 	if(!filename || filename == "cpu")
 		show_file("cpu", prof::psi::cpu);
 
-	if(!filename || filename == "mem")
-		show_file("mem", prof::psi::mem);
+	if(!filename || filename == "memory")
+		show_file("memory", prof::psi::mem);
 
 	if(!filename || filename == "io")
 		show_file("io ", prof::psi::io);

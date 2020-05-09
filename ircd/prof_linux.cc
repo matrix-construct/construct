@@ -166,6 +166,14 @@ ircd::prof::psi::supported
 	(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 20)
 };
 
+decltype(ircd::prof::psi::path)
+ircd::prof::psi::path
+{
+	"/proc/pressure/cpu",
+	"/proc/pressure/memory",
+	"/proc/pressure/io",
+};
+
 decltype(ircd::prof::psi::cpu)
 ircd::prof::psi::cpu
 {
@@ -189,16 +197,102 @@ ircd::prof::psi::io
 //
 
 ircd::prof::psi::file &
-ircd::prof::psi::wait()
+ircd::prof::psi::wait(const vector_view<const trigger> &cmd)
 try
 {
-	const fs::fd fd[3]
+	static const size_t max{3};
+	size_t trig_num {0}, trig_idx[max]
 	{
-		{ "/proc/pressure/cpu",    std::ios::in },
-		{ "/proc/pressure/memory", std::ios::in },
-		{ "/proc/pressure/io",     std::ios::in },
+		size_t(-1),
+		size_t(-1),
+		size_t(-1),
 	};
 
+	// Associate all of the trigger inputs (cmd) with one of the files; the
+	// cmds can be arranged any way and may not be for all files or any.
+	for(size_t i(0); i < cmd.size(); ++i)
+	{
+		const auto it
+		{
+			std::find_if(begin(path), end(path), [&cmd, &i]
+			(const auto &name)
+			{
+				return lstrip(name, "/proc/pressure/") == cmd[i].file.name;
+			})
+		};
+
+		const auto pos
+		{
+			std::distance(begin(path), it)
+		};
+
+		if(unlikely(size_t(pos) >= max))
+			throw error
+			{
+				"%s does not exist",
+				cmd[i].file.name,
+			};
+
+		trig_idx[pos] = i;
+		trig_num++;
+	}
+
+	const fs::fd::opts opts
+	{
+		std::ios::in | std::ios::out
+	};
+
+	// Open the fd's; if triggers were given we don't open files that were
+	// not included in the cmd vector; otherwise we open all files.
+	const fs::fd fd[max]
+	{
+		!trig_num || trig_idx[0] < max?
+			fs::fd{path[0], opts}:
+			fs::fd{},
+
+		!trig_num || trig_idx[1] < max?
+			fs::fd{path[1], opts}:
+			fs::fd{},
+
+		!trig_num || trig_idx[2] < max?
+			fs::fd{path[2], opts}:
+			fs::fd{},
+	};
+
+	// Write all triggers to their respective file
+	for(size_t i(0); i < max; ++i)
+	{
+		if(trig_idx[i] >= max)
+			continue;
+
+		const auto &trig(cmd[trig_idx[i]]); try
+		{
+			// psi_write() in the kernel wants a write length of one greater
+			// than the length of the string, but it places a \0 in its own
+			// buffer unconditionally. This is noteworthy because our string
+			// may not be null terminated and this length requirement smells.
+			assert(trig.file.name == lstrip(path[i], "/proc/pressure/"));
+			syscall(::write, fd[i], trig.string.c_str(), size(trig.string) + 1);
+		}
+		catch(const ctx::interrupted &)
+		{
+			throw;
+		}
+		catch(const std::exception &e)
+		{
+			log::error
+			{
+				"Failed to set pressure stall trigger [%s] on /proc/pressure/%s :%s",
+				trig.string,
+				trig.file.name,
+				e.what(),
+			};
+
+			throw;
+		}
+	}
+
+	// Yield ircd::ctx until fd[n] has a result.
 	const size_t n
 	{
 		fs::select(fd)
