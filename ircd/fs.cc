@@ -597,6 +597,99 @@ ircd::fs::stdin::tty::write(const string_view &buf)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// fs/select.h
+//
+
+size_t
+ircd::fs::select(const vector_view<const fd> &fd_)
+{
+	using asio::posix::stream_descriptor;
+
+	static ios::descriptor desc
+	{
+		"ircd::fs::select"
+	};
+
+	const size_t num(size(fd_));
+	std::optional<stream_descriptor> _fd[num];
+	const unwind release{[&_fd]
+	{
+		for(auto &fd : _fd)
+			if(fd)
+				fd->release();
+	}};
+
+	size_t ret(-1);
+	ctx::latch latch(num);
+	const auto callback{[&num, &_fd, &latch, &ret]
+	(const boost::system::error_code &ec, const auto &fd)
+	{
+		// The first successful callback is associated with an input fd
+		// and its array indice becomes the return value.
+		if(!ec && ret == size_t(-1))
+		{
+			const auto it
+			{
+				std::find_if(_fd, _fd + num, [&fd]
+				(const auto &_fd)
+				{
+					return _fd && std::addressof(*_fd) == std::addressof(*fd);
+				})
+			};
+
+			ret = std::distance(_fd, it);
+			assert(ret < num);
+		}
+
+		latch.count_down();
+	}};
+
+	for(size_t i(0); i < num; ++i)
+	{
+		// Allow a closed descriptor in the vector to be no-op.
+		if(!fd_[i])
+		{
+			latch.count_down();
+			continue;
+		}
+
+		_fd[i] =
+		{
+			ios::get(), int(fd_[i])
+		};
+
+		auto handle
+		{
+			std::bind(callback, ph::_1, std::cref(_fd[i]))
+		};
+
+		_fd[i]->async_wait(stream_descriptor::wait_read, ios::handle(desc, std::move(handle)));
+	}
+
+	std::exception_ptr eptr; try
+	{
+		latch.wait();
+		assert(ret < num);
+		return ret;
+	}
+	catch(...)
+	{
+		eptr = std::current_exception();
+		const ctx::exception_handler eh;
+		const ctx::uninterruptible::nothrow ui;
+		for(auto &fd : _fd)
+			fd->cancel();
+
+		latch.wait();
+		assert(eptr);
+		std::rethrow_exception(eptr);
+	}
+
+	return ret;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // fs/sync.h
 //
 

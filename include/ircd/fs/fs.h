@@ -53,6 +53,7 @@ namespace ircd::fs
 #include "sync.h"
 #include "aio.h"
 #include "iou.h"
+#include "select.h"
 #include "stdin.h"
 #include "support.h"
 
