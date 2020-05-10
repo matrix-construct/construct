@@ -299,10 +299,17 @@ noexcept
 
 	if(primary == this)
 		_fetch.reset(nullptr);
+}
 
-	if(primary == this)
-		for(auto rit(rbegin(modules)); rit != rend(modules); ++rit)
-			mods::imports.erase(*rit);
+//
+// homeserver modules
+//
+
+ircd::m::homeserver::modules::~modules()
+noexcept
+{
+	for(auto rit(std::rbegin(*this)); rit != std::rend(*this); ++rit)
+		mods::imports.erase(*rit);
 }
 
 //

@@ -68,7 +68,13 @@ struct ircd::m::homeserver
 	std::unique_ptr<struct conf> conf;
 
 	/// Requested modules.
-	std::vector<string_view> modules;
+	struct modules
+	:std::vector<string_view>
+	{
+		using std::vector<string_view>::vector;
+		~modules() noexcept;
+	}
+	modules;
 
 	/// vm
 	std::shared_ptr<vm::init> vm;
