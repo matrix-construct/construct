@@ -11,7 +11,7 @@
 namespace ircd::m
 {
 	static void bootstrap(homeserver &);
-	static void signon(homeserver &), signoff(homeserver &);
+	static void signon(homeserver &), signoff(homeserver &) noexcept;
 
 	extern conf::item<std::string> online_status_msg;
 	extern conf::item<std::string> offline_status_msg;
@@ -789,9 +789,25 @@ ircd::m::signon(homeserver &homeserver)
 
 void
 ircd::m::signoff(homeserver &homeserver)
+noexcept try
 {
 	if(!std::uncaught_exceptions() && !ircd::write_avoid && vm::sequence::retired != 0)
 		presence::set(homeserver.self, "offline", offline_status_msg);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "homeserver signoff failure :%s",
+		e.what(),
+	};
+}
+catch(...)
+{
+	log::critical
+	{
+		log, "Unknown error during homeserver signoff"
+	};
 }
 
 //
