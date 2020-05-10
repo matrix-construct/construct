@@ -1229,6 +1229,12 @@ console_cmd__vg(opt &out, const string_view &line)
 bool
 console_cmd__prof__psi(opt &out, const string_view &line)
 {
+	if(!prof::psi::supported)
+		throw error
+		{
+			"Pressure Still Information is not supported."
+		};
+
 	const auto show_file{[&out]
 	(const string_view &name, prof::psi::file &file)
 	{

@@ -22,6 +22,15 @@ ircd::prof::log
 	"prof"
 };
 
+#ifndef __linux__
+[[gnu::weak]]
+decltype(ircd::prof::psi::supported)
+ircd::prof::psi::supported
+{
+	false
+};
+#endif
+
 uint64_t
 ircd::prof::time_real()
 noexcept
