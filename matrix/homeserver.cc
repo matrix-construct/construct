@@ -10,6 +10,7 @@
 
 namespace ircd::m
 {
+	static void bootstrap_event_vector(homeserver &);
 	static void bootstrap(homeserver &);
 	static void signon(homeserver &), signoff(homeserver &) noexcept;
 
@@ -260,7 +261,12 @@ try
 	}};
 
 	if(dbs::events && sequence(*dbs::events) == 0)
-		bootstrap(*this);
+	{
+		if(opts->bootstrap_vector_path)
+			bootstrap_event_vector(*this);
+		else
+			bootstrap(*this);
+	}
 
 	if(key && !key->verify_keys.empty())
 		m::keys::cache::set(key->verify_keys);
@@ -830,8 +836,73 @@ catch(...)
 }
 
 //
-// bootstrap
+// bootstrap_vector
 //
+
+void
+ircd::m::bootstrap_event_vector(homeserver &homeserver)
+try
+{
+	const string_view &path
+	{
+		homeserver.opts->bootstrap_vector_path
+	};
+
+	fs::fd::opts fileopts(std::ios::in);
+	fileopts.sequential = true;
+	const fs::fd file
+	{
+		path, fileopts
+	};
+
+	log::notice
+	{
+		log, "Bootstrapping database from event vector @ `%s'",
+		path,
+	};
+
+	const unique_mutable_buffer mb
+	{
+		512_KiB
+	};
+
+	size_t events(0);
+	const_buffer buf;
+	fs::read_opts ropts; do
+	{
+		buf = read(file, mb, ropts);
+
+
+		ropts.offset += size(buf);
+	}
+	while(!!buf);
+
+	log::info
+	{
+		log, "Bootstrapped %zu events in %zu bytes from `%s'",
+		events,
+		ropts.offset,
+		path,
+	};
+}
+catch(const std::exception &e)
+{
+	log::logf
+	{
+		log, log::level::CRITICAL,
+		"Failed to start server '%s' on network '%s'",
+		server_name(homeserver),
+		origin(homeserver),
+		e.what()
+	};
+
+	throw ircd::error
+	{
+		"bootstrap %s error :%s",
+		server_name(homeserver),
+		e.what()
+	};
+}
 
 void
 ircd::m::bootstrap(homeserver &homeserver)

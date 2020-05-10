@@ -41,6 +41,7 @@ bool soft_assert;
 bool nomatrix;
 bool matrix {true}; // matrix server by default.
 bool defaults;
+const char *bootstrap;
 
 lgetopt opts[]
 {
@@ -70,6 +71,7 @@ lgetopt opts[]
 	{ "nomatrix",   &nomatrix,      lgetopt::BOOL,    "Prevent loading the matrix application module" },
 	{ "matrix",     &matrix,        lgetopt::BOOL,    "Allow loading the matrix application module" },
 	{ "defaults",   &defaults,      lgetopt::BOOL,    "Use configuration defaults without database load for this execution" },
+	{ "bootstrap",  &bootstrap,     lgetopt::STRING,  "Bootstrap fresh database from event vector" },
 	{ nullptr,      nullptr,        lgetopt::STRING,  nullptr },
 };
 
@@ -203,6 +205,7 @@ noexcept try
 			struct ircd::m::homeserver::opts opts;
 			opts.origin = origin;
 			opts.server_name = server_name;
+			opts.bootstrap_vector_path = bootstrap;
 			const ircd::custom_ptr<ircd::m::homeserver> homeserver
 			{
 				// 6.1

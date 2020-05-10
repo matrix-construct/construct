@@ -143,4 +143,10 @@ struct ircd::m::homeserver::opts
 	/// be the origin itself; otherwise, SRV/well-known indirection is required
 	/// to reach the servername starting from the origin.
 	string_view server_name;
+
+	/// When instantiating a homeserver with a fresh database, the file found
+	/// at this path can supplement for any initial bootstrapping. This vector
+	/// may contain additional events as well; the server will continue its
+	/// operation after having processed these events.
+	string_view bootstrap_vector_path;
 };
