@@ -1295,17 +1295,15 @@ AC_HELP_STRING([--with-sodium-libs=[[[DIR]]]], [Path to sodium library directory
 	SODIUM_LDFLAGS+=" -L$withval"
 ], [])
 
-PKG_CHECK_MODULES(SODIUM, libsodium,
+PKG_CHECK_MODULES(sodium, libsodium,
 [
 	have_sodium="yes"
 ], [
 	dnl NOTE that PKG_CHECK_MODULES is preferred, but on some systems it gives
 	dnl a false negative and we end up here with an AC_CHECK_LIB fallback.
-	RB_CHK_SYSHEADER(sodium.h, [SODIUM_H])
 	AC_CHECK_LIB([sodium], sodium_init,
 	[
 		have_sodium="yes"
-		SODIUM_LIBS+=" -lsodium"
 	], [
 		have_sodium="no"
 	])
@@ -1315,7 +1313,9 @@ AM_CONDITIONAL([SODIUM], [test "x$have_sodium" = "xyes"])
 
 AM_COND_IF([SODIUM],
 [
+	RB_CHK_SYSHEADER(sodium.h, [SODIUM_H])
 	AC_DEFINE([HAVE_SODIUM], [1], [Have libsodium])
+	SODIUM_LIBS+=" -lsodium"
 ], [
 	AC_MSG_ERROR([libsodium is required but not found. Try apt-get install libsodium-dev])
 ])
