@@ -1061,7 +1061,7 @@ github_handle__issue_comment(std::ostream &out,
 		auto lines(split(body, delim)); do
 		{
 			out << lines.first
-			    << "<br />"
+			    << "\\n"
 			    ;
 
 			lines = split(lines.second, delim);
