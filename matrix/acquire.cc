@@ -29,11 +29,17 @@ ircd::m::acquire::log
 ircd::m::acquire::acquire::acquire(const room &room,
                                    const opts &opts)
 {
-	handle_room(room, opts);
-	ctx::interruption_point();
+	if(opts.head)
+	{
+		handle_room(room, opts);
+		ctx::interruption_point();
+	}
 
-	handle_missing(room, opts);
-	ctx::interruption_point();
+	if(opts.missing)
+	{
+		handle_missing(room, opts);
+		ctx::interruption_point();
+	}
 }
 
 //

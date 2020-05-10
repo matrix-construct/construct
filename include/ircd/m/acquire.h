@@ -29,4 +29,8 @@ struct ircd::m::acquire::opts
 	string_view hint;
 
 	bool hint_only {false};
+
+	bool head {false};
+
+	bool missing {false};
 };
