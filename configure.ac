@@ -1845,7 +1845,7 @@ RB_HELP_STRING([--with-included-rocksdb[[[=version]]]], [Use the RocksDB sources
 	AC_MSG_RESULT([no])
 	with_included_rocksdb="no"
 
-	PKG_CHECK_MODULES(ROCKSDB, [rocksdb],
+	PKG_CHECK_MODULES(rocksdb, [rocksdb],
 	[
 		ROCKSDB_LIBS="-lrocksdb"
 	], [
@@ -1946,7 +1946,7 @@ dnl
 dnl
 
 RB_CHK_SYSHEADER(jemalloc/jemalloc.h, [JEMALLOC_H])
-PKG_CHECK_MODULES(JEMALLOC, [jemalloc],
+PKG_CHECK_MODULES(jemalloc, [jemalloc],
 [
 	have_jemalloc="yes"
 ], [
