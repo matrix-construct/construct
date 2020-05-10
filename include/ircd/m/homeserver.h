@@ -76,9 +76,6 @@ struct ircd::m::homeserver
 	}
 	modules;
 
-	/// vm
-	std::shared_ptr<vm::init> vm;
-
 	homeserver(const struct opts *const &);
 	~homeserver() noexcept;
 

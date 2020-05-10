@@ -161,14 +161,11 @@ ircd::m::origin(const homeserver &homeserver)
 // homeserver::homeserver
 //
 
-/// --- tmp ---
-
 namespace ircd::m
 {
 	std::unique_ptr<fetch::init> _fetch;
+	std::unique_ptr<vm::init> _vm;
 }
-
-/// --- /tmp ---
 
 decltype(ircd::m::homeserver::primary)
 ircd::m::homeserver::primary;
@@ -181,10 +178,6 @@ try
 	assert(opts);
 	rfc3986::valid_host(opts->origin);
 	rfc3986::valid_host(opts->server_name);
-
-	//TODO: XXX
-	if(!_fetch)
-		_fetch = std::make_unique<fetch::init>();
 
 	return new homeserver
 	{
@@ -220,6 +213,7 @@ noexcept
 
 IRCD_MODULE_EXPORT
 ircd::m::homeserver::homeserver(const struct opts *const &opts)
+try
 :instance_multimap
 {
 	string_view{opts->origin}
@@ -254,51 +248,69 @@ ircd::m::homeserver::homeserver(const struct opts *const &opts)
 		for(const auto &name : modules)
 			mods::imports.emplace(std::string{name}, name);
 
-	if(primary == this)
-		vm = std::make_shared<vm::init>();
-
-	if(primary == this && conf && !ircd::defaults)
+	if(conf && !ircd::defaults)
 		conf->load();
 
-	if(primary == this && dbs::events && sequence(*dbs::events) == 0)
+	_fetch = std::make_unique<fetch::init>();
+	_vm = std::make_unique<vm::init>();
+	const unwind_exceptional exceptional{[]
+	{
+		_fetch.reset(nullptr);
+		_vm.reset(nullptr);
+	}};
+
+	if(dbs::events && sequence(*dbs::events) == 0)
 		bootstrap(*this);
 
 	if(key && !key->verify_keys.empty())
 		m::keys::cache::set(key->verify_keys);
 
 	signon(*this);
-
-	if(primary == this)
-		mods::imports.emplace("net_dns_cache"s, "net_dns_cache"s);
-
-	if(primary == this)
-		m::init::backfill::init();
+	mods::imports.emplace("net_dns_cache"s, "net_dns_cache"s);
+	m::init::backfill::init();
+}
+catch(const std::exception &e)
+{
+	log::logf
+	{
+		log, log::level::CRITICAL,
+		"Failed to start server '%s' on network '%s'",
+		opts->server_name,
+		opts->origin,
+		e.what()
+	};
 }
 
 ircd::m::homeserver::~homeserver()
-noexcept
+noexcept try
 {
-	if(primary == this)
+	///TODO: XXX primary
+	server::init::interrupt();
+	client::terminate_all();         //TODO: XXX
+	server::init::close();
+	client::close_all();
+	m::init::backfill::fini();
+	client::wait_all();
+	server::init::wait();
+	m::sync::pool.join();
+
+	if(_vm)
+		signoff(*this);
+
+	///TODO: XXX primary
+	mods::imports.erase("net_dns_cache"s);
+	_fetch.reset(nullptr);
+	_vm.reset(nullptr);
+}
+catch(const std::exception &e)
+{
+	log::critical
 	{
-		server::init::interrupt();       //TODO: XXX
-		client::terminate_all();         //TODO: XXX
-		server::init::close();           //TODO: XXX
-		client::close_all();             //TODO: XXX
-		m::init::backfill::fini();
-		client::wait_all();              //TODO: XXX
-		server::init::wait();            //TODO: XXX
-		m::sync::pool.join();
-	}
+		log, "Homeserver shutdown failed :%s",
+		e.what()
+	};
 
-	signoff(*this);
-	if(primary == this)
-		mods::imports.erase("net_dns_cache"s);
-
-	if(primary == this)
-		vm.reset();
-
-	if(primary == this)
-		_fetch.reset(nullptr);
+	return;
 }
 
 //
@@ -995,6 +1007,15 @@ try
 }
 catch(const std::exception &e)
 {
+	log::logf
+	{
+		log, log::level::CRITICAL,
+		"Failed to bootstrap server '%s' on network '%s' :%s",
+		server_name(homeserver),
+		origin(homeserver),
+		e.what()
+	};
+
 	throw ircd::panic
 	{
 		"bootstrap %s error :%s",
