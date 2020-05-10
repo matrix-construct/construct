@@ -329,6 +329,14 @@ noexcept try
 		ios.run()
 	};
 
+	ircd::log::debug
+	{
+		"epoch construct:%zu ircd::ios:%zu ircd::ctx:%zu",
+		handled,
+		ircd::ios::epoch(),
+		ircd::ctx::epoch(),
+	};
+
 	// 13
 	// The smoketest is enabled if the first value is true; then all of the
 	// values must be true for the smoketest to pass.
