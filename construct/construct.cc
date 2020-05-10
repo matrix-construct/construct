@@ -186,12 +186,13 @@ noexcept try
 	// different contexts.
 	ircd::ctx::latch start(2), quit(2);
 	std::exception_ptr eptr;
+	bool rethrow {false};
 
 	// Setup the matrix homeserver application. This will be executed on an
 	// ircd::context (dedicated stack). We construct several objects on the
 	// stack which are the basis for our matrix homeserver. When the stack
 	// unwinds, the homeserver will go out of service.
-	const auto homeserver{[&origin, &server_name, &start, &quit, &eptr]
+	const auto homeserver{[&origin, &server_name, &start, &quit, &eptr, &rethrow]
 	{
 		try
 		{
@@ -212,6 +213,8 @@ noexcept try
 					matrix.fini(homeserver);
 				}
 			};
+
+			rethrow = true;
 
 			// 7 Notify the loader the homeserver is ready for service.
 			start.count_down_and_wait();
@@ -247,7 +250,7 @@ noexcept try
 	// to start and stop the homeserver.
 	const ircd::run::changed loader
 	{
-		[&homeserver, &start, &quit, &eptr](const auto &level)
+		[&homeserver, &start, &quit, &eptr, &rethrow](const auto &level)
 		{
 			static ircd::context context;
 
@@ -264,8 +267,10 @@ noexcept try
 
 				// 8 Check if error on start; rethrowing that here propagates
 				// to ircd::main() and triggers a runlevel QUIT sequence.
-				if(!!eptr)
+				if(!!eptr && rethrow)
 					std::rethrow_exception(eptr);
+				else if(!!eptr)
+					ircd::quit();
 
 				// 8.1
 				return;
