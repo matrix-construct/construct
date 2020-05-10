@@ -1361,32 +1361,51 @@ RB_CHK_SYSHEADER(openssl/evp.h, [OPENSSL_EVP_H])
 RB_CHK_SYSHEADER(openssl/ripemd.h, [OPENSSL_RIPEMD_H])
 RB_CHK_SYSHEADER(openssl/dh.h, [OPENSSL_DH_H])
 RB_CHK_SYSHEADER(openssl/tls1.h, [OPENSSL_TLS1_H])
-AC_CHECK_LIB(ssl, SSL_version,
+PKG_CHECK_MODULES(ssl, [ssl],
 [
 	have_ssl="yes"
-	SSL_LIBS="-lssl"
 ], [
-	have_ssl="no"
-	AC_MSG_ERROR([libssl is required but not found. Try apt-get install libssl-dev])
+	AC_CHECK_LIB(ssl, SSL_version,
+	[
+		have_ssl="yes"
+	], [
+		have_ssl="no"
+		AC_MSG_ERROR([libssl is required but not found. Try apt-get install libssl-dev])
+	])
 ])
 
 AM_CONDITIONAL([SSL], [test "x$have_ssl" = "xyes"])
+
+AM_COND_IF([SSL],
+[
+	SSL_LIBS="-lssl"
+])
 
 AC_SUBST(CRYPTO_CPPFLAGS, [])
 AC_SUBST(CRYPTO_LDFLAGS, [])
 AC_SUBST(CRYPTO_LIBS, [])
 
-AC_CHECK_LIB(crypto, OPENSSL_init,
+PKG_CHECK_MODULES(crypto, [crypto],
 [
 	have_crypto="yes"
-	AC_DEFINE(HAVE_CRYPTO, 1, [Define to 1 if libcrypto (-lcrypto) is available.])
-	CRYPTO_LIBS="-lcrypto"
 ], [
-	have_crypto="no"
-	AC_MSG_ERROR([libcrypto is required but not found.])
+	AC_CHECK_LIB(crypto, OPENSSL_init,
+	[
+		have_crypto="yes"
+		CRYPTO_LIBS="-lcrypto"
+	], [
+		have_crypto="no"
+		AC_MSG_ERROR([libcrypto is required but not found.])
+	])
 ])
 
 AM_CONDITIONAL([CRYPTO], [test "x$have_crypto" = "xyes"])
+
+AM_COND_IF([CRYPTO],
+[
+	AC_DEFINE(HAVE_CRYPTO, 1, [Define to 1 if libcrypto (-lcrypto) is available.])
+	CRYPTO_LIBS="-lcrypto"
+])
 
 dnl
 dnl
@@ -1420,16 +1439,25 @@ RB_HELP_STRING([--with-magic-file=[[[FILE]]]], [Path to magic database file]),
 ])
 
 RB_CHK_SYSHEADER(magic.h, [MAGIC_H])
-AC_CHECK_LIB(magic, magic_version,
+PKG_CHECK_MODULES(magic, [magic],
 [
 	have_magic="yes"
-	MAGIC_LIBS="-lmagic"
 ], [
-	have_magic="no"
-	AC_MSG_ERROR([libmagic is required but not found. Try apt-get install libmagic-dev])
+	AC_CHECK_LIB(magic, magic_version,
+	[
+		have_magic="yes"
+	], [
+		have_magic="no"
+		AC_MSG_ERROR([libmagic is required but not found. Try apt-get install libmagic-dev])
+	])
 ])
 
 AM_CONDITIONAL([MAGIC], [test "x$have_magic" = "xyes"])
+
+AM_COND_IF([MAGIC],
+[
+	MAGIC_LIBS="-lmagic"
+])
 
 dnl
 dnl
@@ -1454,15 +1482,24 @@ RB_HELP_STRING([--with-z-libs=[[[DIR]]]], [Path to zlib library directory]),
 ], [])
 
 RB_CHK_SYSHEADER(zlib.h, [ZLIB_H])
-AC_CHECK_LIB(z, zlibVersion,
+PKG_CHECK_MODULES(zlib, [zlib],
 [
 	have_zlib="yes"
-	Z_LIBS="-lz"
 ], [
-	have_zlib="no"
+	AC_CHECK_LIB(z, zlibVersion,
+	[
+		have_zlib="yes"
+	], [
+		have_zlib="no"
+	])
 ])
 
 AM_CONDITIONAL([ZLIB], [test "x$have_zlib" = "xyes"])
+
+AM_COND_IF([ZLIB],
+[
+	ZLIB_LIBS="-lz"
+])
 
 dnl
 dnl
@@ -1487,15 +1524,24 @@ RB_HELP_STRING([--with-lz4-libs=[[[DIR]]]], [Path to LZ4 library directory]),
 ], [])
 
 RB_CHK_SYSHEADER(lz4.h, [LZ4_H])
-AC_CHECK_LIB(lz4, LZ4_versionNumber,
+PKG_CHECK_MODULES(lz4, [lz4],
 [
 	have_lz4="yes"
-	LZ4_LIBS="-llz4"
 ], [
-	have_lz4="no"
+	AC_CHECK_LIB(lz4, LZ4_versionNumber,
+	[
+		have_lz4="yes"
+	], [
+		have_lz4="no"
+	])
 ])
 
 AM_CONDITIONAL([LZ4], [test "x$have_lz4" = "xyes"])
+
+AM_COND_IF([LZ4],
+[
+	LZ4_LIBS="-llz4"
+])
 
 dnl
 dnl
@@ -1520,15 +1566,24 @@ RB_HELP_STRING([--with-snappy-libs=[[[DIR]]]], [Path to snappy library directory
 ], [])
 
 RB_CHK_SYSHEADER(snappy.h, [SNAPPY_H])
-AC_CHECK_LIB(snappy, snappy_compress,
+PKG_CHECK_MODULES(snappy, [snappy],
 [
 	have_snappy="yes"
-	SNAPPY_LIBS="-lsnappy"
 ], [
-	have_snappy="no"
+	AC_CHECK_LIB(snappy, snappy_compress,
+	[
+		have_snappy="yes"
+	], [
+		have_snappy="no"
+	])
 ])
 
 AM_CONDITIONAL([SNAPPY], [test "x$have_snappy" = "xyes"])
+
+AM_COND_IF([SNAPPY],
+[
+	SNAPPY_LIBS="-lsnappy"
+])
 
 dnl
 dnl
@@ -1552,16 +1607,26 @@ RB_HELP_STRING([--with-gmp-libs=[[[DIR]]]], [Path to libgmp library directory]),
 	GMP_LDFLAGS="-L$withval"
 ], [])
 
-AC_CHECK_LIB([gmp], [__gmp_version],
+PKG_CHECK_MODULES(gmp, [gmp],
 [
 	have_gmp="yes"
-	GMP_LIBS="-lgmp"
 ], [
-	have_gmp="no"
-	AC_MSG_WARN([Unable to find GNU Multi-Precision library (libgmp) on this system.])
+	AC_CHECK_LIB([gmp], [__gmp_version],
+	[
+		have_gmp="yes"
+	], [
+		have_gmp="no"
+	])
 ])
 
 AM_CONDITIONAL([GMP], [test "x$have_gmp" = "xyes" ])
+
+AM_COND_IF([GMP],
+[
+	GMP_LIBS="-lgmp"
+], [
+	AC_MSG_WARN([Unable to find GNU Multi-Precision library (libgmp) on this system.])
+])
 
 dnl
 dnl
@@ -1605,14 +1670,21 @@ RB_HELP_STRING([--with-included-pbc], [Use the libpbc sources from included subm
 	])
 ], [
 	with_included_pbc="no"
-	AC_CHECK_LIB([pbc], [pbc_set_memory_functions],
+	PKG_CHECK_MODULES(pbc, [pbc],
 	[
 		have_pbc="yes"
 		AC_DEFINE(HAVE_PBC, 1, [Define to 1 if libpbc is available.])
 		PBC_LIBS="-lpbc"
 	], [
-		have_pbc="no"
-		AC_MSG_WARN([Unable to find Pairing-Based Cryptography (libpbc) on this system.])
+		AC_CHECK_LIB([pbc], [pbc_set_memory_functions],
+		[
+			have_pbc="yes"
+			AC_DEFINE(HAVE_PBC, 1, [Define to 1 if libpbc is available.])
+			PBC_LIBS="-lpbc"
+		], [
+			have_pbc="no"
+			AC_MSG_WARN([Unable to find Pairing-Based Cryptography (libpbc) on this system.])
+		])
 	])
 ])
 
