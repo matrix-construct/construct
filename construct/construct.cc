@@ -18,6 +18,7 @@
 
 bool printversion;
 bool cmdline;
+std::vector<std::string> execute;
 bool quietmode;
 bool single;
 bool debugmode;
@@ -35,41 +36,40 @@ bool yes6;
 bool norun;
 bool read_only;
 bool write_avoid;
+std::array<bool, 7> smoketest;
 bool soft_assert;
 bool nomatrix;
 bool matrix {true}; // matrix server by default.
 bool defaults;
-std::vector<std::string> execute;
-std::array<bool, 7> smoketest;
 
 lgetopt opts[]
 {
 	{ "help",       nullptr,        lgetopt::USAGE,   "Print this text" },
 	{ "version",    &printversion,  lgetopt::BOOL,    "Print version and exit" },
 	{ "debug",      &debugmode,     lgetopt::BOOL,    "Enable options for debugging" },
-	{ "quiet",      &quietmode,     lgetopt::BOOL,    "Suppress log messages at the terminal." },
-	{ "single",     &single,        lgetopt::BOOL,    "Single user mode for maintenance and diagnostic." },
+	{ "quiet",      &quietmode,     lgetopt::BOOL,    "Suppress log messages at the terminal" },
+	{ "single",     &single,        lgetopt::BOOL,    "Single user mode for maintenance and diagnostic" },
 	{ "console",    &cmdline,       lgetopt::BOOL,    "Drop to a command line immediately after startup" },
 	{ "execute",    &execute,       lgetopt::STRINGS, "Execute command lines immediately after startup" },
 	{ "nolisten",   &nolisten,      lgetopt::BOOL,    "Normal execution but without listening sockets" },
 	{ "noautomod",  &noautomod,     lgetopt::BOOL,    "Normal execution but without autoloading modules" },
 	{ "checkdb",    &checkdb,       lgetopt::BOOL,    "Perform complete checks of databases when opening" },
 	{ "pitrecdb",   &pitrecdb,      lgetopt::BOOL,    "Allow Point-In-Time-Recover if DB reports corruption after crash" },
-	{ "repairdb",   &repairdb,      lgetopt::BOOL,    "Perform full DB repair after deep block/file corruption." },
-	{ "nojs",       &nojs,          lgetopt::BOOL,    "Disable SpiderMonkey JS subsystem from initializing. (noop when not available)." },
-	{ "nodirect",   &nodirect,      lgetopt::BOOL,    "Disable direct IO (O_DIRECT) for unsupporting filesystems." },
+	{ "repairdb",   &repairdb,      lgetopt::BOOL,    "Perform full DB repair after deep block/file corruption" },
+	{ "nojs",       &nojs,          lgetopt::BOOL,    "Disable SpiderMonkey JS subsystem from initializing. (noop when not available)" },
+	{ "nodirect",   &nodirect,      lgetopt::BOOL,    "Disable direct IO (O_DIRECT) for unsupporting filesystems" },
 	{ "noaio",      &noaio,         lgetopt::BOOL,    "Disable the AIO interface in favor of traditional syscalls. " },
 	{ "noiou",      &noiou,         lgetopt::BOOL,    "Disable the io_uring interface and fallback to AIO or system calls. " },
 	{ "no6",        &no6,           lgetopt::BOOL,    "Disable IPv6 operations (default)" },
 	{ "6",          &yes6,          lgetopt::BOOL,    "Enable IPv6 operations" },
-	{ "norun",      &norun,         lgetopt::BOOL,    "[debug & testing only] Initialize but never run the event loop." },
-	{ "ro",         &read_only,     lgetopt::BOOL,    "Read-only mode. No writes to database allowed." },
-	{ "wa",         &write_avoid,   lgetopt::BOOL,    "Like read-only mode, but writes permitted if triggered." },
-	{ "smoketest",  &smoketest[0],  lgetopt::BOOL,    "Starts and stops the daemon to return success."},
-	{ "sassert",    &soft_assert,   lgetopt::BOOL,    "Softens assertion effects in debug mode."},
-	{ "nomatrix",   &nomatrix,      lgetopt::BOOL,    "Prevent loading the matrix application module."},
-	{ "matrix",     &matrix,        lgetopt::BOOL,    "Allow loading the matrix application module."},
-	{ "defaults",   &defaults,      lgetopt::BOOL,    "Use configuration defaults without database load for this execution."},
+	{ "norun",      &norun,         lgetopt::BOOL,    "[debug & testing only] Initialize but never run the event loop" },
+	{ "ro",         &read_only,     lgetopt::BOOL,    "Read-only mode. No writes to database allowed" },
+	{ "wa",         &write_avoid,   lgetopt::BOOL,    "Like read-only mode, but writes permitted if triggered" },
+	{ "smoketest",  &smoketest[0],  lgetopt::BOOL,    "Starts and stops the daemon to return success" },
+	{ "sassert",    &soft_assert,   lgetopt::BOOL,    "Softens assertion effects in debug mode" },
+	{ "nomatrix",   &nomatrix,      lgetopt::BOOL,    "Prevent loading the matrix application module" },
+	{ "matrix",     &matrix,        lgetopt::BOOL,    "Allow loading the matrix application module" },
+	{ "defaults",   &defaults,      lgetopt::BOOL,    "Use configuration defaults without database load for this execution" },
 	{ nullptr,      nullptr,        lgetopt::STRING,  nullptr },
 };
 

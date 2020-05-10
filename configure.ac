@@ -121,7 +121,7 @@ dnl Debugging mode
 dnl
 
 AC_MSG_CHECKING(whether to enable debugging)
-AC_ARG_ENABLE(debug, RB_HELP_STRING([--enable-debug], [Enable debugging suite for development.]),
+AC_ARG_ENABLE(debug, RB_HELP_STRING([--enable-debug], [Enable debugging suite for development]),
 [
 	debug="yes"
 	AC_MSG_RESULT([yes])
@@ -400,7 +400,7 @@ dnl Generic Mode compilation
 dnl
 
 AC_MSG_CHECKING(whether to enable generic mode or tune for this host)
-AC_ARG_ENABLE(generic, RB_HELP_STRING([--enable-generic], [Emit more generic code for pkg binaries.]),
+AC_ARG_ENABLE(generic, RB_HELP_STRING([--enable-generic], [Emit more generic code for pkg binaries]),
 [
 	enable_generic="yes"
 	AC_MSG_RESULT([yes])
@@ -426,7 +426,7 @@ dnl Untuned Mode compilation
 dnl
 
 AC_MSG_CHECKING(whether to enable fully untuned mode)
-AC_ARG_ENABLE(untuned, RB_HELP_STRING([--enable-untuned], [Emit no special feature instructions.]),
+AC_ARG_ENABLE(untuned, RB_HELP_STRING([--enable-untuned], [Emit no special feature instructions]),
 [
 	enable_untuned="yes"
 	AC_MSG_RESULT([yes])
@@ -1169,7 +1169,7 @@ dnl
 
 AC_SUBST_DIR([moduledir])
 AC_MSG_CHECKING([whether to modify moduledir])
-AC_ARG_WITH(moduledir, RB_HELP_STRING([--with-moduledir=DIR], [Directory to install modules.]),
+AC_ARG_WITH(moduledir, RB_HELP_STRING([--with-moduledir=DIR], [Directory to install modules]),
 [
 	AC_MSG_RESULT(yes)
 	moduledir=`echo $withval | sed 's/\/$//'`
@@ -1247,7 +1247,7 @@ dnl Check for --with-logdir
 dnl
 
 AC_MSG_CHECKING([whether to modify logdir])
-AC_ARG_WITH(logdir, RB_HELP_STRING([--with-logdir=DIR], [Directory where to write logfiles.]),
+AC_ARG_WITH(logdir, RB_HELP_STRING([--with-logdir=DIR], [Directory where to write logfiles]),
 [
 	AC_MSG_RESULT(yes)
 	logdir=`echo $withval | sed 's/\/$//'`
@@ -1959,7 +1959,7 @@ PKG_CHECK_MODULES(JEMALLOC, [jemalloc],
 ])
 
 AC_MSG_CHECKING(whether to disable use of any found jemalloc)
-AC_ARG_ENABLE(jemalloc, RB_HELP_STRING([--disable-jemalloc], [Disable jemalloc as third-party dynamic memory manager.]),
+AC_ARG_ENABLE(jemalloc, RB_HELP_STRING([--disable-jemalloc], [Disable jemalloc as third-party dynamic memory manager]),
 [
 	AC_MSG_RESULT([yes])
 	enable_jemalloc="no"
@@ -2137,7 +2137,7 @@ dnl --with-custom-branding
 dnl
 
 AC_MSG_CHECKING([whether custom branding is requested])
-AC_ARG_WITH(custom-branding, RB_HELP_STRING([--with-custom-branding=NAME], [Custom branding name.]),
+AC_ARG_WITH(custom-branding, RB_HELP_STRING([--with-custom-branding=NAME], [Custom branding name]),
 [
 	BRANDING_NAME="$withval"
 	AC_DEFINE_UNQUOTED(BRANDING_NAME, ["$BRANDING_NAME"], [Custom branding name.])
@@ -2154,7 +2154,7 @@ dnl --with-custom-version
 dnl
 
 AC_MSG_CHECKING([whether a custom version is requested])
-AC_ARG_WITH(custom-version, RB_HELP_STRING([--with-custom-version=NAME], [Custom version branding.]),
+AC_ARG_WITH(custom-version, RB_HELP_STRING([--with-custom-version=NAME], [Custom version branding]),
 [
 	BRANDING_VERSION="$withval"
 	AC_DEFINE_UNQUOTED(BRANDING_VERSION, ["$BRANDING_VERSION"], [Custom branding version.])
