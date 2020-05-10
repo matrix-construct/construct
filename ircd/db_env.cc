@@ -8,7 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <RB_INC_FCNTL_H
 #include "db.h"
 
 decltype(ircd::db::database::env::log)
@@ -1265,6 +1264,7 @@ try
 		(trunc? std::ios::trunc : std::ios::openmode(0))
 	};
 
+	ret.dontneed = true;
 	ret.direct = this->env_opts.use_direct_writes;
 	ret.cloexec = this->env_opts.set_fd_cloexec;
 	return ret;
@@ -2812,6 +2812,7 @@ decltype(ircd::db::database::env::sequential_file::default_opts)
 ircd::db::database::env::sequential_file::default_opts{[]
 {
 	ircd::fs::fd::opts ret{std::ios_base::in};
+	ret.sequential = true;
 	return ret;
 }()};
 
@@ -2861,11 +2862,6 @@ try
 		_buffer_align,
 		name
 	};
-	#endif
-
-	#if defined(HAVE_POSIX_FADVISE) && defined(POSIX_FADV_SEQUENTIAL)
-	if(!opts.direct)
-		syscall(::posix_fadvise, fd, offset, off_t(0), POSIX_FADV_SEQUENTIAL);
 	#endif
 }
 catch(const std::system_error &e)
@@ -3220,6 +3216,7 @@ decltype(ircd::db::database::env::random_access_file::default_opts)
 ircd::db::database::env::random_access_file::default_opts{[]
 {
 	ircd::fs::fd::opts ret{std::ios_base::in};
+	ret.random = true;
 	return ret;
 }()};
 
@@ -3630,6 +3627,7 @@ ircd::db::database::env::random_rw_file::default_opts{[]
 		std::ios_base::in | std::ios_base::out
 	};
 
+	ret.random = true;
 	return ret;
 }()};
 
