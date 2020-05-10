@@ -19,4 +19,5 @@ struct construct::signals
 
   public:
 	signals(boost::asio::io_context &ios);
+	~signals() noexcept;
 };

@@ -45,6 +45,11 @@ construct::signals::signals(boost::asio::io_context &ios)
 	set_handle();
 }
 
+construct::signals::~signals()
+noexcept
+{
+}
+
 // Because we registered signal handlers with the io_context, ios->run()
 // is now shared between those handlers and libircd. This means the run()
 // won't return even if we call ircd::quit(). We use this callback to
@@ -56,7 +61,7 @@ construct::signals::on_runlevel(const enum ircd::run::level &level)
 	{
 		case ircd::run::level::HALT:
 		case ircd::run::level::QUIT:
-			signal_set->cancel();
+			signal_set.reset(nullptr);
 			break;
 
 		default:

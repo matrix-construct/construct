@@ -299,7 +299,7 @@ noexcept try
 	// event loop. This means we lose the true instant hardware-interrupt gratitude
 	// of signals but with the benefit of unconditional safety and cross-
 	// platformness with windows etc.
-	const construct::signals signals{ios};
+	construct::signals signals{ios};
 
 	// Associates libircd with our io_context and posts the initial routines
 	// to that io_context. Execution of IRCd will then occur during ios::run()
