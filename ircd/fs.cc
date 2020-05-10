@@ -2028,6 +2028,22 @@ try
 	return syscall(::open, path_cstr(path), flags, mode);
 }()}
 {
+	const int advise
+	{
+		opts.direct?
+			0:
+		opts.random?
+			POSIX_FADV_RANDOM:
+		opts.sequential?
+			POSIX_FADV_SEQUENTIAL:
+		opts.dontneed?
+			POSIX_FADV_DONTNEED:
+			0
+	};
+
+	if(advise)
+		fs::advise(*this, advise);
+
 	if(opts.ate)
 		syscall(::lseek, fdno, 0, SEEK_END);
 }

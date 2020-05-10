@@ -81,6 +81,15 @@ struct ircd::fs::fd::opts
 	/// (O_NONBLOCK) Non-blocking behavior.
 	bool blocking {true};
 
+	/// Advise for random access (ignored when direct=true)
+	bool random {false};
+
+	/// Advise for sequential access (ignored when direct=true)
+	bool sequential {false};
+
+	/// Advise for dontneed access (ignored when direct=true)
+	bool dontneed {false};
+
 	/// Construct options from an std::ios::open_mode bitmask.
 	opts(const std::ios::openmode &);
 	opts() = default;
