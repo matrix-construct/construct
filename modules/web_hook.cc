@@ -419,16 +419,11 @@ github_handle__gollum(std::ostream &out,
 
 			static const auto delim("\\r\\n");
 			const json::string body(page["summary"]);
-			auto lines(split(body, delim)); do
+			ircd::tokens(body, delim, [&out]
+			(const string_view &line)
 			{
-				out
-				<< lines.first
-				<< "<br />"
-				;
-
-				lines = split(lines.second, delim);
-			}
-			while(!empty(lines.second));
+				out << line << "<br />";
+			});
 
 			out
 			<< ""
@@ -871,15 +866,11 @@ github_handle__issues(std::ostream &out,
 
 		static const auto delim("\\r\\n");
 		const json::string body(issue["body"]);
-		auto lines(split(body, delim)); do
+		ircd::tokens(body, delim, [&out]
+		(const string_view &line)
 		{
-			out << lines.first
-			    << "<br />"
-			    ;
-
-			lines = split(lines.second, delim);
-		}
-		while(!empty(lines.second));
+			out << line << "<br />";
+		});
 
 		out << ""
 		    << "</code></pre>"
@@ -1058,15 +1049,11 @@ github_handle__issue_comment(std::ostream &out,
 
 		static const auto delim("\\r\\n");
 		const json::string body(comment["body"]);
-		auto lines(split(body, delim)); do
+		ircd::tokens(body, delim, [&out]
+		(const string_view &line)
 		{
-			out << lines.first
-			    << "\\n"
-			    ;
-
-			lines = split(lines.second, delim);
-		}
-		while(!empty(lines.second));
+			out << line << "<br />";
+		});
 
 		out << ""
 		    << "</code></pre>"
