@@ -39,6 +39,13 @@ if LTO
 AM_CXXFLAGS += -flto
 endif
 
+if LTO
+if CLANG
+AM_CXXFLAGS += -fstrict-vtable-pointers
+AM_CXXFLAGS += -fwhole-program-vtables
+endif
+endif
+
 if DEBUG
 if GCC
 AM_CXXFLAGS += -fmax-errors=3
