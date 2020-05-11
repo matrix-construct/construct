@@ -238,12 +238,9 @@ ircd::m::get_room_keys_version(client &client,
 	}
 
 	if(!event_idx)
-		return resource::response
+		throw m::NOT_FOUND
 		{
-			client, json::members
-			{
-				{ "version", 0L },
-			}
+			"No version found.",
 		};
 
 	if(m::room_id(event_idx) != user_room.room_id)
@@ -254,9 +251,9 @@ ircd::m::get_room_keys_version(client &client,
 		};
 
 	if(m::redacted(event_idx))
-		return resource::response
+		throw m::NOT_FOUND
 		{
-			client, http::NOT_FOUND
+			"No version found.",
 		};
 
 	m::get(event_idx, "content", [&client, &event_idx]
