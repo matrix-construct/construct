@@ -103,6 +103,9 @@ ircd::m::sync::room_state_linear_events(data &data)
 		is_own_membership && data.membership == "join"
 	};
 
+	if(is_own_join)
+		return false;
+
 	const ssize_t &viewport_size
 	{
 		room::events::viewport_size
@@ -152,21 +155,6 @@ ircd::m::sync::room_state_linear_events(data &data)
 	{
 		*data.out, state_member_name
 	};
-
-	if(is_own_membership && data.membership == "join")
-	{
-		const scope_restore data_range_first
-		{
-			data.range.first, 0UL
-		};
-
-		const scope_restore data_range_second
-		{
-			data.range.second, std::max(data.event_idx + 1, data.range.second)
-		};
-
-		return room_state_polylog_events(data);
-	}
 
 	json::stack::array array
 	{

@@ -146,36 +146,20 @@ ircd::m::sync::room_timeline_linear(data &data)
 		*data.out, "timeline"
 	};
 
-	// Branch to backfill the user's timeline before their own join event to
-	// the room. This simply reuses the polylog handler as if they were
-	// initial-syncing the room. This branch is not taken for rejoins (i.e
-	// displayname and avatar changes).
-	if(is_own_join && !is_own_rejoin)
+	if(is_own_join)
 	{
-		const event::idx range_first
+		json::stack::member
 		{
-			!is_invite_accept && last_membership_state_idx?
-				last_membership_state_idx + 1: // start after last state
-				0UL
+			timeline, "limited", json::value{true}
 		};
 
-		const scope_restore data_range_first
+		json::stack::member
 		{
-			data.range.first, range_first
+			timeline, "prev_batch", json::value
+			{
+				string_view{data.event->event_id}
+			}
 		};
-
-		const scope_restore data_range_second
-		{
-			data.range.second, std::max(data.event_idx + 1, data.range.second)
-		};
-
-		bool ret{false}, limited{false};
-		const auto prev_batch
-		{
-			_room_timeline_polylog_events(data, *data.room, limited, ret)
-		};
-
-		return ret;
 	}
 
 	json::stack::array array
