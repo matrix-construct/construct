@@ -10,6 +10,29 @@
 
 #include <boost/tokenizer.hpp>
 
+namespace ircd
+{
+	struct string_separator;
+};
+
+struct [[gnu::visibility("internal")]]
+ircd::string_separator
+{
+	string_view delim;
+
+	template<class iterator,
+	         class token>
+	bool operator()(iterator &next, iterator end, token &ret) const noexcept;
+	void reset() noexcept;
+
+	string_separator(const string_view &delim) noexcept;
+	~string_separator() noexcept;
+};
+
+//
+// interface
+//
+
 ircd::string_view
 ircd::tokens_before(const string_view &str,
                     const char &sep,
@@ -359,4 +382,57 @@ ircd::tokens(const string_view &str,
 	};
 
 	std::for_each(begin(view), end(view), closure);
+}
+
+//
+// string_separator
+//
+
+ircd::string_separator::string_separator(const string_view &delim)
+noexcept
+:delim
+{
+	delim
+}
+{
+}
+
+ircd::string_separator::~string_separator()
+noexcept
+{
+}
+
+void
+ircd::string_separator::reset()
+noexcept
+{
+	//TODO: ???
+}
+
+template<class iterator,
+         class token>
+bool
+ircd::string_separator::operator()(iterator &start,
+                                   iterator stop,
+                                   token &ret)
+const noexcept
+{
+	do
+	{
+		if(start == stop)
+			return false;
+
+		const string_view input
+		{
+			start, stop
+		};
+
+		string_view remain;
+		std::tie(ret, remain) = ircd::split(input, delim);
+		start = remain?
+			begin(remain):
+			stop;
+	}
+	while(!ret);
+	return true;
 }
