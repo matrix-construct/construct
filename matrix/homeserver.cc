@@ -280,10 +280,10 @@ catch(const std::exception &e)
 	log::logf
 	{
 		log, log::level::CRITICAL,
-		"Failed to start server '%s' on network '%s'",
+		"Failed to start server '%s' on network '%s' :%s",
 		opts->server_name,
 		opts->origin,
-		e.what()
+		e.what(),
 	};
 }
 
@@ -890,17 +890,17 @@ catch(const std::exception &e)
 	log::logf
 	{
 		log, log::level::CRITICAL,
-		"Failed to start server '%s' on network '%s'",
+		"Failed to bootstrap server '%s' on network '%s' :%s",
 		server_name(homeserver),
 		origin(homeserver),
-		e.what()
+		e.what(),
 	};
 
 	throw ircd::error
 	{
-		"bootstrap %s error :%s",
+		"bootstrap %s :%s",
 		server_name(homeserver),
-		e.what()
+		e.what(),
 	};
 }
 
