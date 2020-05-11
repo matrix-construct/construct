@@ -53,6 +53,14 @@ ircd::allocator::je::malloc_version_abi
 	"jemalloc", info::versions::ABI, //TODO: get this
 };
 
+decltype(ircd::allocator::je::available)
+ircd::allocator::je::available
+{
+	#if defined(IRCD_ALLOCATOR_JEMALLOC)
+		mods::ldso::has("jemalloc")
+	#endif
+};
+
 #if defined(IRCD_ALLOCATOR_JEMALLOC)
 bool
 ircd::allocator::trim(const size_t &pad)

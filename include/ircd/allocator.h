@@ -46,6 +46,13 @@ namespace ircd::allocator
 	bool trim(const size_t &pad = 0) noexcept; // malloc_trim(3)
 }
 
+/// jemalloc specific suite; note that some of the primary ircd::allocator
+/// interface has different functionality when je::available.
+namespace ircd::allocator::je
+{
+	extern const bool available;
+}
+
 /// Valgrind memcheck hypercall suite
 /// note: definitions located in ircd/vg.cc
 namespace ircd::allocator::vg
