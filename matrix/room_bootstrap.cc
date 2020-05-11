@@ -8,7 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-namespace ircd::m::bootstrap
+namespace ircd::m::roomstrap
 {
 	struct pkg;
 	using send_join_response = std::tuple<json::object, unique_buffer<mutable_buffer>>;
@@ -29,7 +29,7 @@ namespace ircd::m::bootstrap
 	extern log::log log;
 }
 
-struct ircd::m::bootstrap::pkg
+struct ircd::m::roomstrap::pkg
 {
 	std::string event;
 	std::string event_id;
@@ -37,14 +37,14 @@ struct ircd::m::bootstrap::pkg
 	std::string room_version;
 };
 
-decltype(ircd::m::bootstrap::log)
-ircd::m::bootstrap::log
+decltype(ircd::m::roomstrap::log)
+ircd::m::roomstrap::log
 {
 	"m.room.bootstrap"
 };
 
-decltype(ircd::m::bootstrap::backfill_limit)
-ircd::m::bootstrap::backfill_limit
+decltype(ircd::m::roomstrap::backfill_limit)
+ircd::m::roomstrap::backfill_limit
 {
 	{ "name",         "ircd.client.rooms.join.backfill.limit" },
 	{ "default",      64L                                     },
@@ -57,22 +57,22 @@ ircd::m::bootstrap::backfill_limit
 	)"}
 };
 
-decltype(ircd::m::bootstrap::backfill_timeout)
-ircd::m::bootstrap::backfill_timeout
+decltype(ircd::m::roomstrap::backfill_timeout)
+ircd::m::roomstrap::backfill_timeout
 {
 	{ "name",     "ircd.client.rooms.join.backfill.timeout" },
 	{ "default",  15L                                       },
 };
 
-decltype(ircd::m::bootstrap::send_join_timeout)
-ircd::m::bootstrap::send_join_timeout
+decltype(ircd::m::roomstrap::send_join_timeout)
+ircd::m::roomstrap::send_join_timeout
 {
 	{ "name",     "ircd.client.rooms.join.send_join.timeout" },
 	{ "default",  90L  /* spinappse */                       },
 };
 
-decltype(ircd::m::bootstrap::make_join_timeout)
-ircd::m::bootstrap::make_join_timeout
+decltype(ircd::m::roomstrap::make_join_timeout)
+ircd::m::roomstrap::make_join_timeout
 {
 	{ "name",     "ircd.client.rooms.join.make_join.timeout" },
 	{ "default",  15L                                        },
@@ -126,10 +126,10 @@ ircd::m::room::bootstrap::bootstrap(m::event::id::buf &event_id_buf,
 		event_id_buf = m::event_id(std::nothrow, member_event_idx);
 
 	if(!event_id_buf)
-		event_id_buf = m::bootstrap::make_join(host, room_id, user_id, room_version_buf);
+		event_id_buf = m::roomstrap::make_join(host, room_id, user_id, room_version_buf);
 
 	if(!room_version)
-		m::bootstrap::make_join(host, room_id, user_id, room_version_buf);
+		m::roomstrap::make_join(host, room_id, user_id, room_version_buf);
 
 	assert(event_id_buf);
 
@@ -162,7 +162,7 @@ try
 	assert(event.valid);
 	assert(event.source);
 
-	m::bootstrap::pkg pkg
+	m::roomstrap::pkg pkg
 	{
 		std::string(event.source),
 		event.event_id,
@@ -175,7 +175,7 @@ try
 		"bootstrap",
 		stack_sz,
 		flags,
-		std::bind(&ircd::m::bootstrap::worker, std::move(pkg))
+		std::bind(&ircd::m::roomstrap::worker, std::move(pkg))
 	};
 }
 catch(const std::exception &e)
@@ -227,7 +227,7 @@ try
 	assert(event.source);
 	const auto &[response, buf]
 	{
-		m::bootstrap::send_join(host, room_id, event_id, event.source)
+		m::roomstrap::send_join(host, room_id, event_id, event.source)
 	};
 
 	const json::array &auth_chain
@@ -259,13 +259,13 @@ try
 	vmopts.fetch_state = false;
 	vmopts.fetch_prev = false;
 
-	m::bootstrap::fetch_keys(auth_chain);
-	m::bootstrap::eval_auth_chain(auth_chain, vmopts);
+	m::roomstrap::fetch_keys(auth_chain);
+	m::roomstrap::eval_auth_chain(auth_chain, vmopts);
 
-	m::bootstrap::fetch_keys(state);
-	m::bootstrap::eval_state(state, vmopts);
+	m::roomstrap::fetch_keys(state);
+	m::roomstrap::eval_state(state, vmopts);
 
-	m::bootstrap::backfill(host, room_id, event_id, vmopts);
+	m::roomstrap::backfill(host, room_id, event_id, vmopts);
 
 	// After we just received and processed all of this state with only a
 	// recent backfill our system doesn't know if state events which are
@@ -283,7 +283,7 @@ try
 	// server. Now that we have processed the state we know of more servers.
 	// They don't know about our join event though, so we conduct a synchronous
 	// broadcast to the room now manually.
-	m::bootstrap::broadcast_join(room, event, host);
+	m::roomstrap::broadcast_join(room, event, host);
 
 	log::notice
 	{
@@ -307,11 +307,11 @@ catch(const std::exception &e)
 }
 
 //
-// m::bootstrap
+// m::roomstrap
 //
 
 void
-ircd::m::bootstrap::worker(pkg pkg)
+ircd::m::roomstrap::worker(pkg pkg)
 try
 {
 	assert(!empty(pkg.event));
@@ -350,7 +350,7 @@ catch(const std::exception &e)
 }
 
 void
-ircd::m::bootstrap::broadcast_join(const m::room &room,
+ircd::m::roomstrap::broadcast_join(const m::room &room,
                                    const m::event &event,
                                    const string_view &exclude) //TODO: XX
 {
@@ -427,7 +427,7 @@ ircd::m::bootstrap::broadcast_join(const m::room &room,
 }
 
 void
-ircd::m::bootstrap::backfill(const string_view &host,
+ircd::m::roomstrap::backfill(const string_view &host,
                              const m::room::id &room_id,
                              const m::event::id &event_id,
                              vm::opts vmopts)
@@ -504,7 +504,7 @@ catch(const std::exception &e)
 }
 
 void
-ircd::m::bootstrap::eval_state(const json::array &state,
+ircd::m::roomstrap::eval_state(const json::array &state,
                                vm::opts vmopts)
 try
 {
@@ -533,7 +533,7 @@ catch(const std::exception &e)
 }
 
 void
-ircd::m::bootstrap::eval_auth_chain(const json::array &auth_chain,
+ircd::m::roomstrap::eval_auth_chain(const json::array &auth_chain,
                                     vm::opts vmopts)
 try
 {
@@ -563,7 +563,7 @@ catch(const std::exception &e)
 }
 
 void
-ircd::m::bootstrap::fetch_keys(const json::array &events)
+ircd::m::roomstrap::fetch_keys(const json::array &events)
 try
 {
 	std::vector<m::fed::key::server_key> queries;
@@ -612,8 +612,8 @@ catch(const std::exception &e)
 	//throw;
 }
 
-ircd::m::bootstrap::send_join_response
-ircd::m::bootstrap::send_join(const string_view &host,
+ircd::m::roomstrap::send_join_response
+ircd::m::roomstrap::send_join(const string_view &host,
                               const m::room::id &room_id,
                               const m::event::id &event_id,
                               const json::object &event)
@@ -677,7 +677,7 @@ catch(const std::exception &e)
 }
 
 ircd::m::event::id::buf
-ircd::m::bootstrap::make_join(const string_view &host,
+ircd::m::roomstrap::make_join(const string_view &host,
                               const m::room::id &room_id,
                               const m::user::id &user_id,
                               const mutable_buffer &room_version_buf)
