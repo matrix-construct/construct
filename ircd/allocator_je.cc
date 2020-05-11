@@ -10,6 +10,10 @@
 
 #include <RB_INC_JEMALLOC_H
 
+#if defined(IRCD_ALLOCATOR_USE_JEMALLOC) && defined(HAVE_JEMALLOC_H)
+	#define IRCD_ALLOCATOR_JEMALLOC
+#endif
+
 namespace ircd::allocator
 {
 	static std::function<void (std::ostream &, const string_view &)> je_stats_callback;
@@ -19,7 +23,7 @@ namespace ircd::allocator
 	extern info::versions je_malloc_version_abi;
 }
 
-#if defined(IRCD_ALLOCATOR_USE_JEMALLOC) && defined(HAVE_JEMALLOC_H)
+#if defined(IRCD_ALLOCATOR_USE_JEMALLOC)
 const char *
 __attribute__((weak))
 malloc_conf
@@ -49,7 +53,7 @@ ircd::allocator::je_malloc_version_abi
 	"jemalloc", info::versions::ABI, //TODO: get this
 };
 
-#if defined(IRCD_ALLOCATOR_USE_JEMALLOC) && defined(HAVE_JEMALLOC_H)
+#if defined(IRCD_ALLOCATOR_JEMALLOC)
 bool
 ircd::allocator::trim(const size_t &pad)
 noexcept
@@ -58,7 +62,7 @@ noexcept
 }
 #endif
 
-#if defined(IRCD_ALLOCATOR_USE_JEMALLOC) && defined(HAVE_JEMALLOC_H)
+#if defined(IRCD_ALLOCATOR_JEMALLOC)
 ircd::string_view
 ircd::allocator::get(const string_view &key_,
                      const mutable_buffer &buf)
@@ -75,7 +79,7 @@ ircd::allocator::get(const string_view &key_,
 }
 #endif
 
-#if defined(IRCD_ALLOCATOR_USE_JEMALLOC) && defined(HAVE_JEMALLOC_H)
+#if defined(IRCD_ALLOCATOR_JEMALLOC)
 ircd::string_view
 ircd::allocator::set(const string_view &key_,
                      const string_view &val,
@@ -111,7 +115,7 @@ catch(const std::bad_function_call &)
 	return;
 }
 
-#if defined(IRCD_ALLOCATOR_USE_JEMALLOC) && defined(HAVE_JEMALLOC_H)
+#if defined(IRCD_ALLOCATOR_JEMALLOC)
 ircd::string_view
 ircd::allocator::info(const mutable_buffer &buf)
 {
@@ -135,7 +139,7 @@ ircd::allocator::info(const mutable_buffer &buf)
 }
 #endif
 
-#if defined(IRCD_ALLOCATOR_USE_JEMALLOC) && defined(HAVE_JEMALLOC_H)
+#if defined(IRCD_ALLOCATOR_JEMALLOC)
 void
 ircd::allocator::scope::hook_init()
 noexcept
@@ -143,7 +147,7 @@ noexcept
 }
 #endif
 
-#if defined(IRCD_ALLOCATOR_USE_JEMALLOC) && defined(HAVE_JEMALLOC_H)
+#if defined(IRCD_ALLOCATOR_JEMALLOC)
 void
 ircd::allocator::scope::hook_fini()
 noexcept
