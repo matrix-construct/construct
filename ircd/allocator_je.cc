@@ -14,13 +14,13 @@
 	#define IRCD_ALLOCATOR_JEMALLOC
 #endif
 
-namespace ircd::allocator
+namespace ircd::allocator::je
 {
-	static std::function<void (std::ostream &, const string_view &)> je_stats_callback;
-	static void je_stats_handler(void *, const char *);
+	static std::function<void (std::ostream &, const string_view &)> stats_callback;
+	static void stats_handler(void *, const char *);
 
-	extern info::versions je_malloc_version_api;
-	extern info::versions je_malloc_version_abi;
+	extern info::versions malloc_version_api;
+	extern info::versions malloc_version_abi;
 }
 
 #if defined(IRCD_ALLOCATOR_USE_JEMALLOC)
@@ -33,8 +33,8 @@ malloc_conf
 };
 #endif
 
-decltype(ircd::allocator::je_malloc_version_api)
-ircd::allocator::je_malloc_version_api
+decltype(ircd::allocator::je::malloc_version_api)
+ircd::allocator::je::malloc_version_api
 {
 	"jemalloc", info::versions::API, 0,
 	#ifdef HAVE_JEMALLOC_H
@@ -47,8 +47,8 @@ ircd::allocator::je_malloc_version_api
 	#endif
 };
 
-decltype(ircd::allocator::je_malloc_version_abi)
-ircd::allocator::je_malloc_version_abi
+decltype(ircd::allocator::je::malloc_version_abi)
+ircd::allocator::je::malloc_version_abi
 {
 	"jemalloc", info::versions::ABI, //TODO: get this
 };
@@ -98,8 +98,8 @@ ircd::allocator::set(const string_view &key_,
 #endif
 
 void
-ircd::allocator::je_stats_handler(void *const ptr,
-                                  const char *const msg)
+ircd::allocator::je::stats_handler(void *const ptr,
+                                   const char *const msg)
 try
 {
 	auto &out
@@ -107,7 +107,7 @@ try
 		*reinterpret_cast<std::stringstream *>(ptr)
 	};
 
-	je_stats_callback(out, msg);
+	stats_callback(out, msg);
 }
 catch(const std::bad_function_call &)
 {
@@ -122,7 +122,7 @@ ircd::allocator::info(const mutable_buffer &buf)
 	std::stringstream out;
 	pubsetbuf(out, buf);
 
-	je_stats_callback = []
+	je::stats_callback = []
 	(auto &out, const string_view &msg)
 	{
 		out << msg;
@@ -133,7 +133,7 @@ ircd::allocator::info(const mutable_buffer &buf)
 		""
 	};
 
-	malloc_stats_print(je_stats_handler, &out, opts);
+	malloc_stats_print(je::stats_handler, &out, opts);
 	out << std::endl;
 	return view(out, buf);
 }
