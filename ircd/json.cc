@@ -8,6 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#pragma GCC visibility push(internal)
 namespace ircd::json
 {
 	using namespace ircd::spirit;
@@ -21,20 +22,25 @@ namespace ircd::json
 
 	const size_t &error_show_max {48};
 }
+#pragma GCC visibility pop
 
+#pragma GCC visibility push(internal)
 BOOST_FUSION_ADAPT_STRUCT
 (
     ircd::json::member,
     ( decltype(ircd::json::member::first),   first )
     ( decltype(ircd::json::member::second),  second )
 )
+#pragma GCC visibility pop
 
+#pragma GCC visibility push(internal)
 BOOST_FUSION_ADAPT_STRUCT
 (
     ircd::json::object::member,
     ( decltype(ircd::json::object::member::first),   first )
     ( decltype(ircd::json::object::member::second),  second )
 )
+#pragma GCC visibility pop
 
 struct [[gnu::visibility("internal")]]
 ircd::json::input
@@ -376,6 +382,7 @@ const ircd::json::printer;
 
 template<class gen,
          class... attr>
+[[gnu::visibility("internal")]]
 bool
 ircd::json::printer::operator()(mutable_buffer &out,
                                 gen&& g,
@@ -407,6 +414,7 @@ const
 }
 
 template<class gen>
+[[gnu::visibility("internal")]]
 bool
 ircd::json::printer::operator()(mutable_buffer &out,
                                 gen&& g)
@@ -438,8 +446,8 @@ const
 template<class it_a,
          class it_b,
          class closure>
+[[gnu::visibility("internal")]]
 inline void
-__attribute__((always_inline))
 ircd::json::printer::list_protocol(mutable_buffer &out,
                                    it_a it,
                                    const it_b &end,
@@ -457,6 +465,7 @@ ircd::json::printer::list_protocol(mutable_buffer &out,
 	}
 }
 
+[[gnu::visibility("internal")]]
 void
 ircd::json::input::throws_exceeded()
 {
