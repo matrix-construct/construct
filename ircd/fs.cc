@@ -99,7 +99,7 @@ void
 ircd::fs::update_rlimit_nofile()
 try
 {
-	rlimit rlim[2] {0};
+	rlimit rlim[2];
 	syscall(getrlimit, RLIMIT_NOFILE, &rlim[0]);
 
 	rlim[1] = rlim[0];
