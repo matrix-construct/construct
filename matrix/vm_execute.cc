@@ -714,11 +714,6 @@ ircd::m::vm::execute_pdu(eval &eval,
 			};
 	}
 
-	log::debug
-	{
-		log, "%s | event committing", loghead(eval)
-	};
-
 	assert(eval.sequence != 0);
 	assert(sequence::uncommitted <= sequence::get(eval));
 	assert(sequence::committed < sequence::get(eval));
@@ -758,11 +753,6 @@ ircd::m::vm::execute_pdu(eval &eval,
 
 		call_hook(eval_hook, eval, event, eval);
 	}
-
-	log::debug
-	{
-		log, "%s | event committed", loghead(eval)
-	};
 
 	assert(sequence::committed < sequence::get(eval));
 	assert(sequence::retired < sequence::get(eval));
