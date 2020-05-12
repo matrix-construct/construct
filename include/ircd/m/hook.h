@@ -132,6 +132,7 @@ final
 	void call(hook<void> &, const event &);
 
   public:
+	void operator()(base **const &, const event &);
 	void operator()(const event &);
 
 	site(const json::members &feature);
@@ -164,6 +165,7 @@ struct ircd::m::hook::site
 	void call(hook<data> &hfn, const event &event, data d);
 
   public:
+	void operator()(base **const &, const event &event, data d);
 	void operator()(const event &event, data d);
 
 	site(const json::members &feature)
@@ -176,10 +178,32 @@ void
 ircd::m::hook::site<data>::operator()(const event &event,
                                       data d)
 {
-	match(event, [this, &event, &d]
+	base *cur {nullptr};
+	operator()(&cur, event, std::forward<data>(d));
+}
+
+template<class data>
+void
+ircd::m::hook::site<data>::operator()(base **const &cur,
+                                      const event &event,
+                                      data d)
+{
+	// Iterate all matching hooks
+	match(event, [this, &cur, &event, &d]
 	(base &base)
 	{
-		call(dynamic_cast<hook<data> &>(base), event, d);
+		// Indicate which hook we're entering
+		const scope_restore entered
+		{
+			*cur, std::addressof(base)
+		};
+
+		auto &hfn
+		{
+			dynamic_cast<hook<data> &>(base)
+		};
+
+		call(hfn, event, d);
 		return true;
 	});
 }

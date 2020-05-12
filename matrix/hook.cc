@@ -507,10 +507,30 @@ ircd::m::hook::site<void>::site(const json::members &feature)
 void
 ircd::m::hook::site<void>::operator()(const event &event)
 {
-	match(event, [this, &event]
+	base *cur {nullptr};
+	operator()(&cur, event);
+}
+
+void
+ircd::m::hook::site<void>::operator()(base **const &cur,
+                                      const event &event)
+{
+	// Iterate all matching hooks
+	match(event, [this, &cur, &event]
 	(base &base)
 	{
-		call(dynamic_cast<hook<void> &>(base), event);
+		// Indicate which hook we're entering
+		const scope_restore entered
+		{
+			*cur, std::addressof(base)
+		};
+
+		auto &hfn
+		{
+			dynamic_cast<hook<void> &>(base)
+		};
+
+		call(hfn, event);
 		return true;
 	});
 }
