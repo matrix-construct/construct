@@ -89,7 +89,7 @@ struct ircd::m::vm::eval
 	event::id::buf event_id;
 	event::conforms report;
 	string_view room_version;
-	const hook::base::site *phase_hook {nullptr};
+	hook::base *hook {nullptr};
 	vm::phase phase {vm::phase(0)};
 	bool room_internal {false};
 

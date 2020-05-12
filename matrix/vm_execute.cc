@@ -1044,13 +1044,15 @@ try
 	};
 	#endif
 
-	assert(!eval.phase_hook);
-	const scope_restore hook_phase
+	// Providing a pointer to the eval.hook pointer allows the hook site to
+	// provide updates for observers in other contexts for which hook is
+	// currently entered.
+	auto **const cur
 	{
-		eval.phase_hook, std::addressof(hook)
+		std::addressof(eval.hook)
 	};
 
-	hook(event, std::forward<T>(data));
+	hook(cur, event, std::forward<T>(data));
 
 	#if 0
 	log::debug
