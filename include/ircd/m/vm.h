@@ -87,7 +87,7 @@ struct ircd::m::vm::eval
 	event::id::buf event_id;
 	event::conforms report;
 	string_view room_version;
-	const hook::base::site *phase {nullptr};
+	const hook::base::site *phase_hook {nullptr};
 	bool room_internal {false};
 
 	static bool for_each_pdu(const std::function<bool (const event &)> &);

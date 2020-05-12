@@ -14942,7 +14942,7 @@ console_cmd__vm(opt &out, const string_view &line)
 		<< std::right << std::setw(5) << done << " "
 		<< std::right << std::setw(9) << eval->sequence << " "
 		<< std::right << std::setw(9) << std::max(eval->sequence_shared[0], eval->sequence_shared[1]) << " "
-		<< std::left << std::setw(9) << (eval->phase? eval->phase->name() : ""_sv) << " "
+		<< std::left << std::setw(9) << (eval->phase_hook? eval->phase_hook->name() : ""_sv) << " "
 		<< std::right << std::setw(6) << (eval->txn? eval->txn->bytes() : 0UL) << "  "
 		<< std::right << std::setw(5) << (eval->txn? eval->txn->size() : 0UL) << " "
 		<< std::right << std::setw(8) << (eval->event_ && eval->event_id? long(json::get<"depth"_>(*eval->event_)) : -1L) << " "

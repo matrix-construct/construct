@@ -868,10 +868,10 @@ try
 	};
 	#endif
 
-	assert(!eval.phase);
+	assert(!eval.phase_hook);
 	const scope_restore hook_phase
 	{
-		eval.phase, std::addressof(hook)
+		eval.phase_hook, std::addressof(hook)
 	};
 
 	hook(event, std::forward<T>(data));
