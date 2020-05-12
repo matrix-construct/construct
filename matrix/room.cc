@@ -331,7 +331,7 @@ ircd::m::commit(const room &room,
 	opts.non_conform |= event::conforms::MISMATCH_ORIGIN_SENDER;
 
 	// Don't need this here
-	opts.verify = false;
+	opts.phase.reset(vm::phase::VERIFY);
 
 	return vm::eval
 	{

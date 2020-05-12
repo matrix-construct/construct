@@ -128,6 +128,11 @@ try
 		eval::executing
 	};
 
+	const scope_restore eval_phase
+	{
+		eval.phase, phase::EXECUTE
+	};
+
 	const scope_notify notify
 	{
 		vm::dock
@@ -213,11 +218,18 @@ try
 	// evaluation is finished. If the other was successful, the exists()
 	// check will skip this, otherwise we have to try again here because
 	// this evaluator might be using different options/credentials.
-	if(likely(opts.unique) && event.event_id)
+	if(likely(opts.phase[phase::DUPCHK] && opts.unique) && event.event_id)
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::DUPCHK
+		};
+
 		sequence::dock.wait([&event]
 		{
 			return eval::count(event.event_id) <= 1;
 		});
+	}
 
 	// We can elide a lot of grief here by not proceeding further and simply
 	// returning fault::EXISTS after an existence check. If we had to wait for
@@ -320,8 +332,15 @@ try
 
 	// The issue hook is only called when this server is injecting a newly
 	// created event.
-	if(eval.copts && eval.copts->issue)
+	if(opts.phase[phase::ISSUE] && eval.copts && eval.copts->issue)
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::ISSUE
+		};
+
 		call_hook(issue_hook, eval, event, eval);
+	}
 
 	// Branch on whether the event is an EDU or a PDU
 	const fault ret
@@ -344,15 +363,29 @@ try
 
 	// The event was executed; now we broadcast the good news. This will
 	// include notifying client `/sync` and the federation sender.
-	if(likely(opts.notify))
+	if(likely(opts.phase[phase::NOTIFY]))
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::NOTIFY
+		};
+
 		call_hook(notify_hook, eval, event, eval);
+	}
 
 	// The "effects" of the event are created by listeners on the effect hook.
 	// These can include the creation of even more events, such as creating a
 	// PDU out of an EDU, etc. Unlike the post_hook in execute_pdu(), the
 	// notify for the event at issue here has already been made.
-	if(likely(opts.effects))
+	if(likely(opts.phase[phase::EFFECTS]))
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::EFFECTS
+		};
+
 		call_hook(effect_hook, eval, event, eval);
+	}
 
 	if(opts.infolog_accept || bool(log_accept_info))
 		log::info
@@ -431,11 +464,25 @@ ircd::m::vm::fault
 ircd::m::vm::execute_edu(eval &eval,
                          const event &event)
 {
-	if(likely(eval.opts->eval))
-		call_hook(eval_hook, eval, event, eval);
+	if(likely(eval.opts->phase[phase::EVALUATE]))
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::EVALUATE
+		};
 
-	if(likely(eval.opts->post))
+		call_hook(eval_hook, eval, event, eval);
+	}
+
+	if(likely(eval.opts->phase[phase::POST]))
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::POST
+		};
+
 		call_hook(post_hook, eval, event, eval);
+	}
 
 	return fault::ACCEPT;
 }
@@ -487,8 +534,13 @@ ircd::m::vm::execute_pdu(eval &eval,
 
 	// The conform hook runs static checks on an event's formatting and
 	// composure; these checks only require the event data itself.
-	if(likely(opts.conform))
+	if(likely(opts.phase[phase::CONFORM]))
 	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::CONFORM
+		};
+
 		const ctx::critical_assertion ca;
 		call_hook(conform_hook, eval, event, eval);
 	}
@@ -501,11 +553,18 @@ ircd::m::vm::execute_pdu(eval &eval,
 
 	// Wait for any pending duplicate evals before proceeding.
 	assert(eval::count(event_id));
-	if(likely(opts.unique))
+	if(likely(opts.phase[phase::DUPCHK] && opts.unique))
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::DUPCHK
+		};
+
 		sequence::dock.wait([&event_id]
 		{
 			return eval::count(event_id) <= 1;
 		});
+	}
 
 	if(likely(opts.unique) && unlikely(eval::count(event_id) > 1))
 		throw error
@@ -519,22 +578,41 @@ ircd::m::vm::execute_pdu(eval &eval,
 			fault::EXISTS, "Event has already been evaluated."
 		};
 
-	if(likely(opts.access))
-		call_hook(access_hook, eval, event, eval);
+	if(likely(opts.phase[phase::ACCESS]))
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::ACCESS
+		};
 
-	if(likely(opts.verify) && !verify(event))
+		call_hook(access_hook, eval, event, eval);
+	}
+
+	if(likely(opts.phase[phase::VERIFY]) && unlikely(!verify(event)))
 		throw m::BAD_SIGNATURE
 		{
-			"Signature verification failed"
+			"Signature verification failed."
 		};
 
 	// Fetch dependencies
-	if(likely(opts.fetch))
+	if(likely(opts.phase[phase::FETCH]))
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::FETCH
+		};
+
 		call_hook(fetch_hook, eval, event, eval);
+	}
 
 	// Evaluation by auth system; throws
-	if(likely(authenticate))
+	if(likely(opts.phase[phase::AUTHSTATIC]) && authenticate)
 	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::AUTHSTATIC
+		};
+
 		const auto &[pass, fail]
 		{
 			room::auth::check_static(event)
@@ -564,13 +642,18 @@ ircd::m::vm::execute_pdu(eval &eval,
 		log, "%s | event sequenced", loghead(eval)
 	};
 
+	const scope_restore eval_phase_precommit
+	{
+		eval.phase, phase::PRECOMMIT
+	};
+
 	// Wait until this is the lowest sequence number
 	sequence::dock.wait([&eval]
 	{
 		return eval::seqnext(sequence::uncommitted) == &eval;
 	});
 
-	if(likely(authenticate))
+	if(likely(opts.phase[phase::AUTHRELA]) && authenticate)
 	{
 		const auto &[pass, fail]
 		{
@@ -597,6 +680,11 @@ ircd::m::vm::execute_pdu(eval &eval,
 	assert(eval::sequnique(sequence::get(eval)));
 	sequence::uncommitted = sequence::get(eval);
 
+	const scope_restore eval_phase_commit
+	{
+		eval.phase, phase::COMMIT
+	};
+
 	// Wait until this is the lowest sequence number
 	sequence::dock.wait([&eval]
 	{
@@ -604,12 +692,26 @@ ircd::m::vm::execute_pdu(eval &eval,
 	});
 
 	// Reevaluation of auth against the present state of the room.
-	if(likely(authenticate))
+	if(likely(opts.phase[phase::AUTHPRES]) && authenticate)
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::AUTHPRES
+		};
+
 		room::auth::check_present(event);
+	}
 
 	// Evaluation by module hooks
-	if(likely(opts.eval))
+	if(likely(opts.phase[phase::EVALUATE]))
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::EVALUATE
+		};
+
 		call_hook(eval_hook, eval, event, eval);
+	}
 
 	log::debug
 	{
@@ -620,22 +722,49 @@ ircd::m::vm::execute_pdu(eval &eval,
 	assert(sequence::retired < sequence::get(eval));
 	sequence::committed = sequence::get(eval);
 
-	write_prepare(eval, event);
-	write_append(eval, event);
+	if(likely(opts.phase[phase::INDEX]))
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::INDEX
+		};
+
+		write_prepare(eval, event);
+		write_append(eval, event);
+	}
 
 	// Generate post-eval/pre-notify effects. This function may conduct
 	// an entire eval of several more events recursively before returning.
-	if(likely(opts.post))
+	if(likely(opts.phase[phase::POST]))
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::POST
+		};
+
 		call_hook(post_hook, eval, event, eval);
+	}
 
 	// Commit the transaction to database iff this eval is at the stack base.
-	if(likely(opts.write) && !eval.sequence_shared[0])
+	if(likely(opts.phase[phase::WRITE]) && !eval.sequence_shared[0])
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::WRITE
+		};
+
 		write_commit(eval);
+	}
 
 	// Wait for sequencing only if this is the stack base, otherwise we'll
 	// never return back to that stack base.
 	if(likely(!eval.sequence_shared[0]))
 	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::RETIRE
+		};
+
 		sequence::dock.wait([&eval]
 		{
 			return eval::seqnext(sequence::retired) == std::addressof(eval);

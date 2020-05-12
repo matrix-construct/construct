@@ -464,7 +464,7 @@ ircd::m::_create_event(const createroom &c)
 
 	m::vm::copts opts;
 	opts.room_version = room_version;
-	opts.verify = false;
+	opts.phase.reset(vm::phase::VERIFY);
 	m::vm::eval
 	{
 		event, content, opts

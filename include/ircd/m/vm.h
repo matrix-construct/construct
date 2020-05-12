@@ -21,6 +21,7 @@ namespace ircd::m::vm
 	struct copts;
 	struct eval;
 	enum fault :uint;
+	enum phase :uint;
 	using fault_t = std::underlying_type<fault>::type;
 
 	extern const opts default_opts;
@@ -30,6 +31,7 @@ namespace ircd::m::vm
 	extern bool ready;
 
 	string_view reflect(const fault &);
+	string_view reflect(const phase &);
 	http::code http_code(const fault &);
 	string_view loghead(const mutable_buffer &, const eval &);
 	string_view loghead(const eval &);    // single tls buffer
@@ -88,6 +90,7 @@ struct ircd::m::vm::eval
 	event::conforms report;
 	string_view room_version;
 	const hook::base::site *phase_hook {nullptr};
+	vm::phase phase {vm::phase(0)};
 	bool room_internal {false};
 
 	static bool for_each_pdu(const std::function<bool (const event &)> &);
@@ -149,6 +152,33 @@ enum ircd::m::vm::fault
 	EVENT         = 0x20,  ///< Eval requires addl events in the ef register (#ef)
 };
 
+/// Evaluation phases
+enum ircd::m::vm::phase
+:uint
+{
+	NONE           = 0x00,  ///< No phase; not entered.
+	DUPCHK         = 0x01,  ///< Duplicate check & hold.
+	EXECUTE        = 0x02,  ///< Execution entered.
+	ISSUE          = 0x03,  ///< Issue phase.
+	CONFORM        = 0x04,  ///< Conformity phase.
+	ACCESS         = 0x05,  ///< Access control phase.
+	VERIFY         = 0x06,  ///< Signature verification.
+	FETCH          = 0x07,  ///< Fetch phase.
+	AUTHSTATIC     = 0x08,  ///< Authentication phase.
+	PRECOMMIT      = 0x09,  ///< Precommit sequence.
+	AUTHRELA       = 0x0a,  ///< Authentication phase.
+	COMMIT         = 0x0b,  ///< Commit sequence.
+	AUTHPRES       = 0x0c,  ///< Authentication phase.
+	EVALUATE       = 0x0d,  ///< Evaluation phase.
+	INDEX          = 0x0e,  ///< Indexing & transaction building phase.
+	POST           = 0x0f,  ///< Transaction-included effects phase.
+	WRITE          = 0x10,  ///< Write transaction.
+	RETIRE         = 0x11,  ///< Retire phase
+	NOTIFY         = 0x12,  ///< Notifications phase.
+	EFFECTS        = 0x13,  ///< Effects phase.
+	_NUM_
+};
+
 /// Evaluation Options
 struct ircd::m::vm::opts
 {
@@ -161,33 +191,11 @@ struct ircd::m::vm::opts
 	/// The txnid from the node conducting the eval.
 	string_view txn_id;
 
-	/// Call conform hooks (detailed behavior can be tweaked below)
-	bool conform {true};
-
-	/// Check various access controls before processing event further.
-	bool access {true};
-
-	/// Make fetches or false to bypass fetch stage.
-	bool fetch {true};
-
-	/// Call eval hooks or false to bypass this stage.
-	bool eval {true};
-
-	/// Perform auth or false to bypass this state.
-	bool auth {true};
-
-	/// Make writes to database
-	bool write {true};
+	/// Enabled phases of evaluation.
+	std::bitset<num_of<vm::phase>()> phase {-1UL};
 
 	/// Custom write_opts to use during write.
 	dbs::write_opts wopts;
-
-	/// Call post hooks or false to bypass post-write / pre-notify effects.
-	bool post {true};
-
-	/// Broadcast to clients/servers. When true, individual notify options
-	/// that follow are considered. When false, no notifications occur.
-	short notify {true};
 
 	/// Broadcast to local clients (/sync stream).
 	bool notify_clients {true};
@@ -195,11 +203,11 @@ struct ircd::m::vm::opts
 	/// Broadcast to federation servers (/federation/send/).
 	bool notify_servers {true};
 
-	/// Apply effects of this event or false to bypass this stage.
-	bool effects {true};
-
 	/// False to allow a dirty conforms report (not recommended).
 	bool conforming {true};
+
+	/// False to bypass all auth phases.
+	bool auth {true};
 
 	/// Mask of conformity failures to allow without considering dirty.
 	event::conforms non_conform;
@@ -254,9 +262,6 @@ struct ircd::m::vm::opts
 	/// the tuple if no source is referenced. This should only be set to true
 	/// if the evaluator already performed this and the json source is good.
 	bool json_source {false};
-
-	/// Verify the origin signature; recommended.
-	bool verify {true};
 
 	/// Whether to gather all unknown keys from an input vector of events and
 	/// perform a parallel/mass fetch before proceeding with the evals.

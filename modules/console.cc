@@ -7968,11 +7968,11 @@ console_cmd__eval(opt &out, const string_view &line)
 				break;
 
 			case "nowrite"_:
-				opts.write = false;
+				opts.phase.reset(m::vm::phase::WRITE);
 				break;
 
 			case "noverify"_:
-				opts.verify = false;
+				opts.phase.reset(m::vm::phase::VERIFY);
 				break;
 		}
 	});
@@ -14909,7 +14909,7 @@ console_cmd__vm(opt &out, const string_view &line)
 	<< std::right << std::setw(5) << "DONE" << " "
 	<< std::right << std::setw(9) << "SEQUENCE" << " "
 	<< std::right << std::setw(9) << "SEQSHARE" << " "
-	<< std::left << std::setw(9) << "PHASE" << " "
+	<< std::left << std::setw(10) << "PHASE" << " "
 	<< std::right << std::setw(6) << "SIZE" << "  "
 	<< std::right << std::setw(5) << "CELLS" << " "
 	<< std::right << std::setw(8) << "DEPTH" << " "
@@ -14942,7 +14942,7 @@ console_cmd__vm(opt &out, const string_view &line)
 		<< std::right << std::setw(5) << done << " "
 		<< std::right << std::setw(9) << eval->sequence << " "
 		<< std::right << std::setw(9) << std::max(eval->sequence_shared[0], eval->sequence_shared[1]) << " "
-		<< std::left << std::setw(9) << (eval->phase_hook? eval->phase_hook->name() : ""_sv) << " "
+		<< std::left << std::setw(10) << trunc(reflect(eval->phase), 10) << " "
 		<< std::right << std::setw(6) << (eval->txn? eval->txn->bytes() : 0UL) << "  "
 		<< std::right << std::setw(5) << (eval->txn? eval->txn->size() : 0UL) << " "
 		<< std::right << std::setw(8) << (eval->event_ && eval->event_id? long(json::get<"depth"_>(*eval->event_)) : -1L) << " "

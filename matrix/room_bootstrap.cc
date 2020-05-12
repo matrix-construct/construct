@@ -544,7 +544,7 @@ try
 	};
 
 	vmopts.nothrows = vm::fault::EXISTS;
-	vmopts.fetch = false;
+	vmopts.phase.reset(vm::phase::FETCH);
 	m::vm::eval
 	{
 		auth_chain, vmopts
@@ -781,7 +781,7 @@ try
 	vmopts.infolog_accept = true;
 	vmopts.room_version = room_version;
 	vmopts.user_id = user_id;
-	vmopts.fetch = false;
+	vmopts.phase.reset(vm::phase::FETCH);
 	vmopts.auth = false;
 	const vm::eval eval
 	{

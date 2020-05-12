@@ -153,7 +153,7 @@ put__send_join(client &client,
 		};
 
 	m::vm::opts vmopts;
-	vmopts.fetch = false;
+	vmopts.phase.reset(m::vm::phase::FETCH);
 	m::vm::eval eval
 	{
 		event, vmopts

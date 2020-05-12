@@ -158,6 +158,36 @@ ircd::m::vm::http_code(const fault &code)
 }
 
 ircd::string_view
+ircd::m::vm::reflect(const enum phase &code)
+{
+	switch(code)
+	{
+		case phase::NONE:         return "NONE";
+		case phase::DUPCHK:       return "DUPCHK";
+		case phase::EXECUTE:      return "EXECUTE";
+		case phase::ISSUE:        return "ISSUE";
+		case phase::CONFORM:      return "CONFORM";
+		case phase::ACCESS:       return "ACCESS";
+		case phase::VERIFY:       return "VERIFY";
+		case phase::FETCH:        return "FETCH";
+		case phase::AUTHSTATIC:   return "AUTHSTATIC";
+		case phase::PRECOMMIT:    return "PRECOMMIT";
+		case phase::AUTHRELA:     return "AUTHRELA";
+		case phase::COMMIT:       return "COMMIT";
+		case phase::AUTHPRES:     return "AUTHPRES";
+		case phase::EVALUATE:     return "EVALUATE";
+		case phase::INDEX:        return "INDEX";
+		case phase::POST:         return "POST";
+		case phase::WRITE:        return "WRITE";
+		case phase::RETIRE:       return "RETIRE";
+		case phase::NOTIFY:       return "NOTIFY";
+		case phase::EFFECTS:      return "EFFECTS";
+	}
+
+	return "??????";
+}
+
+ircd::string_view
 ircd::m::vm::reflect(const enum fault &code)
 {
 	switch(code)

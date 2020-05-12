@@ -120,7 +120,7 @@ ircd::m::vm::fetch::handle(const event &event,
 try
 {
 	assert(eval.opts);
-	assert(eval.opts->fetch);
+	assert(eval.opts->phase[phase::FETCH]);
 	const auto &opts
 	{
 		*eval.opts
