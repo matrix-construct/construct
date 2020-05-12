@@ -2082,18 +2082,25 @@ console_cmd__hook__list(opt &out, const string_view &line)
 {
 	for(const auto &site : m::hook::base::site::list)
 	{
-		out << std::setw(24) << std::left << site->name()
-		    << std::endl;
-
-		out << string_view{site->feature}
-		    << std::endl;
+		out
+		<< std::setw(24) << std::left << site->name() << ':'
+		<< std::endl
+		<< string_view{site->feature}
+		<< std::endl
+		<< std::endl
+		;
 
 		for(const auto &hookp : site->hooks)
-			out << (hookp->registered? '+' : '-')
-			    << " " << string_view{hookp->feature}
-			    << std::endl;
+			out
+			<< std::setw(4) << std::right << hookp->id()
+			<< " " << (hookp->registered? '+' : '-')
+			<< " " << string_view{hookp->feature}
+			<< std::endl
+			;
 
-		out << std::endl;
+		out
+		<< std::endl
+		;
 	}
 
 	return true;

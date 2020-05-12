@@ -67,6 +67,7 @@ struct ircd::m::hook::base
 	size_t calling {0};
 
   public:
+	uint id() const;
 	site *find_site() const;
 	string_view site_name() const;
 
@@ -93,6 +94,7 @@ struct ircd::m::hook::base::site
 	size_t calling {0};
 
   public:
+	uint id() const;
 	string_view name() const;
 
   protected:
@@ -213,9 +215,10 @@ catch(const std::exception &e)
 
 	log::critical
 	{
-		log, "Unhandled hookfn(%p) %s error :%s",
-		&hfn,
+		log, "Unhandled site:%u hook:%u %s error :%s",
+		id(),
+		hfn.id(),
 		string_view{hfn.feature},
-		e.what()
+		e.what(),
 	};
 }

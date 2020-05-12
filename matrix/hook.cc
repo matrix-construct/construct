@@ -291,6 +291,23 @@ const
 	return nullptr;
 }
 
+uint
+ircd::m::hook::base::id()
+const
+{
+	uint ret(0);
+	for(auto *const &hook : m::hook::base::list)
+		if(hook != this)
+			++ret;
+		else
+			return ret;
+
+	throw std::out_of_range
+	{
+		"Hook not found in instance list."
+	};
+}
+
 //
 // hook::site
 //
@@ -364,9 +381,12 @@ ircd::m::hook::base::site::add(base &hook)
 	{
 		log::warning
 		{
-			log, "Hook %p already registered to site %s",
+			log, "Hook:%u (%p) already registered to site:%u (%p) :%s",
+			hook.id(),
 			&hook,
-			name()
+			id(),
+			this,
+			name(),
 		};
 
 		return false;
@@ -385,9 +405,12 @@ ircd::m::hook::base::site::add(base &hook)
 
 	log::debug
 	{
-		log, "Registered hook %p to site %s",
+		log, "Registered hook:%u (%p) to site:%u (%p) :%s",
+		hook.id(),
 		&hook,
-		name()
+		id(),
+		this,
+		name(),
 	};
 
 	return true;
@@ -398,9 +421,12 @@ ircd::m::hook::base::site::del(base &hook)
 {
 	log::debug
 	{
-		log, "Removing hook %p from site %s",
+		log, "Removing hook:%u (%p) from site:%u (%p) :%s",
+		hook.id(),
 		&hook,
-		name()
+		id(),
+		this,
+		name(),
 	};
 
 	assert(hook.registered);
@@ -439,6 +465,22 @@ catch(const std::out_of_range &e)
 	};
 }
 
+uint
+ircd::m::hook::base::site::id()
+const
+{
+	uint ret(0);
+	for(auto *const &site : m::hook::base::site::list)
+		if(site != this)
+			++ret;
+		else
+			return ret;
+
+	throw std::out_of_range
+	{
+		"Hook site not found in instance list."
+	};
+}
 //
 // hook<void>
 //
@@ -502,10 +544,11 @@ catch(const std::exception &e)
 
 	log::critical
 	{
-		log, "Unhandled hookfn(%p) %s error :%s",
-		&hfn,
+		log, "Unhandled site:%u hook:%u %s error :%s",
+		this->id(),
+		hfn.id(),
 		string_view{hfn.feature},
-		e.what()
+		e.what(),
 	};
 }
 
