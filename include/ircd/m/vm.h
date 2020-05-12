@@ -156,28 +156,28 @@ enum ircd::m::vm::fault
 enum ircd::m::vm::phase
 :uint
 {
-	NONE           = 0x00,  ///< No phase; not entered.
-	DUPCHK         = 0x01,  ///< Duplicate check & hold.
-	EXECUTE        = 0x02,  ///< Execution entered.
-	ISSUE          = 0x03,  ///< Issue phase.
-	CONFORM        = 0x04,  ///< Conformity check phase.
-	ACCESS         = 0x05,  ///< Access control phase.
-	VERIFY         = 0x06,  ///< Signature verification.
-	FETCH_AUTH     = 0x07,  ///< Authentication events fetch phase.
-	AUTH_STATIC    = 0x08,  ///< Static authentication phase.
-	FETCH_PREV     = 0x09,  ///< Previous events fetch phase.
-	FETCH_STATE    = 0x0a,  ///< State events fetch phase.
-	PRECOMMIT      = 0x0b,  ///< Precommit sequence.
-	AUTH_RELA      = 0x0c,  ///< Relative authentication phase.
-	COMMIT         = 0x0d,  ///< Commit sequence.
-	AUTH_PRES      = 0x0e,  ///< Authentication phase.
-	EVALUATE       = 0x0f,  ///< Evaluation phase.
-	INDEX          = 0x10,  ///< Indexing & transaction building phase.
-	POST           = 0x11,  ///< Transaction-included effects phase.
-	WRITE          = 0x12,  ///< Write transaction.
-	RETIRE         = 0x13,  ///< Retire phase
-	NOTIFY         = 0x14,  ///< Notifications phase.
-	EFFECTS        = 0x15,  ///< Effects phase.
+	NONE,                  ///< No phase; not entered.
+	DUPCHK,                ///< Duplicate check & hold.
+	EXECUTE,               ///< Execution entered.
+	ISSUE,                 ///< Issue phase.
+	CONFORM,               ///< Conformity check phase.
+	ACCESS,                ///< Access control phase.
+	VERIFY,                ///< Signature verification.
+	FETCH_AUTH,            ///< Authentication events fetch phase.
+	AUTH_STATIC,           ///< Static authentication phase.
+	FETCH_PREV,            ///< Previous events fetch phase.
+	FETCH_STATE,           ///< State events fetch phase.
+	PRECOMMIT,             ///< Precommit sequence.
+	AUTH_RELA,             ///< Relative authentication phase.
+	COMMIT,                ///< Commit sequence.
+	AUTH_PRES,             ///< Authentication phase.
+	EVALUATE,              ///< Evaluation phase.
+	INDEX,                 ///< Indexing & transaction building phase.
+	POST,                  ///< Transaction-included effects phase.
+	WRITE,                 ///< Write transaction.
+	RETIRE,                ///< Retire phase
+	NOTIFY,                ///< Notifications phase.
+	EFFECTS,               ///< Effects phase.
 	_NUM_
 };
 
