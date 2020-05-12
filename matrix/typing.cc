@@ -131,6 +131,7 @@ void
 ircd::m::typing::timeout_check()
 try
 {
+	const ctx::uninterruptible ui;
 	const auto now
 	{
 		ircd::now<system_point>()
@@ -140,10 +141,9 @@ try
 	{
 		if(it->timesout < now)
 		{
-			// have to restart the loop if there's a timeout because
-			// the call will have yields and invalidate iterators etc.
 			timeout_timeout(*it);
 			it = typists.erase(it);
+			ctx::interruption_point();
 		}
 		else ++it;
 	}
