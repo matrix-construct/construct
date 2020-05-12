@@ -602,11 +602,19 @@ ircd::m::vm::execute_pdu(eval &eval,
 		call_hook(access_hook, eval, event, eval);
 	}
 
-	if(likely(opts.phase[phase::VERIFY]) && unlikely(!verify(event)))
-		throw m::BAD_SIGNATURE
+	if(likely(opts.phase[phase::VERIFY]))
+	{
+		const scope_restore eval_phase
 		{
-			"Signature verification failed."
+			eval.phase, phase::VERIFY
 		};
+
+		if(unlikely(!verify(event)))
+			throw m::BAD_SIGNATURE
+			{
+				"Signature verification failed."
+			};
+	}
 
 	if(likely(opts.phase[phase::FETCH_AUTH] && opts.fetch))
 	{
