@@ -669,8 +669,12 @@ ircd::m::vm::execute_pdu(eval &eval,
 
 	// Obtain sequence number here.
 	const auto *const &top(eval::seqmax());
-	eval.sequence_shared[0] = 0;
-	eval.sequence_shared[1] = 0;
+	const scope_restore<uint64_t> sequence_shared[2]
+	{
+		{ eval.sequence_shared[0], 0UL },
+		{ eval.sequence_shared[1], 0UL },
+	};
+
 	eval.sequence =
 	{
 		top?
