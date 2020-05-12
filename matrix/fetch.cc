@@ -125,6 +125,11 @@ ircd::ctx::future<ircd::m::fetch::result>
 ircd::m::fetch::start(opts opts)
 {
 	assert(opts.room_id && opts.event_id);
+	if(unlikely(run::level == run::level::QUIT))
+		throw m::UNAVAILABLE
+		{
+			"Cannot start fetch requests at this time."
+		};
 
 	// in case requests are started before runlevel RUN they are stalled here
 	run::barrier<m::UNAVAILABLE>
@@ -378,12 +383,6 @@ bool
 ircd::m::fetch::start(request &request)
 try
 {
-	if(unlikely(run::level != run::level::RUN || ctx::termination(request_context)))
-		throw m::UNAVAILABLE
-		{
-			"Cannot start fetch requests at this time."
-		};
-
 	assert(!request.finished);
 	if(!request.started && !request.origin)
 		request.origin = request.opts.hint;
@@ -424,14 +423,13 @@ ircd::m::fetch::start(request &request,
                       const string_view &remote)
 try
 {
+	assert(!request.finished);
 	if(unlikely(run::level != run::level::RUN))
 		throw m::UNAVAILABLE
 		{
-			"Cannot take requests in runlevel %s",
-			reflect(run::level),
+			"Cannot start fetch requests in runlevel."
 		};
 
-	assert(!request.finished);
 	request.last = ircd::now<system_point>();
 	if(!request.started)
 		request.started = request.last;
