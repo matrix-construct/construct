@@ -249,7 +249,7 @@ try
 	// returning fault::EXISTS after an existence check. If we had to wait for
 	// a duplicate eval this check will indicate its success.
 	if(likely(!opts.replays && opts.nothrows & fault::EXISTS) && event.event_id)
-		if(m::exists(event.event_id))
+		if(!eval.copts && m::exists(event.event_id))
 			return fault::EXISTS;
 
 	// Set a member pointer to the event currently being evaluated. This
@@ -586,7 +586,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 			fault::EXISTS, "Event is already being evaluated."
 		};
 
-	if(likely(!opts.replays) && m::exists(event_id))
+	if(likely(!opts.replays) && !eval.copts && m::exists(event_id))
 		throw error
 		{
 			fault::EXISTS, "Event has already been evaluated."
