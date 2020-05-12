@@ -41,7 +41,7 @@ ircd::m::relation::fetch_hook
 {
 	handle_fetch,
 	{
-		{ "_site",  "vm.fetch" },
+		{ "_site",  "vm.fetch.prev" },
 	}
 };
 
@@ -52,10 +52,7 @@ try
 {
 	assert(eval.opts);
 	const auto &opts{*eval.opts};
-	if(!opts.fetch_prev)
-		return;
-
-	if(!fetch_enable)
+	if(!opts.fetch || !fetch_enable)
 		return;
 
 	if(my(event))
@@ -124,8 +121,8 @@ try
 	};
 
 	auto eval_opts(opts);
-	eval_opts.fetch_prev = false;
-	eval_opts.fetch_state = false;
+	eval_opts.phase.set(vm::phase::FETCH_PREV, false);
+	eval_opts.phase.set(vm::phase::FETCH_STATE, false);
 	vm::eval
 	{
 		result, eval_opts

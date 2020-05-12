@@ -256,8 +256,8 @@ try
 	vmopts.warnlog &= ~vm::fault::EXISTS;
 	vmopts.nothrows = -1;
 	vmopts.room_version = room_version;
-	vmopts.fetch_state = false;
-	vmopts.fetch_prev = false;
+	vmopts.phase.reset(m::vm::phase::FETCH_PREV);
+	vmopts.phase.reset(m::vm::phase::FETCH_STATE);
 
 	m::roomstrap::fetch_keys(auth_chain);
 	m::roomstrap::eval_auth_chain(auth_chain, vmopts);
@@ -544,7 +544,7 @@ try
 	};
 
 	vmopts.nothrows = vm::fault::EXISTS;
-	vmopts.phase.reset(vm::phase::FETCH);
+	vmopts.fetch = false;
 	m::vm::eval
 	{
 		auth_chain, vmopts
@@ -781,7 +781,7 @@ try
 	vmopts.infolog_accept = true;
 	vmopts.room_version = room_version;
 	vmopts.user_id = user_id;
-	vmopts.phase.reset(vm::phase::FETCH);
+	vmopts.fetch = false;
 	vmopts.auth = false;
 	const vm::eval eval
 	{

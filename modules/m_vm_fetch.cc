@@ -29,7 +29,9 @@ namespace ircd::m::vm::fetch
 	extern conf::item<seconds> state_timeout;
 	extern conf::item<seconds> auth_timeout;
 	extern conf::item<bool> enable;
-	extern hookfn<vm::eval &> hook;
+	extern hookfn<vm::eval &> auth_hook;
+	extern hookfn<vm::eval &> prev_hook;
+	extern hookfn<vm::eval &> state_hook;
 	extern log::log log;
 }
 
@@ -45,12 +47,30 @@ ircd::m::vm::fetch::log
 	"m.vm.fetch"
 };
 
-decltype(ircd::m::vm::fetch::hook)
-ircd::m::vm::fetch::hook
+decltype(ircd::m::vm::fetch::auth_hook)
+ircd::m::vm::fetch::auth_hook
 {
 	handle,
 	{
-		{ "_site",  "vm.fetch" }
+		{ "_site",  "vm.fetch.auth" }
+	}
+};
+
+decltype(ircd::m::vm::fetch::prev_hook)
+ircd::m::vm::fetch::prev_hook
+{
+	handle,
+	{
+		{ "_site",  "vm.fetch.prev" }
+	}
+};
+
+decltype(ircd::m::vm::fetch::state_hook)
+ircd::m::vm::fetch::state_hook
+{
+	handle,
+	{
+		{ "_site",  "vm.fetch.state" }
 	}
 };
 
@@ -120,7 +140,6 @@ ircd::m::vm::fetch::handle(const event &event,
 try
 {
 	assert(eval.opts);
-	assert(eval.opts->phase[phase::FETCH]);
 	const auto &opts
 	{
 		*eval.opts
@@ -150,14 +169,14 @@ try
 	m::room room{room_id};
 	room.event_id = event_id;
 
-	if(opts.fetch_auth)
-		auth(event, eval, room);
+	if(eval.phase == phase::FETCH_AUTH)
+		return auth(event, eval, room);
 
-	if(opts.fetch_prev)
-		prev(event, eval, room);
+	if(eval.phase == phase::FETCH_PREV)
+		return prev(event, eval, room);
 
-	if(opts.fetch_state)
-		state(event, eval, room);
+	if(eval.phase == phase::FETCH_STATE)
+		return state(event, eval, room);
 }
 catch(const std::exception &e)
 {
@@ -220,12 +239,6 @@ try
 		throw vm::error
 		{
 			vm::fault::AUTH, "Fetching auth_events disabled by configuration",
-		};
-
-	if(!opts.fetch_auth)
-		throw vm::error
-		{
-			vm::fault::AUTH, "Not fetching auth_events for this evaluation",
 		};
 
 	// This is a blocking call to recursively fetch and evaluate the auth_chain
@@ -330,9 +343,7 @@ try
 {
 	assert(eval.opts);
 	auto opts(*eval.opts);
-	opts.fetch_prev = false;
-	opts.fetch_state = false;
-	opts.fetch_auth = false;
+	opts.fetch = false;
 	opts.infolog_accept = true;
 	opts.warnlog &= ~vm::fault::EXISTS;
 	opts.notify_servers = false;
@@ -444,8 +455,8 @@ try
 		};
 
 		auto opts(*eval.opts);
-		opts.fetch_prev = false;
-		opts.fetch_state = false;
+		opts.phase.set(m::vm::phase::FETCH_PREV, false);
+		opts.phase.set(m::vm::phase::FETCH_STATE, false);
 		opts.notify_servers = false;
 		vm::eval
 		{
@@ -600,7 +611,7 @@ ircd::m::vm::fetch::prev(const event &event,
 	if(prev_wait(event, eval))
 		return;
 
-	if(!opts.fetch_prev || !m::vm::fetch::enable)
+	if(!m::vm::fetch::enable)
 	{
 		prev_check(event, eval);
 		return;
@@ -673,8 +684,8 @@ ircd::m::vm::fetch::prev(const event &event,
 		};
 
 		auto opts(*eval.opts);
-		opts.fetch_prev = false;
-		opts.fetch_state = false;
+		opts.phase.set(m::vm::phase::FETCH_PREV, false);
+		opts.phase.set(m::vm::phase::FETCH_STATE, false);
 		opts.notify_servers = false;
 		log::debug
 		{

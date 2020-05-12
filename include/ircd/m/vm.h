@@ -160,22 +160,24 @@ enum ircd::m::vm::phase
 	DUPCHK         = 0x01,  ///< Duplicate check & hold.
 	EXECUTE        = 0x02,  ///< Execution entered.
 	ISSUE          = 0x03,  ///< Issue phase.
-	CONFORM        = 0x04,  ///< Conformity phase.
+	CONFORM        = 0x04,  ///< Conformity check phase.
 	ACCESS         = 0x05,  ///< Access control phase.
 	VERIFY         = 0x06,  ///< Signature verification.
-	FETCH          = 0x07,  ///< Fetch phase.
-	AUTHSTATIC     = 0x08,  ///< Authentication phase.
-	PRECOMMIT      = 0x09,  ///< Precommit sequence.
-	AUTHRELA       = 0x0a,  ///< Authentication phase.
-	COMMIT         = 0x0b,  ///< Commit sequence.
-	AUTHPRES       = 0x0c,  ///< Authentication phase.
-	EVALUATE       = 0x0d,  ///< Evaluation phase.
-	INDEX          = 0x0e,  ///< Indexing & transaction building phase.
-	POST           = 0x0f,  ///< Transaction-included effects phase.
-	WRITE          = 0x10,  ///< Write transaction.
-	RETIRE         = 0x11,  ///< Retire phase
-	NOTIFY         = 0x12,  ///< Notifications phase.
-	EFFECTS        = 0x13,  ///< Effects phase.
+	FETCH_AUTH     = 0x07,  ///< Authentication events fetch phase.
+	AUTH_STATIC    = 0x08,  ///< Static authentication phase.
+	FETCH_PREV     = 0x09,  ///< Previous events fetch phase.
+	FETCH_STATE    = 0x0a,  ///< State events fetch phase.
+	PRECOMMIT      = 0x0b,  ///< Precommit sequence.
+	AUTH_RELA      = 0x0c,  ///< Relative authentication phase.
+	COMMIT         = 0x0d,  ///< Commit sequence.
+	AUTH_PRES      = 0x0e,  ///< Authentication phase.
+	EVALUATE       = 0x0f,  ///< Evaluation phase.
+	INDEX          = 0x10,  ///< Indexing & transaction building phase.
+	POST           = 0x11,  ///< Transaction-included effects phase.
+	WRITE          = 0x12,  ///< Write transaction.
+	RETIRE         = 0x13,  ///< Retire phase
+	NOTIFY         = 0x14,  ///< Notifications phase.
+	EFFECTS        = 0x15,  ///< Effects phase.
 	_NUM_
 };
 
@@ -208,6 +210,9 @@ struct ircd::m::vm::opts
 
 	/// False to bypass all auth phases.
 	bool auth {true};
+
+	/// False to bypass all fetch phases.
+	bool fetch {true};
 
 	/// Mask of conformity failures to allow without considering dirty.
 	event::conforms non_conform;
@@ -266,16 +271,6 @@ struct ircd::m::vm::opts
 	/// Whether to gather all unknown keys from an input vector of events and
 	/// perform a parallel/mass fetch before proceeding with the evals.
 	bool mfetch_keys {true};
-
-	/// Whether to automatically fetch the auth events when they do not exist.
-	bool fetch_auth {true};
-
-	/// Whether to automatically fetch the room state when there is no state
-	/// or incomplete state for the room found on the this server.
-	bool fetch_state {true};
-
-	/// Dispatches a fetch operation when a prev_event does not exist locally.
-	bool fetch_prev {true};
 
 	/// Throws fault::EVENT if *all* of the prev_events do not exist locally.
 	/// This is used to enforce that at least one path is traversable. This

@@ -24,14 +24,16 @@ namespace ircd::m::vm
 	static void fini();
 	static void init();
 
-	extern hook::site<eval &> issue_hook;    ///< Called when this server is issuing event
-	extern hook::site<eval &> conform_hook;  ///< Called for static evaluations of event
-	extern hook::site<eval &> access_hook;   ///< Called for access control checking
-	extern hook::site<eval &> fetch_hook;    ///< Called to resolve dependencies
-	extern hook::site<eval &> eval_hook;     ///< Called for final event evaluation
-	extern hook::site<eval &> post_hook;     ///< Called to apply effects pre-notify
-	extern hook::site<eval &> notify_hook;   ///< Called to broadcast successful eval
-	extern hook::site<eval &> effect_hook;   ///< Called to apply effects post-notify
+	extern hook::site<eval &> issue_hook;        ///< Called when this server is issuing event
+	extern hook::site<eval &> conform_hook;      ///< Called for static evaluations of event
+	extern hook::site<eval &> access_hook;       ///< Called for access control checking
+	extern hook::site<eval &> fetch_auth_hook;   ///< Called to resolve dependencies
+	extern hook::site<eval &> fetch_prev_hook;   ///< Called to resolve dependencies
+	extern hook::site<eval &> fetch_state_hook;  ///< Called to resolve dependencies
+	extern hook::site<eval &> eval_hook;         ///< Called for final event evaluation
+	extern hook::site<eval &> post_hook;         ///< Called to apply effects pre-notify
+	extern hook::site<eval &> notify_hook;       ///< Called to broadcast successful eval
+	extern hook::site<eval &> effect_hook;       ///< Called to apply effects post-notify
 
 	extern conf::item<bool> log_commit_debug;
 	extern conf::item<bool> log_accept_debug;
@@ -77,10 +79,22 @@ ircd::m::vm::access_hook
 	{ "name", "vm.access" }
 };
 
-decltype(ircd::m::vm::fetch_hook)
-ircd::m::vm::fetch_hook
+decltype(ircd::m::vm::fetch_auth_hook)
+ircd::m::vm::fetch_auth_hook
 {
-	{ "name", "vm.fetch" }
+	{ "name", "vm.fetch.auth" }
+};
+
+decltype(ircd::m::vm::fetch_prev_hook)
+ircd::m::vm::fetch_prev_hook
+{
+	{ "name", "vm.fetch.prev" }
+};
+
+decltype(ircd::m::vm::fetch_state_hook)
+ircd::m::vm::fetch_state_hook
+{
+	{ "name", "vm.fetch.state" }
 };
 
 decltype(ircd::m::vm::eval_hook)
@@ -594,23 +608,22 @@ ircd::m::vm::execute_pdu(eval &eval,
 			"Signature verification failed."
 		};
 
-	// Fetch dependencies
-	if(likely(opts.phase[phase::FETCH]))
+	if(likely(opts.phase[phase::FETCH_AUTH] && opts.fetch))
 	{
 		const scope_restore eval_phase
 		{
-			eval.phase, phase::FETCH
+			eval.phase, phase::FETCH_AUTH
 		};
 
-		call_hook(fetch_hook, eval, event, eval);
+		call_hook(fetch_auth_hook, eval, event, eval);
 	}
 
 	// Evaluation by auth system; throws
-	if(likely(opts.phase[phase::AUTHSTATIC]) && authenticate)
+	if(likely(opts.phase[phase::AUTH_STATIC]) && authenticate)
 	{
 		const scope_restore eval_phase
 		{
-			eval.phase, phase::AUTHSTATIC
+			eval.phase, phase::AUTH_STATIC
 		};
 
 		const auto &[pass, fail]
@@ -624,6 +637,26 @@ ircd::m::vm::execute_pdu(eval &eval,
 				fault::AUTH, "Fails against provided auth_events :%s",
 				what(fail)
 			};
+	}
+
+	if(likely(opts.phase[phase::FETCH_PREV] && opts.fetch))
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::FETCH_PREV
+		};
+
+		call_hook(fetch_prev_hook, eval, event, eval);
+	}
+
+	if(likely(opts.phase[phase::FETCH_STATE] && opts.fetch))
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::FETCH_STATE
+		};
+
+		call_hook(fetch_state_hook, eval, event, eval);
 	}
 
 	// Obtain sequence number here.
@@ -653,8 +686,13 @@ ircd::m::vm::execute_pdu(eval &eval,
 		return eval::seqnext(sequence::uncommitted) == &eval;
 	});
 
-	if(likely(opts.phase[phase::AUTHRELA]) && authenticate)
+	if(likely(opts.phase[phase::AUTH_RELA]) && authenticate)
 	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::AUTH_RELA
+		};
+
 		const auto &[pass, fail]
 		{
 			room::auth::check_relative(event)
@@ -692,11 +730,11 @@ ircd::m::vm::execute_pdu(eval &eval,
 	});
 
 	// Reevaluation of auth against the present state of the room.
-	if(likely(opts.phase[phase::AUTHPRES]) && authenticate)
+	if(likely(opts.phase[phase::AUTH_PRES]) && authenticate)
 	{
 		const scope_restore eval_phase
 		{
-			eval.phase, phase::AUTHPRES
+			eval.phase, phase::AUTH_PRES
 		};
 
 		room::auth::check_present(event);

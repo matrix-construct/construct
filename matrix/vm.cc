@@ -169,12 +169,14 @@ ircd::m::vm::reflect(const enum phase &code)
 		case phase::CONFORM:      return "CONFORM";
 		case phase::ACCESS:       return "ACCESS";
 		case phase::VERIFY:       return "VERIFY";
-		case phase::FETCH:        return "FETCH";
-		case phase::AUTHSTATIC:   return "AUTHSTATIC";
+		case phase::FETCH_AUTH:   return "FETCH_AUTH";
+		case phase::AUTH_STATIC:  return "AUTH_STATIC";
+		case phase::FETCH_PREV:   return "FETCH_PREV";
+		case phase::FETCH_STATE:  return "FETCH_STATE";
 		case phase::PRECOMMIT:    return "PRECOMMIT";
-		case phase::AUTHRELA:     return "AUTHRELA";
+		case phase::AUTH_RELA:    return "AUTH_RELA";
 		case phase::COMMIT:       return "COMMIT";
-		case phase::AUTHPRES:     return "AUTHPRES";
+		case phase::AUTH_PRES:    return "AUTH_PRES";
 		case phase::EVALUATE:     return "EVALUATE";
 		case phase::INDEX:        return "INDEX";
 		case phase::POST:         return "POST";

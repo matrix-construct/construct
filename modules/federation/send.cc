@@ -92,8 +92,8 @@ handle_pdus(client &client,
 	vmopts.nothrows = -1U;
 	vmopts.node_id = request.node_id;
 	vmopts.txn_id = txn_id;
-	vmopts.fetch_prev = bool(fetch_prev);
-	vmopts.fetch_state = bool(fetch_state);
+	vmopts.phase.set(m::vm::phase::FETCH_PREV, bool(fetch_prev));
+	vmopts.phase.set(m::vm::phase::FETCH_STATE, bool(fetch_state));
 	vmopts.fetch_prev_wait_count = -1;
 	m::vm::eval eval
 	{

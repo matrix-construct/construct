@@ -313,8 +313,8 @@ try
 
 	m::vm::opts vmopts;
 	vmopts.infolog_accept = true;
-	vmopts.fetch_prev = !below_viewport;
-	vmopts.fetch_state = below_viewport;
+	vmopts.phase.set(m::vm::phase::FETCH_PREV, !below_viewport);
+	vmopts.phase.set(m::vm::phase::FETCH_STATE, below_viewport);
 	vmopts.warnlog &= ~vm::fault::EXISTS;
 	vmopts.node_id = opts.hint;
 	vmopts.notify_servers = false;

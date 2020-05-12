@@ -13619,8 +13619,8 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 	m::vm::opts vmopts;
 	vmopts.nothrows = -1;
 	vmopts.debuglog_accept = true;
-	vmopts.fetch_prev = false;
-	vmopts.fetch_state = false;
+	vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
+	vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
 	vmopts.notify_servers = false;
 	char rembuf[256];
 	vmopts.node_id = string(rembuf, remote);
@@ -13736,8 +13736,8 @@ console_cmd__fed__state(opt &out, const string_view &line)
 
 	m::vm::opts vmopts;
 	vmopts.nothrows = -1;
-	vmopts.fetch_state = false;
-	vmopts.fetch_prev = false;
+	vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
+	vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
 	vmopts.notify_servers = false;
 
 	m::vm::eval
@@ -13919,8 +13919,8 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 	vmopts.nothrows = -1;
 	vmopts.room_head = false;
 	vmopts.room_head_resolve = true;
-	vmopts.fetch_prev = false;
-	vmopts.fetch_state = false;
+	vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
+	vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
 	char rembuf[256];
 	vmopts.node_id = string(rembuf, remote);
 	vmopts.notify_servers = false;
@@ -14081,8 +14081,8 @@ console_cmd__fed__event(opt &out, const string_view &line)
 	if(has(op, "eval"))
 	{
 		m::vm::opts vmopts;
-		vmopts.fetch_prev = has(op, "prev");
-		vmopts.fetch_state = false;
+		vmopts.phase.set(m::vm::phase::FETCH_PREV, has(op, "prev"));
+		vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
 		vmopts.notify_servers = false;
 		m::vm::eval eval
 		{
