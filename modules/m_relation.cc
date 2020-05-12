@@ -75,9 +75,16 @@ try
 	if(!m_relates_to || json::type(m_relates_to) != json::OBJECT)
 		return;
 
-	const event::id &event_id
+	const json::object &m_in_reply_to
 	{
-		m_relates_to.get<json::string>("event_id")
+		content["m.in_reply_to"]
+	};
+
+	const m::event::id &event_id
+	{
+		json::type(m_in_reply_to, std::nothrow) == json::OBJECT?
+			m_in_reply_to.get<json::string>("event_id"):
+			m_relates_to.get<json::string>("event_id")
 	};
 
 	// If the relates_to is a prev_event then the vm::fetch unit will perform
