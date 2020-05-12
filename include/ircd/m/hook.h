@@ -66,8 +66,9 @@ struct ircd::m::hook::base
 	size_t calls {0};
 	size_t calling {0};
 
-	string_view site_name() const;
+  public:
 	site *find_site() const;
+	string_view site_name() const;
 
  protected:
 	base(const json::members &);
@@ -91,14 +92,16 @@ struct ircd::m::hook::base::site
 	size_t calls {0};
 	size_t calling {0};
 
-	friend class base;
+  public:
 	string_view name() const;
+
+  protected:
+	friend class base;
 	bool add(base &);
 	bool del(base &);
 
 	void match(const event &, const std::function<bool (base &)> &);
 
-  protected:
 	site(const json::members &);
 	site(site &&) = delete;
 	site(const site &) = delete;

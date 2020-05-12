@@ -258,6 +258,20 @@ noexcept
 	site->del(*this);
 }
 
+ircd::string_view
+ircd::m::hook::base::site_name()
+const try
+{
+	return unquote(feature.at("_site"));
+}
+catch(const std::out_of_range &e)
+{
+	throw panic
+	{
+		"Hook %p must name a '_site' to register with.", this
+	};
+}
+
 ircd::m::hook::base::site *
 ircd::m::hook::base::find_site()
 const
@@ -275,20 +289,6 @@ const
 			return site;
 
 	return nullptr;
-}
-
-ircd::string_view
-ircd::m::hook::base::site_name()
-const try
-{
-	return unquote(feature.at("_site"));
-}
-catch(const std::out_of_range &e)
-{
-	throw panic
-	{
-		"Hook %p must name a '_site' to register with.", this
-	};
 }
 
 //
