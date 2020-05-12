@@ -863,25 +863,59 @@ try
 
 	const unique_mutable_buffer mb
 	{
-		512_KiB
+		4_MiB
 	};
 
-	size_t events(0);
 	const_buffer buf;
-	fs::read_opts ropts; do
+	fs::read_opts ropts;
+	size_t reads(0), events(0);
+	while(!!(buf = read(file, mb, ropts)))
 	{
-		buf = read(file, mb, ropts);
+		++reads;
+		const json::vector vec{buf};
+		const size_t _events(events);
+		for(auto it(begin(vec)); it != end(vec); ) try
+		{
+			ropts.offset += size(string_view(*it));
+			const m::event event{*it};
 
+			++events;
+			++it;
+		}
+		catch(const json::parse_error &)
+		{
+			if(_events == events)
+				throw;
+			else
+				break;
+		}
+		catch(const std::exception &e)
+		{
+			log::error
+			{
+				log, "Bootstrap event %zu :%s",
+				events,
+				e.what()
+			};
+		}
 
-		ropts.offset += size(buf);
+		char pbuf[48];
+		log::info
+		{
+			log, "Bootstrapping progress %zu events; %s in %zu reads...",
+			events,
+			pretty(pbuf, iec(ropts.offset)),
+			reads,
+		};
 	}
-	while(!!buf);
 
+	char pbuf[48];
 	log::info
 	{
-		log, "Bootstrapped %zu events in %zu bytes from `%s'",
+		log, "Bootstrapped %zu events in %s from %zu reads of `%s'",
 		events,
-		ropts.offset,
+		pretty(pbuf, iec(ropts.offset)),
+		reads,
 		path,
 	};
 }
