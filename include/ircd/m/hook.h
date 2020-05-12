@@ -11,6 +11,26 @@
 #pragma once
 #define HAVE_IRCD_M_HOOK_H
 
+/// Hooks allow dynamic functionality to be invoked as a result of an event
+/// matching some criteria. Hooks are comprised of two interfacing components:
+/// the hook function (callee) and the hook site (caller); these components
+/// link and delink to each other during initialization. This hook system is
+/// oriented around the m::event structure; every hook function has an m::event
+/// as its first argument. An optional second argument can be specified with
+/// the template to convey additional payload and options.
+///
+/// Hook functions and hook sites are constructed out of json::members (pairs
+/// of json::value in an initializer list). We refer to this as the "feature."
+/// Each member with a name directly corresponding to an m::event property is
+/// a match parameter. The hook function is not called if a matching parameter
+/// is specified in the feature, but the event input at the hook::site does not
+/// match it. Undefined features match everything.
+///
+/// One can create a hook pair anywhere, simply create a m::hook::site with a
+/// feature `{ "name", "myname" }` and a hook::hook with a similar feature
+/// `{ "_site", "myname" }` matching the site's name; these objects must have
+/// matching templates.
+///
 namespace ircd::m::hook
 {
 	IRCD_EXCEPTION(ircd::error, error)
@@ -30,6 +50,9 @@ namespace ircd::m
 	template<class data = void> using hookfn = m::hook::hook<data>;
 }
 
+/// Non-template base class for all hook functions. This is the handler
+/// (or callee) component of the hook
+///
 struct ircd::m::hook::base
 :instance_list<base>
 {
@@ -53,6 +76,8 @@ struct ircd::m::hook::base
 	virtual ~base() noexcept;
 };
 
+/// Non-template base class for all hook sites (dispatcher/caller component)
+///
 struct ircd::m::hook::base::site
 :instance_list<site>
 {
@@ -80,6 +105,7 @@ struct ircd::m::hook::base::site
 	virtual ~site() noexcept;
 };
 
+/// Hook function with no payload; only an m::event argument
 template<>
 struct ircd::m::hook::hook<void>
 final
@@ -92,6 +118,7 @@ final
 	hook(decltype(function) function, const json::members &feature);
 };
 
+/// Hook site for functions with no payload.
 template<>
 struct ircd::m::hook::site<void>
 final
@@ -105,6 +132,7 @@ final
 	site(const json::members &feature);
 };
 
+/// Hook function with a template class as the payload
 template<class data>
 struct ircd::m::hook::hook
 :base
@@ -123,6 +151,7 @@ struct ircd::m::hook::hook
 	{}
 };
 
+/// Hook site for functions with a template class as the payload
 template<class data>
 struct ircd::m::hook::site
 :base::site
