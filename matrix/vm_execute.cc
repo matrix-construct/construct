@@ -758,6 +758,14 @@ ircd::m::vm::execute_pdu(eval &eval,
 	assert(sequence::retired < sequence::get(eval));
 	sequence::committed = sequence::get(eval);
 
+	// Allocate transaction; discover shared-sequenced evals.
+	if(likely(opts.phase[phase::INDEX]))
+	{
+		const ctx::critical_assertion ca;
+		write_prepare(eval, event);
+	}
+
+	// Transaction composition.
 	if(likely(opts.phase[phase::INDEX]))
 	{
 		const scope_restore eval_phase
@@ -765,7 +773,6 @@ ircd::m::vm::execute_pdu(eval &eval,
 			eval.phase, phase::INDEX
 		};
 
-		write_prepare(eval, event);
 		write_append(eval, event);
 	}
 
