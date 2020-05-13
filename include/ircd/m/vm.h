@@ -93,10 +93,6 @@ struct ircd::m::vm::eval
 	vm::phase phase {vm::phase(0)};
 	bool room_internal {false};
 
-	static bool for_each_pdu(const std::function<bool (const event &)> &);
-	static const event *find_pdu(const eval &, const event::id &);
-	static const event *find_pdu(const event::id &);
-
 	void mfetch_keys() const;
 
   public:
@@ -120,11 +116,16 @@ struct ircd::m::vm::eval
 	~eval() noexcept;
 
 	static bool for_each(const ctx::ctx *const &, const std::function<bool (eval &)> &);
-	static bool for_each(const std::function<bool (eval &)> &);
 	static size_t count(const ctx::ctx *const &);
+
+	static bool for_each(const std::function<bool (eval &)> &);
+	static bool for_each_pdu(const std::function<bool (const event &)> &);
+	static const event *find_pdu(const eval &, const event::id &);
+	static const event *find_pdu(const event::id &);
 	static size_t count(const event::id &);
 	static eval *find(const event::id &);
 	static eval &get(const event::id &);
+
 	static bool sequnique(const uint64_t &seq);
 	static eval *seqnext(const uint64_t &seq);
 	static eval *seqmax();

@@ -197,16 +197,60 @@ ircd::m::vm::eval::count(const event::id &event_id)
 	return ret;
 }
 
-size_t
-ircd::m::vm::eval::count(const ctx::ctx *const &c)
+const ircd::m::event *
+ircd::m::vm::eval::find_pdu(const event::id &event_id)
 {
-	return std::count_if(begin(eval::list), end(eval::list), [&c]
-	(const eval *const &eval)
+	const m::event *ret{nullptr};
+	for_each_pdu([&ret, &event_id]
+	(const m::event &event)
 	{
-		return eval->ctx == c;
+		if(event.event_id != event_id)
+			return true;
+
+		ret = std::addressof(event);
+		return false;
 	});
+
+	return ret;
 }
 
+const ircd::m::event *
+ircd::m::vm::eval::find_pdu(const eval &eval,
+                            const event::id &event_id)
+{
+	const m::event *ret{nullptr};
+	for(const auto &event : eval.pdus)
+	{
+		if(event.event_id != event_id)
+			continue;
+
+		ret = std::addressof(event);
+		break;
+	}
+
+	return ret;
+}
+
+bool
+ircd::m::vm::eval::for_each_pdu(const std::function<bool (const event &)> &closure)
+{
+	return for_each([&closure](eval &e)
+	{
+		if(!empty(e.pdus))
+		{
+			for(const auto &pdu : e.pdus)
+				if(!closure(pdu))
+					return false;
+		}
+		else if(e.event_)
+		{
+			if(!closure(*e.event_))
+				return false;
+		}
+
+		return true;
+	});
+}
 bool
 ircd::m::vm::eval::for_each(const std::function<bool (eval &)> &closure)
 {
@@ -215,6 +259,16 @@ ircd::m::vm::eval::for_each(const std::function<bool (eval &)> &closure)
 			return false;
 
 	return true;
+}
+
+size_t
+ircd::m::vm::eval::count(const ctx::ctx *const &c)
+{
+	return std::count_if(begin(eval::list), end(eval::list), [&c]
+	(const eval *const &eval)
+	{
+		return eval->ctx == c;
+	});
 }
 
 bool
@@ -410,59 +464,4 @@ const
 			queries.size(),
 			this->pdus.size(),
 		};
-}
-
-const ircd::m::event *
-ircd::m::vm::eval::find_pdu(const event::id &event_id)
-{
-	const m::event *ret{nullptr};
-	for_each_pdu([&ret, &event_id]
-	(const m::event &event)
-	{
-		if(event.event_id != event_id)
-			return true;
-
-		ret = std::addressof(event);
-		return false;
-	});
-
-	return ret;
-}
-
-const ircd::m::event *
-ircd::m::vm::eval::find_pdu(const eval &eval,
-                            const event::id &event_id)
-{
-	const m::event *ret{nullptr};
-	for(const auto &event : eval.pdus)
-	{
-		if(event.event_id != event_id)
-			continue;
-
-		ret = std::addressof(event);
-		break;
-	}
-
-	return ret;
-}
-
-bool
-ircd::m::vm::eval::for_each_pdu(const std::function<bool (const event &)> &closure)
-{
-	return for_each([&closure](eval &e)
-	{
-		if(!empty(e.pdus))
-		{
-			for(const auto &pdu : e.pdus)
-				if(!closure(pdu))
-					return false;
-		}
-		else if(e.event_)
-		{
-			if(!closure(*e.event_))
-				return false;
-		}
-
-		return true;
-	});
 }
