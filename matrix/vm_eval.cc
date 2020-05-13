@@ -315,7 +315,7 @@ ircd::m::vm::eval::eval(const event &event,
 
 ircd::m::vm::eval::eval(const json::array &pdus,
                         const vm::opts &opts)
-:opts{&opts}
+:eval{opts}
 {
 	// Sort the events first to avoid complicating the evals; the events might
 	// be from different rooms but it doesn't matter.
@@ -326,7 +326,7 @@ ircd::m::vm::eval::eval(const json::array &pdus,
 
 ircd::m::vm::eval::eval(const vector_view<m::event> &events,
                         const vm::opts &opts)
-:opts{&opts}
+:eval{opts}
 {
 	operator()(events);
 }
