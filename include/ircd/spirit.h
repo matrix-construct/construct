@@ -36,6 +36,8 @@
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/karma.hpp>
 #include <boost/spirit/include/phoenix.hpp>
+#include <boost/spirit/repository/include/qi_seek.hpp>
+#include <boost/spirit/repository/include/qi_subrule.hpp>
 #include <boost/fusion/include/std_pair.hpp>
 #include <boost/fusion/adapted/std_pair.hpp>
 #include <boost/fusion/adapted/std_tuple.hpp>
@@ -68,6 +70,15 @@ __attribute__((visibility("hidden")))
 	namespace karma = spirit::karma;
 	namespace qi = spirit::qi;
 	namespace phx = boost::phoenix;
+
+	using _val_type = phx::actor<spirit::attribute<0>>;
+	using _r0_type = phx::actor<spirit::attribute<0>>;
+	using _r1_type = phx::actor<spirit::attribute<1>>;
+	using _r2_type = phx::actor<spirit::attribute<2>>;
+	using _r3_type = phx::actor<spirit::attribute<3>>;
+
+	using spirit::unused_type;
+	using spirit::_pass;
 
 	using qi::locals;
 	using qi::_a;
@@ -110,6 +121,8 @@ __attribute__((visibility("hidden")))
 	using qi::big_bin_double;
 	using qi::little_bin_double;
 
+	using spirit::repository::qi::seek;
+
 	using karma::lit;
 	using karma::char_;
 	using karma::long_;
@@ -119,15 +132,6 @@ __attribute__((visibility("hidden")))
 	using karma::attr_cast;
 	using karma::maxwidth;
 	using karma::buffer;
-
-	using spirit::unused_type;
-	using spirit::_pass;
-
-	using _val_type = phx::actor<spirit::attribute<0>>;
-	using _r0_type = phx::actor<spirit::attribute<0>>;
-	using _r1_type = phx::actor<spirit::attribute<1>>;
-	using _r2_type = phx::actor<spirit::attribute<2>>;
-	using _r3_type = phx::actor<spirit::attribute<3>>;
 }}
 
 namespace ircd::spirit::local
