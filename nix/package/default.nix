@@ -1,17 +1,10 @@
-{ rev    ? "c7e0e9ed5abd0043e50ee371129fcb8640264fc4"
-, sha256 ? "0c28mpvjhjc8kiwj2w8zcjsr2rayw989a1wnsqda71zpcyas3mq2"
-, pkgs   ? import (builtins.fetchTarball { inherit sha256;
-    url = "https://github.com/NixOS/nixpkgs/archive/${rev}.tar.gz";
-  }) { }
-
-, stdenv ? if useClang
-           then (if pkgs.stdenv.cc.isClang
-                 then pkgs.stdenv
-                 else pkgs.llvmPackages_latest.stdenv)
-           else (if pkgs.stdenv.cc.isGNU
-                 then pkgs.stdenv
-                 else pkgs.gcc.stdenv)
-, lib ? pkgs.lib
+{ source, rev, pkgs, lib, stdenv ? if useClang
+                                   then (if pkgs.stdenv.cc.isClang
+                                         then pkgs.stdenv
+                                         else pkgs.llvmPackages_latest.stdenv)
+                                   else (if pkgs.stdenv.cc.isGNU
+                                         then pkgs.stdenv
+                                         else pkgs.gcc.stdenv)
 
 , debug              ? false # Debug Build
 , useClang           ? false # Use Clang over GCC
@@ -21,34 +14,13 @@
 
 let
   pname = "matrix-construct";
-  version = "development";
-
-  source = let
-    srcFilter = n: t: (lib.hasSuffix ".cc" n || lib.hasSuffix ".h" n || lib.hasSuffix ".S" n
-                    || lib.hasSuffix ".md" n || t == "directory");
-    repo = lib.cleanSourceWith { filter = srcFilter; src = lib.cleanSource ./.; };
-
-    buildFileWith = root: name: type: rec {
-      inherit name; file = "${root}/${name}";
-      path = if type == "directory" then buildFarmFrom name file else "${file}";
-    };
-    buildFarm = root: lib.mapAttrsToList (buildFileWith root) (builtins.readDir root);
-    buildFarmFrom = basename: root: pkgs.linkFarm (lib.strings.sanitizeDerivationName basename) (buildFarm root);
-  in buildFarmFrom "construct" repo;
+  version = lib.substring 0 9 rev;
 
   buildArgs = buildInputs: nativeBuildInputs: {
     inherit buildInputs nativeBuildInputs;
     preferLocalBuild = true;
     allowSubstitutes = false;
   };
-
-  VERSION_COMMIT_CMD = "git rev-parse --short HEAD";
-  VERSION_BRANCH_CMD = "git rev-parse --abbrev-ref HEAD";
-  VERSION_TAG_CMD = "git describe --tags --abbrev=0 --dirty --always --broken";
-  VERSION_CMD = "git describe --tags --always --broken";
-  runWithGit = id: cmd: lib.removeSuffix "\n" (builtins.readFile (pkgs.runCommandNoCCLocal "construct-${id}" {
-    buildInputs = [ pkgs.git ];
-  } "cd ${./.} && ${cmd} > $out"));
 in stdenv.mkDerivation rec {
   inherit pname version;
   src = source;
@@ -528,7 +500,7 @@ in stdenv.mkDerivation rec {
       libtool --tag=CXX --mode=link g++ -std=gnu++17 -ftls-model=initial-exec -pthread ${CXXOPTS} -version-info 3:2:0 \
         -Wl,--no-undefined-version -Wl,--weak-unresolved-symbols -Wl,--unresolved-symbols=ignore-in-shared-libs \
         -Wl,--wrap=pthread_create -Wl,--wrap=pthread_join -Wl,--wrap=pthread_timedjoin_np -Wl,--wrap=pthread_self -Wl,--wrap=pthread_setname_np \
-        -Wl,-z,nodelete -Wl,-z,nodlopen -Wl,-z,lazy -L${boost.out}/lib \
+        -Wl,-z,nodelete -Wl,-z,nodlopen -Wl,-z,lazy -L${pkgs.boost.out}/lib \
         -Wl,-fuse-ld=gold -Wl,--gdb-index -Wl,--warn-common -Wl,--warn-execstack -Wl,--detect-odr-violations -Wl,--rosegment -Wl,-z,noexecstack -Wl,-z,combreloc -Wl,-z,text-unlikely-segment \
         -o $out/${laFile} ${lib.concatStringsSep " " loFiles} ${extraArgs} \
         -lrocksdb -lboost_coroutine -lboost_context -lboost_thread -lboost_filesystem -lboost_chrono -lboost_system -lssl -lcrypto -L${pkgs.libsodium.out}/lib -lsodium -lmagic -lz -lpthread -latomic -lrocksdb -ldl
@@ -570,11 +542,11 @@ in stdenv.mkDerivation rec {
 
     versionDefs = let
       versions = {
-        BRANDING_VERSION = "${runWithGit "version" VERSION_CMD}";
-        RB_VERSION = "${runWithGit "version" VERSION_CMD}";
-        RB_VERSION_BRANCH = "${runWithGit "version-branch" VERSION_BRANCH_CMD}";
-        RB_VERSION_COMMIT = "${runWithGit "version-commit" VERSION_COMMIT_CMD}";
-        RB_VERSION_TAG = "${runWithGit "version-tag" VERSION_TAG_CMD}";
+        BRANDING_VERSION = lib.substring 0 9 rev;
+        RB_VERSION = lib.substring 0 9 rev;
+        RB_VERSION_BRANCH = "master";
+        RB_VERSION_COMMIT = rev;
+        RB_VERSION_TAG = rev;
       };
     in lib.concatStringsSep " " (lib.mapAttrsToList (k: v: "-U${k} -D'${k}=\"${v}\"'") versions);
 
