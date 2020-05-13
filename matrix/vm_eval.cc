@@ -271,6 +271,40 @@ ircd::m::vm::eval::count(const ctx::ctx *const &c)
 	});
 }
 
+ircd::m::vm::eval *
+ircd::m::vm::eval::find_root(const eval &a,
+                             const ctx::ctx &c)
+{
+	eval *ret {nullptr}, *parent {nullptr}; do
+	{
+		if(!(parent = find_parent(a, c)))
+			return ret;
+
+		ret = parent;
+	}
+	while(1);
+}
+
+ircd::m::vm::eval *
+ircd::m::vm::eval::find_parent(const eval &a,
+                               const ctx::ctx &c)
+{
+	eval *ret {nullptr};
+	for_each(&c, [&ret, &a]
+	(eval &eval)
+	{
+		const bool cond
+		{
+			(&eval != &a) && (!ret || eval.id > ret->id)
+		};
+
+		ret = cond? &eval : ret;
+		return true;
+	});
+
+	return ret;
+}
+
 bool
 ircd::m::vm::eval::for_each(const ctx::ctx *const &c,
                             const std::function<bool (eval &)> &closure)
@@ -289,13 +323,31 @@ ircd::m::vm::eval::for_each(const ctx::ctx *const &c,
 
 ircd::m::vm::eval::eval(const vm::opts &opts)
 :opts{&opts}
+,parent
 {
+	find_parent(*this)
+}
+{
+	if(parent)
+	{
+		assert(!parent->child);
+		parent->child = this;
+	}
 }
 
 ircd::m::vm::eval::eval(const vm::copts &opts)
 :opts{&opts}
 ,copts{&opts}
+,parent
 {
+	find_parent(*this)
+}
+{
+	if(parent)
+	{
+		assert(!parent->child);
+		parent->child = this;
+	}
 }
 
 ircd::m::vm::eval::eval(json::iov &event,
@@ -334,6 +386,12 @@ ircd::m::vm::eval::eval(const vector_view<m::event> &events,
 ircd::m::vm::eval::~eval()
 noexcept
 {
+	assert(!child);
+	if(parent)
+	{
+		assert(parent->child == this);
+		parent->child = nullptr;
+	}
 }
 
 size_t

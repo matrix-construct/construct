@@ -77,6 +77,8 @@ struct ircd::m::vm::eval
 	const vm::opts *opts {&default_opts};
 	const vm::copts *copts {nullptr};
 	ctx::ctx *ctx {ctx::current};
+	vm::eval *parent {nullptr};
+	vm::eval *child {nullptr};
 	uint64_t id {++id_ctr};
 	uint64_t sequence {0};
 	uint64_t sequence_shared[2] {0}; // min, max
@@ -116,6 +118,8 @@ struct ircd::m::vm::eval
 	~eval() noexcept;
 
 	static bool for_each(const ctx::ctx *const &, const std::function<bool (eval &)> &);
+	static eval *find_parent(const eval &, const ctx::ctx & = ctx::cur());
+	static eval *find_root(const eval &, const ctx::ctx & = ctx::cur());
 	static size_t count(const ctx::ctx *const &);
 
 	static bool for_each(const std::function<bool (eval &)> &);
