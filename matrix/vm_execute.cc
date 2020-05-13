@@ -669,12 +669,6 @@ ircd::m::vm::execute_pdu(eval &eval,
 
 	// Obtain sequence number here.
 	const auto *const &top(eval::seqmax());
-	const scope_restore<uint64_t> sequence_shared[2]
-	{
-		{ eval.sequence_shared[0], 0UL },
-		{ eval.sequence_shared[1], 0UL },
-	};
-
 	eval.sequence =
 	{
 		top?
@@ -719,11 +713,13 @@ ircd::m::vm::execute_pdu(eval &eval,
 	}
 
 	assert(eval.sequence != 0);
-	assert(sequence::uncommitted <= sequence::get(eval));
-	assert(sequence::committed < sequence::get(eval));
-	assert(sequence::retired < sequence::get(eval));
 	assert(eval::sequnique(sequence::get(eval)));
-	sequence::uncommitted = sequence::get(eval);
+	assert(eval.parent || sequence::uncommitted <= sequence::get(eval));
+	assert(eval.parent || sequence::committed < sequence::get(eval));
+	assert(eval.parent || sequence::retired < sequence::get(eval));
+	sequence::uncommitted = !eval.parent?
+		sequence::get(eval):
+		sequence::uncommitted;
 
 	const scope_restore eval_phase_commit
 	{
@@ -733,7 +729,10 @@ ircd::m::vm::execute_pdu(eval &eval,
 	// Wait until this is the lowest sequence number
 	sequence::dock.wait([&eval]
 	{
-		return eval::seqnext(sequence::committed) == &eval;
+		return false
+		|| eval.parent
+		|| eval::seqnext(sequence::committed) == &eval
+		;
 	});
 
 	// Reevaluation of auth against the present state of the room.
@@ -758,10 +757,6 @@ ircd::m::vm::execute_pdu(eval &eval,
 		call_hook(eval_hook, eval, event, eval);
 	}
 
-	assert(sequence::committed < sequence::get(eval));
-	assert(sequence::retired < sequence::get(eval));
-	sequence::committed = sequence::get(eval);
-
 	// Allocate transaction; discover shared-sequenced evals.
 	if(likely(opts.phase[phase::INDEX]))
 	{
@@ -780,6 +775,12 @@ ircd::m::vm::execute_pdu(eval &eval,
 		write_append(eval, event);
 	}
 
+	assert(eval.parent || sequence::committed < sequence::get(eval));
+	assert(eval.parent || sequence::retired < sequence::get(eval));
+	sequence::committed = !eval.parent?
+		sequence::get(eval):
+		sequence::committed;
+
 	// Generate post-eval/pre-notify effects. This function may conduct
 	// an entire eval of several more events recursively before returning.
 	if(likely(opts.phase[phase::POST]))
@@ -793,7 +794,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 	}
 
 	// Commit the transaction to database iff this eval is at the stack base.
-	if(likely(opts.phase[phase::WRITE]) && !eval.sequence_shared[0])
+	if(likely(opts.phase[phase::WRITE] && !eval.parent))
 	{
 		const scope_restore eval_phase
 		{
@@ -805,7 +806,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 
 	// Wait for sequencing only if this is the stack base, otherwise we'll
 	// never return back to that stack base.
-	if(likely(!eval.sequence_shared[0]))
+	if(likely(!eval.parent))
 	{
 		const scope_restore eval_phase
 		{
@@ -817,9 +818,16 @@ ircd::m::vm::execute_pdu(eval &eval,
 			return eval::seqnext(sequence::retired) == std::addressof(eval);
 		});
 
+		const auto next
+		{
+			eval::seqnext(eval.sequence)
+		};
+
 		const auto highest
 		{
-			std::max(eval.sequence_shared[1], sequence::get(eval))
+			next?
+				sequence::get(*next):
+				sequence::get(eval)
 		};
 
 		const auto retire
@@ -872,8 +880,6 @@ ircd::m::vm::write_prepare(eval &eval,
 		if(sequence::get(other) <= sequence::retired)
 			return true;
 
-		other.sequence_shared[1] = std::max(other.sequence_shared[1], sequence::get(eval));
-		eval.sequence_shared[0] = sequence::get(other);
 		eval.txn = other.txn;
 		return false;
 	}};
@@ -984,7 +990,7 @@ ircd::m::vm::write_commit(eval &eval)
 {
 	assert(eval.txn);
 	assert(eval.txn.use_count() == 1);
-	assert(eval.sequence_shared[0] == 0);
+	assert(!eval.parent);
 	auto &txn
 	{
 		*eval.txn
@@ -1001,10 +1007,9 @@ ircd::m::vm::write_commit(eval &eval)
 
 	log::debug
 	{
-		log, "%s | wrote  %lu:%lu | db seq %lu:%lu %zu cells in %zu bytes to events database ...",
+		log, "%s | wrote %lu | db seq %lu:%lu %zu cells in %zu bytes to events database ...",
 		loghead(eval),
 		sequence::get(eval),
-		eval.sequence_shared[1],
 		db_seq_before,
 		db_seq_after,
 		txn.size(),

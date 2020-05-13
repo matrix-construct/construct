@@ -81,7 +81,6 @@ struct ircd::m::vm::eval
 	vm::eval *child {nullptr};
 	uint64_t id {++id_ctr};
 	uint64_t sequence {0};
-	uint64_t sequence_shared[2] {0}; // min, max
 	std::shared_ptr<db::txn> txn;
 
 	vector_view<m::event> pdus;
