@@ -181,7 +181,13 @@ ircd::json::input
 	// primary recursive rule
 	rule<unused_type(uint)> value
 	{
-		string | number | lit_true | lit_false | lit_null | object(depth + 1) | array(depth + 1)
+		(&quote >> string)
+		| (&object_begin >> object(depth + 1))
+		| (&array_begin >> array(depth + 1))
+		| number
+		| lit_true
+		| lit_false
+		| lit_null
 		,"value"
 	};
 
@@ -198,11 +204,11 @@ ircd::json::input
 
 	rule<enum json::type> type_strict
 	{
-		(omit[string]     >> attr(json::STRING))  |
-		(omit[object(0)]  >> attr(json::OBJECT))  |
-		(omit[array(0)]   >> attr(json::ARRAY))   |
-		(omit[number]     >> attr(json::NUMBER))  |
-		(omit[literal]    >> attr(json::LITERAL))
+		(omit[&quote >> string]            >> attr(json::STRING))  |
+		(omit[&object_begin >> object(0)]  >> attr(json::OBJECT))  |
+		(omit[&array_begin >> array(0)]    >> attr(json::ARRAY))   |
+		(omit[number]                      >> attr(json::NUMBER))  |
+		(omit[literal]                     >> attr(json::LITERAL))
 		,"type"
 	};
 
@@ -210,14 +216,14 @@ ircd::json::input
 	:input::base_type{rule<>{}} // required by spirit
 	{
 		// synthesized repropagation of recursive rules
-		value %= string
-		       | number
-		       | lit_true
-		       | lit_false
-		       | lit_null
-		       | object(depth + 1)
-		       | array(depth + 1)
-		       ;
+		value %= (&quote >> string)
+		| (&object_begin >> object(depth + 1))
+		| (&array_begin >> array(depth + 1))
+		| number
+		| lit_true
+		| lit_false
+		| lit_null
+		;
 	}
 };
 
