@@ -63,11 +63,11 @@ handle_edu_m_receipt(const m::event &event,
 		at<"content"_>(event)
 	};
 
-	for(const auto &member : content)
+	for(const auto &[_room_id, content] : content)
 	{
 		const m::room::id &room_id
 		{
-			unquote(member.first)
+			_room_id
 		};
 
 		if(m::room::server_acl::enable_write && !m::room::server_acl::check(room_id, origin))
@@ -82,7 +82,7 @@ handle_edu_m_receipt(const m::event &event,
 			continue;
 		}
 
-		handle_m_receipt(event, room_id, member.second);
+		handle_m_receipt(event, room_id, content);
 	}
 }
 
