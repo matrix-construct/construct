@@ -30,7 +30,7 @@ ircd::m::dbs::desc::room_state__cache__size
 {
 	{
 		{ "name",     "ircd.m.dbs._room_state.cache.size"  },
-		{ "default",  long(16_MiB)                         },
+		{ "default",  long(32_MiB)                         },
 	}, []
 	{
 		const size_t &value{room_state__cache__size};

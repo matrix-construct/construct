@@ -41,7 +41,7 @@ ircd::m::dbs::desc::event_id__cache__size
 {
 	{
 		{ "name",     "ircd.m.dbs.event_id.cache.size"  },
-		{ "default",  long(32_MiB)                      },
+		{ "default",  long(48_MiB)                      },
 	}, []
 	{
 		auto &column(event_column.at(json::indexof<event, "event_id"_>()));
@@ -652,7 +652,7 @@ ircd::m::dbs::desc::origin_server_ts__cache__size
 {
 	{
 		{ "name",     "ircd.m.dbs.origin_server_ts.cache.size"  },
-		{ "default",  long(16_MiB)                              },
+		{ "default",  long(32_MiB)                              },
 	}, []
 	{
 		auto &column(event_column.at(json::indexof<event, "origin_server_ts"_>()));
