@@ -161,7 +161,7 @@ struct ircd::db::txn::handler
 	using Slice = rocksdb::Slice;
 
 	const database &d;
-	const std::function<bool (const delta &)> &cb;
+	std::function<bool (const delta &)> cb;
 	bool _continue {true};
 
 	Status callback(const delta &) noexcept;
@@ -180,8 +180,8 @@ struct ircd::db::txn::handler
 	Status PutCF(const uint32_t cfid, const Slice &, const Slice &) noexcept override;
 
 	handler(const database &d,
-	        const std::function<bool (const delta &)> &cb)
+	        std::function<bool (const delta &)> cb)
 	:d{d}
-	,cb{cb}
+	,cb{std::move(cb)}
 	{}
 };
