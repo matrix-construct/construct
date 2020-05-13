@@ -678,7 +678,8 @@ ircd::m::vm::execute_pdu(eval &eval,
 
 	log::debug
 	{
-		log, "%s | event sequenced", loghead(eval)
+		log, "%s event sequenced",
+		loghead(eval)
 	};
 
 	const scope_restore eval_phase_precommit
@@ -842,7 +843,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 
 		log::debug
 		{
-			log, "%s | retire %lu:%lu release %lu",
+			log, "%s %lu:%lu release %lu",
 			loghead(eval),
 			sequence::get(eval),
 			retire,
@@ -965,7 +966,7 @@ ircd::m::vm::write_append(eval &eval,
 			if(fail)
 				log::dwarning
 				{
-					log, "%s | fails auth for present state of %s :%s",
+					log, "%s fails auth for present state of %s :%s",
 					loghead(eval),
 					string_view{room.room_id},
 					what(fail),
@@ -980,7 +981,7 @@ ircd::m::vm::write_append(eval &eval,
 
 	log::debug
 	{
-		log, "%s | write buffered",
+		log, "%s composed transaction",
 		loghead(eval),
 	};
 }
@@ -1007,7 +1008,7 @@ ircd::m::vm::write_commit(eval &eval)
 
 	log::debug
 	{
-		log, "%s | wrote %lu | db seq %lu:%lu %zu cells in %zu bytes to events database ...",
+		log, "%s wrote %lu | db seq %lu:%lu %zu cells in %zu bytes to events database ...",
 		loghead(eval),
 		sequence::get(eval),
 		db_seq_before,
@@ -1043,7 +1044,7 @@ try
 	#if 0
 	log::debug
 	{
-		log, "%s | phase:%s enter",
+		log, "%s hook:%s enter",
 		loghead(eval),
 		hook.name(),
 	};
@@ -1062,7 +1063,7 @@ try
 	#if 0
 	log::debug
 	{
-		log, "%s | phase:%s leave",
+		log, "%s hook:%s leave",
 		loghead(eval),
 		hook.name(),
 	};
@@ -1072,7 +1073,7 @@ catch(const m::error &e)
 {
 	log::derror
 	{
-		log, "%s | phase:%s :%s :%s :%s",
+		log, "%s hook:%s :%s :%s :%s",
 		loghead(eval),
 		hook.name(),
 		e.what(),
@@ -1086,7 +1087,7 @@ catch(const http::error &e)
 {
 	log::derror
 	{
-		log, "%s | phase:%s :%s :%s",
+		log, "%s hook:%s :%s :%s",
 		loghead(eval),
 		hook.name(),
 		e.what(),
@@ -1099,7 +1100,7 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		log, "%s | phase:%s :%s",
+		log, "%s hook:%s :%s",
 		loghead(eval),
 		hook.name(),
 		e.what(),

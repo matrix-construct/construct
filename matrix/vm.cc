@@ -127,15 +127,19 @@ ircd::m::vm::loghead(const mutable_buffer &buf,
 {
 	return fmt::sprintf
 	{
-		buf, "vm:%lu:%lu:%lu eval:%lu seq:%lu parent:%lu %s",
+		buf, "vm:%lu:%lu:%lu parent:%lu %s eval:%lu %s seq:%lu %s",
 		sequence::retired,
 		sequence::committed,
 		sequence::uncommitted,
-		eval.id,
-		sequence::get(eval),
 		eval.parent?
 			eval.parent->id:
 			0UL,
+		eval.parent?
+			reflect(eval.parent->phase):
+			reflect(phase::NONE),
+		eval.id,
+		reflect(eval.phase),
+		sequence::get(eval),
 		eval.event_?
 			string_view{eval.event_->event_id}:
 			"<unidentified>"_sv,
