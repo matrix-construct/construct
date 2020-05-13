@@ -559,7 +559,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 		call_hook(conform_hook, eval, event, eval);
 	}
 
-	if(unlikely(eval.room_internal && !my(event)))
+	if(eval.room_internal && !my(event))
 		throw error
 		{
 			fault::GENERAL, "Internal room event denied from external source."
@@ -580,13 +580,13 @@ ircd::m::vm::execute_pdu(eval &eval,
 		});
 	}
 
-	if(likely(opts.unique) && unlikely(eval::count(event_id) > 1))
+	if(unlikely(opts.unique && eval::count(event_id) > 1))
 		throw error
 		{
 			fault::EXISTS, "Event is already being evaluated."
 		};
 
-	if(likely(!opts.replays) && !eval.copts && m::exists(event_id))
+	if(!opts.replays && !eval.copts && m::exists(event_id))
 		throw error
 		{
 			fault::EXISTS, "Event has already been evaluated."
@@ -609,7 +609,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 			eval.phase, phase::VERIFY
 		};
 
-		if(unlikely(!verify(event)))
+		if(!verify(event))
 			throw m::BAD_SIGNATURE
 			{
 				"Signature verification failed."
@@ -698,7 +698,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 		return eval::seqnext(sequence::uncommitted) == &eval;
 	});
 
-	if(likely(opts.phase[phase::AUTH_RELA]) && authenticate)
+	if(likely(opts.phase[phase::AUTH_RELA] && authenticate))
 	{
 		const scope_restore eval_phase
 		{
@@ -737,7 +737,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 	});
 
 	// Reevaluation of auth against the present state of the room.
-	if(likely(opts.phase[phase::AUTH_PRES]) && authenticate)
+	if(likely(opts.phase[phase::AUTH_PRES] && authenticate))
 	{
 		const scope_restore eval_phase
 		{
