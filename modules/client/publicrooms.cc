@@ -164,9 +164,13 @@ get__publicrooms(client &client,
 	m::room::id::buf next_batch_buf;
 	json::stack::object top{out};
 	{
-		json::stack::member chunk_m{top, "chunk"};
-		json::stack::array chunk{chunk_m};
-		m::rooms::for_each(opts, [&](const m::room::id &room_id)
+		json::stack::array chunk
+		{
+			top, "chunk"
+		};
+
+		m::rooms::for_each(opts, [&]
+		(const m::room::id &room_id)
 		{
 			if(++count > limit)
 			{
@@ -174,7 +178,11 @@ get__publicrooms(client &client,
 				return false;
 			}
 
-			json::stack::object obj{chunk};
+			json::stack::object obj
+			{
+				chunk
+			};
+
 			m::rooms::summary::get(obj, room_id);
 			return true;
 		});
