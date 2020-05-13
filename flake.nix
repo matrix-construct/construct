@@ -10,7 +10,7 @@
         inherit (prev) lib linkFarm;
         srcFilter = n: t: (lib.hasSuffix ".cc" n || lib.hasSuffix ".h" n || lib.hasSuffix ".S" n
         || lib.hasSuffix ".md" n || t == "directory");
-        repo = lib.cleanSourceWith { filter = srcFilter; src = lib.cleanSource "./."; };
+        repo = lib.cleanSourceWith { filter = srcFilter; src = lib.cleanSource ./.; };
 
         buildFileWith = root: name: type: rec {
           inherit name; file = "${root}/${name}";

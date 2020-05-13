@@ -1,4 +1,4 @@
-self: { config, system, pkgs, lib, ... }:
+self: { config, pkgs, lib, ... }:
 
 let
   cfg = config.services.matrix-construct;
@@ -35,7 +35,7 @@ in {
 
     package = mkOption {
       type = types.package;
-      default = self.packages.${system}.matrix-construct;
+      default = self.packages.${pkgs.system}.matrix-construct;
       defaultText = "pkgs.matrix-construct";
       description = ''
         Guix package to use.
@@ -55,7 +55,7 @@ in {
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [ cfg.package ] ++ lib.optional cfg.useScreen pkgs.screen;
 
-    systemd.services.construct = {
+    systemd.services.matrix-construct = {
       description = "Matrix Construct";
       wantedBy = [ "multi-user.target" ];
 
