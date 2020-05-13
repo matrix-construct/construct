@@ -7330,7 +7330,7 @@ console_cmd__event(opt &out, const string_view &line)
 		case hash("raw"):
 		{
 			if(event.source)
-				out << event.source << std::endl;
+				out << json::strung{event.source} << std::endl;
 			else
 				out << event << std::endl;
 
@@ -7340,7 +7340,7 @@ console_cmd__event(opt &out, const string_view &line)
 		case hash("source"):
 		{
 			if(event.source)
-				out << event.source << std::endl;
+				out << string_view{event.source} << std::endl;
 
 			return true;
 		}
