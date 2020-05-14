@@ -14918,7 +14918,7 @@ console_cmd__vm(opt &out, const string_view &line)
 	out << std::endl;
 
 	out
-	<< std::right << std::setw(5) << "ID" << " "
+	<< std::right << std::setw(8) << "ID" << " "
 	<< std::right << std::setw(4) << "CTX" << " "
 	<< std::left << std::setw(8) << " " << " "
 	<< std::left << std::setw(24) << "USER" << " "
@@ -14956,7 +14956,7 @@ console_cmd__vm(opt &out, const string_view &line)
 		};
 
 		out
-		<< std::right << std::setw(5) << eval->id << " "
+		<< std::right << std::setw(8) << eval->id << " "
 		<< std::right << std::setw(4) << (eval->ctx? ctx::id(*eval->ctx) : 0UL) << " "
 		<< std::left << std::setw(8) << (eval->ctx? trunc(ctx::name(*eval->ctx), 8) : string_view{}) << " "
 		<< std::left << std::setw(24) << trunc(eval->opts->node_id?: eval->opts->user_id, 24) << " "
