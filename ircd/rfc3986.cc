@@ -619,35 +619,48 @@ ircd::rfc3986::encode(const mutable_buffer &buf,
 // general interface
 //
 
+namespace ircd::rfc3986
+{
+	[[gnu::visibility("internal")]] extern const parser::rule<string_view> host_literal;
+	[[gnu::visibility("internal")]] extern const parser::rule<string_view> host_non_literal;
+	[[gnu::visibility("internal")]] extern const parser::rule<string_view> host_alternative;
+	[[gnu::visibility("internal")]] extern const parser::rule<string_view> host_parse;
+}
+
+decltype(ircd::rfc3986::host_literal)
+ircd::rfc3986::host_literal
+{
+	parser::ip6_address
+};
+
+decltype(ircd::rfc3986::host_non_literal)
+ircd::rfc3986::host_non_literal
+{
+	parser::ip6_address | parser::ip4_address | parser::domain
+};
+
+decltype(ircd::rfc3986::host_alternative)
+ircd::rfc3986::host_alternative
+{
+	(&lit('[') > raw[host_literal]) | raw[host_non_literal]
+	,"host"
+};
+
+decltype(ircd::rfc3986::host_parse)
+ircd::rfc3986::host_parse
+{
+	expect[host_alternative >> omit[&lit(':') | eoi]]
+	,"host"
+};
+
 ircd::string_view
 ircd::rfc3986::host(const string_view &str)
 try
 {
-	static const parser::rule<string_view> literal
-	{
-		parser::ip6_address
-	};
-
-	static const parser::rule<string_view> non_literal
-	{
-		parser::ip6_address | parser::ip4_address | parser::domain
-	};
-
-	static const parser::rule<string_view> rule
-	{
-		(&lit('[') > raw[literal]) | raw[non_literal]
-		,"host"
-	};
-
-	static const parser::rule<string_view> grammar
-	{
-		expect[rule >> omit[&lit(':') | eoi]]
-		,"host"
-	};
-
 	string_view ret;
 	const char *start(str.data()), *const stop(start + str.size());
-	qi::parse(start, stop, grammar, ret);
+	qi::parse(start, stop, host_parse, ret);
+	assert(!ret.empty());
 	return ret;
 }
 catch(const qi::expectation_failure<const char *> &e)
