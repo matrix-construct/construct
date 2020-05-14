@@ -58,50 +58,11 @@ struct ircd::json::vector
 	using string_view::string_view;
 };
 
-namespace ircd::json
+#include "vector_iterator.h"
+
+inline ircd::json::vector::const_iterator
+ircd::json::vector::end()
+const
 {
-	bool operator==(const vector::const_iterator &, const vector::const_iterator &);
-	bool operator!=(const vector::const_iterator &, const vector::const_iterator &);
-	bool operator<=(const vector::const_iterator &, const vector::const_iterator &);
-	bool operator>=(const vector::const_iterator &, const vector::const_iterator &);
-	bool operator<(const vector::const_iterator &, const vector::const_iterator &);
-	bool operator>(const vector::const_iterator &, const vector::const_iterator &);
+	return { string_view::end(), string_view::end() };
 }
-
-struct ircd::json::vector::const_iterator
-{
-	using value_type = const object;
-	using pointer = value_type *;
-	using reference = value_type &;
-	using iterator = const_iterator;
-	using size_type = size_t;
-	using difference_type = ptrdiff_t;
-	using iterator_category = std::forward_iterator_tag;
-
-  protected:
-	friend class vector;
-
-	const char *start {nullptr};
-	const char *stop {nullptr};
-	object state;
-
-	const_iterator(const char *const &start, const char *const &stop)
-	:start{start}
-	,stop{stop}
-	{}
-
-  public:
-	value_type *operator->() const               { return &state;                                  }
-	value_type &operator*() const                { return *operator->();                           }
-
-	const_iterator &operator++();
-
-	const_iterator() = default;
-
-	friend bool operator==(const const_iterator &, const const_iterator &);
-	friend bool operator!=(const const_iterator &, const const_iterator &);
-	friend bool operator<=(const const_iterator &, const const_iterator &);
-	friend bool operator>=(const const_iterator &, const const_iterator &);
-	friend bool operator<(const const_iterator &, const const_iterator &);
-	friend bool operator>(const const_iterator &, const const_iterator &);
-};

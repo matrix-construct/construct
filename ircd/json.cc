@@ -2393,53 +2393,6 @@ catch(const qi::expectation_failure<const char *> &e)
 	};
 }
 
-ircd::json::vector::const_iterator
-ircd::json::vector::end()
-const
-{
-	return { string_view::end(), string_view::end() };
-}
-
-//
-// vector::const_iterator
-//
-
-bool
-ircd::json::operator==(const vector::const_iterator &a, const vector::const_iterator &b)
-{
-	return a.state == b.state;
-}
-
-bool
-ircd::json::operator!=(const vector::const_iterator &a, const vector::const_iterator &b)
-{
-	return a.state != b.state;
-}
-
-bool
-ircd::json::operator<=(const vector::const_iterator &a, const vector::const_iterator &b)
-{
-	return a.state <= b.state;
-}
-
-bool
-ircd::json::operator>=(const vector::const_iterator &a, const vector::const_iterator &b)
-{
-	return a.state >= b.state;
-}
-
-bool
-ircd::json::operator<(const vector::const_iterator &a, const vector::const_iterator &b)
-{
-	return a.state < b.state;
-}
-
-bool
-ircd::json::operator>(const vector::const_iterator &a, const vector::const_iterator &b)
-{
-	return a.state > b.state;
-}
-
 //
 // vector::const_iterator::const_iterator
 //
