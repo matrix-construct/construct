@@ -625,6 +625,7 @@ namespace ircd::rfc3986
 	[[gnu::visibility("internal")]] extern const parser::rule<string_view> host_non_literal;
 	[[gnu::visibility("internal")]] extern const parser::rule<string_view> host_alternative;
 	[[gnu::visibility("internal")]] extern const parser::rule<string_view> host_parse;
+	[[gnu::visibility("internal")]] extern const parser::rule<uint16_t> port_parse;
 }
 
 decltype(ircd::rfc3986::host_literal)
@@ -653,6 +654,13 @@ ircd::rfc3986::host_parse
 	,"host"
 };
 
+decltype(ircd::rfc3986::port_parse)
+ircd::rfc3986::port_parse
+{
+	omit[host_alternative] >> -(omit[lit(':')] >> parser::port) >> eoi
+	,"port"
+};
+
 ircd::string_view
 ircd::rfc3986::host(const string_view &str)
 try
@@ -672,25 +680,9 @@ uint16_t
 ircd::rfc3986::port(const string_view &str)
 try
 {
-	static const parser::rule<> literal
-	{
-		parser::ip6_literal | parser::ip4_literal | parser::domain
-	};
-
-	static const parser::rule<> non_literal
-	{
-		parser::ip6_address
-	};
-
-	static const parser::rule<uint16_t> rule
-	{
-		non_literal | (literal >> -(lit(':') >> parser::port)) >> eoi
-		,"port"
-	};
-
 	uint16_t ret(0);
 	const char *start(str.data()), *const stop(start + str.size());
-	qi::parse(start, stop, rule, ret);
+	qi::parse(start, stop, port_parse, ret);
 	return ret;
 }
 catch(const qi::expectation_failure<const char *> &e)
