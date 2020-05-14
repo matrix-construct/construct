@@ -2448,6 +2448,17 @@ const
 // json/object.h
 //
 
+namespace ircd::json
+{
+	using object_rule = parser::rule<object::member>;
+
+	[[gnu::visibility("internal")]] extern const object_rule object_member;
+	[[gnu::visibility("internal")]] extern const object_rule object_next;
+	[[gnu::visibility("internal")]] extern const object_rule object_begin;
+	[[gnu::visibility("internal")]] extern const object_rule object_next_parse;
+	[[gnu::visibility("internal")]] extern const object_rule object_begin_parse;
+}
+
 decltype(ircd::json::object::max_recursion_depth)
 ircd::json::object::max_recursion_depth
 {
@@ -2458,6 +2469,42 @@ decltype(ircd::json::object::max_sorted_members)
 ircd::json::object::max_sorted_members
 {
 	iov::max_size
+};
+
+decltype(ircd::json::object_member)
+ircd::json::object_member
+{
+	parser.name >> -parser.ws >> parser.name_sep >> -parser.ws >> raw[parser.value(0)]
+	,"object member"
+};
+
+decltype(ircd::json::object_next)
+ircd::json::object_next
+{
+	(parser.value_sep >> -parser.ws >> object_member) |
+	(parser.object_end >> -parser.ws >> eoi)
+	,"object member"
+};
+
+decltype(ircd::json::object_begin)
+ircd::json::object_begin
+{
+	parser.object_begin >> -parser.ws >> (parser.object_end | object_member)
+	,"object"
+};
+
+decltype(ircd::json::object_next_parse)
+ircd::json::object_next_parse
+{
+	expect[object_next >> -parser.ws]
+	,"object increment"
+};
+
+decltype(ircd::json::object_begin_parse)
+ircd::json::object_begin_parse
+{
+	expect[-parser.ws >> (eoi | (object_begin >> -parser.ws))]
+	,"object begin"
 };
 
 std::ostream &
@@ -2629,55 +2676,6 @@ const
 	});
 }
 
-namespace ircd::json
-{
-	extern const parser::rule<object::member> object_member;
-	extern const parser::rule<object::member> object_next;
-	extern const parser::rule<object::member> object_begin;
-	extern const parser::rule<object::member> object_next_parse;
-	extern const parser::rule<object::member> object_begin_parse;
-}
-
-[[gnu::visibility("internal")]]
-decltype(ircd::json::object_member)
-ircd::json::object_member
-{
-	parser.name >> -parser.ws >> parser.name_sep >> -parser.ws >> raw[parser.value(0)]
-	,"object member"
-};
-
-[[gnu::visibility("internal")]]
-decltype(ircd::json::object_next)
-ircd::json::object_next
-{
-	parser.object_end | (parser.value_sep >> -parser.ws >> object_member)
-	,"object member"
-};
-
-[[gnu::visibility("internal")]]
-decltype(ircd::json::object_begin)
-ircd::json::object_begin
-{
-	parser.object_begin >> -parser.ws >> (parser.object_end | object_member)
-	,"object"
-};
-
-[[gnu::visibility("internal")]]
-decltype(ircd::json::object_next_parse)
-ircd::json::object_next_parse
-{
-	expect[object_next >> -parser.ws]
-	,"object increment"
-};
-
-[[gnu::visibility("internal")]]
-decltype(ircd::json::object_begin_parse)
-ircd::json::object_begin_parse
-{
-	expect[-parser.ws >> object_begin >> -parser.ws]
-	,"object begin"
-};
-
 ircd::json::object::const_iterator
 ircd::json::object::begin()
 const try
@@ -2687,9 +2685,7 @@ const try
 		string_view::begin(), string_view::end()
 	};
 
-	if(likely(!string_view{*this}.empty()))
-		qi::parse(ret.start, ret.stop, object_begin_parse, ret.state);
-
+	qi::parse(ret.start, ret.stop, object_begin_parse, ret.state);
 	return ret;
 }
 catch(const qi::expectation_failure<const char *> &e)
@@ -2719,8 +2715,7 @@ ircd::json::object::const_iterator &
 ircd::json::object::const_iterator::operator++()
 try
 {
-	state.first = string_view{};
-	state.second = string_view{};
+	state = {};
 	qi::parse(start, stop, object_next_parse, state);
 	return *this;
 }
