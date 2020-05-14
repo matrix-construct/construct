@@ -14939,15 +14939,11 @@ console_cmd__vm(opt &out, const string_view &line)
 	<< std::left << std::setw(20) << "STATE_KEY" << " "
 	<< std::endl;
 
-	for(auto rit(rbegin(m::vm::eval::list)); rit != rend(m::vm::eval::list); ++rit)
+	for(const auto *const &eval : m::vm::eval::list)
 	{
-		const auto *const &eval
-		{
-			*rit
-		};
-
 		assert(eval);
 		assert(eval->ctx);
+
 		const auto done
 		{
 			!eval->pdus.empty() && eval->event_?
