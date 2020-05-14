@@ -2532,7 +2532,7 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 	    << "STACK"
 	    << " "
 	    << std::setw(25)
-	    << "PEAK"
+	    << "PEAK OBSERVED"
 	    << " "
 	    << std::setw(25)
 	    << "LIMIT"
