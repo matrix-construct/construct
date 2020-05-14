@@ -635,13 +635,19 @@ try
 
 	static const parser::rule<string_view> rule
 	{
-		(lit('[') >> raw[literal]) | raw[non_literal]
+		(&lit('[') > raw[literal]) | raw[non_literal]
+		,"host"
+	};
+
+	static const parser::rule<string_view> grammar
+	{
+		expect[rule >> omit[&lit(':') | eoi]]
 		,"host"
 	};
 
 	string_view ret;
 	const char *start(str.data()), *const stop(start + str.size());
-	qi::parse(start, stop, eps > rule, ret);
+	qi::parse(start, stop, grammar, ret);
 	return ret;
 }
 catch(const qi::expectation_failure<const char *> &e)
@@ -665,7 +671,7 @@ try
 
 	static const parser::rule<uint16_t> rule
 	{
-		non_literal | (literal >> -(lit(':') >> parser::port) >> eoi)
+		non_literal | (literal >> -(lit(':') >> parser::port)) >> eoi
 		,"port"
 	};
 
