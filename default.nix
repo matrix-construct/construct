@@ -63,17 +63,6 @@ stdenv.mkDerivation rec {
   ] ++ lib.optional useClang llvmPackages_latest.llvm
     ++ lib.optional useJemalloc jemalloc;
   buildInputs = with pkgs; [
-    libsodium openssl file boost gmp
-    (rocksdb.overrideAttrs (super: rec {
-      version = "5.16.6";
-      src = pkgs.fetchFromGitHub {
-        owner = "facebook";
-        repo = "rocksdb";
-        rev = "v${version}";
-        sha256 = "0yy09myzbi99qdmh2c2mxlddr12pwxzh66ym1y6raaqglrsmax66";
-      };
-      cmakeFlags = builtins.map (f: if f == "-DWITH_TOOLS=0" then "-DWITH_TOOLS=1" else f) super.cmakeFlags;
-      NIX_CFLAGS_COMPILE = "${super.NIX_CFLAGS_COMPILE} -Wno-error=redundant-move";
-    }))
+    libsodium openssl file boost gmp rocksdb
   ] ++ lib.optional withGraphicsMagick graphicsmagick;
 }
