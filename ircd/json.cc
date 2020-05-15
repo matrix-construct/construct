@@ -2817,10 +2817,56 @@ ircd::json::sorted(const object::member *const &begin,
 // json/array.h
 //
 
+namespace ircd::json
+{
+	using array_rule = parser::rule<string_view>;
+
+	[[gnu::visibility("internal")]] extern const array_rule array_value;
+	[[gnu::visibility("internal")]] extern const array_rule array_next;
+	[[gnu::visibility("internal")]] extern const array_rule array_begin;
+	[[gnu::visibility("internal")]] extern const array_rule array_next_parse;
+	[[gnu::visibility("internal")]] extern const array_rule array_begin_parse;
+}
+
 decltype(ircd::json::array::max_recursion_depth)
 ircd::json::array::max_recursion_depth
 {
 	96
+};
+
+decltype(ircd::json::array_value)
+ircd::json::array_value
+{
+	raw[parser.value(0)]
+	,"array element"
+};
+
+decltype(ircd::json::array_next)
+ircd::json::array_next
+{
+	parser.array_end | (parser.value_sep >> -parser.ws >> array_value)
+	,"next array element"
+};
+
+decltype(ircd::json::array_begin)
+ircd::json::array_begin
+{
+	parser.array_begin >> -parser.ws >> (parser.array_end | array_value)
+	,"array begin element"
+};
+
+decltype(ircd::json::array_next_parse)
+ircd::json::array_next_parse
+{
+	expect[array_next >> -parser.ws]
+	,"array next"
+};
+
+decltype(ircd::json::array_begin_parse)
+ircd::json::array_begin_parse
+{
+	expect[-parser.ws >> (eoi | (array_begin >> -parser.ws))]
+	,"array begin"
 };
 
 std::ostream &
@@ -2957,31 +3003,12 @@ ircd::json::array::const_iterator
 ircd::json::array::begin()
 const try
 {
-	static const auto &ws
-	{
-		parser.ws
-	};
-
-	static const parser::rule<string_view> value
-	{
-		raw[parser.value(0)]
-		,"array element"
-	};
-
-	static const parser::rule<string_view> parse_begin
-	{
-		-ws >> parser.array_begin >> -ws >> (parser.array_end | value) >> -ws
-		,"array begin and element or end"
-	};
-
 	const_iterator ret
 	{
 		string_view::begin(), string_view::end()
 	};
 
-	if(!string_view{*this}.empty())
-		qi::parse(ret.start, ret.stop, eps > parse_begin, ret.state);
-
+	qi::parse(ret.start, ret.stop, array_begin_parse, ret.state);
 	return ret;
 }
 catch(const qi::expectation_failure<const char *> &e)
@@ -3058,25 +3085,8 @@ ircd::json::array::const_iterator &
 ircd::json::array::const_iterator::operator++()
 try
 {
-	static const auto &ws
-	{
-		parser.ws
-	};
-
-	static const parser::rule<string_view> value
-	{
-		raw[parser.value(0)]
-		,"array element"
-	};
-
-	static const parser::rule<string_view> parse_next
-	{
-		(parser.array_end | (parser.value_sep >> -ws >> value)) >> -ws
-		,"next array element or end"
-	};
-
 	state = string_view{};
-	qi::parse(start, stop, eps > parse_next, state);
+	qi::parse(start, stop, array_next_parse, state);
 	return *this;
 }
 catch(const qi::expectation_failure<const char *> &e)
