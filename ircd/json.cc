@@ -3976,6 +3976,24 @@ ircd::json::operator==(const value &a, const value &b)
 // json/util.h
 //
 
+namespace ircd::json
+{
+	[[gnu::visibility("internal")]] extern const parser::rule<> validation;
+	[[gnu::visibility("internal")]] extern const parser::rule<> validation_expect;
+}
+
+decltype(ircd::json::validation)
+ircd::json::validation
+{
+	parser.value(0) >> eoi
+};
+
+decltype(ircd::json::validation_expect)
+ircd::json::validation_expect
+{
+	expect[validation]
+};
+
 const ircd::string_view ircd::json::literal_null   { "null"   };
 const ircd::string_view ircd::json::literal_true   { "true"   };
 const ircd::string_view ircd::json::literal_false  { "false"  };
@@ -4011,16 +4029,12 @@ ircd::json::valid(const string_view &s,
                   std::nothrow_t)
 noexcept try
 {
-	static const parser::rule<> validator
-	{
-		parser.value(0) >> eoi
-	};
-
 	const char *start(begin(s)), *const stop(end(s));
-	return qi::parse(start, stop, validator);
+	return qi::parse(start, stop, validation);
 }
 catch(...)
 {
+	assert(false);
 	return false;
 }
 
@@ -4028,13 +4042,13 @@ void
 ircd::json::valid(const string_view &s)
 try
 {
-	static const parser::rule<> validator
+	const char *start(begin(s)), *const stop(end(s));
+	const bool ret
 	{
-		eps > parser.value(0) > eoi
+		qi::parse(start, stop, validation_expect)
 	};
 
-	const char *start(begin(s)), *const stop(end(s));
-	qi::parse(start, stop, validator);
+	assert(ret);
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
