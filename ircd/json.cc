@@ -4099,17 +4099,25 @@ ircd::json::serialized(const string_view &v)
 // json/type.h
 //
 
+namespace ircd::json
+{
+	using type_rule = parser::rule<enum json::type>;
+
+	[[gnu::visibility("internal")]] extern const type_rule type_strict;
+}
+
+decltype(ircd::json::type_strict)
+ircd::json::type_strict
+{
+	-parser.ws >> parser.type_strict >> -parser.ws >> eoi
+};
+
 enum ircd::json::type
 ircd::json::type(const string_view &buf,
                  strict_t)
 {
-	static const parser::rule<enum json::type> rule
-	{
-		-parser.ws >> parser.type_strict >> -parser.ws >> eoi
-	};
-
 	enum type ret;
-	if(!qi::parse(begin(buf), end(buf), rule , ret))
+	if(!qi::parse(begin(buf), end(buf), type_strict, ret))
 		throw type_error
 		{
 			"Failed to derive JSON value type from input buffer."
@@ -4123,13 +4131,8 @@ ircd::json::type(const string_view &buf,
                  strict_t,
                  std::nothrow_t)
 {
-	static const parser::rule<enum json::type> rule
-	{
-		-parser.ws >> parser.type_strict >> -parser.ws >> eoi
-	};
-
 	enum type ret;
-	if(!qi::parse(begin(buf), end(buf), rule, ret))
+	if(!qi::parse(begin(buf), end(buf), type_strict, ret))
 		return STRING;
 
 	return ret;
