@@ -47,6 +47,8 @@ stdenv.mkDerivation rec {
     "--with-boost-libdir=${pkgs.boost.out}/lib"
     "--with-boost=${pkgs.boost.dev}"
     "--with-magic-file=${pkgs.file}/share/misc/magic.mgc"
+    "--with-rocksdb-includes=${pkgs.rocksdb.src}"
+    "--with-rocksdb-libs=${pkgs.rocksdb.out}"
   ] ++ lib.optional useJemalloc "--enable-jemalloc"
     ++ lib.optional withGraphicsMagick [
     "--with-imagemagick-includes=${pkgs.graphicsmagick}/include/GraphicsMagick"
