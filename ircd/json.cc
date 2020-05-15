@@ -2256,6 +2256,36 @@ const
 // json/vector.h
 //
 
+namespace ircd::json
+{
+	using vector_rule = parser::rule<string_view>;
+
+	[[gnu::visibility("internal")]] extern const vector_rule vector_object;
+	[[gnu::visibility("internal")]] extern const vector_rule vector_next_parse;
+	[[gnu::visibility("internal")]] extern const vector_rule vector_begin_parse;
+}
+
+decltype(ircd::json::vector_object)
+ircd::json::vector_object
+{
+	raw[parser.object(0)]
+	,"vector object"
+};
+
+decltype(ircd::json::vector_next_parse)
+ircd::json::vector_next_parse
+{
+	expect[eoi | (vector_object >> -parser.ws)]
+	,"next object vector element or end"
+};
+
+decltype(ircd::json::vector_begin_parse)
+ircd::json::vector_begin_parse
+{
+	expect[-parser.ws >> (eoi | (vector_object >> -parser.ws))]
+	,"object vector element"
+};
+
 bool
 ircd::json::operator!(const vector &v)
 {
@@ -2341,6 +2371,35 @@ const
 	for(; it != end() && i; ++it, i--);
 	return it;
 }
+
+ircd::json::vector::const_iterator
+ircd::json::vector::begin()
+const try
+{
+	const_iterator ret
+	{
+		string_view::begin(), string_view::end()
+	};
+
+	string_view &state(ret.state);
+	qi::parse(ret.start, ret.stop, vector_begin_parse, state);
+	return ret;
+}
+catch(const qi::expectation_failure<const char *> &e)
+{
+	throw expectation_failure<parse_error>
+	{
+		e, string_view::data(), error_show_max
+	};
+}
+
+ircd::json::vector::const_iterator
+ircd::json::vector::end()
+const
+{
+	return { string_view::end(), string_view::end() };
+}
+
 //
 // vector::const_iterator
 //
@@ -2381,19 +2440,18 @@ ircd::json::operator>(const vector::const_iterator &a, const vector::const_itera
 	return a.state > b.state;
 }
 
+//
+// vector::const_iterator::const_iterator
+//
+
 ircd::json::vector::const_iterator &
 ircd::json::vector::const_iterator::operator++()
 try
 {
-	static const parser::rule<string_view> parse_next
-	{
-		raw[parser.object(0)] | qi::eoi
-		,"next vector element or end"
-	};
 
-	string_view state;
-	qi::parse(start, stop, eps > parse_next, state);
-	this->state = state;
+	this->state = {};
+	string_view &state(this->state);
+	qi::parse(start, stop, vector_next_parse, state);
 	return *this;
 }
 catch(const qi::expectation_failure<const char *> &e)
@@ -2402,45 +2460,6 @@ catch(const qi::expectation_failure<const char *> &e)
 	{
 		e, start, error_show_max
 	};
-}
-
-ircd::json::vector::const_iterator
-ircd::json::vector::begin()
-const try
-{
-	static const parser::rule<string_view> parse_begin
-	{
-		raw[parser.object(0)]
-		,"object vector element"
-	};
-
-	const_iterator ret
-	{
-		string_view::begin(), string_view::end()
-	};
-
-	if(!string_view{*this}.empty())
-	{
-		string_view state;
-		qi::parse(ret.start, ret.stop, eps > parse_begin, state);
-		ret.state = state;
-	}
-
-	return ret;
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	throw expectation_failure<parse_error>
-	{
-		e, string_view::data(), error_show_max
-	};
-}
-
-ircd::json::vector::const_iterator
-ircd::json::vector::end()
-const
-{
-	return { string_view::end(), string_view::end() };
 }
 
 ///////////////////////////////////////////////////////////////////////////////
