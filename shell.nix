@@ -5,11 +5,11 @@ let
 
   configureFlags = [
     "--enable-generic"
-    "--with-custom-branding=nix"
-    "--with-custom-version=dev"
     "--with-boost-libdir=${pkgs.boost.out}/lib"
     "--with-boost=${pkgs.boost.dev}"
     "--with-magic-file=${pkgs.file}/share/misc/magic.mgc"
+    "--with-rocksdb-includes=${pkgs.rocksdb.src}"
+    "--with-rocksdb-libs=${pkgs.rocksdb.out}"
     "--enable-jemalloc"
     "--with-imagemagick-includes=${pkgs.graphicsmagick}/include/GraphicsMagick"
     "--with-log-level=DEBUG"
