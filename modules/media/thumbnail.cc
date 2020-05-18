@@ -150,13 +150,25 @@ get__thumbnail(client &client,
 static m::resource::method
 method_get__legacy
 {
-	thumbnail_resource__legacy, "GET", get__thumbnail
+	thumbnail_resource__legacy,
+	"GET",
+	get__thumbnail,
+	{
+		m::resource::method::flag(0), // flag
+		45s,                          // timeout
+	}
 };
 
 static m::resource::method
 method_get
 {
-	thumbnail_resource, "GET", get__thumbnail
+	thumbnail_resource,
+	"GET",
+	get__thumbnail,
+	{
+		m::resource::method::flag(0), // flag
+		45s,                          // timeout
+	}
 };
 
 static m::resource::response

@@ -163,11 +163,23 @@ get__download_local(client &client,
 static m::resource::method
 method_get
 {
-	download_resource, "GET", get__download
+	download_resource,
+	"GET",
+	get__download,
+	{
+		m::resource::method::flag(0),  // flags
+		45s,                           // timeout
+	}
 };
 
 static m::resource::method
 method_get__legacy
 {
-	download_resource__legacy, "GET", get__download
+	download_resource__legacy,
+	"GET",
+	get__download,
+	{
+		m::resource::method::flag(0),  // flags
+		45s,                           // timeout
+	}
 };

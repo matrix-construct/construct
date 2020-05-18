@@ -344,7 +344,7 @@ decltype(ircd::m::media::download_timeout)
 ircd::m::media::download_timeout
 {
 	{ "name",     "ircd.media.download.timeout" },
-	{ "default",  15L                           },
+	{ "default",  30L                           },
 };
 
 std::pair
