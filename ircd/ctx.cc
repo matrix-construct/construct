@@ -506,22 +506,6 @@ ircd::ctx::interrupt(ctx &ctx)
 		(*ctx.cont->intr)(current);
 }
 
-/// Marks `ctx` for whether to allow or suppress interruption. Suppression
-/// does not ignore an interrupt itself, it only ignores the interruption
-/// points. Thus when a suppression ends if the interrupt flag was ever set
-/// the next interruption point will throw as expected.
-[[gnu::hot]]
-void
-ircd::ctx::interruptible(ctx &ctx,
-                         const bool &b)
-noexcept
-{
-	if(b)
-		ctx.flags &= ~context::NOINTERRUPT;
-	else
-		ctx.flags |= context::NOINTERRUPT;
-}
-
 int8_t
 ircd::ctx::nice(ctx &ctx,
                 const int8_t &val)
@@ -610,15 +594,6 @@ ircd::ctx::interruption(const ctx &c)
 noexcept
 {
 	return c.flags & context::INTERRUPTED;
-}
-
-/// Indicates if `ctx` will suppress any interrupts.
-[[gnu::hot]]
-bool
-ircd::ctx::interruptible(const ctx &c)
-noexcept
-{
-	return ~c.flags & context::NOINTERRUPT;
 }
 
 /// Returns the cycle count for `ctx`

@@ -11,6 +11,12 @@
 #pragma once
 #define HAVE_IRCD_CTX_UNINTERRUPTIBLE_H
 
+namespace ircd::ctx
+{
+	bool interruptible(const ctx &) noexcept;
+	void interruptible(ctx &, const bool &) noexcept;
+}
+
 namespace ircd::ctx {
 inline namespace this_ctx
 {
@@ -113,4 +119,25 @@ ircd::ctx::this_ctx::interruptible()
 noexcept
 {
 	return interruptible(cur());
+}
+
+/// Marks `ctx` for whether to allow or suppress interruption. Suppression
+/// does not ignore an interrupt itself, it only ignores the interruption
+/// points. Thus when a suppression ends if the interrupt flag was ever set
+/// the next interruption point will throw as expected.
+inline void
+ircd::ctx::interruptible(ctx &ctx,
+                         const bool &b)
+noexcept
+{
+	flags(ctx) ^= (flags(ctx) ^ (ulong(b) - 1)) & context::NOINTERRUPT;
+	assert(bool(flags(ctx) & context::NOINTERRUPT) == !b);
+	assert(interruptible(ctx) == b);
+}
+
+inline bool
+ircd::ctx::interruptible(const ctx &ctx)
+noexcept
+{
+	return ~flags(ctx) & context::NOINTERRUPT;
 }

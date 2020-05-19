@@ -81,6 +81,7 @@ namespace ircd::ctx
 
 #include "prof.h"
 #include "this_ctx.h"
+#include "context.h"
 #include "wait.h"
 #include "sleep.h"
 #include "stack.h"
@@ -105,7 +106,6 @@ namespace ircd::ctx
 #include "promise.h"
 #include "future.h"
 #include "when.h"
-#include "context.h"
 #include "async.h"
 #include "pool.h"
 #include "ole.h"
