@@ -285,16 +285,17 @@ ircd::m::dbs::room_events_key(const mutable_buffer &out_,
                               const id::room &room_id,
                               const uint64_t &depth)
 {
-	const const_buffer depth_cb
-	{
-		reinterpret_cast<const char *>(&depth), sizeof(depth)
-	};
-
 	mutable_buffer out{out_};
 	consume(out, copy(out, room_id));
 	consume(out, copy(out, '\0'));
-	consume(out, copy(out, depth_cb));
-	return { data(out_), data(out) };
+	consume(out, copy(out, byte_view<string_view>(depth)));
+	const mutable_buffer ret
+	{
+		data(out_), data(out)
+	};
+
+	assert(size(ret) == size(room_id) + 1 + 8);
+	return ret;
 }
 
 ircd::string_view
@@ -303,20 +304,16 @@ ircd::m::dbs::room_events_key(const mutable_buffer &out_,
                               const uint64_t &depth,
                               const event::idx &event_idx)
 {
-	const const_buffer depth_cb
-	{
-		reinterpret_cast<const char *>(&depth), sizeof(depth)
-	};
-
-	const const_buffer event_idx_cb
-	{
-		reinterpret_cast<const char *>(&event_idx), sizeof(event_idx)
-	};
-
 	mutable_buffer out{out_};
 	consume(out, copy(out, room_id));
 	consume(out, copy(out, '\0'));
-	consume(out, copy(out, depth_cb));
-	consume(out, copy(out, event_idx_cb));
-	return { data(out_), data(out) };
+	consume(out, copy(out, byte_view<string_view>(depth)));
+	consume(out, copy(out, byte_view<string_view>(event_idx)));
+	const mutable_buffer ret
+	{
+		data(out_), data(out)
+	};
+
+	assert(size(ret) == size(room_id) + 1 + 8 + 8);
+	return ret;
 }
