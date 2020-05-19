@@ -32,7 +32,7 @@ struct ircd::ctx::this_ctx::uninterruptible
 
 	bool theirs;
 
-	uninterruptible();
+	uninterruptible(const bool & = true);
 	uninterruptible(uninterruptible &&) = delete;
 	uninterruptible(const uninterruptible &) = delete;
 	~uninterruptible() noexcept(false);
@@ -47,7 +47,7 @@ struct ircd::ctx::this_ctx::uninterruptible::nothrow
 {
 	bool theirs;
 
-	nothrow() noexcept;
+	nothrow(const bool & = true) noexcept;
 	nothrow(nothrow &&) = delete;
 	nothrow(const nothrow &) = delete;
 	~nothrow() noexcept;
@@ -58,13 +58,13 @@ struct ircd::ctx::this_ctx::uninterruptible::nothrow
 //
 
 inline
-ircd::ctx::this_ctx::uninterruptible::uninterruptible()
+ircd::ctx::this_ctx::uninterruptible::uninterruptible(const bool &ours)
 :theirs
 {
 	interruptible(cur())
 }
 {
-	interruptible(false);
+	interruptible(!ours);
 }
 
 inline
@@ -79,14 +79,14 @@ noexcept(false)
 //
 
 inline
-ircd::ctx::this_ctx::uninterruptible::nothrow::nothrow()
+ircd::ctx::this_ctx::uninterruptible::nothrow::nothrow(const bool &ours)
 noexcept
 :theirs
 {
 	interruptible(cur())
 }
 {
-	interruptible(false, std::nothrow);
+	interruptible(!ours, std::nothrow);
 }
 
 inline
