@@ -32,15 +32,17 @@
 #pragma GCC visibility pop
 
 #pragma GCC visibility push(hidden)
-#include <boost/fusion/include/at.hpp>
+#include <boost/fusion/sequence.hpp>
+#include <boost/fusion/iterator.hpp>
+#include <boost/fusion/adapted.hpp>
+#include <boost/fusion/functional.hpp>
+#include <boost/fusion/algorithm.hpp>
+#include <boost/fusion/include/std_pair.hpp>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/karma.hpp>
 #include <boost/spirit/include/phoenix.hpp>
 #include <boost/spirit/repository/include/qi_seek.hpp>
 #include <boost/spirit/repository/include/qi_subrule.hpp>
-#include <boost/fusion/include/std_pair.hpp>
-#include <boost/fusion/adapted/std_pair.hpp>
-#include <boost/fusion/adapted/std_tuple.hpp>
 #pragma GCC visibility pop
 
 namespace ircd {
