@@ -333,6 +333,10 @@ ircd::m::hook::base::site::site(const json::members &members)
 {
 	feature.get<bool>("exceptions", true)
 }
+,interrupts
+{
+	feature.get<bool>("interrupts", false)
+}
 {
 	for(const auto &site : list)
 		if(site->name() == name() && site != this)
@@ -515,6 +519,11 @@ void
 ircd::m::hook::site<void>::operator()(base **const &cur,
                                       const event &event)
 {
+	const ctx::uninterruptible ui
+	{
+		!interrupts
+	};
+
 	// Iterate all matching hooks
 	match(event, [this, &cur, &event]
 	(base &base)
@@ -556,6 +565,21 @@ try
 
 	// call hook
 	hfn.function(event);
+}
+catch(const ctx::interrupted &e)
+{
+	if(exceptions && interrupts)
+		throw;
+
+	log::logf
+	{
+		log, interrupts? log::DERROR: log::ERROR,
+		"site:%u hook:%u %s error :%s",
+		id(),
+		hfn.id(),
+		string_view{hfn.feature},
+		e.what(),
+	};
 }
 catch(const std::exception &e)
 {

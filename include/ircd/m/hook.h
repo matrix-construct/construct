@@ -90,6 +90,7 @@ struct ircd::m::hook::base::site
 	std::set<base *> hooks;
 	size_t matchers {0};
 	bool exceptions {true};
+	bool interrupts {false};
 	size_t calls {0};
 	size_t calling {0};
 
@@ -188,6 +189,11 @@ ircd::m::hook::site<data>::operator()(base **const &cur,
                                       const event &event,
                                       data d)
 {
+	const ctx::uninterruptible ui
+	{
+		!interrupts
+	};
+
 	// Iterate all matching hooks
 	match(event, [this, &cur, &event, &d]
 	(base &base)
@@ -231,6 +237,21 @@ try
 
 	// call hook
 	hfn.function(event, d);
+}
+catch(const ctx::interrupted &e)
+{
+	if(exceptions && interrupts)
+		throw;
+
+	log::logf
+	{
+		log, interrupts? log::DERROR: log::ERROR,
+		"site:%u hook:%u %s error :%s",
+		id(),
+		hfn.id(),
+		string_view{hfn.feature},
+		e.what(),
+	};
 }
 catch(const std::exception &e)
 {
