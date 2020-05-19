@@ -44,7 +44,7 @@ namespace ircd::ctx
 ///
 struct ircd::ctx::context
 {
-	enum flags :uint;
+	enum flags :uint32_t;
 	using function = std::function<void ()>;
 
   private:
@@ -96,7 +96,7 @@ struct ircd::ctx::context
 };
 
 enum ircd::ctx::context::flags
-:uint
+:uint32_t
 {
 	POST            = 0x0001,   ///< Defers spawn with an ios.post()
 	DISPATCH        = 0x0002,   ///< Defers spawn with an ios.dispatch()

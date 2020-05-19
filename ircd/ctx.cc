@@ -537,6 +537,15 @@ ircd::ctx::ionice(ctx &ctx,
 	return ctx.ionice;
 }
 
+/// Returns writable reference to the flags of ctx
+[[gnu::hot]]
+uint32_t &
+ircd::ctx::flags(ctx &ctx)
+noexcept
+{
+	return ctx.flags;
+}
+
 /// !running() && notes > 0
 [[gnu::hot]]
 bool
@@ -652,6 +661,15 @@ ircd::ctx::notes(const ctx &ctx)
 noexcept
 {
 	return ctx.notes;
+}
+
+/// Returns reference to the flags of ctx
+[[gnu::hot]]
+const uint32_t &
+ircd::ctx::flags(const ctx &ctx)
+noexcept
+{
+	return ctx.flags;
 }
 
 /// Returns the developer's optional name literal for `ctx`

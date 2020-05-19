@@ -47,6 +47,7 @@ namespace ircd::ctx
 
 	const uint64_t &id(const ctx &) noexcept;       // Unique ID for context
 	string_view name(const ctx &) noexcept;         // User's optional label for context
+	const uint32_t &flags(const ctx &) noexcept;    // Direct flags access
 	const int32_t &notes(const ctx &) noexcept;     // Peeks at internal semaphore count
 	const uint64_t &epoch(const ctx &) noexcept;    // Context switching counter
 	const ulong &cycles(const ctx &) noexcept;      // Accumulated tsc (not counting cur slice)
@@ -61,6 +62,7 @@ namespace ircd::ctx
 	bool waiting(const ctx &) noexcept;             // started() && !finished() && !running()
 	bool queued(const ctx &) noexcept;              // !running() && notes() > 0
 
+	uint32_t &flags(ctx &) noexcept;                // Direct flags access
 	int8_t ionice(ctx &, const int8_t &);           // IO priority nice-value
 	int8_t nice(ctx &, const int8_t &);             // Scheduling priority nice-value
 	void interruptible(ctx &, const bool &);        // False for interrupt suppression.

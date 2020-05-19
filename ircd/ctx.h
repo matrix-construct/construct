@@ -28,12 +28,14 @@ namespace ircd::ctx::prof
 struct ircd::ctx::ctx
 :instance_list<ctx>
 {
+	using flags_type = std::underlying_type<context::flags>::type;
+
 	static uint64_t id_ctr;                      // monotonic
 	static ios::descriptor ios_desc;
 
 	uint64_t id {++id_ctr};                      // Unique runtime ID
 	string_view name;                            // User given name (optional)
-	context::flags flags;                        // User given flags
+	flags_type flags;                            // User given flags
 	int8_t nice {0};                             // Scheduling priority nice-value
 	int8_t ionice {0};                           // IO priority nice-value (defaults for fs::opts)
 	int32_t notes {0};                           // norm: 0 = asleep; 1 = awake; inc by others; dec by self
