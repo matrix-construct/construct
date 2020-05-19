@@ -514,6 +514,7 @@ ircd::ctx::interrupt(ctx &ctx)
 void
 ircd::ctx::interruptible(ctx &ctx,
                          const bool &b)
+noexcept
 {
 	if(b)
 		ctx.flags &= ~context::NOINTERRUPT;
@@ -524,6 +525,7 @@ ircd::ctx::interruptible(ctx &ctx,
 int8_t
 ircd::ctx::nice(ctx &ctx,
                 const int8_t &val)
+noexcept
 {
 	ctx.nice = val;
 	return ctx.nice;
@@ -532,6 +534,7 @@ ircd::ctx::nice(ctx &ctx,
 int8_t
 ircd::ctx::ionice(ctx &ctx,
                   const int8_t &val)
+noexcept
 {
 	ctx.ionice = val;
 	return ctx.ionice;

@@ -39,39 +39,39 @@ namespace ircd::ctx
 	IRCD_EXCEPTION(ircd::error, error)
 	IRCD_EXCEPTION(error, interrupted)
 	IRCD_EXCEPTION(error, timeout)
-	struct terminated {};                           // Special exception
+	struct terminated {};                              // Special exception
 
 	IRCD_OVERLOAD(threadsafe)
 	bool is_main_thread() noexcept;
 	void assert_main_thread();
 
-	const uint64_t &id(const ctx &) noexcept;       // Unique ID for context
-	string_view name(const ctx &) noexcept;         // User's optional label for context
-	const uint32_t &flags(const ctx &) noexcept;    // Direct flags access
-	const int32_t &notes(const ctx &) noexcept;     // Peeks at internal semaphore count
-	const uint64_t &epoch(const ctx &) noexcept;    // Context switching counter
-	const ulong &cycles(const ctx &) noexcept;      // Accumulated tsc (not counting cur slice)
-	const int8_t &ionice(const ctx &) noexcept;     // IO priority nice-value
-	const int8_t &nice(const ctx &) noexcept;       // Scheduling priority nice-value
-	bool interruptible(const ctx &) noexcept;       // Context can throw at interruption point
-	bool interruption(const ctx &) noexcept;        // Context was marked for interruption
-	bool termination(const ctx &) noexcept;         // Context was marked for termination
-	bool finished(const ctx &) noexcept;            // Context function returned (or exception).
-	bool started(const ctx &) noexcept;             // Context was ever entered.
-	bool running(const ctx &) noexcept;             // Context is the currently running ctx.
-	bool waiting(const ctx &) noexcept;             // started() && !finished() && !running()
-	bool queued(const ctx &) noexcept;              // !running() && notes() > 0
+	const uint64_t &id(const ctx &) noexcept;          // Unique ID for context
+	string_view name(const ctx &) noexcept;            // User's optional label for context
+	const uint32_t &flags(const ctx &) noexcept;       // Direct flags access
+	const int32_t &notes(const ctx &) noexcept;        // Peeks at internal semaphore count
+	const uint64_t &epoch(const ctx &) noexcept;       // Context switching counter
+	const ulong &cycles(const ctx &) noexcept;         // Accumulated tsc (not counting cur slice)
+	const int8_t &ionice(const ctx &) noexcept;        // IO priority nice-value
+	const int8_t &nice(const ctx &) noexcept;          // Scheduling priority nice-value
+	bool interruptible(const ctx &) noexcept;          // Context can throw at interruption point
+	bool interruption(const ctx &) noexcept;           // Context was marked for interruption
+	bool termination(const ctx &) noexcept;            // Context was marked for termination
+	bool finished(const ctx &) noexcept;               // Context function returned (or exception).
+	bool started(const ctx &) noexcept;                // Context was ever entered.
+	bool running(const ctx &) noexcept;                // Context is the currently running ctx.
+	bool waiting(const ctx &) noexcept;                // started() && !finished() && !running()
+	bool queued(const ctx &) noexcept;                 // !running() && notes() > 0
 
-	uint32_t &flags(ctx &) noexcept;                // Direct flags access
-	int8_t ionice(ctx &, const int8_t &);           // IO priority nice-value
-	int8_t nice(ctx &, const int8_t &);             // Scheduling priority nice-value
-	void interruptible(ctx &, const bool &);        // False for interrupt suppression.
-	void interrupt(ctx &);                          // Interrupt the context.
-	void terminate(ctx &);                          // Interrupt for termination.
-	void signal(ctx &, std::function<void ()>);     // Post function to context strand
-	void notify(ctx &, threadsafe_t);               // Notify context with threadsafety.
-	bool notify(ctx &) noexcept;                    // Queue a context switch to arg
-	void yield(ctx &);                              // Direct context switch to arg
+	uint32_t &flags(ctx &) noexcept;                   // Direct flags access
+	int8_t ionice(ctx &, const int8_t &) noexcept;     // IO priority nice-value
+	int8_t nice(ctx &, const int8_t &) noexcept;       // Scheduling priority nice-value
+	void interruptible(ctx &, const bool &) noexcept;  // False for interrupt suppression.
+	void interrupt(ctx &);                             // Interrupt the context.
+	void terminate(ctx &);                             // Interrupt for termination.
+	void signal(ctx &, std::function<void ()>);        // Post function to context strand
+	void notify(ctx &, threadsafe_t);                  // Notify context with threadsafety.
+	bool notify(ctx &) noexcept;                       // Queue a context switch to arg
+	void yield(ctx &);                                 // Direct context switch to arg
 
 	bool for_each(const std::function<bool (ctx &)> &);
 	const uint64_t &epoch() noexcept;
