@@ -549,10 +549,13 @@ const
 	using karma::eps;
 	using karma::maxwidth;
 
-	static const auto throw_illegal([]
+	static const auto throw_illegal{[]
 	{
-		throw illegal("Not a pointer");
-	});
+		throw illegal
+		{
+			"Not a pointer"
+		};
+	}};
 
 	struct generator
 	:karma::grammar<char *, uintptr_t()>
@@ -619,10 +622,13 @@ const
 	using karma::eps;
 	using karma::maxwidth;
 
-	static const auto throw_illegal([]
+	static const auto throw_illegal{[]
 	{
-		throw illegal("Not a printable character");
-	});
+		throw illegal
+		{
+			"Not a printable character"
+		};
+	}};
 
 	struct generator
 	:karma::grammar<char *, char()>
@@ -658,10 +664,13 @@ const
 	using karma::eps;
 	using karma::maxwidth;
 
-	static const auto throw_illegal([]
+	static const auto throw_illegal{[]
 	{
-		throw illegal("Failed to print signed value");
-	});
+		throw illegal
+		{
+			"Failed to print signed value"
+		};
+	}};
 
 	const auto closure([&](const bool &boolean)
 	{
@@ -696,10 +705,13 @@ ircd::fmt::signed_specifier::operator()(char *&out,
                                         const arg &val)
 const
 {
-	static const auto throw_illegal([]
+	static const auto throw_illegal{[]
 	{
-		throw illegal("Failed to print signed value");
-	});
+		throw illegal
+		{
+			"Failed to print signed value"
+		};
+	}};
 
 	const auto closure([&out, &max, &spec, &val]
 	(const long &integer)
@@ -768,10 +780,13 @@ ircd::fmt::unsigned_specifier::operator()(char *&out,
                                           const arg &val)
 const
 {
-	static const auto throw_illegal([]
+	static const auto throw_illegal{[]
 	{
-		throw illegal("Failed to print unsigned value");
-	});
+		throw illegal
+		{
+			"Failed to print unsigned value"
+		};
+	}};
 
 	const auto closure([&out, &max, &spec, &val]
 	(const ulong &integer)
@@ -840,10 +855,13 @@ ircd::fmt::hex_lowercase_specifier::operator()(char *&out,
                                                const arg &val)
 const
 {
-	static const auto throw_illegal([]
+	static const auto throw_illegal{[]
 	{
-		throw illegal("Failed to print hexadecimal value");
-	});
+		throw illegal
+		{
+			"Failed to print hexadecimal value"
+		};
+	}};
 
 	const auto closure([&](const ulong &integer)
 	{
@@ -911,10 +929,13 @@ ircd::fmt::hex_uppercase_specifier::operator()(char *&out,
                                                const arg &val)
 const
 {
-	static const auto throw_illegal([]
+	static const auto throw_illegal{[]
 	{
-		throw illegal("Failed to print hexadecimal value");
-	});
+		throw illegal
+		{
+			"Failed to print hexadecimal value"
+		};
+	}};
 
 	const auto closure([&](const ulong &integer)
 	{
@@ -984,10 +1005,13 @@ ircd::fmt::float_specifier::operator()(char *&out,
                                        const arg &val)
 const
 {
-	static const auto throw_illegal([]
+	static const auto throw_illegal{[]
 	{
-		throw illegal("Failed to print floating point value");
-	});
+		throw illegal
+		{
+			"Failed to print floating point value"
+		};
+	}};
 
 	thread_local uint _precision_;
 	_precision_ = s.precision;
@@ -1045,10 +1069,13 @@ const
 	using karma::maxwidth;
 	using karma::unused_type;
 
-	static const auto throw_illegal([]
+	static const auto throw_illegal{[]
 	{
-		throw illegal("Not a printable string");
-	});
+		throw illegal
+		{
+			"Not a printable string"
+		};
+	}};
 
 	struct generator
 	:karma::grammar<char *, string_view>

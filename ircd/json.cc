@@ -2258,11 +2258,11 @@ const
 
 namespace ircd::json
 {
-	using vector_rule = parser::rule<string_view>;
-
-	[[gnu::visibility("internal")]] extern const vector_rule vector_object;
-	[[gnu::visibility("internal")]] extern const vector_rule vector_next_parse;
-	[[gnu::visibility("internal")]] extern const vector_rule vector_begin_parse;
+	[[gnu::visibility("internal")]]
+	extern const parser::rule<string_view>
+	vector_object,
+	vector_next_parse,
+	vector_begin_parse;
 }
 
 decltype(ircd::json::vector_object)
@@ -2421,13 +2421,13 @@ catch(const qi::expectation_failure<const char *> &e)
 
 namespace ircd::json
 {
-	using object_rule = parser::rule<object::member>;
-
-	[[gnu::visibility("internal")]] extern const object_rule object_member;
-	[[gnu::visibility("internal")]] extern const object_rule object_next;
-	[[gnu::visibility("internal")]] extern const object_rule object_begin;
-	[[gnu::visibility("internal")]] extern const object_rule object_next_parse;
-	[[gnu::visibility("internal")]] extern const object_rule object_begin_parse;
+	[[gnu::visibility("internal")]]
+	extern const parser::rule<object::member>
+	object_member,
+	object_next,
+	object_begin,
+	object_next_parse,
+	object_begin_parse;
 }
 
 decltype(ircd::json::object::max_recursion_depth)
@@ -2792,13 +2792,13 @@ ircd::json::sorted(const object::member *const &begin,
 
 namespace ircd::json
 {
-	using array_rule = parser::rule<string_view>;
-
-	[[gnu::visibility("internal")]] extern const array_rule array_value;
-	[[gnu::visibility("internal")]] extern const array_rule array_next;
-	[[gnu::visibility("internal")]] extern const array_rule array_begin;
-	[[gnu::visibility("internal")]] extern const array_rule array_next_parse;
-	[[gnu::visibility("internal")]] extern const array_rule array_begin_parse;
+	[[gnu::visibility("internal")]]
+	extern const parser::rule<string_view>
+	array_value,
+	array_next,
+	array_begin,
+	array_next_parse,
+	array_begin_parse;
 }
 
 decltype(ircd::json::array::max_recursion_depth)
@@ -3981,8 +3981,10 @@ ircd::json::operator==(const value &a, const value &b)
 
 namespace ircd::json
 {
-	[[gnu::visibility("internal")]] extern const parser::rule<> validation;
-	[[gnu::visibility("internal")]] extern const parser::rule<> validation_expect;
+	[[gnu::visibility("internal")]]
+	extern const parser::rule<>
+	validation,
+	validation_expect;
 }
 
 decltype(ircd::json::validation)
@@ -3997,12 +3999,13 @@ ircd::json::validation_expect
 	expect[validation]
 };
 
-const ircd::string_view ircd::json::literal_null   { "null"   };
-const ircd::string_view ircd::json::literal_true   { "true"   };
-const ircd::string_view ircd::json::literal_false  { "false"  };
-const ircd::string_view ircd::json::empty_string   { "\"\""   };
-const ircd::string_view ircd::json::empty_object   { "{}"     };
-const ircd::string_view ircd::json::empty_array    { "[]"     };
+const ircd::string_view
+ircd::json::literal_null   { "null"   },
+ircd::json::literal_true   { "true"   },
+ircd::json::literal_false  { "false"  },
+ircd::json::empty_string   { "\"\""   },
+ircd::json::empty_object   { "{}"     },
+ircd::json::empty_array    { "[]"     };
 
 decltype(ircd::json::undefined_number)
 ircd::json::undefined_number

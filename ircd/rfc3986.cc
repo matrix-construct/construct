@@ -621,11 +621,16 @@ ircd::rfc3986::encode(const mutable_buffer &buf,
 
 namespace ircd::rfc3986
 {
-	[[gnu::visibility("internal")]] extern const parser::rule<string_view> host_literal;
-	[[gnu::visibility("internal")]] extern const parser::rule<string_view> host_non_literal;
-	[[gnu::visibility("internal")]] extern const parser::rule<string_view> host_alternative;
-	[[gnu::visibility("internal")]] extern const parser::rule<string_view> host_parse;
-	[[gnu::visibility("internal")]] extern const parser::rule<uint16_t> port_parse;
+	[[gnu::visibility("internal")]]
+	extern const parser::rule<string_view>
+	host_literal,
+	host_non_literal,
+	host_alternative,
+	host_parse;
+
+	[[gnu::visibility("internal")]]
+	extern const parser::rule<uint16_t>
+	port_parse;
 }
 
 decltype(ircd::rfc3986::host_literal)
