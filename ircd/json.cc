@@ -13,9 +13,6 @@ namespace ircd::json
 {
 	using namespace ircd::spirit;
 
-	struct input;
-	struct output;
-
 	// Instantiations of the grammars
 	struct parser extern const parser;
 	struct printer extern const printer;
@@ -43,7 +40,7 @@ BOOST_FUSION_ADAPT_STRUCT
 #pragma GCC visibility pop
 
 struct [[gnu::visibility("internal")]]
-ircd::json::input
+ircd::json::parser
 :qi::grammar<const char *, unused_type>
 {
 	using it = const char *;
@@ -212,8 +209,8 @@ ircd::json::input
 		,"type"
 	};
 
-	input()
-	:input::base_type{rule<>{}} // required by spirit
+	parser()
+	:parser::base_type{rule<>{}} // required by spirit
 	{
 		// synthesized repropagation of recursive rules
 		value %= (&quote >> string)
@@ -225,10 +222,11 @@ ircd::json::input
 		| lit_null
 		;
 	}
-};
+}
+const ircd::json::parser;
 
 struct [[gnu::visibility("internal")]]
-ircd::json::output
+ircd::json::printer
 :karma::grammar<char *, unused_type>
 {
 	using it = char *;
@@ -341,8 +339,20 @@ ircd::json::output
 		,"array"
 	};
 
-	output()
-	:output::base_type{rule<>{}}
+	template<class it_a,
+	         class it_b,
+	         class closure>
+	static void list_protocol(mutable_buffer &, it_a begin, const it_b &end, closure&&);
+
+	template<class gen,
+	         class... attr>
+	bool operator()(mutable_buffer &out, gen&&, attr&&...) const;
+
+	template<class gen>
+	bool operator()(mutable_buffer &out, gen&&) const;
+
+	printer()
+	:printer::base_type{rule<>{}}
 	{
 		for(const auto &p : escapes)
 			escaped.add(p.first, p.second);
@@ -358,31 +368,6 @@ ircd::json::output
 		       | string
 		       ;
 	}
-};
-
-struct [[gnu::visibility("internal")]]
-ircd::json::parser
-:input
-{
-	using input::input;
-}
-const ircd::json::parser;
-
-struct [[gnu::visibility("internal")]]
-ircd::json::printer
-:output
-{
-	template<class gen,
-	         class... attr>
-	bool operator()(mutable_buffer &out, gen&&, attr&&...) const;
-
-	template<class gen>
-	bool operator()(mutable_buffer &out, gen&&) const;
-
-	template<class it_a,
-	         class it_b,
-	         class closure>
-	static void list_protocol(mutable_buffer &, it_a begin, const it_b &end, closure&&);
 }
 const ircd::json::printer;
 
@@ -473,7 +458,7 @@ ircd::json::printer::list_protocol(mutable_buffer &out,
 
 [[gnu::visibility("internal")]]
 void
-ircd::json::input::throws_exceeded()
+ircd::json::parser::throws_exceeded()
 {
 	throw recursion_limit
 	{
