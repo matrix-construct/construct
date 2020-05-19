@@ -271,8 +271,8 @@ ircd::m::dbs::room_events_key(const string_view &amalgam)
 	const event::idx &event_idx
 	{
 		size(amalgam) >= 1 + 8 + 8?
-			*reinterpret_cast<const uint64_t *>(data(amalgam) + 1 + 8):
-			std::numeric_limits<uint64_t>::max()
+			*reinterpret_cast<const event::idx *>(data(amalgam) + 1 + 8):
+			std::numeric_limits<event::idx>::max()
 	};
 
 	// Make sure these are copied rather than ever returning references in
