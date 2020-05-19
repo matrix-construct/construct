@@ -2401,7 +2401,6 @@ ircd::json::vector::const_iterator &
 ircd::json::vector::const_iterator::operator++()
 try
 {
-
 	this->state = {};
 	string_view &state(this->state);
 	qi::parse(start, stop, vector_next_parse, state);
@@ -2687,6 +2686,8 @@ ircd::json::object::const_iterator &
 ircd::json::object::const_iterator::operator++()
 try
 {
+	assert(start != stop);
+
 	state = {};
 	qi::parse(start, stop, object_next_parse, state);
 	return *this;
@@ -3057,6 +3058,8 @@ ircd::json::array::const_iterator &
 ircd::json::array::const_iterator::operator++()
 try
 {
+	assert(start != stop);
+
 	state = string_view{};
 	qi::parse(start, stop, array_next_parse, state);
 	return *this;
