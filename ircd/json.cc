@@ -44,7 +44,10 @@ ircd::json::parser
 :qi::grammar<const char *, unused_type>
 {
 	using it = const char *;
-	template<class T = unused_type, class... A> using rule = qi::rule<it, T, A...>;
+
+	template<class T = unused_type,
+	         class... A>
+	using rule = qi::rule<it, T, A...>;
 
 	const rule<> NUL                   { lit('\0')                                          ,"nul" };
 
@@ -230,7 +233,10 @@ ircd::json::printer
 :karma::grammar<char *, unused_type>
 {
 	using it = char *;
-	template<class T = unused_type, class... A> using rule = karma::rule<it, T, A...>;
+
+	template<class T = unused_type,
+	         class... A>
+	using rule = karma::rule<it, T, A...>;
 
 	const rule<> NUL                   { lit('\0')                                          ,"nul" };
 
