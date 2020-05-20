@@ -49,6 +49,7 @@ namespace ircd {
 namespace spirit
 __attribute__((visibility("default")))
 {
+	struct substring_view;
 	template<class parent_error> struct expectation_failure;
 
 	extern thread_local char rulebuf[64]; // parse.cc
@@ -80,7 +81,9 @@ __attribute__((visibility("hidden")))
 	using _r3_type = phx::actor<spirit::attribute<3>>;
 
 	using spirit::unused_type;
+	using spirit::auto_;
 	using spirit::_pass;
+	using spirit::_val;
 
 	using qi::locals;
 	using qi::_a;
@@ -134,6 +137,7 @@ __attribute__((visibility("hidden")))
 	using karma::attr_cast;
 	using karma::maxwidth;
 	using karma::buffer;
+	using karma::skip;
 }}
 
 namespace ircd::spirit::local
@@ -148,6 +152,21 @@ namespace spirit
 __attribute__((visibility("default")))
 {
 }}
+
+struct ircd::spirit::substring_view
+:ircd::string_view
+{
+	using _iterator = boost::spirit::karma::detail::indirect_iterator<const char *>;
+	using _iterator_range = boost::iterator_range<_iterator>;
+
+	using ircd::string_view::string_view;
+	explicit substring_view(const _iterator_range &range)
+	:ircd::string_view
+	{
+		std::addressof(*range.begin()), std::addressof(*range.end())
+	}
+	{}
+};
 
 template<class parent_error>
 struct __attribute__((visibility("default")))
