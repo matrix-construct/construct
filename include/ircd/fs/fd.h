@@ -31,7 +31,7 @@ struct ircd::fs::fd
 {
 	struct opts;
 
-	int fdno{-1};
+	int fdno {-1};
 
   public:
 	operator const int &() const;
@@ -52,6 +52,7 @@ struct ircd::fs::fd
 	~fd() noexcept;
 };
 
+/// Descriptor options (open options)
 struct ircd::fs::fd::opts
 {
 	static conf::item<bool> direct_io_enable;

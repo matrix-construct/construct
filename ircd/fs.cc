@@ -27,22 +27,19 @@
 // TODO: prevents use until io_uring support implemented
 #undef IRCD_USE_IOU
 
+namespace ircd::fs
+{
+	extern conf::item<ulong> rlimit_nofile;
+
+	static void update_rlimit_nofile();
+	static void init_dump_info();
+}
+
 decltype(ircd::fs::log)
 ircd::fs::log
 {
 	"fs"
 };
-
-//
-// init
-//
-
-namespace ircd::fs
-{
-	extern conf::item<ulong> rlimit_nofile;
-	static void update_rlimit_nofile();
-	static void init_dump_info();
-}
 
 decltype(ircd::fs::rlimit_nofile)
 ircd::fs::rlimit_nofile
