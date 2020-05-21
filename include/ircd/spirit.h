@@ -125,7 +125,6 @@ __attribute__((visibility("hidden")))
 	using qi::bin_double;
 	using qi::big_bin_double;
 	using qi::little_bin_double;
-
 	using spirit::repository::qi::seek;
 
 	using karma::lit;
@@ -138,10 +137,21 @@ __attribute__((visibility("hidden")))
 	using karma::maxwidth;
 	using karma::buffer;
 	using karma::skip;
+
+	template<size_t idx,
+	         class semantic_context>
+	auto &
+	attr_at(semantic_context&&);
+
+	template<size_t idx,
+	         class semantic_context>
+	auto &
+	local_at(semantic_context&&);
 }}
 
 namespace ircd::spirit::local
 {
+	using qi::_0;
 	using qi::_1;
 	using qi::_2;
 	using qi::_3;
@@ -224,6 +234,22 @@ try
 catch(const spirit::qi::expectation_failure<it> &e)
 {
 	throw spirit::expectation_failure<parent_error>(e);
+}
+
+template<size_t idx,
+         class semantic_context>
+auto &
+ircd::spirit::local_at(semantic_context&& c)
+{
+	return boost::fusion::at_c<idx>(c.locals);
+}
+
+template<size_t idx,
+         class semantic_context>
+auto &
+ircd::spirit::attr_at(semantic_context&& c)
+{
+	return boost::fusion::at_c<idx>(c.attributes);
 }
 
 #endif // HAVE_IRCD_SPIRIT_H
