@@ -42,6 +42,7 @@ struct ircd::fs::fd
 	int release() noexcept;
 
 	explicit fd(const int &);
+	fd(const int &dirfd, const string_view &path, const opts &);
 	fd(const string_view &path, const opts &);
 	fd(const string_view &path);
 	fd() = default;

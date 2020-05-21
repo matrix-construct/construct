@@ -1994,19 +1994,38 @@ ircd::fs::fd::opts::opts(const std::ios::openmode &mode)
 //
 
 ircd::fs::fd::fd(const int &fdno)
-:fdno{fdno}
+:fdno
+{
+	fdno
+}
 {
 }
 
 ircd::fs::fd::fd(const string_view &path)
-:fd{path, opts{}}
+:fd
+{
+	path, opts{}
+}
 {
 }
 
 ircd::fs::fd::fd(const string_view &path,
                  const opts &opts)
+:fd
+{
+	AT_FDCWD, path, opts
+}
+{
+}
+
+ircd::fs::fd::fd(const int &dirfd,
+                 const string_view &path,
+                 const opts &opts)
 try
-:fdno{-1}
+:fdno
+{
+	-1 // sentinel value for inert dtor
+}
 {
 	const mode_t mode
 	{
@@ -2033,11 +2052,11 @@ try
 
 	const prof::syscall_usage_warning message
 	{
-		"fs::fs::fd(): open(2): %s", path
+		"fs::fs::fd(): openat(2): %s", path
 	};
 
 	assert((flags & ~O_CREAT) || mode != 0);
-	fdno = syscall(::open, path_cstr(path), flags, mode);
+	fdno = syscall(::openat, dirfd, path_cstr(path), flags, mode);
 
 	if(advise)
 		fs::advise(*this, advise);
