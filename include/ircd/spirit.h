@@ -87,6 +87,7 @@ __attribute__((visibility("hidden")))
 
 	using qi::locals;
 	using qi::_a;
+	using qi::_a_type;
 	using qi::_r1_type;
 	using qi::raw;
 	using qi::omit;

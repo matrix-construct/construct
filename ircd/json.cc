@@ -276,45 +276,28 @@ ircd::json::printer
 	};
 
 	// string
-	const std::map<char, const char *> escapes
+	struct string_state;
+	union character_state;
+	using character_prototype = char(const string_view &, string_state &);
+	template<class context> static void character_dfa(char &, context &, bool &) noexcept;
+	const rule<character_prototype, locals<character_state>> character
 	{
-		{ '\x00',   "\\0"      },
-		{ '\x01',   "\\u0001"  }, { '\x02',   "\\u0002"  }, { '\x03',   "\\u0003"  },
-		{ '\x04',   "\\u0004"  }, { '\x05',   "\\u0005"  }, { '\x06',   "\\u0006"  },
-		{ '\a',     "\\u0007"  },
-		{ '\b',     "\\b"      },
-		{ '\t',     "\\t"      },
-		{ '\n',     "\\n"      },
-		{ '\v',     "\\u000B"  },
-		{ '\f',     "\\f"      },
-		{ '\r',     "\\r"      },
-		{ '\x0E',   "\\u000E"  }, { '\x0F',   "\\u000F"  }, { '\x10',   "\\u0010"  },
-		{ '\x11',   "\\u0011"  }, { '\x12',   "\\u0012"  }, { '\x13',   "\\u0013"  },
-		{ '\x14',   "\\u0014"  }, { '\x15',   "\\u0015"  }, { '\x16',   "\\u0016"  },
-		{ '\x17',   "\\u0017"  }, { '\x18',   "\\u0018"  }, { '\x19',   "\\u0019"  },
-		{ '\x1A',   "\\u001A"  }, { '\x1B',   "\\u001B"  }, { '\x1C',   "\\u001C"  },
-		{ '\x1D',   "\\u001D"  }, { '\x1E',   "\\u001E"  }, { '\x1F',   "\\u001F"  },
-		{ '"',      "\\\""     },
-		{ '\\',     "\\\\"     },
+		repeat[char_[([](auto &out, auto &gen, auto &ret)
+		{
+			character_dfa(out, gen, ret);
+		})]]
+		,"character"
 	};
 
-	karma::symbols<char, const char *> escaped
+	_a_type _string_state;
+	_val_type _string_input;
+	const rule<string_view(), locals<string_state>> string
 	{
-		"escaped"
-	};
-
-	rule<char()> character
-	{
-		escaped | char_
-	};
-
-	rule<string_view> string
-	{
-		quote << *(character) << quote
+		quote << *(character(_string_input, _string_state)) << quote
 		,"string"
 	};
 
-	rule<string_view> name
+	const rule<string_view()> name
 	{
 		string.alias()
 		,"name"
@@ -360,9 +343,6 @@ ircd::json::printer
 	printer()
 	:printer::base_type{rule<>{}}
 	{
-		for(const auto &p : escapes)
-			escaped.add(p.first, p.second);
-
 		// synthesized repropagation of recursive rules
 		member %= name << name_sep << value;
 		object %= object_begin << -(member % value_sep) << object_end;
@@ -376,6 +356,124 @@ ircd::json::printer
 	}
 }
 const ircd::json::printer;
+
+struct ircd::json::printer::string_state
+{
+	uint32_t pos {0};
+	bool escaped {0};
+};
+
+union ircd::json::printer::character_state
+{
+	static const char ctrl_tab[0x20][8];
+
+	uint64_t mode {0}; struct
+	{
+		bool leave;
+		bool ctrl;
+		bool quote;
+		bool escape;
+		bool escaped;
+		uint8_t pos;
+	};
+};
+
+decltype(ircd::json::printer::character_state::ctrl_tab)
+ircd::json::printer::character_state::ctrl_tab
+{
+	"\\0",
+	"\\u0001", "\\u0002", "\\u0003",
+	"\\u0004", "\\u0005", "\\u0006",
+	"\\u0007",
+	"\\b",
+	"\\t",
+	"\\n",
+	"\\u000B",
+	"\\f",
+	"\\r",
+	"\\u000E", "\\u000F", "\\u0010",
+	"\\u0011", "\\u0012", "\\u0013",
+	"\\u0014", "\\u0015", "\\u0016",
+	"\\u0017", "\\u0018", "\\u0019",
+	"\\u001A", "\\u001B", "\\u001C",
+	"\\u001D", "\\u001E", "\\u001F",
+};
+
+template<class gen>
+inline void
+ircd::json::printer::character_dfa(char &out,
+                                   gen &g,
+                                   bool &ret)
+noexcept
+{
+	__label__ Lpass, Lleave, Lctrl, Lquote, Lescape, Lescaped;
+
+	#if __has_builtin(__builtin_assume)
+		__builtin_assume(ret == true);
+	#endif
+
+	const string_view &str(attr_at<1>(g));    // Whole input string.
+	const char &in(attr_at<0>(g));            // Current character in input.
+
+	string_state &sst(attr_at<2>(g));         // Whole input string state.
+	auto &st(local_at<0>(g));                 // Current character state.
+
+	st.ctrl |= !st.mode & (in < 0x20);
+	st.quote |= !st.mode & (in == '"');
+	st.escape |= !st.mode & (in == '\\');
+
+	goto *
+	(
+		st.leave?     &&Lleave:
+		sst.escaped?  &&Lescaped:
+		st.ctrl?      &&Lctrl:
+		st.quote?     &&Lquote:
+		st.escape?    &&Lescape:
+		              &&Lpass
+	);
+
+	Lpass:
+		out = in;
+		st.leave = true;
+		return;
+
+	Lleave:
+		//assert(st.leave);
+		ret = false;
+		sst.pos++;
+		return;
+
+	Lctrl:
+		out = st.ctrl_tab[uint8_t(in)][st.pos++];
+		ret &= out != '\0'; // break loop at this iteration
+		sst.pos += !ret;
+		return;
+
+	Lquote:
+		out = "\\\""_sv[st.pos++];
+		ret &= out != '\0'; // break loop at this iteration
+		sst.pos += !ret;
+		return;
+
+	Lescape:
+		out = in;
+		sst.escaped = true;
+		st.leave = sst.pos + 1 < str.size(); // must spin if last char of string is esc
+		return;
+
+	Lescaped:
+	{
+		const auto ok
+		{
+			in == 'u' | in == '"' | in == '\\'
+		};
+
+		out = ok? in : '\\';
+		st.leave = ok;
+		sst.escaped = false;
+		return;
+	}
+}
 
 template<class gen,
          class... attr>
@@ -3230,17 +3328,19 @@ ircd::json::string
 ircd::json::escape(const mutable_buffer &buf,
                    const string_view &in)
 {
-	static const printer::rule<string_view> characters
+	mutable_buffer out{buf};
+	const bool ok
 	{
-		*(printer.character)
+		printer(out, printer.string, in)
 	};
 
-	mutable_buffer out{buf};
-	printer(out, characters, in);
-	return string_view
+	const string_view ret
 	{
 		data(buf), data(out)
 	};
+
+	assert(ok);
+	return ret;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
