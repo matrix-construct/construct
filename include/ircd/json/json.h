@@ -60,9 +60,11 @@ namespace ircd
 ///
 template<class... T>
 ircd::string_view
-ircd::json::stringify(const mutable_buffer &&mb,
+ircd::json::stringify(const mutable_buffer &&mb_,
                       T&&... t)
 {
-	mutable_buffer mbc{mb};
-	return stringify(mbc, std::forward<T>(t)...);
+	mutable_buffer mb(mb_);
+	const auto ret(stringify(mb, std::forward<T>(t)...));
+	valid_output(ret, serialized(std::forward<T>(t))...);
+	return ret;
 }
