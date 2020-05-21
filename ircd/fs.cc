@@ -1762,7 +1762,8 @@ noexcept
 
 namespace ircd::fs
 {
-	static uint posix_flags(const std::ios::openmode &mode);
+	static uint flags(const fd::opts &);
+	static uint flags(const std::ios::openmode &);
 	static long pathconf(const fd &, const int &arg);
 }
 
@@ -1973,7 +1974,7 @@ ircd::fs::fd::opts::opts(const std::ios::openmode &mode)
 }
 ,flags
 {
-	posix_flags(mode)
+	fs::flags(mode)
 }
 ,mask
 {
@@ -2021,7 +2022,6 @@ try
 
 	const mode_t &mode(opts.mask);
 	assert((flags & ~O_CREAT) || mode != 0);
-
 	return syscall(::open, path_cstr(path), flags, mode);
 }()}
 {
@@ -2121,6 +2121,41 @@ const
 	ret.cloexec = ret.flags & O_CLOEXEC;
 	ret.nocreate = ~ret.flags & O_CREAT;
 	ret.blocking = ret.flags & O_NONBLOCK;
+	return ret;
+}
+
+uint
+ircd::fs::flags(const fd::opts &opts)
+{
+	uint ret(opts.flags);
+	ret |= fs::flags(opts.mode);
+	ret |= opts.direct? O_DIRECT : 0UL;
+	ret |= opts.cloexec? O_CLOEXEC : 0UL;
+	ret &= opts.nocreate? ~O_CREAT : ret;
+	ret |= !opts.blocking? O_NONBLOCK : 0UL;
+	return ret;
+}
+
+uint
+ircd::fs::flags(const std::ios::openmode &mode)
+{
+	static const auto rdwr
+	{
+		std::ios::in | std::ios::out
+	};
+
+	uint ret{0};
+	if((mode & rdwr) == rdwr)
+		ret |= O_RDWR;
+	else if(mode & std::ios::out)
+		ret |= O_WRONLY;
+	else
+		ret |= O_RDONLY;
+
+	ret |= mode & std::ios::trunc? O_TRUNC : 0;
+	ret |= mode & std::ios::app? O_APPEND : 0;
+	ret |= ret & O_WRONLY? O_CREAT : 0;
+	ret |= ret & O_RDWR && ret & (O_TRUNC | O_APPEND)? O_CREAT : 0;
 	return ret;
 }
 
@@ -2407,29 +2442,6 @@ ircd::fs::error::error(const boost::filesystem::filesystem_error &e)
 //
 // Internal utils
 //
-
-uint
-ircd::fs::posix_flags(const std::ios::openmode &mode)
-{
-	static const auto rdwr
-	{
-		std::ios::in | std::ios::out
-	};
-
-	uint ret{0};
-	if((mode & rdwr) == rdwr)
-		ret |= O_RDWR;
-	else if(mode & std::ios::out)
-		ret |= O_WRONLY;
-	else
-		ret |= O_RDONLY;
-
-	ret |= mode & std::ios::trunc? O_TRUNC : 0;
-	ret |= mode & std::ios::app? O_APPEND : 0;
-	ret |= ret & O_WRONLY? O_CREAT : 0;
-	ret |= ret & O_RDWR && ret & (O_TRUNC | O_APPEND)? O_CREAT : 0;
-	return ret;
-}
 
 /// Translate an ircd::fs opts priority integer to an AIO priority integer.
 /// The ircd::fs priority integer is like a nice value. The AIO value is
