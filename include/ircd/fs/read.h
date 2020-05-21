@@ -16,18 +16,17 @@ namespace ircd::fs
 	struct read_op;
 	struct read_opts extern const read_opts_default;
 
+	// Yields ircd::ctx for parallel reads into buffers; total bytes read
+	size_t read(const vector_view<read_op> &);
+
 	// Yields ircd::ctx for read into buffers; returns bytes read
 	size_t read(const fd &, const mutable_buffers &, const read_opts & = read_opts_default);
-	size_t read(const string_view &path, const mutable_buffers &, const read_opts & = read_opts_default);
-	size_t read(const vector_view<read_op> &); // parallel read
 
 	// Yields ircd::ctx for read into buffer; returns view of read portion.
 	const_buffer read(const fd &, const mutable_buffer &, const read_opts & = read_opts_default);
-	const_buffer read(const string_view &path, const mutable_buffer &, const read_opts & = read_opts_default);
 
 	// Yields ircd::ctx for read into allocated string; returns that string
 	std::string read(const fd &, const read_opts & = read_opts_default);
-	std::string read(const string_view &path, const read_opts & = read_opts_default);
 
 	// Test whether bytes in the specified range are cached and should not block
 	bool fincore(const fd &, const size_t &, const read_opts & = read_opts_default);

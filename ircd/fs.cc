@@ -848,18 +848,6 @@ ircd::fs::fincore(void *const &map,
 }
 
 std::string
-ircd::fs::read(const string_view &path,
-               const read_opts &opts)
-{
-	const fd fd
-	{
-		path
-	};
-
-	return read(fd, opts);
-}
-
-std::string
 ircd::fs::read(const fd &fd,
                const read_opts &opts)
 {
@@ -868,22 +856,6 @@ ircd::fs::read(const fd &fd,
 	{
 		return read(fd, buf, opts);
 	});
-}
-
-ircd::const_buffer
-ircd::fs::read(const string_view &path,
-               const mutable_buffer &buf,
-               const read_opts &opts)
-{
-	const mutable_buffers bufs
-	{
-		&buf, 1
-	};
-
-	return mutable_buffer
-	{
-		data(buf), read(path, bufs, opts)
-	};
 }
 
 ircd::const_buffer
@@ -900,19 +872,6 @@ ircd::fs::read(const fd &fd,
 	{
 		data(buf), read(fd, bufs, opts)
 	};
-}
-
-size_t
-ircd::fs::read(const string_view &path,
-               const mutable_buffers &bufs,
-               const read_opts &opts)
-{
-	const fd fd
-	{
-		path
-	};
-
-	return read(fd, bufs, opts);
 }
 
 size_t
