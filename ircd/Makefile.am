@@ -32,6 +32,10 @@ AM_LDFLAGS = \
 	@EXTRA_LDFLAGS@ \
 	###
 
+if CLANG
+AM_CXXFLAGS += -fno-c++-static-destructors
+endif
+
 if LTO
 AM_CXXFLAGS += -flto
 endif
