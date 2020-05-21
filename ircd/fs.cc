@@ -2006,26 +2006,19 @@ ircd::fs::fd::fd(const string_view &path)
 ircd::fs::fd::fd(const string_view &path,
                  const opts &opts)
 try
-:fdno{[&path, &opts]
-() -> int
+:fdno{-1}
 {
-	const prof::syscall_usage_warning message
+	const mode_t mode
 	{
-		"fs::fs::fd(): open(2): %s", path
+		mode_t(opts.mask)
 	};
 
-	uint flags(opts.flags);
-	flags |= opts.direct? O_DIRECT : 0UL;
-	flags |= opts.cloexec? O_CLOEXEC : 0UL;
-	flags &= opts.nocreate? ~O_CREAT : flags;
-	flags |= !opts.blocking? O_NONBLOCK : 0UL;
+	const uint &flags
+	{
+		fs::flags(opts)
+	};
 
-	const mode_t &mode(opts.mask);
-	assert((flags & ~O_CREAT) || mode != 0);
-	return syscall(::open, path_cstr(path), flags, mode);
-}()}
-{
-	const int advise
+	const int &advise
 	{
 		opts.direct?
 			0:
@@ -2037,6 +2030,14 @@ try
 			POSIX_FADV_DONTNEED:
 			0
 	};
+
+	const prof::syscall_usage_warning message
+	{
+		"fs::fs::fd(): open(2): %s", path
+	};
+
+	assert((flags & ~O_CREAT) || mode != 0);
+	fdno = syscall(::open, path_cstr(path), flags, mode);
 
 	if(advise)
 		fs::advise(*this, advise);
@@ -2052,6 +2053,14 @@ catch(const std::system_error &e)
 		path,
 		e.what(),
 	};
+
+	this->~fd();
+	throw;
+}
+catch(...)
+{
+	this->~fd();
+	throw;
 }
 
 ircd::fs::fd::fd(fd &&o)
