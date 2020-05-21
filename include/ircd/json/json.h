@@ -65,6 +65,6 @@ ircd::json::stringify(const mutable_buffer &&mb_,
 {
 	mutable_buffer mb(mb_);
 	const auto ret(stringify(mb, std::forward<T>(t)...));
-	valid_output(ret, serialized(std::forward<T>(t))...);
+	debug_valid_output(ret, serialized(std::forward<T>(t)...));
 	return ret;
 }

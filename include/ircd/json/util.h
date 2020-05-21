@@ -24,6 +24,9 @@ namespace ircd::json
 	constexpr name_hash_t name_hash(const string_view name) noexcept;
 	constexpr name_hash_t operator ""_(const char *const name, const size_t len) noexcept;
 
+	void valid_output(const string_view &, const size_t &expected);
+	void debug_valid_output(const string_view &, const size_t &expected);
+
 	size_t serialized(const string_view &);
 	string_view stringify(mutable_buffer &, const string_view &);
 	template<class... T> size_t print(const mutable_buffer &buf, T&&... t);
@@ -32,9 +35,6 @@ namespace ircd::json
 	bool valid(const string_view &, std::nothrow_t) noexcept;
 	void valid(const string_view &);
 	std::string why(const string_view &);
-
-	// (Internal) validates output
-	void valid_output(const string_view &, const size_t &expected);
 }
 
 /// Alternative to `json::strung` which uses a fixed array rather than an
@@ -73,8 +73,18 @@ ircd::json::print(const mutable_buffer &buf,
 	};
 
 	buf[sv.size()] = '\0';
-	valid_output(sv, size(sv)); // no size expectation check
+	debug_valid_output(sv, size(sv)); // no size expectation check
 	return sv.size();
+}
+
+extern inline void
+__attribute__((always_inline, gnu_inline, artificial))
+ircd::json::debug_valid_output(const string_view &in,
+                               const size_t &expected)
+{
+	#ifdef RB_DEBUG
+	valid_output(in, expected);
+	#endif
 }
 
 constexpr ircd::json::name_hash_t

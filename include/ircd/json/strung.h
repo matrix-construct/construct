@@ -59,7 +59,7 @@ ircd::json::strung::strung(T&&... t)
 			stringify(mutable_buffer{out}, std::forward<T>(t)...)
 		};
 
-		valid_output(sv, ircd::size(out));
+		debug_valid_output(sv, ircd::size(out));
 		return sv;
 	})
 }
