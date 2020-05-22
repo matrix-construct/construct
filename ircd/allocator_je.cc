@@ -17,7 +17,7 @@
 namespace ircd::allocator::je
 {
 	static std::function<void (std::ostream &, const string_view &)> stats_callback;
-	static void stats_handler(void *, const char *);
+	static void stats_handler(void *, const char *) noexcept;
 
 	extern info::versions malloc_version_api;
 	extern info::versions malloc_version_abi;
@@ -108,7 +108,7 @@ ircd::allocator::set(const string_view &key_,
 void
 ircd::allocator::je::stats_handler(void *const ptr,
                                    const char *const msg)
-try
+noexcept try
 {
 	auto &out
 	{
