@@ -34,7 +34,8 @@ namespace ircd::allocator
 
 #ifdef IRCD_ALLOCATOR_USE_GNU
 ircd::string_view
-ircd::allocator::info(const mutable_buffer &buf)
+ircd::allocator::info(const mutable_buffer &buf,
+                      [[unused]] const string_view &opts)
 {
 	std::stringstream out;
 	pubsetbuf(out, buf);

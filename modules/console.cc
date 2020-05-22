@@ -1028,6 +1028,18 @@ console_cmd__proc__smaps(opt &out, const string_view &line)
 bool
 console_cmd__mem(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"opts"
+	}};
+
+	// Optional options string passed to implementation; might not be available
+	// or ignored. See jemalloc(3) etc.
+	const string_view &opts
+	{
+		param["opts"]
+	};
+
 	auto &this_thread
 	{
 		ircd::allocator::profile::this_thread
@@ -1043,7 +1055,7 @@ console_cmd__mem(opt &out, const string_view &line)
 
 	thread_local char buf[48_KiB];
 	out << "Allocator information:" << std::endl
-	    << allocator::info(buf) << std::endl
+	    << allocator::info(buf, opts) << std::endl
 	    ;
 
 	return true;

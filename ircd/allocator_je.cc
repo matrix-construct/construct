@@ -125,7 +125,8 @@ catch(const std::bad_function_call &)
 
 #if defined(IRCD_ALLOCATOR_JEMALLOC)
 ircd::string_view
-ircd::allocator::info(const mutable_buffer &buf)
+ircd::allocator::info(const mutable_buffer &buf,
+                      const string_view &opts_)
 {
 	std::stringstream out;
 	pubsetbuf(out, buf);
@@ -136,9 +137,12 @@ ircd::allocator::info(const mutable_buffer &buf)
 		out << msg;
 	};
 
-	static const char *const &opts
+	thread_local char opts_buf[64];
+	const char *const opts
 	{
-		""
+		opts_?
+			data(strlcpy(opts_buf, opts_)):
+			""
 	};
 
 	malloc_stats_print(je::stats_handler, &out, opts);
