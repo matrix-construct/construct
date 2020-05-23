@@ -1847,7 +1847,10 @@ catch(const std::exception &e)
 		e.what(),
 	};
 
-	return origin;
+	return string_view
+	{
+		data(buf), move(buf, origin)
+	};
 }
 
 namespace ircd::m::fed
@@ -1894,7 +1897,10 @@ try
 
 		// Successful error; bail
 		if(code >= 400)
-			return origin;
+			return string_view
+			{
+				data(user_buf), move(user_buf, origin)
+			};
 
 		// Successful result; response content handled after loop.
 		if(code < 300)
@@ -1905,7 +1911,10 @@ try
 
 		// Indirection code, but no location response header
 		if(!location)
-			return origin;
+			return string_view
+			{
+				data(user_buf), move(user_buf, origin)
+			};
 
 		// Redirection; carry over the new target by copying it because it's
 		// in the buffer which we'll be overwriting for the new request.
@@ -1914,7 +1923,10 @@ try
 
 		// Indirection code, bad location header.
 		if(!uri.path || !uri.remote)
-			return origin;
+			return string_view
+			{
+				data(user_buf), move(user_buf, origin)
+			};
 	}
 
 	const json::string &m_server
@@ -1923,7 +1935,10 @@ try
 	};
 
 	if(!m_server)
-		return origin;
+		return string_view
+		{
+			data(user_buf), move(user_buf, origin)
+		};
 
 	// This construction validates we didn't get a junk string
 	volatile const net::hostport ret
@@ -1959,7 +1974,10 @@ catch(const std::exception &e)
 		e.what(),
 	};
 
-	return origin;
+	return string_view
+	{
+		data(user_buf), move(user_buf, origin)
+	};
 }
 
 /// Return a tuple of the HTTP code, any Location header, and the response
