@@ -1675,7 +1675,7 @@ ircd::conf::item<ircd::seconds>
 well_known_fetch_timeout
 {
 	{ "name",     "ircd.m.fed.well-known.fetch.timeout" },
-	{ "default",  8L                                    },
+	{ "default",  15L                                   },
 };
 
 ircd::conf::item<size_t>
