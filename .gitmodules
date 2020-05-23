@@ -15,3 +15,6 @@
 [submodule "deps/pbc"]
 	path = deps/pbc
 	url = https://github.com/blynn/pbc.git
+[submodule "doc"]
+	path = doc
+	url = https://github.com/matrix-construct/construct.wiki.git
