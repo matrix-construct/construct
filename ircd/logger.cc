@@ -24,6 +24,7 @@ namespace ircd::log
 	static void open(const level &);
 	static void mkdir();
 
+	extern bool ready;
 	extern const size_t CTX_NAME_TRUNC;
 	extern const size_t LOG_NAME_TRUNC;
 	extern const size_t LOG_BUFSIZE;
@@ -89,6 +90,12 @@ ircd::log::CTX_NAME_TRUNC
 	10
 };
 
+decltype(ircd::log::ready)
+ircd::log::ready
+{
+	false
+};
+
 /// The '*' logger is for log::mark()'s which do not target any specific named
 /// logger because such mark()'s are not repeated to all named loggers. The '*'
 /// logger should not otherwise be the target of log messages.
@@ -129,11 +136,13 @@ ircd::log::init()
 		console_disable(level::DWARNING);
 	}
 
-	if(ircd::write_avoid && !ircd::debugmode)
-		return;
+	if(!ircd::write_avoid || ircd::debugmode)
+	{
+		mkdir();
+		open();
+	}
 
-	mkdir();
-	open();
+	ircd::log::ready = true;
 }
 
 void
@@ -600,6 +609,10 @@ __attribute__((optimize("3")))
 ircd::log::can_skip(const log &log,
                     const level &lev)
 {
+	// Subsystem not initialized
+	if(unlikely(!ircd::log::ready))
+		return true;
+
 	// Nobody is listening.
 	if(hook.empty())
 		return true;
