@@ -277,7 +277,7 @@ ircd::json::printer
 
 	// string
 	struct string_state;
-	union character_state;
+	struct character_state;
 	using character_prototype = char(const string_view &, string_state &);
 	template<class context> static void character_dfa(char &, context &, bool &) noexcept;
 	const rule<character_prototype, locals<character_state>> character
@@ -363,19 +363,21 @@ struct ircd::json::printer::string_state
 	bool escaped {0};
 };
 
-union ircd::json::printer::character_state
+struct ircd::json::printer::character_state
 {
 	static const char ctrl_tab[0x20][8];
 
-	uint64_t mode {0}; struct
+	enum mode
 	{
-		bool leave;
-		bool ctrl;
-		bool quote;
-		bool escape;
-		bool escaped;
-		uint8_t pos;
-	};
+		PASS,
+		LEAVE,
+		CTRL,
+		QUOTE,
+		ESCAPE,
+		ESCAPED,
+	}
+	mode {PASS};
+	uint8_t pos {0};
 };
 
 decltype(ircd::json::printer::character_state::ctrl_tab)
@@ -406,72 +408,72 @@ ircd::json::printer::character_dfa(char &out,
                                    bool &ret)
 noexcept
 {
-	__label__ Lpass, Lleave, Lctrl, Lquote, Lescape, Lescaped;
+	using mode = decltype(character_state::mode);
 
 	#if __has_builtin(__builtin_assume)
 		__builtin_assume(ret == true);
 	#endif
 
 	const string_view &str(attr_at<1>(g));    // Whole input string.
-	const char &in(attr_at<0>(g));            // Current character in input.
+	const uint8_t &in(attr_at<0>(g));         // Current character in input.
 
 	string_state &sst(attr_at<2>(g));         // Whole input string state.
 	auto &st(local_at<0>(g));                 // Current character state.
 
-	st.ctrl |= !st.mode & (in < 0x20);
-	st.quote |= !st.mode & (in == '"');
-	st.escape |= !st.mode & (in == '\\');
-
-	goto *
-	(
-		st.leave?     &&Lleave:
-		sst.escaped?  &&Lescaped:
-		st.ctrl?      &&Lctrl:
-		st.quote?     &&Lquote:
-		st.escape?    &&Lescape:
-		              &&Lpass
-	);
-
-	Lpass:
-		out = in;
-		st.leave = true;
-		return;
-
-	Lleave:
-		//assert(st.leave);
-		ret = false;
-		sst.pos++;
-		return;
-
-	Lctrl:
-		out = st.ctrl_tab[uint8_t(in)][st.pos++];
-		ret &= out != '\0'; // break loop at this iteration
-		sst.pos += !ret;
-		return;
-
-	Lquote:
-		out = "\\\""_sv[st.pos++];
-		ret &= out != '\0'; // break loop at this iteration
-		sst.pos += !ret;
-		return;
-
-	Lescape:
-		out = in;
-		sst.escaped = true;
-		st.leave = sst.pos + 1 < str.size(); // must spin if last char of string is esc
-		return;
-
-	Lescaped:
+	out = in;
+	st.mode =
+		st.mode != mode::PASS?  st.mode:
+		sst.escaped?            mode::ESCAPED:
+		in < 0x20U?             mode::CTRL:
+		in == '"'?              mode::QUOTE:
+		in == '\\'?             mode::ESCAPE:
+		                        mode::PASS;
+	switch(st.mode)
 	{
-		const auto ok
-		{
-			in == 'u' | in == '"' | in == '\\'
-		};
+		[[likely]]
+		case mode::PASS:
+			st.mode = mode::LEAVE;
+			break; // mode::PASS
 
-		out = ok? in : '\\';
-		st.leave = ok;
-		sst.escaped = false;
-		return;
+		[[likely]]
+		case mode::LEAVE:
+			ret = false;
+			sst.pos++;
+			assert(sst.pos <= str.size());
+			break; // mode::LEAVE
+
+		case mode::CTRL:
+			out = st.ctrl_tab[in][st.pos++];
+			ret &= out != '\0'; // break loop at this iteration
+			sst.pos += !ret;
+			assert(st.pos <= 8);
+			break; // mode::CTRL
+
+		case mode::QUOTE:
+			out = "\\\""_sv[st.pos++];
+			ret &= out != '\0'; // break loop at this iteration
+			sst.pos += !ret;
+			assert(st.pos <= 8);
+			break; // mode::QUOTE
+
+		case mode::ESCAPE:
+			st.mode = sst.pos + 1 < str.size()?
+				mode::LEAVE:
+				mode::PASS; // must spin if last char of string is esc
+			sst.escaped = true;
+			assert(sst.pos < str.size());
+			break; // mode::ESCAPE
+
+		case mode::ESCAPED:
+		{
+			const bool ok(in == 'u' | in == '"' | in == '\\');
+			sst.escaped = false;
+			out = ok? out: '\\';
+			st.mode = ok?
+				mode::LEAVE:
+				mode::PASS;
+			break; // mode::ESCAPED
+		}
 	}
 }
 
