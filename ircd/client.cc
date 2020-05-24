@@ -175,11 +175,15 @@ ircd::client::wait_all()
 	while(!dock.wait_for(seconds(3), is_empty))
 	{
 		for(const auto &[remote, client] : client::map)
+		{
 			log::dwarning
 			{
 				log, "Waiting for client %s",
 				client->loghead(),
 			};
+
+			assert(!client->sock || client->sock->fini);
+		}
 
 		log::warning
 		{
