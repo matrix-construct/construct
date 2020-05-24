@@ -17,7 +17,7 @@ inline namespace this_ctx
 	struct slice_usage_warning;
 }}
 
-#ifndef NDEBUG
+#ifdef RB_DEBUG
 struct ircd::ctx::this_ctx::slice_usage_warning
 {
 	string_view fmt;

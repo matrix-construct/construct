@@ -906,7 +906,7 @@ noexcept
 // ctx/slice_usage_warning.h
 //
 
-#ifndef NDEBUG
+#ifdef RB_DEBUG
 ircd::ctx::this_ctx::slice_usage_warning::slice_usage_warning(const string_view &fmt,
                                                               va_rtti &&ap)
 :fmt
@@ -931,7 +931,7 @@ ircd::ctx::this_ctx::slice_usage_warning::slice_usage_warning(const string_view 
 }
 #endif
 
-#ifndef NDEBUG
+#ifdef RB_DEBUG
 ircd::ctx::this_ctx::slice_usage_warning::~slice_usage_warning()
 noexcept
 {
