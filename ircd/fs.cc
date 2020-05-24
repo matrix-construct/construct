@@ -1986,6 +1986,11 @@ try
 	-1 // sentinel value for inert dtor
 }
 {
+	const unwind_exceptional dtor_on_error
+	{
+		[this] { this->~fd(); }
+	};
+
 	const mode_t mode
 	{
 		mode_t(opts.mask)
@@ -2009,13 +2014,15 @@ try
 			0
 	};
 
-	const prof::syscall_usage_warning message
 	{
-		"fs::fs::fd(): openat(2): %s", path
-	};
+		const prof::syscall_usage_warning message
+		{
+			"fs::fs::fd(): openat(2): %s", path
+		};
 
-	assert((flags & ~O_CREAT) || mode != 0);
-	fdno = syscall(::openat, dirfd, path_cstr(path), flags, mode);
+		assert((flags & ~O_CREAT) || mode != 0);
+		fdno = syscall(::openat, dirfd, path_cstr(path), flags, mode);
+	}
 
 	if(advise)
 		fs::advise(*this, advise);
@@ -2032,12 +2039,6 @@ catch(const std::system_error &e)
 		e.what(),
 	};
 
-	this->~fd();
-	throw;
-}
-catch(...)
-{
-	this->~fd();
 	throw;
 }
 
