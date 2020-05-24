@@ -55,6 +55,7 @@ struct ircd::fs::fd
 
 /// Descriptor options (open options)
 struct ircd::fs::fd::opts
+:fs::opts
 {
 	static conf::item<bool> direct_io_enable;
 
@@ -79,9 +80,6 @@ struct ircd::fs::fd::opts
 	/// Prevents file from being created if it doesn't exist. This clears
 	/// any implied O_CREAT from the open_mode ctor and in flags too.
 	bool nocreate {false};
-
-	/// (O_NONBLOCK) Non-blocking behavior.
-	bool blocking {true};
 
 	/// Advise for random access (ignored when direct=true)
 	bool random {false};
