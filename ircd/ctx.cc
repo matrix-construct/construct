@@ -978,9 +978,7 @@ noexcept
 	const ulong &threshold{prof::settings::slice_warning};
 	log::dwarning
 	{
-		log, "[%s] context id:%lu watchdog :timeslice excessive; lim:%lu this:%lu pct:%.2lf span:%lu :%s",
-		current? name(cur()) : ""_sv,
-		current? id(cur()) : 0,
+		prof::watchdog, "timeslice excessive; lim:%lu this:%lu pct:%.2lf span:%lu :%s",
 		threshold,
 		total,
 		(double(total) / double(threshold)) * 100.0,
@@ -1626,6 +1624,12 @@ namespace ircd::ctx::prof
 	static void inc_ticker(const event &e) noexcept;
 }
 
+decltype(ircd::ctx::prof::watchdog)
+ircd::ctx::prof::watchdog
+{
+	"ctx.watchdog"
+};
+
 // stack_usage_warning at 1/3 engineering tolerance
 decltype(ircd::ctx::prof::settings::stack_usage_warning)
 ircd::ctx::prof::settings::stack_usage_warning
@@ -1792,9 +1796,7 @@ ircd::ctx::prof::check_slice()
 	if(unlikely(slice_exceeded_warning(last_slice) && !slice_exempt))
 		log::dwarning
 		{
-			log, "[%s] context id:%lu watchdog :timeslice excessive; lim:%lu last:%lu pct:%.2lf",
-			name(c),
-			id(c),
+			watchdog, "timeslice excessive; lim:%lu last:%lu pct:%.2lf",
 			ulong(settings::slice_warning),
 			last_slice,
 			((double(last_slice) / double(ulong(settings::slice_warning))) * 100.0)
@@ -1841,9 +1843,7 @@ ircd::ctx::prof::check_stack()
 	if(unlikely(!stack_exempt && stack_exceeded_warning(stack_at)))
 		log::dwarning
 		{
-			log, "[%s] id:%lu watchdog :stack used %zu of %zu bytes",
-			name(c),
-			id(c),
+			watchdog, "stack used %zu of %zu bytes",
 			stack_at,
 			c.stack.max
 		};

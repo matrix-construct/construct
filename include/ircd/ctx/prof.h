@@ -53,6 +53,8 @@ namespace ircd::ctx::prof
 	bool slice_exceeded_interrupt(const ulong &cycles) noexcept;
 	bool stack_exceeded_warning(const size_t &size) noexcept;
 	bool stack_exceeded_assertion(const size_t &size) noexcept;
+
+	extern log::log watchdog;
 }
 
 namespace ircd::ctx::prof::settings
