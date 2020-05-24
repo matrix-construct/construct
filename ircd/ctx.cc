@@ -917,6 +917,12 @@ ircd::ctx::this_ctx::slice_usage_warning::slice_usage_warning(const string_view 
 {
 	std::move(ap)
 }
+,epoch
+{
+	current?
+		ircd::ctx::epoch(cur()):
+		ircd::ctx::epoch()
+}
 ,start
 {
 	// Set the start value to the total number of cycles accrued by this
@@ -956,6 +962,13 @@ noexcept
 	if(likely(!prof::slice_exceeded_warning(total)))
 		return;
 
+	const auto span
+	{
+		current?
+			ircd::ctx::epoch(cur()) - this->epoch:
+			ircd::ctx::epoch() - this->epoch
+	};
+
 	thread_local char buf[256];
 	const string_view reason{fmt::vsprintf
 	{
@@ -965,12 +978,13 @@ noexcept
 	const ulong &threshold{prof::settings::slice_warning};
 	log::dwarning
 	{
-		log, "[%s] context id:%lu watchdog :timeslice excessive; lim:%lu this:%lu pct:%.2lf :%s",
+		log, "[%s] context id:%lu watchdog :timeslice excessive; lim:%lu this:%lu pct:%.2lf span:%lu :%s",
 		current? name(cur()) : ""_sv,
 		current? id(cur()) : 0,
 		threshold,
 		total,
 		(double(total) / double(threshold)) * 100.0,
+		span,
 		reason
 	};
 }

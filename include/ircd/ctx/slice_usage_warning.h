@@ -22,6 +22,7 @@ struct ircd::ctx::this_ctx::slice_usage_warning
 {
 	string_view fmt;
 	va_rtti ap;
+	ulong epoch;
 	ulong start;
 
 	template<class... args>
