@@ -114,7 +114,11 @@ construct::console::active()
 //
 
 construct::console::console()
-:context
+:outbuf
+{
+	1_MiB
+}
+,context
 {
 	"console",
 	stack_sz,
@@ -257,6 +261,7 @@ construct::console::handle_line_bymodule()
 
 	std::ostringstream out;
 	out.exceptions(out.badbit | out.failbit | out.eofbit);
+	pubsetbuf(out, outbuf);
 
 	int ret;
 	static const string_view opts;
@@ -270,9 +275,9 @@ construct::console::handle_line_bymodule()
 			// into the command output.
 			const log::console_quiet quiet{false};
 
-			const auto str
+			const string_view str
 			{
-				out.str()
+				view(out, outbuf)
 			};
 
 			// If this string is set, the user wants to log a copy of the output
@@ -328,7 +333,7 @@ construct::console::handle_line_bymodule()
 		// we use this code to translate it.
 		case -2: throw bad_command
 		{
-			out.str()
+			view(out, outbuf)
 		};
 
 		// Command isn't handled by the module; continue handling here

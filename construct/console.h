@@ -22,6 +22,7 @@ struct construct::console
 
 	std::string line;
 	std::string record_path;
+	ircd::unique_mutable_buffer outbuf;
 	ircd::module *module {nullptr};
 	ircd::context context;
 	ircd::run::changed runlevel_changed;
