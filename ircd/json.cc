@@ -191,27 +191,6 @@ ircd::json::parser
 		,"value"
 	};
 
-	// type checkers
-	rule<enum json::type> type
-	{
-		(omit[quote]           >> attr(json::STRING))  |
-		(omit[object_begin]    >> attr(json::OBJECT))  |
-		(omit[array_begin]     >> attr(json::ARRAY))   |
-		(omit[number >> eoi]   >> attr(json::NUMBER))  |
-		(omit[literal >> eoi]  >> attr(json::LITERAL))
-		,"type"
-	};
-
-	rule<enum json::type> type_strict
-	{
-		(omit[&quote >> string]            >> attr(json::STRING))  |
-		(omit[&object_begin >> object(0)]  >> attr(json::OBJECT))  |
-		(omit[&array_begin >> array(0)]    >> attr(json::ARRAY))   |
-		(omit[number]                      >> attr(json::NUMBER))  |
-		(omit[literal]                     >> attr(json::LITERAL))
-		,"type"
-	};
-
 	parser()
 	:parser::base_type{rule<>{}} // required by spirit
 	{
@@ -4216,13 +4195,48 @@ namespace ircd::json
 {
 	using type_rule = parser::rule<enum json::type>;
 
-	[[gnu::visibility("internal")]] extern const type_rule type_strict;
+	[[gnu::visibility("internal")]]
+	extern const parser::rule<enum json::type>;
+	type_parse,
+	type_parse_strict,
+	type_parse_parse,
+	type_parse_strict_parse;
 }
 
-decltype(ircd::json::type_strict)
-ircd::json::type_strict
+decltype(ircd::json::type_parse)
+ircd::json::type_parse
 {
-	-parser.ws >> parser.type_strict >> -parser.ws >> eoi
+	(omit[parser.quote]           >> attr(json::STRING))  |
+	(omit[parse.object_begin]     >> attr(json::OBJECT))  |
+	(omit[parse.array_begin]      >> attr(json::ARRAY))   |
+	(omit[parse.number >> eoi]    >> attr(json::NUMBER))  |
+	(omit[parser.literal >> eoi]  >> attr(json::LITERAL))
+	,"type check"
+};
+
+decltype(ircd::json::type_parse_strict)
+ircd::json::type_parse_strict
+{
+	(omit[&parser.quote >> parser.string]            >> attr(json::STRING))  |
+	(omit[&parser.object_begin >> parser.object(0)]  >> attr(json::OBJECT))  |
+	(omit[&parser.array_begin >> parser.array(0)]    >> attr(json::ARRAY))   |
+	(omit[parser.number]                             >> attr(json::NUMBER))  |
+	(omit[parserliteral]                             >> attr(json::LITERAL))
+	,"type check strict"
+};
+
+decltype(ircd::json::type_parse_parse)
+ircd::json::type_parse_parse
+{
+	-parser.ws >> type_parse
+	,"type check"
+};
+
+decltype(ircd::json::type_parse_strict)
+ircd::json::type_parse_strict_parse
+{
+	-parser.ws >> type_parse_strict >> -parser.ws >> eoi
+	,"type check strict"
 };
 
 enum ircd::json::type
@@ -4230,7 +4244,7 @@ ircd::json::type(const string_view &buf,
                  strict_t)
 {
 	enum type ret;
-	if(!qi::parse(begin(buf), end(buf), type_strict, ret))
+	if(!qi::parse(begin(buf), end(buf), type_parse_strict, ret))
 		throw type_error
 		{
 			"Failed to derive JSON value type from input buffer."
@@ -4245,7 +4259,7 @@ ircd::json::type(const string_view &buf,
                  std::nothrow_t)
 {
 	enum type ret;
-	if(!qi::parse(begin(buf), end(buf), type_strict, ret))
+	if(!qi::parse(begin(buf), end(buf), type_parse_strict, ret))
 		return STRING;
 
 	return ret;
@@ -4260,7 +4274,7 @@ ircd::json::type(const string_view &buf)
 	};
 
 	enum type ret;
-	if(!qi::phrase_parse(begin(buf), end(buf), parser.type, parser.WS, flag, ret))
+	if(!qi::phrase_parse(begin(buf), end(buf), type_parse, parser.WS, flag, ret))
 		throw type_error
 		{
 			"Failed to derive JSON value type from input buffer."
@@ -4279,7 +4293,7 @@ ircd::json::type(const string_view &buf,
 	};
 
 	enum type ret;
-	if(!qi::phrase_parse(begin(buf), end(buf), parser.type, parser.WS, flag, ret))
+	if(!qi::phrase_parse(begin(buf), end(buf), type_parse, parser.WS, flag, ret))
 		return STRING;
 
 	return ret;
