@@ -55,7 +55,7 @@ decltype(ircd::m::dbs::desc::event_idx__bloom__bits)
 ircd::m::dbs::desc::event_idx__bloom__bits
 {
 	{ "name",     "ircd.m.dbs._event_idx.bloom.bits" },
-	{ "default",  10L                                },
+	{ "default",  12L                                },
 };
 
 decltype(ircd::m::dbs::desc::event_idx)
@@ -118,7 +118,7 @@ ircd::m::dbs::desc::event_idx
 	size_t(event_idx__meta_block__size),
 
 	// compression
-	"kLZ4Compression;kSnappyCompression"s,
+	{}, // no compression
 
 	// compactor
 	{},
