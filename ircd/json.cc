@@ -4193,35 +4193,60 @@ ircd::json::serialized(const string_view &v)
 
 namespace ircd::json
 {
-	using type_rule = parser::rule<enum json::type>;
+	[[gnu::visibility("internal")]]
+	extern const parser::rule<>
+	type_parse_is[5],
+	type_parse_is_strict[5];
 
 	[[gnu::visibility("internal")]]
-	extern const parser::rule<enum json::type>;
+	extern const parser::rule<enum json::type>
 	type_parse,
 	type_parse_strict,
 	type_parse_parse,
 	type_parse_strict_parse;
 }
 
+//TODO: XXX array designated initializers
+decltype(ircd::json::type_parse_is)
+ircd::json::type_parse_is
+{
+	{ -parser.ws >> parser.quote           },
+	{ -parser.ws >> parser.object_begin    },
+	{ -parser.ws >> parser.array_begin     },
+	{ -parser.ws >> parser.number >> eoi   },
+	{ -parser.ws >> parser.literal >> eoi  },
+};
+
+//TODO: XXX array designated initializers
+decltype(ircd::json::type_parse_is_strict)
+ircd::json::type_parse_is_strict
+{
+	{ -parser.ws >> &parser.quote >> parser.string           },
+	{ -parser.ws >> &parser.object_begin >> parser.object(0) },
+	{ -parser.ws >> &parser.array_begin >> parser.array(0)   },
+	{ -parser.ws >> parser.number >> eoi                     },
+	{ -parser.ws >> parser.literal >> eoi                    },
+};
+
 decltype(ircd::json::type_parse)
 ircd::json::type_parse
 {
-	(omit[parser.quote]           >> attr(json::STRING))  |
-	(omit[parse.object_begin]     >> attr(json::OBJECT))  |
-	(omit[parse.array_begin]      >> attr(json::ARRAY))   |
-	(omit[parse.number >> eoi]    >> attr(json::NUMBER))  |
-	(omit[parser.literal >> eoi]  >> attr(json::LITERAL))
+	(omit[type_parse_is[json::STRING]]  >> attr(json::STRING))  |
+	(omit[type_parse_is[json::OBJECT]]  >> attr(json::OBJECT))  |
+	(omit[type_parse_is[json::ARRAY]]   >> attr(json::ARRAY))   |
+	(omit[type_parse_is[json::NUMBER]]  >> attr(json::NUMBER))  |
+	(omit[type_parse_is[json::LITERAL]] >> attr(json::LITERAL))
 	,"type check"
 };
 
 decltype(ircd::json::type_parse_strict)
 ircd::json::type_parse_strict
 {
-	(omit[&parser.quote >> parser.string]            >> attr(json::STRING))  |
-	(omit[&parser.object_begin >> parser.object(0)]  >> attr(json::OBJECT))  |
-	(omit[&parser.array_begin >> parser.array(0)]    >> attr(json::ARRAY))   |
-	(omit[parser.number]                             >> attr(json::NUMBER))  |
-	(omit[parserliteral]                             >> attr(json::LITERAL))
+	(omit[type_parse_is_strict[json::STRING]]  >> attr(json::STRING))  |
+	(omit[type_parse_is_strict[json::OBJECT]]  >> attr(json::OBJECT))  |
+	(omit[type_parse_is_strict[json::ARRAY]]   >> attr(json::ARRAY))   |
+	(omit[type_parse_is_strict[json::NUMBER]]  >> attr(json::NUMBER))  |
+	(omit[type_parse_is_strict[json::LITERAL]] >> attr(json::LITERAL))
 	,"type check strict"
 };
 
@@ -4238,6 +4263,31 @@ ircd::json::type_parse_strict_parse
 	-parser.ws >> type_parse_strict >> -parser.ws >> eoi
 	,"type check strict"
 };
+
+bool
+ircd::json::type(const string_view &buf,
+                 const enum type &type)
+{
+	const bool ret
+	{
+		qi::parse(begin(buf), end(buf), type_parse_is[type])
+	};
+
+	return ret;
+}
+
+bool
+ircd::json::type(const string_view &buf,
+                 const enum type &type,
+                 strict_t)
+{
+	const bool ret
+	{
+		qi::parse(begin(buf), end(buf), type_parse_is_strict[type])
+	};
+
+	return ret;
+}
 
 enum ircd::json::type
 ircd::json::type(const string_view &buf,

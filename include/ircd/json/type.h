@@ -23,11 +23,23 @@ namespace ircd::json
 	struct iov;
 	using members = std::initializer_list<const member>;
 
+	/// strict_t overloads scan the whole string to determine both the type
+	/// and validity of the string. For large strings this may involve a lot
+	/// of memory operations; if the validity is known good it is better to
+	/// not use the strict overload.
 	IRCD_OVERLOAD(strict)
+
+	// Determine the type
 	enum type type(const string_view &);
 	enum type type(const string_view &, std::nothrow_t);
 	enum type type(const string_view &, strict_t);
 	enum type type(const string_view &, strict_t, std::nothrow_t);
+
+	// Query if type
+	bool type(const string_view &, const enum type &, strict_t);
+	bool type(const string_view &, const enum type &);
+
+	// Utils
 	string_view reflect(const enum type &);
 
 	extern const string_view literal_null;
