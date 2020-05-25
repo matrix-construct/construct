@@ -4201,31 +4201,29 @@ namespace ircd::json
 	[[gnu::visibility("internal")]]
 	extern const parser::rule<enum json::type>
 	type_parse,
-	type_parse_strict,
-	type_parse_parse,
-	type_parse_strict_parse;
+	type_parse_strict;
 }
 
 //TODO: XXX array designated initializers
 decltype(ircd::json::type_parse_is)
 ircd::json::type_parse_is
 {
-	{ -parser.ws >> parser.quote           },
-	{ -parser.ws >> parser.object_begin    },
-	{ -parser.ws >> parser.array_begin     },
-	{ -parser.ws >> parser.number >> eoi   },
-	{ -parser.ws >> parser.literal >> eoi  },
+	{ -parser.ws >> parser.quote                         },
+	{ -parser.ws >> parser.object_begin                  },
+	{ -parser.ws >> parser.array_begin                   },
+	{ -parser.ws >> parser.number >> -parser.ws >> eoi   },
+	{ -parser.ws >> parser.literal >> -parser.ws >> eoi  },
 };
 
 //TODO: XXX array designated initializers
 decltype(ircd::json::type_parse_is_strict)
 ircd::json::type_parse_is_strict
 {
-	{ -parser.ws >> &parser.quote >> parser.string           },
-	{ -parser.ws >> &parser.object_begin >> parser.object(0) },
-	{ -parser.ws >> &parser.array_begin >> parser.array(0)   },
-	{ -parser.ws >> parser.number >> eoi                     },
-	{ -parser.ws >> parser.literal >> eoi                    },
+	{ -parser.ws >> &parser.quote >> parser.string >> -parser.ws >> eoi            },
+	{ -parser.ws >> &parser.object_begin >> parser.object(0) >> -parser.ws >> eoi  },
+	{ -parser.ws >> &parser.array_begin >> parser.array(0) >> -parser.ws >> eoi    },
+	{ -parser.ws >> parser.number >> -parser.ws >> eoi                             },
+	{ -parser.ws >> parser.literal >> -parser.ws >> eoi                            },
 };
 
 decltype(ircd::json::type_parse)
@@ -4247,20 +4245,6 @@ ircd::json::type_parse_strict
 	(omit[type_parse_is_strict[json::ARRAY]]   >> attr(json::ARRAY))   |
 	(omit[type_parse_is_strict[json::NUMBER]]  >> attr(json::NUMBER))  |
 	(omit[type_parse_is_strict[json::LITERAL]] >> attr(json::LITERAL))
-	,"type check strict"
-};
-
-decltype(ircd::json::type_parse_parse)
-ircd::json::type_parse_parse
-{
-	-parser.ws >> type_parse
-	,"type check"
-};
-
-decltype(ircd::json::type_parse_strict)
-ircd::json::type_parse_strict_parse
-{
-	-parser.ws >> type_parse_strict >> -parser.ws >> eoi
 	,"type check strict"
 };
 
@@ -4290,6 +4274,30 @@ ircd::json::type(const string_view &buf,
 }
 
 enum ircd::json::type
+ircd::json::type(const string_view &buf)
+{
+	enum type ret;
+	if(!qi::parse(begin(buf), end(buf), type_parse, ret))
+		throw type_error
+		{
+			"Failed to derive JSON value type from input buffer."
+		};
+
+	return ret;
+}
+
+enum ircd::json::type
+ircd::json::type(const string_view &buf,
+                 std::nothrow_t)
+{
+	enum type ret;
+	if(!qi::parse(begin(buf), end(buf), type_parse, ret))
+		return STRING;
+
+	return ret;
+}
+
+enum ircd::json::type
 ircd::json::type(const string_view &buf,
                  strict_t)
 {
@@ -4310,40 +4318,6 @@ ircd::json::type(const string_view &buf,
 {
 	enum type ret;
 	if(!qi::parse(begin(buf), end(buf), type_parse_strict, ret))
-		return STRING;
-
-	return ret;
-}
-
-enum ircd::json::type
-ircd::json::type(const string_view &buf)
-{
-	static const auto flag
-	{
-		qi::skip_flag::dont_postskip
-	};
-
-	enum type ret;
-	if(!qi::phrase_parse(begin(buf), end(buf), type_parse, parser.WS, flag, ret))
-		throw type_error
-		{
-			"Failed to derive JSON value type from input buffer."
-		};
-
-	return ret;
-}
-
-enum ircd::json::type
-ircd::json::type(const string_view &buf,
-                 std::nothrow_t)
-{
-	static const auto flag
-	{
-		qi::skip_flag::dont_postskip
-	};
-
-	enum type ret;
-	if(!qi::phrase_parse(begin(buf), end(buf), type_parse, parser.WS, flag, ret))
 		return STRING;
 
 	return ret;
