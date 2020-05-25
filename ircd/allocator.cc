@@ -406,23 +406,48 @@ extern "C" [[gnu::weak]] void __real_free(void *ptr);
 extern "C" void *
 __wrap_malloc(size_t size)
 {
-	return __real_malloc(size);
+	void *const &ptr(::__real_malloc(size));
+	if(unlikely(!ptr))
+		throw std::bad_alloc();
+
+	auto &this_thread(ircd::allocator::profile::this_thread);
+	this_thread.alloc_bytes += size;
+	this_thread.alloc_count++;
+	return ptr;
 }
 
 extern "C" void *
 __wrap_calloc(size_t nmemb, size_t size)
 {
+	void *const &ptr(::__real_calloc(nmemb, size));
+	if(unlikely(!ptr))
+		throw std::bad_alloc();
+
+	auto &this_thread(ircd::allocator::profile::this_thread);
+	this_thread.alloc_bytes += nmemb * size;
+	this_thread.alloc_count++;
 	return __real_calloc(nmemb, size);
 }
 
 extern "C" void *
 __wrap_realloc(void *ptr, size_t size)
 {
-	return __real_realloc(ptr, size);
+	void *const &ret(::__real_realloc(ptr, size));
+	if(unlikely(!ret))
+		throw std::bad_alloc();
+
+	auto &this_thread(ircd::allocator::profile::this_thread);
+	this_thread.alloc_bytes += size;
+	this_thread.alloc_count++;
+	return ret;
 }
 
 extern "C" void
 __wrap_free(void *ptr)
 {
-	return __real_free(ptr);
+	__real_free(ptr);
+
+	auto &this_thread(ircd::allocator::profile::this_thread);
+	this_thread.free_bytes += 0UL; //TODO: XXX
+	this_thread.free_count++;
 }
