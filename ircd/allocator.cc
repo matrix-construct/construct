@@ -372,6 +372,7 @@ operator new(const size_t size)
 
 void
 operator delete(void *const ptr)
+noexcept
 {
 	::free(ptr);
 
@@ -382,6 +383,7 @@ operator delete(void *const ptr)
 void
 operator delete(void *const ptr,
                 const size_t size)
+noexcept
 {
 	::free(ptr);
 
