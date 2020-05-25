@@ -1045,13 +1045,17 @@ console_cmd__mem(opt &out, const string_view &line)
 		ircd::allocator::profile::this_thread
 	};
 
+	char pbuf[2][48];
 	if(this_thread.alloc_count)
 		out << "IRCd thread allocations:" << std::endl
 		    << "alloc count:  " << this_thread.alloc_count << std::endl
 		    << "freed count:  " << this_thread.free_count << std::endl
-		    << "alloc bytes:  " << pretty(iec(this_thread.alloc_bytes)) << std::endl
-		    << "freed bytes:  " << pretty(iec(this_thread.free_bytes)) << std::endl
+		    << "alloc bytes:  " << pretty(pbuf[0], iec(this_thread.alloc_bytes)) << std::endl
+		    << "freed bytes:  " << pretty(pbuf[1], iec(this_thread.free_bytes)) << std::endl
 		    << std::endl;
+
+	if(opts == "ircd")
+		return true;
 
 	thread_local char buf[48_KiB];
 	out << "Allocator information:" << std::endl
