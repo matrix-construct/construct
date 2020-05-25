@@ -484,7 +484,12 @@ const
 		};
 	}};
 
-	return karma::generate(begin(out), gg | eps[throws], std::forward<attr>(a)...);
+	const auto ret
+	{
+		karma::generate(begin(out), gg | eps[throws], std::forward<attr>(a)...)
+	};
+
+	return ret;
 }
 
 template<class gen>
@@ -514,7 +519,12 @@ const
 		};
 	}};
 
-	return karma::generate(begin(out), gg | eps[throws]);
+	const auto ret
+	{
+		karma::generate(begin(out), gg | eps[throws])
+	};
+
+	return ret;
 }
 
 template<class it_a,
