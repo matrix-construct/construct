@@ -474,9 +474,6 @@ ircd::ctx::terminate(ctx &ctx)
 		return;
 
 	ctx.flags |= context::TERMINATED;
-	if(!interruptible(ctx))
-		return;
-
 	if(likely(&ctx != current && ctx.cont != nullptr))
 		(*ctx.cont->intr)(current);
 }
@@ -499,9 +496,6 @@ ircd::ctx::interrupt(ctx &ctx)
 		return;
 
 	ctx.flags |= context::INTERRUPTED;
-	if(!interruptible(ctx))
-		return;
-
 	if(likely(&ctx != current && ctx.cont != nullptr))
 		(*ctx.cont->intr)(current);
 }
