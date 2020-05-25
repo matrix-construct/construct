@@ -113,6 +113,7 @@ ircd::m::vm::notify_hook
 {
 	{ "name",        "vm.notify"  },
 	{ "exceptions",  false        },
+	{ "interrupts",  false        },
 };
 
 decltype(ircd::m::vm::effect_hook)
@@ -120,6 +121,7 @@ ircd::m::vm::effect_hook
 {
 	{ "name",        "vm.effect"  },
 	{ "exceptions",  false        },
+	{ "interrupts",  false        },
 };
 
 //

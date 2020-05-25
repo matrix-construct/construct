@@ -90,7 +90,7 @@ struct ircd::m::hook::base::site
 	std::set<base *> hooks;
 	size_t matchers {0};
 	bool exceptions {true};
-	bool interrupts {false};
+	bool interrupts {true};
 	size_t calls {0};
 	size_t calling {0};
 
@@ -189,7 +189,7 @@ ircd::m::hook::site<data>::operator()(base **const &cur,
                                       const event &event,
                                       data d)
 {
-	const ctx::uninterruptible ui
+	const ctx::uninterruptible::nothrow ui
 	{
 		!interrupts
 	};

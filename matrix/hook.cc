@@ -335,7 +335,7 @@ ircd::m::hook::base::site::site(const json::members &members)
 }
 ,interrupts
 {
-	feature.get<bool>("interrupts", false)
+	feature.get<bool>("interrupts", true)
 }
 {
 	for(const auto &site : list)
@@ -519,7 +519,7 @@ void
 ircd::m::hook::site<void>::operator()(base **const &cur,
                                       const event &event)
 {
-	const ctx::uninterruptible ui
+	const ctx::uninterruptible::nothrow ui
 	{
 		!interrupts
 	};
