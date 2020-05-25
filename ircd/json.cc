@@ -120,9 +120,7 @@ ircd::json::parser
 	// characters that should appear after an escaping solidus
 	const rule<> escaper
 	{
-		quote | escape | unicode
-		| lit('b') | lit('f') | lit('n')
-		| lit('r') | lit('t') | lit('0')
+		char_("btnfr0\"\\") | unicode
 		,"escaper"
 	};
 
