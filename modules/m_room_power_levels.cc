@@ -71,7 +71,7 @@ ircd::m::auth_room_power_levels(const m::event &event,
 	// a. If users key in content is not a dictionary with keys that are
 	// valid user IDs with values that are integers (or a string that is
 	// an integer), reject.
-	if(json::type(json::get<"content"_>(event).get("users")) != json::OBJECT)
+	if(!json::type(json::get<"content"_>(event).get("users"), json::OBJECT))
 		throw FAIL
 		{
 			"m.room.power_levels content.users is not a json object."

@@ -263,12 +263,12 @@ const
 			content[prop]
 		};
 
-		if(!list || json::type(list, std::nothrow) != json::ARRAY)
+		if(!list || !json::type(list, json::ARRAY))
 			return;
 
 		for(auto it(begin(list)); it != end(list) && ret; ++it)
 		{
-			if(json::type(*it, json::strict, std::nothrow) != json::STRING)
+			if(!json::type(*it, json::STRING, json::strict))
 				continue;
 
 			if(!closure(json::string(*it)))

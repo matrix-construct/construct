@@ -72,7 +72,7 @@ try
 		content["m.relates_to"]
 	};
 
-	if(!m_relates_to || json::type(m_relates_to) != json::OBJECT)
+	if(!m_relates_to || !json::type(m_relates_to, json::OBJECT))
 		return;
 
 	const json::object &m_in_reply_to
@@ -82,7 +82,7 @@ try
 
 	const m::event::id &event_id
 	{
-		json::type(m_in_reply_to, std::nothrow) == json::OBJECT?
+		json::type(m_in_reply_to, json::OBJECT)?
 			m_in_reply_to.get<json::string>("event_id"):
 			m_relates_to.get<json::string>("event_id")
 	};

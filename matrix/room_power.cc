@@ -569,7 +569,7 @@ const
 	(const json::object &content)
 	{
 		for(const auto &[key, val] : content)
-			ret += json::type(val) == json::OBJECT;
+			ret += json::type(val, json::OBJECT);
 	});
 
 	return ret;
@@ -659,7 +659,7 @@ const
 			content.get(prop)
 		};
 
-		ret = json::type(value) == json::OBJECT;
+		ret = json::type(value, json::OBJECT);
 	});
 
 	return ret;
@@ -694,7 +694,7 @@ const
 	{
 		for(const auto &[key, val] : content)
 		{
-			if(json::type(val) != json::OBJECT)
+			if(!json::type(val, json::OBJECT))
 				continue;
 
 			if(!closure(key, std::numeric_limits<int64_t>::min()))
@@ -733,7 +733,7 @@ const
 		};
 
 		const string_view _collection{collection};
-		if(prop && (!_collection || json::type(_collection) != json::OBJECT))
+		if(prop && (!_collection || !json::type(_collection, json::OBJECT)))
 			return;
 
 		for(auto it(begin(collection)); it != end(collection) && ret; ++it)

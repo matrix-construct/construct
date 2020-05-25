@@ -465,7 +465,7 @@ ircd::m::dbs::_index_event_refs_m_relates(db::txn &txn,
 	if(!json::get<"content"_>(event).has("m.relates_to"))
 		return;
 
-	if(json::type(json::get<"content"_>(event).get("m.relates_to")) != json::OBJECT)
+	if(!json::type(json::get<"content"_>(event).get("m.relates_to"), json::OBJECT))
 		return;
 
 	const json::object &m_relates_to
@@ -549,7 +549,7 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 	if(!json::get<"content"_>(event).has("m.relates_to"))
 		return;
 
-	if(json::type(json::get<"content"_>(event).get("m.relates_to")) != json::OBJECT)
+	if(!json::type(json::get<"content"_>(event).get("m.relates_to"), json::OBJECT))
 		return;
 
 	const json::object &m_relates_to
@@ -560,7 +560,7 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 	if(!m_relates_to.has("m.in_reply_to"))
 		return;
 
-	if(json::type(m_relates_to.get("m.in_reply_to")) != json::OBJECT)
+	if(!json::type(m_relates_to.get("m.in_reply_to"), json::OBJECT))
 	{
 		log::derror
 		{

@@ -218,7 +218,7 @@ ircd::m::get(std::nothrow_t,
 
 		// The user expects an unquoted string to their closure, the same as
 		// if this value was found in its own column.
-		if(json::type(value) == json::STRING)
+		if(json::type(value, json::STRING))
 			value = json::string(value);
 
 		ret = true;

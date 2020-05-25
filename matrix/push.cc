@@ -146,11 +146,11 @@ try
 	tokens(path, ".", token_view_bool{[&value]
 	(const string_view &key)
 	{
-		if(json::type(value, std::nothrow) != json::OBJECT)
+		if(!json::type(value, json::OBJECT))
 			return false;
 
 		value = json::object(value)[key];
-		if(likely(json::type(value, std::nothrow) != json::STRING))
+		if(likely(!json::type(value, json::STRING)))
 			return true;
 
 		value = json::string(value);
@@ -580,7 +580,7 @@ ircd::m::push::notifying(const rule &rule)
 
 	for(const string_view &action : actions)
 	{
-		if(json::type(action, std::nothrow) != json::STRING)
+		if(!json::type(action, json::STRING))
 			continue;
 
 		const json::string &string
@@ -608,7 +608,7 @@ ircd::m::push::highlighting(const rule &rule)
 
 	for(const string_view &action : actions)
 	{
-		if(json::type(action, std::nothrow) != json::OBJECT)
+		if(!json::type(action, json::OBJECT))
 			continue;
 
 		const json::object &object
