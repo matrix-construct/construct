@@ -139,6 +139,9 @@ ircd::m::vm::fetch::handle(const event &event,
                            vm::eval &eval)
 try
 {
+	if(eval.room_internal)
+		return;
+
 	assert(eval.opts);
 	const auto &opts
 	{
