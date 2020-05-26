@@ -3000,16 +3000,14 @@ ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
                       const array &v)
 {
-	if(string_view{v}.empty())
-	{
-		const char *const start{begin(buf)};
-		consume(buf, copy(buf, empty_array));
-		const string_view ret{start, begin(buf)};
-		assert(serialized(v) == size(ret));
-		return ret;
-	}
+	if(likely(!string_view{v}.empty()))
+		return array::stringify(buf, begin(v), end(v));
 
-	return array::stringify(buf, begin(v), end(v));
+	const char *const start{begin(buf)};
+	consume(buf, copy(buf, empty_array));
+	const string_view ret{start, begin(buf)};
+	assert(serialized(v) == size(ret));
+	return ret;
 }
 
 size_t
