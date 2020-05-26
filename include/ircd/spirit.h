@@ -62,6 +62,13 @@ __attribute__((visibility("default")))
 	         class it = const char *,
 	         class... args>
 	bool parse(args&&...);
+
+	template<class gen,
+	         class... attr>
+	bool generate(mutable_buffer &out, gen&&, attr&&...);
+
+	template<class gen>
+	bool generate(mutable_buffer &out, gen&&);
 }
 
 namespace ircd {
@@ -139,6 +146,16 @@ __attribute__((visibility("hidden")))
 	using karma::buffer;
 	using karma::skip;
 
+	using prop_mask = mpl_::int_
+	<
+		karma::generator_properties::no_properties
+		| karma::generator_properties::buffering
+		| karma::generator_properties::counting
+		| karma::generator_properties::tracking
+		| karma::generator_properties::disabling
+	>;
+	using sink_type = karma::detail::output_iterator<char *, prop_mask, unused_type>;
+
 	template<size_t idx,
 	         class semantic_context>
 	auto &
@@ -162,6 +179,7 @@ namespace ircd {
 namespace spirit
 __attribute__((visibility("default")))
 {
+	extern thread_local mutable_buffer *sink_buffer;
 }}
 
 struct ircd::spirit::substring_view
@@ -223,6 +241,70 @@ ircd::spirit::expectation_failure<parent>::expectation_failure(const qi::expecta
 }
 {}
 
+template<class gen>
+inline bool
+ircd::generate(mutable_buffer &out,
+               gen&& g)
+{
+	using namespace ircd::spirit;
+
+	assert(!sink_buffer);
+	const scope_restore _sink_buffer
+	{
+		sink_buffer, &out
+	};
+
+	sink_type sink
+	{
+		begin(out)
+	};
+
+	const auto gg
+	{
+		karma::maxwidth(size(out))[std::forward<gen>(g)]
+	};
+
+	const auto ret
+	{
+		karma::generate(sink, gg)
+	};
+
+	return ret;
+}
+
+template<class gen,
+         class... attr>
+inline bool
+ircd::generate(mutable_buffer &out,
+               gen&& g,
+               attr&&... a)
+{
+	using namespace ircd::spirit;
+
+	assert(!sink_buffer);
+	const scope_restore _sink_buffer
+	{
+		sink_buffer, &out
+	};
+
+	sink_type sink
+	{
+		begin(out)
+	};
+
+	const auto gg
+	{
+		karma::maxwidth(size(out))[std::forward<gen>(g)]
+	};
+
+	const auto ret
+	{
+		karma::generate(sink, gg, std::forward<attr>(a)...)
+	};
+
+	return ret;
+}
+
 template<class parent_error,
          class it,
          class... args>
@@ -251,6 +333,39 @@ auto &
 ircd::spirit::attr_at(semantic_context&& c)
 {
 	return boost::fusion::at_c<idx>(c.attributes);
+}
+
+template<>
+[[gnu::visibility("internal")]]
+inline bool
+boost::spirit::karma::detail::buffer_sink::copy(ircd::spirit::sink_type &sink,
+                                                size_t maxwidth)
+const
+{
+	assert(ircd::spirit::sink_buffer);
+	return true;
+}
+
+template<>
+[[gnu::visibility("internal")]]
+inline bool
+boost::spirit::karma::detail::buffer_sink::copy_rest(ircd::spirit::sink_type &sink,
+                                                     size_t start_at)
+const
+{
+	assert(ircd::spirit::sink_buffer);
+	assert(false);
+	return true;
+}
+
+template<>
+[[gnu::visibility("internal")]]
+inline void
+boost::spirit::karma::detail::buffer_sink::output(const char &value)
+{
+	assert(ircd::spirit::sink_buffer);
+	auto &buf(*ircd::spirit::sink_buffer);
+	ircd::consume(buf, ircd::copy(buf, value));
 }
 
 #endif // HAVE_IRCD_SPIRIT_H

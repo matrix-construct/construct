@@ -23,8 +23,13 @@
  *  USA
  */
 
-decltype(ircd::spirit::rulebuf) thread_local
+thread_local
+decltype(ircd::spirit::rulebuf)
 ircd::spirit::rulebuf;
+
+thread_local
+decltype(ircd::spirit::sink_buffer)
+ircd::spirit::sink_buffer;
 
 //
 // Museum of historical comments

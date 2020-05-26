@@ -210,16 +210,6 @@ ircd::json::printer
 :karma::grammar<char *, unused_type>
 {
 	using it = char *;
-	using prop_mask = mpl_::int_
-	<
-		karma::generator_properties::no_properties
-		| karma::generator_properties::buffering
-		| karma::generator_properties::counting
-		| karma::generator_properties::tracking
-		| karma::generator_properties::disabling
-	>;
-	using sink_type = karma::detail::output_iterator<it, prop_mask, unused_type>;
-	static thread_local mutable_buffer *sink_buffer;
 
 	template<class T = unused_type,
 	         class... A>
@@ -468,43 +458,6 @@ noexcept
 	}
 }
 
-thread_local
-decltype(ircd::json::printer::sink_buffer)
-ircd::json::printer::sink_buffer;
-
-template<>
-[[gnu::visibility("internal")]]
-inline bool
-boost::spirit::karma::detail::buffer_sink::copy(ircd::json::printer::sink_type &sink,
-                                                size_t maxwidth)
-const
-{
-	assert(ircd::json::printer::sink_buffer);
-	return true;
-}
-
-template<>
-[[gnu::visibility("internal")]]
-inline bool
-boost::spirit::karma::detail::buffer_sink::copy_rest(ircd::json::printer::sink_type &sink,
-                                                     size_t start_at)
-const
-{
-	assert(ircd::json::printer::sink_buffer);
-	assert(false);
-	return true;
-}
-
-template<>
-[[gnu::visibility("internal")]]
-inline void
-boost::spirit::karma::detail::buffer_sink::output(const char &value)
-{
-	assert(ircd::json::printer::sink_buffer);
-	auto &buf(*ircd::json::printer::sink_buffer);
-	ircd::consume(buf, ircd::copy(buf, value));
-}
-
 template<class gen,
          class... attr>
 [[gnu::visibility("internal")]]
@@ -525,33 +478,7 @@ const
 		};
 	}};
 
-	const auto maxwidth
-	{
-		karma::maxwidth(size(out))
-	};
-
-	const auto gg
-	{
-		maxwidth[std::forward<gen>(g)]
-	};
-
-	assert(!sink_buffer);
-	const scope_restore set_sink_buffer
-	{
-		sink_buffer, &out
-	};
-
-	sink_type sink
-	{
-		begin(out)
-	};
-
-	const auto ret
-	{
-		karma::generate(sink, gg | eps[throws], std::forward<attr>(a)...)
-	};
-
-	return ret;
+	return ircd::generate(out, std::forward<gen>(g) | eps[throws], std::forward<attr>(a)...);
 }
 
 template<class gen>
@@ -571,33 +498,7 @@ const
 		};
 	}};
 
-	const auto maxwidth
-	{
-		karma::maxwidth(size(out))
-	};
-
-	const auto gg
-	{
-		maxwidth[std::forward<gen>(g)]
-	};
-
-	assert(!sink_buffer);
-	const scope_restore set_sink_buffer
-	{
-		sink_buffer, &out
-	};
-
-	sink_type sink
-	{
-		begin(out)
-	};
-
-	const auto ret
-	{
-		karma::generate(sink, gg | eps[throws])
-	};
-
-	return ret;
+	return ircd::generate(out, std::forward<gen>(g) | eps[throws]);
 }
 
 template<class it_a,
