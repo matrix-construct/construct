@@ -40,7 +40,7 @@ __attribute__((visibility("hidden")))
 
 	bool is_specifier(const string_view &name);
 	void handle_specifier(mutable_buffer &out, const uint &idx, const spec &, const arg &);
-	template<class generator> bool generate_string(char *&out, generator&&, const arg &val);
+	template<class generator> bool generate_string(char *&out, const size_t &max, generator&&, const arg &val);
 	template<class T, class lambda> bool visit_type(const arg &val, lambda&& closure);
 }}
 
@@ -547,7 +547,6 @@ ircd::fmt::pointer_specifier::operator()(char *&out,
 const
 {
 	using karma::eps;
-	using karma::maxwidth;
 
 	static const auto throw_illegal{[]
 	{
@@ -589,6 +588,11 @@ const
 	}
 	static const generator;
 
+	static const auto &ep
+	{
+		eps[throw_illegal]
+	};
+
 	const auto &ptr(get<0>(val));
 	const auto &type(get<1>(val));
 	const void *const p
@@ -596,20 +600,26 @@ const
 		*static_cast<const void *const *>(ptr)
 	};
 
-	const auto &mw(maxwidth(max));
-	static const auto &ep(eps[throw_illegal]);
+	bool ret;
+	mutable_buffer buf
+	{
+		out, max
+	};
 
 	if(!spec.width)
-		return karma::generate(out, mw[generator] | ep, uintptr_t(p));
+		ret = generate(buf, generator | ep, uintptr_t(p));
 
-	if(spec.sign == '-')
+	else if(spec.sign == '-')
 	{
 		const auto &g(generator.aligned_left(spec.width, spec.pad));
-		return karma::generate(out, mw[g] | ep, uintptr_t(p));
+		ret = generate(buf, g | ep, uintptr_t(p));
+	} else {
+		const auto &g(generator.aligned_right(spec.width, spec.pad));
+		ret = generate(buf, g | ep, uintptr_t(p));
 	}
 
-	const auto &g(generator.aligned_right(spec.width, spec.pad));
-	return karma::generate(out, mw[g] | ep, uintptr_t(p));
+	out = data(buf);
+	return ret;
 }
 
 bool
@@ -620,7 +630,6 @@ ircd::fmt::char_specifier::operator()(char *&out,
 const
 {
 	using karma::eps;
-	using karma::maxwidth;
 
 	static const auto throw_illegal{[]
 	{
@@ -647,8 +656,14 @@ const
 	const auto &type(get<1>(val));
 	if(type == typeid(const char))
 	{
+		mutable_buffer buf
+		{
+			out, max
+		};
+
 		const auto &c(*static_cast<const char *>(ptr));
-		karma::generate(out, maxwidth(max)[generator] | eps[throw_illegal], c);
+		generate(buf, generator | eps[throw_illegal], c);
+		out = data(buf);
 		return true;
 	}
 	else return false;
@@ -662,7 +677,6 @@ ircd::fmt::bool_specifier::operator()(char *&out,
 const
 {
 	using karma::eps;
-	using karma::maxwidth;
 
 	static const auto throw_illegal{[]
 	{
@@ -674,8 +688,6 @@ const
 
 	const auto closure([&](const bool &boolean)
 	{
-		using karma::maxwidth;
-
 		struct generator
 		:karma::grammar<char *, bool()>
 		{
@@ -689,7 +701,18 @@ const
 		}
 		static const generator;
 
-		return karma::generate(out, maxwidth(max)[generator] | eps[throw_illegal], boolean);
+		mutable_buffer buf
+		{
+			out, max
+		};
+
+		const auto ret
+		{
+			generate(buf, generator | eps[throw_illegal], boolean)
+		};
+
+		out = data(buf);
+		return ret;
 	});
 
 	return !until(types, [&](auto type)
@@ -751,20 +774,31 @@ const
 		}
 		static const generator;
 
-		const auto &mw(maxwidth(max));
-		static const auto &ep(eps[throw_illegal]);
+		static const auto &ep
+		{
+			eps[throw_illegal]
+		};
+
+		bool ret;
+		mutable_buffer buf
+		{
+			out, max
+		};
 
 		if(!spec.width)
-			return karma::generate(out, mw[generator] | ep, integer);
+			ret = generate(buf, generator | ep, integer);
 
-		if(spec.sign == '-')
+		else if(spec.sign == '-')
 		{
 			const auto &g(generator.aligned_left(spec.width, spec.pad));
-			return karma::generate(out, mw[g] | ep, integer);
+			ret = generate(buf, g | ep, integer);
+		} else {
+			const auto &g(generator.aligned_right(spec.width, spec.pad));
+			ret = generate(buf, g | ep, integer);
 		}
 
-		const auto &g(generator.aligned_right(spec.width, spec.pad));
-		return karma::generate(out, mw[g] | ep, integer);
+		out = data(buf);
+		return ret;
 	});
 
 	return !until(types, [&](auto type)
@@ -826,20 +860,31 @@ const
 		}
 		static const generator;
 
-		const auto &mw(maxwidth(max));
-		static const auto &ep(eps[throw_illegal]);
+		static const auto &ep
+		{
+			eps[throw_illegal]
+		};
+
+		bool ret;
+		mutable_buffer buf
+		{
+			out, max
+		};
 
 		if(!spec.width)
-			return karma::generate(out, mw[generator] | ep, integer);
+			ret = generate(buf, generator | ep, integer);
 
-		if(spec.sign == '-')
+		else if(spec.sign == '-')
 		{
 			const auto &g(generator.aligned_left(spec.width, spec.pad));
-			return karma::generate(out, mw[g] | ep, integer);
+			ret = generate(buf, g | ep, integer);
+		} else {
+			const auto &g(generator.aligned_right(spec.width, spec.pad));
+			ret = generate(buf, g | ep, integer);
 		}
 
-		const auto &g(generator.aligned_right(spec.width, spec.pad));
-		return karma::generate(out, mw[g] | ep, integer);
+		out = data(buf);
+		return ret;
 	});
 
 	return !until(types, [&](auto type)
@@ -865,8 +910,6 @@ const
 
 	const auto closure([&](const ulong &integer)
 	{
-		using karma::maxwidth;
-
 		struct generator
 		:karma::grammar<char *, ulong()>
 		{
@@ -900,20 +943,31 @@ const
 		}
 		static const generator;
 
-		const auto &mw(maxwidth(max));
-		static const auto &ep(eps[throw_illegal]);
+		static const auto &ep
+		{
+			eps[throw_illegal]
+		};
+
+		bool ret;
+		mutable_buffer buf
+		{
+			out, max
+		};
 
 		if(!spec.width)
-			return karma::generate(out, mw[generator] | ep, integer);
+			ret = generate(buf, generator | ep, integer);
 
-		if(spec.sign == '-')
+		else if(spec.sign == '-')
 		{
 			const auto &g(generator.aligned_left(spec.width, spec.pad));
-			return karma::generate(out, mw[g] | ep, integer);
+			ret = generate(buf, g | ep, integer);
+		} else {
+			const auto &g(generator.aligned_right(spec.width, spec.pad));
+			ret = generate(buf, g | ep, integer);
 		}
 
-		const auto &g(generator.aligned_right(spec.width, spec.pad));
-		return karma::generate(out, mw[g] | ep, integer);
+		out = data(buf);
+		return ret;
 	});
 
 	return !until(types, [&](auto type)
@@ -939,8 +993,6 @@ const
 
 	const auto closure([&](const ulong &integer)
 	{
-		using karma::maxwidth;
-
 		struct generator
 		:karma::grammar<char *, ulong()>
 		{
@@ -974,20 +1026,31 @@ const
 		}
 		static const generator;
 
-		const auto &mw(maxwidth(max));
-		static const auto &ep(eps[throw_illegal]);
+		static const auto &ep
+		{
+			eps[throw_illegal]
+		};
+
+		bool ret;
+		mutable_buffer buf
+		{
+			out, max
+		};
 
 		if(!spec.width)
-			return karma::generate(out, mw[generator] | ep, integer);
+			ret = generate(buf, generator | ep, integer);
 
-		if(spec.sign == '-')
+		else if(spec.sign == '-')
 		{
 			const auto &g(generator.aligned_left(spec.width, spec.pad));
-			return karma::generate(out, mw[g] | ep, integer);
+			ret = generate(buf, g | ep, integer);
+		} else {
+			const auto &g(generator.aligned_right(spec.width, spec.pad));
+			ret = generate(buf, g | ep, integer);
 		}
 
-		const auto &g(generator.aligned_right(spec.width, spec.pad));
-		return karma::generate(out, mw[g] | ep, integer);
+		out = data(buf);
+		return ret;
 	});
 
 	return !until(types, [&](auto type)
@@ -1019,7 +1082,6 @@ const
 	const auto closure([&](const double &floating)
 	{
 		using karma::double_;
-		using karma::maxwidth;
 
 		struct generator
 		:karma::grammar<char *, double()>
@@ -1048,7 +1110,18 @@ const
 		}
 		static const generator;
 
-		return karma::generate(out, maxwidth(max)[generator] | eps[throw_illegal], floating);
+		mutable_buffer buf
+		{
+			out, max
+		};
+
+		const auto ret
+		{
+			generate(buf, generator | eps[throw_illegal], floating)
+		};
+
+		out = data(buf);
+		return ret;
 	});
 
 	return !until(types, [&](auto type)
@@ -1066,7 +1139,6 @@ const
 {
 	using karma::char_;
 	using karma::eps;
-	using karma::maxwidth;
 	using karma::unused_type;
 
 	static const auto throw_illegal{[]
@@ -1116,25 +1188,32 @@ const
 	};
 
 	if(!spec.width)
-		return generate_string(out, maxwidth(max)[generator] | ep, val);
+		return generate_string(out, max, generator | ep, val);
 
 	if(spec.sign == '-')
 	{
 		const auto &g(generator.aligned_left(spec.width, spec.pad));
-		return generate_string(out, maxwidth(max)[g] | ep, val);
+		return generate_string(out, max, g | ep, val);
 	}
 
 	const auto &g(generator.aligned_right(spec.width, spec.pad));
-	return generate_string(out, maxwidth(max)[g] | ep, val);
+	return generate_string(out, max, g | ep, val);
 }
 
 template<class generator>
 bool
 ircd::fmt::generate_string(char *&out,
+                           const size_t &max,
                            generator&& gen,
                            const arg &val)
 {
 	using karma::eps;
+
+	bool ret;
+	mutable_buffer buf
+	{
+		out, max
+	};
 
 	const auto &ptr(get<0>(val));
 	const auto &type(get<1>(val));
@@ -1144,28 +1223,31 @@ ircd::fmt::generate_string(char *&out,
 	   type == typeid(ircd::json::array))
 	{
 		const auto &str(*static_cast<const ircd::string_view *>(ptr));
-		return karma::generate(out, std::forward<generator>(gen), str);
+		ret = generate(buf, std::forward<generator>(gen), str);
 	}
 	else if(type == typeid(std::string_view))
 	{
 		const auto &str(*static_cast<const std::string_view *>(ptr));
-		return karma::generate(out, std::forward<generator>(gen), str);
+		ret = generate(buf, std::forward<generator>(gen), str);
 	}
 	else if(type == typeid(std::string))
 	{
 		const auto &str(*static_cast<const std::string *>(ptr));
-		return karma::generate(out, std::forward<generator>(gen), string_view{str});
+		ret = generate(buf, std::forward<generator>(gen), string_view{str});
 	}
 	else if(type == typeid(const char *))
 	{
 		const char *const &str{*static_cast<const char *const *>(ptr)};
-		return karma::generate(out, std::forward<generator>(gen), string_view{str});
+		ret = generate(buf, std::forward<generator>(gen), string_view{str});
+	} else {
+		// This for string literals which have unique array types depending on their size.
+		// There is no reasonable way to match them. The best that can be hoped for is the
+		// grammar will fail gracefully (most of the time) or not print something bogus when
+		// it happens to be legal.
+		const auto &str(static_cast<const char *>(ptr));
+		ret = generate(buf, std::forward<generator>(gen), string_view{str});
 	}
 
-	// This for string literals which have unique array types depending on their size.
-	// There is no reasonable way to match them. The best that can be hoped for is the
-	// grammar will fail gracefully (most of the time) or not print something bogus when
-	// it happens to be legal.
-	const auto &str(static_cast<const char *>(ptr));
-	return karma::generate(out, std::forward<generator>(gen), string_view{str});
+	out = data(buf);
+	return ret;
 }
