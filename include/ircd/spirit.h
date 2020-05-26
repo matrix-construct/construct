@@ -52,7 +52,14 @@ __attribute__((visibility("default")))
 	struct substring_view;
 	template<class parent_error> struct expectation_failure;
 
-	extern thread_local char rulebuf[64]; // parse.cc
+	IRCD_EXCEPTION(ircd::error, error);
+	IRCD_EXCEPTION(error, generator_error);
+	IRCD_EXCEPTION(generator_error, buffer_overrun);
+
+	// parse.cc
+	extern thread_local char rulebuf[64];
+	extern thread_local mutable_buffer *sink_buffer;
+	extern thread_local size_t sink_consumed;
 }}
 
 namespace ircd
@@ -66,9 +73,6 @@ __attribute__((visibility("default")))
 	template<class gen,
 	         class... attr>
 	bool generate(mutable_buffer &out, gen&&, attr&&...);
-
-	template<class gen>
-	bool generate(mutable_buffer &out, gen&&);
 }
 
 namespace ircd {
@@ -154,6 +158,7 @@ __attribute__((visibility("hidden")))
 		| karma::generator_properties::tracking
 		| karma::generator_properties::disabling
 	>;
+
 	using sink_type = karma::detail::output_iterator<char *, prop_mask, unused_type>;
 
 	template<size_t idx,
@@ -179,7 +184,6 @@ namespace ircd {
 namespace spirit
 __attribute__((visibility("default")))
 {
-	extern thread_local mutable_buffer *sink_buffer;
 }}
 
 struct ircd::spirit::substring_view
@@ -241,50 +245,29 @@ ircd::spirit::expectation_failure<parent>::expectation_failure(const qi::expecta
 }
 {}
 
-template<class gen>
-inline bool
-ircd::generate(mutable_buffer &out,
-               gen&& g)
-{
-	using namespace ircd::spirit;
-
-	assert(!sink_buffer);
-	const scope_restore _sink_buffer
-	{
-		sink_buffer, &out
-	};
-
-	sink_type sink
-	{
-		begin(out)
-	};
-
-	const auto gg
-	{
-		karma::maxwidth(size(out))[std::forward<gen>(g)]
-	};
-
-	const auto ret
-	{
-		karma::generate(sink, gg)
-	};
-
-	return ret;
-}
-
 template<class gen,
          class... attr>
 inline bool
 ircd::generate(mutable_buffer &out,
                gen&& g,
                attr&&... a)
+
 {
 	using namespace ircd::spirit;
 
-	assert(!sink_buffer);
-	const scope_restore _sink_buffer
+	const scope_restore sink_buffer_
 	{
-		sink_buffer, &out
+		sink_buffer, std::addressof(out)
+	};
+
+	const scope_restore sink_consumed_
+	{
+		sink_consumed, 0UL
+	};
+
+	const size_t max
+	{
+		size(out)
 	};
 
 	sink_type sink
@@ -292,15 +275,21 @@ ircd::generate(mutable_buffer &out,
 		begin(out)
 	};
 
-	const auto gg
+	const bool ret
 	{
-		karma::maxwidth(size(out))[std::forward<gen>(g)]
+		karma::generate(sink, std::forward<gen>(g), std::forward<attr>(a)...)
 	};
 
-	const auto ret
+	if(unlikely(sink_consumed > max))
 	{
-		karma::generate(sink, gg, std::forward<attr>(a)...)
-	};
+		char pbuf[2][48];
+		throw spirit::buffer_overrun
+		{
+			"Insufficient buffer of %s for %s",
+			pretty(pbuf[0], iec(max)),
+			pretty(pbuf[1], iec(sink_consumed)),
+		};
+	}
 
 	return ret;
 }
@@ -336,36 +325,59 @@ ircd::spirit::attr_at(semantic_context&& c)
 }
 
 template<>
-[[gnu::visibility("internal")]]
-inline bool
-boost::spirit::karma::detail::buffer_sink::copy(ircd::spirit::sink_type &sink,
-                                                size_t maxwidth)
-const
+inline void
+boost::spirit::karma::detail::buffer_sink::output(const char &value)
 {
 	assert(ircd::spirit::sink_buffer);
+
+	#if __has_builtin(__builtin_assume)
+		__builtin_assume(ircd::spirit::sink_buffer != nullptr);
+	#endif
+
+	auto &sink_buffer
+	{
+		*ircd::spirit::sink_buffer
+	};
+
+	auto &sink_consumed
+	{
+		ircd::spirit::sink_consumed
+	};
+
+	const auto consumed
+	{
+		ircd::consume(sink_buffer, ircd::copy(sink_buffer, value))
+	};
+
+	this->width += consumed;
+	sink_consumed++;
+}
+
+template<>
+inline bool
+ircd::spirit::sink_type::good()
+const
+{
 	return true;
 }
 
 template<>
-[[gnu::visibility("internal")]]
 inline bool
 boost::spirit::karma::detail::buffer_sink::copy_rest(ircd::spirit::sink_type &sink,
                                                      size_t start_at)
 const
 {
-	assert(ircd::spirit::sink_buffer);
 	assert(false);
-	return true;
+	return true; //sink.good();
 }
 
 template<>
-[[gnu::visibility("internal")]]
-inline void
-boost::spirit::karma::detail::buffer_sink::output(const char &value)
+inline bool
+boost::spirit::karma::detail::buffer_sink::copy(ircd::spirit::sink_type &sink,
+                                                size_t maxwidth)
+const
 {
-	assert(ircd::spirit::sink_buffer);
-	auto &buf(*ircd::spirit::sink_buffer);
-	ircd::consume(buf, ircd::copy(buf, value));
+	return true; //sink.good();
 }
 
 #endif // HAVE_IRCD_SPIRIT_H

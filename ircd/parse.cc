@@ -31,6 +31,10 @@ thread_local
 decltype(ircd::spirit::sink_buffer)
 ircd::spirit::sink_buffer;
 
+thread_local
+decltype(ircd::spirit::sink_consumed)
+ircd::spirit::sink_consumed;
+
 //
 // Museum of historical comments
 //

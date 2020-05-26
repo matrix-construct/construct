@@ -467,18 +467,13 @@ ircd::json::printer::operator()(mutable_buffer &out,
                                 attr&&... a)
 const
 {
-	const auto throws{[&out]
-	{
-		throw print_panic
+	if(unlikely(!ircd::generate(out, std::forward<gen>(g), std::forward<attr>(a)...)))
+		throw print_error
 		{
-			"Failed to print attributes '%s' generator '%s' (%zd bytes in buffer)",
-			demangle<decltype(a)...>(),
-			demangle<decltype(g)>(),
-			size(out)
+			"Failed to generate JSON"
 		};
-	}};
 
-	return ircd::generate(out, std::forward<gen>(g) | eps[throws], std::forward<attr>(a)...);
+	return true;
 }
 
 template<class gen>
@@ -488,17 +483,13 @@ ircd::json::printer::operator()(mutable_buffer &out,
                                 gen&& g)
 const
 {
-	const auto throws{[&out]
-	{
-		throw print_panic
+	if(unlikely(!ircd::generate(out, std::forward<gen>(g))))
+		throw print_error
 		{
-			"Failed to print generator '%s' (%zd bytes in buffer)",
-			demangle<decltype(g)>(),
-			size(out)
+			"Failed to generate JSON"
 		};
-	}};
 
-	return ircd::generate(out, std::forward<gen>(g) | eps[throws]);
+	return true;
 }
 
 template<class it_a,
