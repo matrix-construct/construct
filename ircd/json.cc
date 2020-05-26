@@ -453,7 +453,11 @@ noexcept
 
 		case mode::ESCAPED:
 		{
-			const bool ok(in == 'u' | in == '"' | in == '\\');
+			const auto ok
+			{
+				(in == 'u') | (in == '"') | (in == '\\')
+			};
+
 			sst.escaped = false;
 			out = ok? out: '\\';
 			st.mode = ok?
