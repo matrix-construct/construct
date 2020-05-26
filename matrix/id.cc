@@ -370,12 +370,23 @@ const
 		};
 	}};
 
-	const auto gg
+	mutable_buffer buf
 	{
-		maxwidth(size_t(stop - out))[std::forward<decltype(g)>(g)] | eps[throws]
+		out, stop
 	};
 
-	return karma::generate(out, gg, std::forward<decltype(a)>(a));
+	const auto gg
+	{
+		std::forward<decltype(g)>(g) | eps[throws]
+	};
+
+	const auto ret
+	{
+		generate(buf, gg, std::forward<decltype(a)>(a))
+	};
+
+	out = buffer::data(buf);
+	return ret;
 }
 
 template<class gen>
@@ -395,12 +406,23 @@ const
 		};
 	}};
 
-	const auto gg
+	mutable_buffer buf
 	{
-		maxwidth(size_t(stop - out))[std::forward<decltype(g)>(g)] | eps[throws]
+		out, stop
 	};
 
-	return karma::generate(out, gg);
+	const auto gg
+	{
+		std::forward<decltype(g)>(g) | eps[throws]
+	};
+
+	const auto ret
+	{
+		generate(buf, gg)
+	};
+
+	out = buffer::data(buf);
+	return ret;
 }
 
 template<class... args>
