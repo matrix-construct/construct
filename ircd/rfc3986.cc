@@ -600,18 +600,22 @@ ircd::rfc3986::encode(const mutable_buffer &out,
 }
 
 ircd::string_view
-ircd::rfc3986::encode(const mutable_buffer &buf,
+ircd::rfc3986::encode(const mutable_buffer &buf_,
                       const string_view &url)
 {
-	char *out(data(buf));
+	mutable_buffer buf
+	{
+		buf_
+	};
+
 	const bool ok
 	{
-		karma::generate(out, maxwidth(size(buf))[encoder], url)
+		ircd::generate(buf, encoder, url)
 	};
 
 	return string_view
 	{
-		data(buf), size_t(std::distance(data(buf), out))
+		data(buf_), data(buf)
 	};
 }
 
