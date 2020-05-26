@@ -43,6 +43,8 @@ namespace ircd::allocator
 	string_view info(const mutable_buffer &, const string_view &opts = {});
 	string_view get(const string_view &var, const mutable_buffer &val);
 	string_view set(const string_view &var, const string_view &val, const mutable_buffer &cur = {});
+	template<class T> T get(const string_view &var);
+	template<class T> T set(const string_view &var, T val);
 	bool trim(const size_t &pad = 0) noexcept; // malloc_trim(3)
 }
 
@@ -772,4 +774,56 @@ ircd::allocator::twolevel<T, L0_SIZE>::operator
 allocator()
 {
 	return ircd::allocator::twolevel<T, L0_SIZE>::allocator(*this);
+}
+
+template<class T>
+inline T
+ircd::allocator::set(const string_view &var,
+                     T val)
+{
+	const string_view in
+	{
+		reinterpret_cast<const char *>(std::addressof(val)),
+		sizeof(val)
+	};
+
+	const string_view &out
+	{
+		set(var, in, mutable_buffer
+		{
+			reinterpret_cast<char *>(std::addressof(val)),
+			sizeof(val)
+		})
+	};
+
+	if(unlikely(size(out) != sizeof(val)))
+		throw std::system_error
+		{
+			make_error_code(std::errc::no_such_file_or_directory)
+		};
+
+	return val;
+}
+
+template<class T>
+inline T
+ircd::allocator::get(const string_view &var)
+{
+	T val;
+	const string_view &out
+	{
+		get(var, mutable_buffer
+		{
+			reinterpret_cast<char *>(std::addressof(val)),
+			sizeof(val)
+		})
+	};
+
+	if(unlikely(size(out) != sizeof(val)))
+		throw std::system_error
+		{
+			make_error_code(std::errc::no_such_file_or_directory)
+		};
+
+	return val;
 }
