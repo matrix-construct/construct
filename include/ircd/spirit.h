@@ -57,7 +57,7 @@ __attribute__((visibility("default")))
 	IRCD_EXCEPTION(generator_error, buffer_overrun);
 
 	// parse.cc
-	extern thread_local char rulebuf[64];
+	extern thread_local char rule_buffer[64];
 	extern thread_local mutable_buffer *sink_buffer;
 	extern thread_local size_t sink_consumed;
 }}
@@ -223,7 +223,7 @@ ircd::spirit::expectation_failure<parent>::expectation_failure(const qi::expecta
 :parent
 {
 	"Expected %s. You input %zd invalid characters :%s",
-	ircd::string(rulebuf, e.what_),
+	ircd::string(rule_buffer, e.what_),
 	std::distance(e.first, e.last),
 	string_view{e.first, e.first + std::min(std::distance(e.first, e.last), show_max)}
 }
@@ -237,7 +237,7 @@ ircd::spirit::expectation_failure<parent>::expectation_failure(const qi::expecta
 :parent
 {
 	"Expected %s. You input %zd invalid characters somewhere between position %zd and %zd: %s",
-	ircd::string(rulebuf, e.what_),
+	ircd::string(rule_buffer, e.what_),
 	std::distance(e.first, e.last),
 	std::distance(start, e.first),
 	std::distance(start, e.last),

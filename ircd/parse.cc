@@ -24,8 +24,8 @@
  */
 
 thread_local
-decltype(ircd::spirit::rulebuf)
-ircd::spirit::rulebuf;
+decltype(ircd::spirit::rule_buffer)
+ircd::spirit::rule_buffer;
 
 thread_local
 decltype(ircd::spirit::sink_buffer)
