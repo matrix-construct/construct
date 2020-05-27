@@ -400,7 +400,7 @@ ircd::buffer::consume(buffer<it> &buffer,
 	assert(bytes <= size(buffer));
 	get<0>(buffer) += bytes;
 	assert(get<0>(buffer) <= get<1>(buffer));
-	return size(buffer);
+	return bytes;
 }
 
 inline bool
