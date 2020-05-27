@@ -310,7 +310,7 @@ catch(const spirit::qi::expectation_failure<it> &e)
 
 template<size_t idx,
          class semantic_context>
-auto &
+inline auto &
 ircd::spirit::local_at(semantic_context&& c)
 {
 	return boost::fusion::at_c<idx>(c.locals);
@@ -318,7 +318,7 @@ ircd::spirit::local_at(semantic_context&& c)
 
 template<size_t idx,
          class semantic_context>
-auto &
+inline auto &
 ircd::spirit::attr_at(semantic_context&& c)
 {
 	return boost::fusion::at_c<idx>(c.attributes);
