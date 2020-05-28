@@ -17,6 +17,9 @@ inline namespace util
 	template<class T> struct scope_restore;
 }}
 
+/// Overwrite a value for the duration of the instance restoring the
+/// original value at destruction. Device cannot be moved or copied.
+///
 template<class T>
 struct ircd::util::scope_restore
 {

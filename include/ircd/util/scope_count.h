@@ -15,11 +15,12 @@ namespace ircd {
 inline namespace util
 {
 	template<class T> struct scope_count;
-}};
+}}
 
-/// A simple boiler-plate for incrementing a counter when constructed and
-/// decrementing it to its previous value when destructed. This takes a runtime
-/// reference to that counter.
+/// Increment a counter when constructed and decrement it when destructed.
+/// This takes a runtime reference to that counter. The counter thus maintains
+/// the number of reentrances (or entrances across different contexts).
+///
 template<class T>
 struct ircd::util::scope_count
 {
