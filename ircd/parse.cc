@@ -28,12 +28,8 @@ decltype(ircd::spirit::rule_buffer)
 ircd::spirit::rule_buffer;
 
 thread_local
-decltype(ircd::spirit::sink_buffer)
-ircd::spirit::sink_buffer;
-
-thread_local
-decltype(ircd::spirit::sink_consumed)
-ircd::spirit::sink_consumed;
+decltype(ircd::spirit::generator_state)
+ircd::spirit::generator_state;
 
 //
 // Museum of historical comments

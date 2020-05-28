@@ -49,8 +49,8 @@ namespace ircd {
 namespace spirit
 __attribute__((visibility("default")))
 {
-	struct substring_view;
 	template<class parent_error> struct expectation_failure;
+	struct substring_view;
 
 	IRCD_EXCEPTION(ircd::error, error);
 	IRCD_EXCEPTION(error, generator_error);
@@ -58,8 +58,7 @@ __attribute__((visibility("default")))
 
 	// parse.cc
 	extern thread_local char rule_buffer[64];
-	extern thread_local mutable_buffer *sink_buffer;
-	extern thread_local size_t sink_consumed;
+	extern thread_local struct generator_state *generator_state;
 }}
 
 namespace ircd
@@ -245,6 +244,24 @@ ircd::spirit::expectation_failure<parent>::expectation_failure(const qi::expecta
 }
 {}
 
+struct ircd::spirit::generator_state
+{
+	/// Destination buffer (used like window_buffer).
+	mutable_buffer &out;
+
+	/// Current consumption count of the destination buffer.
+	size_t consumed {0};
+
+	/// The number of attemtped generated characters to the destination. This
+	/// can be larger than the consumed counter to indicate the destination
+	/// buffer is insufficient. Note that characters are otherwise quietly
+	/// discarded when the destination (out) is full.
+	size_t generated {0};
+
+	/// Internal state for buffer_sink::copy()
+	size_t last_generated {0}, last_width {0};
+};
+
 template<class gen,
          class... attr>
 inline bool
@@ -254,16 +271,7 @@ ircd::generate(mutable_buffer &out,
 
 {
 	using namespace ircd::spirit;
-
-	const scope_restore sink_buffer_
-	{
-		sink_buffer, std::addressof(out)
-	};
-
-	const scope_restore sink_consumed_
-	{
-		sink_consumed, 0UL
-	};
+	namespace spirit = ircd::spirit;
 
 	const size_t max
 	{
@@ -275,19 +283,29 @@ ircd::generate(mutable_buffer &out,
 		begin(out)
 	};
 
+	struct spirit::generator_state state
+	{
+		out
+	};
+
+	const scope_restore _state
+	{
+		spirit::generator_state, &state
+	};
+
 	const bool ret
 	{
 		karma::generate(sink, std::forward<gen>(g), std::forward<attr>(a)...)
 	};
 
-	if(unlikely(sink_consumed > max))
+	if(unlikely(state.generated > max))
 	{
 		char pbuf[2][48];
 		throw spirit::buffer_overrun
 		{
 			"Insufficient buffer of %s for %s",
 			pretty(pbuf[0], iec(max)),
-			pretty(pbuf[1], iec(sink_consumed)),
+			pretty(pbuf[1], iec(state.generated)),
 		};
 	}
 
@@ -328,37 +346,69 @@ template<>
 inline void
 boost::spirit::karma::detail::buffer_sink::output(const char &value)
 {
-	assert(ircd::spirit::sink_buffer);
-
+	assert(ircd::spirit::generator_state);
 	#if __has_builtin(__builtin_assume)
-		__builtin_assume(ircd::spirit::sink_buffer != nullptr);
+		__builtin_assume(ircd::spirit::generator_state != nullptr);
 	#endif
 
-	auto &sink_buffer
+	auto &state
 	{
-		*ircd::spirit::sink_buffer
+		*ircd::spirit::generator_state
 	};
 
-	auto &sink_consumed
+	const auto &consumed
 	{
-		ircd::spirit::sink_consumed
-	};
-
-	const auto consumed
-	{
-		ircd::consume(sink_buffer, ircd::copy(sink_buffer, value))
+		ircd::consume(state.out, ircd::copy(state.out, value))
 	};
 
 	this->width += consumed;
-	sink_consumed++;
+	state.generated++;
 }
 
 template<>
 inline bool
-ircd::spirit::sink_type::good()
+boost::spirit::karma::detail::buffer_sink::copy(ircd::spirit::sink_type &sink,
+                                                size_t maxwidth)
 const
 {
-	return true;
+	assert(ircd::spirit::generator_state);
+	#if __has_builtin(__builtin_assume)
+		__builtin_assume(ircd::spirit::generator_state != nullptr);
+	#endif
+
+	auto &state
+	{
+		*ircd::spirit::generator_state
+	};
+
+	const auto &width_diff
+	{
+		this->width - state.last_width
+	};
+
+	state.consumed +=
+		state.last_generated == state.generated?
+			width_diff:
+			this->width;
+
+	const auto &rewind_count
+	{
+		std::min(state.generated - state.consumed, state.consumed)
+	};
+
+	const auto &rewind
+	{
+		state.generated > state.consumed?
+			rewind_count:
+			0L
+	};
+
+	std::get<0>(state.out) -= rewind;
+	state.generated -= rewind;
+
+	state.last_generated = state.generated;
+	state.last_width = this->width;
+	return true; //sink.good();
 }
 
 template<>
@@ -373,11 +423,10 @@ const
 
 template<>
 inline bool
-boost::spirit::karma::detail::buffer_sink::copy(ircd::spirit::sink_type &sink,
-                                                size_t maxwidth)
+ircd::spirit::sink_type::good()
 const
 {
-	return true; //sink.good();
+	return true;
 }
 
 #endif // HAVE_IRCD_SPIRIT_H
