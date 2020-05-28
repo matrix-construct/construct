@@ -312,10 +312,10 @@ ircd::json::printer
 
 	template<class gen,
 	         class... attr>
-	bool operator()(mutable_buffer &out, gen&&, attr&&...) const;
+	void operator()(mutable_buffer &out, gen&&, attr&&...) const;
 
 	template<class gen>
-	bool operator()(mutable_buffer &out, gen&&) const;
+	void operator()(mutable_buffer &out, gen&&) const;
 
 	printer()
 	:printer::base_type{rule<>{}}
@@ -461,7 +461,7 @@ noexcept
 template<class gen,
          class... attr>
 [[gnu::visibility("internal")]]
-bool
+void
 ircd::json::printer::operator()(mutable_buffer &out,
                                 gen&& g,
                                 attr&&... a)
@@ -472,13 +472,11 @@ const
 		{
 			"Failed to generate JSON"
 		};
-
-	return true;
 }
 
 template<class gen>
 [[gnu::visibility("internal")]]
-bool
+void
 ircd::json::printer::operator()(mutable_buffer &out,
                                 gen&& g)
 const
@@ -488,8 +486,6 @@ const
 		{
 			"Failed to generate JSON"
 		};
-
-	return true;
 }
 
 template<class it_a,
@@ -1658,13 +1654,7 @@ ircd::json::stack::member::member(object &po,
 
 	char tmp[512];
 	mutable_buffer buf{tmp};
-	if(unlikely(!printer(buf, rule, name)))
-		throw error
-		{
-			"member name overflow: max size is under %zu",
-			sizeof(tmp)
-		};
-
+	printer(buf, rule, name);
 	assert(data(buf) >= tmp);
 	s->append(string_view{tmp, size_t(data(buf) - tmp)});
 }
@@ -3281,17 +3271,12 @@ ircd::json::escape(const mutable_buffer &buf,
                    const string_view &in)
 {
 	mutable_buffer out{buf};
-	const bool ok
-	{
-		printer(out, printer.string, in)
-	};
-
+	printer(out, printer.string, in);
 	const string_view ret
 	{
 		data(buf), data(out)
 	};
 
-	assert(ok);
 	return ret;
 }
 
