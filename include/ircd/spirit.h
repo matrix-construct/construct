@@ -342,6 +342,41 @@ ircd::spirit::attr_at(semantic_context&& c)
 	return boost::fusion::at_c<idx>(c.attributes);
 }
 
+namespace boost::spirit::karma::detail
+{
+	template<> bool buffer_sink::copy(ircd::spirit::sink_type &, size_t maxwidth) const;
+	template<> void buffer_sink::output(const char &);
+}
+
+template<>
+inline void
+boost::spirit::karma::detail::position_policy::output(const char &value)
+{
+}
+
+#if 0
+template<>
+template<>
+inline void
+boost::spirit::karma::detail::counting_policy<ircd::spirit::sink_type>::output(const char &value)
+{
+}
+#endif
+
+#if 0
+template<>
+inline bool
+boost::spirit::karma::detail::buffering_policy::output(const char &value)
+{
+	if(likely(this->buffer != nullptr))
+	{
+		this->buffer->output(value);
+		return false;
+	}
+	else return true;
+}
+#endif
+
 template<>
 inline void
 boost::spirit::karma::detail::buffer_sink::output(const char &value)
