@@ -185,7 +185,7 @@ ircd::m::fed::public_rooms::public_rooms(const string_view &remote,
 		opts.remote = remote;
 
 	if(likely(!defined(json::get<"method"_>(opts.request))))
-		json::get<"method"_>(opts.request) = "GET";
+		json::get<"method"_>(opts.request) = "POST";
 
 	mutable_buffer buf{buf_};
 	if(likely(!defined(json::get<"uri"_>(opts.request))))
@@ -194,23 +194,80 @@ ircd::m::fed::public_rooms::public_rooms(const string_view &remote,
 		std::stringstream qss;
 		pubsetbuf(qss, query);
 
-		if(opts.since)
-			qss << "&since="
-			    << url::encode(since, opts.since);
+		if(json::get<"method"_>(opts.request) == "GET")
+		{
+			if(opts.since)
+				qss << "&since="
+				    << url::encode(since, opts.since);
 
-		if(opts.third_party_instance_id)
-			qss << "&third_party_instance_id="
-			    << url::encode(tpid, opts.third_party_instance_id);
+			if(opts.third_party_instance_id)
+				qss << "&third_party_instance_id="
+				    << url::encode(tpid, opts.third_party_instance_id);
+		}
 
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
 			buf, "/_matrix/federation/v1/publicRooms?limit=%zu%s%s",
 			opts.limit,
-			opts.include_all_networks? "&include_all_networks=true" : "",
+			opts.include_all_networks?
+				"&include_all_networks=true"_sv:
+				string_view{},
 			view(qss, query)
 		};
 
 		consume(buf, size(json::get<"uri"_>(opts.request)));
+	}
+
+	if(likely(!defined(json::get<"content"_>(opts.request))))
+	{
+		json::stack out{buf};
+		json::stack::object top{out};
+		if(likely(json::get<"method"_>(opts.request) == "POST"))
+		{
+			if(opts.limit)
+				json::stack::member
+				{
+					top, "limit", json::value
+					{
+						long(opts.limit)
+					}
+				};
+
+			if(opts.include_all_networks)
+				json::stack::member
+				{
+					top, "include_all_networks", json::value
+					{
+						opts.include_all_networks
+					}
+				};
+
+			if(opts.third_party_instance_id)
+				json::stack::member
+				{
+					top, "third_party_instance_id", json::value
+					{
+						opts.third_party_instance_id
+					}
+				};
+
+			if(opts.search_term)
+			{
+				json::stack::object filter
+				{
+					top, "filter"
+				};
+
+				json::stack::member
+				{
+					filter, "generic_search_term", opts.search_term
+				};
+			}
+		}
+
+		top.~object();
+		json::get<"content"_>(opts.request) = out.completed();
+		consume(buf, size(string_view(json::get<"content"_>(opts.request))));
 	}
 
 	return request

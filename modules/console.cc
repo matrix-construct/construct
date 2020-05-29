@@ -14135,33 +14135,39 @@ console_cmd__fed__public_rooms(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"remote", "limit", "all_networks", "3pid"
+		"remote", "limit", "search_term", "all_networks", "tpid"
 	}};
 
 	const string_view remote
 	{
-		param.at(0)
+		param.at("remote")
 	};
 
 	const auto limit
 	{
-		param.at(1, 32)
+		param.at("limit", 32)
+	};
+
+	const auto search_term
+	{
+		param["search_term"]
 	};
 
 	const auto all_nets
 	{
-		param.at(2, false)
+		param.at("all_networks", false)
 	};
 
 	const auto tpid
 	{
-		param[3]
+		param["tpid"]
 	};
 
 	m::fed::public_rooms::opts opts;
 	opts.limit = limit;
 	opts.third_party_instance_id = tpid;
 	opts.include_all_networks = all_nets;
+	opts.search_term = search_term;
 	const unique_buffer<mutable_buffer> buf
 	{
 		16_KiB
@@ -14185,14 +14191,14 @@ console_cmd__fed__public_rooms(opt &out, const string_view &line)
 		response.get<size_t>("total_room_count_estimate")
 	};
 
-	const auto next_batch
+	const json::string next_batch
 	{
-		unquote(response.get("next_batch"))
+		response["next_batch"]
 	};
 
 	const json::array &rooms
 	{
-		response.get("chunk")
+		response["chunk"]
 	};
 
 	for(const json::object &summary : rooms)

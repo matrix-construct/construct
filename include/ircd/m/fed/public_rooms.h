@@ -43,4 +43,5 @@ struct ircd::m::fed::public_rooms::opts
 	string_view since;
 	string_view third_party_instance_id;
 	bool include_all_networks {true};
+	string_view search_term;
 };
