@@ -278,6 +278,9 @@ ircd::m::sync::_rooms_polylog_room(data &data,
 bool
 ircd::m::sync::should_ignore(const data &data)
 {
+	if(data.prefetch)
+		return false;
+
 	if(data.membership != "invite")
 		return false;
 
