@@ -52,18 +52,18 @@ autoconf-archive, libtool.
 1. At this phase of development the best thing to do is pull the master branch
 and use the latest head.
 
-2. See the [BUILD](doc/BUILD.md) instructions to compile Construct from source.
+2. See the [BUILD](https://github.com/matrix-construct/construct/wiki/BUILD) instructions to compile Construct from source.
 
-3. See the [SETUP](doc/SETUP.md) instructions to run Construct for the first time.
+3. See the [SETUP](https://github.com/matrix-construct/construct/wiki/SETUP) instructions to run Construct for the first time.
 
-4. See the [TUNING](doc/TUNING.md) guide to optimize Construct for your deployment.
+4. See the [TUNING](https://github.com/matrix-construct/construct/wiki/TUNING) guide to optimize Construct for your deployment.
 
 ##### TROUBLESHOOTING
 
-See the [TROUBLESHOOTING](doc/TROUBLESHOOTING.md) guide for solutions to possible
+See the [TROUBLESHOOTING](https://github.com/matrix-construct/construct/wiki/Troubleshooting-problems) guide for solutions to possible
 problems.
 
-See the [FREQUENTLY ASKED QUESTIONS](doc/FAQ.md) for answers to the most common
+See the [FREQUENTLY ASKED QUESTIONS](https://github.com/matrix-construct/construct/wiki/FAQ) for answers to the most common
 perplexities.
 
 ## Developers
@@ -75,12 +75,12 @@ directory is `doc/html`. Browse to `doc/html/index.html`.
 
 ##### ARCHITECTURE GUIDE
 
-See the [ARCHITECTURE](doc/ARCHITECTURE.md) summary for design choices and
+See the [ARCHITECTURE](https://github.com/matrix-construct/construct/wiki/ARCHITECTURE) summary for design choices and
 things to know when starting out.
 
 ##### DEVELOPMENT STYLE GUIDE
 
-See the [STYLE](doc/STYLE.md) guide for an admittedly tongue-in-cheek lecture on
+See the [STYLE](https://github.com/matrix-construct/construct/wiki/STYLE) guide for an admittedly tongue-in-cheek lecture on
 the development approach.
 
 ## Roadmap
