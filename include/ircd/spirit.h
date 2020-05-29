@@ -250,16 +250,16 @@ struct ircd::spirit::generator_state
 	mutable_buffer &out;
 
 	/// Current consumption count of the destination buffer.
-	size_t consumed {0};
+	ssize_t consumed {0};
 
 	/// The number of attemtped generated characters to the destination. This
 	/// can be larger than the consumed counter to indicate the destination
 	/// buffer is insufficient. Note that characters are otherwise quietly
 	/// discarded when the destination (out) is full.
-	size_t generated {0};
+	ssize_t generated {0};
 
 	/// Internal state for buffer_sink::copy()
-	size_t last_generated {0}, last_width {0};
+	ssize_t last_generated {0}, last_width {0};
 };
 
 template<class gen,
@@ -298,7 +298,7 @@ ircd::generate(mutable_buffer &out,
 		karma::generate(sink, std::forward<gen>(g), std::forward<attr>(a)...)
 	};
 
-	if(unlikely(state.generated > max))
+	if(unlikely(size_t(state.generated) > max))
 	{
 		char pbuf[2][48];
 		throw spirit::buffer_overrun
@@ -416,31 +416,38 @@ const
 		*ircd::spirit::generator_state
 	};
 
+	assert(state.last_generated >= 0);
+	assert(state.generated >= state.last_generated);
 	const auto &width_diff
 	{
-		this->width - state.last_width
+		state.last_generated == state.generated?
+			ssize_t(this->width) - state.last_width:
+			ssize_t(this->width)
 	};
 
-	state.consumed +=
-		state.last_generated == state.generated?
-			width_diff:
-			this->width;
+	assert(width_diff >= -state.consumed);
+	assert(state.generated >= state.consumed);
+	state.consumed += width_diff;
 
+	assert(state.consumed >= 0);
 	const auto &rewind_count
 	{
-		std::min(state.generated - state.consumed, state.consumed)
+		state.generated - state.consumed
 	};
 
 	const auto &rewind
 	{
-		state.generated > state.consumed?
-			rewind_count:
+		rewind_count >= 0L?
+			std::min(rewind_count, state.generated):
 			0L
 	};
 
+	assert(rewind >= 0L);
+	assert(rewind <= state.generated);
 	std::get<0>(state.out) -= rewind;
 	state.generated -= rewind;
 
+	assert(state.generated >= 0);
 	state.last_generated = state.generated;
 	state.last_width = this->width;
 	return true; //sink.good();
