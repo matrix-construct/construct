@@ -170,7 +170,7 @@ uint8_t
 ircd::cbor::head::major(const uint8_t &a)
 {
 	// shift for higher 3 bits only
-	static const int &shift(5);
+	static const auto shift(5);
 	return a >> shift;
 }
 
@@ -179,7 +179,7 @@ uint8_t
 ircd::cbor::head::minor(const uint8_t &a)
 {
 	// mask of lower 5 bits only
-	static const uint8_t &mask
+	static const uint8_t mask
 	{
 		uint8_t(0xFF) >> 3
 	};
