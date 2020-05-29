@@ -47,14 +47,25 @@ get_method
 	}
 };
 
+m::resource::method
+post_method
+{
+	publicrooms_resource, "POST", handle_get,
+	{
+		post_method.VERIFY_ORIGIN
+	}
+};
+
 m::resource::response
 handle_get(client &client,
            const m::resource::request &request)
 {
 	char sincebuf[m::room::id::buf::SIZE];
-	const string_view &since
+	const json::string &since
 	{
-		url::decode(sincebuf, request.query["since"])
+		request.query["since"]?
+			url::decode(sincebuf, request.query["since"]):
+			request["since"]
 	};
 
 	if(since && !valid(m::id::ROOM, since))
@@ -81,6 +92,16 @@ handle_get(client &client,
 		request.get<bool>("include_all_networks", false)
 	};
 
+	const json::object &filter
+	{
+		request["filter"]
+	};
+
+	const json::string &search_term
+	{
+		filter["generic_search_term"]
+	};
+
 	m::resource::response::chunked response
 	{
 		client, http::OK
@@ -97,6 +118,7 @@ handle_get(client &client,
 	opts.server = my_host();
 	opts.lower_bound = true;
 	opts.room_id = since;
+	opts.search_term = search_term;
 
 	size_t count{0};
 	m::room::id::buf prev_batch_buf;
