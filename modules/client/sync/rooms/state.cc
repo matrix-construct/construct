@@ -14,7 +14,9 @@ namespace ircd::m::sync
 
 	static bool room_state_phased_member_events(data &, json::stack::array &);
 	static bool room_state_phased_events(data &);
+	static bool room_state_phased_prefetch(data &);
 	static bool room_state_polylog_events(data &);
+	static bool room_state_polylog_prefetch(data &);
 	static bool _room_state_polylog(data &);
 	static bool room_state_polylog(data &);
 	static bool room_invite_state_polylog(data &);
@@ -43,7 +45,8 @@ ircd::m::sync::room_state
 	room_state_polylog,
 	room_state_linear,
 	{
-		{ "phased", true },
+		{ "phased",   true },
+		{ "prefetch", true },
 	}
 };
 
@@ -237,9 +240,17 @@ ircd::m::sync::_room_state_polylog(data &data)
 				return false;
 
 	if(data.phased && data.range.first == 0)
-		return room_state_phased_events(data);
+	{
+		if(data.prefetch)
+			return room_state_phased_prefetch(data);
+		else
+			return room_state_phased_events(data);
+	}
 
-	return room_state_polylog_events(data);
+	if(data.prefetch)
+		return room_state_polylog_prefetch(data);
+	else
+		return room_state_polylog_events(data);
 }
 
 decltype(ircd::m::sync::lazyload_members_enable)
@@ -256,6 +267,12 @@ ircd::m::sync::crazyload_historical_members
 	{ "name",         "ircd.client.sync.rooms.state.members.historical" },
 	{ "default",      false                                             },
 };
+
+bool
+ircd::m::sync::room_state_polylog_prefetch(data &data)
+{
+	return false;
+}
 
 bool
 ircd::m::sync::room_state_polylog_events(data &data)
@@ -356,6 +373,50 @@ ircd::m::sync::room_state_polylog_events(data &data)
 }
 
 bool
+ircd::m::sync::room_state_phased_prefetch(data &data)
+{
+	static const size_t &member_scan_max
+	{
+		24
+	};
+
+	static const size_t &member_max
+	{
+		std::min(size_t(room::events::viewport_size), member_scan_max)
+	};
+
+	const std::pair<string_view, string_view> state_keys[]
+	{
+		{ "m.room.create",           ""                        },
+		{ "m.room.canonical_alias",  ""                        },
+		{ "m.room.name",             ""                        },
+		{ "m.room.avatar",           ""                        },
+		{ "m.room.aliases",          data.user.user_id.host()  },
+		{ "m.room.member",           data.user.user_id         },
+	};
+
+	// Prefetch the state cells
+	const room::state state
+	{
+		*data.room
+	};
+
+	for(const auto &[type, state_key] : state_keys)
+		state.prefetch(type, state_key);
+
+	m::room::events events
+	{
+		*data.room
+	};
+
+	// Prefetch the senders of the recent room events
+	for(size_t i(0); events && i < member_max; --events, ++i)
+		m::prefetch(events.event_idx(), "sender");
+
+	return true;
+}
+
+bool
 ircd::m::sync::room_state_phased_events(data &data)
 {
 	bool ret{false};
@@ -375,7 +436,6 @@ ircd::m::sync::room_state_phased_events(data &data)
 		}
 	};
 
-	std::array<event::idx, 6> event_idx;
 	const std::pair<string_view, string_view> keys[]
 	{
 		{ "m.room.create",           ""                        },
@@ -391,14 +451,11 @@ ircd::m::sync::room_state_phased_events(data &data)
 		*data.room
 	};
 
-	// Prefetch the state cells
-	size_t state_prefetched(0);
-	for(const auto &[type, state_key] : keys)
-		state_prefetched += state.prefetch(type, state_key);
-
 	// Fetch the state cells and prefetch the event data
 	size_t i(0);
 	size_t prev_content_prefetched(0);
+	static const auto num_keys(sizeof(keys) / sizeof(*keys));
+	std::array<event::idx, num_keys> event_idx;
 	for(const auto &[type, state_key] : keys)
 	{
 		auto &idx(event_idx.at(i++));
@@ -455,7 +512,7 @@ ircd::m::sync::room_state_phased_member_events(data &data,
                                                json::stack::array &array)
 {
 	// The number of recent room events we'll seek senders for.
-	static const size_t &max{24};
+	static const size_t &max{24}; //TODO: XXX dedup
 	const size_t &count
 	{
 		std::min(size_t(room::events::viewport_size), max)
