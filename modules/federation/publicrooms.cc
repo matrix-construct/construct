@@ -63,7 +63,7 @@ handle_get(client &client,
 			"Invalid since token for this server."
 		};
 
-	if(since && m::room::id(since).host() != my_host())
+	if(since && !my_host(m::room::id(since).host()))
 		throw m::BAD_REQUEST
 		{
 			"Invalid since token for this server."
