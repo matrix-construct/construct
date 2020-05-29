@@ -82,7 +82,7 @@ ircd::allocator::get(const string_view &key_,
 	syscall(::mallctl, key, data(buf), &len, nullptr, 0UL);
 	return string_view
 	{
-		data(buf), len
+		data(buf), std::min(len, size(buf))
 	};
 }
 #endif
@@ -100,7 +100,7 @@ ircd::allocator::set(const string_view &key_,
 	syscall(::mallctl, key, data(cur), &curlen, const_cast<char *>(data(val)), size(val));
 	return string_view
 	{
-		data(cur), curlen
+		data(cur), std::min(curlen, size(cur))
 	};
 }
 #endif
