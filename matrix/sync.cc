@@ -161,14 +161,16 @@ ircd::m::sync::loghead(const data &data)
 
 	return fmt::sprintf
 	{
-		headbuf, "%s %s %ld:%lu|%lu%s chunk:%zu sent:%s of %s in %s",
+		headbuf, "%s %s %ld:%lu|%lu%s%s chunk:%zu sent:%s of %s in %s",
 		remstr,
 		string_view{data.user.user_id},
 		data.range.first,
 		data.range.second,
 		vm::sequence::retired,
 		data.phased?
-			"|P"_sv : ""_sv,
+			"|CRAZY"_sv : ""_sv,
+		data.prefetch?
+			"|PREFETCH"_sv : ""_sv,
 		flush_count,
 		ircd::pretty(iecbuf[1], iec(flush_bytes)),
 		data.out?
@@ -229,6 +231,10 @@ ircd::m::sync::item::item(std::string name,
 {
 	opts.get<bool>("phased", false)
 }
+,prefetch
+{
+	opts.get<bool>("prefetch", false)
+}
 {
 	log::debug
 	{
@@ -261,6 +267,9 @@ try
 	if(data.phased && !phased && int64_t(data.range.first) < 0)
 		return false;
 
+	if(data.prefetch && !prefetch)
+		return false;
+
 	#ifdef RB_DEBUG
 	sync::stats stats
 	{
@@ -273,9 +282,16 @@ try
 		stats.timer = {};
 	#endif
 
-	const bool ret
+	const bool result
 	{
 		_polylog(data)
+	};
+
+	const bool ret
+	{
+		data.prefetch && prefetch?
+			false:
+			result
 	};
 
 	#ifdef RB_DEBUG

@@ -457,6 +457,34 @@ try
 		*data.out
 	};
 
+	// Prefetch loop
+	if(data.range.first == 0)
+	{
+		const scope_restore prefetching
+		{
+			data.prefetch, true
+		};
+
+		m::sync::for_each(string_view{}, [&data]
+		(item &item)
+		{
+			json::stack::checkpoint checkpoint
+			{
+				*data.out
+			};
+
+			json::stack::object object
+			{
+				*data.out, item.member_name()
+			};
+
+			item.polylog(data);
+			checkpoint.committing(false);
+			return true;
+		});
+	}
+
+	// Output loop
 	bool ret{false};
 	m::sync::for_each(string_view{}, [&data, &ret]
 	(item &item)

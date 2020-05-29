@@ -29,7 +29,8 @@ ircd::m::sync::rooms_ephemeral
 	rooms_ephemeral_polylog,
 	rooms_ephemeral_linear,
 	{
-		{ "phased", true }
+		{ "phased",   true },
+		{ "prefetch", true },
 	}
 };
 

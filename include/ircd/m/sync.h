@@ -55,6 +55,7 @@ struct ircd::m::sync::item
 	json::strung feature;
 	json::object opts;
 	bool phased;
+	bool prefetch;
 
   public:
 	string_view name() const;
@@ -85,6 +86,10 @@ struct ircd::m::sync::data
 	/// Whether to enable phased sync mode. The range.first will be <= 0
 	/// in this case, and only handlers with the phased feature
 	bool phased {false};
+
+	/// Prefetch mode. Supporting item handlers will initiate prefetches for
+	/// their data without writing to output.
+	bool prefetch {false};
 
 	/// Statistics tracking. If null, stats won't be accumulated for the sync.
 	sync::stats *stats {nullptr};

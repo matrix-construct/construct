@@ -33,7 +33,8 @@ ircd::m::sync::rooms
 {
 	"rooms", rooms_polylog, rooms_linear,
 	{
-		{ "phased", true }
+		{ "phased",   true },
+		{ "prefetch", true },
 	}
 };
 
