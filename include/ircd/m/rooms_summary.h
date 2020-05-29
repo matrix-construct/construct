@@ -49,7 +49,8 @@ struct ircd::m::rooms::summary::fetch
 	// request
 	fetch(const string_view &origin,
 	      const string_view &since   =  {},
-	      const size_t &limit        = 64);
+	      const size_t &limit        = 64,
+	      const string_view &search  = {});
 
 	fetch() = default;
 };

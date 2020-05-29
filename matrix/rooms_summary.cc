@@ -67,12 +67,14 @@ ircd::m::rooms::summary::fetch::limit
 
 ircd::m::rooms::summary::fetch::fetch(const string_view &origin,
                                       const string_view &since,
-                                      const size_t &limit)
+                                      const size_t &limit,
+                                      const string_view &search_term)
 {
 	m::fed::public_rooms::opts opts;
 	opts.limit = limit;
 	opts.since = since;
 	opts.include_all_networks = true;
+	opts.search_term = search_term;
 	const unique_buffer<mutable_buffer> buf
 	{
 		// Buffer for headers and send content; received content is dynamic

@@ -101,7 +101,10 @@ get__publicrooms(client &client,
 	{
 		m::rooms::summary::fetch
 		{
-			server, since, limit
+			server,
+			since,
+			limit,
+			search_term
 		};
 	}
 	catch(const std::exception &e)
