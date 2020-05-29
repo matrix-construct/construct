@@ -44,6 +44,7 @@ namespace ircd::allocator
 	string_view get(const string_view &var, const mutable_buffer &val);
 	string_view set(const string_view &var, const string_view &val, const mutable_buffer &cur = {});
 	template<class T> T get(const string_view &var);
+	template<class T, class R> R &set(const string_view &var, T val, R &cur);
 	template<class T> T set(const string_view &var, T val);
 	bool trim(const size_t &pad = 0) noexcept; // malloc_trim(3)
 }
@@ -781,6 +782,16 @@ inline T
 ircd::allocator::set(const string_view &var,
                      T val)
 {
+	return set(var, val, val);
+}
+
+template<class T,
+         class R>
+inline R &
+ircd::allocator::set(const string_view &var,
+                     T val,
+                     R &ret)
+{
 	const string_view in
 	{
 		reinterpret_cast<const char *>(std::addressof(val)),
@@ -791,18 +802,18 @@ ircd::allocator::set(const string_view &var,
 	{
 		set(var, in, mutable_buffer
 		{
-			reinterpret_cast<char *>(std::addressof(val)),
-			sizeof(val)
+			reinterpret_cast<char *>(std::addressof(ret)),
+			sizeof(ret)
 		})
 	};
 
-	if(unlikely(size(out) != sizeof(val)))
+	if(unlikely(size(out) != sizeof(ret)))
 		throw std::system_error
 		{
-			make_error_code(std::errc::no_such_file_or_directory)
+			make_error_code(std::errc::invalid_argument)
 		};
 
-	return val;
+	return ret;
 }
 
 template<class T>
@@ -822,7 +833,7 @@ ircd::allocator::get(const string_view &var)
 	if(unlikely(size(out) != sizeof(val)))
 		throw std::system_error
 		{
-			make_error_code(std::errc::no_such_file_or_directory)
+			make_error_code(std::errc::invalid_argument)
 		};
 
 	return val;
