@@ -139,8 +139,14 @@ struct ircd::fs::aio::request
 	void submit();
 	bool cancel();
 
-	request(const int &fd, const struct opts *const &, ctx::dock *const &);
-	request() = default;
+	request(const int &fd                = -1,
+	        const struct opts *const &   = nullptr,
+	        ctx::dock *const &           = nullptr);
+
+	request(request &&) = delete;
+	request(const request &) = delete;
+	request &operator=(request &&) = delete;
+	request &operator=(const request &) = delete;
 	~request() noexcept;
 };
 

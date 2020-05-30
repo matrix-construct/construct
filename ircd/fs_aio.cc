@@ -258,12 +258,12 @@ ircd::fs::aio::read(const vector_view<read_op> &op)
 
 		assert(op[i].fd);
 		assert(op[i].opts);
-		request[i] =
+		new (request + i) request::read
 		{
 			waiter,
 			*op[i].fd,
 			*op[i].opts,
-			make_iov(iov, op[i].bufs)
+			make_iov(iov, op[i].bufs),
 		};
 	}
 
@@ -439,7 +439,7 @@ ircd::fs::aio::request::request(const int &fd,
 	aio_resfd = system->resfd.native_handle();
 	aio_fildes = fd;
 	aio_data = uintptr_t(this);
-	aio_reqprio = reqprio(opts->priority);
+	aio_reqprio = opts? reqprio(opts->priority) : 0;
 
 	#if defined(RWF_HIPRI)
 	if(support::hipri && aio_reqprio == reqprio(opts::highest_priority))
@@ -447,7 +447,7 @@ ircd::fs::aio::request::request(const int &fd,
 	#endif
 
 	#if defined(RWF_NOWAIT)
-	if(support::nowait && !opts->blocking)
+	if(support::nowait && opts && !opts->blocking)
 		aio_rw_flags |= RWF_NOWAIT;
 	#endif
 }
@@ -455,6 +455,7 @@ ircd::fs::aio::request::request(const int &fd,
 ircd::fs::aio::request::~request()
 noexcept
 {
+	assert(aio_data == uintptr_t(this));
 }
 
 /// Cancel a request. The handler callstack is invoked directly from here
