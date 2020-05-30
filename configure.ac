@@ -995,17 +995,12 @@ dnl
 
 AC_CHECK_FUNCS([          \
 	backtrace             \
-	gettimeofday          \
+	mlock2                \
 	posix_fadvise         \
 	preadv2               \
 	pwritev2              \
-	snprintf              \
 	strlcat               \
 	strlcpy               \
-	strnlen               \
-	strncpy               \
-	strcpy                \
-	vsnprintf             \
 ])
 
 AC_SEARCH_LIBS(dlinfo, dl, AC_DEFINE(HAVE_DLINFO, 1, [Define if you have dlinfo]))
