@@ -296,6 +296,7 @@ struct ircd::db::database::allocator final
 :rocksdb::MemoryAllocator
 {
 	static const size_t ALIGN_DEFAULT;
+	static unsigned cache_arena;
 
 	database *d {nullptr};
 	database::column *c {nullptr};
@@ -314,5 +315,7 @@ struct ircd::db::database::allocator final
 	          const size_t &alignment    = ALIGN_DEFAULT);
 
 	~allocator() noexcept;
+
+	static void init(), fini() noexcept;
 };
 #endif

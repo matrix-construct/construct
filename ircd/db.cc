@@ -105,11 +105,6 @@ ircd::db::request
 decltype(ircd::db::write_mutex)
 ircd::db::write_mutex;
 
-/// Handle to a jemalloc arena when non-zero. Used as the base arena for all
-/// cache allocators.
-decltype(ircd::db::cache_arena)
-ircd::db::cache_arena;
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // init
@@ -118,10 +113,7 @@ ircd::db::cache_arena;
 ircd::db::init::init()
 try
 {
-	#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
-	cache_arena = ircd::allocator::get<unsigned>("arenas.create");
-	#endif
-
+	database::allocator::init();
 	compressions();
 	directory();
 	test_direct_io();
@@ -171,14 +163,7 @@ noexcept
 		log, "All contexts joined; all requests are clear."
 	};
 
-	if(likely(cache_arena != 0))
-	{
-		char keybuf[64];
-		ircd::allocator::get<void>(string_view(fmt::sprintf
-		{
-			keybuf, "arena.%u.destroy", cache_arena
-		}));
-	}
+	database::allocator::fini();
 }
 
 void
@@ -1179,7 +1164,7 @@ try
 ,allocator
 {
 	#ifdef IRCD_DB_HAS_ALLOCATOR
-	std::make_shared<struct allocator>(this, nullptr, cache_arena)
+	std::make_shared<struct allocator>(this, nullptr, database::allocator::cache_arena)
 	#endif
 }
 ,ssts{rocksdb::NewSstFileManager
@@ -1928,7 +1913,7 @@ ircd::db::database::column::column(database &d,
 ,allocator
 {
 	#ifdef IRCD_DB_HAS_ALLOCATOR
-	std::make_shared<struct database::allocator>(this->d, this, cache_arena)
+	std::make_shared<struct database::allocator>(this->d, this, database::allocator::cache_arena)
 	#endif
 }
 ,handle
@@ -3515,6 +3500,22 @@ const noexcept
 //
 #ifdef IRCD_DB_HAS_ALLOCATOR
 
+namespace ircd::db
+{
+	#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+	static void *cache_arena_handle_alloc(extent_hooks_t *, void *, size_t, size_t, bool *, bool *, uint) noexcept;
+	static bool cache_arena_handle_dalloc(extent_hooks_t *, void *, size_t, bool, uint) noexcept;
+	static void cache_arena_handle_destroy(extent_hooks_t *, void *, size_t, bool, uint) noexcept;
+	static bool cache_arena_handle_commit(extent_hooks_t *, void *, size_t, size_t, size_t, uint) noexcept;
+	static bool cache_arena_handle_decommit(extent_hooks_t *, void *, size_t, size_t, size_t, uint) noexcept;
+	static bool cache_arena_handle_purge_lazy(extent_hooks_t *, void *, size_t, size_t, size_t, uint) noexcept;
+	static bool cache_arena_handle_purge_forced(extent_hooks_t *, void *, size_t, size_t, size_t, uint) noexcept;
+	static bool cache_arena_handle_split(extent_hooks_t *, void *, size_t, size_t, size_t, bool, uint) noexcept;
+	static bool cache_arena_handle_merge(extent_hooks_t *, void *, size_t, void *, size_t, bool, uint) noexcept;
+	thread_local extent_hooks_t *their_cache_arena_hooks, cache_arena_hooks;
+	#endif
+}
+
 decltype(ircd::db::database::allocator::ALIGN_DEFAULT)
 ircd::db::database::allocator::ALIGN_DEFAULT
 {
@@ -3526,6 +3527,336 @@ ircd::db::database::allocator::ALIGN_DEFAULT
 		sizeof(void *)
 	#endif
 };
+
+/// Handle to a jemalloc arena when non-zero. Used as the base arena for all
+/// cache allocators.
+decltype(ircd::db::database::allocator::cache_arena)
+ircd::db::database::allocator::cache_arena;
+
+void
+ircd::db::database::allocator::init()
+{
+	#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+	cache_arena = ircd::allocator::get<unsigned>("arenas.create");
+
+	char extent_hooks_keybuf[32];
+	const string_view cache_arena_hooks_key{fmt::sprintf
+	{
+		extent_hooks_keybuf, "arena.%u.extent_hooks", cache_arena
+	}};
+
+	cache_arena_hooks.alloc = cache_arena_handle_alloc;
+	cache_arena_hooks.dalloc = cache_arena_handle_dalloc;
+	cache_arena_hooks.destroy = cache_arena_handle_destroy;
+	cache_arena_hooks.commit = cache_arena_handle_commit;
+	cache_arena_hooks.decommit = cache_arena_handle_decommit;
+	cache_arena_hooks.purge_lazy = cache_arena_handle_purge_lazy;
+	cache_arena_hooks.purge_forced = cache_arena_handle_purge_forced;
+	cache_arena_hooks.split = cache_arena_handle_split;
+	cache_arena_hooks.merge = cache_arena_handle_merge;
+	ircd::allocator::set(cache_arena_hooks_key, &cache_arena_hooks, their_cache_arena_hooks);
+	assert(their_cache_arena_hooks);
+	#endif
+}
+
+void
+ircd::db::database::allocator::fini()
+noexcept
+{
+	#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+	if(likely(cache_arena != 0))
+	{
+		char keybuf[64];
+		ircd::allocator::get<void>(string_view(fmt::sprintf
+		{
+			keybuf, "arena.%u.reset", cache_arena
+		}));
+
+		ircd::allocator::get<void>(string_view(fmt::sprintf
+		{
+			keybuf, "arena.%u.destroy", cache_arena
+		}));
+	}
+	#endif
+}
+
+#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+void *
+ircd::db::cache_arena_handle_alloc(extent_hooks_t *const hooks,
+                                   void *const new_addr,
+                                   size_t size,
+                                   size_t alignment,
+                                   bool *const zero,
+                                   bool *const commit,
+                                   unsigned arena_ind)
+noexcept
+{
+	assert(their_cache_arena_hooks);
+	const auto &their_hooks(*their_cache_arena_hooks);
+
+	#ifdef RB_DEBUG_DB_ENV
+	assert(zero);
+	assert(commit);
+	log::debug
+	{
+		log, "cache arena:%u alloc addr:%p size:%zu align:%zu z:%b c:%b ind:%u",
+		database::allocator::cache_arena,
+		new_addr,
+		size,
+		alignment,
+		*zero,
+		*commit,
+		arena_ind,
+	};
+	#endif
+
+	return their_hooks.alloc(hooks, new_addr, size, alignment, zero, commit, arena_ind);
+}
+#endif
+
+#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+bool
+ircd::db::cache_arena_handle_dalloc(extent_hooks_t *hooks,
+                                    void *const ptr,
+                                    size_t size,
+                                    bool committed,
+                                    uint arena_ind)
+noexcept
+{
+	assert(their_cache_arena_hooks);
+	const auto &their_hooks(*their_cache_arena_hooks);
+
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "cache arena:%u dalloc addr:%p size:%zu align:%zu z:%b c:%b ind:%u",
+		database::allocator::cache_arena,
+		ptr,
+		size,
+		committed,
+		arena_ind,
+	};
+	#endif
+
+	return their_hooks.dalloc(hooks, ptr, size, committed, arena_ind);
+}
+#endif
+
+#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+void
+ircd::db::cache_arena_handle_destroy(extent_hooks_t *hooks,
+                                     void *const ptr,
+                                     size_t size,
+                                     bool committed,
+                                     uint arena_ind)
+noexcept
+{
+	assert(their_cache_arena_hooks);
+	const auto &their_hooks(*their_cache_arena_hooks);
+
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "cache arena:%u destroy addr:%p size:%zu align:%zu z:%b c:%b ind:%u",
+		database::allocator::cache_arena,
+		ptr,
+		size,
+		committed,
+		arena_ind,
+	};
+	#endif
+
+	return their_hooks.destroy(hooks, ptr, size, committed, arena_ind);
+}
+#endif
+
+#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+bool
+ircd::db::cache_arena_handle_commit(extent_hooks_t *const hooks,
+                                    void *const ptr,
+                                    size_t size,
+                                    size_t offset,
+                                    size_t length,
+                                    uint arena_ind)
+noexcept
+{
+	assert(their_cache_arena_hooks);
+	const auto &their_hooks(*their_cache_arena_hooks);
+
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "cache arena:%u commit addr:%p size:%zu offset:%zu length:%zu ind:%u",
+		database::allocator::cache_arena,
+		ptr,
+		size,
+		offset,
+		length,
+		arena_ind,
+	};
+	#endif
+
+	return their_hooks.commit(hooks, ptr, size, offset, length, arena_ind);
+}
+#endif
+
+#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+bool
+ircd::db::cache_arena_handle_decommit(extent_hooks_t *const hooks,
+                                      void *const ptr,
+                                      size_t size,
+                                      size_t offset,
+                                      size_t length,
+                                      uint arena_ind)
+noexcept
+{
+	assert(their_cache_arena_hooks);
+	const auto &their_hooks(*their_cache_arena_hooks);
+
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "cache arena:%u decommit addr:%p size:%zu offset:%zu length:%zu ind:%u",
+		database::allocator::cache_arena,
+		ptr,
+		size,
+		offset,
+		length,
+		arena_ind,
+	};
+	#endif
+
+	return their_hooks.decommit(hooks, ptr, size, offset, length, arena_ind);
+}
+#endif
+
+#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+bool
+ircd::db::cache_arena_handle_purge_lazy(extent_hooks_t *const hooks,
+                                        void *const ptr,
+                                        size_t size,
+                                        size_t offset,
+                                        size_t length,
+                                        uint arena_ind)
+noexcept
+{
+	assert(their_cache_arena_hooks);
+	const auto &their_hooks(*their_cache_arena_hooks);
+
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "cache arena:%u purge lazy addr:%p size:%zu offset:%zu length:%zu ind:%u",
+		database::allocator::cache_arena,
+		ptr,
+		size,
+		offset,
+		length,
+		arena_ind,
+	};
+	#endif
+
+	return their_hooks.purge_lazy(hooks, ptr, size, offset, length, arena_ind);
+}
+#endif
+
+#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+bool
+ircd::db::cache_arena_handle_purge_forced(extent_hooks_t *const hooks,
+                                          void *const ptr,
+                                          size_t size,
+                                          size_t offset,
+                                          size_t length,
+                                          uint arena_ind)
+noexcept
+{
+	assert(their_cache_arena_hooks);
+	const auto &their_hooks(*their_cache_arena_hooks);
+
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "cache arena:%u purge forced addr:%p size:%zu offset:%zu length:%zu ind:%u",
+		database::allocator::cache_arena,
+		ptr,
+		size,
+		offset,
+		length,
+		arena_ind,
+	};
+	#endif
+
+	return their_hooks.purge_forced(hooks, ptr, size, offset, length, arena_ind);
+}
+#endif
+
+#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+bool
+ircd::db::cache_arena_handle_split(extent_hooks_t *const hooks,
+                                   void *const ptr,
+                                   size_t size,
+                                   size_t size_a,
+                                   size_t size_b,
+                                   bool committed,
+                                   uint arena_ind)
+noexcept
+{
+	assert(their_cache_arena_hooks);
+	const auto &their_hooks(*their_cache_arena_hooks);
+
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "cache arena:%u split addr:%p size:%zu size_a:%zu size_b:%zu committed:%b ind:%u",
+		database::allocator::cache_arena,
+		ptr,
+		size,
+		size_a,
+		size_b,
+		committed,
+		arena_ind,
+	};
+	#endif
+
+	return their_hooks.split(hooks, ptr, size, size_a, size_b, committed, arena_ind);
+}
+#endif
+
+#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+bool
+ircd::db::cache_arena_handle_merge(extent_hooks_t *const hooks,
+                                   void *const addr_a,
+                                   size_t size_a,
+                                   void *const addr_b,
+                                   size_t size_b,
+                                   bool committed,
+                                   uint arena_ind)
+noexcept
+{
+	assert(their_cache_arena_hooks);
+	const auto &their_hooks(*their_cache_arena_hooks);
+
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "cache arena:%u merge a[addr:%p size:%zu] b[addr:%p size:%zu] committed:%b ind:%u",
+		database::allocator::cache_arena,
+		addr_a,
+		size_a,
+		addr_b,
+		size_b,
+		committed,
+		arena_ind,
+	};
+	#endif
+
+	return their_hooks.merge(hooks, addr_a, size_a, addr_b, size_b, committed, arena_ind);
+}
+#endif
+
+//
+// allocator::allocator
+//
 
 ircd::db::database::allocator::allocator(database *const &d,
                                          database::column *const &c,
