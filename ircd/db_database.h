@@ -296,6 +296,8 @@ struct ircd::db::database::allocator final
 :rocksdb::MemoryAllocator
 {
 	static const size_t ALIGN_DEFAULT;
+	static const size_t mlock_limit;
+	static size_t mlock_current;
 	static unsigned cache_arena;
 
 	database *d {nullptr};

@@ -8,6 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <RB_INC_SYS_MMAN_H
 #include <RB_INC_JEMALLOC_H
 #include "db.h"
 
@@ -3528,6 +3529,15 @@ ircd::db::database::allocator::ALIGN_DEFAULT
 	#endif
 };
 
+decltype(ircd::db::database::allocator::mlock_limit)
+ircd::db::database::allocator::mlock_limit
+{
+	ircd::allocator::rlimit_memlock()
+};
+
+decltype(ircd::db::database::allocator::mlock_current)
+ircd::db::database::allocator::mlock_current;
+
 /// Handle to a jemalloc arena when non-zero. Used as the base arena for all
 /// cache allocators.
 decltype(ircd::db::database::allocator::cache_arena)
@@ -3610,7 +3620,22 @@ noexcept
 	};
 	#endif
 
-	return their_hooks.alloc(hooks, new_addr, size, alignment, zero, commit, arena_ind);
+	void *const ret
+	{
+		their_hooks.alloc(hooks, new_addr, size, alignment, zero, commit, arena_ind)
+	};
+
+	// This feature is only enabled when RLIMIT_MEMLOCK is unlimited. We don't
+	// want to deal with any limit at all.
+	#if defined(HAVE_MLOCK2) && defined(MLOCK_ONFAULT)
+	if(database::allocator::mlock_limit == -1)
+	{
+		syscall(::mlock2, ret, size, MLOCK_ONFAULT);
+		database::allocator::mlock_current += size;
+	}
+	#endif
+
+	return ret;
 }
 #endif
 
@@ -3638,7 +3663,21 @@ noexcept
 	};
 	#endif
 
-	return their_hooks.dalloc(hooks, ptr, size, committed, arena_ind);
+	const bool ret
+	{
+		their_hooks.dalloc(hooks, ptr, size, committed, arena_ind)
+	};
+
+	#if defined(HAVE_MLOCK2)
+	if(database::allocator::mlock_current && !ret)
+	{
+		syscall(::munlock, ptr, size);
+		assert(database::allocator::mlock_current >= size);
+		database::allocator::mlock_current -= size;
+	}
+	#endif
+
+	return ret;
 }
 #endif
 
@@ -3664,6 +3703,15 @@ noexcept
 		committed,
 		arena_ind,
 	};
+	#endif
+
+	#if defined(HAVE_MLOCK2)
+	if(database::allocator::mlock_current)
+	{
+		syscall(::munlock, ptr, size);
+		assert(database::allocator::mlock_current >= size);
+		database::allocator::mlock_current -= size;
+	}
 	#endif
 
 	return their_hooks.destroy(hooks, ptr, size, committed, arena_ind);
