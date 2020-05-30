@@ -105,6 +105,11 @@ ircd::db::request
 decltype(ircd::db::write_mutex)
 ircd::db::write_mutex;
 
+/// Handle to a jemalloc arena when non-zero. Used as the base arena for all
+/// cache allocators.
+decltype(ircd::db::cache_arena)
+ircd::db::cache_arena;
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // init
@@ -113,6 +118,10 @@ ircd::db::write_mutex;
 ircd::db::init::init()
 try
 {
+	#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+	cache_arena = ircd::allocator::get<unsigned>("arenas.create");
+	#endif
+
 	compressions();
 	directory();
 	test_direct_io();
@@ -161,6 +170,15 @@ noexcept
 	{
 		log, "All contexts joined; all requests are clear."
 	};
+
+	if(likely(cache_arena != 0))
+	{
+		char keybuf[64];
+		ircd::allocator::get<void>(string_view(fmt::sprintf
+		{
+			keybuf, "arena.%u.destroy", cache_arena
+		}));
+	}
 }
 
 void
@@ -1161,7 +1179,7 @@ try
 ,allocator
 {
 	#ifdef IRCD_DB_HAS_ALLOCATOR
-	std::make_shared<struct allocator>(this)
+	std::make_shared<struct allocator>(this, nullptr, cache_arena)
 	#endif
 }
 ,ssts{rocksdb::NewSstFileManager
@@ -1910,7 +1928,7 @@ ircd::db::database::column::column(database &d,
 ,allocator
 {
 	#ifdef IRCD_DB_HAS_ALLOCATOR
-	std::make_shared<struct database::allocator>(this->d, this)
+	std::make_shared<struct database::allocator>(this->d, this, cache_arena)
 	#endif
 }
 ,handle
@@ -3521,8 +3539,8 @@ ircd::db::database::allocator::allocator(database *const &d,
 {
 	0
 	#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
-	| MALLOCX_ARENA(arena)
-	| MALLOCX_ALIGN(alignment)
+	| MALLOCX_ARENA(this->arena)
+	| MALLOCX_ALIGN(this->alignment)
 	| MALLOCX_TCACHE_NONE
 	#endif
 }

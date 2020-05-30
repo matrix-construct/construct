@@ -67,6 +67,7 @@ namespace ircd::db
 	extern ctx::pool::opts request_pool_opts;
 	extern ctx::pool request;
 	extern ctx::mutex write_mutex;
+	extern unsigned cache_arena;
 
 	// reflections
 	string_view reflect(const rocksdb::Status::Code &);
