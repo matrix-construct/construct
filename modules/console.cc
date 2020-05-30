@@ -14900,45 +14900,6 @@ console_cmd__file__download(opt &out, const string_view &line)
 bool
 console_cmd__vm(opt &out, const string_view &line)
 {
-	out << "sequence retired:    "
-	    << std::right << std::setw(10) << m::vm::sequence::retired
-	    << std::endl;
-
-	out << "sequence committed:  "
-	    << std::right << std::setw(10) << m::vm::sequence::committed
-	    << std::endl;
-
-	out << "sequence uncommit:   "
-	    << std::right << std::setw(10) << m::vm::sequence::uncommitted
-	    << std::endl;
-
-	out << "sequence pending:    "
-	    << std::right << std::setw(10) << m::vm::sequence::pending
-	    << std::endl;
-
-	out << "sequence min:max:    "
-	    << std::right << std::setw(10) << m::vm::sequence::min() << ' '
-	    << std::right  << std::setw(10) << m::vm::sequence::max()
-	    << std::endl;
-
-	out << "eval counter:        "
-	    << std::right << std::setw(10) << m::vm::eval::id_ctr
-	    << std::endl;
-
-	out << "eval instances:      "
-	    << std::right << std::setw(10) << size(m::vm::eval::list)
-	    << std::endl;
-
-	out << "eval executing:      "
-	    << std::right << std::setw(10) << m::vm::eval::executing
-	    << std::endl;
-
-	out << "eval injecting:      "
-	    << std::right << std::setw(10) << m::vm::eval::injecting
-	    << std::endl;
-
-	out << std::endl;
-
 	out
 	<< std::right << std::setw(8) << "ID" << " "
 	<< std::right << std::setw(4) << "CTX" << " "
@@ -14996,6 +14957,24 @@ console_cmd__vm(opt &out, const string_view &line)
 		<< std::endl
 		;
 	}
+
+	out << std::endl;
+
+	out << "    retired " << std::left << std::setw(10) << m::vm::sequence::retired;
+	out << "  committed " << std::left << std::setw(10) << m::vm::sequence::committed;
+	out << "   uncommit " << std::left << std::setw(10) << m::vm::sequence::uncommitted;
+	out << std::endl;
+
+	out << "    pending " << std::left << std::setw(10) << m::vm::sequence::pending;
+	out << "      evals " << std::left << std::setw(10) << m::vm::eval::id_ctr;
+	out << "     spread " << std::left << std::setw(10) << m::vm::sequence::min()
+	               << ' ' << std::left << std::setw(10) << m::vm::sequence::max();
+	out << std::endl;
+
+	out << "       inst " << std::left << std::setw(10) << size(m::vm::eval::list);
+	out << "       exec " << std::left << std::setw(10) << m::vm::eval::executing;
+	out << "     inject " << std::left << std::setw(10) << m::vm::eval::injecting;
+	out << std::endl;
 
 	return true;
 }
