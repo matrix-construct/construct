@@ -143,7 +143,7 @@ ircd::m::dbs::desc::type__cache__size
 {
 	{
 		{ "name",     "ircd.m.dbs.type.cache.size"  },
-		{ "default",  long(32_MiB)                  },
+		{ "default",  long(64_MiB)                  },
 	}, []
 	{
 		auto &column(event_column.at(json::indexof<event, "type"_>()));
