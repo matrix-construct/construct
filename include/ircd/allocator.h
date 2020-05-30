@@ -838,3 +838,10 @@ ircd::allocator::get(const string_view &var)
 
 	return val;
 }
+
+template<>
+inline void
+ircd::allocator::get<void>(const string_view &var)
+{
+	get(var, mutable_buffer{});
+}
