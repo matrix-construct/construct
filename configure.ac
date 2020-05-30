@@ -668,6 +668,11 @@ AM_COND_IF([GCC],
 	CXXFLAGS+=" -fverbose-asm"
 ])
 
+AM_COND_IF([CLANG],
+[
+	CXXFLAGS+=" -fasm-blocks"
+])
+
 dnl
 dnl Compiler warnings
 dnl
