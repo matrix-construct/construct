@@ -300,6 +300,8 @@ struct ircd::db::database::allocator final
 	database *d {nullptr};
 	database::column *c {nullptr};
 	size_t alignment {ALIGN_DEFAULT};
+	unsigned arena {0};
+	signed arena_flags{0};
 
 	const char *Name() const noexcept override;
 	void *Allocate(size_t) noexcept override;
@@ -308,6 +310,7 @@ struct ircd::db::database::allocator final
 
 	allocator(database *const &,
 	          database::column *const &  = nullptr,
+	          const unsigned &arena      = 0,
 	          const size_t &alignment    = ALIGN_DEFAULT);
 
 	~allocator() noexcept;

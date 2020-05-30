@@ -8,6 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <RB_INC_JEMALLOC_H
 #include "db.h"
 
 /// Dedicated logging facility for the database subsystem
@@ -3510,11 +3511,23 @@ ircd::db::database::allocator::ALIGN_DEFAULT
 
 ircd::db::database::allocator::allocator(database *const &d,
                                          database::column *const &c,
+                                         const unsigned &arena,
                                          const size_t &alignment)
 :d{d}
 ,c{c}
 ,alignment{alignment}
+,arena{arena}
+,arena_flags
 {
+	0
+	#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+	| MALLOCX_ARENA(arena)
+	| MALLOCX_ALIGN(alignment)
+	| MALLOCX_TCACHE_NONE
+	#endif
+}
+{
+	assert(is_powerof2(alignment));
 }
 
 ircd::db::database::allocator::~allocator()
@@ -3529,13 +3542,16 @@ const noexcept
 {
 	const size_t ret
 	{
-		size % alignment != 0?
-			size + (alignment - (size % alignment)):
-			size
+		#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+			sallocx(ptr, arena_flags)
+		#else
+			size % alignment != 0?
+				size + (alignment - (size % alignment)):
+				size
+		#endif
 	};
 
 	assert(ret % alignment == 0);
-	assert(ret < size + alignment);
 	assert(alignment % sizeof(void *) == 0);
 	return ret;
 }
@@ -3544,16 +3560,27 @@ void
 ircd::db::database::allocator::Deallocate(void *const ptr)
 noexcept
 {
-	std::free(ptr);
+	#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+		dallocx(ptr, arena_flags);
+	#else
+		std::free(ptr);
+	#endif
 }
 
 void *
 ircd::db::database::allocator::Allocate(size_t size)
 noexcept
 {
-	auto ptr
+	assert(size > 0UL);
+	assert(size < 256_GiB);
+
+	const auto ptr
 	{
-		ircd::allocator::aligned_alloc(alignment, size)
+		#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+			mallocx(size, arena_flags)
+		#else
+			ircd::allocator::aligned_alloc(alignment, size).release()
+		#endif
 	};
 
 	#ifdef RB_DEBUG_DB_ENV
@@ -3565,11 +3592,11 @@ noexcept
 		c? string_view(db::name(*c)): string_view{},
 		size,
 		alignment,
-		ptr.get(),
+		ptr,
 	};
 	#endif
 
-	return ptr.release();
+	return ptr;
 }
 
 const char *
