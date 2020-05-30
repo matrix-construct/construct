@@ -303,6 +303,48 @@ ircd::allocator::aligned_alloc(const size_t &alignment_,
 
 #if defined(HAVE_SYS_RESOURCE_H) && defined(RLIMIT_MEMLOCK)
 size_t
+ircd::allocator::rlimit_memlock(const size_t &req)
+try
+{
+	rlimit rlim {0};
+	rlim.rlim_cur = req;
+	syscall(setrlimit, RLIMIT_MEMLOCK, &rlim);
+
+	char pbuf[48];
+	log::info
+	{
+		"Raised resource limit for locked memory to %s",
+		req != -1UL?
+			pretty(pbuf, iec(req)):
+			"unlimited"_sv,
+	};
+
+	return rlim.rlim_cur;
+}
+catch(const std::system_error &e)
+{
+	char pbuf[48];
+	log::warning
+	{
+		"Failed to raise resource limit for locked memory to %s :%s",
+		req != -1UL?
+			pretty(pbuf, iec(req)):
+			"unlimited"_sv,
+		e.what(),
+	};
+
+	return rlimit_memlock();
+}
+#else
+size_t
+ircd::allocator::rlimit_memlock(const size_t &req)
+{
+	return 0;
+}
+#endif
+
+#if defined(HAVE_SYS_RESOURCE_H) && defined(RLIMIT_MEMLOCK)
+size_t
 ircd::allocator::rlimit_memlock()
 {
 	rlimit rlim;

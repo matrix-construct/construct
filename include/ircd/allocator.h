@@ -31,6 +31,7 @@ namespace ircd::allocator
 	size_t rlimit_as();
 	size_t rlimit_data();
 	size_t rlimit_memlock();
+	size_t rlimit_memlock(const size_t &request);
 
 	std::unique_ptr<char, decltype(&std::free)>
 	aligned_alloc(const size_t &align, const size_t &size);
