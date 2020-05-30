@@ -114,7 +114,9 @@ ircd::db::write_mutex;
 ircd::db::init::init()
 try
 {
+	#ifdef IRCD_DB_HAS_ALLOCATOR
 	database::allocator::init();
+	#endif
 	compressions();
 	directory();
 	test_direct_io();
@@ -164,7 +166,9 @@ noexcept
 		log, "All contexts joined; all requests are clear."
 	};
 
+	#ifdef IRCD_DB_HAS_ALLOCATOR
 	database::allocator::fini();
+	#endif
 }
 
 void
