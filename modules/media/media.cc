@@ -528,7 +528,7 @@ ircd::m::media::file::read(const m::room &room,
 		const auto handle{[&](const const_buffer &block)
 		{
 			if(unlikely(size(block) != block_size))
-				throw error
+				throw m::NOT_FOUND
 				{
 					"File [%s] block [%s] event %s idx:%lu block size %zu != %zu",
 					string_view{room.room_id},
@@ -561,7 +561,7 @@ ircd::m::media::file::read(const m::room &room,
 		}};
 
 		if(unlikely(!block::get(hash, handle)))
-			throw error
+			throw m::NOT_FOUND
 			{
 				"File [%s] block %s missing in event %s idx:%lu",
 				string_view{room.room_id},
