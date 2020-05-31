@@ -135,6 +135,8 @@ namespace ircd::openssl
 	void set_tmp_ecdh(SSL_CTX &, EC_KEY &);
 	void set_curves(SSL_CTX &, std::string list);
 	void set_curves(SSL &, std::string list);
+	void set_app_data(SSL &, void *const &);
+	void *get_app_data(SSL &) noexcept;
 
 	// SNI suite
 	string_view server_name(const SSL &); // provided by client

@@ -100,6 +100,20 @@ ircd::openssl::server_name(const SSL &ssl)
 // Cipher suite
 //
 
+void *
+ircd::openssl::get_app_data(SSL &ssl)
+noexcept
+{
+	return SSL_get_app_data(&ssl);
+}
+
+void
+ircd::openssl::set_app_data(SSL &ssl,
+                            void *const &opaque)
+{
+	call(::SSL_set_ex_data, &ssl, 0, opaque);
+}
+
 void
 ircd::openssl::set_curves(SSL &ssl,
                           std::string list)
