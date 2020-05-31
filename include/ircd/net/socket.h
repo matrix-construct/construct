@@ -59,6 +59,7 @@ struct ircd::net::socket
 	stat in, out;
 	deadline_timer timer;
 	uint64_t timer_sem[2] {0};                   // handler, sender
+	char alpn[12] {0};
 	bool timer_set {false};                      // boolean lockout
 	bool timedout {false};
 	bool fini {false};

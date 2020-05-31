@@ -851,7 +851,10 @@ ircd::net::acceptor::handle_alpn(socket &socket,
 	//NOTE: proto == "h2" condition goes here
 	for(const auto &proto : in)
 		if(proto == "http/1.1")
+		{
+			strlcpy(socket.alpn, proto);
 			return proto;
+		}
 
 	return {};
 }
