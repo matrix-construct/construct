@@ -30,6 +30,7 @@ malloc_conf
 {
 	"narenas:1"
 	",tcache:false"
+	",metadata_thp:always"
 };
 #endif
 
