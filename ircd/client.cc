@@ -335,7 +335,7 @@ namespace ircd
 	static bool handle_ec_eof(client &);
 	static bool handle_ec(client &, const error_code &);
 
-	static void handle_client_request(std::shared_ptr<client>);
+	static void handle_client_requests(std::shared_ptr<client>);
 	static void handle_client_ready(std::shared_ptr<client>, const error_code &ec);
 }
 
@@ -400,7 +400,7 @@ ircd::handle_client_ready(std::shared_ptr<client> client,
 
 	auto handler
 	{
-		std::bind(ircd::handle_client_request, std::move(client))
+		std::bind(ircd::handle_client_requests, std::move(client))
 	};
 
 	if(client::pool.avail() == 0)
@@ -419,7 +419,7 @@ ircd::handle_client_ready(std::shared_ptr<client> client,
 /// client will release this ctx and its stack and fall back to async mode
 /// or die.
 void
-ircd::handle_client_request(std::shared_ptr<client> client)
+ircd::handle_client_requests(std::shared_ptr<client> client)
 try
 {
 	// The ircd::ctx now handling this request is referenced and accessible
