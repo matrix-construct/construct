@@ -3632,7 +3632,7 @@ noexcept
 	// This feature is only enabled when RLIMIT_MEMLOCK is unlimited. We don't
 	// want to deal with any limit at all.
 	#if defined(HAVE_MLOCK2) && defined(MLOCK_ONFAULT)
-	if(database::allocator::mlock_limit == -1)
+	if(database::allocator::mlock_limit == -1UL)
 	{
 		syscall(::mlock2, ret, size, MLOCK_ONFAULT);
 		database::allocator::mlock_current += size;
