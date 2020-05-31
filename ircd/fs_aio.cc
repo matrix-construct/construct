@@ -280,7 +280,7 @@ ircd::fs::aio::read(const vector_view<read_op> &op)
 	for(size_t i(0); i < num; ++i) try
 	{
 		op[i].ret = request[i].complete();
-		assert(op[i].ret == buffers::size(op[i].bufs) || !op[i].opts->blocking);
+		assert(!op[i].ret || op[i].ret == buffers::size(op[i].bufs) || !op[i].opts->blocking);
 		ret += op[i].ret;
 		stats.bytes_read += op[i].ret;
 		stats.reads++;
