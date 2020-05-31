@@ -61,8 +61,8 @@ struct ircd::net::acceptor
 	void configure(const json::object &opts);
 
 	// Handshake stack
-	bool handle_sni(SSL &, int &ad);
-	string_view handle_alpn(SSL &, const vector_view<const string_view> &in);
+	bool handle_sni(socket &, int &ad);
+	string_view handle_alpn(socket &, const vector_view<const string_view> &in);
 	void check_handshake_error(const error_code &ec, socket &) const;
 	void handshake(const error_code &, const std::shared_ptr<socket>, const decltype(handshaking)::const_iterator) noexcept;
 
