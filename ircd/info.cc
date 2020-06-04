@@ -808,13 +808,12 @@ ircd::info::dump_sys_info()
 	log::logf
 	{
 		log::star, log::DEBUG,
-		"page_size=%zu iov_max=%zu aio_max=%zu aio_reqprio_max=%zu ram=%s swap=%s",
+		"page_size=%zu iov_max=%zu aio_max=%zu aio_reqprio_max=%zu memlock_limit=%s",
 		page_size,
 		iov_max,
 		aio_max,
 		aio_reqprio_max,
-		pretty(buf[0], iec(total_ram)),
-		pretty(buf[1], iec(total_swap)),
+		pretty(buf[0], iec(allocator::rlimit_memlock())),
 	};
 	#endif
 }
