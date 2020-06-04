@@ -3539,6 +3539,15 @@ ircd::db::database::allocator::mlock_limit
 	ircd::allocator::rlimit_memlock()
 };
 
+decltype(ircd::db::database::allocator::mlock_enabled)
+ircd::db::database::allocator::mlock_enabled
+{
+	mlock_limit == -1UL
+
+	// mlock2() not supported by valgrind
+	&& !vg::active()
+};
+
 decltype(ircd::db::database::allocator::mlock_current)
 ircd::db::database::allocator::mlock_current;
 
@@ -3632,7 +3641,7 @@ noexcept
 	// This feature is only enabled when RLIMIT_MEMLOCK is unlimited. We don't
 	// want to deal with any limit at all.
 	#if defined(HAVE_MLOCK2) && defined(MLOCK_ONFAULT)
-	if(database::allocator::mlock_limit == -1UL)
+	if(database::allocator::mlock_enabled)
 	{
 		syscall(::mlock2, ret, size, MLOCK_ONFAULT);
 		database::allocator::mlock_current += size;

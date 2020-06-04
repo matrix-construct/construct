@@ -297,6 +297,7 @@ struct ircd::db::database::allocator final
 {
 	static const size_t ALIGN_DEFAULT;
 	static const size_t mlock_limit;
+	static const bool mlock_enabled;
 	static size_t mlock_current;
 	static unsigned cache_arena;
 
