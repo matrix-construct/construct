@@ -101,6 +101,10 @@ struct ircd::m::sync::data
 	/// The json::stack master object
 	json::stack *out {nullptr};
 
+	/// Set by a linear sync handler; indicates the handler cannot fulfill
+	/// the request because the polylog sync handler should be used instead;
+	bool reflow_full_state {false};
+
 	data(const m::user &user,
 	     const m::events::range &range,
 	     ircd::client *const &client = nullptr,

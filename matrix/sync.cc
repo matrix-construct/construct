@@ -468,9 +468,15 @@ ircd::m::sync::loghead(const data &data)
 		data.range.second,
 		vm::sequence::retired,
 		data.phased?
-			"|CRAZY"_sv : ""_sv,
+			"|CRAZY"_sv:
+		data.reflow_full_state?
+			"|REFLOW"_sv:
+		(data.args && data.args->full_state)?
+			"|FULLSTATE"_sv:
+			""_sv,
 		data.prefetch?
-			"|PREFETCH"_sv : ""_sv,
+			"|PREFETCH"_sv:
+			""_sv,
 		flush_count,
 		ircd::pretty(iecbuf[1], iec(flush_bytes)),
 		data.out?
@@ -608,6 +614,7 @@ try
 ,full_state
 {
 	request.query.get("full_state", false)
+	|| has(std::get<2>(since), 'P')
 }
 ,set_presence
 {

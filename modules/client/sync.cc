@@ -638,13 +638,30 @@ ircd::m::sync::longpoll::polled(data &data,
 		linear_proffer_event(data, scratch)
 	};
 
-	if(!consumed)
-		return false;
-
 	// In semaphore-mode we're just here to ride the longpoll's blocking
 	// behavior. We want the client to get an empty response.
 	if(args.semaphore)
 		return false;
+
+	if(!consumed && !data.reflow_full_state)
+		return false;
+
+	assert(!data.reflow_full_state || data.event_idx);
+	const auto next
+	{
+		data.event_idx && data.reflow_full_state?
+			std::min(data.event_idx, vm::sequence::retired + 1):
+		data.event_idx?
+			std::min(data.event_idx + 1, vm::sequence::retired + 1):
+			std::min(data.range.second + 1, vm::sequence::retired + 1)
+	};
+
+	const auto &flags
+	{
+		data.reflow_full_state?
+			"P"_sv:
+			string_view{}
+	};
 
 	const json::vector vector
 	{
@@ -659,21 +676,15 @@ ircd::m::sync::longpoll::polled(data &data,
 		*data.out
 	};
 
-	json::merge(top, vector);
-
-	const auto next
-	{
-		data.event_idx?
-			std::min(data.event_idx + 1, vm::sequence::retired + 1):
-			std::min(data.range.second + 1, vm::sequence::retired + 1)
-	};
+	if(likely(consumed))
+		json::merge(top, vector);
 
 	char since_buf[64];
 	json::stack::member
 	{
 		top, "next_batch", json::value
 		{
-			make_since(since_buf, next), json::STRING
+			make_since(since_buf, next, flags), json::STRING
 		}
 	};
 
@@ -747,19 +758,30 @@ try
 	{
 		last && completed?
 			data.range.second:
+		last && data.reflow_full_state?
+			std::min(last, data.range.second):
 		last?
 			std::min(last + 1, data.range.second):
 			0UL
 	};
 
+	assert(!data.reflow_full_state || (last && !completed));
+
 	if(last)
 	{
+		const auto &flags
+		{
+			data.reflow_full_state?
+				"P"_sv:
+				string_view{}
+		};
+
 		char buf[64];
 		json::stack::member
 		{
 			top, "next_batch", json::value
 			{
-				make_since(buf, next), json::STRING
+				make_since(buf, next, flags), json::STRING
 			}
 		};
 
@@ -833,6 +855,10 @@ ircd::m::sync::linear_proffer(data &data,
 			// to continue with the iteration. Otherwise if the next
 			// worst-case event does not fit, bad things.
 			wb.remaining() >= 68_KiB
+
+			// When the handler reports this special-case we have
+			// to stop at this iteration.
+			&& !data.reflow_full_state
 		};
 
 		return enough_space_for_more;

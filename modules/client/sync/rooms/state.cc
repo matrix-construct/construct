@@ -103,11 +103,22 @@ ircd::m::sync::room_state_linear_events(data &data)
 
 	const bool is_own_join
 	{
-		is_own_membership && data.membership == "join"
+		is_own_membership
+		&& data.membership == "join"
 	};
 
 	if(is_own_join)
+	{
+		// Special case gimmick; this effectively stops the linear-sync at this
+		// event and has /sync respond with a token containing a flag. When the
+		// client makes the next request with this flag we treat it as if they
+		// were using the ?full_state=true query parameter. This will enter the
+		// polylog handler instead of the linear handler (here) so as to
+		// efficiently sync the entire room's state to the client; as we cannot
+		// perform that feat from this handler.
+		data.reflow_full_state = true;
 		return false;
+	}
 
 	const ssize_t &viewport_size
 	{
@@ -234,7 +245,14 @@ bool
 ircd::m::sync::_room_state_polylog(data &data)
 {
 	assert(data.args);
-	if(likely(!data.args->full_state))
+
+	const bool full_state_all
+	{
+		data.args->full_state &&
+		!has(std::get<2>(data.args->since), 'P')
+	};
+
+	if(likely(!full_state_all))
 		if(!data.phased && int64_t(data.range.first) > 0)
 			if(!apropos(data, data.room_head))
 				return false;
@@ -330,29 +348,41 @@ ircd::m::sync::room_state_polylog_events(data &data)
 		json::get<"state"_>(room_filter)
 	};
 
-	const auto &lazyload_members
-	{
-		lazyload_members_enable &&
-		json::get<"lazy_load_members"_>(state_filter)
-	};
-
 	const room::state state
 	{
 		*data.room
 	};
 
-	state.for_each([&data, &concurrent, &lazyload_members]
+	const auto &lazyload_members
+	{
+		lazyload_members_enable
+		&& json::get<"lazy_load_members"_>(state_filter)
+	};
+
+	const bool full_state_reflow
+	{
+		data.args->full_state
+		&& has(std::get<2>(data.args->since), 'P')
+	};
+
+	const bool full_state_all
+	{
+		data.args->full_state
+		&& !full_state_reflow
+	};
+
+	state.for_each([&data, &concurrent, &lazyload_members, &full_state_all]
 	(const string_view &type, const string_view &state_key, const event::idx &event_idx)
 	{
 		// Skip this event if it's not in the sync range, except
 		// when the request came with a `?full_state=true`
 		assert(data.args);
-		if(likely(!data.args->full_state))
+		if(likely(!full_state_all))
 			if(!apropos(data, event_idx))
 				return true;
 
 		// For crazyloading/lazyloading related membership event optimiztions.
-		if(!data.args->full_state && type == "m.room.member")
+		if(!full_state_all && type == "m.room.member")
 		{
 			if(lazyload_members)
 				return true;
