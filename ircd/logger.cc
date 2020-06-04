@@ -498,7 +498,6 @@ namespace ircd::log
 }
 
 void
-__attribute__((optimize("3")))
 ircd::log::slog(const log &log,
                 const level &lev,
                 const window_buffer::closure &closure)
@@ -605,7 +604,6 @@ noexcept
 }
 
 bool
-__attribute__((optimize("3")))
 ircd::log::can_skip(const log &log,
                     const level &lev)
 {
