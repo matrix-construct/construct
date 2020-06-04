@@ -109,6 +109,20 @@ ircd::db::write_mutex;
 // init
 //
 
+namespace ircd::db
+{
+	extern const std::string direct_io_test_file_path;
+}
+
+decltype(ircd::db::direct_io_test_file_path)
+ircd::db::direct_io_test_file_path
+{
+	fs::path_string(fs::path_views
+	{
+		fs::base::db, "SUPPORTS_DIRECT_IO"_sv
+	})
+};
+
 ircd::db::init::init()
 try
 {
@@ -204,18 +218,13 @@ catch(const fs::error &e)
 	throw;
 }
 
-namespace ircd::db
-{
-	static std::string direct_io_test_file_path();
-}
-
 void
 ircd::db::init::test_direct_io()
 try
 {
-	const auto test_file_path
+	const auto &test_file_path
 	{
-		direct_io_test_file_path()
+		direct_io_test_file_path
 	};
 
 	if(fs::support::direct_io(test_file_path))
@@ -238,23 +247,9 @@ catch(const std::exception &e)
 	{
 		log, "Failed to test if Direct-IO possible with test file `%s'"
 		"; Concurrent database queries will not be possible :%s",
-		direct_io_test_file_path(),
+		direct_io_test_file_path,
 		e.what()
 	};
-}
-
-std::string
-ircd::db::direct_io_test_file_path()
-{
-	static const auto &test_file_name
-	{
-		"SUPPORTS_DIRECT_IO"_sv
-	};
-
-	return fs::path_string(fs::path_views
-	{
-		fs::base::db, test_file_name
-	});
 }
 
 namespace rocksdb::crc32c
@@ -1257,7 +1252,7 @@ try
 	// database directory claiming such. User can force no direct io
 	// with program option at startup (i.e -nodirect).
 	opts->use_direct_reads = bool(fs::fd::opts::direct_io_enable)?
-		fs::exists(direct_io_test_file_path()):
+		fs::exists(direct_io_test_file_path):
 		false;
 
 	// For the read-side of the compaction process.
