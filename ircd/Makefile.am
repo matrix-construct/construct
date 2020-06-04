@@ -174,6 +174,7 @@ libircd_la_SOURCES += mods_ldso.cc
 endif
 libircd_la_SOURCES += db_fixes.cc
 libircd_la_SOURCES += db_port.cc
+libircd_la_SOURCES += db_allocator.cc
 libircd_la_SOURCES += db_env.cc
 libircd_la_SOURCES += db.cc
 libircd_la_SOURCES += net.cc
@@ -205,6 +206,7 @@ ctx_eh.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 db.lo:                AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 db_env.lo:            AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 db_port.lo:           AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+db_allocator.lo:      AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 db_fixes.lo:          AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 db_fixes.lo:          AM_CPPFLAGS += -I$(top_srcdir)/deps/rocksdb/include
 db_fixes.lo:          AM_CPPFLAGS += -I$(top_srcdir)/deps/rocksdb
