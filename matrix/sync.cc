@@ -13,13 +13,6 @@ namespace ircd::m::sync
 	extern const ctx::pool::opts pool_opts;
 }
 
-decltype(ircd::m::sync::stats_info)
-ircd::m::sync::stats_info
-{
-	{ "name",     "ircd.m.sync.stats.info" },
-	{ "default",  false                    },
-};
-
 decltype(ircd::m::sync::log)
 ircd::m::sync::log
 {
@@ -126,62 +119,19 @@ ircd::m::sync::make_since(const mutable_buffer &buf,
 	};
 }
 
-ircd::string_view
-ircd::m::sync::loghead(const data &data)
+//
+// sync/stats.h
+//
+
+decltype(ircd::m::sync::stats::info)
+ircd::m::sync::stats::info
 {
-	thread_local char headbuf[256], rembuf[128], iecbuf[2][64], tmbuf[32];
-
-	const auto remstr
-	{
-		data.client?
-			string(rembuf, ircd::remote(*data.client)):
-			string_view{}
-	};
-
-	const auto flush_bytes
-	{
-		data.stats?
-			data.stats->flush_bytes:
-			0U
-	};
-
-	const auto flush_count
-	{
-		data.stats?
-			data.stats->flush_count:
-			0U
-	};
-
-	const auto tmstr
-	{
-		data.stats?
-			ircd::pretty(tmbuf, data.stats->timer.at<milliseconds>(), true):
-			string_view{}
-	};
-
-	return fmt::sprintf
-	{
-		headbuf, "%s %s %ld:%lu|%lu%s%s chunk:%zu sent:%s of %s in %s",
-		remstr,
-		string_view{data.user.user_id},
-		data.range.first,
-		data.range.second,
-		vm::sequence::retired,
-		data.phased?
-			"|CRAZY"_sv : ""_sv,
-		data.prefetch?
-			"|PREFETCH"_sv : ""_sv,
-		flush_count,
-		ircd::pretty(iecbuf[1], iec(flush_bytes)),
-		data.out?
-			ircd::pretty(iecbuf[0], iec(flush_bytes + size(data.out->completed()))):
-			string_view{},
-		tmstr
-	};
-}
+	{ "name",     "ircd.m.sync.stats.info" },
+	{ "default",  false                    },
+};
 
 //
-// item
+// sync/item.h
 //
 
 //
@@ -273,12 +223,12 @@ try
 	#ifdef RB_DEBUG
 	sync::stats stats
 	{
-		data.stats && (stats_info || stats_debug)?
+		data.stats && (stats::info || stats_debug)?
 			*data.stats:
 			sync::stats{}
 	};
 
-	if(data.stats && (stats_info || stats_debug))
+	if(data.stats && (stats::info || stats_debug))
 		stats.timer = {};
 	#endif
 
@@ -295,7 +245,7 @@ try
 	};
 
 	#ifdef RB_DEBUG
-	if(data.stats && (stats_info || stats_debug))
+	if(data.stats && (stats::info || stats_debug))
 	{
 		//data.out.flush();
 		thread_local char tmbuf[32];
@@ -426,6 +376,133 @@ ircd::m::sync::item::name()
 const
 {
 	return this->instance_multimap::it->first;
+}
+
+//
+// sync/data.h
+//
+
+ircd::string_view
+ircd::m::sync::loghead(const data &data)
+{
+	thread_local char headbuf[256], rembuf[128], iecbuf[2][64], tmbuf[32];
+
+	const auto remstr
+	{
+		data.client?
+			string(rembuf, ircd::remote(*data.client)):
+			string_view{}
+	};
+
+	const auto flush_bytes
+	{
+		data.stats?
+			data.stats->flush_bytes:
+			0U
+	};
+
+	const auto flush_count
+	{
+		data.stats?
+			data.stats->flush_count:
+			0U
+	};
+
+	const auto tmstr
+	{
+		data.stats?
+			ircd::pretty(tmbuf, data.stats->timer.at<milliseconds>(), true):
+			string_view{}
+	};
+
+	return fmt::sprintf
+	{
+		headbuf, "%s %s %ld:%lu|%lu%s%s chunk:%zu sent:%s of %s in %s",
+		remstr,
+		string_view{data.user.user_id},
+		data.range.first,
+		data.range.second,
+		vm::sequence::retired,
+		data.phased?
+			"|CRAZY"_sv : ""_sv,
+		data.prefetch?
+			"|PREFETCH"_sv : ""_sv,
+		flush_count,
+		ircd::pretty(iecbuf[1], iec(flush_bytes)),
+		data.out?
+			ircd::pretty(iecbuf[0], iec(flush_bytes + size(data.out->completed()))):
+			string_view{},
+		tmstr
+	};
+}
+
+//
+// data::data
+//
+
+ircd::m::sync::data::data(const m::user &user,
+                          const m::events::range &range,
+                          ircd::client *const &client,
+                          json::stack *const &out,
+                          sync::stats *const &stats,
+                          const sync::args *const &args,
+                          const device::id &device_id)
+:range
+{
+	range
+}
+,stats
+{
+	stats
+}
+,client
+{
+	client
+}
+,args
+{
+	args
+}
+,user
+{
+	user
+}
+,user_room
+{
+	user
+}
+,user_state
+{
+	user_room
+}
+,user_rooms
+{
+	user
+}
+,filter_buf
+{
+	this->args?
+		m::filter::get(this->args->filter_id, user):
+		std::string{}
+}
+,filter
+{
+	json::object{filter_buf}
+}
+,device_id
+{
+	device_id
+}
+,out
+{
+	out
+}
+{
+}
+
+ircd::m::sync::data::~data()
+noexcept
+{
 }
 
 //

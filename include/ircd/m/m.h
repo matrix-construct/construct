@@ -89,7 +89,7 @@ namespace ircd
 #include "redacted.h"
 #include "feds.h"
 #include "bridge.h"
-#include "sync.h"
+#include "sync/sync.h"
 #include "fetch.h"
 #include "breadcrumb_rooms.h"
 #include "media.h"

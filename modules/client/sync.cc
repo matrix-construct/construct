@@ -11,9 +11,6 @@
 
 namespace ircd::m::sync
 {
-	struct args;
-	struct stats;
-	struct data;
 	struct response;
 
 	static const_buffer flush(data &, resource::response::chunked &, const const_buffer &);
@@ -1021,7 +1018,7 @@ try
 	if(!ret)
 		checkpoint.committing(false);
 
-	if(!data.phased && stats_info)
+	if(!data.phased && stats::info)
 		log::info
 		{
 			log, "request %s polylog commit:%b complete @%ld",
@@ -1044,73 +1041,4 @@ catch(const std::exception &e)
 	};
 
 	throw;
-}
-
-//
-// data
-//
-
-ircd::m::sync::data::data(const m::user &user,
-                          const m::events::range &range,
-                          ircd::client *const &client,
-                          json::stack *const &out,
-                          sync::stats *const &stats,
-                          const sync::args *const &args,
-                          const device::id &device_id)
-:range
-{
-    range
-}
-,stats
-{
-    stats
-}
-,client
-{
-    client
-}
-,args
-{
-    args
-}
-,user
-{
-    user
-}
-,user_room
-{
-    user
-}
-,user_state
-{
-    user_room
-}
-,user_rooms
-{
-    user
-}
-,filter_buf
-{
-    this->args?
-        m::filter::get(this->args->filter_id, user):
-        std::string{}
-}
-,filter
-{
-    json::object{filter_buf}
-}
-,device_id
-{
-	device_id
-}
-,out
-{
-    out
-}
-{
-}
-
-ircd::m::sync::data::~data()
-noexcept
-{
 }
