@@ -111,13 +111,16 @@ ircd::m::sync::make_since(const string_view &input)
 			0UL
 	};
 
+	// prefix
 	assert(!part[0] || part[0] == "ctor");
 	return
 	{
+		// since
 		part[1]?
 			lex_cast<event::idx>(part[1]):
 			0UL,
 
+		// snapshot
 		part[2]?
 			lex_cast<event::idx>(part[2]):
 			0UL,
