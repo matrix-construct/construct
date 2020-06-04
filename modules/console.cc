@@ -3950,13 +3950,13 @@ _print_sst_info_header(opt &out)
 	    << std::left
 	    << "  " << std::setw(3) << "flt"
 	    << "  " << std::setw(24) << "file size"
-	    << std::right
 	    << "  " << std::setw(23) << "sequence number"
 	    << "  " << std::setw(23) << "key range"
-	    << "  " << std::setw(8) << "reads"
-	    << "  " << std::setw(9) << "entries"
-	    << "  " << std::setw(9) << "blocks"
-	    << "  " << std::setw(6) << "idxs"
+	    << std::right
+	    << "  " << std::setw(10) << "reads"
+	    << "  " << std::setw(10) << "entries"
+	    << "  " << std::setw(10) << "blocks"
+	    << "  " << std::setw(7) << "idxs"
 	    << "  " << std::setw(3) << "lev"
 	    << std::left
 	    << "  " << std::setw(20) << "column"
@@ -3984,16 +3984,16 @@ _print_sst_info(opt &out,
 	char tmbuf[64], pbuf[48];
 	out << std::left << std::setfill(' ')
 	    << std::setw(12) << f.name
-	    << "  " << std::setw(32) << std::left << timef(tmbuf, f.created, ircd::localtime)
+	    << "  " << std::setw(32) << std::left << (f.created? timef(tmbuf, f.created, ircd::localtime) : string_view{})
 	    << "  " << std::setw(5) << std::right << trunc(f.compression, 5)
 	    << "  " << std::setw(3) << std::left << (!f.filter.empty()? 'F' : ' ')
 	    << "  " << std::setw(24) << std::left << pretty(pbuf, iec(f.size))
 	    << "  " << std::setw(10) << std::right << f.min_seq << " : " << std::setw(10) << std::left << f.max_seq
 	    << "  " << std::setw(10) << std::right << min_key << " : " << std::setw(10) << std::left << max_key
-	    << "  " << std::setw(8) << std::right << f.num_reads
-	    << "  " << std::setw(9) << std::right << f.entries
-	    << "  " << std::setw(9) << std::right << f.data_blocks
-	    << "  " << std::setw(6) << std::right << f.index_parts
+	    << "  " << std::setw(10) << std::right << f.num_reads
+	    << "  " << std::setw(10) << std::right << f.entries
+	    << "  " << std::setw(10) << std::right << f.data_blocks
+	    << "  " << std::setw(7) << std::right << f.index_parts
 	    << "  " << std::setw(3) << std::right << f.level
 	    << "  " << std::setw(20) << std::left << f.column
 	    << std::endl;
@@ -4276,6 +4276,31 @@ try
 		db::database::get(dbname)
 	};
 
+	const auto _print_totals{[&out]
+	(const auto &vector)
+	{
+		db::database::sst::info total;
+		total.name = "total"s;
+		for(const auto &info : vector)
+		{
+			total.size += info.size;
+			total.data_size += info.data_size;
+			total.index_size += info.index_size;
+			total.top_index_size += info.top_index_size;
+			total.filter_size += info.filter_size;
+			total.keys_size += info.keys_size;
+			total.values_size += info.values_size;
+			total.index_parts += info.index_parts;
+			total.data_blocks += info.data_blocks;
+			total.entries += info.entries;
+			total.range_deletes += info.range_deletes;
+			total.num_reads += info.num_reads;
+		}
+
+		_print_sst_info_header(out);
+		_print_sst_info(out, total);
+	}};
+
 	if(colname == "*")
 	{
 		db::database::sst::info::vector vector
@@ -4293,9 +4318,8 @@ try
 		for(const auto &fileinfo : vector)
 			_print_sst_info(out, fileinfo);
 
-		out << "-- " << vector.size() << " files"
-		    << std::endl;
-
+		out << std::endl;
+		_print_totals(vector);
 		return true;
 	}
 
@@ -4326,19 +4350,8 @@ try
 	for(const auto &info : vector)
 		_print_sst_info(out, info);
 
-	const size_t total_bytes
-	{
-		std::accumulate(begin(vector), end(vector), size_t(0), []
-		(auto ret, const auto &info)
-		{
-			return ret += info.size;
-		})
-	};
-
-	out << "-- " << pretty(iec(total_bytes))
-	    << " in " << vector.size() << " files"
-	    << std::endl;
-
+	out << std::endl;
+	_print_totals(vector);
 	return true;
 }
 catch(const std::out_of_range &e)
