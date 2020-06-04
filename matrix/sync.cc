@@ -103,7 +103,7 @@ ircd::m::sync::for_each(const string_view &prefix,
 ircd::m::sync::since
 ircd::m::sync::make_since(const string_view &input)
 {
-	string_view part[3];
+	string_view part[4];
 	const auto parts
 	{
 		input && input != "0"_sv?
@@ -124,29 +124,42 @@ ircd::m::sync::make_since(const string_view &input)
 		part[2]?
 			lex_cast<event::idx>(part[2]):
 			0UL,
+
+		// flags
+		part[3]
 	};
 }
 
 ircd::string_view
 ircd::m::sync::make_since(const mutable_buffer &buf,
-                          const int64_t &val)
+                          const int64_t &val,
+                          const string_view &flags)
 {
 	return fmt::sprintf
 	{
-		buf, "ctor_%lu",
-		val
+		buf, "ctor_%lu%s%s",
+		val,
+		flags?
+			"_0_"_sv:
+			flags,
+		flags,
 	};
 }
 
 ircd::string_view
 ircd::m::sync::make_since(const mutable_buffer &buf,
-                          const m::events::range &val)
+                          const m::events::range &val,
+                          const string_view &flags)
 {
 	return fmt::sprintf
 	{
-		buf, "ctor_%lu_%lu",
+		buf, "ctor_%lu_%lu%s%s",
 		val.first,
 		val.second,
+		flags?
+			"_"_sv:
+			flags,
+		flags,
 	};
 }
 

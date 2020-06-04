@@ -13,10 +13,10 @@
 
 namespace ircd::m::sync
 {
-	using since = std::tuple<event::idx, event::idx>;
+	using since = std::tuple<event::idx, event::idx, string_view>;
 
-	string_view make_since(const mutable_buffer &, const m::events::range &);
-	string_view make_since(const mutable_buffer &, const int64_t &);
+	string_view make_since(const mutable_buffer &, const m::events::range &, const string_view &flags = {});
+	string_view make_since(const mutable_buffer &, const int64_t &, const string_view &flags = {});
 
 	since make_since(const string_view &);
 }

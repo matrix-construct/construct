@@ -55,7 +55,7 @@ get__members(client &client,
 	// an event_idx sequence integer, except during phased-polylog sync
 	// when this is a negative integer. If this is phased sync, we can
 	// parse this token for the snapshot integer.
-	const auto &[since, snapshot]
+	const auto &[since, snapshot, flags]
 	{
 		m::sync::make_since(at)
 	};
