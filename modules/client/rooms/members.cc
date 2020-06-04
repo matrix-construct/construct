@@ -57,16 +57,14 @@ get__members(client &client,
 	// parse this token for the snapshot integer.
 	const auto &[since, snapshot]
 	{
-		split(lstrip(at, "ctor_"), '_')
+		m::sync::make_since(at)
 	};
 
-	const auto at_idx
+	const auto &at_idx
 	{
-		snapshot?
-			lex_cast<m::event::idx>(snapshot):
-		since?
-			lex_cast<m::event::idx>(since):
-		-1UL
+		snapshot?:
+		since?:
+			-1UL
 	};
 
 	const m::room room

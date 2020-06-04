@@ -32,27 +32,21 @@ struct ircd::m::sync::args
 	/// for clients that reuse the same filter multiple times, for example in long poll requests.
 	string_view filter_id;
 
+	/// 6.2.1 A point in time to continue a sync from.
 	/// Parse the since token string; this may be two numbers separated by '_'
 	/// or it may be one number, or none. defaults to '0' for initial_sync.
 	/// The second number is used as a next_batch value cookie we gave to
 	/// the client (used during phased polylog sync)
-	std::pair<string_view, string_view> since_token;
+	sync::since since;
 
-	/// 6.2.1 A point in time to continue a sync from.
-	uint64_t since;
-
-	/// This is the raw (non-spec) next_batch token which can be supplied by
-	/// the client as an upper-bound on the window of this sync operation.
 	/// If this is non-empty, the value takes precedence and will be strictly
 	/// adhered to. Otherwise, the next_batch below may be computed by the
-	/// server and may be violated on longpolls.
-	string_view next_batch_token;
-
-	/// This is named the same as the next_batch response value passed to the
-	/// client at the conclusion of the sync operation because it will literally
-	/// pass through this value. The next sync operation will then start at this
-	/// value. This token is an event_idx, like the since token. Note it may point
-	/// to an event that does not yet exist past-the-end.
+	/// server and may be violated on longpolls. This is named the same as the
+	/// next_batch response value passed to the client at the conclusion of the
+	/// sync operation because it will literally pass through this value. The
+	/// next sync operation will then start at this value. This token is an
+	/// event_idx, like the since token. Note it may point to an event that
+	/// does not yet exist past-the-end.
 	uint64_t next_batch;
 
 	/// The point in time at which this /sync should stop longpolling and return

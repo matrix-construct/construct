@@ -24,13 +24,11 @@
 /// provided by the tree of modules.
 namespace ircd::m::sync
 {
-	string_view make_since(const mutable_buffer &, const int64_t &);
-	string_view make_since(const mutable_buffer &, const m::events::range &);
-
 	extern ctx::pool pool;
 	extern log::log log;
 }
 
+#include "since.h"
 #include "item.h"
 #include "stats.h"
 #include "args.h"

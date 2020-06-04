@@ -180,7 +180,8 @@ ircd::m::sync::handle_get(client &client,
 	// exist yet because it is one past the server's sequence::retired counter.
 	const m::events::range range
 	{
-		args.since, std::min(args.next_batch, m::vm::sequence::retired + 1)
+		std::get<0>(args.since),
+		std::min(args.next_batch, m::vm::sequence::retired + 1)
 	};
 
 	// The phased initial sync feature uses negative since tokens.
@@ -247,7 +248,7 @@ ircd::m::sync::handle_get(client &client,
 		polylog_phased && args.phased &&
 		(
 			phased_range ||
-			(initial_sync && empty(args.since_token.second))
+			(initial_sync && !std::get<1>(args.since))
 		)
 	};
 
@@ -513,7 +514,8 @@ try
 		// When the client explicitly gives a next_batch token we have to
 		// adhere to it and return an empty response before going past their
 		// desired upper-bound for this /sync.
-		if(data.args->next_batch_token)
+		assert(data.args);
+		if(int64_t(data.args->next_batch) > 0)
 			if(data.range.first >= data.range.second || data.range.second >= vm::sequence::retired)
 				return false;
 

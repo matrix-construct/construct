@@ -96,6 +96,34 @@ ircd::m::sync::for_each(const string_view &prefix,
 	return true;
 }
 
+//
+// sync/since.h
+//
+
+ircd::m::sync::since
+ircd::m::sync::make_since(const string_view &input)
+{
+	string_view part[3];
+	const auto parts
+	{
+		input && input != "0"_sv?
+			ircd::tokens(input, '_', part):
+			0UL
+	};
+
+	assert(!part[0] || part[0] == "ctor");
+	return
+	{
+		part[1]?
+			lex_cast<event::idx>(part[1]):
+			0UL,
+
+		part[2]?
+			lex_cast<event::idx>(part[2]):
+			0UL,
+	};
+}
+
 ircd::string_view
 ircd::m::sync::make_since(const mutable_buffer &buf,
                           const int64_t &val)
@@ -540,21 +568,17 @@ try
 {
 	request.query["filter"]
 }
-,since_token
-{
-	split(lstrip(request.query.get("since", "0"_sv), "ctor_"), '_')
-}
 ,since
 {
-	lex_cast<uint64_t>(since_token.first)
-}
-,next_batch_token
-{
-	request.query.get("next_batch", since_token.second)
+	sync::make_since(request.query["since"])
 }
 ,next_batch
 {
-	uint64_t(lex_cast<uint64_t>(next_batch_token?: "-1"_sv))
+	request.query["next_batch"]?
+		lex_cast<uint64_t>(request.query["next_batch"]):
+	std::get<1>(since)?
+		std::get<1>(since):
+		-1UL
 }
 ,timesout
 {
