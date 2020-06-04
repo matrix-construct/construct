@@ -8,24 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#if ROCKSDB_MAJOR > 6 \
-|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR > 1) \
-|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR == 1 && ROCKSDB_PATCH >= 1)
-	#define IRCD_DB_HAS_ENV_PRIO_USER
-#endif
-
-#if ROCKSDB_MAJOR > 6 \
-|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR > 3) \
-|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR == 3 && ROCKSDB_PATCH >= 6)
-	#define IRCD_DB_HAS_ENV_MULTIREAD
-#endif
-
-#if ROCKSDB_MAJOR > 6 \
-|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR > 7) \
-|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR == 7 && ROCKSDB_PATCH >= 3)
-	#define IRCD_DB_HAS_ENV_FILESYSTEM
-#endif
-
 /// Internal environment hookup.
 ///
 struct ircd::db::database::env final
