@@ -1020,16 +1020,23 @@ try
 	if(!ret)
 		checkpoint.committing(false);
 
-	if(!data.phased && stats::info)
-		log::info
-		{
-			log, "request %s polylog commit:%b complete @%ld",
-			loghead(data),
-			ret,
-			data.phased?
-				data.range.first:
-				data.range.second
-		};
+	const auto &log_level
+	{
+		!data.phased && stats::info?
+			log::level::INFO:
+			log::level::DEBUG
+	};
+
+	log::logf
+	{
+		log, log_level,
+		"request %s polylog commit:%b complete @%ld",
+		loghead(data),
+		ret,
+		data.phased?
+			data.range.first:
+			data.range.second
+	};
 
 	return ret;
 }
