@@ -395,8 +395,8 @@ ircd::fmt::snprintf::argument(const arg &val)
 	// The format string's front pointer is sitting on the specifier '%'
 	// waiting to be parsed now.
 	fmt::spec spec;
-	auto &start(std::get<0>(this->fmt));
-	const auto &stop(std::get<1>(this->fmt));
+	auto &start(begin(this->fmt));
+	const auto stop(end(this->fmt));
 	if(qi::parse(start, stop, parser, spec))
 		handle_specifier(this->out, idx++, spec, val);
 
@@ -408,20 +408,25 @@ ircd::fmt::snprintf::argument(const arg &val)
 	if(size(fmt) >= 2 && fmt[0] == SPECIFIER && fmt[1] == SPECIFIER)
 	{
 		append({&SPECIFIER, 1});
+		consume(this->fmt, 2);
 		fmt = string_view
 		{
-			start + 2, stop
+			start, stop
 		};
 	}
 
-	auto nextpos(fmt.find(SPECIFIER));
-	append(fmt.substr(0, nextpos));
-	this->fmt = const_buffer
+	const auto nextpos
 	{
-		nextpos != fmt.npos?
-			fmt.substr(nextpos):
-			string_view{}
+		fmt.find(SPECIFIER)
 	};
+
+	const string_view leg
+	{
+		fmt.substr(0, nextpos)
+	};
+
+	append(leg);
+	consume(this->fmt, size(leg));
 }
 
 void
