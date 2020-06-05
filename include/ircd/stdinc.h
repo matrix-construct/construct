@@ -26,7 +26,10 @@
 
 extern "C"
 {
-	#include <RB_INC_ASSERT_H
+	#ifndef assert
+		#include <RB_INC_ASSERT_H
+	#endif
+
 	#include <RB_INC_STDARG_H
 	#include <RB_INC_UNISTD_H
 	#include <RB_INC_SYS_TYPES_H

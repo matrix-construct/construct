@@ -35,7 +35,7 @@ namespace ircd
 {
 	void debugtrap() noexcept;
 	template<class expr> void always_assert(expr&&) noexcept;
-	void print_assertion(const char *const &, const char *const &, const unsigned &, const char *const &) noexcept;
+	[[gnu::cold]] void print_assertion(const char *const &, const char *const &, const unsigned &, const char *const &) noexcept;
 }
 
 /// Override the standard assert behavior to take one of several different

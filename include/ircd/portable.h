@@ -65,6 +65,19 @@ namespace ircd
 	typedef u_long ulong;
 #endif
 
+///TODO: XXX hoist lfence out of unlikely target block
+#if defined(RB_ASSERT) && defined(RB_ASSERT_INTRINSIC) && !defined(NDEBUG) && defined(__SSE2__)
+	#undef assert
+	#define assert(expr)                                                 \
+	({                                                                   \
+	    if(unlikely(!static_cast<bool>(expr)))                           \
+	    {                                                                \
+	        asm volatile ("lfence");                                     \
+	        __assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__);      \
+	    }                                                                \
+	})
+#endif
+
 //
 // Trouble; clang w/ our custom assert
 //
