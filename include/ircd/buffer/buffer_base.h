@@ -56,13 +56,6 @@ ircd::buffer::buffer<it>::buffer(const it &start,
 {}
 
 template<class it>
-inline __attribute__((always_inline, flatten))
-ircd::buffer::buffer<it>::buffer(const it &start,
-                                 const it &stop)
-:std::pair<it, it>{start, stop}
-{}
-
-template<class it>
 inline __attribute__((always_inline))
 ircd::buffer::buffer<it>::buffer(const buffer &start,
                                  const size_t &size)
@@ -73,7 +66,16 @@ ircd::buffer::buffer<it>::buffer(const buffer &start,
 {}
 
 template<class it>
-inline __attribute__((always_inline, flatten))
+inline __attribute__((always_inline))
+ircd::buffer::buffer<it>::buffer(const it &start,
+                                 const it &stop)
+:std::pair<it, it>{start, stop}
+{
+	//assert(this->begin() <= this->end());
+}
+
+template<class it>
+inline __attribute__((always_inline))
 ircd::buffer::buffer<it>::operator string_view()
 const
 {

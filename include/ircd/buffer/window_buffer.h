@@ -102,7 +102,9 @@ ircd::buffer::window_buffer::operator()(const closure_cbuf &closure)
 inline ircd::buffer::const_buffer
 ircd::buffer::window_buffer::operator()(const closure &closure)
 {
-	consume(*this, closure(*this));
+	const size_t addl(closure(*this));
+	assert(addl <= remaining());
+	consume(*this, addl);
 	return completed();
 }
 
