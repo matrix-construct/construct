@@ -4299,6 +4299,7 @@ try
 
 		_print_sst_info_header(out);
 		_print_sst_info(out, total);
+		out << "--- " << vector.size() << " files." << std::endl;
 	}};
 
 	if(colname == "*")
