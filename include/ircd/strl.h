@@ -48,13 +48,15 @@ struct ircd::strlcpy
 	strlcpy(char *const &dst, const string_view &src, const size_t &max)
 	:ret{[&]() -> mutable_buffer
 	{
-		if(!max)
-			return {};
+		mutable_buffer buf{dst, max};
+		const mutable_buffer tgt
+		{
+			buf, std::min(size(src), std::max(max, 1UL) - 1UL)
+		};
 
-		const auto len(std::min(src.size(), max - 1));
-		buffer::copy(mutable_buffer(dst, len), src);
-		dst[len] = '\0';
-		return { dst, len };
+		consume(buf, copy(tgt, src));
+		consume(buf, copy(buf, '\0'));
+		return tgt;
 	}()}
 	{}
 
