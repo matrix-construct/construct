@@ -461,18 +461,29 @@ try
 
 	return ret;
 }
-catch(const m::NOT_FOUND &e)
+catch(const ctx::interrupted &e)
 {
-	log::derror
+	log::error
 	{
-		"Failed to verify %s because key %s for %s :%s",
+		log, "Failed to verify %s because key %s for %s :%s",
 		string_view{event.event_id},
 		keyid,
 		origin,
-		e.what()
+		e.what(),
 	};
 
-	return false;
+	throw;
+}
+catch(const std::exception &e)
+{
+	throw m::BAD_SIGNATURE
+	{
+		"%s key %s for %s :%s",
+		string_view{event.event_id},
+		keyid,
+		origin,
+		e.what(),
+	};
 }
 
 bool
