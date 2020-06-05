@@ -927,7 +927,8 @@ decltype(ircd::info::aio_max)
 ircd::info::aio_max
 {
 	#ifdef _SC_AIO_MAX
-		0 //size_t(syscall(::sysconf, _SC_AIO_MAX))
+		// no syscall() wrapper; -1 becomes unlimited
+		size_t(::sysconf(_SC_AIO_MAX))
 	#endif
 };
 

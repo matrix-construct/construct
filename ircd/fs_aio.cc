@@ -45,7 +45,8 @@ ircd::fs::support::aio_fdsync
 decltype(ircd::fs::aio::MAX_EVENTS)
 ircd::fs::aio::MAX_EVENTS
 {
-	128L //TODO: get this info
+	//TODO: device queue depth
+	std::min(info::aio_max, 64UL)
 };
 
 decltype(ircd::fs::aio::max_events)
