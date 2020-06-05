@@ -4025,9 +4025,10 @@ const
 	if(unlikely(empty(buffer)))
 		throw buffer_overrun
 		{
-			"Chunk dynamic content buffer too small size:%zu content_read:%zu chunk_remaining:%zu",
+			"Chunk dynamic content buffer too small content[size:%zu read:%zu] chunk[size:%zu remain:%zu]",
 			size(content),
 			state.content_read,
+			state.chunk_length,
 			chunk_remaining,
 		};
 
