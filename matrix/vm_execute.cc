@@ -443,14 +443,13 @@ catch(const m::error &e) // GENERAL MATRIX ERROR
 	return handle_error
 	(
 		*eval.opts, fault::GENERAL,
-		"execute %s %s :%s :%s :%s",
+		"execute %s %s :%s :%s",
 		event.event_id?
 			string_view{event.event_id}:
 			"<edu>"_sv,
 		eval.room_id?
 			eval.room_id:
 			"<edu>"_sv,
-		e.what(),
 		error[0],
 		error[1]
 	);
@@ -1059,10 +1058,9 @@ catch(const m::error &e)
 {
 	log::derror
 	{
-		log, "%s hook:%s :%s :%s :%s",
+		log, "%s hook:%s :%s :%s",
 		loghead(eval),
 		hook.name(),
-		e.what(),
 		e.errcode(),
 		e.errstr(),
 	};
