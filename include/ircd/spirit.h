@@ -69,7 +69,8 @@ __attribute__((visibility("default")))
 	         class... args>
 	bool parse(args&&...);
 
-	template<class gen,
+	template<bool truncation = false,
+	         class gen,
 	         class... attr>
 	bool generate(mutable_buffer &out, gen&&, attr&&...);
 }
@@ -265,7 +266,8 @@ struct ircd::spirit::generator_state
 	ssize_t overflow {0};
 };
 
-template<class gen,
+template<bool truncation,
+         class gen,
          class... attr>
 inline bool
 ircd::generate(mutable_buffer &out,
@@ -276,16 +278,8 @@ ircd::generate(mutable_buffer &out,
 	using namespace ircd::spirit;
 	namespace spirit = ircd::spirit;
 
-	const size_t max
-	{
-		size(out)
-	};
-
-	sink_type sink
-	{
-		begin(out)
-	};
-
+	const auto max(size(out));
+	const auto start(data(out));
 	struct spirit::generator_state state
 	{
 		out
@@ -296,20 +290,38 @@ ircd::generate(mutable_buffer &out,
 		spirit::generator_state, &state
 	};
 
-	const bool ret
+	sink_type sink
+	{
+		begin(out)
+	};
+
+	const auto ret
 	{
 		karma::generate(sink, std::forward<gen>(g), std::forward<attr>(a)...)
 	};
 
-	if(unlikely(state.overflow))
+	if constexpr(truncation)
+	{
+		begin(out) = state.overflow? end(out) : begin(out);
+		assert(!state.overflow || begin(out) == end(out));
+		assert(begin(out) <= end(out));
+		return ret;
+	}
+
+	if(unlikely(state.overflow || begin(out) > end(out)))
 	{
 		char pbuf[2][48];
-		begin(out) = end(out) - max;
+		const auto required
+		{
+			max + state.overflow?:
+				std::distance(start, begin(out))
+		};
+
 		throw spirit::buffer_overrun
 		{
-			"Insufficient buffer of %s for %s",
+			"Insufficient buffer of %s; required at least %s",
 			pretty(pbuf[0], iec(max)),
-			pretty(pbuf[1], iec(max + state.overflow)),
+			pretty(pbuf[1], iec(required)),
 		};
 	}
 
@@ -402,6 +414,7 @@ boost::spirit::karma::detail::buffer_sink::output(const char &value)
 		ircd::consume(state.out, ircd::copy(state.out, value))
 	};
 
+	assert(consumed <= 1UL);
 	this->width += consumed;
 	state.overflow += !consumed;
 	state.generated++;

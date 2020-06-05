@@ -42,6 +42,7 @@ __attribute__((visibility("hidden")))
 	void handle_specifier(mutable_buffer &out, const uint &idx, const spec &, const arg &);
 	template<class generator> bool generate_string(char *&out, const size_t &max, generator&&, const arg &val);
 	template<class T, class lambda> bool visit_type(const arg &val, lambda&& closure);
+	template<class gen, class... attr> bool generate(mutable_buffer &, gen&&, attr&&...);
 }}
 
 /// Structural representation of a format specifier. The parse of each
@@ -544,6 +545,21 @@ ircd::fmt::visit_type(const arg &val,
 	return type == typeid(T)? closure(*static_cast<const T *>(ptr)) : false;
 }
 
+template<class gen,
+         class... attr>
+bool
+ircd::fmt::generate(mutable_buffer &out,
+                    gen&& g,
+                    attr&&... a)
+{
+	constexpr bool truncation
+	{
+		true
+	};
+
+	return ircd::generate<truncation>(out, std::forward<gen>(g), std::forward<attr>(a)...);
+}
+
 bool
 ircd::fmt::pointer_specifier::operator()(char *&out,
                                          const size_t &max,
@@ -612,15 +628,15 @@ const
 	};
 
 	if(!spec.width)
-		ret = generate(buf, generator | ep, uintptr_t(p));
+		ret = fmt::generate(buf, generator | ep, uintptr_t(p));
 
 	else if(spec.sign == '-')
 	{
 		const auto &g(generator.aligned_left(spec.width, spec.pad));
-		ret = generate(buf, g | ep, uintptr_t(p));
+		ret = fmt::generate(buf, g | ep, uintptr_t(p));
 	} else {
 		const auto &g(generator.aligned_right(spec.width, spec.pad));
-		ret = generate(buf, g | ep, uintptr_t(p));
+		ret = fmt::generate(buf, g | ep, uintptr_t(p));
 	}
 
 	out = data(buf);
@@ -667,7 +683,7 @@ const
 		};
 
 		const auto &c(*static_cast<const char *>(ptr));
-		generate(buf, generator | eps[throw_illegal], c);
+		fmt::generate(buf, generator | eps[throw_illegal], c);
 		out = data(buf);
 		return true;
 	}
@@ -713,7 +729,7 @@ const
 
 		const auto ret
 		{
-			generate(buf, generator | eps[throw_illegal], boolean)
+			fmt::generate(buf, generator | eps[throw_illegal], boolean)
 		};
 
 		out = data(buf);
@@ -791,15 +807,15 @@ const
 		};
 
 		if(!spec.width)
-			ret = generate(buf, generator | ep, integer);
+			ret = fmt::generate(buf, generator | ep, integer);
 
 		else if(spec.sign == '-')
 		{
 			const auto &g(generator.aligned_left(spec.width, spec.pad));
-			ret = generate(buf, g | ep, integer);
+			ret = fmt::generate(buf, g | ep, integer);
 		} else {
 			const auto &g(generator.aligned_right(spec.width, spec.pad));
-			ret = generate(buf, g | ep, integer);
+			ret = fmt::generate(buf, g | ep, integer);
 		}
 
 		out = data(buf);
@@ -877,15 +893,15 @@ const
 		};
 
 		if(!spec.width)
-			ret = generate(buf, generator | ep, integer);
+			ret = fmt::generate(buf, generator | ep, integer);
 
 		else if(spec.sign == '-')
 		{
 			const auto &g(generator.aligned_left(spec.width, spec.pad));
-			ret = generate(buf, g | ep, integer);
+			ret = fmt::generate(buf, g | ep, integer);
 		} else {
 			const auto &g(generator.aligned_right(spec.width, spec.pad));
-			ret = generate(buf, g | ep, integer);
+			ret = fmt::generate(buf, g | ep, integer);
 		}
 
 		out = data(buf);
@@ -960,15 +976,15 @@ const
 		};
 
 		if(!spec.width)
-			ret = generate(buf, generator | ep, integer);
+			ret = fmt::generate(buf, generator | ep, integer);
 
 		else if(spec.sign == '-')
 		{
 			const auto &g(generator.aligned_left(spec.width, spec.pad));
-			ret = generate(buf, g | ep, integer);
+			ret = fmt::generate(buf, g | ep, integer);
 		} else {
 			const auto &g(generator.aligned_right(spec.width, spec.pad));
-			ret = generate(buf, g | ep, integer);
+			ret = fmt::generate(buf, g | ep, integer);
 		}
 
 		out = data(buf);
@@ -1043,15 +1059,15 @@ const
 		};
 
 		if(!spec.width)
-			ret = generate(buf, generator | ep, integer);
+			ret = fmt::generate(buf, generator | ep, integer);
 
 		else if(spec.sign == '-')
 		{
 			const auto &g(generator.aligned_left(spec.width, spec.pad));
-			ret = generate(buf, g | ep, integer);
+			ret = fmt::generate(buf, g | ep, integer);
 		} else {
 			const auto &g(generator.aligned_right(spec.width, spec.pad));
-			ret = generate(buf, g | ep, integer);
+			ret = fmt::generate(buf, g | ep, integer);
 		}
 
 		out = data(buf);
@@ -1122,7 +1138,7 @@ const
 
 		const auto ret
 		{
-			generate(buf, generator | eps[throw_illegal], floating)
+			fmt::generate(buf, generator | eps[throw_illegal], floating)
 		};
 
 		out = data(buf);
@@ -1228,29 +1244,29 @@ ircd::fmt::generate_string(char *&out,
 	   type == typeid(ircd::json::array))
 	{
 		const auto &str(*static_cast<const ircd::string_view *>(ptr));
-		ret = generate(buf, std::forward<generator>(gen), str);
+		ret = fmt::generate(buf, std::forward<generator>(gen), str);
 	}
 	else if(type == typeid(std::string_view))
 	{
 		const auto &str(*static_cast<const std::string_view *>(ptr));
-		ret = generate(buf, std::forward<generator>(gen), str);
+		ret = fmt::generate(buf, std::forward<generator>(gen), str);
 	}
 	else if(type == typeid(std::string))
 	{
 		const auto &str(*static_cast<const std::string *>(ptr));
-		ret = generate(buf, std::forward<generator>(gen), string_view{str});
+		ret = fmt::generate(buf, std::forward<generator>(gen), string_view{str});
 	}
 	else if(type == typeid(const char *))
 	{
 		const char *const &str{*static_cast<const char *const *>(ptr)};
-		ret = generate(buf, std::forward<generator>(gen), string_view{str});
+		ret = fmt::generate(buf, std::forward<generator>(gen), string_view{str});
 	} else {
 		// This for string literals which have unique array types depending on their size.
 		// There is no reasonable way to match them. The best that can be hoped for is the
 		// grammar will fail gracefully (most of the time) or not print something bogus when
 		// it happens to be legal.
 		const auto &str(static_cast<const char *>(ptr));
-		ret = generate(buf, std::forward<generator>(gen), string_view{str});
+		ret = fmt::generate(buf, std::forward<generator>(gen), string_view{str});
 	}
 
 	out = data(buf);
