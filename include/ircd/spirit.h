@@ -260,6 +260,9 @@ struct ircd::spirit::generator_state
 
 	/// Internal state for buffer_sink::copy()
 	ssize_t last_generated {0}, last_width {0};
+
+	/// Count of rejected from the destination buffer.
+	ssize_t overflow {0};
 };
 
 template<class gen,
@@ -298,17 +301,20 @@ ircd::generate(mutable_buffer &out,
 		karma::generate(sink, std::forward<gen>(g), std::forward<attr>(a)...)
 	};
 
-	if(unlikely(size_t(state.generated) > max))
+	if(unlikely(state.overflow))
 	{
 		char pbuf[2][48];
+		begin(out) = end(out) - max;
 		throw spirit::buffer_overrun
 		{
 			"Insufficient buffer of %s for %s",
 			pretty(pbuf[0], iec(max)),
-			pretty(pbuf[1], iec(state.generated)),
+			pretty(pbuf[1], iec(max + state.overflow)),
 		};
 	}
 
+	assert(begin(out) >= end(out) - max);
+	assert(begin(out) <= end(out));
 	return ret;
 }
 
@@ -397,6 +403,7 @@ boost::spirit::karma::detail::buffer_sink::output(const char &value)
 	};
 
 	this->width += consumed;
+	state.overflow += !consumed;
 	state.generated++;
 }
 
