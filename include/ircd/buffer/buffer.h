@@ -75,6 +75,7 @@ namespace ircd::buffer
 	template<class it> const it &data(const buffer<it> &buffer);
 	template<class it> bool aligned(const buffer<it> &buffer, const size_t &alignment);
 	template<class it> buffer<it> operator+(const buffer<it> &buffer, const size_t &bytes);
+	size_t overlap_count(const const_buffer &, const const_buffer &);
 	bool overlap(const const_buffer &, const const_buffer &);
 
 	// Single buffer mutators
@@ -408,8 +409,21 @@ __attribute__((always_inline))
 ircd::buffer::overlap(const const_buffer &a,
                       const const_buffer &b)
 {
-	return data(a) + size(a) > data(b) &&
-	       data(a) + size(a) < data(b) + size(b);
+	return overlap_count(a, b) > 0UL;
+}
+
+inline size_t
+__attribute__((always_inline))
+ircd::buffer::overlap_count(const const_buffer &a,
+                            const const_buffer &b)
+{
+	const char *const res[2]
+	{
+		std::max(begin(a), begin(b)),
+		std::min(end(a), end(b)),
+	};
+
+	return std::max(res[1] - res[0], 0L);
 }
 
 template<class it>
