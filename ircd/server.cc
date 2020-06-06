@@ -3108,10 +3108,19 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	assert(request);
 	auto &req{*request};
 
-	// informal search for head terminator
+	// Total useful bytes in head buffer from prior packets and the latest
+	// packet; this may extend past this head.
+	assert(overlap(req.in.head, buffer));
+	const const_buffer candidate_head
+	{
+		req.in.head, state.head_read + size(buffer)
+	};
+
+	// informal search for head  terminator
+	assert(size(candidate_head) <= size(req.in.head));
 	const auto pos
 	{
-		string_view{buffer}.find(http::headers::terminator)
+		string_view{candidate_head}.find(http::headers::terminator)
 	};
 
 	// No terminator found; account for what was received in this buffer
@@ -3125,9 +3134,10 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 
 	// This indicates how much head was just received from this buffer only,
 	// including the terminator which is considered part of the dome.
+	assert(pos + size(http::headers::terminator) >= state.head_read);
 	const size_t addl_head_bytes
 	{
-		pos + size(http::headers::terminator)
+		pos + size(http::headers::terminator) - state.head_read
 	};
 
 	// The received buffer may go past the end of the head.
@@ -3140,6 +3150,7 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	// The final update for the confirmed length of the head.
 	state.head_read += addl_head_bytes;
 	assert(state.head_read + beyond_head_len <= size(req.in.head));
+	assert(state.head_read <= size(candidate_head));
 
 	// Window on any data in the buffer after the head.
 	const const_buffer beyond_head
@@ -3386,10 +3397,26 @@ ircd::server::tag::read_chunk_head(const const_buffer &buffer,
 	auto &req{*request};
 	const auto &content{req.in.content};
 
+	// Total useful bytes in content buffer at this time
+	const size_t content_read_max
+	{
+		state.content_read + size(buffer)
+	};
+
+	// Candidate chunk head includes prior packets and the current; may
+	// extend past the chunk head into other data.
+	assert(content_read_max >= state.content_length);
+	assert(content_read_max <= size(content));
+	const const_buffer candidate_head
+	{
+		content + state.content_length, content_read_max - state.content_length
+	};
+
 	// informal search for head terminator
+	assert(size(candidate_head) <= size(content));
 	const auto pos
 	{
-		string_view{buffer}.find(http::line::terminator)
+		string_view{candidate_head}.find(http::line::terminator)
 	};
 
 	if(pos == string_view::npos)
@@ -3399,9 +3426,14 @@ ircd::server::tag::read_chunk_head(const const_buffer &buffer,
 	}
 
 	// This indicates how much head was just received from this buffer only.
+	assert(state.content_read >= state.content_length);
+	assert(state.content_read - state.content_length <= pos + size(http::line::terminator));
+	assert(size(candidate_head) - size(buffer) <= pos + size(http::line::terminator));
+	assert(pos + size(http::line::terminator) <= size(candidate_head));
+	assert(size(candidate_head) >= size(buffer));
 	const size_t addl_head_bytes
 	{
-		pos + size(http::line::terminator)
+		pos + size(http::line::terminator) - (size(candidate_head) - size(buffer))
 	};
 
 	// The received buffer may go past the end of the head.
@@ -3603,10 +3635,28 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 	assert(null(req.in.content)); // dynamic chunk mode
 	assert(state.chunk_length == size_t(-1)); // chunk head mode
 
+	// The primary HTTP head was placed in req.in.head. Before this function
+	// was reached req.in.head was resized tight to that head. There is still
+	// buffer remaining after that which we now use for chunk heads. We offset
+	// to state.head_read and cannot use more than state.head_rem for chunk
+	// head scratch. Chunk heads may overwrite each other to not run out of
+	// head buffer while keeping the data buffers pure with chunk content.
+	assert(size(req.in.head) >= state.head_read);
+	const const_buffer chunk_head_scratch
+	{
+		data(req.in.head) + state.head_read, state.head_rem
+	};
+
+	assert(size(chunk_head_scratch) >= state.chunk_read + size(buffer));
+	const const_buffer chunk_head_buffer
+	{
+		chunk_head_scratch, state.chunk_read + size(buffer)
+	};
+
 	// informal search for head terminator
 	const auto pos
 	{
-		string_view{buffer}.find(http::line::terminator)
+		string_view{chunk_head_buffer}.find(http::line::terminator)
 	};
 
 	if(pos == string_view::npos)
@@ -3618,9 +3668,10 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 	}
 
 	// This indicates how much head was just received from this buffer only.
+	assert(pos + size(http::line::terminator) >= state.chunk_read);
 	const size_t addl_head_bytes
 	{
-		pos + size(http::line::terminator)
+		pos + size(http::line::terminator) - state.chunk_read
 	};
 
 	// The received buffer may go past the end of the head.
@@ -3633,18 +3684,6 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 
 	state.chunk_read += addl_head_bytes;
 	state.content_read += addl_head_bytes;
-
-	// The primary HTTP head was placed in req.in.head. Before this function
-	// was reached req.in.head was resized tight to that head. There is still
-	// buffer remaining after that which we now use for chunk heads. We offset
-	// to state.head_read and cannot use more than state.head_rem for chunk
-	// head scratch. Chunk heads may overwrite each other to not run out of
-	// head buffer while keeping the data buffers pure with chunk content.
-	assert(size(req.in.head) >= state.head_read);
-	const const_buffer chunk_head_buffer
-	{
-		data(req.in.head) + state.head_read, state.head_rem
-	};
 
 	// Focus specifically on this chunk head and nothing after.
 	assert(data(chunk_head_buffer) <= data(buffer));
