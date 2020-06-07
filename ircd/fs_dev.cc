@@ -10,6 +10,69 @@
 
 #include <RB_INC_SYS_SYSMACROS_H
 
+decltype(ircd::fs::dev::block)
+ircd::fs::dev::block;
+
+//
+// init
+//
+
+ircd::fs::dev::init::init()
+{
+	#ifdef __linux__
+	for(const auto &dir : fs::ls("/sys/dev/block"))
+	{
+		const auto &[major, minor]
+		{
+			split(filename(path_scratch, dir), ':')
+		};
+
+		const major_minor device_major_minor
+		{
+			lex_cast<ulong>(major), lex_cast<ulong>(minor)
+		};
+
+		const auto iit
+		{
+			block.emplace(device_major_minor, id(device_major_minor))
+		};
+
+		assert(iit.second);
+		const auto &bd(iit.first->second);
+		if(!bd.is_device || bd.type != "disk")
+			block.erase(iit.first);
+	}
+	#endif
+
+	for(const auto &[mm, bd] : block)
+	{
+		char pbuf[48];
+		log::info
+		{
+			log, "%s %u:%2u %s %s %s %s queue depth:%zu requests:%zu",
+			bd.type,
+			std::get<0>(mm),
+			std::get<1>(mm),
+			bd.vendor,
+			bd.model,
+			bd.rev,
+			pretty(pbuf, iec(bd.size)),
+			bd.queue_depth,
+			bd.nr_requests,
+		};
+	}
+
+}
+
+ircd::fs::dev::init::~init()
+noexcept
+{
+}
+
+//
+// fs::dev
+//
+
 #ifdef __linux__
 ircd::string_view
 ircd::fs::dev::sysfs(const mutable_buffer &out,
@@ -77,4 +140,100 @@ ircd::fs::dev::id(const ulong &id)
 	{
 		major(id), minor(id)
 	};
+}
+
+//
+// dev::device
+//
+
+ircd::fs::dev::blkdev::blkdev(const ulong &id)
+:is_device
+{
+	fs::is_dir(fmt::sprintf
+	{
+		path_scratch, "/sys/dev/block/%s/device",
+		sysfs_id(name_scratch, id),
+	})
+}
+,is_queue
+{
+	fs::is_dir(fmt::sprintf
+	{
+		path_scratch, "/sys/dev/block/%s/queue",
+		sysfs_id(name_scratch, id),
+	})
+}
+,type
+{
+	!is_device? std::string{}:
+	ircd::string(8, [&id]
+	(const mutable_buffer &buf)
+	{
+		char tmp[128];
+		string_view ret;
+		tokens(sysfs(tmp, id, "uevent"), '\n', [&buf, &ret]
+		(const string_view &kv)
+		{
+			const auto &[key, value]
+			{
+				split(kv, '=')
+			};
+
+			if(key == "DEVTYPE")
+				ret = strlcpy(buf, value);
+		});
+
+		return ret;
+	})
+}
+,vendor
+{
+	!is_device? std::string{}:
+	ircd::string(12, [&id]
+	(const mutable_buffer &buf)
+	{
+		return sysfs(buf, id, "device/vendor");
+	})
+}
+,model
+{
+	!is_device? std::string{}:
+	ircd::string(64, [&id]
+	(const mutable_buffer &buf)
+	{
+		return sysfs(buf, id, "device/model");
+	})
+}
+,rev
+{
+	!is_device? std::string{}:
+	ircd::string(12, [&id]
+	(const mutable_buffer &buf)
+	{
+		return sysfs(buf, id, "device/rev");
+	})
+}
+,size
+{
+	sysfs(id, "size")
+}
+,queue_depth
+{
+	is_device?
+		sysfs(id, "device/queue_depth"):
+		0UL
+}
+,nr_requests
+{
+	is_queue?
+		sysfs(id, "queue/nr_requests"):
+		0UL
+}
+,rotational
+{
+	is_queue?
+		sysfs<bool>(id, "queue/rotational"):
+		true
+}
+{
 }
