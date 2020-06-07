@@ -42,18 +42,11 @@ ircd::fs::support::aio_fdsync
 	#endif
 };
 
-decltype(ircd::fs::aio::MAX_EVENTS)
-ircd::fs::aio::MAX_EVENTS
-{
-	//TODO: device queue depth
-	std::min(info::aio_max, 64UL)
-};
-
 decltype(ircd::fs::aio::max_events)
 ircd::fs::aio::max_events
 {
 	{ "name",     "ircd.fs.aio.max_events"  },
-	{ "default",  long(aio::MAX_EVENTS)     },
+	{ "default",  0L                        },
 	{ "persist",  false                     },
 };
 
@@ -100,6 +93,19 @@ ircd::fs::aio::init::init()
 	if(iou::system)
 		return;
 	#endif
+
+	// We don't know which storage device (if any one) will be used by this
+	// application, and we only have one aio instance shared by everything.
+	// To deal with this for now, we look for the most favorable device and
+	// tune to it. The caveat here is that if the application makes heavy use
+	// of an inferior device on the same system, it wont be optimally utilized.
+	if(max_events == 0UL)
+		for(const auto &[mm, bd] : fs::dev::block)
+			if(bd.is_device && bd.type == "disk")
+				max_events._value = std::clamp
+				(
+					bd.queue_depth, size_t(max_events), MAX_EVENTS
+				);
 
 	system = new struct aio::system
 	(
@@ -686,11 +692,9 @@ try
 			sizeof(*head),
 		};
 
-	log::debug
+	log::info
 	{
-		log, "Established head(%p) ring(%p) id:%u fd:%d max_events:%zu max_submit:%zu compat:%x incompat:%x len:%u nr:%u",
-		head.get(),
-		ring,
+		log, "AIO id:%u fd:%d max_events:%zu max_submit:%zu compat:%x incompat:%x len:%u nr:%u",
 		head->id,
 		int(resfd.native_handle()),
 		this->max_events(),

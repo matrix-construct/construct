@@ -73,16 +73,7 @@ ircd::fs::init_dump_info()
 		false || iou::system || aio::system
 	};
 
-	if(support_async)
-		log::info
-		{
-			log, "Asynchronous filesystem IO provided by %s %s.",
-			RB_OS,
-			iou::system? "io_uring":
-			aio::system? "AIO":
-			              "?????",
-		};
-	else
+	if(!support_async)
 		log::warning
 		{
 			log, "Support for asynchronous filesystem IO has not been"
@@ -1614,6 +1605,12 @@ ircd::fs::reflect(const ready &ready)
 //
 // fs/aio.h
 //
+
+decltype(ircd::fs::aio::MAX_EVENTS)
+ircd::fs::aio::MAX_EVENTS
+{
+	info::aio_max
+};
 
 decltype(ircd::fs::aio::MAX_REQPRIO)
 ircd::fs::aio::MAX_REQPRIO
