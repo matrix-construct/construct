@@ -476,8 +476,9 @@ catch(const ctx::interrupted &e)
 }
 catch(const std::exception &e)
 {
-	throw m::BAD_SIGNATURE
+	throw m::error
 	{
+		http::UNAUTHORIZED, "M_UNVERIFIABLE_SIGNATURE",
 		"%s key %s for %s :%s",
 		string_view{event.event_id},
 		keyid,
