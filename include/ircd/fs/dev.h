@@ -36,6 +36,5 @@ ircd::fs::dev::sysfs(const ulong &id,
                      const string_view &path)
 {
 	char buf[bufmax];
-	const auto value(sysfs(buf, id, path));
-	return lex_cast<T>(rstrip(value, '\n'));
+	return lex_cast<T>(sysfs(buf, id, path));
 }

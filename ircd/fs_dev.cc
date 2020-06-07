@@ -25,7 +25,14 @@ ircd::fs::dev::sysfs(const mutable_buffer &out,
 
 	fs::read_opts opts;
 	opts.aio = false;
-	return fs::read(path, out, opts);
+	string_view ret
+	{
+		fs::read(path, out, opts)
+	};
+
+	ret = rstrip(ret, '\n');
+	ret = rstrip(ret, ' ');
+	return ret;
 }
 #else
 ircd::string_view
