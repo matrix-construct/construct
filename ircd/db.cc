@@ -2007,6 +2007,10 @@ ircd::db::database::column::column(database &d,
 	this->options.level0_file_num_compaction_trigger = 2;
 	this->options.disable_auto_compactions = false;
 	this->options.level_compaction_dynamic_level_bytes = false;
+	this->options.ttl = 0;
+	#ifdef IRCD_DB_HAS_PERIODIC_COMPACTIONS
+	this->options.periodic_compaction_seconds = this->descriptor->compaction_period.count();
+	#endif
 
 	this->options.target_file_size_base = this->descriptor->target_file_size.base;
 	this->options.target_file_size_multiplier = this->descriptor->target_file_size.multiplier;
@@ -8699,9 +8703,7 @@ ircd::db::reflect(const rocksdb::CompactionReason &r)
 		case CompactionReason::kFlush:                        return "Flush";
 		case CompactionReason::kExternalSstIngestion:         return "ExternalSstIngestion";
 
-		#if ROCKSDB_MAJOR > 6 \
-		|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR > 6) \
-		|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR == 6 && ROCKSDB_PATCH >= 2)
+		#ifdef IRCD_DB_HAS_PERIODIC_COMPACTIONS
 		case CompactionReason::kPeriodicCompaction:           return "kPeriodicCompaction";
 		#endif
 

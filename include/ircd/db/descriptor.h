@@ -118,4 +118,10 @@ struct ircd::db::descriptor
 		{      0L,  15L }, // max_bytes_for_level[5]
 		{      0L,  31L }, // max_bytes_for_level[6]
 	};
+
+	/// Forces compaction within a certain limit of time
+	seconds compaction_period
+	{
+		60s * 60 * 24 * 21 // 21 day period
+	};
 };
