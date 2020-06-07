@@ -5351,13 +5351,13 @@ const
 }
 
 bool
-ircd::db::row::valid()
+ircd::db::row::valid_all(const string_view &s)
 const
 {
-	return std::any_of(std::begin(*this), std::end(*this), []
+	return !empty() && std::all_of(std::begin(*this), std::end(*this), [&s]
 	(const auto &cell)
 	{
-		return cell.valid();
+		return cell.valid(s);
 	});
 }
 
@@ -5369,6 +5369,28 @@ const
 	(const auto &cell)
 	{
 		return cell.valid(s);
+	});
+}
+
+bool
+ircd::db::row::valid_all()
+const
+{
+	return !empty() && std::all_of(std::begin(*this), std::end(*this), []
+	(const auto &cell)
+	{
+		return cell.valid();
+	});
+}
+
+bool
+ircd::db::row::valid()
+const
+{
+	return std::any_of(std::begin(*this), std::end(*this), []
+	(const auto &cell)
+	{
+		return cell.valid();
 	});
 }
 

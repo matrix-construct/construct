@@ -39,7 +39,9 @@ struct ircd::db::row
 
   public:
 	bool valid() const;                          // true on any cell valid; false on empty
+	bool valid_all() const;                      // true on all cell valid; false_ on empty
 	bool valid(const string_view &) const;       // true on any cell valid equal; false on empty
+	bool valid_all(const string_view &) const;   // true on all cell valid equal; false on empty
 
 	bool cached() const;                         // true on all cell cached
 	bool cached(const string_view &) const;      // true on all columns cached key
