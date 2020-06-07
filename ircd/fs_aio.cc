@@ -107,6 +107,14 @@ ircd::fs::aio::init::init()
 					bd.queue_depth, size_t(max_events), MAX_EVENTS
 				);
 
+	// If max_events is still not determined here set a sane default.
+	if(max_events == 0UL)
+	{
+		static const auto MAX_EVENTS_DEFAULT {32UL};
+		max_events._value = std::min(MAX_EVENTS, MAX_EVENTS_DEFAULT);
+	}
+
+	assert(max_events);
 	system = new struct aio::system
 	(
 		size_t(max_events),
