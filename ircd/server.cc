@@ -425,8 +425,8 @@ ircd::server::request::opts_default
 /// Canceling a request is tricky. This allows a robust way to let the user's
 /// request go out of scope at virtually any time without disrupting the
 /// pipeline and other requests.
+[[GCC::stack_protect]]
 bool
-__attribute__((stack_protect))
 ircd::server::cancel(request &request)
 {
 	if(!request.tag)
@@ -469,8 +469,8 @@ ircd::server::cancel(request &request)
 	return true;
 }
 
+[[GCC::stack_protect]]
 void
-__attribute__((stack_protect))
 ircd::server::submit(const hostport &hostport,
                      request &request)
 {
@@ -2095,8 +2095,8 @@ ircd::server::link::wait_writable()
 	net::wait(*socket, net::ready::WRITE, std::move(handler));
 }
 
+[[GCC::stack_protect]]
 void
-__attribute__((stack_protect))
 ircd::server::link::handle_writable(const error_code &ec)
 noexcept try
 {
@@ -2282,8 +2282,8 @@ ircd::server::link::wait_readable()
 	net::wait(*socket, net::ready::READ, std::move(handler));
 }
 
+[[GCC::stack_protect]]
 void
-__attribute__((stack_protect))
 ircd::server::link::handle_readable(const error_code &ec)
 noexcept try
 {
@@ -3056,8 +3056,8 @@ const
 /// tag; it's only a backreference to flash information to the link/peer
 /// through specific callbacks so the peer can learn information.
 ///
+[[GCC::stack_protect]]
 ircd::const_buffer
-__attribute__((stack_protect))
 ircd::server::tag::read_buffer(const const_buffer &buffer,
                                bool &done,
                                link &link)
@@ -3376,8 +3376,8 @@ namespace ircd::server
 	static void chunk_content_completed(tag &, bool &done);
 }
 
+[[GCC::stack_protect]]
 ircd::const_buffer
-__attribute__((stack_protect))
 ircd::server::tag::read_chunk_head(const const_buffer &buffer,
                                    bool &done,
                                    const uint8_t recursion_level)
@@ -3592,8 +3592,8 @@ namespace ircd::server
 	static void chunk_dynamic_content_completed(tag &, bool &done);
 }
 
+[[GCC::stack_protect]]
 ircd::const_buffer
-__attribute__((stack_protect))
 ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
                                            bool &done,
                                            const uint8_t recursion_level)
@@ -3868,8 +3868,8 @@ ircd::server::chunk_dynamic_contiguous_copy(struct tag::state &state,
 /// should place the next received data. The tag figures this out based on
 /// whether it receiving HTTP head data or whether it is in content mode.
 ///
+[[GCC::stack_protect]]
 ircd::mutable_buffer
-__attribute__((stack_protect))
 ircd::server::tag::make_read_buffer()
 const
 {
