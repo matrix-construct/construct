@@ -307,6 +307,14 @@ try
 	this_ctx::interruption_point();
 	return ret;
 }
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::system_error &)
+{
+	throw;
+}
 catch(const std::bad_function_call &e)
 {
 	log::dwarning
@@ -334,7 +342,7 @@ catch(const m::error &e)
 }
 catch(const std::exception &e)
 {
-	log::derror
+	log::critical
 	{
 		log, "polylog %s '%s' :%s",
 		loghead(data),
@@ -342,7 +350,7 @@ catch(const std::exception &e)
 		e.what()
 	};
 
-	throw;
+	return false;
 }
 
 bool
@@ -353,6 +361,14 @@ try
 		return false;
 
 	return _linear(data);
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::system_error &)
+{
+	throw;
 }
 catch(const std::bad_function_call &e)
 {
@@ -382,7 +398,7 @@ catch(const m::error &e)
 }
 catch(const std::exception &e)
 {
-	log::derror
+	log::critical
 	{
 		log, "linear %s '%s' :%s",
 		loghead(data),
@@ -390,7 +406,7 @@ catch(const std::exception &e)
 		e.what()
 	};
 
-	throw;
+	return false;
 }
 
 size_t
