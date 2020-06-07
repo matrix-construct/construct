@@ -97,6 +97,18 @@ ircd::m::media::blocks_descriptor
 
 	// compaction priority algorithm
 	"kOldestSmallestSeqFirst"s,
+
+	// target file size
+	{
+		2_GiB,   // base
+		1L,      // multiplier
+	},
+
+	// max bytes for each level
+	{},
+
+	// compaction_period
+	60s * 60 * 24 * 42,
 };
 
 decltype(ircd::m::media::description)
