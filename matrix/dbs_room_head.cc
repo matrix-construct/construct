@@ -125,6 +125,15 @@ ircd::m::dbs::desc::room_head
 
 	// compaction priority algorithm
 	"kByCompensatedSize"s,
+
+	// target file size
+	{},
+
+	// max bytes for each level
+	{},
+
+	// compaction_period
+	60s * 60 * 24 * 1     // compact the room head every day.
 };
 
 //
