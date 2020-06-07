@@ -8078,6 +8078,26 @@ ircd::db::valid(const rocksdb::Iterator &it)
 	}
 }
 
+bool
+ircd::db::valid(const rocksdb::Status &s)
+{
+	switch(s.code())
+	{
+		using rocksdb::Status;
+
+		case Status::kOk:
+			return true;
+
+		case Status::kNotFound:
+		case Status::kIncomplete:
+			return false;
+
+		default:
+			throw_on_error{s};
+			__builtin_unreachable();
+	}
+}
+
 //
 // column_names
 //

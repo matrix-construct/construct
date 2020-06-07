@@ -102,6 +102,7 @@ namespace ircd::db
 	std::vector<std::string> column_names(const std::string &path, const std::string &options);
 
 	// Validation functors
+	bool valid(const rocksdb::Status &);
 	bool valid(const rocksdb::Iterator &);
 	bool operator!(const rocksdb::Iterator &);
 	using valid_proffer = std::function<bool (const rocksdb::Iterator &)>;
