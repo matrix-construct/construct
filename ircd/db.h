@@ -113,12 +113,16 @@ namespace ircd::db
 	void valid_or_throw(const rocksdb::Iterator &);
 	void valid_eq_or_throw(const rocksdb::Iterator &, const string_view &);
 
-	// [GET] seek suite
+	// [GET] iterator seek suite
 	template<class pos> bool seek(database::column &, const pos &, const rocksdb::ReadOptions &, std::unique_ptr<rocksdb::Iterator> &it);
 	std::unique_ptr<rocksdb::Iterator> seek(column &, const gopts &);
 	std::unique_ptr<rocksdb::Iterator> seek(column &, const string_view &key, const gopts &);
 	std::vector<row::value_type> seek(database &, const gopts &);
 	std::pair<string_view, string_view> operator*(const rocksdb::Iterator &);
+
+	// [GET] read suite
+	size_t _read(std::nothrow_t, column &, const string_view &key, const rocksdb::ReadOptions &, const column::view_closure & = {});
+	size_t _read(column &, const string_view &key, const rocksdb::ReadOptions &, const column::view_closure & = {});
 
 	// [SET] writebatch suite
 	std::string debug(const rocksdb::WriteBatch &);

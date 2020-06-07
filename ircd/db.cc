@@ -7788,7 +7788,116 @@ ircd::db::has(const rocksdb::WriteBatch &wb,
 }
 
 //
-// seek suite
+// read suite
+//
+
+namespace ircd::db
+{
+	static rocksdb::Status _seek(database::column &, rocksdb::PinnableSlice &, const string_view &, const rocksdb::ReadOptions &);
+}
+
+size_t
+ircd::db::_read(column &column,
+                const string_view &key,
+                const rocksdb::ReadOptions &opts,
+                const column::view_closure &closure)
+{
+	std::string buf;
+	rocksdb::PinnableSlice ps
+	{
+		&buf
+	};
+
+	database::column &c(column);
+	throw_on_error
+	{
+		_seek(c, ps, key, opts)
+	};
+
+	const string_view value
+	{
+		slice(ps)
+	};
+
+	if(likely(closure))
+		closure(value);
+
+	return size(value);
+}
+
+size_t
+ircd::db::_read(std::nothrow_t,
+                column &column,
+                const string_view &key,
+                const rocksdb::ReadOptions &opts,
+                const column::view_closure &closure)
+{
+	std::string buf;
+	rocksdb::PinnableSlice ps
+	{
+		&buf
+	};
+
+	database::column &c(column);
+	const auto status
+	{
+		_seek(c, ps, key, opts)
+	};
+
+	if(!valid(status))
+		return 0;
+
+	const string_view value
+	{
+		slice(ps)
+	};
+
+	if(likely(closure))
+		closure(value);
+
+	return size(value);
+}
+
+rocksdb::Status
+ircd::db::_seek(database::column &c,
+                rocksdb::PinnableSlice &s,
+                const string_view &key,
+                const rocksdb::ReadOptions &ropts)
+{
+	const ctx::uninterruptible::nothrow ui;
+	const ctx::stack_usage_assertion sua;
+
+	rocksdb::ColumnFamilyHandle *const &cf(c);
+	database &d(*c.d);
+
+	#ifdef RB_DEBUG_DB_SEEK
+	const ircd::timer timer;
+	#endif
+
+	const rocksdb::Status ret
+	{
+		d.d->Get(ropts, cf, slice(key), &s)
+	};
+
+	#ifdef RB_DEBUG_DB_SEEK
+	log::debug
+	{
+		log, "[%s] %lu:%lu SEEK %s in %ld$us '%s'",
+		name(d),
+		sequence(d),
+		sequence(opts.snapshot),
+		ret.ToString(),
+		timer.at<microseconds>().count(),
+		name(c)
+	};
+	#endif
+
+	return ret;
+}
+
+
+//
+// iterator seek suite
 //
 
 namespace ircd::db
