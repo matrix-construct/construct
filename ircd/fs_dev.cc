@@ -20,7 +20,7 @@ ircd::fs::dev::block;
 ircd::fs::dev::init::init()
 {
 	#ifdef __linux__
-	for(const auto &dir : fs::ls("/sys/dev/block"))
+	for(const auto &dir : fs::ls("/sys/dev/block")) try
 	{
 		const auto &[major, minor]
 		{
@@ -41,6 +41,15 @@ ircd::fs::dev::init::init()
 		const auto &bd(iit.first->second);
 		if(!bd.is_device || bd.type != "disk")
 			block.erase(iit.first);
+	}
+	catch(const std::exception &e)
+	{
+		log::derror
+		{
+			log, "%s :%s",
+			dir,
+			e.what(),
+		};
 	}
 	#endif
 
@@ -78,6 +87,7 @@ ircd::string_view
 ircd::fs::dev::sysfs(const mutable_buffer &out,
                      const ulong &id,
                      const string_view &relpath)
+try
 {
 	const string_view path{fmt::sprintf
 	{
@@ -96,6 +106,22 @@ ircd::fs::dev::sysfs(const mutable_buffer &out,
 	ret = rstrip(ret, '\n');
 	ret = rstrip(ret, ' ');
 	return ret;
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		log, "sysfs query dev_id:%lu `%s' :%s",
+		id,
+		relpath,
+		e.what(),
+	};
+
+	return {};
 }
 #else
 ircd::string_view
@@ -219,21 +245,15 @@ ircd::fs::dev::blkdev::blkdev(const ulong &id)
 }
 ,queue_depth
 {
-	is_device?
-		sysfs(id, "device/queue_depth"):
-		0UL
+	sysfs(id, "device/queue_depth")
 }
 ,nr_requests
 {
-	is_queue?
-		sysfs(id, "queue/nr_requests"):
-		0UL
+	sysfs(id, "queue/nr_requests")
 }
 ,rotational
 {
-	is_queue?
-		sysfs<bool>(id, "queue/rotational"):
-		true
+	sysfs<bool>(id, "queue/rotational", true)
 }
 {
 }

@@ -27,7 +27,7 @@ namespace ircd::fs::dev
 
 	// Read data for a device from sysfs; path is relative to /sys/dev/block/$id/...
 	string_view sysfs(const mutable_buffer &out, const ulong &id, const string_view &path);
-	template<class T = size_t, size_t bufmax = 32> T sysfs(const ulong &id, const string_view &path);
+	template<class T = size_t, size_t bufmax = 32> T sysfs(const ulong &id, const string_view &path, const T &def = 0);
 
 	extern std::map<major_minor, blkdev> block;
 }
@@ -60,8 +60,16 @@ template<class T,
          size_t bufmax>
 T
 ircd::fs::dev::sysfs(const ulong &id,
-                     const string_view &path)
+                     const string_view &path,
+                     const T &def)
 {
 	char buf[bufmax];
-	return lex_cast<T>(sysfs(buf, id, path));
+	const string_view val
+	{
+		sysfs(buf, id, path)
+	};
+
+	return lex_castable<T>(val)?
+		lex_cast<T>(val):
+		def;
 }
