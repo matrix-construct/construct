@@ -38,6 +38,7 @@ struct ircd::server::peer
 	std::string server_version;
 	size_t write_bytes {0};
 	size_t read_bytes {0};
+	size_t tag_done {0};
 	bool op_resolve {false};
 	bool op_fini {false};
 
@@ -78,6 +79,7 @@ struct ircd::server::peer
 	size_t link_count() const;
 	size_t link_busy() const;
 	size_t link_ready() const;
+	size_t link_tag_done() const;
 
 	// stats for all tags in all links in peer
 	size_t tag_count() const;

@@ -29,6 +29,7 @@ struct ircd::server::link
 	server::peer *peer;                          ///< backreference to peer
 	std::shared_ptr<net::socket> socket;         ///< link's socket
 	std::list<tag> queue;                        ///< link's work queue
+	size_t tag_done {0L};                        ///< total tags processed
 	time_t synack_ts {0L};                       ///< time socket was estab
 	time_t read_ts {0L};                         ///< time of last read
 	time_t write_ts {0L};                        ///< time of last write

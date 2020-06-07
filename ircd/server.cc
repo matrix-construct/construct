@@ -1121,6 +1121,7 @@ noexcept try
 	if(tag.request)
 	{
 		assert(link.peer);
+		++tag_done;
 		log::logf
 		{
 			request::log, uint(tag.state.status) >= 300? log::DERROR: log::DEBUG,
@@ -1699,6 +1700,16 @@ const
 	return accumulate_links([](const auto &link)
 	{
 		return link.tag_count();
+	});
+}
+
+size_t
+ircd::server::peer::link_tag_done()
+const
+{
+	return accumulate_links([](const auto &link)
+	{
+		return link.tag_done;
 	});
 }
 
@@ -2425,6 +2436,7 @@ try
 	peer->handle_tag_done(*this, tag);
 	assert(!queue.empty());
 	queue.pop_front();
+	++tag_done;
 	return done;
 }
 catch(const buffer_overrun &e)
