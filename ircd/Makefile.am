@@ -156,6 +156,7 @@ libircd_la_SOURCES += prof_linux.cc
 endif
 libircd_la_SOURCES += fs.cc
 libircd_la_SOURCES += fs_path.cc
+libircd_la_SOURCES += fs_dev.cc
 libircd_la_SOURCES += ios.cc
 libircd_la_SOURCES += ctx_x86_64.S
 libircd_la_SOURCES += ctx.cc

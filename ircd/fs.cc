@@ -13,7 +13,6 @@
 #include <RB_INC_SYS_STATFS_H
 #include <RB_INC_SYS_STATVFS_H
 #include <RB_INC_SYS_RESOURCE_H
-#include <RB_INC_SYS_SYSMACROS_H
 #include <boost/filesystem.hpp>
 
 #ifdef IRCD_USE_AIO
@@ -2145,73 +2144,6 @@ ircd::fs::flags(const std::ios::openmode &mode)
 	ret |= ret & O_WRONLY? O_CREAT : 0;
 	ret |= ret & O_RDWR && ret & (O_TRUNC | O_APPEND)? O_CREAT : 0;
 	return ret;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// fs/device.h
-//
-
-#ifdef __linux__
-ircd::string_view
-ircd::fs::dev::sysfs(const mutable_buffer &out,
-                     const ulong &id,
-                     const string_view &relpath)
-{
-	const string_view path{fmt::sprintf
-	{
-		path_scratch, "/sys/dev/block/%s/%s",
-		sysfs_id(name_scratch, id),
-		relpath
-	}};
-
-	fs::read_opts opts;
-	opts.aio = false;
-	return fs::read(path, out, opts);
-}
-#else
-ircd::string_view
-ircd::fs::dev::sysfs(const mutable_buffer &out,
-                     const ulong &id,
-                     const string_view &relpath)
-{
-	throw panic
-	{
-		"sysfs(5) is not available."
-	};
-}
-#endif
-
-ircd::string_view
-ircd::fs::dev::sysfs_id(const mutable_buffer &out,
-                        const ulong &id)
-{
-	return sysfs_id(out, dev::id(id));
-}
-
-ircd::string_view
-ircd::fs::dev::sysfs_id(const mutable_buffer &out,
-                        const major_minor &id)
-{
-	return fmt::sprintf
-	{
-		out, "%lu:%lu", id.first, id.second
-	};
-}
-
-ulong
-ircd::fs::dev::id(const major_minor &id)
-{
-	return makedev(id.first, id.second);
-}
-
-ircd::fs::dev::major_minor
-ircd::fs::dev::id(const ulong &id)
-{
-	return
-	{
-		major(id), minor(id)
-	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
