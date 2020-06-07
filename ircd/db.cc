@@ -6476,17 +6476,12 @@ ircd::db::cached(column &column,
                  const string_view &key,
                  const gopts &gopts)
 {
-	auto opts(make_opts(gopts));
-	opts.read_tier = NON_BLOCKING;
-	opts.fill_cache = false;
-
 	database &d(column);
 	database::column &c(column);
 
-	// Theoretically this can be faster than a seek(), but it's not.
-	//thread_local std::string discard;
-	//if(!d.d->KeyMayExist(opts, c, slice(key), &discard, nullptr))
-	//	return false;
+	auto opts(make_opts(gopts));
+	opts.read_tier = NON_BLOCKING;
+	opts.fill_cache = false;
 
 	std::unique_ptr<rocksdb::Iterator> it;
 	if(!seek(c, key, opts, it))
@@ -6505,25 +6500,45 @@ ircd::db::has(column &column,
 	database::column &c(column);
 
 	// Perform a co-RP query to the filtration
+	//
 	// NOTE disabled for rocksdb >= v5.15 due to a regression
 	// where rocksdb does not init SuperVersion data in the column
 	// family handle and this codepath triggers null derefs and ub.
-	if((false) && c.table_opts.filter_policy)
+	//
+	// NOTE works on rocksdb 6.6.4 but unconditionally copies value.
+	auto opts(make_opts(gopts));
+	if(c.table_opts.filter_policy && (false))
 	{
-		const auto k(slice(key));
 		auto opts(make_opts(gopts));
-		opts.read_tier = NON_BLOCKING;
-		thread_local std::string discard;
-		bool value_found;
-		if(!d.d->KeyMayExist(opts, c, k, &discard, &value_found))
+		const scope_restore read_tier
+		{
+			opts.read_tier, NON_BLOCKING
+		};
+
+		const scope_restore fill_cache
+		{
+			opts.fill_cache, false
+		};
+
+		std::string discard;
+		bool value_found {false};
+		const bool key_may_exist
+		{
+			d.d->KeyMayExist(opts, c, slice(key), &discard, &value_found)
+		};
+
+		if(!key_may_exist)
 			return false;
+
+		if(value_found)
+			return true;
 	}
 
-	const auto it
-	{
-		seek(column, key, gopts)
-	};
+	std::unique_ptr<rocksdb::Iterator> it;
+	if(!seek(c, key, opts, it))
+		return false;
 
+	assert(bool(it));
 	return valid_eq(*it, key);
 }
 
