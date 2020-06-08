@@ -29,6 +29,9 @@ struct ircd::resource::method
 	std::unique_ptr<struct stats> stats;
 	unique_const_iterator<decltype(resource::methods)> methods_it;
 
+	bool content_length_acceptable(const http::request::head &) const;
+	bool mime_type_acceptable(const http::request::head &) const;
+
 	void handle_timeout(client &) const;
 	response call_handler(client &, request &);
 

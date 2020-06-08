@@ -447,15 +447,8 @@ try
 		stats->pending
 	};
 
-	const auto &method_payload_max
-	{
-		opts->payload_max != -1UL?
-			opts->payload_max:
-			size_t(default_payload_max)
-	};
-
 	// Bail out if the method limited the amount of content and it was exceeded.
-	if(head.content_length > method_payload_max)
+	if(!content_length_acceptable(head))
 		throw http::error
 		{
 			http::PAYLOAD_TOO_LARGE
@@ -463,19 +456,11 @@ try
 
 	// Check if the resource method wants a specific MIME type. If no option
 	// is given by the resource then any Content-Type by the client will pass.
-	if(opts->mime.first)
-	{
-		const auto &ct(split(head.content_type, ';'));
-		const auto &supplied(split(ct.first, '/'));
-		const auto &charset(ct.second);
-		const auto &required(opts->mime);
-		if(required.first != supplied.first
-		||(required.second && required.second != supplied.second))
-			throw http::error
-			{
-				http::UNSUPPORTED_MEDIA_TYPE
-			};
-	}
+	if(!mime_type_acceptable(head))
+		throw http::error
+		{
+			http::UNSUPPORTED_MEDIA_TYPE
+		};
 
 	// This timer will keep the request from hanging forever for whatever
 	// reason. The resource method may want to do its own timing and can
@@ -649,6 +634,53 @@ const
 	//TODO: If we know that no response has been sent yet
 	//TODO: we can respond with http::REQUEST_TIMEOUT instead.
 	client.close(net::dc::RST, net::close_ignore);
+}
+
+bool
+ircd::resource::method::mime_type_acceptable(const http::request::head &head)
+const
+{
+	assert(opts);
+
+	const auto &[required_registry, required_format]
+	{
+		opts->mime
+	};
+
+	const auto &[supplied, charset]
+	{
+		split(head.content_type, ';')
+	};
+
+	const auto &[supplied_registry, supplied_format]
+	{
+		split(supplied, '/')
+	};
+
+	const bool match[]
+	{
+		!required_registry || iequals(required_registry, supplied_registry),
+		!required_format || iequals(required_format, supplied_format),
+	};
+
+	return all(match);
+}
+
+bool
+ircd::resource::method::content_length_acceptable(const http::request::head &head)
+const
+{
+	assert(opts);
+	assert(opts->payload_max != 0UL);
+
+	const auto &payload_max
+	{
+		opts->payload_max != -1UL?
+			opts->payload_max:
+			size_t(default_payload_max)
+	};
+
+	return head.content_length <= payload_max;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
