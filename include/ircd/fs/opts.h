@@ -60,6 +60,10 @@ struct ircd::fs::opts
 	/// opcode and then pass the opts structure to write().
 	enum op op {op::NOOP};
 
+	/// Suppress logging of some expected/tolerated failures. Set to false
+	/// if the call should just silently rethrow.
+	bool errlog {true};
+
 	opts(const off_t &, const enum op & = op::NOOP);
 	opts() = default;
 };

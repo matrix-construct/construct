@@ -2028,12 +2028,13 @@ try
 }
 catch(const std::system_error &e)
 {
-	log::derror
-	{
-		log, "`%s' :%s",
-		path,
-		e.what(),
-	};
+	if(opts.errlog)
+		log::derror
+		{
+			log, "`%s' :%s",
+			path,
+			e.what(),
+		};
 
 	throw;
 }
