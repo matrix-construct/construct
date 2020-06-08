@@ -10,16 +10,16 @@
 
 #include <RB_INC_SYS_SYSMACROS_H
 
-decltype(ircd::fs::dev::block)
-ircd::fs::dev::block;
-
-//
-// init
-//
-
-ircd::fs::dev::init::init()
+bool
+ircd::fs::dev::for_each(const blk_closure &closure)
 {
-	#ifdef __linux__
+	return for_each(string_view{}, closure);
+}
+
+bool
+ircd::fs::dev::for_each(const string_view &type,
+                        const blk_closure &closure)
+{
 	for(const auto &dir : fs::ls("/sys/dev/block")) try
 	{
 		const auto &[major, minor]
@@ -27,62 +27,35 @@ ircd::fs::dev::init::init()
 			split(filename(path_scratch, dir), ':')
 		};
 
-		const major_minor device_major_minor
+		const ulong id
 		{
-			lex_cast<ulong>(major), lex_cast<ulong>(minor)
+			dev::id({lex_cast<ulong>(major), lex_cast<ulong>(minor)})
 		};
 
-		const auto iit
-		{
-			block.emplace(device_major_minor, id(device_major_minor))
-		};
+		char dtbuf[32];
+		if(type && blk::devtype(dtbuf, id) != type)
+			continue;
 
-		assert(iit.second);
-		const auto &bd(iit.first->second);
-		if(!bd.is_device || bd.type != "disk")
-			block.erase(iit.first);
+		if(!closure(id, blk(id)))
+			return false;
+	}
+	catch(const ctx::interrupted &)
+	{
+		throw;
 	}
 	catch(const std::exception &e)
 	{
-		log::derror
+		log::error
 		{
 			log, "%s :%s",
 			dir,
 			e.what(),
 		};
 	}
-	#endif
 
-	for(const auto &[mm, bd] : block)
-	{
-		char pbuf[48];
-		log::info
-		{
-			log, "%s %u:%2u %s %s %s %s queue depth:%zu requests:%zu",
-			bd.type,
-			std::get<0>(mm),
-			std::get<1>(mm),
-			bd.vendor,
-			bd.model,
-			bd.rev,
-			pretty(pbuf, iec(bd.size)),
-			bd.queue_depth,
-			bd.nr_requests,
-		};
-	}
-
+	return true;
 }
 
-ircd::fs::dev::init::~init()
-noexcept
-{
-}
-
-//
-// fs::dev
-//
-
-#ifdef __linux__
 ircd::string_view
 ircd::fs::dev::sysfs(const mutable_buffer &out,
                      const ulong &id,
@@ -96,11 +69,18 @@ try
 		relpath
 	}};
 
-	fs::read_opts opts;
-	opts.aio = false;
+	fs::fd::opts fdopts;
+	fdopts.errlog = false;
+	const fs::fd fd
+	{
+		path, fdopts
+	};
+
+	fs::read_opts ropts;
+	ropts.aio = false;
 	string_view ret
 	{
-		fs::read(path, out, opts)
+		fs::read(fd, out, ropts)
 	};
 
 	ret = rstrip(ret, '\n');
@@ -113,6 +93,7 @@ catch(const ctx::interrupted &)
 }
 catch(const std::exception &e)
 {
+	#if 0
 	log::derror
 	{
 		log, "sysfs query dev_id:%lu `%s' :%s",
@@ -120,21 +101,10 @@ catch(const std::exception &e)
 		relpath,
 		e.what(),
 	};
+	#endif
 
 	return {};
 }
-#else
-ircd::string_view
-ircd::fs::dev::sysfs(const mutable_buffer &out,
-                     const ulong &id,
-                     const string_view &relpath)
-{
-	throw panic
-	{
-		"sysfs(5) is not available."
-	};
-}
-#endif
 
 ircd::string_view
 ircd::fs::dev::sysfs_id(const mutable_buffer &out,
@@ -169,53 +139,21 @@ ircd::fs::dev::id(const ulong &id)
 }
 
 //
-// dev::device
+// dev::blk
 //
 
-ircd::fs::dev::blkdev::blkdev(const ulong &id)
-:is_device
+ircd::fs::dev::blk::blk(const ulong &id)
+:type
 {
-	fs::is_dir(fmt::sprintf
-	{
-		path_scratch, "/sys/dev/block/%s/device",
-		sysfs_id(name_scratch, id),
-	})
-}
-,is_queue
-{
-	fs::is_dir(fmt::sprintf
-	{
-		path_scratch, "/sys/dev/block/%s/queue",
-		sysfs_id(name_scratch, id),
-	})
-}
-,type
-{
-	!is_device? std::string{}:
-	ircd::string(8, [&id]
+	ircd::string(15, [&id]
 	(const mutable_buffer &buf)
 	{
-		char tmp[128];
-		string_view ret;
-		tokens(sysfs(tmp, id, "uevent"), '\n', [&buf, &ret]
-		(const string_view &kv)
-		{
-			const auto &[key, value]
-			{
-				split(kv, '=')
-			};
-
-			if(key == "DEVTYPE")
-				ret = strlcpy(buf, value);
-		});
-
-		return ret;
+		return devtype(buf, id);
 	})
 }
 ,vendor
 {
-	!is_device? std::string{}:
-	ircd::string(12, [&id]
+	ircd::string(15, [&id]
 	(const mutable_buffer &buf)
 	{
 		return sysfs(buf, id, "device/vendor");
@@ -223,7 +161,6 @@ ircd::fs::dev::blkdev::blkdev(const ulong &id)
 }
 ,model
 {
-	!is_device? std::string{}:
 	ircd::string(64, [&id]
 	(const mutable_buffer &buf)
 	{
@@ -232,8 +169,7 @@ ircd::fs::dev::blkdev::blkdev(const ulong &id)
 }
 ,rev
 {
-	!is_device? std::string{}:
-	ircd::string(12, [&id]
+	ircd::string(15, [&id]
 	(const mutable_buffer &buf)
 	{
 		return sysfs(buf, id, "device/rev");
@@ -253,7 +189,28 @@ ircd::fs::dev::blkdev::blkdev(const ulong &id)
 }
 ,rotational
 {
-	sysfs<bool>(id, "queue/rotational", true)
+	sysfs<bool>(id, "queue/rotational", false)
 }
 {
+}
+
+ircd::string_view
+ircd::fs::dev::blk::devtype(const mutable_buffer &buf,
+                            const ulong &id)
+{
+	char tmp[128];
+	string_view ret;
+	tokens(sysfs(tmp, id, "uevent"), '\n', [&buf, &ret]
+	(const string_view &kv)
+	{
+		const auto &[key, value]
+		{
+			split(kv, '=')
+		};
+
+		if(key == "DEVTYPE")
+			ret = strlcpy(buf, value);
+	});
+
+	return ret;
 }

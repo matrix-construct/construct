@@ -13,9 +13,9 @@
 
 namespace ircd::fs::dev
 {
-	struct init;
-	struct blkdev;
+	struct blk;
 	using major_minor = std::pair<ulong, ulong>;
+	using blk_closure = std::function<bool (const ulong &id, const blk &)>;
 
 	// Convert device ID's with the major(3) / minor(3) / makedev(3)
 	ulong id(const major_minor &);
@@ -27,15 +27,23 @@ namespace ircd::fs::dev
 
 	// Read data for a device from sysfs; path is relative to /sys/dev/block/$id/...
 	string_view sysfs(const mutable_buffer &out, const ulong &id, const string_view &path);
-	template<class T = size_t, size_t bufmax = 32> T sysfs(const ulong &id, const string_view &path, const T &def = 0);
 
-	extern std::map<major_minor, blkdev> block;
+	// Read data for a device lexical_cast'ed to type
+	template<class R = size_t,
+	         size_t bufmax = 32>
+	R
+	sysfs(const ulong &id,
+	      const string_view &path,
+	      const R &def = 0);
+
+	bool for_each(const string_view &devtype, const blk_closure &);
+	bool for_each(const blk_closure &);
 }
 
-struct ircd::fs::dev::blkdev
+struct ircd::fs::dev::blk
 {
-	bool is_device {false};
-	bool is_queue {false};
+	static string_view devtype(const mutable_buffer &, const ulong &id);
+
 	std::string type;
 	std::string vendor;
 	std::string model;
@@ -45,14 +53,8 @@ struct ircd::fs::dev::blkdev
 	size_t nr_requests {0};
 	bool rotational {false};
 
-	blkdev(const ulong &id);
-	blkdev() = default;
-};
-
-struct ircd::fs::dev::init
-{
-	init();
-	~init() noexcept;
+	blk(const ulong &id);
+	blk() = default;
 };
 
 /// Return a lex_cast'able (an integer) from a sysfs target.

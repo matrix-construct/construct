@@ -100,12 +100,16 @@ ircd::fs::aio::init::init()
 	// tune to it. The caveat here is that if the application makes heavy use
 	// of an inferior device on the same system, it wont be optimally utilized.
 	if(max_events == 0UL)
-		for(const auto &[mm, bd] : fs::dev::block)
-			if(bd.is_device && bd.type == "disk")
-				max_events._value = std::clamp
-				(
-					bd.queue_depth, size_t(max_events), MAX_EVENTS
-				);
+		fs::dev::for_each("disk", []
+		(const ulong &id, const fs::dev::blk &device)
+		{
+			max_events._value = std::clamp
+			(
+				device.queue_depth, size_t(max_events), MAX_EVENTS
+			);
+
+			return true;
+		});
 
 	// If max_events is still not determined here set a sane default.
 	if(max_events == 0UL)

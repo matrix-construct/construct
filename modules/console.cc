@@ -914,6 +914,42 @@ console_cmd__fs__ls(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__fs__dev(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"type"
+	}};
+
+	const string_view type
+	{
+		param["type"]
+	};
+
+	fs::dev::for_each(type, [&out]
+	(const ulong &id, const fs::dev::blk &dev)
+	{
+		const auto mm(fs::dev::id(id));
+		char pbuf[48];
+		out
+		<< std::setw(16) << dev.type << ' '
+		<< std::setw(3) << std::right << std::get<0>(mm) << ':'
+		<< std::setw(3) << std::left << std::get<1>(mm) << ' '
+		<< std::setw(16) << dev.vendor << ' '
+		<< std::setw(20) << dev.model << ' '
+		<< std::setw(10) << dev.rev << ' '
+		<< "qd:" << std::setw(3) << dev.queue_depth << ' '
+		<< "nr:" << std::setw(3) << dev.nr_requests << ' '
+		<< pretty(pbuf, iec(dev.size)) << ' '
+		<< std::endl;
+		return true;
+	});
+
+	return true;
+}
+
+
+bool
 console_cmd__ls(opt &out, const string_view &line)
 {
 	return console_cmd__fs__ls(out, line);

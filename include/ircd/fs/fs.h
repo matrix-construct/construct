@@ -78,7 +78,6 @@ namespace ircd::fs
 /// Filesystem interface init / fini held by ircd::main().
 struct ircd::fs::init
 {
-	dev::init _dev_;
 	iou::init _iou_;
 	aio::init _aio_;
 
