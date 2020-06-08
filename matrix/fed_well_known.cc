@@ -369,9 +369,14 @@ ircd::m::fed::well_known::fetch(const mutable_buffer &buf,
 		buf
 	};
 
+	const http::header headers[]
+	{
+		{ "User-Agent", info::user_agent },
+	};
+
 	http::request
 	{
-		wb, host(target), "GET", url
+		wb, host(target), "GET", url, 0, {}, headers
 	};
 
 	const const_buffer out_head
