@@ -15458,7 +15458,7 @@ console_cmd__well_known__matrix__server(opt &out, const string_view &line)
 
 	const net::hostport result
 	{
-		m::fed::fetch_well_known(buf, remote)
+		m::fed::well_known::fetch(buf, remote)
 	};
 
 	out << result << std::endl;

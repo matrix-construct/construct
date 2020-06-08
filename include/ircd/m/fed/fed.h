@@ -17,9 +17,6 @@ namespace ircd::m::fed
 	id::event::buf fetch_head(const id::room &room_id, const string_view &remote, const id::user &);
 	id::event::buf fetch_head(const id::room &room_id, const string_view &remote);
 
-	string_view fetch_well_known(const mutable_buffer &out, const string_view &origin);
-	string_view well_known(const mutable_buffer &out, const string_view &origin);
-
 	net::hostport matrix_service(net::hostport remote) noexcept;
 	string_view server(const mutable_buffer &out, const string_view &origin);
 
@@ -31,6 +28,7 @@ namespace ircd::m::fed
 	bool clear_error(const string_view &origin);
 }
 
+#include "well_known.h"
 #include "request.h"
 #include "version.h"
 #include "key.h"
