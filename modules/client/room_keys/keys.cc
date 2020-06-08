@@ -72,7 +72,14 @@ ircd::m::room_keys_keys_put
 {
 	room_keys_keys, "PUT", put_room_keys_keys,
 	{
-		room_keys_keys_put.REQUIRES_AUTH
+		// Flags
+		room_keys_keys_put.REQUIRES_AUTH,
+
+		// timeout //TODO: XXX designated
+		30s,
+
+		// Payload maximum
+		1_MiB,
 	}
 };
 
