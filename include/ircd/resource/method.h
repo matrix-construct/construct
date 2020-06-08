@@ -18,6 +18,8 @@ struct ircd::resource::method
 	struct stats;
 	using handler = std::function<response (client &, request &)>;
 
+	static conf::item<seconds> default_timeout;
+	static conf::item<size_t> default_payload_max;
 	static ctx::dock idle_dock;
 
 	struct resource *resource;
@@ -51,12 +53,12 @@ struct ircd::resource::method::opts
 {
 	flag flags {(flag)0};
 
-	/// Timeout specific to this resource.
-	seconds timeout {30s};
+	/// Timeout specific to this resource; 0 is automatic
+	seconds timeout {0};
 
 	/// The maximum size of the Content-Length for this method. Anything
-	/// larger will be summarily rejected with a 413.
-	size_t payload_max {128_KiB};
+	/// larger will be summarily rejected with a 413. -1 is automatic.
+	size_t payload_max {-1UL};
 
 	/// MIME type; first part is the Registry (i.e application) and second
 	/// part is the format (i.e json). Empty value means nothing rejected.

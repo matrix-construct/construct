@@ -332,6 +332,24 @@ decltype(ircd::resource::method::idle_dock)
 ircd::resource::method::idle_dock;
 
 //
+// method::opts
+//
+
+decltype(ircd::resource::method::default_timeout)
+ircd::resource::method::default_timeout
+{
+	{ "name",    "ircd.resource.method.default.timeout" },
+	{ "default", 30L                                    },
+};
+
+decltype(ircd::resource::method::default_payload_max)
+ircd::resource::method::default_payload_max
+{
+	{ "name",    "ircd.resource.method.default.payload_max" },
+	{ "default", long(128_KiB)                              },
+};
+
+//
 // method::method
 //
 
@@ -429,8 +447,15 @@ try
 		stats->pending
 	};
 
+	const auto &method_payload_max
+	{
+		opts->payload_max != -1UL?
+			opts->payload_max:
+			size_t(default_payload_max)
+	};
+
 	// Bail out if the method limited the amount of content and it was exceeded.
-	if(head.content_length > opts->payload_max)
+	if(head.content_length > method_payload_max)
 		throw http::error
 		{
 			http::PAYLOAD_TOO_LARGE
@@ -455,9 +480,16 @@ try
 	// This timer will keep the request from hanging forever for whatever
 	// reason. The resource method may want to do its own timing and can
 	// disable this in its options structure.
+	const auto &method_timeout
+	{
+		opts->timeout != 0s?
+			opts->timeout:
+			seconds(default_timeout)
+	};
+
 	const net::scope_timeout timeout
 	{
-		*client.sock, opts->timeout, [this, &client]
+		*client.sock, method_timeout, [this, &client]
 		(const bool &timed_out)
 		{
 			if(timed_out)
