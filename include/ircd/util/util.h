@@ -66,6 +66,7 @@ namespace ircd
 #include "test.h"
 #include "boolean.h"
 #include "maybe.h"
+#include "all.h"
 
 // Unsorted section
 namespace ircd {
