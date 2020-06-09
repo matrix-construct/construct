@@ -44,6 +44,10 @@ namespace ircd::db
 	bool cached(column &, const string_view &key, const gopts & = {});
 	bool prefetch(column &, const string_view &key, const gopts & = {});
 
+	// [GET] Tests if multiple keys exist in parallel; returns bitset
+	uint64_t has(const vector_view<column> &, const vector_view<const string_view> &keys, const gopts & = {});
+	uint64_t has(column &, const vector_view<const string_view> &keys, const gopts & = {});
+
 	// [GET] Query space usage
 	size_t bytes(column &, const std::pair<string_view, string_view> &range, const gopts & = {});
 	size_t bytes_value(column &, const string_view &key, const gopts & = {});

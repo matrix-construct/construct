@@ -6596,6 +6596,52 @@ ircd::db::has(column &column,
 	return valid_eq(*it, key);
 }
 
+uint64_t
+ircd::db::has(column &column,
+              const vector_view<const string_view> &key,
+              const gopts &opts)
+{
+	const size_t num(key.size());
+	return has({&column, 1}, key, opts);
+}
+
+uint64_t
+ircd::db::has(const vector_view<column> &c,
+              const vector_view<const string_view> &key,
+              const gopts &gopts)
+{
+	if(c.empty())
+		return 0UL;
+
+	const size_t num(key.size());
+	if(unlikely(!num || num > 64))
+		throw std::out_of_range
+		{
+			"db::has() :too many columns or vector size mismatch"
+		};
+
+	_read_op op[num];
+	for(size_t i(0); i < num; ++i)
+		op[i] =
+		{
+			c[std::min(c.size() - 1, i)], key[i]
+		};
+
+	uint64_t i(0), ret(0);
+	auto opts(make_opts(gopts));
+	_read({op, num}, opts, [&i, &ret, &opts]
+	(column &, const column::delta &, const rocksdb::Status &s)
+	{
+		uint64_t found {0};
+		found |= s.ok();
+		found |= s.IsIncomplete() & (opts.read_tier == NON_BLOCKING);
+		ret |= (found << i++);
+		return true;
+	});
+
+	return ret;
+}
+
 //
 // column
 //
