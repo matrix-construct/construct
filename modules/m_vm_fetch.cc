@@ -537,9 +537,6 @@ ircd::m::vm::fetch::state_fetch(const event &event,
 		const auto each_state_id{[&eval, &ret, &req, &result]
 		(const m::event::id &event_id)
 		{
-			if(m::exists(event_id))
-				return;
-
 			auto it(req.lower_bound(event_id));
 			if(it != end(req) && *it == event_id)
 				return;
@@ -563,6 +560,33 @@ ircd::m::vm::fetch::state_fetch(const event &event,
 			};
 		}};
 
+		const auto each_state_set{[&each_state_id]
+		(const json::array &ids)
+		{
+			event::id event_id[32]; //TODO conf
+			auto it(begin(ids)); do
+			{
+				size_t i(0);
+				for(; i < 32 && it != end(ids); ++it)
+					event_id[i++] = json::string{*it};
+
+				const vector_view<const event::id> event_ids
+				(
+					event_id, i
+				);
+
+				const uint64_t exists
+				{
+					m::exists(event_ids)
+				};
+
+				for(size_t j(0); j < i; ++j)
+					if(~exists & (1UL << j))
+						each_state_id(event_id[j]);
+			}
+			while(it != end(ids));
+		}};
+
 		const json::array &auth_chain_ids
 		{
 			result.object["auth_chain_ids"]
@@ -573,12 +597,8 @@ ircd::m::vm::fetch::state_fetch(const event &event,
 			result.object["pdu_ids"]
 		};
 
-		for(const json::string &auth_chain_id : auth_chain_ids)
-			each_state_id(auth_chain_id);
-
-		for(const json::string &pdu_id : pdu_ids)
-			each_state_id(pdu_id);
-
+		each_state_set(auth_chain_ids);
+		each_state_set(pdu_ids);
 		return true;
 	});
 
