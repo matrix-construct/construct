@@ -24,6 +24,9 @@ namespace ircd::m
 	bool good(const id::event &);
 	bool bad(const id::event &);
 
+	// parallel util; returns bitset
+	uint64_t exists(const vector_view<const id::event> &);
+
 	// Equality tests the event_id only! know this.
 	bool operator==(const event &a, const event &b);
 

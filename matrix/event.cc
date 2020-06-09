@@ -999,6 +999,22 @@ ircd::m::operator==(const event &a, const event &b)
 	return a.event_id == b.event_id;
 }
 
+uint64_t
+ircd::m::exists(const vector_view<const id::event> &event_ids)
+{
+	const vector_view<const string_view> key
+	{
+		static_cast<const string_view *>(event_ids.data()), event_ids.size()
+	};
+
+	auto &column
+	{
+		dbs::event_idx
+	};
+
+	return db::has(column, key);
+}
+
 bool
 ircd::m::bad(const id::event &event_id)
 {
