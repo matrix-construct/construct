@@ -121,6 +121,9 @@ namespace ircd::db
 	std::pair<string_view, string_view> operator*(const rocksdb::Iterator &);
 
 	// [GET] read suite
+	using _read_op = std::tuple<column, string_view>;
+	using _read_closure = std::function<bool (column &, const column::delta &, const rocksdb::Status &)>;
+	bool _read(const vector_view<_read_op> &, const rocksdb::ReadOptions &, const _read_closure & = {});
 	size_t _read(std::nothrow_t, column &, const string_view &key, const rocksdb::ReadOptions &, const column::view_closure & = {});
 	size_t _read(column &, const string_view &key, const rocksdb::ReadOptions &, const column::view_closure & = {});
 
