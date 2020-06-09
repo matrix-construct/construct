@@ -68,14 +68,22 @@ namespace ircd
 ///TODO: XXX hoist lfence out of unlikely target block
 #if defined(RB_ASSERT) && defined(RB_ASSERT_INTRINSIC) && !defined(NDEBUG) && defined(__SSE2__)
 	#undef assert
-	#define assert(expr)                                                 \
-	({                                                                   \
-	    if(unlikely(!static_cast<bool>(expr)))                           \
-	    {                                                                \
-	        asm volatile ("lfence");                                     \
-	        __assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__);      \
-	    }                                                                \
-	})
+	#ifdef __clang__
+		#define assert(expr)                                                 \
+		({                                                                   \
+		    if(unlikely(!static_cast<bool>(expr)))                           \
+		    {                                                                \
+		        asm volatile ("lfence");                                     \
+		        __assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__);      \
+		    }                                                                \
+		})
+	#else
+		#define assert(expr)                                                 \
+		({                                                                   \
+		    if(unlikely(!static_cast<bool>(expr)))                           \
+		        __assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__);      \
+		})
+	#endif
 #endif
 
 //
