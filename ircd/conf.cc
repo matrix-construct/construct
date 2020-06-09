@@ -162,8 +162,8 @@ catch(const std::out_of_range &e)
 }
 
 ircd::string_view
-ircd::conf::get(const string_view &key,
-                const mutable_buffer &out)
+ircd::conf::get(const mutable_buffer &out,
+                const string_view &key)
 try
 {
 	const auto &item(*items.at(key));

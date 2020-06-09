@@ -63,7 +63,7 @@ namespace ircd::conf
 
 	bool exists(const string_view &key);
 	bool persists(const string_view &key);
-	string_view get(const string_view &key, const mutable_buffer &out);
+	string_view get(const mutable_buffer &out, const string_view &key);
 	std::string get(const string_view &key);
 	bool set(const string_view &key, const string_view &value);
 	bool set(std::nothrow_t, const string_view &key, const string_view &value);
