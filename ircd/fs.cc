@@ -382,6 +382,11 @@ bool
 ircd::fs::remove(const string_view &path)
 try
 {
+	const prof::syscall_usage_warning message
+	{
+		"fs::remove(%s)", path
+	};
+
 	return filesystem::remove(_path(path));
 }
 catch(const filesystem::filesystem_error &e)
@@ -393,6 +398,11 @@ bool
 ircd::fs::remove(std::nothrow_t,
                  const string_view &path)
 {
+	const prof::syscall_usage_warning message
+	{
+		"fs::remove(%s)", path
+	};
+
 	boost::system::error_code ec;
 	return filesystem::remove(_path(path), ec);
 }
@@ -402,6 +412,11 @@ ircd::fs::rename(const string_view &old,
                  const string_view &new_)
 try
 {
+	const prof::syscall_usage_warning message
+	{
+		"fs::rename(%s, %s)", old, new_
+	};
+
 	filesystem::rename(_path(old), _path(new_));
 	return true;
 }
@@ -415,6 +430,11 @@ ircd::fs::rename(std::nothrow_t,
                  const string_view &old,
                  const string_view &new_)
 {
+	const prof::syscall_usage_warning message
+	{
+		"fs::rename(%s, %s)", old, new_
+	};
+
 	boost::system::error_code ec;
 	filesystem::rename(_path(old), _path(new_), ec);
 	return !ec;
