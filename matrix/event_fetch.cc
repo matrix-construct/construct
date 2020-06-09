@@ -335,17 +335,26 @@ try
 
 	event.source = {};
 	assign(event, row, key);
-	const auto event_id
+
+	// N.B. a row assignment might not produce an event.event_id unless
+	// the key is explicitly selected or it was otherwise trivially found.
+	event.event_id =
 	{
+		event.event_id?
+			event.event_id:
+
 		!empty(json::get<"event_id"_>(event))?
-			id{json::get<"event_id"_>(event)}:
+			event::id{json::get<"event_id"_>(event)}:
+
 		event_id_buf?
-			id{event_id_buf}:
-			m::event_id(std::nothrow, event_idx, event_id_buf)
+			event::id{event_id_buf}:
+
+		cell.at(json::indexof<m::event, "event_id"_>())?
+			event::id{cell.at(json::indexof<m::event, "event_id"_>()).val()}:
+
+			event::id{}
 	};
 
-	assert(event_id);
-	event.event_id = event_id;
 	return true;
 }
 catch(const json::parse_error &e)
