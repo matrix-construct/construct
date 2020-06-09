@@ -84,6 +84,7 @@ namespace ircd
 /// Database subsystem initialization and destruction
 struct ircd::db::init
 {
+	static void request_pool();
 	static void compressions();
 	static void directory();
 	static void test_direct_io();

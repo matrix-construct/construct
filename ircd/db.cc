@@ -66,7 +66,7 @@ ircd::db::request_pool_size
 {
 	{
 		{ "name",     "ircd.db.request_pool.size" },
-		{ "default",  32L                         },
+		{ "default",  0L                          },
 	}, []
 	{
 		request.set(size_t(request_pool_size));
@@ -131,9 +131,9 @@ try
 	#endif
 	compressions();
 	directory();
+	request_pool();
 	test_direct_io();
 	test_hw_crc32();
-	request.add(request_pool_size);
 }
 catch(const std::exception &e)
 {
@@ -348,6 +348,34 @@ catch(const std::exception &e)
 	};
 
 	throw;
+}
+
+void
+ircd::db::init::request_pool()
+{
+	char buf[32];
+	const string_view value
+	{
+		conf::get(buf, "ircd.fs.aio.max_events")
+	};
+
+	const size_t aio_max_events
+	{
+		lex_castable<size_t>(value)?
+			lex_cast<size_t>(value):
+			0UL
+	};
+
+	const size_t new_size
+	{
+		size_t(request_pool_size)?
+			request_pool_size:
+		aio_max_events?
+			aio_max_events:
+			1UL
+	};
+
+	request_pool_size.set(lex_cast(new_size));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
