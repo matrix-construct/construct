@@ -50,6 +50,7 @@
 	#include "file/sst_file_manager_impl.h"
 #endif
 
+#include "db_has.h"
 #include "db_env.h"
 
 ///////////////////////////////////////////////////////////////////////////////
