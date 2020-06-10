@@ -13,7 +13,7 @@ namespace ircd::m
 	static resource::response get_room_keys_keys(client &, const resource::request &);
 	extern resource::method room_keys_keys_get;
 
-	static void put_room_keys_keys_key(client &, const resource::request &, const room::id &, const string_view &, const event::idx &, const json::object &);
+	static event::id::buf put_room_keys_keys_key(client &, const resource::request &, const room::id &, const string_view &, const event::idx &, const json::object &);
 	static resource::response put_room_keys_keys(client &, const resource::request &);
 	extern resource::method room_keys_keys_put;
 
@@ -137,7 +137,7 @@ ircd::m::put_room_keys_keys(client &client,
 	};
 }
 
-void
+ircd::m::event::id::buf
 ircd::m::put_room_keys_keys_key(client &client,
                                 const resource::request &request,
                                 const room::id &room_id,
@@ -185,6 +185,8 @@ ircd::m::put_room_keys_keys_key(client &client,
 	{
 		send(user_room, request.user_id, "ircd.room_keys.key", state_key, content)
 	};
+
+	return event_id;
 }
 
 //
