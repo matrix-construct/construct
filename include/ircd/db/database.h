@@ -19,6 +19,7 @@ namespace ircd::db
 	extern conf::item<bool> open_check;
 	extern conf::item<std::string> open_recover;
 	extern conf::item<bool> open_repair;
+	extern conf::item<bool> auto_compact;
 
 	// General information
 	const std::string &name(const database &);

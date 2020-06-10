@@ -442,6 +442,17 @@ ircd::db::open_repair
 	{ "persist",  false                  },
 };
 
+/// Conf item toggles whether automatic compaction is enabled or disabled for
+/// all databases upon opening. This is useful for developers, debugging and
+/// valgrind etc to prevent these background jobs from spawning when unwanted.
+decltype(ircd::db::auto_compact)
+ircd::db::auto_compact
+{
+	{ "name",     "ircd.db.compact.auto" },
+	{ "default",  true                   },
+	{ "persist",  false                  },
+};
+
 void
 ircd::db::sync(database &d)
 {
@@ -2014,6 +2025,10 @@ ircd::db::database::column::column(database &d,
 	this->options.min_write_buffer_number_to_merge = 4;
 	this->options.max_write_buffer_number_to_maintain = 0;
 
+	// Conf item can be set to disable automatic compactions. For developers
+	// and debugging; good for valgrind.
+	this->options.disable_auto_compactions = !bool(db::auto_compact);
+
 	// Set the compaction style; we don't override this in the descriptor yet.
 	//this->options.compaction_style = rocksdb::kCompactionStyleNone;
 	this->options.compaction_style = rocksdb::kCompactionStyleLevel;
@@ -2033,7 +2048,6 @@ ircd::db::database::column::column(database &d,
 
 	this->options.num_levels = 7;
 	this->options.level0_file_num_compaction_trigger = 2;
-	this->options.disable_auto_compactions = false;
 	this->options.level_compaction_dynamic_level_bytes = false;
 	this->options.ttl = 0;
 	#ifdef IRCD_DB_HAS_PERIODIC_COMPACTIONS

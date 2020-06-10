@@ -24,6 +24,7 @@ bool single;
 bool debugmode;
 bool nolisten;
 bool noautomod;
+bool nocompact;
 bool checkdb;
 bool pitrecdb;
 bool repairdb;
@@ -54,6 +55,7 @@ lgetopt opts[]
 	{ "execute",    &execute,       lgetopt::STRINGS, "Execute command lines immediately after startup" },
 	{ "nolisten",   &nolisten,      lgetopt::BOOL,    "Normal execution but without listening sockets" },
 	{ "noautomod",  &noautomod,     lgetopt::BOOL,    "Normal execution but without autoloading modules" },
+	{ "nocompact",  &nocompact,     lgetopt::BOOL,    "Disable automatic database compaction" },
 	{ "checkdb",    &checkdb,       lgetopt::BOOL,    "Perform complete checks of databases when opening" },
 	{ "pitrecdb",   &pitrecdb,      lgetopt::BOOL,    "Allow Point-In-Time-Recover if DB reports corruption after crash" },
 	{ "repairdb",   &repairdb,      lgetopt::BOOL,    "Perform full DB repair after deep block/file corruption" },
@@ -512,6 +514,9 @@ applyargs()
 		ircd::db::open_repair.set("true");
 	else
 		ircd::db::open_repair.set("false");
+
+	if(nocompact)
+		ircd::db::auto_compact.set("false");
 
 	if(nodirect)
 		ircd::fs::fd::opts::direct_io_enable.set("false");
