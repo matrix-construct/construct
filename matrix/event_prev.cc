@@ -39,10 +39,36 @@ size_t
 ircd::m::event::prev::prev_events_exist()
 const
 {
-	size_t ret(0);
-	for(size_t i(0); i < prev_events_count(); ++i)
-		ret += prev_event_exists(i);
+	// the spec max is really 20 but we accept a little more in this
+	// subroutine for whatever forward reason...
+	static const auto max
+	{
+		32UL
+	};
 
+	const auto num
+	{
+		std::min(prev_events_count(), max)
+	};
+
+	size_t i(0);
+	event::id ids[num];
+	std::generate(ids, ids + num, [this, &i]
+	{
+		return prev_event(i++);
+	});
+
+	const auto mask
+	{
+		m::exists({ids, i})
+	};
+
+	const auto ret
+	{
+		__builtin_popcountl(mask)
+	};
+
+	assert(size_t(ret) <= max && size_t(ret) <= prev_events_count());
 	return ret;
 }
 
@@ -50,10 +76,36 @@ size_t
 ircd::m::event::prev::auth_events_exist()
 const
 {
-	size_t ret(0);
-	for(size_t i(0); i < auth_events_count(); ++i)
-		ret += auth_event_exists(i);
+	// the de facto max is really 4 but we accept a little more in this
+	// subroutine for whatever forward reason...
+	static const auto max
+	{
+		8UL
+	};
 
+	const auto num
+	{
+		std::min(auth_events_count(), max)
+	};
+
+	size_t i(0);
+	event::id ids[num];
+	std::generate(ids, ids + num, [this, &i]
+	{
+		return auth_event(i++);
+	});
+
+	const auto mask
+	{
+		m::exists({ids, i})
+	};
+
+	const auto ret
+	{
+		__builtin_popcountl(mask)
+	};
+
+	assert(size_t(ret) <= max && size_t(ret) <= auth_events_count());
 	return ret;
 }
 
