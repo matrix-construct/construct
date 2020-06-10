@@ -4022,7 +4022,9 @@ _print_sst_info(opt &out,
 	    << std::setw(12) << f.name
 	    << "  " << std::setw(32) << std::left << (f.created? timef(tmbuf, f.created, ircd::localtime) : string_view{})
 	    << "  " << std::setw(5) << std::right << trunc(f.compression, 5)
-	    << "  " << std::setw(3) << std::left << (!f.filter.empty()? 'F' : ' ')
+	    << "  " << std::setw(1) << std::left << (!f.filter.empty()? 'F' : ' ')
+	    <<         std::setw(1) << std::left << (f.delta_encoding? 'D' : ' ')
+	    <<         std::setw(1) << std::left << (true? ' ' : ' ')
 	    << "  " << std::setw(24) << std::left << pretty(pbuf, iec(f.size))
 	    << "  " << std::setw(10) << std::right << f.min_seq << " : " << std::setw(10) << std::left << f.max_seq
 	    << "  " << std::setw(10) << std::right << min_key << " : " << std::setw(10) << std::left << max_key
@@ -4099,6 +4101,7 @@ _print_sst_info_full(opt &out,
 	close_auto("range deletes", f.range_deletes);
 	close_auto("compacting", f.compacting? "yes"_sv : "no"_sv);
 	close_auto("compression", f.compression);
+	close_auto("delta encode", f.delta_encoding? "yes"_sv : "no"_sv);
 	close_auto("", "");
 
 	const auto blocks_size{f.keys_size + f.values_size};

@@ -57,6 +57,7 @@ struct ircd::db::database::sst::info
 	int32_t version {-1};
 	time_t created {0};
 	time_t oldest_key {0};
+	bool delta_encoding {false};
 
 	info(const database &, const string_view &filename);
 	info() = default;

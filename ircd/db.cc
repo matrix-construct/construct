@@ -3796,6 +3796,7 @@ ircd::db::database::sst::info::operator=(rocksdb::TableProperties &&tp)
 	fixed_key_len = std::move(tp.fixed_key_len);
 	created = std::move(tp.creation_time);
 	oldest_key = std::move(tp.oldest_key_time);
+	delta_encoding = std::move(tp.index_value_is_delta_encoded);
 	return *this;
 }
 
