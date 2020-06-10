@@ -2103,9 +2103,8 @@ ircd::db::database::column::column(database &d,
 	// Block based table index type.
 	table_opts.format_version = 3; // RocksDB >= 5.15 compat only; otherwise use 2.
 	table_opts.index_type = rocksdb::BlockBasedTableOptions::kTwoLevelIndexSearch;
+	table_opts.index_block_restart_interval = 64;
 	table_opts.read_amp_bytes_per_bit = 8;
-	table_opts.partition_filters = true;
-	table_opts.use_delta_encoding = true;
 
 	// Specify that index blocks should use the cache. If not, they will be
 	// pre-read into RAM by rocksdb internally. Because of the above
@@ -2116,7 +2115,8 @@ ircd::db::database::column::column(database &d,
 	table_opts.pin_top_level_index_and_filter = false;
 	table_opts.pin_l0_filter_and_index_blocks_in_cache = false;
 	table_opts.enable_index_compression = false;
-	table_opts.index_block_restart_interval = 64;
+	table_opts.partition_filters = true;
+	table_opts.use_delta_encoding = false;
 
 	// Setup the block size
 	table_opts.block_size = this->descriptor->block_size;
