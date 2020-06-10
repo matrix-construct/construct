@@ -13,6 +13,28 @@
 // event/prev.h
 //
 
+bool
+ircd::m::event::prev::prev_exist()
+const
+{
+	for(size_t i(0); i < prev_events_count(); ++i)
+		if(prev_event_exists(i))
+			return true;
+
+	return false;
+}
+
+bool
+ircd::m::event::prev::auth_exist()
+const
+{
+	for(size_t i(0); i < auth_events_count(); ++i)
+		if(auth_event_exists(i))
+			return true;
+
+	return false;
+}
+
 size_t
 ircd::m::event::prev::prev_events_exist()
 const

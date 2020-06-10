@@ -58,6 +58,9 @@ struct ircd::m::event::prev
 	size_t auth_events_exist() const;
 	size_t prev_events_exist() const;
 
+	bool auth_exist() const;
+	bool prev_exist() const;
+
 	using super_type::tuple;
 	using super_type::operator=;
 };
