@@ -3435,6 +3435,8 @@ catch(const std::exception &e)
 
 	return error_to_status{e};
 }
+#else
+#warning "RocksDB MultiRead is not supported for this build."
 #endif IRCD_DB_HAS_ENV_MULTIREAD
 
 rocksdb::Status
