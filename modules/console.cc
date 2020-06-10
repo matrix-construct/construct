@@ -926,28 +926,57 @@ console_cmd__fs__dev(opt &out, const string_view &line)
 		param["type"]
 	};
 
+	out
+	<< std::setw(3) << std::right << "maj" << ':'
+	<< std::setw(3) << std::left << "min" << ' '
+	<< std::setw(10) << std::right << "TYPE" << ' '
+	<< std::setw(12) << std::left << " " << ' '
+	<< std::setw(6) << std::right << "NR_REQ" << ' '
+	<< std::setw(6) << std::right << "DEPTH" << ' '
+	<< std::setw(5) << std::right << "MERGE" << ' '
+	<< std::setw(5) << std::right << "OPTSZ" << ' '
+	<< std::setw(5) << std::right << "MINSZ" << ' '
+	<< std::setw(5) << std::right << "LOGSZ" << ' '
+	<< std::setw(5) << std::right << "PHYSZ" << ' '
+	<< std::setw(6) << std::right << "SECTSZ" << ' '
+	<< std::setw(14) << std::right << "SECTORS" << ' '
+	<< std::setw(26) << "SIZE" << ' '
+	<< std::setw(10) << std::right << "REV" << ' '
+	<< std::setw(20) << std::left << "MODEL" << ' '
+	<< std::setw(16) << std::left << "VENDOR" << ' '
+	<< std::setw(24) << std::left << "SCHED" << ' '
+	<< std::endl;
+
 	fs::dev::for_each(type, [&out]
 	(const ulong &id, const fs::dev::blk &dev)
 	{
 		const auto mm(fs::dev::id(id));
 		char pbuf[48];
 		out
-		<< std::setw(16) << dev.type << ' '
 		<< std::setw(3) << std::right << std::get<0>(mm) << ':'
 		<< std::setw(3) << std::left << std::get<1>(mm) << ' '
-		<< std::setw(16) << dev.vendor << ' '
-		<< std::setw(20) << dev.model << ' '
-		<< std::setw(10) << dev.rev << ' '
-		<< "qd:" << std::setw(3) << dev.queue_depth << ' '
-		<< "nr:" << std::setw(3) << dev.nr_requests << ' '
-		<< pretty(pbuf, iec(dev.size)) << ' '
+		<< std::setw(10) << std::right << dev.type << ' '
+		<< std::setw(12) << std::left << (dev.rotational? "rotating"_sv : string_view{}) << ' '
+		<< std::setw(6) << std::right << dev.nr_requests << ' '
+		<< std::setw(6) << std::right << dev.queue_depth << ' '
+		<< std::setw(5) << std::right << (dev.merges? 'Y' : 'N') << ' '
+		<< std::setw(5) << std::right << dev.optimal_io << ' '
+		<< std::setw(5) << std::right << dev.minimum_io << ' '
+		<< std::setw(5) << std::right << dev.logical_block << ' '
+		<< std::setw(5) << std::right << dev.physical_block << ' '
+		<< std::setw(6) << std::right << dev.sector_size << ' '
+		<< std::setw(14) << std::right << dev.sectors << ' '
+		<< std::setw(26) << pretty(pbuf, iec(dev.sectors * dev.sector_size)) << ' '
+		<< std::setw(10) << std::right << dev.rev << ' '
+		<< std::setw(20) << std::left << dev.model << ' '
+		<< std::setw(16) << std::left << dev.vendor << ' '
+		<< std::setw(24) << std::left << dev.scheduler << ' '
 		<< std::endl;
 		return true;
 	});
 
 	return true;
 }
-
 
 bool
 console_cmd__ls(opt &out, const string_view &line)

@@ -14,6 +14,7 @@
 namespace ircd::fs::dev
 {
 	struct blk;
+
 	using major_minor = std::pair<ulong, ulong>;
 	using blk_closure = std::function<bool (const ulong &id, const blk &)>;
 
@@ -42,16 +43,26 @@ namespace ircd::fs::dev
 
 struct ircd::fs::dev::blk
 {
+	static const size_t SECTOR_SIZE;
+	static const string_view BASE_PATH;
+
 	static string_view devtype(const mutable_buffer &, const ulong &id);
 
 	std::string type;
 	std::string vendor;
 	std::string model;
 	std::string rev;
-	size_t size {0};
+	size_t sector_size {0};
+	size_t physical_block {0};
+	size_t logical_block {0};
+	size_t minimum_io {0};
+	size_t optimal_io {0};
+	size_t sectors {0};
 	size_t queue_depth {0};
 	size_t nr_requests {0};
+	std::string scheduler;
 	bool rotational {false};
+	bool merges {false};
 
 	blk(const ulong &id);
 	blk() = default;

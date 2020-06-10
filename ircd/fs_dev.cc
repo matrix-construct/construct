@@ -20,7 +20,7 @@ bool
 ircd::fs::dev::for_each(const string_view &type,
                         const blk_closure &closure)
 {
-	for(const auto &dir : fs::ls("/sys/dev/block")) try
+	for(const auto &dir : fs::ls(blk::BASE_PATH)) try
 	{
 		const auto &[major, minor]
 		{
@@ -64,7 +64,8 @@ try
 {
 	const string_view path{fmt::sprintf
 	{
-		path_scratch, "/sys/dev/block/%s/%s",
+		path_scratch, "%s/%s/%s",
+		blk::BASE_PATH,
 		sysfs_id(name_scratch, id),
 		relpath
 	}};
@@ -142,6 +143,18 @@ ircd::fs::dev::id(const ulong &id)
 // dev::blk
 //
 
+decltype(ircd::fs::dev::blk::SECTOR_SIZE)
+ircd::fs::dev::blk::SECTOR_SIZE
+{
+	512
+};
+
+decltype(ircd::fs::dev::blk::BASE_PATH)
+ircd::fs::dev::blk::BASE_PATH
+{
+	"/sys/dev/block"
+};
+
 ircd::fs::dev::blk::blk(const ulong &id)
 :type
 {
@@ -175,7 +188,27 @@ ircd::fs::dev::blk::blk(const ulong &id)
 		return sysfs(buf, id, "device/rev");
 	})
 }
-,size
+,sector_size
+{
+	sysfs(id, "queue/hw_sector_size")
+}
+,physical_block
+{
+	sysfs(id, "queue/physical_block_size")
+}
+,logical_block
+{
+	sysfs(id, "queue/logical_block_size")
+}
+,minimum_io
+{
+	sysfs(id, "queue/minimum_io_size")
+}
+,optimal_io
+{
+	sysfs(id, "queue/optimal_io_size")
+}
+,sectors
 {
 	sysfs(id, "size")
 }
@@ -187,9 +220,21 @@ ircd::fs::dev::blk::blk(const ulong &id)
 {
 	sysfs(id, "queue/nr_requests")
 }
+,scheduler
+{
+	ircd::string(64, [&id]
+	(const mutable_buffer &buf)
+	{
+		return sysfs(buf, id, "queue/scheduler");
+	})
+}
 ,rotational
 {
 	sysfs<bool>(id, "queue/rotational", false)
+}
+,merges
+{
+	!sysfs<bool>(id, "queue/nomerges", true)
 }
 {
 }
