@@ -27,6 +27,7 @@ bool noautomod;
 bool nocompact;
 bool checkdb;
 bool pitrecdb;
+bool recoverdb;
 bool repairdb;
 bool nojs;
 bool nodirect;
@@ -58,6 +59,7 @@ lgetopt opts[]
 	{ "nocompact",  &nocompact,     lgetopt::BOOL,    "Disable automatic database compaction" },
 	{ "checkdb",    &checkdb,       lgetopt::BOOL,    "Perform complete checks of databases when opening" },
 	{ "pitrecdb",   &pitrecdb,      lgetopt::BOOL,    "Allow Point-In-Time-Recover if DB reports corruption after crash" },
+	{ "recoverdb",  &recoverdb,     lgetopt::BOOL,    "Allow earlier Point-In-Time when -pitrecdb does not work" },
 	{ "repairdb",   &repairdb,      lgetopt::BOOL,    "Perform full DB repair after deep block/file corruption" },
 	{ "nojs",       &nojs,          lgetopt::BOOL,    "Disable SpiderMonkey JS subsystem from initializing. (noop when not available)" },
 	{ "nodirect",   &nodirect,      lgetopt::BOOL,    "Disable direct IO (O_DIRECT) for unsupporting filesystems" },
@@ -509,6 +511,9 @@ applyargs()
 		ircd::db::open_recover.set("point");
 	else
 		ircd::db::open_recover.set("absolute");
+
+	if(recoverdb)
+		ircd::db::open_recover.set("recover");
 
 	if(repairdb)
 		ircd::db::open_repair.set("true");
