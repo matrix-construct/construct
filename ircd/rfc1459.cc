@@ -422,7 +422,7 @@ try
 		parse::head
 	};
 
-	qi::parse(start, stop, grammar, *this);
+	ircd::parse(start, stop, grammar, *this);
 }
 catch(const qi::expectation_failure<const char *> &e)
 {

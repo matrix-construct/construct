@@ -388,12 +388,7 @@ ircd::m::vm::fetch::state(const event &event,
 try
 {
 	const event::prev prev{event};
-	const size_t prev_miss
-	{
-		prev.prev_events_count() - prev.prev_events_exist()
-	};
-
-	if(!prev_miss)
+	if(prev.prev_exist())
 		return;
 
 	const auto &[sounding_depth, sounding_idx]

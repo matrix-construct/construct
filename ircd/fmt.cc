@@ -398,7 +398,7 @@ ircd::fmt::snprintf::argument(const arg &val)
 	fmt::spec spec;
 	auto &start(begin(this->fmt));
 	const auto stop(end(this->fmt));
-	if(qi::parse(start, stop, parser, spec))
+	if(ircd::parse<invalid_format>(start, stop, parser, spec))
 		handle_specifier(this->out, idx++, spec, val);
 
 	string_view fmt

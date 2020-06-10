@@ -55,25 +55,7 @@ __attribute__((visibility("default")))
 	IRCD_EXCEPTION(ircd::error, error);
 	IRCD_EXCEPTION(error, generator_error);
 	IRCD_EXCEPTION(generator_error, buffer_overrun);
-
-	// parse.cc
-	extern thread_local char rule_buffer[64];
-	extern thread_local struct generator_state *generator_state;
 }}
-
-namespace ircd
-__attribute__((visibility("default")))
-{
-	template<class parent_error,
-	         class it = const char *,
-	         class... args>
-	bool parse(args&&...);
-
-	template<bool truncation = false,
-	         class gen,
-	         class... attr>
-	bool generate(mutable_buffer &out, gen&&, attr&&...);
-}
 
 namespace ircd {
 namespace spirit
@@ -184,6 +166,41 @@ namespace ircd {
 namespace spirit
 __attribute__((visibility("default")))
 {
+	// parse.cc
+	extern thread_local char rule_buffer[64];
+	extern thread_local struct generator_state *generator_state;
+}}
+
+namespace ircd {
+namespace spirit
+__attribute__((visibility("internal")))
+{
+	template<class gen,
+	         class... attr>
+	bool parse(const char *&start, const char *const &stop, gen&&, attr&&...);
+
+	template<class parent_error,
+	         size_t error_show_max  = 48,
+	         class gen,
+	         class... attr>
+	bool parse(const char *&start, const char *const &stop, gen&&, attr&&...);
+
+	template<bool truncation = false,
+	         class gen,
+	         class... attr>
+	bool generate(mutable_buffer &out, gen&&, attr&&...);
+}}
+
+namespace ircd
+{
+	using spirit::generate;
+	using spirit::parse;
+}
+
+namespace ircd {
+namespace spirit
+__attribute__((visibility("default")))
+{
 }}
 
 struct ircd::spirit::substring_view
@@ -245,7 +262,8 @@ ircd::spirit::expectation_failure<parent>::expectation_failure(const qi::expecta
 }
 {}
 
-struct ircd::spirit::generator_state
+struct [[gnu::visibility("hidden")]]
+ircd::spirit::generator_state
 {
 	/// Destination buffer (used like window_buffer).
 	mutable_buffer &out;
@@ -269,25 +287,23 @@ struct ircd::spirit::generator_state
 template<bool truncation,
          class gen,
          class... attr>
-inline bool
-ircd::generate(mutable_buffer &out,
-               gen&& g,
-               attr&&... a)
+[[using gnu: flatten, always_inline, gnu_inline, artificial]]
+extern inline bool
+ircd::spirit::generate(mutable_buffer &out,
+                       gen&& g,
+                       attr&&... a)
 
 {
-	using namespace ircd::spirit;
-	namespace spirit = ircd::spirit;
-
 	const auto max(size(out));
 	const auto start(data(out));
-	struct spirit::generator_state state
+	struct generator_state state
 	{
 		out
 	};
 
 	const scope_restore _state
 	{
-		spirit::generator_state, &state
+		generator_state, &state
 	};
 
 	sink_type sink
@@ -317,7 +333,7 @@ ircd::generate(mutable_buffer &out,
 				std::distance(start, begin(out))
 		};
 
-		throw spirit::buffer_overrun
+		throw buffer_overrun
 		{
 			"Insufficient buffer of %s; required at least %s",
 			pretty(pbuf[0], iec(max)),
@@ -331,17 +347,37 @@ ircd::generate(mutable_buffer &out,
 }
 
 template<class parent_error,
-         class it,
-         class... args>
-inline bool
-ircd::parse(args&&... a)
+         size_t error_show_max,
+         class gen,
+         class... attr>
+[[using gnu: flatten, always_inline, gnu_inline, artificial]]
+extern inline bool
+ircd::spirit::parse(const char *&start,
+                    const char *const &stop,
+                    gen&& g,
+                    attr&&... a)
 try
 {
-	return spirit::qi::parse(std::forward<args>(a)...);
+	return qi::parse(start, stop, std::forward<gen>(g), std::forward<attr>(a)...);
 }
-catch(const spirit::qi::expectation_failure<it> &e)
+catch(const qi::expectation_failure<const char *> &e)
 {
-	throw spirit::expectation_failure<parent_error>(e);
+	throw expectation_failure<parent_error>
+	{
+		e, start, error_show_max
+	};
+}
+
+template<class gen,
+         class... attr>
+[[using gnu: flatten, always_inline, gnu_inline, artificial]]
+extern inline bool
+ircd::spirit::parse(const char *&start,
+                    const char *const &stop,
+                    gen&& g,
+                    attr&&... a)
+{
+	return qi::parse(start, stop, std::forward<gen>(g), std::forward<attr>(a)...);
 }
 
 template<size_t idx,

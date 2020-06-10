@@ -218,8 +218,24 @@ struct ircd::http::parser
 :grammar
 {
 	static size_t content_length(const string_view &val);
+
+	template<class gen,
+	         class... attr>
+	bool operator()(const char *&start, const char *const &stop, gen&&, attr&&...) const;
 }
 const ircd::http::parser;
+
+template<class gen,
+         class... attr>
+inline bool
+ircd::http::parser::operator()(const char *&start,
+                               const char *const &stop,
+                               gen&& g,
+                               attr&&... a)
+const
+{
+	return ircd::parse(start, stop, std::forward<gen>(g), std::forward<attr>(a)...);
+}
 
 namespace ircd { namespace http
 __attribute__((visibility("default")))
@@ -600,7 +616,7 @@ try
 	const char *start(line::begin());
 	const auto res
 	{
-		qi::parse(start, line::end(), grammar, this->size)
+		parser(start, line::end(), grammar, this->size)
 	};
 
 	assert(res == true);
@@ -753,7 +769,7 @@ try
 
 	const char *start(line.data());
 	const char *const stop(line.data() + line.size());
-	qi::parse(start, stop, grammar, *this);
+	parser(start, stop, grammar, *this);
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
@@ -769,7 +785,7 @@ ircd::http::line::response::response(const line &line)
 
 	const char *start(line.data());
 	const char *const stop(line.data() + line.size());
-	qi::parse(start, stop, grammar, *this);
+	parser(start, stop, grammar, *this);
 }
 
 ircd::http::line::request::request(const line &line)
@@ -782,7 +798,7 @@ try
 
 	const char *start(line.data());
 	const char *const stop(line.data() + line.size());
-	qi::parse(start, stop, grammar, *this);
+	parser(start, stop, grammar, *this);
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
@@ -825,7 +841,7 @@ ircd::http::line::line(parse::capstan &pc)
 	string_view ret;
 	pc([&ret](const char *&start, const char *const &stop)
 	{
-		if(!qi::parse(start, stop, grammar, ret))
+		if(!parser(start, stop, grammar, ret))
 		{
 			ret = {};
 			return false;
@@ -996,7 +1012,7 @@ const
 
 	const string_view &s(*this);
 	const char *start(s.begin()), *const stop(s.end());
-	qi::parse(start, stop, grammar);
+	parser(start, stop, grammar);
 	return ret;
 }
 
@@ -1016,7 +1032,7 @@ ircd::http::parser::content_length(const string_view &str)
 	const char *start(str.data());
 	const bool parsed
 	{
-		qi::parse(start, start + str.size(), grammar, ret)
+		http::parser(start, start + str.size(), grammar, ret)
 	};
 
 	if(!parsed || ret >= 256_GiB)
@@ -1235,7 +1251,11 @@ ircd::http::status(const string_view &str)
 
 	short ret;
 	const char *start(str.data());
-	const bool parsed(qi::parse(start, start + str.size(), grammar, ret));
+	const bool parsed
+	{
+		parser(start, start + str.size(), grammar, ret)
+	};
+
 	if(!parsed || ret < 0 || ret >= 1000)
 		throw ircd::error
 		{

@@ -16,8 +16,6 @@ namespace ircd::json
 	// Instantiations of the grammars
 	struct parser extern const parser;
 	struct printer extern const printer;
-
-	const size_t &error_show_max {48};
 }
 #pragma GCC visibility pop
 
@@ -188,6 +186,14 @@ ircd::json::parser
 		| lit_null
 		,"value"
 	};
+
+	template<class gen,
+	         class... attr>
+	bool operator()(const char *&start, const char *const &stop, gen&&, attr&&...) const;
+
+	template<class gen,
+	         class... attr>
+	bool operator()(const char *const &start, const char *const &stop, gen&&, attr&&...) const;
 
 	parser()
 	:parser::base_type{rule<>{}} // required by spirit
@@ -460,8 +466,8 @@ noexcept
 
 template<class gen,
          class... attr>
-[[gnu::visibility("internal")]]
-void
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline void
 ircd::json::printer::operator()(mutable_buffer &out,
                                 gen&& g,
                                 attr&&... a)
@@ -475,8 +481,8 @@ const
 }
 
 template<class gen>
-[[gnu::visibility("internal")]]
-void
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline void
 ircd::json::printer::operator()(mutable_buffer &out,
                                 gen&& g)
 const
@@ -491,8 +497,8 @@ const
 template<class it_a,
          class it_b,
          class closure>
-[[gnu::visibility("internal")]]
-inline void
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline void
 ircd::json::printer::list_protocol(mutable_buffer &out,
                                    it_a it,
                                    const it_b &end,
@@ -503,14 +509,40 @@ ircd::json::printer::list_protocol(mutable_buffer &out,
 		lambda(out, *it);
 		for(++it; it != end; ++it)
 		{
-			static const auto &printer(json::printer);
+			const auto &printer(json::printer);
 			printer(out, printer.value_sep);
 			lambda(out, *it);
 		}
 	}
 }
 
-[[gnu::visibility("internal")]]
+template<class gen,
+         class... attr>
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline bool
+ircd::json::parser::operator()(const char *const &start_,
+                               const char *const &stop,
+                               gen&& g,
+                               attr&&...a)
+const
+{
+	const char *start(start_);
+	return operator()(start, stop, std::forward<gen>(g), std::forward<attr>(a)...);
+}
+
+template<class gen,
+         class... attr>
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline bool
+ircd::json::parser::operator()(const char *&start,
+                               const char *const &stop,
+                               gen&& g,
+                               attr&&...a)
+const
+{
+	return ircd::parse<parse_error>(start, stop, std::forward<gen>(g), std::forward<attr>(a)...);
+}
+
 void
 ircd::json::parser::throws_exceeded()
 {
@@ -2407,7 +2439,7 @@ const
 
 ircd::json::vector::const_iterator
 ircd::json::vector::begin()
-const try
+const
 {
 	const_iterator ret
 	{
@@ -2415,15 +2447,8 @@ const try
 	};
 
 	string_view &state(ret.state);
-	qi::parse(ret.start, ret.stop, vector_begin_parse, state);
+	parser(ret.start, ret.stop, vector_begin_parse, state);
 	return ret;
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	throw expectation_failure<parse_error>
-	{
-		e, string_view::data(), error_show_max
-	};
 }
 
 //
@@ -2432,19 +2457,11 @@ catch(const qi::expectation_failure<const char *> &e)
 
 ircd::json::vector::const_iterator &
 ircd::json::vector::const_iterator::operator++()
-try
 {
 	this->state = {};
 	string_view &state(this->state);
-	qi::parse(start, stop, vector_next_parse, state);
+	parser(start, stop, vector_next_parse, state);
 	return *this;
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	throw expectation_failure<parse_error>
-	{
-		e, start, error_show_max
-	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2689,10 +2706,10 @@ const try
 		string_view::begin(), string_view::end()
 	};
 
-	qi::parse(ret.start, ret.stop, object_begin_parse, ret.state);
+	parser(ret.start, ret.stop, object_begin_parse, ret.state);
 	return ret;
 }
-catch(const qi::expectation_failure<const char *> &e)
+catch(const expectation_failure<parse_error> &e)
 {
 	const auto type
 	{
@@ -2702,13 +2719,11 @@ catch(const qi::expectation_failure<const char *> &e)
 	if(type != type::OBJECT)
 		throw type_error
 		{
-			"Expected JSON type OBJECT, not %s.", reflect(type)
+			"Expected JSON type OBJECT, not %s.",
+			reflect(type)
 		};
 
-	throw expectation_failure<parse_error>
-	{
-		e, string_view::begin(), error_show_max
-	};
+	throw;
 }
 
 //
@@ -2717,20 +2732,12 @@ catch(const qi::expectation_failure<const char *> &e)
 
 ircd::json::object::const_iterator &
 ircd::json::object::const_iterator::operator++()
-try
 {
 	assert(start != stop);
 
 	state = {};
-	qi::parse(start, stop, object_next_parse, state);
+	parser(start, stop, object_next_parse, state);
 	return *this;
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	throw expectation_failure<parse_error>
-	{
-		e, start, error_show_max
-	};
 }
 
 //
@@ -3005,22 +3012,15 @@ const
 
 ircd::json::array::const_iterator
 ircd::json::array::begin()
-const try
+const
 {
 	const_iterator ret
 	{
 		string_view::begin(), string_view::end()
 	};
 
-	qi::parse(ret.start, ret.stop, array_begin_parse, ret.state);
+	parser(ret.start, ret.stop, array_begin_parse, ret.state);
 	return ret;
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	throw expectation_failure<parse_error>
-	{
-		e, string_view::data(), error_show_max
-	};
 }
 
 ircd::string_view
@@ -3087,20 +3087,12 @@ const
 
 ircd::json::array::const_iterator &
 ircd::json::array::const_iterator::operator++()
-try
 {
 	assert(start != stop);
 
 	state = string_view{};
-	qi::parse(start, stop, array_next_parse, state);
+	parser(start, stop, array_next_parse, state);
 	return *this;
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	throw expectation_failure<parse_error>
-	{
-		e, start, error_show_max
-	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -4064,7 +4056,7 @@ ircd::json::valid(const string_view &s,
 noexcept try
 {
 	const char *start(begin(s)), *const stop(end(s));
-	return qi::parse(start, stop, validation);
+	return parser(start, stop, validation);
 }
 catch(...)
 {
@@ -4074,22 +4066,14 @@ catch(...)
 
 void
 ircd::json::valid(const string_view &s)
-try
 {
 	const char *start(begin(s)), *const stop(end(s));
 	const bool ret
 	{
-		qi::parse(start, stop, validation_expect)
+		parser(start, stop, validation_expect)
 	};
 
 	assert(ret);
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	throw expectation_failure<parse_error>
-	{
-		e, begin(s), error_show_max
-	};
 }
 
 void
@@ -4210,7 +4194,7 @@ ircd::json::type(const string_view &buf,
 {
 	const bool ret
 	{
-		qi::parse(begin(buf), end(buf), type_parse_is[type])
+		parser(begin(buf), end(buf), type_parse_is[type])
 	};
 
 	return ret;
@@ -4223,7 +4207,7 @@ ircd::json::type(const string_view &buf,
 {
 	const bool ret
 	{
-		qi::parse(begin(buf), end(buf), type_parse_is_strict[type])
+		parser(begin(buf), end(buf), type_parse_is_strict[type])
 	};
 
 	return ret;
@@ -4233,7 +4217,7 @@ enum ircd::json::type
 ircd::json::type(const string_view &buf)
 {
 	enum type ret;
-	if(!qi::parse(begin(buf), end(buf), type_parse, ret))
+	if(!parser(begin(buf), end(buf), type_parse, ret))
 		throw type_error
 		{
 			"Failed to derive JSON value type from input buffer."
@@ -4247,7 +4231,7 @@ ircd::json::type(const string_view &buf,
                  std::nothrow_t)
 {
 	enum type ret;
-	if(!qi::parse(begin(buf), end(buf), type_parse, ret))
+	if(!parser(begin(buf), end(buf), type_parse, ret))
 		return STRING;
 
 	return ret;
@@ -4258,7 +4242,7 @@ ircd::json::type(const string_view &buf,
                  strict_t)
 {
 	enum type ret;
-	if(!qi::parse(begin(buf), end(buf), type_parse_strict, ret))
+	if(!parser(begin(buf), end(buf), type_parse_strict, ret))
 		throw type_error
 		{
 			"Failed to derive JSON value type from input buffer."
@@ -4273,7 +4257,7 @@ ircd::json::type(const string_view &buf,
                  std::nothrow_t)
 {
 	enum type ret;
-	if(!qi::parse(begin(buf), end(buf), type_parse_strict, ret))
+	if(!parser(begin(buf), end(buf), type_parse_strict, ret))
 		return STRING;
 
 	return ret;
