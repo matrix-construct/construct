@@ -77,13 +77,38 @@ ircd::json::parser
 	const rule<> boolean               { lit_true | lit_false                           ,"boolean" };
 	const rule<> literal               { lit_true | lit_false | lit_null                ,"literal" };
 
-	// numerical (TODO: exponent)
+	// numerical
+	const rule<> number_int
+	{
+		lit('0') | (char_("1-9") >> repeat(0, 18)[char_("0-9")])
+		,"integer"
+	};
+
+	const rule<> number_frac
+	{
+		lit('.') >> repeat(1, 16)[char_("0-9")] >> -char_("1-9")
+		,"fraction"
+	};
+
+	const rule<> number_exp
+	{
+		char_("eE") >> -char_("+-") >> repeat(1, 4)[char_("0-9")]
+		,"exponent"
+	};
+
+	const rule<> is_number
+	{
+		-lit('-') >> number_int >> -number_frac >> -number_exp
+		,"number"
+	};
+
 	const rule<> number
 	{
 		double_ | long_
 		,"number"
 	};
 
+	// string
 	const rule<> utf16_surrogate
 	{
 		qi::uint_parser
@@ -4160,11 +4185,11 @@ namespace ircd::json
 decltype(ircd::json::type_parse_is)
 ircd::json::type_parse_is
 {
-	{ -parser.ws >> parser.quote                         },
-	{ -parser.ws >> parser.object_begin                  },
-	{ -parser.ws >> parser.array_begin                   },
-	{ -parser.ws >> parser.number >> -parser.ws >> eoi   },
-	{ -parser.ws >> parser.literal >> -parser.ws >> eoi  },
+	{ -parser.ws >> parser.quote                           },
+	{ -parser.ws >> parser.object_begin                    },
+	{ -parser.ws >> parser.array_begin                     },
+	{ -parser.ws >> parser.is_number >> -parser.ws >> eoi  },
+	{ -parser.ws >> parser.literal >> -parser.ws >> eoi    },
 };
 
 //TODO: XXX array designated initializers
@@ -4174,7 +4199,7 @@ ircd::json::type_parse_is_strict
 	{ -parser.ws >> &parser.quote >> parser.string >> -parser.ws >> eoi            },
 	{ -parser.ws >> &parser.object_begin >> parser.object(0) >> -parser.ws >> eoi  },
 	{ -parser.ws >> &parser.array_begin >> parser.array(0) >> -parser.ws >> eoi    },
-	{ -parser.ws >> parser.number >> -parser.ws >> eoi                             },
+	{ -parser.ws >> parser.is_number >> -parser.ws >> eoi                          },
 	{ -parser.ws >> parser.literal >> -parser.ws >> eoi                            },
 };
 
