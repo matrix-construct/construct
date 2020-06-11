@@ -749,12 +749,12 @@ ircd::json::merge(stack::object &out,
 
 		void merge(const string_view &v)
 		{
-			if(type(v) == json::OBJECT)
-				_merge_object(v);
-			else if(type(v) == json::ARRAY)
-				_merge_array(v);
-			else
-				this->v = v;
+			switch(json::type(v))
+			{
+				case json::OBJECT:  _merge_object(v);  break;
+				case json::ARRAY:   _merge_array(v);   break;
+				default:            this->v = v;       break;
+			}
 		}
 
 		void _compose_object(json::stack &out, json::stack::object &object) const
