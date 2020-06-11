@@ -132,7 +132,7 @@ ircd::info::dump_cpu_info()
 	#if defined(__i386__) or defined(__x86_64__)
 	log::info
 	{
-		log::star, "%s mmx:%b sse:%b sse2:%b sse3:%b ssse3:%b sse4.1:%b sse4.2:%b avx:%b avx2:%b",
+		log::star, "%s mmx:%b sse:%b sse2:%b sse3:%b ssse3:%b sse4.1:%b sse4.2:%b avx:%b avx2:%b constant_tsc:%b",
 		hardware::x86::vendor,
 		hardware::x86::mmx,
 		hardware::x86::sse,
@@ -143,6 +143,7 @@ ircd::info::dump_cpu_info()
 		hardware::x86::sse4_2,
 		hardware::x86::avx,
 		hardware::x86::avx2,
+		hardware::x86::tsc_constant,
 	};
 	#endif
 
@@ -416,6 +417,18 @@ decltype(ircd::info::hardware::x86::avx2)
 ircd::info::hardware::x86::avx2
 {
 	bool(features & (uint128_t(1) << (32 + 5)))
+};
+
+decltype(ircd::info::hardware::x86::tsc)
+ircd::info::hardware::x86::tsc
+{
+	bool(features & (uint128_t(1) << 4))
+};
+
+decltype(ircd::info::hardware::x86::tsc_constant)
+ircd::info::hardware::x86::tsc_constant
+{
+	bool(_apmi & (uint128_t(1) << (8)))
 };
 
 #ifdef __x86_64__
@@ -803,19 +816,20 @@ ircd::info::dump_sys_info()
 	fs::support::dump_info();
 
 	// Additional detected system parameters
-	#ifdef RB_DEBUG
+	//#ifdef RB_DEBUG
 	char buf[2][48];
 	log::logf
 	{
 		log::star, log::DEBUG,
-		"page_size=%zu iov_max=%zu aio_max=%zu aio_reqprio_max=%zu memlock_limit=%s",
+		"page_size=%zu iov_max=%zd aio_max=%zd aio_reqprio_max=%zd memlock_limit=%s clock_source=%s",
 		page_size,
 		iov_max,
 		aio_max,
 		aio_reqprio_max,
 		pretty(buf[0], iec(allocator::rlimit_memlock())),
+		clock_source,
 	};
-	#endif
+	//#endif
 }
 
 #ifdef HAVE_SYS_UTSNAME_H
@@ -914,6 +928,13 @@ ircd::info::clk_tck
 	1 // prevent #DE
 };
 #endif
+
+static char ircd_info_clock_source[32];
+decltype(ircd::info::clock_source)
+ircd::info::clock_source
+{
+	sys::get(ircd_info_clock_source, "devices/system/clocksource/clocksource0/current_clocksource")
+};
 
 decltype(ircd::info::aio_reqprio_max)
 ircd::info::aio_reqprio_max

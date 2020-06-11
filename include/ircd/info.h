@@ -51,11 +51,12 @@ namespace ircd::info
 	extern const versions sd6_version;
 
 	// System configuration / information
-	extern const size_t page_size;
-	extern const size_t iov_max;
-	extern const size_t aio_max;
-	extern const size_t aio_reqprio_max;
 	extern const size_t clk_tck;
+	extern const string_view clock_source;
+	extern const size_t aio_reqprio_max;
+	extern const size_t aio_max;
+	extern const size_t iov_max;
+	extern const size_t page_size;
 	extern const size_t total_ram;
 	extern const size_t total_swap;
 
@@ -118,6 +119,7 @@ namespace ircd::info::hardware::x86
 	extern const bool mmx, sse, sse2;
 	extern const bool sse3, ssse3, sse4_1, sse4_2;
 	extern const bool avx, avx2;
+	extern const bool tsc, tsc_constant;
 };
 
 /// Instances of `versions` create a dynamic version registry identifying
