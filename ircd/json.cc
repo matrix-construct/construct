@@ -4122,7 +4122,19 @@ ircd::json::serialized(const string_view &v)
 	if(v.empty() && defined(v))
 		return size(empty_string);
 
-	const json::value value{v};
+	// Query the json::type of the input string here in relaxed mode. The
+	// json::value ctor uses strict_t by default which is a full validation;
+	// we don't care about that for the serialized() suite.
+	const auto type
+	{
+		json::type(v, std::nothrow)
+	};
+
+	const json::value value
+	{
+		v, type
+	};
+
 	return serialized(value);
 }
 
