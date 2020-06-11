@@ -8010,6 +8010,8 @@ ircd::db::_read(column &column,
 	if(likely(closure))
 		closure(value);
 
+	// triggered when the result was not zero-copy
+	//assert(buf.empty());
 	return size(value);
 }
 
@@ -8043,6 +8045,8 @@ ircd::db::_read(std::nothrow_t,
 	if(likely(closure))
 		closure(value);
 
+	// triggered when the result was not zero-copy
+	//assert(buf.empty());
 	return size(value);
 }
 
@@ -8104,9 +8108,17 @@ ircd::db::_read(const vector_view<_read_op> &op,
 		op.size()
 	};
 
-	rocksdb::Status status[num];
+	std::string buf[num];
 	rocksdb::PinnableSlice val[num];
+	for(size_t i(0); i < num; ++i)
+		new (val + i) rocksdb::PinnableSlice
+		{
+			buf + i
+		};
+
+	rocksdb::Status status[num];
 	_seek(op, {status, num}, {val, num}, ropts);
+
 	if(closure) for(size_t i(0); i < op.size(); ++i)
 	{
 		const column::delta &delta
@@ -8117,6 +8129,9 @@ ircd::db::_read(const vector_view<_read_op> &op,
 		if(!closure(std::get<0>(op[i]), delta, status[i]))
 			return false;
 	}
+
+	// triggered when the result was not zero-copy
+	//assert(!std::count_if(buf, buf + num, [](auto &&s) { return !s.empty(); }));
 
 	return true;
 }
@@ -8165,11 +8180,14 @@ ircd::db::_seek(const vector_view<_read_op> &op,
 	#ifdef RB_DEBUG_DB_SEEK
 	log::debug
 	{
-		log, "[%s] %lu:%lu SEEK parallel:%zu in %ld$us",
+		log, "[%s] %lu:%lu SEEK parallel:%zu ok:%zu nf:%zu inc:%zu in %ld$us",
 		name(d),
 		sequence(d),
 		sequence(ropts.snapshot),
 		ret.size(),
+		std::count_if(begin(ret), end(ret), [](auto&& s) { return s.ok(); }),
+		std::count_if(begin(ret), end(ret), [](auto&& s) { return s.IsNotFound(); }),
+		std::count_if(begin(ret), end(ret), [](auto&& s) { return s.IsIncomplete(); }),
 		timer.at<microseconds>().count(),
 	};
 	#endif
