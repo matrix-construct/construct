@@ -2159,9 +2159,13 @@ ircd::db::database::column::column(database &d,
 	table_opts.cache_index_and_filter_blocks_with_high_priority = true;
 	table_opts.pin_top_level_index_and_filter = false;
 	table_opts.pin_l0_filter_and_index_blocks_in_cache = false;
-	table_opts.enable_index_compression = false;
 	table_opts.partition_filters = true;
 	table_opts.use_delta_encoding = false;
+
+	// Determine whether the index for this column should be compressed.
+	const bool is_string_index(this->descriptor->type.first == typeid(string_view));
+	const bool is_compression(this->options.compression != rocksdb::kNoCompression);
+	table_opts.enable_index_compression = is_compression; //&& is_string_index;
 
 	// Setup the block size
 	table_opts.block_size = this->descriptor->block_size;
