@@ -60,51 +60,16 @@ ircd::string_view
 ircd::fs::dev::sysfs(const mutable_buffer &out,
                      const ulong &id,
                      const string_view &relpath)
-try
 {
+	thread_local char path_buf[1024];
 	const string_view path{fmt::sprintf
 	{
-		path_scratch, "%s/%s/%s",
-		blk::BASE_PATH,
+		path_buf, "dev/block/%s/%s",
 		sysfs_id(name_scratch, id),
 		relpath
 	}};
 
-	fs::fd::opts fdopts;
-	fdopts.errlog = false;
-	const fs::fd fd
-	{
-		path, fdopts
-	};
-
-	fs::read_opts ropts;
-	ropts.aio = false;
-	string_view ret
-	{
-		fs::read(fd, out, ropts)
-	};
-
-	ret = rstrip(ret, '\n');
-	ret = rstrip(ret, ' ');
-	return ret;
-}
-catch(const ctx::interrupted &)
-{
-	throw;
-}
-catch(const std::exception &e)
-{
-	#if 0
-	log::derror
-	{
-		log, "sysfs query dev_id:%lu `%s' :%s",
-		id,
-		relpath,
-		e.what(),
-	};
-	#endif
-
-	return {};
+	return sys::get(out, path);
 }
 
 ircd::string_view
