@@ -8117,9 +8117,17 @@ ircd::db::_read(const vector_view<_read_op> &op,
 		};
 
 	rocksdb::Status status[num];
+	#ifdef IRCD_DB_HAS_MULTIGET_BATCHED
 	_seek(op, {status, num}, {val, num}, ropts);
+	#else
+	for(size_t i(0); i < num; ++i)
+	{
+		database::column &column(std::get<0>(op[i]));
+		status[i] = _seek(column, val[i], std::get<1>(op[i]), ropts);
+	}
+	#endif
 
-	if(closure) for(size_t i(0); i < op.size(); ++i)
+	if(closure) for(size_t i(0); i < num; ++i)
 	{
 		const column::delta &delta
 		{
@@ -8136,6 +8144,7 @@ ircd::db::_read(const vector_view<_read_op> &op,
 	return true;
 }
 
+#ifdef IRCD_DB_HAS_MULTIGET_BATCHED
 void
 ircd::db::_seek(const vector_view<_read_op> &op,
                 const vector_view<rocksdb::Status> &ret,
@@ -8192,6 +8201,9 @@ ircd::db::_seek(const vector_view<_read_op> &op,
 	};
 	#endif
 }
+#else
+#warning "RocksDB version does not support batched MultiGet; some queries will be linearized"
+#endif IRCD_DB_HAS_MULTIGET_BATCHED
 
 //
 // iterator seek suite
