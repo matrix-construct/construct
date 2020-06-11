@@ -410,6 +410,7 @@ ircd::m::room_id(const mutable_buffer &out,
 ircd::m::id::room
 ircd::m::room_id(const mutable_buffer &out,
                  const event::idx &event_idx)
+try
 {
 	room::id ret;
 	m::get(event_idx, "room_id", [&out, &ret]
@@ -420,10 +421,19 @@ ircd::m::room_id(const mutable_buffer &out,
 
 	return ret;
 }
+catch(const m::NOT_FOUND &e)
+{
+	throw m::NOT_FOUND
+	{
+		"resolving room_id from event_idx :%s",
+		e.what(),
+	};
+}
 
 ircd::m::id::room
 ircd::m::room_id(const mutable_buffer &out,
                  const id::event &event_id)
+try
 {
 	room::id ret;
 	m::get(event_id, "room_id", [&out, &ret]
@@ -434,10 +444,19 @@ ircd::m::room_id(const mutable_buffer &out,
 
 	return ret;
 }
+catch(const m::NOT_FOUND &e)
+{
+	throw m::NOT_FOUND
+	{
+		"resolving room_id from event_id :%s",
+		e.what(),
+	};
+}
 
 ircd::m::id::room
 ircd::m::room_id(const mutable_buffer &out,
                  const id::room_alias &room_alias)
+try
 {
 	room::id ret;
 	room::aliases::cache::get(room_alias, [&out, &ret]
@@ -447,6 +466,14 @@ ircd::m::room_id(const mutable_buffer &out,
 	});
 
 	return ret;
+}
+catch(const m::NOT_FOUND &e)
+{
+	throw m::NOT_FOUND
+	{
+		"resolving room_id from alias :%s",
+		e.what(),
+	};
 }
 
 bool
