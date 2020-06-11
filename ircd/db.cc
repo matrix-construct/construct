@@ -453,6 +453,17 @@ ircd::db::auto_compact
 	{ "persist",  false                  },
 };
 
+/// Conf item dictates whether databases will be opened in slave mode; this
+/// is a recent feature of RocksDB which may not be available. It allows two
+/// instances of a database, so long as only one is not opened as a slave.
+decltype(ircd::db::open_slave)
+ircd::db::open_slave
+{
+	{ "name",     "ircd.db.open.slave" },
+	{ "default",  false                },
+	{ "persist",  false                },
+};
+
 void
 ircd::db::sync(database &d)
 {
@@ -644,6 +655,27 @@ ircd::db::resume(database &d)
 		name(d),
 		sequence(d),
 		errors.size()
+	};
+}
+
+void
+ircd::db::refresh(database &d)
+{
+	assert(d.d);
+
+	throw_on_error
+	{
+		#ifdef IRCD_DB_HAS_SECONDARY
+		d.d->TryCatchUpWithPrimary()
+		#else
+		rocksdb::Status::NotSupported(slice("Slave mode not supported by this RocksDB"_sv))
+		#endif
+	};
+
+	log::debug
+	{
+		log, "[%s] Caught up with primary database.",
+		name(d)
 	};
 }
 
@@ -1170,6 +1202,10 @@ try
 {
 	db::open_repair
 }
+,slave
+{
+	db::open_slave
+}
 ,read_only
 {
 	ircd::read_only
@@ -1480,7 +1516,16 @@ try
 
 	// Open DB into ptr
 	rocksdb::DB *ptr;
-	if(read_only)
+	if(slave)
+		throw_on_error
+		{
+			#ifdef IRCD_DB_HAS_SECONDARY
+			rocksdb::DB::OpenAsSecondary(*opts, path, "/tmp/slave", columns, &handles, &ptr)
+			#else
+			rocksdb::Status::NotSupported(slice("Slave mode not supported by this RocksDB"_sv))
+			#endif
+		};
+	else if(read_only)
 		throw_on_error
 		{
 			rocksdb::DB::OpenForReadOnly(*opts, path, columns, &handles, &ptr)

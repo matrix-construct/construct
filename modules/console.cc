@@ -2835,6 +2835,35 @@ catch(const std::out_of_range &e)
 }
 
 bool
+console_cmd__db__refresh(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname",
+	}};
+
+	const auto dbname
+	{
+		param.at(0)
+	};
+
+	auto &database
+	{
+		db::database::get(dbname)
+	};
+
+	refresh(database);
+	out << "done" << std::endl;
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__loglevel(opt &out, const string_view &line)
 try
 {

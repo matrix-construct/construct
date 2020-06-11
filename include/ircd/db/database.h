@@ -19,6 +19,7 @@ namespace ircd::db
 	extern conf::item<bool> open_check;
 	extern conf::item<std::string> open_recover;
 	extern conf::item<bool> open_repair;
+	extern conf::item<bool> open_slave;
 	extern conf::item<bool> auto_compact;
 
 	// General information
@@ -53,6 +54,7 @@ namespace ircd::db
 	void bgcancel(database &, const bool &blocking = true);
 	void bgcontinue(database &);
 	void bgpause(database &);
+	void refresh(database &);
 	void resume(database &);
 	void check(database &, const string_view &file);
 	void check(database &);
@@ -105,7 +107,7 @@ struct ircd::db::database
 	uint64_t checkpoint;
 	std::string path;
 	std::string optstr;
-	bool fsck, read_only;
+	bool fsck, slave, read_only;
 	std::shared_ptr<struct env> env;
 	std::shared_ptr<struct stats> stats;
 	std::shared_ptr<struct logger> logger;

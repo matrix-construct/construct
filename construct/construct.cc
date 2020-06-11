@@ -38,6 +38,7 @@ bool yes6;
 bool norun;
 bool read_only;
 bool write_avoid;
+bool slave;
 std::array<bool, 7> smoketest;
 bool soft_assert;
 bool nomatrix;
@@ -70,6 +71,7 @@ lgetopt opts[]
 	{ "norun",      &norun,         lgetopt::BOOL,    "[debug & testing only] Initialize but never run the event loop" },
 	{ "ro",         &read_only,     lgetopt::BOOL,    "Read-only mode. No writes to database allowed" },
 	{ "wa",         &write_avoid,   lgetopt::BOOL,    "Like read-only mode, but writes permitted if triggered" },
+	{ "slave",      &slave,         lgetopt::BOOL,    "Like read-only mode; allows multiple instances of server" },
 	{ "smoketest",  &smoketest[0],  lgetopt::BOOL,    "Starts and stops the daemon to return success" },
 	{ "sassert",    &soft_assert,   lgetopt::BOOL,    "Softens assertion effects in debug mode" },
 	{ "nomatrix",   &nomatrix,      lgetopt::BOOL,    "Prevent loading the matrix application module" },
@@ -482,6 +484,9 @@ applyargs()
 
 	if(read_only)
 		ircd::read_only.set("true");
+
+	if(slave)
+		ircd::db::open_slave.set("true");
 
 	// read_only implies write_avoid.
 	if(write_avoid || read_only)
