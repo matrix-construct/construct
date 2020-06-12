@@ -5673,7 +5673,7 @@ try
 			out << std::setw(4) << "    " << "  ";
 
 		if(request.tag && request.tag->abandoned())
-			out << std::setw(4) << "LEFT" << "  ";
+			out << std::setw(4) << "GONE" << "  ";
 		else if(!request.tag)
 			out << std::setw(4) << "----" << "  ";
 		else
