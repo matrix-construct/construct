@@ -117,7 +117,10 @@ struct ircd::http::grammar
 :qi::grammar<const char *, unused_type>
 {
 	using it = const char *;
-	template<class R = unused_type, class... S> using rule = qi::rule<it, R, S...>;
+
+	template<class R = unused_type,
+	         class... S>
+	using rule = qi::rule<it, R, S...>;
 
 	rule<> NUL                         { lit('\0')                                          ,"nul" };
 
@@ -143,7 +146,6 @@ struct ircd::http::grammar
 	rule<string_view> line             { *ws >> -string >> CRLF                            ,"line" };
 
 	rule<string_view> status           { raw[repeat(3)[char_("0-9")]]                    ,"status" };
-	rule<short> status_code            { short_                                     ,"status code" };
 	rule<string_view> reason           { string                                          ,"status" };
 
 	rule<string_view> head_key         { raw[+(char_ - (illegal | ws | colon))]        ,"head key" };
@@ -1241,33 +1243,58 @@ noexcept
 // status
 //
 
-ircd::http::code
+#pragma GCC visibility push(internal)
+namespace ircd::http
+{
+	extern const parser::rule<uint8_t> status_codepoint;
+	extern const parser::rule<enum category> status_category;
+	extern const parser::rule<enum code> status_code;
+}
+#pragma GCC visibility pop
+
+decltype(ircd::http::status_codepoint)
+ircd::http::status_codepoint
+{
+	qi::uint_parser<uint8_t, 10, 1, 1>{}
+	,"status codepoint"
+};
+
+decltype(ircd::http::status_category)
+ircd::http::status_category
+{
+	&char_("1-9") >> status_codepoint >> omit[repeat(2)[char_("0-9")] >> (eoi | parser.ws)]
+};
+
+decltype(ircd::http::status_code)
+ircd::http::status_code
+{
+	qi::uint_parser<uint16_t, 10, 3, 3>{} >> omit[eoi | parser.ws]
+	,"status code"
+};
+
+enum ircd::http::code
 ircd::http::status(const string_view &str)
 {
-	static const auto grammar
-	{
-		parser.status_code
-	};
-
 	short ret;
-	const char *start(str.data());
+	const char *start(begin(str)), *const stop(end(str));
 	const bool parsed
 	{
-		parser(start, start + str.size(), grammar, ret)
+		parser(start, stop, status_code, ret)
 	};
 
-	if(!parsed || ret < 0 || ret >= 1000)
+	if(!parsed)
 		throw ircd::error
 		{
 			"Invalid HTTP status code"
 		};
 
+	assert(ret >= 0 && ret < 1000);
 	return http::code(ret);
 }
 
 ircd::string_view
-ircd::http::status(const http::code &code)
-try
+ircd::http::status(const enum code &code)
+noexcept try
 {
 	return reason.at(code);
 }
@@ -1279,4 +1306,64 @@ catch(const std::out_of_range &e)
 	};
 
 	return ""_sv;
+}
+
+enum ircd::http::category
+ircd::http::category(const string_view &str)
+noexcept
+{
+	enum category ret;
+	const char *start(begin(str)), *const stop(end(str));
+	const bool parsed
+	{
+		parser(start, stop, status_category, ret)
+	};
+
+	if(!parsed || ret > category::UNKNOWN)
+		ret = category::UNKNOWN;
+
+	assert(uint8_t(ret) <= uint8_t(category::UNKNOWN));
+	return ret;
+}
+
+enum ircd::http::category
+ircd::http::category(const enum code &code)
+noexcept
+{
+	if(ushort(code) == 0)
+		return category::NONE;
+
+	if(ushort(code) < 200)
+		return category::INFO;
+
+	if(ushort(code) < 300)
+		return category::SUCCESS;
+
+	if(ushort(code) < 400)
+		return category::REDIRECT;
+
+	if(ushort(code) < 500)
+		return category::ERROR;
+
+	if(ushort(code) < 600)
+		return category::SERVER;
+
+	return category::UNKNOWN;
+}
+
+ircd::string_view
+ircd::http::category(const enum category &category)
+noexcept
+{
+	switch(category)
+	{
+		case category::NONE:      return "NONE";
+		case category::INFO:      return "INFO";
+		case category::SUCCESS:   return "SUCCESS";
+		case category::REDIRECT:  return "REDIRECT";
+		case category::ERROR:     return "ERROR";
+		case category::SERVER:    return "SERVER";
+		default:
+		case category::UNKNOWN:   return "UNKNOWN";
+	}
 }

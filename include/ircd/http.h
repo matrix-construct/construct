@@ -14,7 +14,6 @@
 /// HyperText TransPort: formal grammars & tools
 namespace ircd::http
 {
-	enum code :ushort;
 	struct error;
 	struct line;
 	struct query;
@@ -23,8 +22,14 @@ namespace ircd::http
 	struct request;
 	struct response;
 
-	string_view status(const code &);
-	code status(const string_view &);
+	enum code :ushort;
+	string_view status(const enum code &) noexcept;
+	enum code status(const string_view &);
+
+	enum class category :uint8_t;
+	string_view category(const enum category &) noexcept;
+	enum category category(const enum code &) noexcept;
+	enum category category(const string_view &) noexcept;
 
 	void writeline(window_buffer &);
 	void writeline(window_buffer &, const window_buffer::closure &);
@@ -38,21 +43,95 @@ namespace ircd::http
 	bool has(const vector_view<const header> &, const string_view &key);
 }
 
+/// HTTP Status classifications.
+enum class ircd::http::category
+:uint8_t
+{
+	NONE          = 0,   ///< Sentinel
+	INFO          = 1,   ///< Informational
+	SUCCESS       = 2,   ///< Successful
+	REDIRECT      = 3,   ///< Redirectional
+	ERROR         = 4,   ///< Erroneous
+	SERVER        = 6,   ///< Server Error
+	UNKNOWN       = 7,   /// Pair with default case in switch/tables
+};
+
+/// HTTP Status codes.
+enum ircd::http::code
+:ushort
+{
+	CONTINUE                                = 100,
+	SWITCHING_PROTOCOLS                     = 101,
+	PROCESSING                              = 102,
+	EARLY_HINTS                             = 103,
+
+	OK                                      = 200,
+	CREATED                                 = 201,
+	ACCEPTED                                = 202,
+	NON_AUTHORITATIVE_INFORMATION           = 203,
+	NO_CONTENT                              = 204,
+	PARTIAL_CONTENT                         = 206,
+
+	MULTIPLE_CHOICES                        = 300,
+	MOVED_PERMANENTLY                       = 301,
+	FOUND                                   = 302,
+	SEE_OTHER                               = 303,
+	NOT_MODIFIED                            = 304,
+	USE_PROXY                               = 305,
+	SWITCH_PROXY                            = 306,
+	TEMPORARY_REDIRECT                      = 307,
+	PERMANENT_REDIRECT                      = 308,
+
+	BAD_REQUEST                             = 400,
+	UNAUTHORIZED                            = 401,
+	FORBIDDEN                               = 403,
+	NOT_FOUND                               = 404,
+	METHOD_NOT_ALLOWED                      = 405,
+	NOT_ACCEPTABLE                          = 406,
+	REQUEST_TIMEOUT                         = 408,
+	CONFLICT                                = 409,
+	GONE                                    = 410,
+	LENGTH_REQUIRED                         = 411,
+	PAYLOAD_TOO_LARGE                       = 413,
+	REQUEST_URI_TOO_LONG                    = 414,
+	UNSUPPORTED_MEDIA_TYPE                  = 415,
+	RANGE_NOT_SATISFIABLE                   = 416,
+	EXPECTATION_FAILED                      = 417,
+	IM_A_TEAPOT                             = 418,
+	UNPROCESSABLE_ENTITY                    = 422,
+	PRECONDITION_REQUIRED                   = 428,
+	TOO_MANY_REQUESTS                       = 429,
+	REQUEST_HEADER_FIELDS_TOO_LARGE         = 431,
+
+	INTERNAL_SERVER_ERROR                   = 500,
+	NOT_IMPLEMENTED                         = 501,
+	BAD_GATEWAY                             = 502,
+	SERVICE_UNAVAILABLE                     = 503,
+	GATEWAY_TIMEOUT                         = 504,
+	HTTP_VERSION_NOT_SUPPORTED              = 505,
+	INSUFFICIENT_STORAGE                    = 507,
+
+	CLOUDFLARE_REFUSED                      = 521,
+	CLOUDFLARE_TIMEDOUT                     = 522,
+	CLOUDFLARE_UNREACHABLE                  = 523,
+	CLOUDFLARE_REQUEST_TIMEOUT              = 524,
+};
+
 /// Root exception for HTTP.
 struct ircd::http::error
 :ircd::error
 {
 	std::string content;
 	std::string headers;
-	http::code code {http::code(0)};
+	enum code code {http::code(0)};
 
 	explicit operator bool() const     { return code != http::code(0);         }
 	bool operator!() const             { return !bool(*this);                  }
 
 	error() = default;
-	error(const http::code &, std::string content = {}, std::string headers = {});
-	error(const http::code &, std::string content, const vector_view<const header> &);
-	template<class... args> error(const string_view &fmt, const http::code &, args&&...);
+	error(const enum code &, std::string content = {}, std::string headers = {});
+	error(const enum code &, std::string content, const vector_view<const header> &);
+	template<class... args> error(const string_view &fmt, const enum code &, args&&...);
 	~error() noexcept;
 };
 
@@ -263,7 +342,7 @@ struct ircd::http::response
 
 	// compose a response into buffer
 	response(window_buffer &,
-	         const code &,
+	         const enum code &,
 	         const size_t &content_length       = 0,
 	         const string_view &content_type    = {},
 	         const http::headers &headers       = {},
@@ -300,69 +379,6 @@ struct ircd::http::response::chunk
 
 	chunk(parse::capstan &pc);
 	chunk() = default;
-};
-
-//
-// Add more as you go...
-//
-enum ircd::http::code
-:ushort
-{
-	CONTINUE                                = 100,
-	SWITCHING_PROTOCOLS                     = 101,
-	PROCESSING                              = 102,
-	EARLY_HINTS                             = 103,
-
-	OK                                      = 200,
-	CREATED                                 = 201,
-	ACCEPTED                                = 202,
-	NON_AUTHORITATIVE_INFORMATION           = 203,
-	NO_CONTENT                              = 204,
-	PARTIAL_CONTENT                         = 206,
-
-	MULTIPLE_CHOICES                        = 300,
-	MOVED_PERMANENTLY                       = 301,
-	FOUND                                   = 302,
-	SEE_OTHER                               = 303,
-	NOT_MODIFIED                            = 304,
-	USE_PROXY                               = 305,
-	SWITCH_PROXY                            = 306,
-	TEMPORARY_REDIRECT                      = 307,
-	PERMANENT_REDIRECT                      = 308,
-
-	BAD_REQUEST                             = 400,
-	UNAUTHORIZED                            = 401,
-	FORBIDDEN                               = 403,
-	NOT_FOUND                               = 404,
-	METHOD_NOT_ALLOWED                      = 405,
-	NOT_ACCEPTABLE                          = 406,
-	REQUEST_TIMEOUT                         = 408,
-	CONFLICT                                = 409,
-	GONE                                    = 410,
-	LENGTH_REQUIRED                         = 411,
-	PAYLOAD_TOO_LARGE                       = 413,
-	REQUEST_URI_TOO_LONG                    = 414,
-	UNSUPPORTED_MEDIA_TYPE                  = 415,
-	RANGE_NOT_SATISFIABLE                   = 416,
-	EXPECTATION_FAILED                      = 417,
-	IM_A_TEAPOT                             = 418,
-	UNPROCESSABLE_ENTITY                    = 422,
-	PRECONDITION_REQUIRED                   = 428,
-	TOO_MANY_REQUESTS                       = 429,
-	REQUEST_HEADER_FIELDS_TOO_LARGE         = 431,
-
-	INTERNAL_SERVER_ERROR                   = 500,
-	NOT_IMPLEMENTED                         = 501,
-	BAD_GATEWAY                             = 502,
-	SERVICE_UNAVAILABLE                     = 503,
-	GATEWAY_TIMEOUT                         = 504,
-	HTTP_VERSION_NOT_SUPPORTED              = 505,
-	INSUFFICIENT_STORAGE                    = 507,
-
-	CLOUDFLARE_REFUSED                      = 521,
-	CLOUDFLARE_TIMEDOUT                     = 522,
-	CLOUDFLARE_UNREACHABLE                  = 523,
-	CLOUDFLARE_REQUEST_TIMEOUT              = 524,
 };
 
 template<size_t MAX>
