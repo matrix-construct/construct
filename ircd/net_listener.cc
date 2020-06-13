@@ -449,6 +449,9 @@ noexcept try
 	if(interrupting)
 		return false;
 
+	if(!a.is_open())
+		return false;
+
 	interrupting = true;
 	a.cancel();
 	return true;
