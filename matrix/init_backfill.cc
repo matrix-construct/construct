@@ -14,7 +14,9 @@ namespace ircd::m::init::backfill
 	void handle_room(const room::id &);
 	void worker();
 
+	extern ircd::run::changed handle_quit;
 	extern std::unique_ptr<context> worker_context;
+	extern ctx::pool *worker_pool;
 	extern conf::item<seconds> delay;
 	extern conf::item<seconds> gossip_timeout;
 	extern conf::item<bool> gossip_enable;
@@ -72,8 +74,24 @@ ircd::m::init::backfill::delay
 	{ "default",  15L                           },
 };
 
+decltype(ircd::m::init::backfill::worker_pool)
+ircd::m::init::backfill::worker_pool;
+
 decltype(ircd::m::init::backfill::worker_context)
 ircd::m::init::backfill::worker_context;
+
+decltype(ircd::m::init::backfill::handle_quit)
+ircd::m::init::backfill::handle_quit
+{
+	run::level::QUIT, []
+	{
+		if(worker_context)
+			worker_context->terminate();
+
+		if(worker_pool)
+			worker_pool->terminate();
+	}
+};
 
 void
 ircd::m::init::backfill::init()
@@ -120,6 +138,9 @@ noexcept
 	{
 		log, "Terminating worker context..."
 	};
+
+	if(worker_pool)
+		worker_pool->terminate();
 
 	worker_context.reset(nullptr);
 }
@@ -177,8 +198,12 @@ try
 
 	ctx::pool pool
 	{
-		"m.init.backfill",
-		pool_opts
+		"m.init.backfill", pool_opts
+	};
+
+	const scope_restore backfill_worker_pool
+	{
+		backfill::worker_pool, std::addressof(pool)
 	};
 
 	// Iterate the room_id's, submitting a copy of each to the next pool
@@ -225,9 +250,6 @@ try
 			complete,
 		};
 
-	if(unlikely(ctx::interruption_requested()))
-		pool.terminate();
-
 	// All rooms have been submitted to the pool but the pool workers might
 	// still be busy. If we unwind now the pool's dtor will kill the workers
 	// so we synchronize their completion here.
@@ -235,9 +257,6 @@ try
 	{
 		return complete >= count;
 	});
-
-	if(unlikely(ctx::interruption_requested()))
-		return;
 
 	log::notice
 	{
