@@ -40,6 +40,14 @@ ircd::m::acquire::acquire::acquire(const room &room,
 		handle_missing(room, opts);
 		ctx::interruption_point();
 	}
+
+	if(opts.head_reset)
+	{
+		const size_t num_reset
+		{
+			m::room::head::reset(room)
+		};
+	}
 }
 
 //

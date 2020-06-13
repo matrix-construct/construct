@@ -32,5 +32,7 @@ struct ircd::m::acquire::opts
 
 	bool head {false};
 
+	bool head_reset {false};
+
 	bool missing {false};
 };

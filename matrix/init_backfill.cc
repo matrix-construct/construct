@@ -306,6 +306,7 @@ ircd::m::init::backfill::handle_room(const room::id &room_id)
 	m::acquire::opts opts;
 	opts.head = true;
 	opts.missing = true;
+	opts.head_reset = true;
 	m::acquire::acquire
 	{
 		room_id, opts
