@@ -524,6 +524,7 @@ ircd::http::response::response(window_buffer &out,
 	if(!headers_s.empty())
 		out([&headers_s](const mutable_buffer &out)
 		{
+			assert(endswith(headers_s, "\r\n"));
 			return copy(out, headers_s);
 		});
 
