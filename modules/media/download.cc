@@ -127,10 +127,19 @@ get__download_local(client &client,
 		};
 	});
 
+	static const auto &addl_headers
+	{
+		"Cache-Control: public, max-age=31536000, immutable\r\n"_sv
+	};
+
 	// Send HTTP head to client
 	m::resource::response
 	{
-		client, http::OK, content_type, file_size
+		client,
+		http::OK,
+		content_type,
+		file_size,
+		addl_headers,
 	};
 
 	size_t sent{0}, read

@@ -327,10 +327,15 @@ get__thumbnail_local(client &client,
 				"Unknown reason",
 		};
 
+	static const auto &addl_headers
+	{
+		"Cache-Control: public, max-age=31536000, immutable\r\n"_sv
+	};
+
 	if(fallback)
 		return m::resource::response
 		{
-			client, buf, content_type
+			client, buf, content_type, http::OK, addl_headers
 		};
 
 	const auto closure{[&client, &content_type]
@@ -338,7 +343,7 @@ get__thumbnail_local(client &client,
 	{
 		m::resource::response
 		{
-			client, buf, content_type
+			client, buf, content_type, http::OK, addl_headers
 		};
 	}};
 
