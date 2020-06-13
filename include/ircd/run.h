@@ -71,7 +71,8 @@ enum class ircd::run::level
 	START    = 2,    ///<   |   |   Starting internal subsystems.
 	LOAD     = 3,    ///<   |   |   Load user application.
 	RUN      = 4,    ///<   O   |   IRCd in service.
-	QUIT     = 5,    ///<   --> ^   Clean shutdown in progress.
+	QUIT     = 5,    ///<   |   |   Clean shutdown starting.
+	UNLOAD   = 6,    ///<   --> ^   Unload user application.
 };
 
 /// An instance of this class registers itself to be called back when

@@ -139,10 +139,11 @@ try
 	{
 		switch(level)
 		{
-			case level::HALT:  break;
-			case level::QUIT:  break;
-			case level::LOAD:  throw;
-			default:           throw;
+			case level::HALT:   break;
+			case level::QUIT:   break;
+			case level::UNLOAD: break;
+			case level::LOAD:   throw;
+			default:            throw;
 		}
 
 		log::error
@@ -199,6 +200,7 @@ ircd::run::reflect(const enum run::level &level)
 		case level::LOAD:      return "LOAD";
 		case level::RUN:       return "RUN";
 		case level::QUIT:      return "QUIT";
+		case level::UNLOAD:    return "UNLOAD";
 		case level::FAULT:     return "FAULT";
 	}
 

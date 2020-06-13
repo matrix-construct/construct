@@ -215,8 +215,9 @@ noexcept
 			return true;
 		}
 
-		case run::level::HALT:
+		case run::level::UNLOAD:
 		case run::level::QUIT:
+		case run::level::HALT:
 		case run::level::FAULT:
 			return false;
 	}
@@ -308,10 +309,11 @@ noexcept try
 	server::init _server_;   // Server related
 	js::init _js_;           // SpiderMonkey
 
-	// Transition to the QUIT state on unwind.
+	// Transition to the QUIT and UNLOAD states on unwind.
 	const unwind quit{[]
 	{
 		ircd::run::set(run::level::QUIT);
+		ircd::run::set(run::level::UNLOAD);
 	}};
 	ctx::interruption_point();
 

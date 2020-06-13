@@ -39,7 +39,7 @@ bool norun;
 bool read_only;
 bool write_avoid;
 bool slave;
-std::array<bool, 7> smoketest;
+std::array<bool, 8> smoketest;
 bool soft_assert;
 bool nomatrix;
 bool matrix {true}; // matrix server by default.
@@ -285,7 +285,7 @@ noexcept try
 				return;
 			}
 
-			if(level != ircd::run::level::QUIT || !context)
+			if(level != ircd::run::level::UNLOAD || !context)
 				return;
 
 			// 10 Notify the waiting homeserver context to quit; this will
