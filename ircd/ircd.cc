@@ -243,18 +243,12 @@ noexcept
 
 	switch(run::level)
 	{
-		case run::level::HALT:
-		case run::level::READY:
-		case run::level::FAULT:
-			return;
-
-		case run::level::START:
-		case run::level::QUIT:
-			return;
-
 		case run::level::LOAD:
 		case run::level::RUN:
 			break;
+
+		default:
+			return;
 	}
 
 	log::notice
