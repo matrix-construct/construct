@@ -18,7 +18,7 @@ static bool load_listener(const m::event &);
 extern "C" bool unload_listener(const string_view &name);
 extern "C" bool load_listener(const string_view &name);
 static void init_listeners();
-static void on_quit();
+static void on_quit() noexcept;
 static void on_run();
 static void on_unload();
 static void on_load();
@@ -78,27 +78,30 @@ on_unload()
 void
 on_run()
 {
-	log::debug
-	{
-		"Allowing %zu listeners to accept connections...",
-		listeners.size()
-	};
-
 	for(auto &listener : listeners)
 		start(listener);
+
+	if(!listeners.empty())
+		log::notice
+		{
+			"Accepting connections on %zu listeners...",
+			listeners.size()
+		};
 }
 
 void
 on_quit()
+noexcept
 {
-	log::debug
-	{
-		"Disallowing %zu listeners from accepting connections...",
-		listeners.size()
-	};
-
 	for(auto &listener : listeners)
 		stop(listener);
+
+	if(!listeners.empty())
+		log::notice
+		{
+			"Stopped accepting new connections on %zu listeners",
+			listeners.size()
+		};
 }
 
 void
