@@ -14,6 +14,7 @@ namespace ircd::m::init::backfill
 	void handle_room(const room::id &);
 	void worker();
 
+	extern size_t count, complete;
 	extern ircd::run::changed handle_quit;
 	extern std::unique_ptr<context> worker_context;
 	extern ctx::pool *worker_pool;
@@ -73,6 +74,12 @@ ircd::m::init::backfill::delay
 	{ "name",     "ircd.m.init.backfill.delay"  },
 	{ "default",  15L                           },
 };
+
+decltype(ircd::m::init::backfill::count)
+ircd::m::init::backfill::count;
+
+decltype(ircd::m::init::backfill::complete)
+ircd::m::init::backfill::complete;
 
 decltype(ircd::m::init::backfill::worker_pool)
 ircd::m::init::backfill::worker_pool;
@@ -210,9 +217,8 @@ try
 	// worker; the submission blocks when all pool workers are busy, as per
 	// the pool::opts.
 	ctx::dock dock;
-	size_t count(0), complete(0);
 	const ctx::uninterruptible ui;
-	rooms::for_each(opts, [&pool, &count, &complete, &estimate, &dock]
+	rooms::for_each(opts, [&pool, &estimate, &dock]
 	(const room::id &room_id)
 	{
 		if(unlikely(ctx::interruption_requested()))
@@ -221,7 +227,7 @@ try
 		++count;
 		pool([&, room_id(std::string(room_id))] // asynchronous
 		{
-			const unwind completed{[&complete, &dock]
+			const unwind completed{[&dock]
 			{
 				++complete;
 				dock.notify_one();
@@ -253,32 +259,35 @@ try
 	// All rooms have been submitted to the pool but the pool workers might
 	// still be busy. If we unwind now the pool's dtor will kill the workers
 	// so we synchronize their completion here.
-	dock.wait([&complete, &count]
+	dock.wait([]
 	{
 		return complete >= count;
 	});
 
-	log::notice
-	{
-		log, "Initial resynchronization of %zu rooms completed.",
-		count,
-	};
+	if(count)
+		log::notice
+		{
+			log, "Initial resynchronization of %zu rooms completed.",
+			count,
+		};
 }
 catch(const ctx::interrupted &e)
 {
-	log::derror
-	{
-		log, "Worker interrupted without completing resynchronization of all rooms."
-	};
+	if(count)
+		log::derror
+		{
+			log, "Worker interrupted without completing resynchronization of all rooms."
+		};
 
 	throw;
 }
 catch(const ctx::terminated &e)
 {
-	log::error
-	{
-		log, "Worker terminated without completing resynchronization of all rooms."
-	};
+	if(count)
+		log::error
+		{
+			log, "Worker terminated without completing resynchronization of all rooms."
+		};
 
 	throw;
 }
