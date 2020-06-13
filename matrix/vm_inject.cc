@@ -98,6 +98,16 @@ ircd::m::vm::inject(eval &eval,
 			string_view{eval.room_id}
 	};
 
+	const scope_restore eval_room_internal
+	{
+		eval.room_internal,
+		eval.room_internal?
+			eval.room_internal:
+		eval.room_id && my(room::id(eval.room_id))?
+			m::internal(eval.room_id):
+			false
+	};
+
 	// Attempt to resolve the room version at this point for interface
 	// exposure at vm::eval::room_version.
 	char room_version_buf[room::VERSION_MAX_SIZE];

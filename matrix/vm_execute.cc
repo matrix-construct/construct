@@ -206,9 +206,11 @@ try
 	const scope_restore room_internal
 	{
 		eval.room_internal,
+		eval.room_internal?
+			eval.room_internal:
 		is_internal_room_create?
 			true:
-		eval.room_id?
+		eval.room_id && my(room::id(eval.room_id))?
 			m::internal(eval.room_id):
 			false
 	};
