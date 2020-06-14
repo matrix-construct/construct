@@ -126,16 +126,16 @@ get__members(client &client,
 	// parameter was passed to for_each() all members are of that membership,
 	// and that membership is desired, so we don't have to run any match here.
 	const auto membership_match{[&memberships, &not_memberships]
-	(const m::user::id &member, const m::event::idx &event_idx)
+	(const m::event &event)
 	{
 		if(likely(!empty(not_memberships)))
 		{
-			if(m::membership(event_idx, not_memberships))
+			if(m::membership(event, not_memberships))
 				return false;
 		}
 		else if(likely(!empty(memberships)))
 		{
-			if(!m::membership(event_idx, memberships))
+			if(!m::membership(event, memberships))
 				return false;
 		}
 
@@ -148,10 +148,6 @@ get__members(client &client,
 	{
 		if(event_idx > at_idx)
 			return true;
-
-		// Prefetch the content cell for the m::membership test
-		if(!membership)
-			m::prefetch(event_idx, "content");
 
 		// Prefetch the event JSON
 		m::prefetch(event_idx);
@@ -166,10 +162,10 @@ get__members(client &client,
 		if(event_idx > at_idx)
 			return true;
 
-		if(!membership && !membership_match(member, event_idx))
+		if(!seek(std::nothrow, event, event_idx))
 			return true;
 
-		if(!seek(std::nothrow, event, event_idx))
+		if(!membership && !membership_match(event))
 			return true;
 
 		chunk.append(event);
