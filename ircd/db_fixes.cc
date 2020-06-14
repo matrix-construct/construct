@@ -114,8 +114,53 @@ rocksdb::WriteThread::BlockingAwaitState(Writer *const w,
 // simply not start that thread.
 //
 
+//
+// Mitigations now achieved by killing SstFileManager itself; these obsolete
+// the requirement for the below specific interpositions. This is required post
+// RocksDB v6.10.2, not backported for all versions to simplify this section.
+//
+
+#if __has_include("file/sst_file_manager_impl.h")
+rocksdb::SstFileManager *
+rocksdb::NewSstFileManager(Env *env,
+                           std::shared_ptr<Logger> info_log,
+                           std::string trash_dir,
+                           int64_t rate_bytes_per_sec,
+                           bool delete_existing_trash,
+                           Status* status,
+                           double max_trash_db_ratio,
+                           uint64_t bytes_max_delete_chunk)
+{
+	if(status)
+		*status = Status::NotSupported();
+
+	return nullptr;
+}
+#endif
+
+#if defined(IRCD_DB_HAS_ENV_FILESYSTEM) \
+&& __has_include("file/sst_file_manager_impl.h")
+rocksdb::SstFileManager *
+rocksdb::NewSstFileManager(Env *env,
+                           std::shared_ptr<FileSystem> fs,
+                           std::shared_ptr<Logger> info_log,
+                           const std::string& trash_dir,
+                           int64_t rate_bytes_per_sec,
+                           bool delete_existing_trash,
+                           Status* status,
+                           double max_trash_db_ratio,
+                           uint64_t bytes_max_delete_chunk)
+{
+	if(status)
+		*status = Status::NotSupported();
+
+	return nullptr;
+}
+#endif
+
 #if !defined(IRCD_DB_HAS_ENV_FILESYSTEM) \
-&& (__has_include("util/delete_scheduler.h") || __has_include("file/delete_scheduler.h"))
+&& (__has_include("util/delete_scheduler.h") || __has_include("file/delete_scheduler.h")) \
+&& 0 // Not required if interposing NewSstFileManager
 rocksdb::DeleteScheduler::DeleteScheduler(Env* env,
                                           int64_t rate_bytes_per_sec,
                                           Logger* info_log,
@@ -141,7 +186,8 @@ max_trash_db_ratio_(max_trash_db_ratio)
 #endif
 
 #if defined(IRCD_DB_HAS_ENV_FILESYSTEM) \
-&& __has_include("file/delete_scheduler.h")
+&& __has_include("file/delete_scheduler.h") \
+&& 0 // Not required if interposing NewSstFileManager
 rocksdb::DeleteScheduler::DeleteScheduler(Env* env,
                                           FileSystem *fs,
                                           int64_t rate_bytes_per_sec,
@@ -168,7 +214,8 @@ max_trash_db_ratio_(max_trash_db_ratio)
 }
 #endif
 
-#if __has_include("util/delete_scheduler.h") || __has_include("file/delete_scheduler.h")
+#if (__has_include("util/delete_scheduler.h") || __has_include("file/delete_scheduler.h")) \
+&& 0 // Not required if interposing NewSstFileManager
 rocksdb::DeleteScheduler::~DeleteScheduler()
 {
 }
@@ -180,7 +227,8 @@ rocksdb::DeleteScheduler::~DeleteScheduler()
 // and directly conduct the deletion.
 //
 
-#if __has_include("util/delete_scheduler.h")
+#if __has_include("util/delete_scheduler.h") \
+&& 0 // Not required if interposing NewSstFileManager
 rocksdb::Status
 rocksdb::DeleteSSTFile(const ImmutableDBOptions *db_options,
                        const std::string& fname,
@@ -192,7 +240,8 @@ rocksdb::DeleteSSTFile(const ImmutableDBOptions *db_options,
 }
 #endif
 
-#if __has_include("file/file_util.h")
+#if __has_include("file/file_util.h") \
+&& 0 // Not required if interposing NewSstFileManager
 rocksdb::Status
 rocksdb::DeleteDBFile(const ImmutableDBOptions *db_options,
                       const std::string& fname,
