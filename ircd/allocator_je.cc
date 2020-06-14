@@ -51,7 +51,25 @@ ircd::allocator::je::malloc_version_api
 decltype(ircd::allocator::je::malloc_version_abi)
 ircd::allocator::je::malloc_version_abi
 {
-	"jemalloc", info::versions::ABI, //TODO: get this
+	"jemalloc", info::versions::ABI, 0, {0, 0, 0}, []
+	(info::versions &v, const mutable_buffer &buf)
+	{
+		#ifdef HAVE_JEMALLOC_H
+		const string_view val
+		{
+			*reinterpret_cast<const char *const *>(data(allocator::get("version", buf)))
+		};
+
+		if(!val)
+			return;
+
+		strlcpy(buf, val);
+		const string_view semantic(split(val, '-').first);
+		v.semantic[0] = lex_cast<ulong>(token(semantic, '.', 0));
+		v.semantic[1] = lex_cast<ulong>(token(semantic, '.', 1));
+		v.semantic[2] = lex_cast<ulong>(token(semantic, '.', 2));
+		#endif
+	}
 };
 
 decltype(ircd::allocator::je::available)
