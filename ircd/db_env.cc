@@ -3391,13 +3391,16 @@ noexcept try
 
 	for(size_t i(0); i < num; ++i) try
 	{
-		assert(op[i].ret <= size(buf[i]));
-		const const_buffer read(buf[i], op[i].ret);
-		req[i].result = slice(read);
-
 		if(op[i].eptr)
 			std::rethrow_exception(op[i].eptr);
 
+		assert(op[i].ret <= size(buf[i]));
+		const const_buffer read
+		{
+			buf[i], op[i].ret
+		};
+
+		req[i].result = slice(read);
 		req[i].status = Status::OK();
 	}
 	catch(const std::exception &e)
