@@ -8116,27 +8116,32 @@ ircd::db::_read(const vector_view<_read_op> &op,
 			buf + i
 		};
 
+	const bool parallelize
+	{
+		#ifdef IRCD_DB_HAS_MULTIGET_BATCHED
+			true && num > 1
+		#else
+			false
+		#endif
+	};
+
 	rocksdb::Status status[num];
-	#ifdef IRCD_DB_HAS_MULTIGET_BATCHED
-	_seek(op, {status, num}, {val, num}, ropts);
-	#else
-	for(size_t i(0); i < num; ++i)
-	{
-		database::column &column(std::get<0>(op[i]));
-		status[i] = _seek(column, val[i], std::get<1>(op[i]), ropts);
-	}
-	#endif
-
-	if(closure) for(size_t i(0); i < num; ++i)
-	{
-		const column::delta &delta
+	if(!parallelize)
+		for(size_t i(0); i < num; ++i)
 		{
-			std::get<1>(op[i]), slice(val[i])
-		};
+			database::column &column(std::get<column>(op[i]));
+			status[i] = _seek(column, val[i], std::get<1>(op[i]), ropts);
+		}
+	else
+		_seek(op, {status, num}, {val, num}, ropts);
 
-		if(!closure(std::get<0>(op[i]), delta, status[i]))
-			return false;
-	}
+	if(closure)
+		for(size_t i(0); i < num; ++i)
+		{
+			const column::delta delta(std::get<1>(op[i]), slice(val[i]));
+			if(!closure(std::get<column>(op[i]), delta, status[i]))
+				return false;
+		}
 
 	// triggered when the result was not zero-copy
 	//assert(!std::count_if(buf, buf + num, [](auto &&s) { return !s.empty(); }));
