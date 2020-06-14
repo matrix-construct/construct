@@ -1240,10 +1240,10 @@ console_cmd__mem__get(opt &out, const string_view &line)
 
 	const string_view &type
 	{
-		param.at("type", "string"_sv)
+		param.at("type", "unsigned"_sv)
 	};
 
-	thread_local char buf[4_KiB];
+	char buf[512];
 	const string_view &val
 	{
 		allocator::get(key, buf)
@@ -1267,6 +1267,7 @@ console_cmd__mem__get(opt &out, const string_view &line)
 			out << lex_cast(*reinterpret_cast<const ssize_t *>(data(val))) << std::endl;
 			break;
 
+		default:
 		case "unsigned"_:
 			out << lex_cast(*reinterpret_cast<const unsigned *>(data(val))) << std::endl;
 			break;
@@ -1279,9 +1280,8 @@ console_cmd__mem__get(opt &out, const string_view &line)
 			out << lex_cast(*reinterpret_cast<const uintptr_t *>(data(val))) << std::endl;
 			break;
 
-		default:
 		case "string"_:
-			out << val << std::endl;
+			out << *reinterpret_cast<const char *const *const>(data(val)) << std::endl;
 			break;
 	}
 
