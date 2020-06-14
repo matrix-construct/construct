@@ -96,7 +96,20 @@ ircd::info::versions::versions(const string_view &name,
 ,semantic{semantic}
 ,string{'\0'}
 {
-	closure(*this, this->string);
+	if(closure) try
+	{
+		closure(*this, this->string);
+	}
+	catch(const std::exception &e)
+	{
+		log::error
+		{
+			"Querying %s version of '%s' :%s",
+			type == type::ABI? "ABI"_sv : "API"_sv,
+			name,
+			e.what(),
+		};
+	}
 
 	// User provided a string already; nothing else to do
 	if(strnlen(this->string, sizeof(this->string)) != 0)
