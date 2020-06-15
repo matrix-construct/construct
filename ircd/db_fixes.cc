@@ -50,6 +50,10 @@
 	#include "file/sst_file_manager_impl.h"
 #endif
 
+#if __has_include("util/thread_local.h")
+	#include "util/thread_local.h"
+#endif
+
 #include "db_has.h"
 #include "db_env.h"
 
@@ -253,6 +257,217 @@ rocksdb::DeleteDBFile(const ImmutableDBOptions *db_options,
 	assert(db_options->env);
 	return db_options->env->DeleteFile(fname);
 }
+#endif
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ThreadLocalPtr
+//
+
+#if __has_include("util/thread_local.h")
+
+namespace ircd::db::fixes::tls
+{
+	using key_pair = pair<uint32_t>;
+
+	static uint32_t id_ctr;
+	static std::map<uint64_t, void *> map;
+	static std::map<uint32_t, rocksdb::UnrefHandler> dtors;
+	static ctx::mutex dtor_mutex;
+
+	static key_pair make_key(const uint64_t &);
+	static uint64_t make_key(const key_pair &);
+}
+
+ircd::db::fixes::tls::key_pair
+ircd::db::fixes::tls::make_key(const uint64_t &k)
+{
+	return
+	{
+		uint32_t(k >> 32), uint32_t(k)
+	};
+}
+
+uint64_t
+ircd::db::fixes::tls::make_key(const key_pair &k)
+{
+	uint64_t ret(0UL);
+	ret |= k.first;
+	ret <<= 32;
+	ret |= k.second;
+	return ret;
+}
+
+void
+rocksdb::ThreadLocalPtr::InitSingletons()
+{
+}
+
+rocksdb::ThreadLocalPtr::ThreadLocalPtr(UnrefHandler handler)
+:id_
+{
+	uint32_t(ircd::db::fixes::tls::id_ctr++)
+}
+{
+	assert(ircd::db::fixes::tls::id_ctr < uint32_t(-1U));
+
+	if(handler)
+	{
+		using namespace ircd::db::fixes::tls;
+
+		const auto iit
+		{
+			dtors.emplace(id_, handler)
+		};
+
+		assert(iit.second);
+	}
+}
+
+rocksdb::ThreadLocalPtr::~ThreadLocalPtr()
+{
+	using namespace ircd::db::fixes::tls;
+
+	const std::lock_guard lock
+	{
+		dtor_mutex
+	};
+
+	UnrefHandler dtor{nullptr};
+	{
+		const auto it
+		{
+			dtors.find(id_)
+		};
+
+		if(it != end(dtors))
+		{
+			dtor = it->second;
+			dtors.erase(it);
+		}
+	}
+
+	const uint64_t key[2]
+	{
+		make_key({id_, 0}),        // lower bound
+		make_key({id_ + 1, 0})     // upper bound
+	};
+
+	auto it
+	{
+		map.lower_bound(key[0])
+	};
+
+	for(; it != end(map) && it->first < key[1]; it = map.erase(it))
+		if(dtor)
+			dtor(it->second);
+}
+
+void *
+rocksdb::ThreadLocalPtr::Get()
+const
+{
+	using namespace ircd::db::fixes::tls;
+
+	const auto ctxid
+	{
+		ircd::ctx::current?
+			ircd::ctx::id():
+			0UL
+	};
+
+	const auto it
+	{
+		map.find(make_key({id_, ctxid}))
+	};
+
+	return it != end(map)?
+		it->second:
+		nullptr;
+}
+
+void
+rocksdb::ThreadLocalPtr::Reset(void *const ptr)
+{
+	this->Swap(ptr);
+}
+
+void *
+rocksdb::ThreadLocalPtr::Swap(void *ptr)
+{
+	using namespace ircd::db::fixes::tls;
+
+	const auto ctxid
+	{
+		ircd::ctx::current?
+			ircd::ctx::id():
+			0UL
+	};
+
+	const auto iit
+	{
+		map.emplace(make_key({id_, ctxid}), ptr)
+	};
+
+	if(iit.second)
+		return nullptr;
+
+	std::swap(iit.first->second, ptr);
+	return ptr;
+}
+
+bool
+rocksdb::ThreadLocalPtr::CompareAndSwap(void *const ptr,
+                                        void *&expected)
+{
+	using namespace ircd::db::fixes::tls;
+
+	const auto ctxid
+	{
+		ircd::ctx::current?
+			ircd::ctx::id():
+			0UL
+	};
+
+	const auto key
+	{
+		make_key({id_, ctxid})
+	};
+
+	const auto it
+	{
+		map.lower_bound(key)
+	};
+
+	if(it == end(map) || it->first != key)
+	{
+		if(expected != nullptr)
+		{
+			expected = nullptr;
+			return false;
+		}
+
+		map.emplace_hint(it, key, ptr);
+		return true;
+	}
+
+	if(it->second != expected)
+	{
+		expected = it->second;
+		return false;
+	}
+
+	it->second = ptr;
+	return true;
+}
+
+void
+rocksdb::ThreadLocalPtr::Fold(FoldFunc func,
+                              void *const res)
+{
+	ircd::always_assert(false);
+}
+
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
