@@ -3402,9 +3402,22 @@ noexcept try
 
 		req[i].result = slice(read);
 		req[i].status = Status::OK();
+		assert(req[i].result.size() == req[i].len);
 	}
 	catch(const std::exception &e)
 	{
+		log::error
+		{
+			log, "[%s] rfile:%p multiread:%zu:%zu offset:%zu length:%zu :%s",
+			d.name,
+			this,
+			i,
+			num,
+			req[i].offset,
+			req[i].len,
+			e.what(),
+		};
+
 		req[i].status = error_to_status{e};
 	}
 
