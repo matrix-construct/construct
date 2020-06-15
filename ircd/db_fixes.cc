@@ -24,34 +24,24 @@
 	#error "RocksDB db/write_thread.h is not available. Cannot interpose bugfixes."
 #endif
 
-#if __has_include("table/block_fetcher.h")
-	#include "table/block_fetcher.h"
-#else
-	#error "RocksDB table/block_fetcher.h is not available. Cannot interpose bugfixes."
-#endif
-
-#if __has_include("util/delete_scheduler.h")
-	#include "util/delete_scheduler.h"
-#elif __has_include("file/delete_scheduler.h")
-	#include "file/delete_scheduler.h"
-#else
-	#error "RocksDB delete_scheduler.h is not available. Cannot interpose bugfixes."
-#endif
-
 #if __has_include("util/file_util.h")
 	#include "util/file_util.h"
 #elif __has_include("file/file_util.h")
 	#include "file/file_util.h"
-#else
-	#error "RocksDB file_util.h is not available. Cannot interpose bugfixes."
 #endif
 
 #if __has_include("file/sst_file_manager_impl.h")
 	#include "file/sst_file_manager_impl.h"
+#elif __has_include("util/sst_file_manager_impl.h")
+	#include "util/sst_file_manager_impl.h"
+#else
+	#error "RocksDB file/sst_file_manager_imp.h is not available. Cannot interpose bugfixes."
 #endif
 
 #if __has_include("util/thread_local.h")
 	#include "util/thread_local.h"
+#else
+	#error "RocksDB util/thread_local.h is not available. Cannot interpose bugfixes."
 #endif
 
 #include "db_has.h"
@@ -120,11 +110,12 @@ rocksdb::WriteThread::BlockingAwaitState(Writer *const w,
 
 //
 // Mitigations now achieved by killing SstFileManager itself; these obsolete
-// the requirement for the below specific interpositions. This is required post
-// RocksDB v6.10.2, not backported for all versions to simplify this section.
+// the requirement for the DeleteScheduler specific interpositions. This is
+// required post RocksDB v6.10.2, and required for prior versions of no other
+// specific mitigations against DeleteScheduler are taken.
 //
 
-#if __has_include("file/sst_file_manager_impl.h")
+#if __has_include("file/sst_file_manager_impl.h") || __has_include("util/sst_file_manager_impl.h")
 rocksdb::SstFileManager *
 rocksdb::NewSstFileManager(Env *env,
                            std::shared_ptr<Logger> info_log,
@@ -143,7 +134,7 @@ rocksdb::NewSstFileManager(Env *env,
 #endif
 
 #if defined(IRCD_DB_HAS_ENV_FILESYSTEM) \
-&& __has_include("file/sst_file_manager_impl.h")
+&& (__has_include("file/sst_file_manager_impl.h") || __has_include("util/sst_file_manager_impl.h"))
 rocksdb::SstFileManager *
 rocksdb::NewSstFileManager(Env *env,
                            std::shared_ptr<FileSystem> fs,
@@ -159,103 +150,6 @@ rocksdb::NewSstFileManager(Env *env,
 		*status = Status::NotSupported();
 
 	return nullptr;
-}
-#endif
-
-#if !defined(IRCD_DB_HAS_ENV_FILESYSTEM) \
-&& (__has_include("util/delete_scheduler.h") || __has_include("file/delete_scheduler.h")) \
-&& 0 // Not required if interposing NewSstFileManager
-rocksdb::DeleteScheduler::DeleteScheduler(Env* env,
-                                          int64_t rate_bytes_per_sec,
-                                          Logger* info_log,
-                                          SstFileManagerImpl* sst_file_manager,
-                                          double max_trash_db_ratio,
-                                          uint64_t bytes_max_delete_chunk)
-:env_(env),
-total_trash_size_(0),
-rate_bytes_per_sec_(rate_bytes_per_sec),
-pending_files_(0),
-bytes_max_delete_chunk_(bytes_max_delete_chunk),
-closing_(false),
-cv_(&mu_),
-info_log_(info_log),
-sst_file_manager_(sst_file_manager),
-max_trash_db_ratio_(max_trash_db_ratio)
-{
-	assert(sst_file_manager != nullptr);
-	assert(max_trash_db_ratio >= 0);
-//	bg_thread_.reset(
-//		new port::Thread(&DeleteScheduler::BackgroundEmptyTrash, this));
-}
-#endif
-
-#if defined(IRCD_DB_HAS_ENV_FILESYSTEM) \
-&& __has_include("file/delete_scheduler.h") \
-&& 0 // Not required if interposing NewSstFileManager
-rocksdb::DeleteScheduler::DeleteScheduler(Env* env,
-                                          FileSystem *fs,
-                                          int64_t rate_bytes_per_sec,
-                                          Logger* info_log,
-                                          SstFileManagerImpl* sst_file_manager,
-                                          double max_trash_db_ratio,
-                                          uint64_t bytes_max_delete_chunk)
-:env_(env),
-fs_(fs),
-total_trash_size_(0),
-rate_bytes_per_sec_(rate_bytes_per_sec),
-pending_files_(0),
-bytes_max_delete_chunk_(bytes_max_delete_chunk),
-closing_(false),
-cv_(&mu_),
-info_log_(info_log),
-sst_file_manager_(sst_file_manager),
-max_trash_db_ratio_(max_trash_db_ratio)
-{
-	assert(sst_file_manager != nullptr);
-	assert(max_trash_db_ratio >= 0);
-//	bg_thread_.reset(
-//		new port::Thread(&DeleteScheduler::BackgroundEmptyTrash, this));
-}
-#endif
-
-#if (__has_include("util/delete_scheduler.h") || __has_include("file/delete_scheduler.h")) \
-&& 0 // Not required if interposing NewSstFileManager
-rocksdb::DeleteScheduler::~DeleteScheduler()
-{
-}
-#endif
-
-//
-// To effectively employ the DeleteScheduler bypass we also interpose the
-// function which dispatches deletions to the scheduler to remove the branch
-// and directly conduct the deletion.
-//
-
-#if __has_include("util/delete_scheduler.h") \
-&& 0 // Not required if interposing NewSstFileManager
-rocksdb::Status
-rocksdb::DeleteSSTFile(const ImmutableDBOptions *db_options,
-                       const std::string& fname,
-                       const std::string& dir_to_sync)
-{
-	assert(db_options);
-	assert(db_options->env);
-	return db_options->env->DeleteFile(fname);
-}
-#endif
-
-#if __has_include("file/file_util.h") \
-&& 0 // Not required if interposing NewSstFileManager
-rocksdb::Status
-rocksdb::DeleteDBFile(const ImmutableDBOptions *db_options,
-                      const std::string& fname,
-                      const std::string& dir_to_sync,
-                      const bool force_bg,
-                      const bool force_fg)
-{
-	assert(db_options);
-	assert(db_options->env);
-	return db_options->env->DeleteFile(fname);
 }
 #endif
 
