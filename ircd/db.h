@@ -22,6 +22,8 @@
 /// useful even in debug-mode builds, thus the manual #define being required.
 ///
 //#define RB_DEBUG_DB_SEEK
+//#define RB_DEBUG_DB_SEEK_ROW
+//#define IRCD_DB_DEBUG_PREFETCH
 
 /// Uncomment or -D this #define to enable extensive log messages for the
 /// experimental db environment-port implementation. This is only useful
