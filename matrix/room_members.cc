@@ -110,16 +110,20 @@ const
 		state.present()
 	};
 
+	const closure_idx _closure
+	{
+		[&closure](const auto &user_id, const auto &event_idx)
+		{
+			return closure(user_id);
+		}
+	};
+
 	// joined members optimization. Only possible when seeking
 	// membership="join" on the present state of the room.
 	if(membership == "join" && present)
-		return for_each_join_present(host, closure);
+		return for_each_join_present(host, _closure);
 
-	return this->for_each(membership, host, [&closure]
-	(const auto &user_id, const auto &event_idx)
-	{
-		return closure(user_id);
-	});
+	return this->for_each(membership, host, _closure);
 }
 
 bool
@@ -142,12 +146,10 @@ const
 	// membership="join" on the present state of the room.
 	if(membership == "join" && present)
 		return for_each_join_present(host, [&closure, &state]
-		(const id::user &user_id)
+		(const id::user &user_id, event::idx event_idx)
 		{
-			const auto &event_idx
-			{
-				state.get(std::nothrow, "m.room.member", user_id)
-			};
+			if(!event_idx)
+				event_idx = state.get(std::nothrow, "m.room.member", user_id);
 
 			if(unlikely(!event_idx))
 			{
@@ -162,10 +164,7 @@ const
 				return true;
 			}
 
-			if(!closure(user_id, event_idx))
-				return false;
-
-			return true;
+			return closure(user_id, event_idx);
 		});
 
 	return state.for_each("m.room.member", [this, &host, &membership, &closure]
@@ -187,7 +186,7 @@ const
 
 bool
 ircd::m::room::members::for_each_join_present(const string_view &host,
-                                              const closure &closure)
+                                              const closure_idx &closure)
 const
 {
 	db::domain &index
@@ -216,7 +215,14 @@ const
 		if(host && origin != host)
 			break;
 
-		if(!closure(user_id))
+		const event::idx event_idx
+		{
+			it->second.size() >= sizeof(event::idx)?
+				event::idx(byte_view<event::idx>(it->second)):
+				0UL
+		};
+
+		if(!closure(user_id, event_idx))
 			return false;
 	}
 

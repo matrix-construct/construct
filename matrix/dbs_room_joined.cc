@@ -181,12 +181,19 @@ ircd::m::dbs::_index_room_joined(db::txn &txn,
 	else
 		return;
 
+	const string_view val
+	{
+		byte_view<string_view>{opts.event_idx}
+	};
+
+	assert(val.size() >= sizeof(event::idx));
 	db::txn::append
 	{
 		txn, room_joined,
 		{
 			op,
 			key,
+			val,
 		}
 	};
 }

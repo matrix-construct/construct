@@ -23,7 +23,7 @@ struct ircd::m::room::members
 
 	m::room room;
 
-	bool for_each_join_present(const string_view &host, const closure &) const;
+	bool for_each_join_present(const string_view &host, const closure_idx &) const;
 
   public:
 	bool for_each(const string_view &membership, const string_view &host, const closure &) const;
