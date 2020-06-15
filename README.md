@@ -15,7 +15,7 @@ you to contribute new ideas and are liberal in accepting experimental features.
 ### Dependencies
 
 - **Boost** library 1.66+
-- **RocksDB** library 5.16.6.
+- **RocksDB** library 5.17.2+
 - **Sodium** library for curve ed25519.
 - **OpenSSL** library for HTTPS TLS / X.509.
 - **Magic** library for MIME type recognition.
