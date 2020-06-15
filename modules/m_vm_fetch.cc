@@ -212,16 +212,10 @@ try
 		prev.auth_events_count()
 	};
 
-	size_t auth_exists{0};
-	for(size_t i(0); i < auth_count; ++i)
+	const size_t auth_exists
 	{
-		const auto &auth_id
-		{
-			prev.auth_event(i)
-		};
-
-		auth_exists += bool(m::exists(auth_id));
-	}
+		prev.auth_events_exist()
+	};
 
 	// We are satisfied at this point if all auth_events for this event exist,
 	// as those events have themselves been successfully evaluated and so forth.
