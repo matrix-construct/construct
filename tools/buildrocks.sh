@@ -47,7 +47,7 @@ USERDIR=$PWD            # Save current dir and return to it later
 run git submodule update --init deps/rocksdb
 
 run cd deps/rocksdb
-run git fetch --tags --force
+git fetch --tags --force
 run git checkout $BRANCH
 NJOBS=`nproc`
 export CFLAGS="$CFLAGS -DROCKSDB_USE_RTTI"
