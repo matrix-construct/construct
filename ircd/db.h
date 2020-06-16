@@ -59,8 +59,8 @@ namespace ircd::db
 	struct throw_on_error;
 	struct error_to_status;
 
-	constexpr const auto BLOCKING      { rocksdb::ReadTier::kReadAllTier      };
-	constexpr const auto NON_BLOCKING  { rocksdb::ReadTier::kBlockCacheTier   };
+	constexpr auto BLOCKING      { rocksdb::ReadTier::kReadAllTier      };
+	constexpr auto NON_BLOCKING  { rocksdb::ReadTier::kBlockCacheTier   };
 
 	// state
 	extern log::log rog;

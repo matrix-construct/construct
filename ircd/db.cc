@@ -8014,7 +8014,7 @@ ircd::db::_read(column &column,
 		closure(value);
 
 	// triggered when the result was not zero-copy
-	//assert(buf.empty());
+	assert(!opts.fill_cache || buf.empty());
 	return ret;
 }
 
@@ -8086,7 +8086,7 @@ ircd::db::_read(const vector_view<_read_op> &op,
 
 	const bool parallelize
 	{
-		#ifdef IRCD_DB_HAS_MULTIGET_BATCHED
+		#ifdef IRCD_DB_HAS_MULTIGET_DIRECT
 			true && num > 1
 		#else
 			false
@@ -8111,13 +8111,15 @@ ircd::db::_read(const vector_view<_read_op> &op,
 				return false;
 		}
 
+	//#ifdef IRCD_DB_HAS_MULTIGET_DIRECT
 	// triggered when the result was not zero-copy
-	//assert(!std::count_if(buf, buf + num, [](auto &&s) { return !s.empty(); }));
+	static const auto not_empty{[](auto &&s) { return !s.empty(); }};
+	assert(!ropts.fill_cache || !std::count_if(buf, buf + num, not_empty));
+	//#endif
 
 	return true;
 }
 
-#ifdef IRCD_DB_HAS_MULTIGET_BATCHED
 void
 ircd::db::_seek(const vector_view<_read_op> &op,
                 const vector_view<rocksdb::Status> &ret,
@@ -8157,7 +8159,9 @@ ircd::db::_seek(const vector_view<_read_op> &op,
 	const ircd::timer timer;
 	#endif
 
+	#ifdef IRCD_DB_HAS_MULTIGET_BATCHED
 	d.d->MultiGet(ropts, num, cf, key, val.data(), ret.data());
+	#endif
 
 	#ifdef RB_DEBUG_DB_SEEK
 	log::debug
@@ -8174,9 +8178,6 @@ ircd::db::_seek(const vector_view<_read_op> &op,
 	};
 	#endif
 }
-#else
-#warning "RocksDB version does not support batched MultiGet; some queries will be linearized"
-#endif IRCD_DB_HAS_MULTIGET_BATCHED
 
 //
 // iterator seek suite

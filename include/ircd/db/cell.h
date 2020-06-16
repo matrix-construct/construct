@@ -47,10 +47,10 @@ struct ircd::db::cell
 	std::unique_ptr<rocksdb::Iterator> it;
 
   public:
-	operator const rocksdb::Iterator &() const   { return *it;                                    }
+	operator const rocksdb::Iterator &() const   { assert(it); return *it;                        }
 	operator const database::snapshot &() const  { return ss;                                     }
 	explicit operator const column &() const     { return c;                                      }
-	operator rocksdb::Iterator &()               { return *it;                                    }
+	operator rocksdb::Iterator &()               { assert(it); return *it;                        }
 	operator database::snapshot &()              { return ss;                                     }
 	explicit operator column &()                 { return c;                                      }
 
