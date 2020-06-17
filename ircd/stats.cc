@@ -8,14 +8,51 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+decltype(ircd::stats::NAME_MAX_LEN)
+ircd::stats::NAME_MAX_LEN
+{
+	127
+};
+
 decltype(ircd::stats::items)
 ircd::stats::items
 {};
 
 std::ostream &
-ircd::stats::operator<<(std::ostream &s, const item &item)
+ircd::stats::operator<<(std::ostream &s,
+                        const item<void> &item_)
 {
-	s << static_cast<long long>(item.val);
+	if(item_.type == typeid(uint64_t *))
+	{
+		const auto &item
+		{
+			dynamic_cast<const stats::item<uint64_t *> &>(item_)
+		};
+
+		assert(item.val);
+		s << *item.val;
+	}
+	else if(item_.type == typeid(uint32_t *))
+	{
+		const auto &item
+		{
+			dynamic_cast<const stats::item<uint32_t *> &>(item_)
+		};
+
+		assert(item.val);
+		s << *item.val;
+	}
+	else if(item_.type == typeid(uint16_t *))
+	{
+		const auto &item
+		{
+			dynamic_cast<const stats::item<uint16_t *> &>(item_)
+		};
+
+		assert(item.val);
+		s << *item.val;
+	}
+
 	return s;
 }
 
@@ -23,34 +60,32 @@ ircd::stats::operator<<(std::ostream &s, const item &item)
 // item
 //
 
-decltype(ircd::stats::item::NAME_MAX_LEN)
-ircd::stats::item::NAME_MAX_LEN
-{
-	127
-};
-
 //
 // item::item
 //
 
-ircd::stats::item::item(const json::members &opts)
-:feature_
+ircd::stats::item<void>::item(const std::type_index &type,
+                              const json::members &opts)
+:type
 {
-	opts
+	type
 }
 ,feature
 {
-	feature_
-}
-,name
-{
-	unquote(feature.at("name"))
-}
-,val
-{
-	feature.get<long>("default", 0L)
+	opts
 }
 {
+	const json::string name
+	{
+		this->operator[]("name")
+	};
+
+	if(!name)
+		throw error
+		{
+			"Stats item must have a 'name' string feature"
+		};
+
 	if(name.size() > NAME_MAX_LEN)
 		throw error
 		{
@@ -67,13 +102,141 @@ ircd::stats::item::item(const json::members &opts)
 		};
 }
 
-ircd::stats::item::~item()
+ircd::stats::item<void>::~item()
 noexcept
 {
+	const json::string name
+	{
+		this->operator[]("name")
+	};
+
 	if(name)
 	{
-		const auto it{items.find(name)};
+		const auto it
+		{
+			items.find(name)
+		};
+
 		assert(data(it->first) == data(name));
 		items.erase(it);
 	}
+}
+
+ircd::string_view
+ircd::stats::item<void>::operator[](const string_view &key)
+const noexcept
+{
+	const json::object feature
+	{
+		this->feature
+	};
+
+	return feature[key];
+}
+
+//
+// pointer-to-value items
+//
+
+//
+// item<uint64_t *>
+//
+
+ircd::stats::item<uint64_t *>::item(uint64_t *const &val,
+                                    const json::members &feature)
+:item<void>
+{
+	typeid(uint64_t *), feature
+}
+,val
+{
+	val
+}
+{
+}
+
+//
+// item<uint32_t *>
+//
+
+ircd::stats::item<uint32_t *>::item(uint32_t *const &val,
+                                    const json::members &feature)
+:item<void>
+{
+	typeid(uint32_t *), feature
+}
+,val
+{
+	val
+}
+{
+}
+
+//
+// item<uint16_t *>
+//
+
+ircd::stats::item<uint16_t *>::item(uint16_t *const &val,
+                                    const json::members &feature)
+:item<void>
+{
+	typeid(uint16_t *), feature
+}
+,val
+{
+	val
+}
+{
+}
+
+//
+// value-carrying items
+//
+
+//
+// item<uint64_t>
+//
+
+ircd::stats::item<uint64_t>::item(const json::members &feature)
+:item<uint64_t *>
+{
+	std::addressof(this->val), feature
+}
+,val
+{
+	0UL
+}
+{
+}
+
+//
+// item<uint32_t>
+//
+
+ircd::stats::item<uint32_t>::item(const json::members &feature)
+:item<uint32_t *>
+{
+	std::addressof(this->val), feature
+}
+,val
+{
+	0U
+}
+{
+}
+
+//
+// item<uint16_t>
+//
+
+ircd::stats::item<uint16_t>::item(const json::members &feature)
+:item<uint16_t *>
+{
+	std::addressof(this->val), feature
+}
+,val
+{
+	0U
+}
+{
 }
