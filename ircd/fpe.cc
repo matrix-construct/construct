@@ -21,11 +21,9 @@ ircd::fpe::set(const ushort &flags)
 }
 
 void
-ircd::fpe::throw_errors(const ushort &flags)
+ircd::fpe::_throw_errors(const ushort &flags)
 {
-	if(!flags)
-		return;
-
+	assert(flags);
 	thread_local char buf[128];
 	throw std::domain_error
 	{
@@ -87,42 +85,4 @@ ircd::fpe::reflect_sicode(const int &code)
 	}
 
 	return "?????";
-}
-
-//
-// errors_handle
-//
-
-ircd::fpe::errors_handle::errors_handle()
-{
-	syscall(std::fegetexceptflag, &theirs, FE_ALL_EXCEPT);
-	clear_pending();
-}
-
-ircd::fpe::errors_handle::~errors_handle()
-noexcept(false)
-{
-	const auto pending(this->pending());
-	syscall(std::fesetexceptflag, &theirs, FE_ALL_EXCEPT);
-	throw_errors(pending);
-}
-
-void
-ircd::fpe::errors_handle::clear_pending()
-{
-	syscall(std::feclearexcept, FE_ALL_EXCEPT);
-}
-
-void
-ircd::fpe::errors_handle::throw_pending()
-const
-{
-	throw_errors(pending());
-}
-
-ushort
-ircd::fpe::errors_handle::pending()
-const
-{
-	return std::fetestexcept(FE_ALL_EXCEPT);
 }

@@ -19,6 +19,7 @@ namespace ircd::fpe
 	string_view reflect(const ushort &flag);
 	string_view reflect(const mutable_buffer &, const ushort &flags);
 
+	[[noreturn]] void _throw_errors(const ushort &flags);
 	void throw_errors(const ushort &flags);
 	std::fexcept_t set(const ushort &flag);
 }
@@ -38,3 +39,48 @@ struct ircd::fpe::errors_handle
 	errors_handle();
 	~errors_handle() noexcept(false);
 };
+
+[[gnu::always_inline]] inline
+ircd::fpe::errors_handle::errors_handle()
+{
+	syscall(std::fegetexceptflag, &theirs, FE_ALL_EXCEPT);
+	clear_pending();
+}
+
+[[gnu::always_inline]] inline
+ircd::fpe::errors_handle::~errors_handle()
+noexcept(false)
+{
+	const unwind reset{[this]
+	{
+		syscall(std::fesetexceptflag, &theirs, FE_ALL_EXCEPT);
+	}};
+
+	throw_pending();
+}
+
+inline void
+ircd::fpe::errors_handle::clear_pending()
+{
+	syscall(std::feclearexcept, FE_ALL_EXCEPT);
+}
+
+inline void
+ircd::fpe::errors_handle::throw_pending()
+const
+{
+	const auto pending
+	{
+		this->pending()
+	};
+
+	if(unlikely(pending))
+		_throw_errors(pending);
+}
+
+inline ushort
+ircd::fpe::errors_handle::pending()
+const
+{
+	return std::fetestexcept(FE_ALL_EXCEPT);
+}
