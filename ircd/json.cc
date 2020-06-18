@@ -96,15 +96,9 @@ ircd::json::parser
 		,"exponent"
 	};
 
-	const rule<> is_number
-	{
-		-lit('-') >> number_int >> -number_frac >> -number_exp
-		,"number"
-	};
-
 	const rule<> number
 	{
-		double_ | long_
+		-lit('-') >> number_int >> -number_frac >> -number_exp
 		,"number"
 	};
 
@@ -4188,7 +4182,7 @@ ircd::json::type_parse_is
 	{ -parser.ws >> parser.quote                           },
 	{ -parser.ws >> parser.object_begin                    },
 	{ -parser.ws >> parser.array_begin                     },
-	{ -parser.ws >> parser.is_number >> -parser.ws >> eoi  },
+	{ -parser.ws >> parser.number >> -parser.ws >> eoi     },
 	{ -parser.ws >> parser.literal >> -parser.ws >> eoi    },
 };
 
@@ -4199,7 +4193,7 @@ ircd::json::type_parse_is_strict
 	{ -parser.ws >> &parser.quote >> parser.string >> -parser.ws >> eoi            },
 	{ -parser.ws >> &parser.object_begin >> parser.object(0) >> -parser.ws >> eoi  },
 	{ -parser.ws >> &parser.array_begin >> parser.array(0) >> -parser.ws >> eoi    },
-	{ -parser.ws >> parser.is_number >> -parser.ws >> eoi                          },
+	{ -parser.ws >> parser.number >> -parser.ws >> eoi                             },
 	{ -parser.ws >> parser.literal >> -parser.ws >> eoi                            },
 };
 
