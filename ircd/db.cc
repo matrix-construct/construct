@@ -1999,7 +1999,7 @@ ircd::db::database::column::column(database &d,
 ,cfilter{this, this->descriptor->compactor}
 ,stats
 {
-	std::make_shared<struct database::stats>(this->d)
+	std::make_shared<struct database::stats>(this->d, this)
 }
 ,allocator
 {
@@ -2624,8 +2624,10 @@ namespace ircd::db
 // stats::stats
 //
 
-ircd::db::database::stats::stats(database *const &d)
+ircd::db::database::stats::stats(database *const &d,
+                                 database::column *const &c)
 :d{d}
+,c{c}
 ,get_copied
 {
 	{ "name", make_name("get.copied")                                   },
@@ -2760,8 +2762,9 @@ const
 	assert(this->d);
 	return fmt::sprintf
 	{
-		database_stats_name_buf, "ircd.db.%s.%s",
+		database_stats_name_buf, "ircd.db.%s.%s.%s",
 		db::name(*d),
+		c? db::name(*c): "db"s,
 		ticker_name,
 	};
 }

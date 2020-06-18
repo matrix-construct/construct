@@ -319,6 +319,7 @@ struct ircd::db::database::stats final
 	struct passthru;
 
 	database *d {nullptr};
+	database::column *c {nullptr};
 	std::array<uint64_t, NUM_TICKER> ticker {{0}};
 	std::array<ircd::stats::item<uint64_t *>, NUM_TICKER> item;
 	std::array<struct db::histogram, NUM_HISTOGRAM> histogram;
@@ -342,7 +343,7 @@ struct ircd::db::database::stats final
 	rocksdb::Status Reset() noexcept override;
 
 	stats() = default;
-	stats(database *const &d);
+	stats(database *const &d, database::column *const &c = nullptr);
 	~stats() noexcept;
 };
 
