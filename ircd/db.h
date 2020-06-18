@@ -323,6 +323,12 @@ struct ircd::db::database::stats final
 	std::array<ircd::stats::item<uint64_t *>, NUM_TICKER> item;
 	std::array<struct db::histogram, NUM_HISTOGRAM> histogram;
 
+	// Additional custom stats
+	ircd::stats::item<uint64_t> get_copied;
+	ircd::stats::item<uint64_t> get_referenced;
+	ircd::stats::item<uint64_t> multiget_copied;
+	ircd::stats::item<uint64_t> multiget_referenced;
+
 	string_view make_name(const string_view &ticker_name) const; // tls buffer
 
 	uint64_t getTickerCount(const uint32_t tickerType) const noexcept override;

@@ -2626,6 +2626,26 @@ namespace ircd::db
 
 ircd::db::database::stats::stats(database *const &d)
 :d{d}
+,get_copied
+{
+	{ "name", make_name("get.copied")                                   },
+	{ "desc", "Number of DB::Get() results violating zero-copy."        },
+}
+,get_referenced
+{
+	{ "name", make_name("get.referenced")                               },
+	{ "desc", "Number of DB::Get() results adhering to zero-copy."      },
+}
+,multiget_copied
+{
+	{ "name", make_name("multiget.copied")                              },
+	{ "desc", "Number of DB::MultiGet() results violating zero-copy."   },
+}
+,multiget_referenced
+{
+	{ "name", make_name("multiget.referenced")                          },
+	{ "desc", "Number of DB::MultiGet() results adhering to zero-copy." },
+}
 {
 	assert(item.size() == ticker.size());
 	for(size_t i(0); i < item.size(); ++i)
@@ -8049,8 +8069,14 @@ ircd::db::_read(column &column,
 	if(likely(closure))
 		closure(value);
 
-	// triggered when the result was not zero-copy
-	assert(!opts.fill_cache || buf.empty());
+	// Update stats about whether the pinnable slices we obtained have internal
+	// copies or referencing the cache copy.
+	{
+		database &d(column);
+		d.stats->get_copied += !buf.empty();
+		d.stats->get_referenced += buf.empty();
+	}
+
 	return ret;
 }
 
@@ -8147,11 +8173,33 @@ ircd::db::_read(const vector_view<_read_op> &op,
 				return false;
 		}
 
-	//#ifdef IRCD_DB_HAS_MULTIGET_DIRECT
-	// triggered when the result was not zero-copy
-	static const auto not_empty{[](auto &&s) { return !s.empty(); }};
-	assert(!ropts.fill_cache || !std::count_if(buf, buf + num, not_empty));
-	//#endif
+	// Update stats about whether the pinnable slices we obtained have internal
+	// copies or referencing the cache copy.
+	{
+		database &d(std::get<column>(op[0]));
+		const auto copy_count
+		{
+			std::count_if(buf, buf + num, [](auto&& s) { return !s.empty(); })
+		};
+
+		auto &referenced
+		{
+			parallelize?
+				d.stats->multiget_referenced:
+				d.stats->get_referenced
+		};
+
+		auto &copied
+		{
+			parallelize?
+				d.stats->multiget_copied:
+				d.stats->get_copied
+		};
+
+		assert(num >= size_t(copy_count));
+		referenced += (num - copy_count);
+		copied += copy_count;
+	}
 
 	return true;
 }
