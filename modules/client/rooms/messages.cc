@@ -36,6 +36,13 @@ max_filter_miss
 	{ "default",   2048L                                        },
 };
 
+conf::item<float>
+postfetch_multiplier
+{
+	{ "name",      "ircd.client.rooms.messages.postfetch.multiplier" },
+	{ "default",   2.0                                               },
+};
+
 log::log
 messages_log
 {
@@ -181,7 +188,8 @@ get__messages(client &client,
 	// prefetched by the following loop after each request from here. Note that
 	// this loop does not yet account for visibility and filters etc.
 	size_t postfetched(0);
-	for(size_t i(0); i <= page.limit && it; ++i, page.dir == 'b'? --it : ++it)
+	const size_t postfetch_max(page.limit * float(postfetch_multiplier));
+	for(size_t i(0); i <= postfetch_max && it; ++i, page.dir == 'b'? --it : ++it)
 	{
 		const auto &event_idx(it.event_idx());
 		postfetched += m::prefetch(event_idx);
