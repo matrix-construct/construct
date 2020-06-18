@@ -1540,23 +1540,44 @@ console_cmd__env(opt &out, const string_view &line)
 bool
 console_cmd__stats(opt &out, const string_view &line)
 {
-	for(const auto &[name, item] : stats::items)
+	const params param{line, " ",
 	{
-		static constexpr size_t name_width {60};
+		"prefix", "all"
+	}};
+
+	const bool all
+	{
+		param[0] == "-a" || param[1] == "-a"
+	};
+
+	const string_view prefix
+	{
+		param[0] == "-a"? param[1]: param[0]
+	};
+
+	for(const auto &[name_, item] : stats::items)
+	{
+		if(prefix && !startswith(name_, prefix))
+			continue;
 
 		assert(item);
-		const auto trunc_name(trunc(name, name_width));
-		out << std::left << std::setw(name_width) << trunc_name;
+		if(!all && !*item)
+			continue;
 
-		if(size(trunc_name) == name_width)
-			out << "...";
-		else
-			out << "   ";
+		static constexpr size_t name_width
+		{
+			80
+		};
 
-		out << "  "
-		    << std::left << (*item)
-		    << std::endl
-		    ;
+		const fmt::bsprintf<128> name
+		{
+			"%s ", trunc(name_, name_width)
+		};
+
+		out
+		<< std::left << std::setfill('_') << std::setw(name_width) << name
+		<< " " << (*item)
+		<< std::endl;
 	}
 
 	return true;
