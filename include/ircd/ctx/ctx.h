@@ -137,6 +137,59 @@ namespace ircd
 	using ctx::assert_main_thread;
 }
 
+/// Marks `ctx` for whether to allow or suppress interruption. Suppression
+/// does not ignore an interrupt itself, it only ignores the interruption
+/// points. Thus when a suppression ends if the interrupt flag was ever set
+/// the next interruption point will throw as expected.
+inline void
+ircd::ctx::interruptible(ctx &ctx,
+                         const bool &b)
+noexcept
+{
+	flags(ctx) ^= (flags(ctx) ^ (ulong(b) - 1)) & context::NOINTERRUPT;
+	assert(bool(flags(ctx) & context::NOINTERRUPT) == !b);
+	assert(interruptible(ctx) == b);
+}
+
+/// Indicates if `ctx` was terminated; does not clear the flag
+inline bool
+ircd::ctx::termination(const ctx &c)
+noexcept
+{
+	return flags(c) & context::TERMINATED;
+}
+
+/// Indicates if `ctx` was interrupted; does not clear the flag
+inline bool
+ircd::ctx::interruption(const ctx &c)
+noexcept
+{
+	return flags(c) & context::INTERRUPTED;
+}
+
+inline bool
+ircd::ctx::interruptible(const ctx &ctx)
+noexcept
+{
+	return ~flags(ctx) & context::NOINTERRUPT;
+}
+
+/// Returns the cycle count for `ctx`
+inline const ulong &
+ircd::ctx::cycles(const ctx &ctx)
+noexcept
+{
+	return prof::get(ctx, prof::event::CYCLES);
+}
+
+/// Returns the yield count for `ctx`
+inline const uint64_t &
+ircd::ctx::epoch(const ctx &ctx)
+noexcept
+{
+	return prof::get(ctx, prof::event::YIELD);
+}
+
 inline void
 __attribute__((always_inline))
 ircd::ctx::assert_main_thread()

@@ -572,33 +572,6 @@ noexcept
 	return ctx.finished();
 }
 
-/// Indicates if `ctx` was terminated; does not clear the flag
-[[gnu::hot]]
-bool
-ircd::ctx::termination(const ctx &c)
-noexcept
-{
-	return c.flags & context::TERMINATED;
-}
-
-/// Indicates if `ctx` was interrupted; does not clear the flag
-[[gnu::hot]]
-bool
-ircd::ctx::interruption(const ctx &c)
-noexcept
-{
-	return c.flags & context::INTERRUPTED;
-}
-
-/// Returns the cycle count for `ctx`
-[[gnu::hot]]
-const ulong &
-ircd::ctx::cycles(const ctx &ctx)
-noexcept
-{
-	return prof::get(ctx, prof::event::CYCLES);
-}
-
 /// Returns the IO priority nice-value
 [[gnu::hot]]
 const int8_t &
@@ -615,15 +588,6 @@ ircd::ctx::nice(const ctx &ctx)
 noexcept
 {
 	return ctx.nice;
-}
-
-/// Returns the yield count for `ctx`
-[[gnu::hot]]
-const uint64_t &
-ircd::ctx::epoch(const ctx &ctx)
-noexcept
-{
-	return prof::get(ctx, prof::event::YIELD);
 }
 
 /// Returns the notification count for `ctx`
@@ -789,15 +753,6 @@ ircd::ctx::this_ctx::interruption_point()
 	return cur().interruption_point();
 }
 
-/// Returns true if the currently running context was interrupted and clears
-/// the interrupt flag.
-bool
-ircd::ctx::this_ctx::interruption_requested()
-noexcept
-{
-	return interruption(cur()) || termination(cur());
-}
-
 /// Returns unique ID of currently running context
 [[gnu::hot]]
 const uint64_t &
@@ -806,30 +761,6 @@ noexcept
 {
 	static const uint64_t zero{0};
 	return current? id(cur()) : zero;
-}
-
-//
-// interruptible
-//
-
-/// Throws interrupted if the currently running context was interrupted
-/// and clears the interrupt flag.
-[[gnu::hot]]
-void
-ircd::ctx::this_ctx::interruptible(const bool &b)
-{
-	const bool theirs
-	{
-		interruptible(cur())
-	};
-
-	if(theirs && !b)
-		interruption_point();
-
-	interruptible(cur(), b);
-
-	if(!theirs && b)
-		interruption_point();
 }
 
 //

@@ -18,8 +18,14 @@ namespace ircd::ctx { inline namespace this_ctx
 	const uint64_t &id() noexcept;               // Unique ID for cur ctx
 	string_view name() noexcept;                 // Optional label for cur ctx
 	ulong cycles() noexcept;                     // misc profiling related
+
 	bool interruption_requested() noexcept;      // interruption(cur())
 	void interruption_point();                   // throws if interruption_requested()
+	bool interruptible() noexcept;
+
+	void interruptible(const bool &, std::nothrow_t) noexcept;
+	void interruptible(const bool &);
+
 	void yield();                                // Allow other contexts to run before returning.
 }}
 
@@ -41,6 +47,49 @@ ircd::ctx::this_ctx::name()
 noexcept
 {
 	return current? name(cur()) : "*"_sv;
+}
+
+inline void
+ircd::ctx::this_ctx::interruptible(const bool &b,
+                                   std::nothrow_t)
+noexcept
+{
+	interruptible(cur(), b);
+}
+
+inline bool
+ircd::ctx::this_ctx::interruptible()
+noexcept
+{
+	return interruptible(cur());
+}
+
+/// Throws interrupted if the currently running context was interrupted
+/// and clears the interrupt flag.
+inline void
+ircd::ctx::this_ctx::interruptible(const bool &b)
+{
+	const bool theirs
+	{
+		interruptible(cur())
+	};
+
+	if(unlikely(theirs && !b && interruption_requested()))
+		interruption_point();
+
+	interruptible(cur(), b);
+
+	if(unlikely(!theirs && b && interruption_requested()))
+		interruption_point();
+}
+
+/// Returns true if the currently running context was interrupted and clears
+/// the interrupt flag.
+inline bool
+ircd::ctx::this_ctx::interruption_requested()
+noexcept
+{
+	return interruption(cur()) || termination(cur());
 }
 
 /// Calculate the current TSC (reference cycle count) accumulated for this
