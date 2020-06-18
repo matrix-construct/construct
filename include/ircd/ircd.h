@@ -52,6 +52,7 @@
 #include "run.h"
 #include "demangle.h"
 #include "backtrace.h"
+#include "fpe.h"
 #include "locale.h"
 #include "time.h"
 #include "logger.h"

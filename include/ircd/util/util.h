@@ -60,7 +60,6 @@ namespace ircd
 #include "u2a.h"
 #include "pretty.h"
 #include "hash.h"
-#include "fpe.h"
 #include "closure.h"
 #include "test.h"
 #include "boolean.h"

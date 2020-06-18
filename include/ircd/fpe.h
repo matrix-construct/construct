@@ -1,7 +1,7 @@
-// Matrix Construct
+// The Construct
 //
-// Copyright (C) Matrix Construct Developers, Authors & Contributors
-// Copyright (C) 2016-2018 Jason Volk <jason@zemos.net>
+// Copyright (C) The Construct Developers, Authors & Contributors
+// Copyright (C) 2016-2020 Jason Volk <jason@zemos.net>
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -9,11 +9,9 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_UTIL_FPE_H
+#define HAVE_IRCD_FPE_H
 
-namespace ircd {
-inline namespace util {
-namespace fpe
+namespace ircd::fpe
 {
 	struct errors_handle;
 
@@ -23,12 +21,12 @@ namespace fpe
 
 	void throw_errors(const ushort &flags);
 	std::fexcept_t set(const ushort &flag);
-}}}
+}
 
 /// Perform a single floating point operation at a time within the scope
 /// of fpe::errors_handle. After each operation check the floating point
 /// unit for an error status flag and throw a C++ exception.
-struct ircd::util::fpe::errors_handle
+struct ircd::fpe::errors_handle
 {
 	std::fexcept_t theirs;
 
