@@ -81,6 +81,8 @@ struct ircd::stats::item<void>
 	// Access features
 	string_view operator[](const string_view &key) const noexcept;
 
+	virtual bool operator!() const = 0;
+
 	item() = default;
 	item(const std::type_index &, const json::members &);
 	item(item &&) = delete;
@@ -95,6 +97,11 @@ struct ircd::stats::item<uint64_t *>
 	uint64_t *val {nullptr};
 
   public:
+	bool operator!() const override
+	{
+		return !val || !*val;
+	}
+
 	operator const uint64_t &() const
 	{
 		assert(val);
@@ -118,6 +125,11 @@ struct ircd::stats::item<uint32_t *>
 	uint32_t *val {nullptr};
 
   public:
+	bool operator!() const override
+	{
+		return !val || !*val;
+	}
+
 	operator const uint32_t &() const
 	{
 		assert(val);
@@ -141,6 +153,11 @@ struct ircd::stats::item<uint16_t *>
 	uint16_t *val {nullptr};
 
   public:
+	bool operator!() const override
+	{
+		return !val || !*val;
+	}
+
 	operator const uint16_t &() const
 	{
 		assert(val);
