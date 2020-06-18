@@ -1999,7 +1999,9 @@ ircd::db::database::column::column(database &d,
 ,cfilter{this, this->descriptor->compactor}
 ,stats
 {
-	std::make_shared<struct database::stats>(this->d, this)
+	descriptor.name != "default"s?
+		std::make_shared<struct database::stats>(this->d, this):
+		std::shared_ptr<struct database::stats>{},
 }
 ,allocator
 {
