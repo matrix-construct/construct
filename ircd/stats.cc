@@ -22,6 +22,15 @@ std::ostream &
 ircd::stats::operator<<(std::ostream &s,
                         const item<void> &item_)
 {
+	thread_local char tmp[256];
+	s << string(tmp, item_);
+	return s;
+}
+
+ircd::string_view
+ircd::stats::string(const mutable_buffer &buf,
+                    const item<void> &item_)
+{
 	if(item_.type == typeid(uint64_t *))
 	{
 		const auto &item
@@ -30,7 +39,10 @@ ircd::stats::operator<<(std::ostream &s,
 		};
 
 		assert(item.val);
-		s << *item.val;
+		return fmt::sprintf
+		{
+			buf, "%lu", *item.val
+		};
 	}
 	else if(item_.type == typeid(uint32_t *))
 	{
@@ -40,7 +52,10 @@ ircd::stats::operator<<(std::ostream &s,
 		};
 
 		assert(item.val);
-		s << *item.val;
+		return fmt::sprintf
+		{
+			buf, "%u", *item.val
+		};
 	}
 	else if(item_.type == typeid(uint16_t *))
 	{
@@ -50,10 +65,16 @@ ircd::stats::operator<<(std::ostream &s,
 		};
 
 		assert(item.val);
-		s << *item.val;
+		return fmt::sprintf
+		{
+			buf, "%u", *item.val
+		};
 	}
-
-	return s;
+	else throw error
+	{
+		"Unsupported value type '%s'",
+		item_.type.name(),
+	};
 }
 
 //

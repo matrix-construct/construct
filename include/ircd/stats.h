@@ -56,6 +56,7 @@ namespace ircd::stats
 	extern const size_t NAME_MAX_LEN;
 	extern std::map<string_view, item<void> *> items;
 
+	string_view string(const mutable_buffer &, const item<void> &);
 	std::ostream &operator<<(std::ostream &, const item<void> &);
 }
 
