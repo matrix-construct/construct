@@ -86,7 +86,7 @@ ircd::json::parser
 
 	const rule<> number_frac
 	{
-		lit('.') >> repeat(1, 16)[char_("0-9")] >> -char_("1-9")
+		lit('.') >> repeat(1, 18)[char_("0-9")] >> -char_("1-9")
 		,"fraction"
 	};
 
