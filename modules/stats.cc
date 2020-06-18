@@ -8,16 +8,22 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd;
+namespace ircd::stats
+{
+	static resource::response get_stats(client &, const resource::request &);
 
-mapi::header
+	extern resource::method method_get;
+	extern resource stats_resource;
+}
+
+ircd::mapi::header
 IRCD_MODULE
 {
 	"Prometheus Metrics"
 };
 
-resource
-stats_resource
+decltype(ircd::stats::stats_resource)
+ircd::stats::stats_resource
 {
 	"/stats",
 	{
@@ -25,51 +31,48 @@ stats_resource
 	}
 };
 
-static resource::response
-get__stats(client &,
-           const resource::request &);
-
-resource::method
-stats_get
+decltype(ircd::stats::method_get)
+ircd::stats::method_get
 {
-	stats_resource, "GET", get__stats
+	stats_resource, "GET", get_stats
 };
 
-resource::response
-get__stats(client &client,
-           const resource::request &request)
+ircd::resource::response
+ircd::stats::get_stats(client &client,
+                       const resource::request &request)
 {
-	static const size_t buf_max
+	resource::response::chunked response
 	{
-		4096
+		client, http::OK, "text/plain"
 	};
-
-	char buf[buf_max];
-	std::stringstream out;
-	pubsetbuf(out, buf);
 
 	const time_t ts
 	{
 		ircd::time<milliseconds>()
 	};
 
-	out << "aio_requests_total"
-	    << ' ' << fs::aio::stats.requests
-	    << ' ' << ts
-	    << '\n';
-
-	out << "aio_requests_bytes_total"
-	    << ' ' << fs::aio::stats.bytes_requests
-	    << ' ' << ts
-	    << '\n';
-
-	const string_view output
+	for(const auto &[name_, item] : items)
 	{
-		view(out, buf)
-	};
+		char buf[256], name[2][128], val[64];
+		const string_view _name
+		{
+			replace(name[0], name_, '.', '_')
+		};
 
-	return resource::response
-	{
-		client, output, "text/plain", http::OK
-	};
+		const string_view line
+		{
+			buf,
+			::snprintf
+			(
+				buf, sizeof(buf), "%s %s %lu\n",
+				data(strlcpy(name[1], _name)),
+				data(string(val, *item)),
+				ts
+			)
+		};
+
+		response.write(line);
+	}
+
+	return std::move(response);
 }
