@@ -253,7 +253,7 @@ ircd::spirit::expectation_failure<parent>::expectation_failure(const qi::expecta
 		                                                       const ssize_t &show_max)
 :parent
 {
-	"Expected %s. You input %zd invalid characters somewhere between position %zd and %zd: %s",
+	"Expected %s. You input %zd invalid characters somewhere between position %zd and %zd :%s",
 	ircd::string(rule_buffer, e.what_),
 	std::distance(e.first, e.last),
 	std::distance(start, e.first),
