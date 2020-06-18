@@ -313,22 +313,30 @@ struct ircd::db::database::compaction_filter final
 struct ircd::db::database::stats final
 :rocksdb::Statistics
 {
+	static constexpr auto NUM_TICKER { rocksdb::TICKER_ENUM_MAX };
+	static constexpr auto NUM_HISTOGRAM { rocksdb::HISTOGRAM_ENUM_MAX };
+
 	struct passthru;
 
 	database *d {nullptr};
-	std::array<uint64_t, rocksdb::TICKER_ENUM_MAX> ticker {{0}};
-	std::array<struct db::histogram, rocksdb::HISTOGRAM_ENUM_MAX> histogram;
+	std::array<uint64_t, NUM_TICKER> ticker {{0}};
+	std::array<ircd::stats::item<uint64_t *>, NUM_TICKER> item;
+	std::array<struct db::histogram, NUM_HISTOGRAM> histogram;
+
+	string_view make_name(const string_view &ticker_name) const; // tls buffer
 
 	uint64_t getTickerCount(const uint32_t tickerType) const noexcept override;
+	uint64_t getAndResetTickerCount(const uint32_t tickerType) noexcept override;
 	void recordTick(const uint32_t tickerType, const uint64_t count) noexcept override;
 	void setTickerCount(const uint32_t tickerType, const uint64_t count) noexcept override;
+
 	void histogramData(const uint32_t type, rocksdb::HistogramData *) const noexcept override;
 	void measureTime(const uint32_t histogramType, const uint64_t time) noexcept override;
 	bool HistEnabledForType(const uint32_t type) const noexcept override;
-	uint64_t getAndResetTickerCount(const uint32_t tickerType) noexcept override;
 	rocksdb::Status Reset() noexcept override;
 
-	stats(database *const &d = nullptr);
+	stats() = default;
+	stats(database *const &d);
 	~stats() noexcept;
 };
 

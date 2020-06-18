@@ -2615,6 +2615,11 @@ catch(const std::exception &e)
 // database::stats (db/database/stats.h) internal
 //
 
+namespace ircd::db
+{
+	static thread_local char database_stats_name_buf[128];
+}
+
 //
 // stats::stats
 //
@@ -2622,6 +2627,24 @@ catch(const std::exception &e)
 ircd::db::database::stats::stats(database *const &d)
 :d{d}
 {
+	assert(item.size() == ticker.size());
+	for(size_t i(0); i < item.size(); ++i)
+	{
+		const auto &[id, ticker_name]
+		{
+			rocksdb::TickersNameMap[i]
+		};
+
+		assert(id == i);
+		new (item.data() + i) ircd::stats::item<uint64_t *>
+		{
+			std::addressof(ticker[i]), json::members
+			{
+				{ "name", make_name(ticker_name)                },
+				{ "desc", "RocksDB library statistics counter." },
+			}
+		};
+	}
 }
 
 ircd::db::database::stats::~stats()
@@ -2636,15 +2659,6 @@ noexcept
 	ticker.fill(0);
 	histogram.fill({0.0});
 	return rocksdb::Status::OK();
-}
-
-uint64_t
-ircd::db::database::stats::getAndResetTickerCount(const uint32_t type)
-noexcept
-{
-	const auto ret(getTickerCount(type));
-	setTickerCount(type, 0);
-	return ret;
 }
 
 bool
@@ -2704,10 +2718,32 @@ noexcept
 }
 
 uint64_t
+ircd::db::database::stats::getAndResetTickerCount(const uint32_t type)
+noexcept
+{
+	const auto ret(getTickerCount(type));
+	setTickerCount(type, 0);
+	return ret;
+}
+
+uint64_t
 ircd::db::database::stats::getTickerCount(const uint32_t type)
 const noexcept
 {
 	return ticker.at(type);
+}
+
+ircd::string_view
+ircd::db::database::stats::make_name(const string_view &ticker_name)
+const
+{
+	assert(this->d);
+	return fmt::sprintf
+	{
+		database_stats_name_buf, "ircd.db.%s.%s",
+		db::name(*d),
+		ticker_name,
+	};
 }
 
 //
