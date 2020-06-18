@@ -643,6 +643,21 @@ AM_COND_IF([GCC],
 	CXXFLAGS+=" -fvtable-verify=none"
 ])
 
+AM_COND_IF([CLANG],
+[
+	CXXFLAGS+=" -fasm-blocks"
+])
+
+AM_COND_IF([GCC],
+[
+	CXXFLAGS+=" -fverbose-asm"
+])
+
+dnl Exception safety at instruction boundary rather than function boundary
+dnl This option is needed to enable noexcept(false) i.e to throw from a
+dnl destructor; without this noexcept(false) still terminates.
+CXXFLAGS+=" -fasynchronous-unwind-tables"
+
 dnl  -fvisibility-inlines-hidden - for optimization; note the address of inline
 dnl  functions won't be the same between translation units
 CXXFLAGS+=" -fvisibility-inlines-hidden"
@@ -661,17 +676,6 @@ dnl tasks we consider the likelyhood of a static initialization race to either
 dnl be sufficiently low or simply immaterial for our uses of them.
 dnl
 CXXFLAGS+=" -fno-threadsafe-statics"
-
-dnl
-AM_COND_IF([GCC],
-[
-	CXXFLAGS+=" -fverbose-asm"
-])
-
-AM_COND_IF([CLANG],
-[
-	CXXFLAGS+=" -fasm-blocks"
-])
 
 dnl
 dnl Compiler warnings
