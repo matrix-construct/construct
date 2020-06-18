@@ -8076,12 +8076,11 @@ ircd::db::_read(column &column,
 
 	// Update stats about whether the pinnable slices we obtained have internal
 	// copies or referencing the cache copy.
-	{
-		database &d(column);
-		d.stats->get_copied += !buf.empty();
-		d.stats->get_referenced += buf.empty();
-	}
-
+	database &d(column);
+	c.stats->get_referenced += buf.empty();
+	d.stats->get_referenced += buf.empty();
+	c.stats->get_copied += !buf.empty();
+	d.stats->get_copied += !buf.empty();
 	return ret;
 }
 
@@ -8170,43 +8169,41 @@ ircd::db::_read(const vector_view<_read_op> &op,
 	else
 		_seek(op, {status, num}, {val, num}, ropts);
 
+	bool ret(true);
 	if(closure)
-		for(size_t i(0); i < num; ++i)
+		for(size_t i(0); i < num && ret; ++i)
 		{
 			const column::delta delta(std::get<1>(op[i]), slice(val[i]));
-			if(!closure(std::get<column>(op[i]), delta, status[i]))
-				return false;
+			ret = closure(std::get<column>(op[i]), delta, status[i]);
 		}
 
 	// Update stats about whether the pinnable slices we obtained have internal
 	// copies or referencing the cache copy.
+	for(size_t i(0); i < num; ++i)
 	{
-		database &d(std::get<column>(op[0]));
-		const auto copy_count
+		database &d(std::get<column>(op[i]));
+		database::column &c(std::get<column>(op[i]));
+
+		// Find the correct stats to update, one for the specific column and
+		// one for the database total.
+		ircd::stats::item<uint64_t *> *item_[2]
 		{
-			std::count_if(buf, buf + num, [](auto&& s) { return !s.empty(); })
+			parallelize && buf[i].empty()?    &c.stats->multiget_referenced:
+			parallelize?                      &c.stats->multiget_copied:
+			buf[i].empty()?                   &c.stats->get_referenced:
+			                                  &c.stats->get_copied,
+
+			parallelize && buf[i].empty()?    &d.stats->multiget_referenced:
+			parallelize?                      &d.stats->multiget_copied:
+			buf[i].empty()?                   &d.stats->get_referenced:
+			                                  &d.stats->get_copied,
 		};
 
-		auto &referenced
-		{
-			parallelize?
-				d.stats->multiget_referenced:
-				d.stats->get_referenced
-		};
-
-		auto &copied
-		{
-			parallelize?
-				d.stats->multiget_copied:
-				d.stats->get_copied
-		};
-
-		assert(num >= size_t(copy_count));
-		referenced += (num - copy_count);
-		copied += copy_count;
+		for(auto *const &item : item_)
+			++(*item);
 	}
 
-	return true;
+	return ret;
 }
 
 void
