@@ -1663,6 +1663,65 @@ console_cmd__ios(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__ios__depth(opt &out, const string_view &line)
+{
+	uint64_t returned, executed, started;
+
+	// ios::dispatch
+	{
+		started = ios::epoch();
+		ios::dispatch(ios::synchronous, [&executed]
+		{
+			executed = ios::epoch();
+		});
+
+		returned = ios::epoch();
+	}
+
+	out
+	<< "disp send:    "  << (executed - started)    << std::endl
+	<< "disp recv:    "  << (returned - executed)   << std::endl
+	<< "disp rtt:     "  << (returned - started)    << std::endl
+	<< std::endl;
+
+	// ios::defer
+	{
+		started = ios::epoch();
+		ios::defer(ios::synchronous, [&executed]
+		{
+			executed = ios::epoch();
+		});
+
+		returned = ios::epoch();
+	}
+
+	out
+	<< "defer send:   "  << (executed - started)    << std::endl
+	<< "defer recv:   "  << (returned - executed)   << std::endl
+	<< "defer rtt:    "  << (returned - started)    << std::endl
+	<< std::endl;
+
+	// ios::post
+	{
+		started = ios::epoch();
+		ios::post(ios::synchronous, [&executed]
+		{
+			executed = ios::epoch();
+		});
+
+		returned = ios::epoch();
+	}
+
+	out
+	<< "post send:    "  << (executed - started)    << std::endl
+	<< "post recv:    "  << (returned - executed)   << std::endl
+	<< "post rtt:     "  << (returned - started)    << std::endl
+	<< std::endl;
+
+	return true;
+}
+
 #ifdef __x86_64__
 bool
 console_cmd__ios__latency(opt &out, const string_view &line)
