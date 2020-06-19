@@ -47,10 +47,10 @@ namespace ircd::ios
 	extern asio::executor user;
 	extern asio::executor main;
 
-	bool available() noexcept;
-
 	const string_view &name(const descriptor &);
 	const string_view &name(const handler &);
+
+	bool available() noexcept;
 	const uint64_t &epoch() noexcept;
 
 	void forked_parent();

@@ -5192,14 +5192,6 @@ ircd::db::write(const row::delta *const &begin,
 	write(&deltas.front(), &deltas.front() + deltas.size(), sopts);
 }
 
-// Developer can specifically use RB_DEBUG_DB_SEEK_ROW without RB_DEBUG_DB_SEEK
-// to only see a report of the row seek as a whole. If RB_DEBUG_DB_SEEK is
-// enabled that implies RB_DEBUG_DB_SEEK_ROW as well.
-//
-#if !defined(RB_DEBUG_DB_SEEK_ROW) && defined(RB_DEBUG_DB_SEEK)
-	#define RB_DEBUG_DB_SEEK_ROW
-#endif
-
 size_t
 ircd::db::seek(row &r,
                const string_view &key,
