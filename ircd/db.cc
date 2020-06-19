@@ -47,7 +47,7 @@ ircd::db::version_abi
 	{
 		fmt::sprintf
 		{
-			buf, "%s (%s)\n",
+			buf, "%s (%s)",
 			lstrip(rocksdb_build_git_sha, "rocksdb_build_git_sha:"),
 			rocksdb_build_compile_date,
 		};
