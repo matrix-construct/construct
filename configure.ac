@@ -1331,12 +1331,12 @@ dnl RB_CHK_SYSHEADER(unicode/utmscale.h, [UNICODE_UTMSCALE_H])
 PKG_CHECK_MODULES(icuuc, [icuuc],
 [
 	have_icuuc="yes"
-	dnl ICU_LIBS+=" -licuuc"
+	ICU_LIBS+=" -licuuc"
 ], [
 	AC_CHECK_LIB([icuuc], [_init],
 	[
 		have_icuuc="yes"
-		dnl ICU_LIBS+=" -licuuc"
+		ICU_LIBS+=" -licuuc"
 	], [
 		have_icuuc="no"
 	])
@@ -2335,6 +2335,7 @@ dnl Units defining spirit grammars may benefit from special compiler flags due
 dnl to their various complexities. The ./configure may have generated flags
 dnl in $GRAMMAR_UNIT_CXXFLAGS to improve compile time and reduce debug symbol.
 AC_SUBST(SPIRIT_UNIT_CPPFLAGS)
+SPIRIT_UNIT_CPPFLAGS+=" $ICU_CPPFLAGS"
 SPIRIT_UNIT_CPPFLAGS+=" $BOOST_CPPFLAGS"
 SPIRIT_UNIT_CPPFLAGS+=" -include ircd/spirit.h"
 
