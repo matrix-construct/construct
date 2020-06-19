@@ -228,6 +228,7 @@ ircd::m::event::conforms::conforms(const event &e,
 }
 
 ircd::m::event::conforms::conforms(const event &e)
+try
 :report{0}
 {
 	if(!e.event_id)
@@ -366,6 +367,16 @@ ircd::m::event::conforms::conforms(const event &e)
 				if(event_id == prev.prev_event(j))
 					set(DUP_PREV_EVENT);
 	}
+}
+catch(const std::exception &_e)
+{
+	log::error
+	{
+		log, "Unable to complete conformity check :%s",
+		_e.what(),
+	};
+
+	throw;
 }
 
 void
