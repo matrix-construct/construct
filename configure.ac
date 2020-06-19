@@ -1279,6 +1279,73 @@ dnl
 
 dnl
 dnl
+dnl unicode / icu
+dnl
+dnl
+
+AC_SUBST(ICU_CPPFLAGS, [])
+AC_SUBST(ICU_LDFLAGS, [])
+AC_SUBST(ICU_LIBS, [])
+
+AC_ARG_WITH(icu-includes,
+RB_HELP_STRING([--with-icu-includes=[[[DIR]]]], [Path to unicode include directory]),
+[
+	ICU_CPPFLAGS+="-isystem $withval"
+])
+
+AC_ARG_WITH(icu-libs,
+RB_HELP_STRING([--with-icu-libs=[[[DIR]]]], [Path to unicode libraries directory]),
+[
+	ICU_LDFLAGS+=" -L$withval"
+])
+
+dnl RB_CHK_SYSHEADER(unicode/utypes.h, [UNICODE_UTYPES_H])
+
+dnl RB_CHK_SYSHEADER(unicode/ustring.h, [UNICODE_USTRING_H])
+dnl RB_CHK_SYSHEADER(unicode/utext.h, [UNICODE_UTEXT_H])
+dnl RB_CHK_SYSHEADER(unicode/unistr.h, [UNICODE_UNISTR_H])
+dnl RB_CHK_SYSHEADER(unicode/chariter.h, [UNICODE_CHARITER_H])
+dnl RB_CHK_SYSHEADER(unicode/stringpiece.h, [UNICODE_STRINGPIECE_H])
+dnl RB_CHK_SYSHEADER(unicode/utf.h, [UNICODE_UTF_H])
+
+dnl RB_CHK_SYSHEADER(unicode/uchar.h, [UNICODE_UCHAR_H])
+dnl RB_CHK_SYSHEADER(unicode/uscript.h, [UNICODE_USCRIPT_H])
+
+dnl RB_CHK_SYSHEADER(unicode/uset.h, [UNICODE_USET_H])
+dnl RB_CHK_SYSHEADER(unicode/uniset.h, [UNICODE_UNISET_H])
+
+dnl RB_CHK_SYSHEADER(unicode/uloc.h, [UNICODE_ULOC_H])
+dnl RB_CHK_SYSHEADER(unicode/locid.h, [UNICODE_LOCID_H])
+
+dnl RB_CHK_SYSHEADER(unicode/usearch.h, [UNICODE_USEARCH_H])
+dnl RB_CHK_SYSHEADER(unicode/stsearch.h, [UNICODE_STSEARCH_H])
+
+dnl RB_CHK_SYSHEADER(unicode/ubrk.h, [UNICODE_UBRK_H])
+dnl RB_CHK_SYSHEADER(unicode/brkiter.h, [UNICODE_BRKITER_H])
+
+dnl RB_CHK_SYSHEADER(unicode/uidna.h, [UNICODE_UIDNA_H]	)
+dnl RB_CHK_SYSHEADER(unicode/idna.h, [UNICODE_IDNA_H])
+
+dnl RB_CHK_SYSHEADER(unicode/utmscale.h, [UNICODE_UTMSCALE_H])
+
+PKG_CHECK_MODULES(icuuc, [icuuc],
+[
+	have_icuuc="yes"
+	dnl ICU_LIBS+=" -licuuc"
+], [
+	AC_CHECK_LIB([icuuc], [_init],
+	[
+		have_icuuc="yes"
+		dnl ICU_LIBS+=" -licuuc"
+	], [
+		have_icuuc="no"
+	])
+])
+
+AM_CONDITIONAL([ICUUC], [test "x$have_icuuc" = "xyes" ])
+
+dnl
+dnl
 dnl libsodium (NaCl) crypto support
 dnl
 dnl
@@ -2320,6 +2387,7 @@ echo "Building boost .................... $with_included_boost"
 echo "Building RocksDB .................. $with_included_rocksdb"
 echo "Building JS (SpiderMonkey) ........ $with_included_js"
 echo "IPv6 support ...................... $ipv6"
+echo "Unicode support ................... $have_icuuc"
 echo "Ziplinks (libz) support ........... $have_zlib"
 echo "LZ4 support ....................... $have_lz4"
 echo "Snappy support .................... $have_snappy"
