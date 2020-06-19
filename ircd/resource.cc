@@ -774,10 +774,22 @@ noexcept try
 	if(!c)
 		return;
 
-	if(!std::uncaught_exceptions())
-		finish();
-	else
-		c->close(net::dc::RST, net::close_ignore);
+	if(std::uncaught_exceptions())
+	{
+		log::derror
+		{
+			log, "%s HTTP response chunks:%u wrote:%zu flushed:%zu :stream interrupted...",
+			c->loghead(),
+			count,
+			wrote,
+			flushed,
+		};
+
+		c->close(net::dc::SSL_NOTIFY, net::close_ignore);
+		return;
+	}
+
+	finish();
 }
 catch(...)
 {
