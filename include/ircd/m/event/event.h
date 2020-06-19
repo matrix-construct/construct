@@ -40,11 +40,6 @@ namespace ircd::m
 	size_t degree(const event &);
 	bool before(const event &a, const event &b);
 
-	bool check_id(const event &) noexcept;
-	bool check_id(const event &, const string_view &room_version) noexcept;
-	id::event make_id(const event &, const string_view &version, id::event::buf &buf, const const_buffer &hash);
-	id::event make_id(const event &, const string_view &version, id::event::buf &buf);
-
 	json::object hashes(const mutable_buffer &, const event &);
 	event signatures(const mutable_buffer &, const m::event &, const string_view &origin);
 	event signatures(const mutable_buffer &, const m::event &);
@@ -64,6 +59,11 @@ namespace ircd::m
 	ed25519::sig sign(const event &, const ed25519::sk &);
 	ed25519::sig sign(const event &, const string_view &origin);
 	ed25519::sig sign(const event &);
+
+	id::event make_id(const event &, const string_view &version, id::event::buf &buf, const const_buffer &hash);
+	id::event make_id(const event &, const string_view &version, id::event::buf &buf);
+	bool check_id(const event &, const string_view &room_version) noexcept;
+	bool check_id(const event &) noexcept;
 }
 
 ///

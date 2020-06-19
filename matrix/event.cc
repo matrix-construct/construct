@@ -23,6 +23,122 @@ ircd::m::event::max_size
 	{ "default",   65507L            },
 };
 
+bool
+ircd::m::check_id(const event &event)
+noexcept
+{
+	if(!event.event_id)
+		return false;
+
+	const string_view &version
+	{
+		event.event_id.version()
+	};
+
+	return check_id(event, version);
+}
+
+bool
+ircd::m::check_id(const event &event,
+                  const string_view &room_version)
+noexcept try
+{
+	assert(event.event_id);
+	const auto &version
+	{
+		room_version?: event.event_id.version()
+	};
+
+	char buf[64];
+	const event::id &check_id
+	{
+		version == "1" || version == "2"?
+			event::id{json::get<"event_id"_>(event)}:
+
+		version == "3"?
+			event::id{event::id::v3{buf, event}}:
+
+		event::id{event::id::v4{buf, event}}
+	};
+
+	return event.event_id == check_id;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"m::check_id() :%s", e.what()
+	};
+
+	return false;
+}
+catch(...)
+{
+	assert(0);
+	return false;
+}
+
+ircd::m::id::event
+ircd::m::make_id(const event &event,
+                 const string_view &version,
+                 id::event::buf &buf)
+{
+	if(version == "1" || version == "2")
+	{
+		const crh::sha256::buf hash{event};
+		return make_id(event, version, buf, hash);
+	}
+
+	if(version == "3")
+		return event::id::v3
+		{
+			buf, event
+		};
+
+	return event::id::v4
+	{
+		buf, event
+	};
+}
+
+ircd::m::id::event
+ircd::m::make_id(const event &event,
+                 const string_view &version,
+                 id::event::buf &buf,
+                 const const_buffer &hash)
+{
+	char readable[b64encode_size(sha256::digest_size)];
+
+	if(version == "1" || version == "2")
+	{
+		const id::event ret
+		{
+			buf, b64tob64url(readable, b64encode_unpadded(readable, hash)), at<"origin"_>(event)
+		};
+
+		buf.assigned(ret);
+		return ret;
+	}
+	else if(version == "3")
+	{
+		const id::event ret
+		{
+			buf, b64encode_unpadded(readable, hash), string_view{}
+		};
+
+		buf.assigned(ret);
+		return ret;
+	}
+
+	const id::event ret
+	{
+		buf, b64tob64url(readable, b64encode_unpadded(readable, hash)), string_view{}
+	};
+
+	buf.assigned(ret);
+	return ret;
+}
+
 ircd::json::object
 ircd::m::hashes(const mutable_buffer &out,
                 const event &event)
@@ -819,122 +935,6 @@ catch(const json::not_found &e)
 	};
 
 	throw;
-}
-
-ircd::m::id::event
-ircd::m::make_id(const event &event,
-                 const string_view &version,
-                 id::event::buf &buf)
-{
-	if(version == "1" || version == "2")
-	{
-		const crh::sha256::buf hash{event};
-		return make_id(event, version, buf, hash);
-	}
-
-	if(version == "3")
-		return event::id::v3
-		{
-			buf, event
-		};
-
-	return event::id::v4
-	{
-		buf, event
-	};
-}
-
-ircd::m::id::event
-ircd::m::make_id(const event &event,
-                 const string_view &version,
-                 id::event::buf &buf,
-                 const const_buffer &hash)
-{
-	char readable[b64encode_size(sha256::digest_size)];
-
-	if(version == "1" || version == "2")
-	{
-		const id::event ret
-		{
-			buf, b64tob64url(readable, b64encode_unpadded(readable, hash)), at<"origin"_>(event)
-		};
-
-		buf.assigned(ret);
-		return ret;
-	}
-	else if(version == "3")
-	{
-		const id::event ret
-		{
-			buf, b64encode_unpadded(readable, hash), string_view{}
-		};
-
-		buf.assigned(ret);
-		return ret;
-	}
-
-	const id::event ret
-	{
-		buf, b64tob64url(readable, b64encode_unpadded(readable, hash)), string_view{}
-	};
-
-	buf.assigned(ret);
-	return ret;
-}
-
-bool
-ircd::m::check_id(const event &event)
-noexcept
-{
-	if(!event.event_id)
-		return false;
-
-	const string_view &version
-	{
-		event.event_id.version()
-	};
-
-	return check_id(event, version);
-}
-
-bool
-ircd::m::check_id(const event &event,
-                  const string_view &room_version)
-noexcept try
-{
-	assert(event.event_id);
-	const auto &version
-	{
-		room_version?: event.event_id.version()
-	};
-
-	char buf[64];
-	const event::id &check_id
-	{
-		version == "1" || version == "2"?
-			event::id{json::get<"event_id"_>(event)}:
-
-		version == "3"?
-			event::id{event::id::v3{buf, event}}:
-
-		event::id{event::id::v4{buf, event}}
-	};
-
-	return event.event_id == check_id;
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		"m::check_id() :%s", e.what()
-	};
-
-	return false;
-}
-catch(...)
-{
-	assert(0);
-	return false;
 }
 
 bool
