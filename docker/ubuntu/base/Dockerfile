@@ -19,6 +19,7 @@ RUN \
         git \
         libbz2-dev \
         libgraphicsmagick1-dev \
+        libicu-dev \
         libjemalloc-dev \
         liblz4-dev \
         libmagic-dev \
