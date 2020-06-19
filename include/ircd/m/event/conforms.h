@@ -85,6 +85,8 @@ enum ircd::m::event::conforms::code
 	DUP_PREV_EVENT,                    ///< duplicate references in prev_events
 	DUP_AUTH_EVENT,                    ///< duplicate references in auth_events
 	MISMATCH_EVENT_ID,                 ///< event.event_id isn't the right hash.
+	MISSING_HASHES,                    ///< no hashes or recognized algorithm
+	MISMATCH_HASHES,                   ///< hashes don't match expected
 
 	_NUM_
 };
