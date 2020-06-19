@@ -66,3 +66,306 @@ ircd::icu::unicode_version_abi
 		#endif
 	}
 };
+
+//
+// uchar
+//
+
+#if __has_include(<unicode/uchar.h>)
+
+ircd::string_view
+ircd::icu::property_acronym(const uint &prop)
+{
+	return u_getPropertyName(UProperty(prop), U_SHORT_PROPERTY_NAME);
+}
+
+ircd::string_view
+ircd::icu::property_name(const uint &prop)
+{
+	return u_getPropertyName(UProperty(prop), U_LONG_PROPERTY_NAME);
+}
+
+ircd::string_view
+ircd::icu::name(const mutable_buffer &out,
+                const char32_t &ch)
+{
+	UErrorCode err{U_ZERO_ERROR};
+	const auto len
+	{
+		u_charName(ch, U_EXTENDED_CHAR_NAME, data(out), size(out), &err)
+	};
+
+	if(unlikely(U_FAILURE(err)))
+		throw error
+		{
+			"%s", u_errorName(err)
+		};
+
+	return string_view
+	{
+		data(out), std::min(size_t(len), size(out))
+	};
+}
+
+ircd::string_view
+ircd::icu::name(const mutable_buffer &out,
+                std::nothrow_t,
+                const char32_t &ch)
+{
+	UErrorCode err{U_ZERO_ERROR};
+	const auto len
+	{
+		u_charName(ch, U_EXTENDED_CHAR_NAME, data(out), size(out), &err)
+	};
+
+	return string_view
+	{
+		data(out), U_SUCCESS(err)? std::min(size_t(len), size(out)): 0UL
+	};
+}
+
+char32_t
+ircd::icu::name(const string_view &name)
+{
+	thread_local char buf[128];
+	UErrorCode err{U_ZERO_ERROR};
+	const auto ret
+	{
+		u_charFromName(U_EXTENDED_CHAR_NAME, data(strlcpy(buf, name)), &err)
+	};
+
+	if(unlikely(U_FAILURE(err)))
+		throw error
+		{
+			"%s", u_errorName(err)
+		};
+
+	return ret;
+}
+
+char32_t
+ircd::icu::name(std::nothrow_t,
+                const string_view &name)
+{
+	thread_local char buf[128];
+	UErrorCode err{U_ZERO_ERROR};
+	const auto ret
+	{
+		u_charFromName(U_EXTENDED_CHAR_NAME, data(strlcpy(buf, name)), &err)
+	};
+
+	return U_SUCCESS(err)? ret: char32_t(0xfffd);
+}
+
+char32_t
+ircd::icu::tolower(const char32_t &ch)
+noexcept
+{
+	return u_tolower(ch);
+}
+
+char32_t
+ircd::icu::toupper(const char32_t &ch)
+noexcept
+{
+	return u_toupper(ch);
+}
+
+bool
+ircd::icu::is_char(const char32_t &ch)
+noexcept
+{
+	return U_IS_UNICODE_CHAR(ch);
+}
+
+bool
+ircd::icu::is_nonchar(const char32_t &ch)
+noexcept
+{
+	return U_IS_UNICODE_NONCHAR(ch);
+}
+
+int16_t
+ircd::icu::block(const char32_t &ch)
+noexcept
+{
+	return ublock_getCode(ch);
+}
+
+int8_t
+ircd::icu::category(const char32_t &ch)
+noexcept
+{
+	return u_charType(ch);
+}
+
+#endif // __has_include(<unicode/uchar.h>)
+
+//
+// utf-16
+//
+
+#if __has_include(<unicode/utf16.h>)
+
+char32_t
+ircd::icu::u16::get_unsafe(const string_view &in)
+noexcept
+{
+	UChar32 ret;
+	const auto &_in(reinterpret_cast<const uint8_t *>(data(in)));
+	U16_GET_UNSAFE(_in, 0, ret);
+	return ret;
+}
+
+char32_t
+ircd::icu::u16::get_or_fffd(const string_view &in_)
+noexcept
+{
+	UChar32 ret;
+	const auto &in(reinterpret_cast<const uint8_t *>(data(in_)));
+	const int32_t len(size(in_));
+	U16_GET_OR_FFFD(in, 0, 0, len, ret);
+	return ret;
+}
+
+char32_t
+ircd::icu::u16::get(const string_view &in_)
+noexcept
+{
+	UChar32 ret;
+	const auto &in(reinterpret_cast<const uint8_t *>(data(in_)));
+	const int32_t len(size(in_));
+	U16_GET(in, 0, 0, len, ret);
+	return ret;
+}
+
+size_t
+ircd::icu::u16::length(const string_view &in)
+noexcept
+{
+	return u16::length(u16::get(in));
+}
+
+size_t
+ircd::icu::u16::length(const char32_t &ch)
+noexcept
+{
+	return U16_LENGTH(ch);
+}
+
+bool
+ircd::icu::u16::single(const char &ch)
+noexcept
+{
+	return U16_IS_SINGLE(ch);
+}
+
+bool
+ircd::icu::u16::trail(const char &ch)
+noexcept
+{
+	return U16_IS_TRAIL(ch);
+}
+
+bool
+ircd::icu::u16::lead(const char &ch)
+noexcept
+{
+	return U16_IS_LEAD(ch);
+}
+
+#endif // __has_include(<unicode/utf16.h>)
+
+//
+// utf-8
+//
+
+#if __has_include(<unicode/utf8.h>)
+
+size_t
+ircd::icu::u8::transform(char32_t *const &out,
+                         const size_t &max,
+                         const string_view &in)
+{
+	const auto &_in
+	{
+		reinterpret_cast<const uint8_t *>(data(in))
+	};
+
+	size_t ret(0), off(0);
+	for(; ret < max && off < size(in); ++ret)
+		U8_NEXT(_in, off, size(in), out[ret]);
+
+	assert(off <= size(in));
+	assert(ret <= max);
+	return ret;
+}
+
+char32_t
+ircd::icu::u8::get_unsafe(const string_view &in)
+noexcept
+{
+	UChar32 ret;
+	const auto &_in(reinterpret_cast<const uint8_t *>(data(in)));
+	U8_GET_UNSAFE(_in, 0, ret);
+	return ret;
+}
+
+char32_t
+ircd::icu::u8::get_or_fffd(const string_view &in_)
+noexcept
+{
+	UChar32 ret;
+	const auto &in(reinterpret_cast<const uint8_t *>(data(in_)));
+	const int32_t len(size(in_));
+	U8_GET_OR_FFFD(in, 0, 0, len, ret);
+	return ret;
+}
+
+char32_t
+ircd::icu::u8::get(const string_view &in_)
+noexcept
+{
+	UChar32 ret;
+	const auto &in(reinterpret_cast<const uint8_t *>(data(in_)));
+	const int32_t len(size(in_));
+	U8_GET(in, 0, 0, len, ret);
+	return ret;
+}
+
+size_t
+ircd::icu::u8::length(const string_view &in)
+noexcept
+{
+	return u8::length(u8::get(in));
+}
+
+size_t
+ircd::icu::u8::length(const char32_t &ch)
+noexcept
+{
+	return U8_LENGTH(ch);
+}
+
+bool
+ircd::icu::u8::single(const char &ch)
+noexcept
+{
+	return U8_IS_SINGLE(ch);
+}
+
+bool
+ircd::icu::u8::trail(const char &ch)
+noexcept
+{
+	return U8_IS_TRAIL(ch);
+}
+
+bool
+ircd::icu::u8::lead(const char &ch)
+noexcept
+{
+	return U8_IS_LEAD(ch);
+}
+
+#endif // __has_include(<unicode/utf8.h>)
