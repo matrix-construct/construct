@@ -179,40 +179,17 @@ ircd::m::make_hashes(const mutable_buffer &out,
 }
 
 ircd::sha256::buf
-ircd::m::event::hash(const json::object &event)
-try
+ircd::m::event::hash(const json::object &event_)
 {
-	static const size_t iov_max{json::iov::max_size};
-	thread_local std::array<json::object::member, iov_max> member;
-
-	size_t i(0);
-	for(const auto &m : event)
-	{
-		if(m.first == "signatures" ||
-		   m.first == "hashes" ||
-		   m.first == "unsigned" ||
-		   m.first == "age_ts" ||
-		   m.first == "outlier" ||
-		   m.first == "destinations")
-			continue;
-
-		member.at(i++) = m;
-	}
-
 	thread_local char buf[event::MAX_SIZE];
-	const string_view reimage
+	const json::object event
 	{
-		json::stringify(buf, member.data(), member.data() + i)
+		referential(buf, event_)
 	};
 
-	return sha256{reimage};
-}
-catch(const std::out_of_range &e)
-{
-	throw m::BAD_JSON
+	return sha256
 	{
-		"Object has more than %zu member properties.",
-		json::iov::max_size
+		event
 	};
 }
 
@@ -935,6 +912,44 @@ catch(const json::not_found &e)
 	};
 
 	throw;
+}
+
+ircd::json::object
+ircd::m::event::referential(const mutable_buffer &buf,
+                            const json::object &event)
+try
+{
+	static const size_t iov_max{json::iov::max_size};
+	thread_local std::array<json::object::member, iov_max> member;
+
+	size_t i(0);
+	for(const auto &m : event)
+	{
+		if(m.first == "signatures" ||
+		   m.first == "hashes" ||
+		   m.first == "unsigned" ||
+		   m.first == "age_ts" ||
+		   m.first == "outlier" ||
+		   m.first == "destinations")
+			continue;
+
+		member.at(i++) = m;
+	}
+
+	const string_view ret
+	{
+		json::stringify(mutable_buffer(buf), member.data(), member.data() + i)
+	};
+
+	return ret;
+}
+catch(const std::out_of_range &e)
+{
+	throw m::BAD_JSON
+	{
+		"Object has more than %zu member properties.",
+		json::iov::max_size
+	};
 }
 
 bool
