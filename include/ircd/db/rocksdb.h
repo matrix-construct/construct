@@ -29,6 +29,7 @@ namespace rocksdb
 	struct ColumnFamilyHandle;
 	struct WriteBatch;
 	struct Slice;
+	struct PinnableSlice;
 	struct Checkpoint;
 	struct SstFileManager;
 	struct PerfContext;
@@ -46,11 +47,19 @@ namespace rocksdb
 //
 namespace ircd::db
 {
+	// Forward slice suite; consider rocksdb::Slice similar to string_view
 	rocksdb::Slice slice(const string_view &);
 	string_view slice(const rocksdb::Slice &);
-	size_t size(const rocksdb::Slice &);
 	const char *data(const rocksdb::Slice &);
+	size_t size(const rocksdb::Slice &);
 
+	// Forward PinnableSlice suite; this inherits from Slice, but the forward
+	// interface doesn't know that here.
+	string_view slice(const rocksdb::PinnableSlice &);
+	const char *data(const rocksdb::PinnableSlice &);
+	size_t size(const rocksdb::PinnableSlice &);
+
+	// Iterator suite.
 	bool valid(const rocksdb::Iterator &);
 	string_view key(const rocksdb::Iterator &);
 	string_view val(const rocksdb::Iterator &);

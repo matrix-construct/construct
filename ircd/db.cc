@@ -8875,6 +8875,10 @@ ircd::db::namepoint(const string_view &name,
 	return std::string{name} + ':' + std::string{lex_cast(checkpoint)};
 }
 
+//
+// Iterator
+//
+
 std::pair<ircd::string_view, ircd::string_view>
 ircd::db::operator*(const rocksdb::Iterator &it)
 {
@@ -8894,19 +8898,41 @@ ircd::db::val(const rocksdb::Iterator &it)
 }
 
 //
-// slice
+// PinnableSlice
 //
 
-const char *
-ircd::db::data(const rocksdb::Slice &slice)
+size_t
+ircd::db::size(const rocksdb::PinnableSlice &ps)
 {
-	return slice.data();
+	return size(static_cast<const rocksdb::Slice &>(ps));
 }
+
+const char *
+ircd::db::data(const rocksdb::PinnableSlice &ps)
+{
+	return data(static_cast<const rocksdb::Slice &>(ps));
+}
+
+ircd::string_view
+ircd::db::slice(const rocksdb::PinnableSlice &ps)
+{
+	return slice(static_cast<const rocksdb::Slice &>(ps));
+}
+
+//
+// Slice
+//
 
 size_t
 ircd::db::size(const rocksdb::Slice &slice)
 {
 	return slice.size();
+}
+
+const char *
+ircd::db::data(const rocksdb::Slice &slice)
+{
+	return slice.data();
 }
 
 rocksdb::Slice
