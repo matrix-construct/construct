@@ -2488,17 +2488,6 @@ ircd::json::vector::const_iterator::operator++()
 // json/object.h
 //
 
-namespace ircd::json
-{
-	[[gnu::visibility("internal")]]
-	extern const parser::rule<object::member>
-	object_member,
-	object_next,
-	object_begin,
-	object_next_parse,
-	object_begin_parse;
-}
-
 decltype(ircd::json::object::max_recursion_depth)
 ircd::json::object::max_recursion_depth
 {
@@ -2510,6 +2499,25 @@ ircd::json::object::max_sorted_members
 {
 	iov::max_size
 };
+
+namespace ircd::json
+{
+	[[gnu::visibility("internal")]]
+	extern const parser::rule<object::member>
+	object_member,
+	object_next,
+	object_begin,
+	object_next_parse,
+	object_begin_parse;
+
+	using object_member_array_type = std::array<object::member, object::max_sorted_members>;
+	using object_member_arrays_type = std::array<object_member_array_type, object::max_recursion_depth>;
+	static_assert(sizeof(object_member_arrays_type) == 3_MiB); // yay reentrance .. joy :/
+	static thread_local object_member_arrays_type object_member_arrays;
+	static thread_local size_t object_member_arrays_ctr;
+
+	static string_view _stringify(mutable_buffer &buf, const object::member *const &b, const object::member *const &e);
+}
 
 decltype(ircd::json::object_member)
 ircd::json::object_member
@@ -2559,18 +2567,12 @@ ircd::json::stringify(mutable_buffer &buf,
                       const object &object)
 try
 {
-	using member_array = std::array<object::member, object::max_sorted_members>;
-	using member_arrays = std::array<member_array, object::max_recursion_depth>;
-	static_assert(sizeof(member_arrays) == 3_MiB); // yay reentrance .. joy :/
-
-	thread_local member_arrays ma;
-	thread_local size_t mctr;
-	const size_t mc{mctr};
-	const scope_count _mc{mctr};
-	assert(mc < ma.size());
+	const size_t mc(object_member_arrays_ctr);
+	assert(mc < object_member_arrays.size());
+	const scope_count _mc(object_member_arrays_ctr);
+	auto &m(object_member_arrays.at(object_member_arrays_ctr));
 
 	size_t i(0);
-	auto &m{ma.at(mc)};
 	for(auto it(begin(object)); it != end(object); ++it, ++i)
 		m.at(i) = *it;
 
@@ -2580,7 +2582,7 @@ try
 		return a.first < b.first;
 	});
 
-	return stringify(buf, m.data(), m.data() + i);
+	return _stringify(buf, m.data(), m.data() + i);
 }
 catch(const std::out_of_range &e)
 {
@@ -2800,7 +2802,29 @@ ircd::json::stringify(mutable_buffer &buf,
                       const object::member *const &b,
                       const object::member *const &e)
 {
-	char *const start(begin(buf));
+	const size_t mc(object_member_arrays_ctr);
+	assert(mc < object_member_arrays.size());
+	const scope_count _mc(object_member_arrays_ctr);
+	auto &m(object_member_arrays.at(object_member_arrays_ctr));
+
+	size_t i(0);
+	for(auto it(b); it != e; ++it, ++i)
+		m.at(i) = *it;
+
+	std::sort(begin(m), begin(m) + i, []
+	(const object::member &a, const object::member &b) noexcept
+	{
+		return a.first < b.first;
+	});
+
+	return _stringify(buf, begin(m), begin(m) + i);
+}
+
+ircd::string_view
+ircd::json::_stringify(mutable_buffer &buf,
+                       const object::member *const &b,
+                       const object::member *const &e)
+{
 	static const auto stringify_member
 	{
 		[](mutable_buffer &buf, const object::member &member)
@@ -2809,6 +2833,7 @@ ircd::json::stringify(mutable_buffer &buf,
 		}
 	};
 
+	char *const start(begin(buf));
 	printer(buf, printer.object_begin);
 	printer::list_protocol(buf, b, e, stringify_member);
 	printer(buf, printer.object_end);
