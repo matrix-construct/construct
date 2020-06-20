@@ -122,7 +122,6 @@ libircd_la_SOURCES += demangle.cc
 libircd_la_SOURCES += backtrace.cc
 libircd_la_SOURCES += fpe.cc
 libircd_la_SOURCES += icu.cc
-libircd_la_SOURCES += locale.cc
 libircd_la_SOURCES += timedate.cc
 libircd_la_SOURCES += lex_cast.cc
 libircd_la_SOURCES += stringops.cc
@@ -236,7 +235,6 @@ endif
 json.lo:              AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 json.lo:              AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
 lex_cast.lo:          AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
-locale.lo:            AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
 tokens.lo:            AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
 prof.lo:              AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
 if MAGIC
