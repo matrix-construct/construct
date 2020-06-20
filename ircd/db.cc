@@ -2001,7 +2001,7 @@ ircd::db::database::column::column(database &d,
 {
 	descriptor.name != "default"s?
 		std::make_shared<struct database::stats>(this->d, this):
-		std::shared_ptr<struct database::stats>{},
+		this->d->stats
 }
 ,allocator
 {
