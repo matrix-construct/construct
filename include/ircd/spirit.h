@@ -21,6 +21,7 @@
 // ircd.h is included here so that it can be compiled into this header. Then
 // this becomes the single leading precompiled header.
 #include <ircd/ircd.h>
+#include <ircd/simd.h>
 
 // Disables asserts in spirit headers even when we're NDEBUG due to
 // some false asserts around boolean character tests in spirit.
