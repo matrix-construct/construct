@@ -281,7 +281,7 @@ ircd::json::printer
 	struct string_state;
 	struct character_state;
 	using character_prototype = char(const string_view &, string_state &);
-	template<class context> static void character_dfa(char &, context &, bool &) noexcept;
+	template<class context> static void character_dfa(char &__restrict__, context &, bool &) noexcept;
 	const rule<character_prototype, locals<character_state>> character
 	{
 		repeat[char_[([](auto &out, auto &gen, auto &ret)
@@ -405,7 +405,7 @@ ircd::json::printer::character_state::ctrl_tab
 
 template<class gen>
 inline void
-ircd::json::printer::character_dfa(char &out,
+ircd::json::printer::character_dfa(char &__restrict__ out,
                                    gen &g,
                                    bool &ret)
 noexcept
