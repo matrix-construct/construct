@@ -182,14 +182,14 @@ ircd::sha256::buf
 ircd::m::event::hash(const json::object &event_)
 {
 	thread_local char buf[event::MAX_SIZE];
-	const json::object event
+	const json::object preimage
 	{
-		referential(buf, event_)
+		event::preimage(buf, event_)
 	};
 
 	return sha256
 	{
-		event
+		preimage
 	};
 }
 
@@ -915,8 +915,8 @@ catch(const json::not_found &e)
 }
 
 ircd::json::object
-ircd::m::event::referential(const mutable_buffer &buf,
-                            const json::object &event)
+ircd::m::event::preimage(const mutable_buffer &buf_,
+                         const json::object &event)
 try
 {
 	static const size_t iov_max{json::iov::max_size};
@@ -936,9 +936,10 @@ try
 		member.at(i++) = m;
 	}
 
+	mutable_buffer buf{buf_};
 	const string_view ret
 	{
-		json::stringify(mutable_buffer(buf), member.data(), member.data() + i)
+		json::stringify(buf, member.data(), member.data() + i)
 	};
 
 	return ret;

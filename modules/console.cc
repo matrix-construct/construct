@@ -14296,6 +14296,29 @@ console_cmd__fed__event(opt &out, const string_view &line)
 		return true;
 	}
 
+	if(has(op, "essential"))
+	{
+		const unique_mutable_buffer buf
+		{
+			m::event::MAX_SIZE
+		};
+
+		out << m::essential(response, buf) << std::endl;
+		return true;
+	}
+
+	if(has(op, "preimage"))
+	{
+		const unique_mutable_buffer buf
+		{
+			m::event::MAX_SIZE
+		};
+
+		const string_view preimage(m::event::preimage(buf, response));
+		out << preimage << std::endl;
+		return true;
+	}
+
 	m::event::id::buf _event_id;
 	const m::event event
 	{
