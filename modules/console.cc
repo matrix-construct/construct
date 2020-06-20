@@ -15750,15 +15750,15 @@ console_cmd__icu(opt &out, const string_view &line)
 
 	const size_t count
 	{
-		icu::u8::transform(ch, size(line), line)
+		utf8::transform(ch, size(line), line)
 	};
 
 	char namebuf[64]; size_t li(0);
-	for(size_t i(0); i < count; ++i, li += icu::u8::length(ch[i]))
+	for(size_t i(0); i < count; ++i, li += utf8::length(ch[i]))
 		out
 		<< ' ' << std::dec << std::right << std::setw(6) << int(icu::block(ch[i]))
 		<< ' ' << std::dec << std::right << std::setw(4) << int(icu::category(ch[i]))
-		<< ' ' << std::dec << std::right << std::setw(2) << int(icu::u8::length(ch[i]))
+		<< ' ' << std::dec << std::right << std::setw(2) << int(icu::utf8::length(ch[i]))
 		<< ' ' << "U+" << std::hex << std::right << std::setw(6) << std::setfill('0') << uint32_t(ch[i]) << std::setfill(' ')
 		<< ' ' << ' ' << icu::name(namebuf, ch[i])
 		<< std::endl;

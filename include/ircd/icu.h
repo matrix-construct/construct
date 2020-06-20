@@ -37,7 +37,7 @@ namespace ircd::icu
 	extern const info::versions unicode_version_api, unicode_version_abi;
 }
 
-namespace ircd::icu::u8
+namespace ircd::icu::utf8
 {
 	bool lead(const char &) noexcept;
 	bool trail(const char &) noexcept;
@@ -50,7 +50,7 @@ namespace ircd::icu::u8
 	size_t transform(char32_t *const &out, const size_t &max, const string_view &in);
 }
 
-namespace ircd::icu::u16
+namespace ircd::icu::utf16
 {
 	bool lead(const char &) noexcept;
 	bool trail(const char &) noexcept;
@@ -60,4 +60,10 @@ namespace ircd::icu::u16
 	char32_t get(const string_view &) noexcept;          // error < 0
 	char32_t get_or_fffd(const string_view &) noexcept;  // error = U+FFFD
 	char32_t get_unsafe(const string_view &) noexcept;   // error undefined
+}
+
+namespace ircd
+{
+	namespace utf8 = icu::utf8;
+	namespace utf16 = icu::utf16;
 }

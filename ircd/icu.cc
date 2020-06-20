@@ -208,7 +208,7 @@ noexcept
 #if __has_include(<unicode/utf16.h>)
 
 char32_t
-ircd::icu::u16::get_unsafe(const string_view &in)
+ircd::icu::utf16::get_unsafe(const string_view &in)
 noexcept
 {
 	UChar32 ret;
@@ -218,7 +218,7 @@ noexcept
 }
 
 char32_t
-ircd::icu::u16::get_or_fffd(const string_view &in_)
+ircd::icu::utf16::get_or_fffd(const string_view &in_)
 noexcept
 {
 	UChar32 ret;
@@ -229,7 +229,7 @@ noexcept
 }
 
 char32_t
-ircd::icu::u16::get(const string_view &in_)
+ircd::icu::utf16::get(const string_view &in_)
 noexcept
 {
 	UChar32 ret;
@@ -240,35 +240,35 @@ noexcept
 }
 
 size_t
-ircd::icu::u16::length(const string_view &in)
+ircd::icu::utf16::length(const string_view &in)
 noexcept
 {
-	return u16::length(u16::get(in));
+	return utf16::length(utf16::get(in));
 }
 
 size_t
-ircd::icu::u16::length(const char32_t &ch)
+ircd::icu::utf16::length(const char32_t &ch)
 noexcept
 {
 	return U16_LENGTH(ch);
 }
 
 bool
-ircd::icu::u16::single(const char &ch)
+ircd::icu::utf16::single(const char &ch)
 noexcept
 {
 	return U16_IS_SINGLE(ch);
 }
 
 bool
-ircd::icu::u16::trail(const char &ch)
+ircd::icu::utf16::trail(const char &ch)
 noexcept
 {
 	return U16_IS_TRAIL(ch);
 }
 
 bool
-ircd::icu::u16::lead(const char &ch)
+ircd::icu::utf16::lead(const char &ch)
 noexcept
 {
 	return U16_IS_LEAD(ch);
@@ -283,9 +283,9 @@ noexcept
 #if __has_include(<unicode/utf8.h>)
 
 size_t
-ircd::icu::u8::transform(char32_t *const &out,
-                         const size_t &max,
-                         const string_view &in)
+ircd::icu::utf8::transform(char32_t *const &out,
+                           const size_t &max,
+                           const string_view &in)
 {
 	const auto &_in
 	{
@@ -302,7 +302,7 @@ ircd::icu::u8::transform(char32_t *const &out,
 }
 
 char32_t
-ircd::icu::u8::get_unsafe(const string_view &in)
+ircd::icu::utf8::get_unsafe(const string_view &in)
 noexcept
 {
 	UChar32 ret;
@@ -312,7 +312,7 @@ noexcept
 }
 
 char32_t
-ircd::icu::u8::get_or_fffd(const string_view &in_)
+ircd::icu::utf8::get_or_fffd(const string_view &in_)
 noexcept
 {
 	UChar32 ret;
@@ -323,7 +323,7 @@ noexcept
 }
 
 char32_t
-ircd::icu::u8::get(const string_view &in_)
+ircd::icu::utf8::get(const string_view &in_)
 noexcept
 {
 	UChar32 ret;
@@ -334,35 +334,35 @@ noexcept
 }
 
 size_t
-ircd::icu::u8::length(const string_view &in)
+ircd::icu::utf8::length(const string_view &in)
 noexcept
 {
-	return u8::length(u8::get(in));
+	return utf8::length(utf8::get(in));
 }
 
 size_t
-ircd::icu::u8::length(const char32_t &ch)
+ircd::icu::utf8::length(const char32_t &ch)
 noexcept
 {
 	return U8_LENGTH(ch);
 }
 
 bool
-ircd::icu::u8::single(const char &ch)
+ircd::icu::utf8::single(const char &ch)
 noexcept
 {
 	return U8_IS_SINGLE(ch);
 }
 
 bool
-ircd::icu::u8::trail(const char &ch)
+ircd::icu::utf8::trail(const char &ch)
 noexcept
 {
 	return U8_IS_TRAIL(ch);
 }
 
 bool
-ircd::icu::u8::lead(const char &ch)
+ircd::icu::utf8::lead(const char &ch)
 noexcept
 {
 	return U8_IS_LEAD(ch);
