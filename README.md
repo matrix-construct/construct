@@ -22,9 +22,10 @@ you to contribute new ideas and are liberal in accepting experimental features.
 
 ##### OPTIONAL
 
-- **zlib** or **lz4** or **snappy** database compressions.
+- **lz4** or **snappy** database compressions.
 - **GraphicsMagick** for media thumbnails.
 - **jemalloc** for dynamic memory.
+- **ICU** for unicode tools.
 
 ##### BUILD TOOLS
 
