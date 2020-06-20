@@ -342,9 +342,9 @@ ircd::m::hook::base::site::site(const json::members &members)
 		if(site->name() == name() && site != this)
 			throw error
 			{
-				"Hook site '%s' already registered at %p",
+				"Hook site '%s' already registered at site:%u",
 				name(),
-				site
+				site->id(),
 			};
 
 	// Find and register all of the orphan hooks which were constructed before
@@ -385,11 +385,9 @@ ircd::m::hook::base::site::add(base &hook)
 	{
 		log::warning
 		{
-			log, "Hook:%u (%p) already registered to site:%u (%p) :%s",
+			log, "Hook:%u already registered to site:%u :%s",
 			hook.id(),
-			&hook,
 			id(),
-			this,
 			name(),
 		};
 
@@ -409,11 +407,9 @@ ircd::m::hook::base::site::add(base &hook)
 
 	log::debug
 	{
-		log, "Registered hook:%u (%p) to site:%u (%p) :%s",
+		log, "Registered hook:%u to site:%u :%s",
 		hook.id(),
-		&hook,
 		id(),
-		this,
 		name(),
 	};
 
@@ -425,11 +421,9 @@ ircd::m::hook::base::site::del(base &hook)
 {
 	log::debug
 	{
-		log, "Removing hook:%u (%p) from site:%u (%p) :%s",
+		log, "Removing hook:%u from site:%u :%s",
 		hook.id(),
-		&hook,
 		id(),
-		this,
 		name(),
 	};
 
