@@ -24,17 +24,6 @@ AM_CXXFLAGS += \
 endif
 endif
 
-if BUILD_PCH
-BUILT_SOURCES = \
-	ircd.h.gch \
-	ircd.pic.h.gch \
-	spirit.h.gch \
-	asio.h.gch \
-	matrix.h.gch \
-	matrix.pic.h.gch \
-	###
-endif
-
 if GCC
 if LOWMEM_COMPILE
 LOWMEM_FLAGS= --param ggc-min-expand=1
@@ -44,8 +33,18 @@ endif
 # includedir = @includedir@/$(PACKAGE_TARNAME)
 includedir = @includedir@/ircd
 nobase_include_HEADERS = $(DEPS)
-noinst_HEADERS = *.gch
 
+if BUILD_PCH # --- Actions when Precompiled headers enabled
+
+noinst_HEADERS = *.gch
+BUILT_SOURCES = \
+	ircd.h.gch \
+	ircd.pic.h.gch \
+	spirit.h.gch \
+	asio.h.gch \
+	matrix.h.gch \
+	matrix.pic.h.gch \
+	###
 
 ircd.h.gch: ircd.h
 	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -o ircd.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) ircd.h
@@ -72,6 +71,25 @@ asio.h.gch: ircd.h
 
 asio.h.gch: \
 	AM_CPPFLAGS += @BOOST_CPPFLAGS@ @SSL_CPPFLAGS@ @CRYPTO_CPPFLAGS@
+
+else # --- Actions without Precompiled Headers enabled
+
+BUILT_SOURCES = \
+	ircd.pic.h \
+	matrix.pic.h \
+	###
+
+ircd.pic.h: ircd.h
+	cp ircd.h ircd.pic.h
+
+matrix.pic.h: matrix.h
+	cp matrix.h matrix.pic.h
+
+endif # --- /BUILD_PCH
+
+#
+# Clean / Install
+#
 
 clean-local:
 	rm -f *.h.gch
