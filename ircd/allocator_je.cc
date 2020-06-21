@@ -54,7 +54,7 @@ ircd::allocator::je::malloc_version_abi
 	"jemalloc", info::versions::ABI, 0, {0, 0, 0}, []
 	(info::versions &v, const mutable_buffer &buf)
 	{
-		#ifdef HAVE_JEMALLOC_H
+		#ifdef IRCD_ALLOCATOR_JEMALLOC
 		const string_view val
 		{
 			*reinterpret_cast<const char *const *>(data(allocator::get("version", buf)))
