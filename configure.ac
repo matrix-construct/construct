@@ -419,6 +419,7 @@ AM_COND_IF([GENERIC],
 ], [
 	machine_tuning="native instruction set"
 	CXXFLAGS+=" -march=native"
+	CXXFLAGS+=" -mtune=native"
 ])
 
 dnl
