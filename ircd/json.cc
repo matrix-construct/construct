@@ -2779,7 +2779,7 @@ ircd::json::stringify(mutable_buffer &buf,
 	char *const start(begin(buf));
 	assert(!surrounds(member.first, '"'));
 	consume(buf, copy(buf, '"'));
-	consume(buf, copy(buf, member.first));
+	printer(buf, printer.name, member.first);
 	consume(buf, copy(buf, "\":"_sv));
 	stringify(buf, member.second);
 	const string_view ret
@@ -3389,12 +3389,6 @@ ircd::json::stringify(mutable_buffer &buf,
 				v.string, v.len
 			};
 
-			if(v.serial)
-			{
-				consume(buf, copy(buf, sv));
-				break;
-			}
-
 			printer(buf, printer.string, sv);
 			break;
 		}
@@ -3531,9 +3525,6 @@ ircd::json::serialized(const value &v)
 		{
 			if(!v.string)
 				return size(empty_string);
-
-			if(v.serial)
-				return v.len;
 
 			thread_local char test_buffer[value::max_string_size];
 			const string_view sv{v.string, v.len};
