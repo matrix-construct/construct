@@ -3401,43 +3401,28 @@ ircd::json::stringify(mutable_buffer &buf,
 				consume(buf, copy(buf, "true"_sv));
 			else
 				consume(buf, copy(buf, "false"_sv));
-
 			break;
 		}
 
 		case OBJECT:
 		{
 			if(v.serial)
-			{
 				stringify(buf, json::object{string_view{v}});
-				break;
-			}
-
-			if(v.object)
-			{
+			else if(v.object)
 				stringify(buf, v.object, v.object + v.len);
-				break;
-			}
-
-			consume(buf, copy(buf, empty_object));
+			else
+				consume(buf, copy(buf, empty_object));
 			break;
 		}
 
 		case ARRAY:
 		{
 			if(v.serial)
-			{
 				stringify(buf, json::array{string_view{v}});
-				break;
-			}
-
-			if(v.array)
-			{
+			else if(v.array)
 				stringify(buf, v.array, v.array + v.len);
-				break;
-			}
-
-			consume(buf, copy(buf, empty_array));
+			else
+				consume(buf, copy(buf, empty_array));
 			break;
 		}
 
@@ -3450,7 +3435,6 @@ ircd::json::stringify(mutable_buffer &buf,
 				consume(buf, copy(buf, lex_cast(v.floating)));
 			else
 				consume(buf, copy(buf, lex_cast(v.integer)));
-
 			break;
 		}
 	}
