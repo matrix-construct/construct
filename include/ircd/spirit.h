@@ -319,7 +319,8 @@ ircd::spirit::generate(mutable_buffer &out,
 
 	if constexpr(truncation)
 	{
-		begin(out) = state.overflow? end(out) : begin(out);
+		assert(begin(out) <= end(out));
+		begin(out) = state.overflow? end(out): begin(out);
 		assert(!state.overflow || begin(out) == end(out));
 		assert(begin(out) <= end(out));
 		return ret;
@@ -334,6 +335,7 @@ ircd::spirit::generate(mutable_buffer &out,
 				std::distance(start, begin(out))
 		};
 
+		assert(begin(out) <= end(out));
 		throw buffer_overrun
 		{
 			"Insufficient buffer of %s; required at least %s",
