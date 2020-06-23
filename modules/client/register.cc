@@ -50,7 +50,7 @@ ircd::conf::item<bool>
 register_enable
 {
 	{ "name",     "ircd.client.register.enable" },
-	{ "default",  true                          }
+	{ "default",  false                         }
 };
 
 /// see: ircd/m/register.h for the m::user::registar tuple.
