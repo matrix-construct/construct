@@ -288,7 +288,7 @@ ircd::spirit::generator_state
 template<bool truncation,
          class gen,
          class... attr>
-[[using gnu: flatten, always_inline, gnu_inline, artificial]]
+[[using gnu: flatten, always_inline, gnu_inline]]
 extern inline bool
 ircd::spirit::generate(mutable_buffer &out,
                        gen&& g,
@@ -351,7 +351,7 @@ template<class parent_error,
          size_t error_show_max,
          class gen,
          class... attr>
-[[using gnu: flatten, always_inline, gnu_inline, artificial]]
+[[using gnu: flatten, always_inline, gnu_inline]]
 extern inline bool
 ircd::spirit::parse(const char *&start,
                     const char *const &stop,
@@ -371,7 +371,7 @@ catch(const qi::expectation_failure<const char *> &e)
 
 template<class gen,
          class... attr>
-[[using gnu: flatten, always_inline, gnu_inline, artificial]]
+[[using gnu: flatten, always_inline, gnu_inline]]
 extern inline bool
 ircd::spirit::parse(const char *&start,
                     const char *const &stop,
