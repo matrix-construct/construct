@@ -17,13 +17,15 @@ namespace ircd::prof
 }
 
 /// Count the reference cycles for a scope using the lifetime of this object.
-/// The result is stored in `result`. Note that `result` is also used while
-/// this object is operating.
+/// The result is added to the value in `result`; note that result must be
+/// initialized.
 struct ircd::prof::scope_cycles
 {
 	uint64_t &result;
+	uint64_t started;
 
 	scope_cycles(uint64_t &result) noexcept;
+	scope_cycles(const scope_cycles &) = delete;
 	~scope_cycles() noexcept;
 };
 
@@ -42,7 +44,7 @@ noexcept
 	asm volatile ("lfence");
 	#endif
 
-	result = cycles();
+	started = cycles();
 
 	#if defined(__x86_64__) || defined(__i386__)
 	asm volatile ("lfence");
@@ -63,7 +65,8 @@ noexcept
 	asm volatile ("lfence");
 	#endif
 
-	result = cycles() - result;
+	const uint64_t stopped(cycles());
+	result += stopped - started;
 
 	#if defined(__x86_64__) || defined(__i386__)
 	asm volatile ("lfence");
