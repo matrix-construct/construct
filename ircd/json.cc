@@ -19,6 +19,9 @@ namespace ircd::json
 }
 #pragma GCC visibility pop
 
+decltype(ircd::json::stats)
+ircd::json::stats;
+
 #pragma GCC visibility push(internal)
 BOOST_FUSION_ADAPT_STRUCT
 (
@@ -489,6 +492,8 @@ ircd::json::printer::operator()(mutable_buffer &out,
                                 attr&&... a)
 const
 {
+	++stats.print_calls;
+	const prof::scope_cycles timer{stats.print_cycles};
 	if(unlikely(!ircd::generate(out, std::forward<gen>(g), std::forward<attr>(a)...)))
 		throw print_error
 		{
@@ -542,6 +547,8 @@ ircd::json::parser::operator()(const char *&start,
                                attr&&...a)
 const
 {
+	++stats.parse_calls;
+	const prof::scope_cycles timer{stats.parse_cycles};
 	return ircd::parse<parse_error>(start, stop, std::forward<gen>(g), std::forward<attr>(a)...);
 }
 

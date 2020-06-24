@@ -35,7 +35,17 @@ namespace ircd::json
 	bool valid(const string_view &, std::nothrow_t) noexcept;
 	void valid(const string_view &);
 	std::string why(const string_view &);
+
+	struct stats extern stats;
 }
+
+/// Statistics counter access; unfortunately these cannot participate as
+/// ircd::stats items right now.
+struct ircd::json::stats
+{
+	uint64_t print_calls {0}, print_cycles {0};
+	uint64_t parse_calls {0}, parse_cycles {0};
+};
 
 /// Alternative to `json::strung` which uses a fixed array rather than an
 /// allocated string as the target.
