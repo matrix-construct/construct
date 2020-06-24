@@ -339,9 +339,6 @@ ircd::json::printer
 	         class... attr>
 	void operator()(mutable_buffer &out, gen&&, attr&&...) const;
 
-	template<class gen>
-	void operator()(mutable_buffer &out, gen&&) const;
-
 	printer()
 	:printer::base_type{rule<>{}}
 	{
@@ -493,20 +490,6 @@ ircd::json::printer::operator()(mutable_buffer &out,
 const
 {
 	if(unlikely(!ircd::generate(out, std::forward<gen>(g), std::forward<attr>(a)...)))
-		throw print_error
-		{
-			"Failed to generate JSON"
-		};
-}
-
-template<class gen>
-[[using gnu: always_inline, gnu_inline, artificial]]
-extern inline void
-ircd::json::printer::operator()(mutable_buffer &out,
-                                gen&& g)
-const
-{
-	if(unlikely(!ircd::generate(out, std::forward<gen>(g))))
 		throw print_error
 		{
 			"Failed to generate JSON"
