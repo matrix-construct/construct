@@ -62,11 +62,12 @@ namespace ircd {
 namespace spirit
 __attribute__((visibility("hidden")))
 {
+	namespace phx = boost::phoenix;
+	namespace fusion = boost::fusion;
 	namespace spirit = boost::spirit;
 	namespace ascii = spirit::ascii;
 	namespace karma = spirit::karma;
 	namespace qi = spirit::qi;
-	namespace phx = boost::phoenix;
 
 	using _val_type = phx::actor<spirit::attribute<0>>;
 	using _r0_type = phx::actor<spirit::attribute<0>>;
