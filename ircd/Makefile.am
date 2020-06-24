@@ -120,6 +120,7 @@ libircd_la_SOURCES += exception.cc
 libircd_la_SOURCES += util.cc
 libircd_la_SOURCES += demangle.cc
 libircd_la_SOURCES += backtrace.cc
+libircd_la_SOURCES += simd.cc
 libircd_la_SOURCES += fpe.cc
 libircd_la_SOURCES += icu.cc
 libircd_la_SOURCES += timedate.cc

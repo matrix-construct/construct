@@ -155,3 +155,19 @@ struct ircd::pshuf_imm8
 	u8 dst1  : 2;  // set src idx for word 1
 	u8 dst0  : 2;  // set src idx for word 0
 };
+
+//
+// util
+//
+
+namespace ircd::simd
+{
+	template<class V>
+	string_view print_lane(const mutable_buffer &buf, const V &) noexcept;
+
+	template<class V>
+	string_view print_reg(const mutable_buffer &buf, const V &) noexcept;
+
+	template<class V>
+	string_view print_mem(const mutable_buffer &buf, const V &) noexcept;
+}
