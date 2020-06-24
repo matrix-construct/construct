@@ -138,43 +138,15 @@ namespace ircd
 #endif
 
 //
-// other words
+// tools
 //
 
-namespace ircd
+namespace ircd::simd
 {
+	// other words
 	struct pshuf_imm8;
-}
 
-/// Shuffle control structure. This represents an 8-bit immediate operand;
-/// note it can only be used if constexprs are allowed in your definition unit.
-struct ircd::pshuf_imm8
-{
-	u8 dst3  : 2;  // set src idx for word 3
-	u8 dst2  : 2;  // set src idx for word 2
-	u8 dst1  : 2;  // set src idx for word 1
-	u8 dst0  : 2;  // set src idx for word 0
-};
-
-//
-// util
-//
-
-namespace ircd::simd
-{
-	template<class V>
-	string_view print_lane(const mutable_buffer &buf, const V &) noexcept;
-
-	template<class V>
-	string_view print_reg(const mutable_buffer &buf, const V &) noexcept;
-
-	template<class V>
-	string_view print_mem(const mutable_buffer &buf, const V &) noexcept;
-}
-
-// Lane number convenience constants
-namespace ircd::simd
-{
+	// lane number convenience constants
 	extern const u8x32    u8x32_lane_id;
 	extern const u16x16  u16x16_lane_id;
 	extern const u8x16    u8x16_lane_id;
@@ -185,4 +157,66 @@ namespace ircd::simd
 	extern const u64x2    u64x2_lane_id;
 	extern const u256x1  u256x1_lane_id;
 	extern const u128x1  u128x1_lane_id;
+
+	// xmmx shifter workarounds
+	template<int bits, class T> T shl(const T &a) noexcept;
+	template<int bits, class T> T shr(const T &a) noexcept;
+	template<int bits> u128x1 shl(const u128x1 &a) noexcept;
+	template<int bits> u128x1 shr(const u128x1 &a) noexcept;
+
+	// debug print lanes hex
+	template<class V>
+	string_view print_lane(const mutable_buffer &buf, const V &) noexcept;
+
+	// debug print register hex
+	template<class V>
+	string_view print_reg(const mutable_buffer &buf, const V &) noexcept;
+
+	// debug print memory hex
+	template<class V>
+	string_view print_mem(const mutable_buffer &buf, const V &) noexcept;
+}
+
+namespace ircd
+{
+	using simd::shl;
+	using simd::shr;
+}
+
+/// Shuffle control structure. This represents an 8-bit immediate operand;
+/// note it can only be used if constexprs are allowed in your definition unit.
+struct ircd::simd::pshuf_imm8
+{
+	u8 dst3  : 2;  // set src idx for word 3
+	u8 dst2  : 2;  // set src idx for word 2
+	u8 dst1  : 2;  // set src idx for word 1
+	u8 dst0  : 2;  // set src idx for word 0
+};
+
+template<int b>
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline ircd::u128x1
+ircd::simd::shr(const u128x1 &a)
+noexcept
+{
+	static_assert
+	(
+		b % 8 == 0, "xmmx register only shifts right at bytewise resolution."
+	);
+
+	return _mm_bsrli_si128(a, b / 8);
+}
+
+template<int b>
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline ircd::u128x1
+ircd::simd::shl(const u128x1 &a)
+noexcept
+{
+	static_assert
+	(
+		b % 8 == 0, "xmmx register only shifts right at bytewise resolution."
+	);
+
+	return _mm_bslli_si128(a, b / 8);
 }
