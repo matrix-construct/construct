@@ -171,3 +171,18 @@ namespace ircd::simd
 	template<class V>
 	string_view print_mem(const mutable_buffer &buf, const V &) noexcept;
 }
+
+// Lane number convenience constants
+namespace ircd::simd
+{
+	extern const u8x32    u8x32_lane_id;
+	extern const u16x16  u16x16_lane_id;
+	extern const u8x16    u8x16_lane_id;
+	extern const u32x8    u32x8_lane_id;
+	extern const u16x8    u16x8_lane_id;
+	extern const u64x4    u64x4_lane_id;
+	extern const u32x4    u32x4_lane_id;
+	extern const u64x2    u64x2_lane_id;
+	extern const u256x1  u256x1_lane_id;
+	extern const u128x1  u128x1_lane_id;
+}
