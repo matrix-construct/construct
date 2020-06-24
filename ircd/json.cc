@@ -482,8 +482,8 @@ noexcept
 
 template<class gen,
          class... attr>
-[[using gnu: always_inline, gnu_inline, artificial]]
-extern inline void
+[[gnu::always_inline]]
+inline void
 ircd::json::printer::operator()(mutable_buffer &out,
                                 gen&& g,
                                 attr&&... a)
@@ -499,8 +499,8 @@ const
 template<class it_a,
          class it_b,
          class closure>
-[[using gnu: always_inline, gnu_inline, artificial]]
-extern inline void
+[[gnu::always_inline]]
+inline void
 ircd::json::printer::list_protocol(mutable_buffer &out,
                                    it_a it,
                                    const it_b &end,
@@ -520,8 +520,8 @@ ircd::json::printer::list_protocol(mutable_buffer &out,
 
 template<class gen,
          class... attr>
-[[using gnu: always_inline, gnu_inline, artificial]]
-extern inline bool
+[[gnu::always_inline]]
+inline bool
 ircd::json::parser::operator()(const char *const &start_,
                                const char *const &stop,
                                gen&& g,
@@ -534,8 +534,8 @@ const
 
 template<class gen,
          class... attr>
-[[using gnu: always_inline, gnu_inline, artificial]]
-extern inline bool
+[[gnu::always_inline]]
+inline bool
 ircd::json::parser::operator()(const char *&start,
                                const char *const &stop,
                                gen&& g,
@@ -545,6 +545,7 @@ const
 	return ircd::parse<parse_error>(start, stop, std::forward<gen>(g), std::forward<attr>(a)...);
 }
 
+[[gnu::noinline]]
 void
 ircd::json::parser::throws_exceeded()
 {
