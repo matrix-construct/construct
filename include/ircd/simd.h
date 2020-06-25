@@ -163,6 +163,8 @@ namespace ircd::simd
 	template<int bits, class T> T shr(const T &a) noexcept;
 	template<int bits> u128x1 shl(const u128x1 &a) noexcept;
 	template<int bits> u128x1 shr(const u128x1 &a) noexcept;
+	template<int bits> u256x1 shl(const u256x1 &a) noexcept;
+	template<int bits> u256x1 shr(const u256x1 &a) noexcept;
 
 	// readable output and debug
 	template<class T> string_view str_reg(const mutable_buffer &buf, const T &, const uint &fmt = 0) noexcept;
@@ -212,3 +214,35 @@ noexcept
 
 	return _mm_bslli_si128(a, b / 8);
 }
+
+#ifdef __AVX2__
+template<int b>
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline ircd::u256x1
+ircd::simd::shr(const u256x1 &a)
+noexcept
+{
+	static_assert
+	(
+		b % 8 == 0, "ymmx register only shifts right at bytewise resolution."
+	);
+
+	return _mm256_srli_si256(a, b / 8);
+}
+#endif
+
+#ifdef __AVX2__
+template<int b>
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline ircd::u256x1
+ircd::simd::shl(const u256x1 &a)
+noexcept
+{
+	static_assert
+	(
+		b % 8 == 0, "ymmx register only shifts right at bytewise resolution."
+	);
+
+	return _mm256_slli_si256(a, b / 8);
+}
+#endif
