@@ -164,17 +164,9 @@ namespace ircd::simd
 	template<int bits> u128x1 shl(const u128x1 &a) noexcept;
 	template<int bits> u128x1 shr(const u128x1 &a) noexcept;
 
-	// debug print lanes hex
-	template<class V>
-	string_view print_lane(const mutable_buffer &buf, const V &) noexcept;
-
-	// debug print register hex
-	template<class V>
-	string_view print_reg(const mutable_buffer &buf, const V &) noexcept;
-
-	// debug print memory hex
-	template<class V>
-	string_view print_mem(const mutable_buffer &buf, const V &) noexcept;
+	// readable output and debug
+	template<class T> string_view str_reg(const mutable_buffer &buf, const T &, const uint &fmt = 0) noexcept;
+	template<class T> string_view str_mem(const mutable_buffer &buf, const T &, const uint &fmt = 0) noexcept;
 }
 
 namespace ircd
