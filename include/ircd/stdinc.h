@@ -20,22 +20,11 @@
 // pollution and risk of conflicts.
 //
 
-// It is advised that all standard library symbols are declared with default
-// visibility. This pragma overrides any -fvisibility option on any unit.
+// This pragma overrides any -fvisibility option on any unit to maintain
+// consistent default visibility of these items.
 #pragma GCC visibility push(default)
 
-extern "C"
-{
-	#ifndef assert
-		#include <RB_INC_ASSERT_H
-	#endif
-
-	#include <RB_INC_STDARG_H
-	#include <RB_INC_UNISTD_H
-	#include <RB_INC_SYS_TYPES_H
-	#include <RB_INC_SYS_UTSNAME_H
-}
-
+// Windows Specific
 #ifdef _WIN32
 	#define WIN32_LEAN_AND_MEAN 1
 	#include <RB_INC_WINDOWS_H
@@ -44,59 +33,90 @@ extern "C"
 	#include <RB_INC_IPHLPAPI_H
 #endif
 
+// System/platform preambles
+extern "C"
+{
+	// We have our own assert if possible; some system headers forefully
+	// redefine it so we can't include this if so.
+	#ifndef assert
+		#include <RB_INC_ASSERT_H
+	#endif
+
+	#include <RB_INC_UNISTD_H
+	#include <RB_INC_SYS_TYPES_H
+	#include <RB_INC_SYS_UTSNAME_H
+}
+
+// Typography
+#include <RB_INC_CSTDARG
 #include <RB_INC_CSTDDEF
 #include <RB_INC_CSTDINT
 #include <RB_INC_CSTDLIB
 #include <RB_INC_LIMITS
-#include <RB_INC_TYPE_TRAITS
 #include <RB_INC_TYPEINDEX
-#include <RB_INC_VARIANT
+#include <RB_INC_TYPE_TRAITS
+
+// Errors
 #include <RB_INC_CERRNO
-#include <RB_INC_UTILITY
-#include <RB_INC_FUNCTIONAL
-#include <RB_INC_ALGORITHM
-#include <RB_INC_NUMERIC
-#include <RB_INC_CMATH
-#include <RB_INC_CFENV
-#include <RB_INC_MEMORY
 #include <RB_INC_EXCEPTION
 #include <RB_INC_SYSTEM_ERROR
+
+// Dynamic memory
+#include <RB_INC_NEW
+#include <RB_INC_MEMORY
+
+// Containers
+#include <RB_INC_VARIANT
+#include <RB_INC_OPTIONAL
 #include <RB_INC_ARRAY
+#include <RB_INC_BITSET
 #include <RB_INC_VECTOR
 #include <RB_INC_STACK
-#include <RB_INC_STRING
-#include <RB_INC_CSTRING
-#include <RB_INC_STRING_VIEW
-#include <RB_INC_CUCHAR
-#include <RB_INC_LOCALE
-#include <RB_INC_CODECVT
-#include <RB_INC_MAP
-#include <RB_INC_SET
-#include <RB_INC_LIST
 #include <RB_INC_FORWARD_LIST
-#include <RB_INC_UNORDERED_MAP
+#include <RB_INC_LIST
 #include <RB_INC_DEQUE
 #include <RB_INC_QUEUE
-#include <RB_INC_SSTREAM
-#include <RB_INC_FSTREAM
-#include <RB_INC_IOSFWD
-#include <RB_INC_IOMANIP
-#include <RB_INC_CSTDIO
-#include <RB_INC_CHRONO
+#include <RB_INC_SET
+#include <RB_INC_MAP
+#include <RB_INC_UNORDERED_MAP
+
+// Strings
+#include <RB_INC_CUCHAR
+#include <RB_INC_CSTRING
+#include <RB_INC_LOCALE
+#include <RB_INC_CODECVT
+#include <RB_INC_STRING
+#include <RB_INC_STRING_VIEW
+
+// Numerics
+#include <RB_INC_CFENV
+#include <RB_INC_CMATH
+#include <RB_INC_NUMERIC
+#include <RB_INC_RANDOM
+
+// Chronography
 #include <RB_INC_CTIME
+#include <RB_INC_CHRONO
+
+// Concurrency
 #include <RB_INC_ATOMIC
 #include <RB_INC_THREAD
 #include <RB_INC_MUTEX
 #include <RB_INC_SHARED_MUTEX
 #include <RB_INC_CONDITION_VARIABLE
-#include <RB_INC_RANDOM
-#include <RB_INC_BITSET
-#include <RB_INC_OPTIONAL
-#include <RB_INC_NEW
-#include <RB_INC_FILESYSTEM
 
-#include <RB_INC_EXPERIMENTAL_STRING_VIEW
-#include <RB_INC_EXPERIMENTAL_OPTIONAL
+// Input/Output
+#include <RB_INC_CSTDIO
+#include <RB_INC_IOSFWD
+#include <RB_INC_SSTREAM
+#include <RB_INC_FSTREAM
+#include <RB_INC_IOMANIP
+
+// Other standard suites
+#include <RB_INC_UTILITY
+#include <RB_INC_FUNCTIONAL
+#include <RB_INC_ALGORITHM
+#include <RB_INC_FILESYSTEM
 
 // These are #defined in stdio.h. If the system includes it indirectly we have
 // to undef those here or there will be trouble.
