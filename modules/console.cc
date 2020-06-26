@@ -15750,7 +15750,7 @@ console_cmd__icu(opt &out, const string_view &line)
 
 	const size_t count
 	{
-		utf8::transform(ch, size(line), line)
+		utf8::decode(ch, size(line), line)
 	};
 
 	char namebuf[64]; size_t li(0);

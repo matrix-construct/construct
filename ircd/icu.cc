@@ -282,10 +282,30 @@ noexcept
 
 #if __has_include(<unicode/utf8.h>)
 
+ircd::const_buffer
+ircd::icu::utf8::encode(const mutable_buffer &out,
+                        const vector_view<const char32_t> &in)
+{
+	const auto &_out
+	{
+		reinterpret_cast<uint8_t *>(data(out))
+	};
+
+	size_t off(0);
+	for(size_t i(0); i < in.size() && off + 4 < size(out); ++i)
+		U8_APPEND_UNSAFE(_out, off, in[i]);
+
+	assert(off <= size(out));
+	return const_buffer
+	{
+		out, off
+	};
+}
+
 size_t
-ircd::icu::utf8::transform(char32_t *const &out,
-                           const size_t &max,
-                           const string_view &in)
+ircd::icu::utf8::decode(char32_t *const &out,
+                        const size_t &max,
+                        const string_view &in)
 {
 	const auto &_in
 	{

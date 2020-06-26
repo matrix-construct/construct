@@ -47,7 +47,8 @@ namespace ircd::icu::utf8
 	char32_t get(const string_view &) noexcept;          // error < 0
 	char32_t get_or_fffd(const string_view &) noexcept;  // error = U+FFFD
 	char32_t get_unsafe(const string_view &) noexcept;   // error undefined
-	size_t transform(char32_t *const &out, const size_t &max, const string_view &in);
+	size_t decode(char32_t *const &out, const size_t &max, const string_view &in);
+	const_buffer encode(const mutable_buffer &out, const vector_view<const char32_t> &in);
 }
 
 namespace ircd::icu::utf16
