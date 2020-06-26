@@ -67,6 +67,7 @@ extern "C"
 #include <RB_INC_STRING
 #include <RB_INC_CSTRING
 #include <RB_INC_STRING_VIEW
+#include <RB_INC_CUCHAR
 #include <RB_INC_LOCALE
 #include <RB_INC_CODECVT
 #include <RB_INC_MAP
