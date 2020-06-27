@@ -40,6 +40,7 @@
 // Project library interfaces
 //
 
+#include "simd/simd.h"
 #include "string_view.h"
 #include "vector_view.h"
 #include "byte_view.h"

@@ -118,6 +118,9 @@ extern "C"
 #include <RB_INC_ALGORITHM
 #include <RB_INC_FILESYSTEM
 
+// Other
+#include <RB_INC_X86INTRIN_H
+
 // These are #defined in stdio.h. If the system includes it indirectly we have
 // to undef those here or there will be trouble.
 #undef stdin

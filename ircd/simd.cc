@@ -8,7 +8,23 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <ircd/simd.h>
+///////////////////////////////////////////////////////////////////////////////
+//
+// simd/traits.h
+//
+
+decltype(ircd::simd::u8x64_lane_id)
+ircd::simd::u8x64_lane_id
+{
+	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+	0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+	0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
+	0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
+	0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
+	0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,
+};
 
 decltype(ircd::simd::u8x32_lane_id)
 ircd::simd::u8x32_lane_id
@@ -19,11 +35,13 @@ ircd::simd::u8x32_lane_id
 	0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
 };
 
-decltype(ircd::simd::u16x16_lane_id)
-ircd::simd::u16x16_lane_id
+decltype(ircd::simd::u16x32_lane_id)
+ircd::simd::u16x32_lane_id
 {
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+	0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
 };
 
 decltype(ircd::simd::u8x16_lane_id)
@@ -33,10 +51,18 @@ ircd::simd::u8x16_lane_id
 	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
 };
 
-decltype(ircd::simd::u32x8_lane_id)
-ircd::simd::u32x8_lane_id
+decltype(ircd::simd::u16x16_lane_id)
+ircd::simd::u16x16_lane_id
 {
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+};
+
+decltype(ircd::simd::u32x16_lane_id)
+ircd::simd::u32x16_lane_id
+{
+	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
 };
 
 decltype(ircd::simd::u16x8_lane_id)
@@ -45,14 +71,26 @@ ircd::simd::u16x8_lane_id
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 };
 
-decltype(ircd::simd::u64x4_lane_id)
-ircd::simd::u64x4_lane_id
+decltype(ircd::simd::u32x8_lane_id)
+ircd::simd::u32x8_lane_id
 {
-	0x00, 0x01, 0x02, 0x03,
+	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+};
+
+decltype(ircd::simd::u64x8_lane_id)
+ircd::simd::u64x8_lane_id
+{
+	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 };
 
 decltype(ircd::simd::u32x4_lane_id)
 ircd::simd::u32x4_lane_id
+{
+	0x00, 0x01, 0x02, 0x03,
+};
+
+decltype(ircd::simd::u64x4_lane_id)
+ircd::simd::u64x4_lane_id
 {
 	0x00, 0x01, 0x02, 0x03,
 };
@@ -63,23 +101,41 @@ ircd::simd::u64x2_lane_id
 	0x00, 0x01,
 };
 
-decltype(ircd::simd::u256x1_lane_id)
-ircd::simd::u256x1_lane_id
-{
-	0x00,
-};
-
 decltype(ircd::simd::u128x1_lane_id)
 ircd::simd::u128x1_lane_id
 {
 	0x00,
 };
 
+decltype(ircd::simd::u256x1_lane_id)
+ircd::simd::u256x1_lane_id
+{
+	0x00,
+};
+
+decltype(ircd::simd::u512x1_lane_id)
+ircd::simd::u512x1_lane_id
+{
+	0x00,
+};
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// simd/debug.h
+//
+
+//
+// Stringify into native integer (register) hex format value for each lane.
+// Note that each value is prepended with '0x' by convention to indicate an
+// integer and to distinguish this output from the alternative str_mem()
+// suite.
+//
+
 template<>
 ircd::string_view
-ircd::simd::str_reg(const mutable_buffer &buf,
-                    const u8x16 &a,
-                    const uint &fmt)
+ircd::simd::print_reg(const mutable_buffer &buf,
+                      const u8x16 &a,
+                      const uint &fmt)
 noexcept
 {
 	const auto len(::snprintf
@@ -99,9 +155,69 @@ noexcept
 
 template<>
 ircd::string_view
-ircd::simd::str_reg(const mutable_buffer &buf,
-                    const u16x8 &a_,
-                    const uint &fmt)
+ircd::simd::print_reg(const mutable_buffer &buf,
+                      const u8x32 &a,
+                      const uint &fmt)
+noexcept
+{
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x "
+		"0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x "
+		"0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x "
+		"0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x",
+		a[0x00], a[0x01], a[0x02], a[0x03], a[0x04], a[0x05], a[0x06], a[0x07],
+		a[0x08], a[0x09], a[0x0a], a[0x0b], a[0x0c], a[0x0d], a[0x0e], a[0x0f],
+		a[0x10], a[0x11], a[0x12], a[0x13], a[0x14], a[0x15], a[0x16], a[0x17],
+		a[0x18], a[0x19], a[0x1a], a[0x1b], a[0x1c], a[0x1d], a[0x1e], a[0x1f]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_reg(const mutable_buffer &buf,
+                      const u8x64 &a,
+                      const uint &fmt)
+noexcept
+{
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x "
+		"0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x "
+		"0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x "
+		"0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x "
+		"0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x "
+		"0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x "
+		"0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x "
+		"0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x",
+		a[0x00], a[0x01], a[0x02], a[0x03], a[0x04], a[0x05], a[0x06], a[0x07],
+		a[0x08], a[0x09], a[0x0a], a[0x0b], a[0x0c], a[0x0d], a[0x0e], a[0x0f],
+		a[0x10], a[0x11], a[0x12], a[0x13], a[0x14], a[0x15], a[0x16], a[0x17],
+		a[0x18], a[0x19], a[0x1a], a[0x1b], a[0x1c], a[0x1d], a[0x1e], a[0x1f],
+		a[0x20], a[0x21], a[0x22], a[0x23], a[0x24], a[0x25], a[0x26], a[0x27],
+		a[0x28], a[0x29], a[0x2a], a[0x2b], a[0x2c], a[0x2d], a[0x2e], a[0x2f],
+		a[0x30], a[0x31], a[0x32], a[0x33], a[0x34], a[0x35], a[0x36], a[0x37],
+		a[0x38], a[0x39], a[0x3a], a[0x3b], a[0x3c], a[0x3d], a[0x3e], a[0x3f]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_reg(const mutable_buffer &buf,
+                      const u16x8 &a_,
+                      const uint &fmt)
 noexcept
 {
 	const u8x16 a(a_);
@@ -122,9 +238,71 @@ noexcept
 
 template<>
 ircd::string_view
-ircd::simd::str_reg(const mutable_buffer &buf,
-                    const u32x4 &a_,
-                    const uint &fmt)
+ircd::simd::print_reg(const mutable_buffer &buf,
+                      const u16x16 &a_,
+                      const uint &fmt)
+noexcept
+{
+	const u8x32 a(a_);
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"0x%02x%02x 0x%02x%02x 0x%02x%02x 0x%02x%02x "
+		"0x%02x%02x 0x%02x%02x 0x%02x%02x 0x%02x%02x "
+		"0x%02x%02x 0x%02x%02x 0x%02x%02x 0x%02x%02x "
+		"0x%02x%02x 0x%02x%02x 0x%02x%02x 0x%02x%02x",
+		a[0x01], a[0x00], a[0x03], a[0x02], a[0x05], a[0x04], a[0x07], a[0x06],
+		a[0x09], a[0x08], a[0x0b], a[0x0a], a[0x0d], a[0x0c], a[0x0f], a[0x0e],
+		a[0x11], a[0x10], a[0x13], a[0x12], a[0x15], a[0x14], a[0x17], a[0x16],
+		a[0x19], a[0x18], a[0x1b], a[0x1a], a[0x1d], a[0x1c], a[0x1f], a[0x1e]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_reg(const mutable_buffer &buf,
+                      const u16x32 &a_,
+                      const uint &fmt)
+noexcept
+{
+	const u8x64 a(a_);
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"0x%02x%02x 0x%02x%02x 0x%02x%02x 0x%02x%02x "
+		"0x%02x%02x 0x%02x%02x 0x%02x%02x 0x%02x%02x "
+		"0x%02x%02x 0x%02x%02x 0x%02x%02x 0x%02x%02x "
+		"0x%02x%02x 0x%02x%02x 0x%02x%02x 0x%02x%02x "
+		"0x%02x%02x 0x%02x%02x 0x%02x%02x 0x%02x%02x "
+		"0x%02x%02x 0x%02x%02x 0x%02x%02x 0x%02x%02x "
+		"0x%02x%02x 0x%02x%02x 0x%02x%02x 0x%02x%02x "
+		"0x%02x%02x 0x%02x%02x 0x%02x%02x 0x%02x%02x",
+		a[0x01], a[0x00], a[0x03], a[0x02], a[0x05], a[0x04], a[0x07], a[0x06],
+		a[0x09], a[0x08], a[0x0b], a[0x0a], a[0x0d], a[0x0c], a[0x0f], a[0x0e],
+		a[0x11], a[0x10], a[0x13], a[0x12], a[0x15], a[0x14], a[0x17], a[0x16],
+		a[0x19], a[0x18], a[0x1b], a[0x1a], a[0x1d], a[0x1c], a[0x1f], a[0x1e],
+		a[0x21], a[0x20], a[0x23], a[0x22], a[0x25], a[0x24], a[0x27], a[0x26],
+		a[0x29], a[0x28], a[0x2b], a[0x2a], a[0x2d], a[0x2c], a[0x2f], a[0x2e],
+		a[0x31], a[0x30], a[0x33], a[0x32], a[0x35], a[0x34], a[0x37], a[0x36],
+		a[0x39], a[0x38], a[0x3b], a[0x3a], a[0x3d], a[0x3c], a[0x3f], a[0x3e]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_reg(const mutable_buffer &buf,
+                      const u32x4 &a_,
+                      const uint &fmt)
 noexcept
 {
 	const u8x16 a(a_);
@@ -145,9 +323,65 @@ noexcept
 
 template<>
 ircd::string_view
-ircd::simd::str_reg(const mutable_buffer &buf,
-                    const u64x2 &a_,
-                    const uint &fmt)
+ircd::simd::print_reg(const mutable_buffer &buf,
+                      const u32x8 &a_,
+                      const uint &fmt)
+noexcept
+{
+	const u8x32 a(a_);
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"0x%02x%02x%02x%02x 0x%02x%02x%02x%02x 0x%02x%02x%02x%02x 0x%02x%02x%02x%02x "
+		"0x%02x%02x%02x%02x 0x%02x%02x%02x%02x 0x%02x%02x%02x%02x 0x%02x%02x%02x%02x",
+		a[0x03], a[0x02], a[0x01], a[0x00], a[0x07], a[0x06], a[0x05], a[0x04],
+		a[0x0b], a[0x0a], a[0x09], a[0x08], a[0x0f], a[0x0e], a[0x0d], a[0x0c],
+		a[0x13], a[0x12], a[0x11], a[0x10], a[0x17], a[0x16], a[0x15], a[0x14],
+		a[0x1b], a[0x1a], a[0x19], a[0x18], a[0x1f], a[0x1e], a[0x1d], a[0x1c]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_reg(const mutable_buffer &buf,
+                      const u32x16 &a_,
+                      const uint &fmt)
+noexcept
+{
+	const u8x64 a(a_);
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"0x%02x%02x%02x%02x 0x%02x%02x%02x%02x 0x%02x%02x%02x%02x 0x%02x%02x%02x%02x "
+		"0x%02x%02x%02x%02x 0x%02x%02x%02x%02x 0x%02x%02x%02x%02x 0x%02x%02x%02x%02x "
+		"0x%02x%02x%02x%02x 0x%02x%02x%02x%02x 0x%02x%02x%02x%02x 0x%02x%02x%02x%02x "
+		"0x%02x%02x%02x%02x 0x%02x%02x%02x%02x 0x%02x%02x%02x%02x 0x%02x%02x%02x%02x",
+		a[0x03], a[0x02], a[0x01], a[0x00], a[0x07], a[0x06], a[0x05], a[0x04],
+		a[0x0b], a[0x0a], a[0x09], a[0x08], a[0x0f], a[0x0e], a[0x0d], a[0x0c],
+		a[0x13], a[0x12], a[0x11], a[0x10], a[0x17], a[0x16], a[0x15], a[0x14],
+		a[0x1b], a[0x1a], a[0x19], a[0x18], a[0x1f], a[0x1e], a[0x1d], a[0x1c],
+		a[0x23], a[0x22], a[0x21], a[0x20], a[0x27], a[0x26], a[0x25], a[0x24],
+		a[0x2b], a[0x2a], a[0x29], a[0x28], a[0x2f], a[0x2e], a[0x2d], a[0x2c],
+		a[0x33], a[0x32], a[0x31], a[0x30], a[0x37], a[0x36], a[0x35], a[0x34],
+		a[0x3b], a[0x3a], a[0x39], a[0x38], a[0x3f], a[0x3e], a[0x3d], a[0x3c]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_reg(const mutable_buffer &buf,
+                      const u64x2 &a_,
+                      const uint &fmt)
 noexcept
 {
 	const u8x16 a(a_);
@@ -167,16 +401,72 @@ noexcept
 
 template<>
 ircd::string_view
-ircd::simd::str_reg(const mutable_buffer &buf,
-                    const u128x1 &a_,
-                    const uint &fmt)
+ircd::simd::print_reg(const mutable_buffer &buf,
+                      const u64x4 &a_,
+                      const uint &fmt)
+noexcept
+{
+	const u8x32 a(a_);
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x "
+		"0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x",
+		a[0x07], a[0x06], a[0x05], a[0x04], a[0x03], a[0x02], a[0x01], a[0x00],
+		a[0x0f], a[0x0e], a[0x0d], a[0x0c], a[0x0b], a[0x0a], a[0x09], a[0x08],
+		a[0x17], a[0x16], a[0x15], a[0x14], a[0x13], a[0x12], a[0x11], a[0x10],
+		a[0x1f], a[0x1e], a[0x1d], a[0x1c], a[0x1b], a[0x1a], a[0x19], a[0x18]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_reg(const mutable_buffer &buf,
+                      const u64x8 &a_,
+                      const uint &fmt)
+noexcept
+{
+	const u8x64 a(a_);
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x "
+		"0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x "
+		"0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x "
+		"0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x",
+		a[0x07], a[0x06], a[0x05], a[0x04], a[0x03], a[0x02], a[0x01], a[0x00],
+		a[0x0f], a[0x0e], a[0x0d], a[0x0c], a[0x0b], a[0x0a], a[0x09], a[0x08],
+		a[0x17], a[0x16], a[0x15], a[0x14], a[0x13], a[0x12], a[0x11], a[0x10],
+		a[0x1f], a[0x1e], a[0x1d], a[0x1c], a[0x1b], a[0x1a], a[0x19], a[0x18],
+		a[0x27], a[0x26], a[0x25], a[0x24], a[0x23], a[0x22], a[0x21], a[0x20],
+		a[0x2f], a[0x2e], a[0x2d], a[0x2c], a[0x2b], a[0x2a], a[0x29], a[0x28],
+		a[0x37], a[0x36], a[0x35], a[0x34], a[0x33], a[0x32], a[0x31], a[0x30],
+		a[0x3f], a[0x3e], a[0x3d], a[0x3c], a[0x3b], a[0x3a], a[0x39], a[0x38]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_reg(const mutable_buffer &buf,
+                      const u128x1 &a_,
+                      const uint &fmt)
 noexcept
 {
 	const u8x16 a(a_);
 	const auto len(::snprintf
 	(
-		data(buf), size(buf),
-		"0x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+		data(buf), size(buf), "0x"
+		"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
 		a[0x0f], a[0x0e], a[0x0d], a[0x0c], a[0x0b], a[0x0a], a[0x09], a[0x08],
 		a[0x07], a[0x06], a[0x05], a[0x04], a[0x03], a[0x02], a[0x01], a[0x00]
 	));
@@ -189,12 +479,71 @@ noexcept
 
 template<>
 ircd::string_view
-ircd::simd::str_mem(const mutable_buffer &buf,
-                    const u8x16 &a_,
-                    const uint &fmt)
+ircd::simd::print_reg(const mutable_buffer &buf,
+                      const u256x1 &a_,
+                      const uint &fmt)
 noexcept
 {
-	const u8x16 a(a_);
+	const u8x32 a(a_);
+	const auto len(::snprintf
+	(
+		data(buf), size(buf), "0x"
+		"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+		"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+		a[0x1f], a[0x1e], a[0x1d], a[0x1c], a[0x1b], a[0x1a], a[0x19], a[0x18],
+		a[0x17], a[0x16], a[0x15], a[0x14], a[0x13], a[0x12], a[0x11], a[0x10],
+		a[0x0f], a[0x0e], a[0x0d], a[0x0c], a[0x0b], a[0x0a], a[0x09], a[0x08],
+		a[0x07], a[0x06], a[0x05], a[0x04], a[0x03], a[0x02], a[0x01], a[0x00]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_reg(const mutable_buffer &buf,
+                      const u512x1 &a_,
+                      const uint &fmt)
+noexcept
+{
+	const u8x64 a(a_);
+	const auto len(::snprintf
+	(
+		data(buf), size(buf), "0x"
+		"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+		"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+		"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+		"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+		a[0x3f], a[0x3e], a[0x3d], a[0x3c], a[0x3b], a[0x3a], a[0x39], a[0x38],
+		a[0x37], a[0x36], a[0x35], a[0x34], a[0x33], a[0x32], a[0x31], a[0x30],
+		a[0x2f], a[0x2e], a[0x2d], a[0x2c], a[0x2b], a[0x2a], a[0x29], a[0x28],
+		a[0x27], a[0x26], a[0x25], a[0x24], a[0x23], a[0x22], a[0x21], a[0x20],
+		a[0x1f], a[0x1e], a[0x1d], a[0x1c], a[0x1b], a[0x1a], a[0x19], a[0x18],
+		a[0x17], a[0x16], a[0x15], a[0x14], a[0x13], a[0x12], a[0x11], a[0x10],
+		a[0x0f], a[0x0e], a[0x0d], a[0x0c], a[0x0b], a[0x0a], a[0x09], a[0x08],
+		a[0x07], a[0x06], a[0x05], a[0x04], a[0x03], a[0x02], a[0x01], a[0x00]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+//
+// Stringify byte values (memory format) for each lane.
+//
+
+template<>
+ircd::string_view
+ircd::simd::print_mem(const mutable_buffer &buf,
+                      const u8x16 &a,
+                      const uint &fmt)
+noexcept
+{
 	const auto len(::snprintf
 	(
 		data(buf), size(buf),
@@ -211,9 +560,63 @@ noexcept
 
 template<>
 ircd::string_view
-ircd::simd::str_mem(const mutable_buffer &buf,
-                    const u16x8 &a_,
-                    const uint &fmt)
+ircd::simd::print_mem(const mutable_buffer &buf,
+                      const u8x32 &a,
+                      const uint &fmt)
+noexcept
+{
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x "
+		"%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x",
+		a[0x00], a[0x01], a[0x02], a[0x03], a[0x04], a[0x05], a[0x06], a[0x07],
+		a[0x08], a[0x09], a[0x0a], a[0x0b], a[0x0c], a[0x0d], a[0x0e], a[0x0f],
+		a[0x10], a[0x11], a[0x12], a[0x13], a[0x14], a[0x15], a[0x16], a[0x17],
+		a[0x18], a[0x19], a[0x1a], a[0x1b], a[0x1c], a[0x1d], a[0x1e], a[0x1f]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_mem(const mutable_buffer &buf,
+                      const u8x64 &a,
+                      const uint &fmt)
+noexcept
+{
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x "
+		"%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x "
+		"%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x "
+		"%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x",
+		a[0x00], a[0x01], a[0x02], a[0x03], a[0x04], a[0x05], a[0x06], a[0x07],
+		a[0x08], a[0x09], a[0x0a], a[0x0b], a[0x0c], a[0x0d], a[0x0e], a[0x0f],
+		a[0x10], a[0x11], a[0x12], a[0x13], a[0x14], a[0x15], a[0x16], a[0x17],
+		a[0x18], a[0x19], a[0x1a], a[0x1b], a[0x1c], a[0x1d], a[0x1e], a[0x1f],
+		a[0x20], a[0x21], a[0x22], a[0x23], a[0x24], a[0x25], a[0x26], a[0x27],
+		a[0x28], a[0x29], a[0x2a], a[0x2b], a[0x2c], a[0x2d], a[0x2e], a[0x2f],
+		a[0x30], a[0x31], a[0x32], a[0x33], a[0x34], a[0x35], a[0x36], a[0x37],
+		a[0x38], a[0x39], a[0x3a], a[0x3b], a[0x3c], a[0x3d], a[0x3e], a[0x3f]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_mem(const mutable_buffer &buf,
+                      const u16x8 &a_,
+                      const uint &fmt)
 noexcept
 {
 	const u8x16 a(a_);
@@ -233,9 +636,59 @@ noexcept
 
 template<>
 ircd::string_view
-ircd::simd::str_mem(const mutable_buffer &buf,
-                    const u32x4 &a_,
-                    const uint &fmt)
+ircd::simd::print_mem(const mutable_buffer &buf,
+                      const u16x16 &a_,
+                      const uint &fmt)
+noexcept
+{
+	const u8x32 a(a_);
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"%02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x "
+		"%02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x",
+		a[0x00], a[0x01], a[0x02], a[0x03], a[0x04], a[0x05], a[0x06], a[0x07],
+		a[0x08], a[0x09], a[0x0a], a[0x0b], a[0x0c], a[0x0d], a[0x0e], a[0x0f],
+		a[0x10], a[0x11], a[0x12], a[0x13], a[0x14], a[0x15], a[0x16], a[0x17],
+		a[0x18], a[0x19], a[0x1a], a[0x1b], a[0x1c], a[0x1d], a[0x1e], a[0x1f]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_mem(const mutable_buffer &buf,
+                      const u16x32 &a_,
+                      const uint &fmt)
+noexcept
+{
+	const u8x64 a(a_);
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"%02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x "
+		"%02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x",
+		a[0x00], a[0x01], a[0x02], a[0x03], a[0x04], a[0x05], a[0x06], a[0x07],
+		a[0x08], a[0x09], a[0x0a], a[0x0b], a[0x0c], a[0x0d], a[0x0e], a[0x0f],
+		a[0x10], a[0x11], a[0x12], a[0x13], a[0x14], a[0x15], a[0x16], a[0x17],
+		a[0x18], a[0x19], a[0x1a], a[0x1b], a[0x1c], a[0x1d], a[0x1e], a[0x1f]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_mem(const mutable_buffer &buf,
+                      const u32x4 &a_,
+                      const uint &fmt)
 noexcept
 {
 	const u8x16 a(a_);
@@ -255,9 +708,65 @@ noexcept
 
 template<>
 ircd::string_view
-ircd::simd::str_mem(const mutable_buffer &buf,
-                    const u64x2 &a_,
-                    const uint &fmt)
+ircd::simd::print_mem(const mutable_buffer &buf,
+                      const u32x8 &a_,
+                      const uint &fmt)
+noexcept
+{
+	const u8x32 a(a_);
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x "
+		"%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x",
+		a[0x00], a[0x01], a[0x02], a[0x03], a[0x04], a[0x05], a[0x06], a[0x07],
+		a[0x08], a[0x09], a[0x0a], a[0x0b], a[0x0c], a[0x0d], a[0x0e], a[0x0f],
+		a[0x10], a[0x11], a[0x12], a[0x13], a[0x14], a[0x15], a[0x16], a[0x17],
+		a[0x18], a[0x19], a[0x1a], a[0x1b], a[0x1c], a[0x1d], a[0x1e], a[0x1f]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_mem(const mutable_buffer &buf,
+                      const u32x16 &a_,
+                      const uint &fmt)
+noexcept
+{
+	const u8x64 a(a_);
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x "
+		"%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x "
+		"%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x "
+		"%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x",
+		a[0x00], a[0x01], a[0x02], a[0x03], a[0x04], a[0x05], a[0x06], a[0x07],
+		a[0x08], a[0x09], a[0x0a], a[0x0b], a[0x0c], a[0x0d], a[0x0e], a[0x0f],
+		a[0x10], a[0x11], a[0x12], a[0x13], a[0x14], a[0x15], a[0x16], a[0x17],
+		a[0x18], a[0x19], a[0x1a], a[0x1b], a[0x1c], a[0x1d], a[0x1e], a[0x1f],
+		a[0x20], a[0x21], a[0x22], a[0x23], a[0x24], a[0x25], a[0x26], a[0x27],
+		a[0x28], a[0x29], a[0x2a], a[0x2b], a[0x2c], a[0x2d], a[0x2e], a[0x2f],
+		a[0x30], a[0x31], a[0x32], a[0x33], a[0x34], a[0x35], a[0x36], a[0x37],
+		a[0x38], a[0x39], a[0x3a], a[0x3b], a[0x3c], a[0x3d], a[0x3e], a[0x3f]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_mem(const mutable_buffer &buf,
+                      const u64x2 &a_,
+                      const uint &fmt)
 noexcept
 {
 	const u8x16 a(a_);
@@ -277,9 +786,65 @@ noexcept
 
 template<>
 ircd::string_view
-ircd::simd::str_mem(const mutable_buffer &buf,
-                    const u128x1 &a_,
-                    const uint &fmt)
+ircd::simd::print_mem(const mutable_buffer &buf,
+                      const u64x4 &a_,
+                      const uint &fmt)
+noexcept
+{
+	const u8x32 a(a_);
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"%02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x "
+		"%02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x",
+		a[0x00], a[0x01], a[0x02], a[0x03], a[0x04], a[0x05], a[0x06], a[0x07],
+		a[0x08], a[0x09], a[0x0a], a[0x0b], a[0x0c], a[0x0d], a[0x0e], a[0x0f],
+		a[0x10], a[0x11], a[0x12], a[0x13], a[0x14], a[0x15], a[0x16], a[0x17],
+		a[0x18], a[0x19], a[0x1a], a[0x1b], a[0x1c], a[0x1d], a[0x1e], a[0x1f]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_mem(const mutable_buffer &buf,
+                      const u64x8 &a_,
+                      const uint &fmt)
+noexcept
+{
+	const u8x64 a(a_);
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"%02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x "
+		"%02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x "
+		"%02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x "
+		"%02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x",
+		a[0x00], a[0x01], a[0x02], a[0x03], a[0x04], a[0x05], a[0x06], a[0x07],
+		a[0x08], a[0x09], a[0x0a], a[0x0b], a[0x0c], a[0x0d], a[0x0e], a[0x0f],
+		a[0x10], a[0x11], a[0x12], a[0x13], a[0x14], a[0x15], a[0x16], a[0x17],
+		a[0x18], a[0x19], a[0x1a], a[0x1b], a[0x1c], a[0x1d], a[0x1e], a[0x1f],
+		a[0x20], a[0x21], a[0x22], a[0x23], a[0x24], a[0x25], a[0x26], a[0x27],
+		a[0x28], a[0x29], a[0x2a], a[0x2b], a[0x2c], a[0x2d], a[0x2e], a[0x2f],
+		a[0x30], a[0x31], a[0x32], a[0x33], a[0x34], a[0x35], a[0x36], a[0x37],
+		a[0x38], a[0x39], a[0x3a], a[0x3b], a[0x3c], a[0x3d], a[0x3e], a[0x3f]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_mem(const mutable_buffer &buf,
+                      const u128x1 &a_,
+                      const uint &fmt)
 noexcept
 {
 	const u8x16 a(a_);
@@ -289,6 +854,62 @@ noexcept
 		"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
 		a[0x00], a[0x01], a[0x02], a[0x03], a[0x04], a[0x05], a[0x06], a[0x07],
 		a[0x08], a[0x09], a[0x0a], a[0x0b], a[0x0c], a[0x0d], a[0x0e], a[0x0f]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_mem(const mutable_buffer &buf,
+                      const u256x1 &a_,
+                      const uint &fmt)
+noexcept
+{
+	const u8x32 a(a_);
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+		"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+		a[0x00], a[0x01], a[0x02], a[0x03], a[0x04], a[0x05], a[0x06], a[0x07],
+		a[0x08], a[0x09], a[0x0a], a[0x0b], a[0x0c], a[0x0d], a[0x0e], a[0x0f],
+		a[0x10], a[0x11], a[0x12], a[0x13], a[0x14], a[0x15], a[0x16], a[0x17],
+		a[0x18], a[0x19], a[0x1a], a[0x1b], a[0x1c], a[0x1d], a[0x1e], a[0x1f]
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_mem(const mutable_buffer &buf,
+                      const u512x1 &a_,
+                      const uint &fmt)
+noexcept
+{
+	const u8x64 a(a_);
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+		"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+		"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+		"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+		a[0x00], a[0x01], a[0x02], a[0x03], a[0x04], a[0x05], a[0x06], a[0x07],
+		a[0x08], a[0x09], a[0x0a], a[0x0b], a[0x0c], a[0x0d], a[0x0e], a[0x0f],
+		a[0x10], a[0x11], a[0x12], a[0x13], a[0x14], a[0x15], a[0x16], a[0x17],
+		a[0x18], a[0x19], a[0x1a], a[0x1b], a[0x1c], a[0x1d], a[0x1e], a[0x1f],
+		a[0x20], a[0x21], a[0x22], a[0x23], a[0x24], a[0x25], a[0x26], a[0x27],
+		a[0x28], a[0x29], a[0x2a], a[0x2b], a[0x2c], a[0x2d], a[0x2e], a[0x2f],
+		a[0x30], a[0x31], a[0x32], a[0x33], a[0x34], a[0x35], a[0x36], a[0x37],
+		a[0x38], a[0x39], a[0x3a], a[0x3b], a[0x3c], a[0x3d], a[0x3e], a[0x3f]
 	));
 
 	return string_view

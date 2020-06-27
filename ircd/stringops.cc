@@ -8,8 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <ircd/simd.h>
-
 namespace ircd
 {
 	template<class i8xN,
@@ -111,7 +109,7 @@ noexcept
 	};
 }
 
-#if defined(IRCD_SIMD) && defined(__SSE2__)
+#if defined(__SSE2__)
 ircd::string_view
 ircd::tolower(const mutable_buffer &out,
               const string_view &in)

@@ -8,18 +8,8 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-//
-// This header is not included with the standard include group (ircd.h).
-// Include this header in specific units as necessary.
-//
-
 #pragma once
-#define HAVE_IRCD_SIMD_H
-#include <RB_INC_X86INTRIN_H
-
-#ifdef HAVE_X86INTRIN_H
-	#define IRCD_SIMD
-#endif
+#define HAVE_IRCD_SIMD_TYPE_H
 
 //
 // scalar
@@ -46,7 +36,7 @@ namespace ircd
 // unsigned
 //
 
-#if defined(IRCD_SIMD)
+#ifdef HAVE_X86INTRIN_H
 namespace ircd
 {
 	typedef __v64qu       u8x64;     //  [
@@ -74,7 +64,7 @@ namespace ircd
 // signed
 //
 
-#if defined(IRCD_SIMD)
+#ifdef HAVE_X86INTRIN_H
 namespace ircd
 {
 	typedef __v64qi       i8x64;     //  [
@@ -102,7 +92,7 @@ namespace ircd
 // single precision
 //
 
-#if defined(IRCD_SIMD)
+#ifdef HAVE_X86INTRIN_H
 namespace ircd
 {
 	typedef __v16qs       f8x16;     //  [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|
@@ -122,7 +112,7 @@ namespace ircd
 // double precision
 //
 
-#if defined(IRCD_SIMD)
+#ifdef HAVE_X86INTRIN_H
 namespace ircd
 {
 	typedef __v8df        f64x8;     //  [
@@ -138,43 +128,12 @@ namespace ircd
 #endif
 
 //
-// tools
+// other words
 //
 
 namespace ircd::simd
 {
-	// other words
 	struct pshuf_imm8;
-
-	// lane number convenience constants
-	extern const u8x32    u8x32_lane_id;
-	extern const u16x16  u16x16_lane_id;
-	extern const u8x16    u8x16_lane_id;
-	extern const u32x8    u32x8_lane_id;
-	extern const u16x8    u16x8_lane_id;
-	extern const u64x4    u64x4_lane_id;
-	extern const u32x4    u32x4_lane_id;
-	extern const u64x2    u64x2_lane_id;
-	extern const u256x1  u256x1_lane_id;
-	extern const u128x1  u128x1_lane_id;
-
-	// xmmx shifter workarounds
-	template<int bits, class T> T shl(const T &a) noexcept;
-	template<int bits, class T> T shr(const T &a) noexcept;
-	template<int bits> u128x1 shl(const u128x1 &a) noexcept;
-	template<int bits> u128x1 shr(const u128x1 &a) noexcept;
-	template<int bits> u256x1 shl(const u256x1 &a) noexcept;
-	template<int bits> u256x1 shr(const u256x1 &a) noexcept;
-
-	// readable output and debug
-	template<class T> string_view str_reg(const mutable_buffer &buf, const T &, const uint &fmt = 0) noexcept;
-	template<class T> string_view str_mem(const mutable_buffer &buf, const T &, const uint &fmt = 0) noexcept;
-}
-
-namespace ircd
-{
-	using simd::shl;
-	using simd::shr;
 }
 
 /// Shuffle control structure. This represents an 8-bit immediate operand;
@@ -186,63 +145,3 @@ struct ircd::simd::pshuf_imm8
 	u8 dst1  : 2;  // set src idx for word 1
 	u8 dst0  : 2;  // set src idx for word 0
 };
-
-template<int b>
-[[using gnu: always_inline, gnu_inline, artificial]]
-extern inline ircd::u128x1
-ircd::simd::shr(const u128x1 &a)
-noexcept
-{
-	static_assert
-	(
-		b % 8 == 0, "xmmx register only shifts right at bytewise resolution."
-	);
-
-	return _mm_bsrli_si128(a, b / 8);
-}
-
-template<int b>
-[[using gnu: always_inline, gnu_inline, artificial]]
-extern inline ircd::u128x1
-ircd::simd::shl(const u128x1 &a)
-noexcept
-{
-	static_assert
-	(
-		b % 8 == 0, "xmmx register only shifts right at bytewise resolution."
-	);
-
-	return _mm_bslli_si128(a, b / 8);
-}
-
-#ifdef __AVX2__
-template<int b>
-[[using gnu: always_inline, gnu_inline, artificial]]
-extern inline ircd::u256x1
-ircd::simd::shr(const u256x1 &a)
-noexcept
-{
-	static_assert
-	(
-		b % 8 == 0, "ymmx register only shifts right at bytewise resolution."
-	);
-
-	return _mm256_srli_si256(a, b / 8);
-}
-#endif
-
-#ifdef __AVX2__
-template<int b>
-[[using gnu: always_inline, gnu_inline, artificial]]
-extern inline ircd::u256x1
-ircd::simd::shl(const u256x1 &a)
-noexcept
-{
-	static_assert
-	(
-		b % 8 == 0, "ymmx register only shifts right at bytewise resolution."
-	);
-
-	return _mm256_slli_si256(a, b / 8);
-}
-#endif
