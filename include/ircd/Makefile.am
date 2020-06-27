@@ -53,10 +53,10 @@ ircd.pic.h.gch: ircd.h
 	cp ircd.h ircd.pic.h
 	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o ircd.pic.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC ircd.pic.h
 
-matrix.h.gch: matrix.h m/*.h m/*/*.h
+matrix.h.gch: ircd.h matrix.h m/*.h m/*/*.h
 	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -o matrix.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) matrix.h
 
-matrix.pic.h.gch: matrix.h m/*.h m/*/*.h
+matrix.pic.h.gch: ircd.h matrix.h m/*.h m/*/*.h
 	cp matrix.h matrix.pic.h
 	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o matrix.pic.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC matrix.pic.h
 
