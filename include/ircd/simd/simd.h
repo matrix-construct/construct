@@ -25,9 +25,7 @@ namespace ircd::simd
 	template<int bits> u256x1 shl(const u256x1 &a) noexcept;
 	template<int bits> u256x1 shr(const u256x1 &a) noexcept;
 
-	// Convert each lane from a smaller type to a larger type
-	template<class R, class T> R explode(const T &);
-	template<class R> R explode(const u8x16 &);
+	template<class R, class T> R lane_cast(const T &);
 }
 
 namespace ircd
@@ -36,12 +34,22 @@ namespace ircd
 	using simd::shr;
 }
 
-template<class R>
+/// Convert each lane from a smaller type to a larger type
+template<class R,
+         class T>
 inline R
-ircd::simd::explode(const u8x16 &in)
+ircd::simd::lane_cast(const T &in)
 {
+	static_assert
+	(
+		lanes<R>() == lanes<T>(), "Types must have matching number of lanes."
+	);
+
+	if constexpr(__has_builtin(__builtin_convertvector))
+		return __builtin_convertvector(in, R);
+
 	R ret;
-	for(size_t i(0); i < 16; ++i)
+	for(size_t i(0); i < lanes<R>(); ++i)
 		ret[i] = in[i];
 
 	return ret;
