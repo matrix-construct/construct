@@ -15750,11 +15750,11 @@ console_cmd__icu(opt &out, const string_view &line)
 
 	const size_t count
 	{
-		utf8::decode(ch, size(line), line)
+		icu::utf8::decode(ch, size(line), line)
 	};
 
 	char namebuf[64]; size_t li(0);
-	for(size_t i(0); i < count; ++i, li += utf8::length(ch[i]))
+	for(size_t i(0); i < count; ++i, li += icu::utf8::length(ch[i]))
 		out
 		<< ' ' << std::dec << std::right << std::setw(6) << int(icu::block(ch[i]))
 		<< ' ' << std::dec << std::right << std::setw(4) << int(icu::category(ch[i]))

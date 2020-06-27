@@ -62,9 +62,3 @@ namespace ircd::icu::utf16
 	char32_t get_or_fffd(const string_view &) noexcept;  // error = U+FFFD
 	char32_t get_unsafe(const string_view &) noexcept;   // error undefined
 }
-
-namespace ircd
-{
-	namespace utf8 = icu::utf8;
-	namespace utf16 = icu::utf16;
-}

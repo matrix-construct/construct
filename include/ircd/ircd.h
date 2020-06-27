@@ -55,6 +55,7 @@
 #include "backtrace.h"
 #include "info.h"
 #include "icu.h"
+#include "utf.h"
 #include "time.h"
 #include "lex_cast.h"
 #include "logger.h"
