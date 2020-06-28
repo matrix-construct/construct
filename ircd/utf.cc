@@ -32,6 +32,51 @@ noexcept
 	};
 }
 
+ircd::u8x16
+ircd::utf16::mask_surrogate(const u8x16 input)
+noexcept
+{
+	const u128x1 leading_char
+	{
+		find_surrogate(input)
+	};
+
+	const auto mask
+	{
+		shl<0x08>(leading_char) |
+		shl<0x10>(leading_char) |
+		shl<0x18>(leading_char) |
+		shl<0x20>(leading_char) |
+		shl<0x28>(leading_char)
+	};
+
+	return mask;
+}
+
+ircd::u8x16
+ircd::utf16::find_surrogate(const u8x16 input)
+noexcept
+{
+	const u128x1 is_hex_nibble
+	{
+		(input >= '0' && input <= '9') ||
+		(input >= 'A' && input <= 'F') ||
+		(input >= 'a' && input <= 'f')
+	};
+
+	const auto is_surrogate
+	{
+		u128x1(input == '\\') &
+		shr<8>(u128x1(input == 'u')) &
+		shr<16>(is_hex_nibble) &
+		shr<24>(is_hex_nibble) &
+		shr<32>(is_hex_nibble) &
+		shr<40>(is_hex_nibble)
+	};
+
+	return is_surrogate;
+}
+
 //
 // utf8
 //

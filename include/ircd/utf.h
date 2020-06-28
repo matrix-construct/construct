@@ -28,5 +28,7 @@ namespace ircd::utf8
 /// Unicode Transformation Format (16-bit)
 namespace ircd::utf16
 {
+	u8x16 find_surrogate(const u8x16 input) noexcept;
+	u8x16 mask_surrogate(const u8x16 input) noexcept;
 	u32x8 convert_u32x8(const u8x16 pairs) noexcept;
 }
