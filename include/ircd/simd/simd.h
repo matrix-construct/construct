@@ -13,6 +13,7 @@
 
 #include "type.h"
 #include "traits.h"
+#include "lane_cast.h"
 #include "print.h"
 
 namespace ircd::simd
@@ -24,35 +25,13 @@ namespace ircd::simd
 	template<int bits> u128x1 shr(const u128x1 &a) noexcept;
 	template<int bits> u256x1 shl(const u256x1 &a) noexcept;
 	template<int bits> u256x1 shr(const u256x1 &a) noexcept;
-
-	template<class R, class T> R lane_cast(const T &);
 }
 
 namespace ircd
 {
 	using simd::shl;
 	using simd::shr;
-}
-
-/// Convert each lane from a smaller type to a larger type
-template<class R,
-         class T>
-inline R
-ircd::simd::lane_cast(const T &in)
-{
-	static_assert
-	(
-		lanes<R>() == lanes<T>(), "Types must have matching number of lanes."
-	);
-
-	if constexpr(__has_builtin(__builtin_convertvector))
-		return __builtin_convertvector(in, R);
-
-	R ret;
-	for(size_t i(0); i < lanes<R>(); ++i)
-		ret[i] = in[i];
-
-	return ret;
+	using simd::lane_cast;
 }
 
 #ifdef HAVE_X86INTRIN_H
