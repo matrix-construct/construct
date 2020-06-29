@@ -20,13 +20,13 @@ namespace ircd::utf
 /// Unicode Transformation Format (8-bit)
 namespace ircd::utf8
 {
-	u32x16 length(const u32x16 &codepoints) noexcept;
-	u32x16 encode(const u32x16 &codepoints) noexcept;
-	u32x16 decode(const u8x16 &string) noexcept;
+	u32x16 length(const u32x16 codepoints) noexcept;
+	u32x16 encode(const u32x16 codepoints) noexcept;
+	u32x16 decode(const u8x16 string) noexcept;
 }
 
 /// Unicode Transformation Format (16-bit)
 namespace ircd::utf16
 {
-	u32x8 convert_u32x8(const u8x16 &pairs) noexcept;
+	u32x8 convert_u32x8(const u8x16 pairs) noexcept;
 }

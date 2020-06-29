@@ -36,7 +36,7 @@ namespace ircd::simd
 	template<class T>
 	string_view
 	print_reg(const mutable_buffer &buf,
-	          const T &,
+	          const T,
 	          const uint &fmt = 0)
 	noexcept;
 
@@ -47,7 +47,7 @@ namespace ircd::simd
 	template<class T>
 	string_view
 	print_mem(const mutable_buffer &buf,
-	          const T &,
+	          const T,
 	          const uint &fmt = 0)
 	noexcept;
 }

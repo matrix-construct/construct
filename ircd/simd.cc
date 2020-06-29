@@ -134,7 +134,7 @@ ircd::simd::u512x1_lane_id
 template<>
 ircd::string_view
 ircd::simd::print_reg(const mutable_buffer &buf,
-                      const u8x16 &a,
+                      const u8x16 a,
                       const uint &fmt)
 noexcept
 {
@@ -156,7 +156,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_reg(const mutable_buffer &buf,
-                      const u8x32 &a,
+                      const u8x32 a,
                       const uint &fmt)
 noexcept
 {
@@ -182,7 +182,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_reg(const mutable_buffer &buf,
-                      const u8x64 &a,
+                      const u8x64 a,
                       const uint &fmt)
 noexcept
 {
@@ -216,7 +216,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_reg(const mutable_buffer &buf,
-                      const u16x8 &a_,
+                      const u16x8 a_,
                       const uint &fmt)
 noexcept
 {
@@ -239,7 +239,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_reg(const mutable_buffer &buf,
-                      const u16x16 &a_,
+                      const u16x16 a_,
                       const uint &fmt)
 noexcept
 {
@@ -266,7 +266,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_reg(const mutable_buffer &buf,
-                      const u16x32 &a_,
+                      const u16x32 a_,
                       const uint &fmt)
 noexcept
 {
@@ -301,7 +301,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_reg(const mutable_buffer &buf,
-                      const u32x4 &a_,
+                      const u32x4 a_,
                       const uint &fmt)
 noexcept
 {
@@ -324,7 +324,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_reg(const mutable_buffer &buf,
-                      const u32x8 &a_,
+                      const u32x8 a_,
                       const uint &fmt)
 noexcept
 {
@@ -349,7 +349,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_reg(const mutable_buffer &buf,
-                      const u32x16 &a_,
+                      const u32x16 a_,
                       const uint &fmt)
 noexcept
 {
@@ -380,7 +380,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_reg(const mutable_buffer &buf,
-                      const u64x2 &a_,
+                      const u64x2 a_,
                       const uint &fmt)
 noexcept
 {
@@ -402,7 +402,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_reg(const mutable_buffer &buf,
-                      const u64x4 &a_,
+                      const u64x4 a_,
                       const uint &fmt)
 noexcept
 {
@@ -427,7 +427,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_reg(const mutable_buffer &buf,
-                      const u64x8 &a_,
+                      const u64x8 a_,
                       const uint &fmt)
 noexcept
 {
@@ -458,7 +458,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_reg(const mutable_buffer &buf,
-                      const u128x1 &a_,
+                      const u128x1 a_,
                       const uint &fmt)
 noexcept
 {
@@ -480,7 +480,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_reg(const mutable_buffer &buf,
-                      const u256x1 &a_,
+                      const u256x1 a_,
                       const uint &fmt)
 noexcept
 {
@@ -505,7 +505,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_reg(const mutable_buffer &buf,
-                      const u512x1 &a_,
+                      const u512x1 a_,
                       const uint &fmt)
 noexcept
 {
@@ -540,7 +540,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_mem(const mutable_buffer &buf,
-                      const u8x16 &a,
+                      const u8x16 a,
                       const uint &fmt)
 noexcept
 {
@@ -561,7 +561,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_mem(const mutable_buffer &buf,
-                      const u8x32 &a,
+                      const u8x32 a,
                       const uint &fmt)
 noexcept
 {
@@ -585,7 +585,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_mem(const mutable_buffer &buf,
-                      const u8x64 &a,
+                      const u8x64 a,
                       const uint &fmt)
 noexcept
 {
@@ -615,7 +615,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_mem(const mutable_buffer &buf,
-                      const u16x8 &a_,
+                      const u16x8 a_,
                       const uint &fmt)
 noexcept
 {
@@ -637,7 +637,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_mem(const mutable_buffer &buf,
-                      const u16x16 &a_,
+                      const u16x16 a_,
                       const uint &fmt)
 noexcept
 {
@@ -662,7 +662,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_mem(const mutable_buffer &buf,
-                      const u16x32 &a_,
+                      const u16x32 a_,
                       const uint &fmt)
 noexcept
 {
@@ -693,7 +693,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_mem(const mutable_buffer &buf,
-                      const u32x4 &a_,
+                      const u32x4 a_,
                       const uint &fmt)
 noexcept
 {
@@ -715,7 +715,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_mem(const mutable_buffer &buf,
-                      const u32x8 &a_,
+                      const u32x8 a_,
                       const uint &fmt)
 noexcept
 {
@@ -740,7 +740,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_mem(const mutable_buffer &buf,
-                      const u32x16 &a_,
+                      const u32x16 a_,
                       const uint &fmt)
 noexcept
 {
@@ -771,7 +771,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_mem(const mutable_buffer &buf,
-                      const u64x2 &a_,
+                      const u64x2 a_,
                       const uint &fmt)
 noexcept
 {
@@ -793,7 +793,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_mem(const mutable_buffer &buf,
-                      const u64x4 &a_,
+                      const u64x4 a_,
                       const uint &fmt)
 noexcept
 {
@@ -818,7 +818,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_mem(const mutable_buffer &buf,
-                      const u64x8 &a_,
+                      const u64x8 a_,
                       const uint &fmt)
 noexcept
 {
@@ -849,7 +849,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_mem(const mutable_buffer &buf,
-                      const u128x1 &a_,
+                      const u128x1 a_,
                       const uint &fmt)
 noexcept
 {
@@ -871,7 +871,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_mem(const mutable_buffer &buf,
-                      const u256x1 &a_,
+                      const u256x1 a_,
                       const uint &fmt)
 noexcept
 {
@@ -896,7 +896,7 @@ noexcept
 template<>
 ircd::string_view
 ircd::simd::print_mem(const mutable_buffer &buf,
-                      const u512x1 &a_,
+                      const u512x1 a_,
                       const uint &fmt)
 noexcept
 {

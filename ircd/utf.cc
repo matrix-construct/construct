@@ -16,7 +16,7 @@
 /// in parallel. The result vector is twice the size as the input; no template
 /// is offered yet, just the dimensions someone needed for somewhere.
 ircd::u32x8
-ircd::utf16::convert_u32x8(const u8x16 &string)
+ircd::utf16::convert_u32x8(const u8x16 string)
 noexcept
 {
 	return u32x8
@@ -37,7 +37,7 @@ noexcept
 //
 
 ircd::u32x16
-ircd::utf8::decode(const u8x16 &string)
+ircd::utf8::decode(const u8x16 string)
 noexcept
 {
 	const u32x16 in
@@ -119,7 +119,7 @@ noexcept
 /// parallel, returning a sparse result in each char32_t (this does not
 /// compress the result down).
 ircd::u32x16
-ircd::utf8::encode(const u32x16 &codepoint)
+ircd::utf8::encode(const u32x16 codepoint)
 noexcept
 {
 	const u32x16 len
@@ -161,7 +161,7 @@ noexcept
 /// The input vector char32_t codepoints and the output yields an integer
 /// of 0-4 for each lane.
 ircd::u32x16
-ircd::utf8::length(const u32x16 &codepoint)
+ircd::utf8::length(const u32x16 codepoint)
 noexcept
 {
 	const u32x16
