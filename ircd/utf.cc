@@ -12,45 +12,87 @@
 // utf16
 //
 
-/// Convert utf-16 two-byte surrogates (in big-endian) to char32_t codepoints
-/// in parallel. The result vector is twice the size as the input; no template
-/// is offered yet, just the dimensions someone needed for somewhere.
-ircd::u32x8
-ircd::utf16::convert_u32x8(const u8x16 string)
-noexcept
+namespace ircd::utf16
 {
-	return u32x8
-	{
-		string[0x01] | (u32(string[0x00]) << 8),
-		string[0x03] | (u32(string[0x02]) << 8),
-		string[0x05] | (u32(string[0x04]) << 8),
-		string[0x07] | (u32(string[0x06]) << 8),
-		string[0x09] | (u32(string[0x08]) << 8),
-		string[0x0b] | (u32(string[0x0a]) << 8),
-		string[0x0d] | (u32(string[0x0c]) << 8),
-		string[0x0f] | (u32(string[0x0e]) << 8),
-	};
+	static const u128x1 full_mask {~u128x1{0}};
+	extern const u128x1 truncation_table[6];
 }
 
+decltype(ircd::utf16::truncation_table)
+ircd::utf16::truncation_table
+{
+	~shl<0x30>(~full_mask),
+	~shl<0x28>(~full_mask),
+	~shl<0x20>(~full_mask),
+	~shl<0x18>(~full_mask),
+	~shl<0x10>(~full_mask),
+	~shl<0x08>(~full_mask),
+};
+
 ircd::u8x16
-ircd::utf16::mask_surrogate(const u8x16 input)
+ircd::utf16::find_surrogate_partial(const u8x16 input)
 noexcept
 {
-	const u128x1 leading_char
+	const u128x1 is_esc
 	{
-		find_surrogate(input)
+		input == '\\'
 	};
 
-	const auto mask
+	const u128x1 is_u
 	{
-		shl<0x08>(leading_char) |
-		shl<0x10>(leading_char) |
-		shl<0x18>(leading_char) |
-		shl<0x20>(leading_char) |
-		shl<0x28>(leading_char)
+		input == 'u'
 	};
 
-	return mask;
+	const u128x1 is_hex_nibble
+	{
+		(input >= '0' && input <= '9') ||
+		(input >= 'A' && input <= 'F') ||
+		(input >= 'a' && input <= 'f')
+	};
+
+	const u128x1 surrogate_sans[6]
+	{
+		// complete
+		is_esc
+		& shr<8>(is_u)
+		& shr<16>(is_hex_nibble) & shr<24>(is_hex_nibble)
+		& shr<32>(is_hex_nibble) & shr<40>(is_hex_nibble),
+
+		// sans 1
+		is_esc
+		& shr<8>(is_u)
+		& shr<16>(is_hex_nibble) & shr<24>(is_hex_nibble)
+		& shr<32>(is_hex_nibble),
+
+		// sans 2
+		is_esc
+		& shr<8>(is_u)
+		& shr<16>(is_hex_nibble) & shr<24>(is_hex_nibble),
+
+		// sans 3
+		is_esc
+		& shr<8>(is_u)
+		& shr<16>(is_hex_nibble),
+
+		// sans 4
+		is_esc
+		& shr<8>(is_u),
+
+		// sans 5
+		is_esc,
+	};
+
+	const u128x1 ret
+	{
+		(surrogate_sans[0] & truncation_table[0]) |
+		(surrogate_sans[1] & truncation_table[1]) |
+		(surrogate_sans[2] & truncation_table[2]) |
+		(surrogate_sans[3] & truncation_table[3]) |
+		(surrogate_sans[4] & truncation_table[4]) |
+		(surrogate_sans[5] & truncation_table[5])
+	};
+
+	return ret;
 }
 
 ircd::u8x16
@@ -75,6 +117,26 @@ noexcept
 	};
 
 	return is_surrogate;
+}
+
+/// Convert utf-16 two-byte surrogates (in big-endian) to char32_t codepoints
+/// in parallel. The result vector is twice the size as the input; no template
+/// is offered yet, just the dimensions someone needed for somewhere.
+ircd::u32x8
+ircd::utf16::convert_u32x8(const u8x16 string)
+noexcept
+{
+	return u32x8
+	{
+		string[0x01] | (u32(string[0x00]) << 8),
+		string[0x03] | (u32(string[0x02]) << 8),
+		string[0x05] | (u32(string[0x04]) << 8),
+		string[0x07] | (u32(string[0x06]) << 8),
+		string[0x09] | (u32(string[0x08]) << 8),
+		string[0x0b] | (u32(string[0x0a]) << 8),
+		string[0x0d] | (u32(string[0x0c]) << 8),
+		string[0x0f] | (u32(string[0x0e]) << 8),
+	};
 }
 
 //
