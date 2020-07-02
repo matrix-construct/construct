@@ -12,6 +12,78 @@
 // utf16
 //
 
+/// Decodes one or two escaped surrogates (surrogate pair) aligned to the
+/// front of the input block. If the surrogates are a pair which decode into
+/// a single codepoint, only the first element of the return vector is used;
+/// otherwise each surrogate decodes into each element. Three surrogates
+/// cannot be decoded at once, so the last two elements are never used.
+ircd::u32x4
+ircd::utf16::decode_surrogate_aligned_next(const u8x16 input)
+noexcept
+{
+	const u8x16 is_hex[3]
+	{
+		input >= '0' && input <= '9',
+		input >= 'A' && input <= 'F',
+		input >= 'a' && input <= 'f',
+	};
+
+	const u8x16 hex_nibble
+	{
+		((input - 0x30) & is_hex[0])
+		| ((input - 0x41 + 0x0a) & is_hex[1])
+		| ((input - 0x61 + 0x0a) & is_hex[2])
+	};
+
+	const u8x16 hex_upper
+	{
+		shr<16>(u128x1(hex_nibble))
+	};
+
+	const u8x16 hex_byte
+	{
+		(hex_upper << 4) | shr<24>(u128x1(hex_nibble))
+	};
+
+	const u128x1 is_hex_nibble
+	{
+		is_hex[0] | is_hex[1] | is_hex[2]
+	};
+
+	const u128x1 is_surrogate
+	{
+		u128x1(input == '\\') &
+		shr<8>(u128x1(input == 'u')) &
+		shr<16>(is_hex_nibble) &
+		shr<24>(is_hex_nibble) &
+		shr<32>(is_hex_nibble) &
+		shr<40>(is_hex_nibble)
+	};
+
+	const u32x4 surrogate_mask
+	{
+		0xffffffff
+	};
+
+	const u32x4 codepoint_mask
+	{
+		surrogate_mask[0],
+		surrogate_mask[1],
+		0,
+		0,
+	};
+
+	const u8x16 codepoint
+	{
+		hex_byte[2], hex_byte[0], 0, 0,
+		hex_byte[8], hex_byte[6], 0, 0,
+		0, 0, 0, 0,
+		0, 0, 0, 0,
+	};
+
+	return u32x4(codepoint) & codepoint_mask;
+}
+
 namespace ircd::utf16
 {
 	static const u128x1 full_mask {~u128x1{0}};

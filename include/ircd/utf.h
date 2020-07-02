@@ -43,6 +43,9 @@ namespace ircd::utf16
 
 	// scan for utf-16 surrogates including incomplete sequences truncated
 	u8x16 find_surrogate_partial(const u8x16 input) noexcept;
+
+	// decodes one or two surrogates at the front into one or two codepoints
+	u32x4 decode_surrogate_aligned_next(const u8x16 input) noexcept;
 }
 
 inline ircd::u8x16
