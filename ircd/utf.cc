@@ -29,6 +29,8 @@ ircd::utf16::truncation_table
 	~shl<0x08>(~full_mask),
 };
 
+/// scan for utf-16 surrogates including incomplete sequences truncated
+/// by the end of the input; also matches a single trailing slash.
 ircd::u8x16
 ircd::utf16::find_surrogate_partial(const u8x16 input)
 noexcept
@@ -264,21 +266,48 @@ noexcept
 	;
 }
 
-/// Determine the utf-8 encoding length of multiple codepoints in parallel.
-/// The input vector char32_t codepoints and the output yields an integer
-/// of 0-4 for each lane.
+namespace ircd::utf8
+{
+	template<class u32xN> static u32xN _length(const u32xN codepoint) noexcept;
+}
+
+ircd::u32x4
+ircd::utf8::length(const u32x4 codepoint)
+noexcept
+{
+	return _length(codepoint);
+}
+
+ircd::u32x8
+ircd::utf8::length(const u32x8 codepoint)
+noexcept
+{
+	return _length(codepoint);
+}
+
 ircd::u32x16
 ircd::utf8::length(const u32x16 codepoint)
 noexcept
 {
-	const u32x16
+	return _length(codepoint);
+}
+
+/// Determine the utf-8 encoding length of multiple codepoints in parallel.
+/// The input vector char32_t codepoints and the output yields an integer
+/// of 0-4 for each lane.
+template<class u32xN>
+u32xN
+ircd::utf8::_length(const u32xN codepoint)
+noexcept
+{
+	const u32xN
 	length_1      { codepoint <= 0x7f                               },
 	length_2      { codepoint <= 0x7ff && codepoint > 0x7f          },
 	length_3_lo   { codepoint <= 0xd7ff && codepoint > 0x7ff        },
 	length_3_hi   { codepoint <= 0xffff && codepoint > 0xdfff       },
 	length_4      { codepoint <= 0x10ffff && codepoint > 0xffff     };
 
-	[[gnu::unused]] const u32x16 // Preserved here for future reference
+	[[gnu::unused]] const u32xN // Preserved here for future reference
 	length_3_err  { codepoint <= 0xdfff && codepoint > 0xd7ff       },
 	length_err    { (codepoint > 0x10ffff) | length_3_err           };
 

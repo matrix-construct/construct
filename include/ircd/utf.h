@@ -20,7 +20,11 @@ namespace ircd::utf
 /// Unicode Transformation Format (8-bit)
 namespace ircd::utf8
 {
+	// Get the utf8-encoded length from decoded codepoints.
 	u32x16 length(const u32x16 codepoints) noexcept;
+	u32x8 length(const u32x8 codepoints) noexcept;
+	u32x4 length(const u32x4 codepoints) noexcept;
+
 	u32x16 encode(const u32x16 codepoints) noexcept;
 	u32x16 decode(const u8x16 string) noexcept;
 }
@@ -38,7 +42,6 @@ namespace ircd::utf16
 	u8x16 find_surrogate(const u8x16 input) noexcept;
 
 	// scan for utf-16 surrogates including incomplete sequences truncated
-	// by the end of the input; also matches a single trailing slash.
 	u8x16 find_surrogate_partial(const u8x16 input) noexcept;
 }
 
