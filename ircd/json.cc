@@ -281,24 +281,11 @@ ircd::json::printer
 	};
 
 	// string
-	struct string_state;
-	struct character_state;
-	using character_prototype = char(const string_view &, string_state &);
-	template<class context> static void character_dfa(char &__restrict__, context &, bool &) noexcept;
-	const rule<character_prototype, locals<character_state>> character
+	using string_context = boost::spirit::context<fusion::cons<const string_view &>, fusion::vector<>>;
+	static void string_generate(unused_type, string_context &, bool &) noexcept;
+	const rule<string_view()> string
 	{
-		repeat[char_[([](auto &out, auto &gen, auto &ret)
-		{
-			character_dfa(out, gen, ret);
-		})]]
-		,"character"
-	};
-
-	_a_type _string_state;
-	_val_type _string_input;
-	const rule<string_view(), locals<string_state>> string
-	{
-		quote << *(character(_string_input, _string_state)) << quote
+		quote << eps[std::bind(&printer::string_generate, ph::_1, ph::_2, ph::_3)] << quote
 		,"string"
 	};
 
@@ -359,128 +346,46 @@ ircd::json::printer
 }
 const ircd::json::printer;
 
-struct ircd::json::printer::string_state
-{
-	uint32_t pos {0};
-	bool escaped {0};
-};
-
-struct ircd::json::printer::character_state
-{
-	static const char ctrl_tab[0x20][8];
-
-	enum mode
-	{
-		PASS,
-		LEAVE,
-		CTRL,
-		QUOTE,
-		ESCAPE,
-		ESCAPED,
-	}
-	mode {PASS};
-	uint8_t pos {0};
-};
-
-decltype(ircd::json::printer::character_state::ctrl_tab)
-ircd::json::printer::character_state::ctrl_tab
-{
-	"\\0",
-	"\\u0001", "\\u0002", "\\u0003",
-	"\\u0004", "\\u0005", "\\u0006",
-	"\\u0007",
-	"\\b",
-	"\\t",
-	"\\n",
-	"\\u000B",
-	"\\f",
-	"\\r",
-	"\\u000E", "\\u000F", "\\u0010",
-	"\\u0011", "\\u0012", "\\u0013",
-	"\\u0014", "\\u0015", "\\u0016",
-	"\\u0017", "\\u0018", "\\u0019",
-	"\\u001A", "\\u001B", "\\u001C",
-	"\\u001D", "\\u001E", "\\u001F",
-};
-
-template<class gen>
 inline void
-ircd::json::printer::character_dfa(char &__restrict__ out,
-                                   gen &g,
-                                   bool &ret)
+ircd::json::printer::string_generate(unused_type,
+                                     string_context &g,
+                                     bool &ret)
 noexcept
 {
-	using mode = decltype(character_state::mode);
-
 	#if __has_builtin(__builtin_assume)
 		__builtin_assume(ret == true);
 	#endif
 
-	const string_view &str(attr_at<1>(g));    // Whole input string.
-	const uint8_t &in(attr_at<0>(g));         // Current character in input.
-
-	string_state &sst(attr_at<2>(g));         // Whole input string state.
-	auto &st(local_at<0>(g));                 // Current character state.
-
-	out = in;
-	st.mode =
-		st.mode != mode::PASS?  st.mode:
-		sst.escaped?            mode::ESCAPED:
-		in < 0x20U?             mode::CTRL:
-		in == '"'?              mode::QUOTE:
-		in == '\\'?             mode::ESCAPE:
-		                        mode::PASS;
-	switch(st.mode)
+	assert(generator_state);
+	auto &state
 	{
-		[[likely]]
-		case mode::PASS:
-			st.mode = mode::LEAVE;
-			break; // mode::PASS
+		*generator_state
+	};
 
-		[[likely]]
-		case mode::LEAVE:
-			ret = false;
-			sst.pos++;
-			assert(sst.pos <= str.size());
-			break; // mode::LEAVE
+	const string_view &input
+	{
+		attr_at<0>(g)
+	};
 
-		case mode::CTRL:
-			out = st.ctrl_tab[in][st.pos++];
-			ret &= out != '\0'; // break loop at this iteration
-			sst.pos += !ret;
-			assert(st.pos <= 8);
-			break; // mode::CTRL
+	const size_t output_length
+	{
+		json::string::stringify(state.out, input)
+	};
 
-		case mode::QUOTE:
-			out = "\\\""_sv[st.pos++];
-			ret &= out != '\0'; // break loop at this iteration
-			sst.pos += !ret;
-			assert(st.pos <= 8);
-			break; // mode::QUOTE
+	const size_t consumed
+	{
+		std::min(output_length, size(state.out))
+	};
 
-		case mode::ESCAPE:
-			st.mode = sst.pos + 1 < str.size()?
-				mode::LEAVE:
-				mode::PASS; // must spin if last char of string is esc
-			sst.escaped = true;
-			assert(sst.pos < str.size());
-			break; // mode::ESCAPE
+	const size_t overflow
+	{
+		output_length - consumed
+	};
 
-		case mode::ESCAPED:
-		{
-			const auto ok
-			{
-				(in == 'u') | (in == '"') | (in == '\\')
-			};
-
-			sst.escaped = false;
-			out = ok? out: '\\';
-			st.mode = ok?
-				mode::LEAVE:
-				mode::PASS;
-			break; // mode::ESCAPED
-		}
-	}
+	state.consumed += consume(state.out, consumed);
+	state.generated += output_length;
+	state.overflow += overflow;
+	ret = !overflow;
 }
 
 template<class gen,
@@ -3284,6 +3189,66 @@ ircd::json::operator==(const member &a, const string_view &b)
 // json/string.h
 //
 
+namespace ircd::json
+{
+	extern const char ctrl_tab[0x20][16];
+	extern const int32_t ctrl_tab_len[0x20];
+
+	static u8x16 lookup_ctrl_tab_len(const u8x16 block);
+	static u64x2 string_serialized_ctrl(const u8x16 block, const u8x16 mask, const u8x16 ctrl_mask);
+	static u64x2 string_serialized_utf16(const u8x16 block, const u8x16 mask);
+	static u64x2 string_serialized(const u8x16 block, const u8x16 mask);
+
+	static u64x2 string_stringify_utf16(u8x16 &__restrict__ block, const u8x16 mask);
+	static u64x2 string_stringify(u8x16 &__restrict__ block, const u8x16 mask);
+}
+
+/// Escaped control character LUT.
+decltype(ircd::json::ctrl_tab)
+ircd::json::ctrl_tab
+alignas(32)
+{
+	"\\0",
+	"\\u0001", "\\u0002", "\\u0003",
+	"\\u0004", "\\u0005", "\\u0006",
+	"\\u0007",
+	"\\b",
+	"\\t",
+	"\\n",
+	"\\u000B",
+	"\\f",
+	"\\r",
+	"\\u000E", "\\u000F", "\\u0010",
+	"\\u0011", "\\u0012", "\\u0013",
+	"\\u0014", "\\u0015", "\\u0016",
+	"\\u0017", "\\u0018", "\\u0019",
+	"\\u001A", "\\u001B", "\\u001C",
+	"\\u001D", "\\u001E", "\\u001F",
+};
+
+/// Escaped control character LUT length hints
+decltype(ircd::json::ctrl_tab_len)
+ircd::json::ctrl_tab_len
+alignas(32)
+{
+	2,
+	6, 6, 6,
+	6, 6, 6,
+	6,
+	2,
+	2,
+	2,
+	6,
+	2,
+	2,
+	6, 6, 6,
+	6, 6, 6,
+	6, 6, 6,
+	6, 6, 6,
+	6, 6, 6,
+	6, 6, 6,
+};
+
 ircd::const_buffer
 ircd::json::unescape(const mutable_buffer &buf,
                      const string &in)
@@ -3301,6 +3266,522 @@ ircd::json::escape(const mutable_buffer &buf,
 	{
 		data(buf), data(out)
 	};
+
+	return ret;
+}
+
+/// Streaming transform for canonical JSON strings. This function takes
+/// virtually any input and "always makes it right" i.e. always outputs
+/// the application's so-called canonical JSON.
+///
+/// This involves a variable-length transformation where the output might
+/// end up as significantly longer or shorter than the input; neither will
+/// have any hope for aligned access, and most of the inputs are short and
+/// already canonical. This is all tricky.
+///
+size_t
+ircd::json::string::stringify(const mutable_buffer &buf,
+                              const string_view &input)
+noexcept
+{
+	using block_t = u8x16;
+	using vec_t = u128x1;
+	using unaligned_vec_t = u128x1_u;
+	static_assert(sizeof(block_t) == sizeof(vec_t));
+
+	u64x2 count{0}; // input pos, return value
+	while(count[0] + sizeof(block_t) <= input.size() && count[1] + sizeof(block_t) <= ircd::size(buf))
+	{
+		static const auto mask
+		{
+			~block_t{0}
+		};
+
+		const auto di
+		{
+			reinterpret_cast<u128x1_u *__restrict__>(ircd::data(buf) + count[1])
+		};
+
+		const auto si
+		{
+			reinterpret_cast<const u128x1_u *__restrict__>(input.data() + count[0])
+		};
+
+		block_t block
+		{
+			_mm_loadu_si128(si)
+		};
+
+		const u64x2 consume
+		{
+			string_stringify(block, mask)
+		};
+
+		_mm_storeu_si128(di, block);
+		count += consume;
+	}
+
+	while(count[0] < input.size())
+	{
+		const size_t remain
+		{
+			input.size() - count[0]
+		};
+
+		size_t j(0);
+		block_t block{0}, mask{0};
+		for(; j < remain && j < sizeof(block_t); ++j)
+		{
+			block[j] = input[count[0] + j];
+			mask[j] = 0xff;
+		}
+
+		const u64x2 consume
+		{
+			string_stringify(block, mask)
+		};
+
+		char *const __restrict__ di
+		{
+			ircd::data(buf) + count[1]
+		};
+
+		block_t di_mask{0};
+		for(size_t i(0); i < consume[1] && i + count[1] < ircd::size(buf); ++i)
+			di_mask[i] = 0xff;
+
+		_mm_maskmoveu_si128(block, di_mask, di);
+		count += consume;
+	}
+
+	return count[1];
+}
+
+/// Returns two addends to the outer loop. The first advances the input string
+/// pointer any number of bytes; the block for the next invocation will start
+/// at the new offset. This function may want to advance the input less than
+/// the full block width if there's a possibility something important is being
+/// split between blocks (i.e. an escaped utf-16 surrogate pair of 12 chars);
+/// next invocation will then encounter the contiguous sequence without issue.
+/// The second value is added to the final return count to indicate the length
+/// of the input string in serialized form after correction. Partial sequences
+/// trailing off the block are not counted here so they can be pushed over to
+/// the next invocation.
+///
+/// The input is a block of characters from the original string. When the block
+/// cannot be filled at the end of a string (or a short string) the block_mask
+/// will indicate 0 for any bytes past the end, otherwise -1 for valid chars;
+/// note that null characters in the string are valid which we will escape.
+///
+ircd::u64x2
+ircd::json::string_stringify(u8x16 &__restrict__ block,
+                             const u8x16 block_mask)
+{
+	const u8x16 is_esc
+	{
+		block == '\\'
+	};
+
+	const u8x16 is_quote
+	{
+		block == '"'
+	};
+
+	const u8x16 is_ctrl
+	{
+		block < 0x20
+	};
+
+	const u8x16 is_special
+	{
+		is_esc | is_quote | is_ctrl
+	};
+
+	// Count the number of uninteresting characters from the front of the
+	// block. With the special characters masked, we count leading zeroes.
+	// The inverted block_mask generates non-zero bits to terminate any
+	// counting past the end of the string.
+	const u64 regular_prefix_count
+	{
+		simd::clz(u64x2(is_special | ~block_mask)) / 8
+	};
+
+	// Fast-path; backward branch to count and consume uninteresting characters
+	// from the front of the input.
+	if(likely(regular_prefix_count))
+		return u64x2
+		{
+			regular_prefix_count, regular_prefix_count,
+		};
+
+	// Slow-path; decide what to do based on the next character.
+	switch(block[0])
+	{
+		// Covers the ctrl 0x00-0x20 range only; no other character here.
+		default:
+		{
+			assert(block[0] < 0x20);
+			__builtin_assume(block[0] < 0x20);
+
+			const u8 idx{block[0]};
+			block = *reinterpret_cast<const u128x1 *>(ctrl_tab + idx);
+			return u64x2
+			{
+				1, u64(ctrl_tab_len[idx])
+			};
+		}
+
+		// Unescaped quote
+		case '"':
+			block[0] = '\\';
+			block[1] = '"';
+			return u64x2
+			{
+				1, 2
+			};
+
+		// Escape sequence
+		case '\\': switch(block[1] & block_mask[1])
+		{
+			// Legitimately escaped single chars
+			case '\\':
+			case '"':
+			case 'b':
+			case 't':
+			case 'n':
+			case 'f':
+			case 'r':
+			case '0':
+				block[0] = '\\';
+				block[1] = block[1];
+				return u64x2
+				{
+					2, 2
+				};
+
+			case 'u':  // Possible utf-16 surrogate(s)
+				return string_stringify_utf16(block, block_mask);
+
+			// Unnecessary escape; unless it's the last char.
+			default:
+				block[0] = '\\';
+				block[1] = '\\';
+				return u64x2
+				{
+					1, block_mask[1]? 0UL: 2UL
+				};
+		};
+	}
+}
+
+ircd::u64x2
+ircd::json::string_stringify_utf16(u8x16 &__restrict__ block,
+                                   const u8x16 block_mask)
+{
+	const u32x4 unicode
+	{
+		utf16::decode_surrogate_aligned_next(block & block_mask)
+	};
+
+	const u32x4 is_surrogate
+	{
+		utf16::find_surrogate(block & block_mask)
+	};
+
+	const u32x4 is_ctrl
+	{
+		unicode < 0x20
+	};
+
+	const u32x4 length_encoded
+	{
+		utf8::length(unicode) & ~is_ctrl
+	};
+
+	const u32x4 ctrl_idx
+	{
+		unicode & is_ctrl
+	};
+
+	const u32x4 length_surrogate
+	{
+		u32(ctrl_tab_len[ctrl_idx[0]]),
+		u32(ctrl_tab_len[ctrl_idx[1]]),
+	};
+
+	const u32x4 length
+	{
+		(length_encoded | length_surrogate) & is_surrogate
+	};
+
+	const u32x4 encoded_sparse
+	{
+		utf8::encode(unicode)
+	};
+
+	const u8x16 encoded
+	{
+		encoded_sparse
+	};
+
+	size_t di(0);
+	for(size_t i(0); i < 2; ++i)
+		for(size_t j(0); j < length[i]; ++j)
+			block[di++] = is_ctrl[i]?
+				ctrl_tab[ctrl_idx[i]][j]:
+				encoded[i * 4 + j];
+
+	const auto total_decoded
+	{
+		6UL * ((is_surrogate[0] & 1) + (is_surrogate[1] & 1))
+	};
+
+	assert(di == length[0] + length[1]);
+	return u64x2
+	{
+		total_decoded, di
+	};
+}
+
+size_t
+ircd::json::string::serialized(const string_view &input)
+noexcept
+{
+	using block_t = u8x16;
+	using vec_t = u128x1;
+	using unaligned_vec_t = u128x1_u;
+	static_assert(sizeof(block_t) == sizeof(vec_t));
+
+	u8x16 block;
+	u64x2 count{0}; // input pos, return value
+	while(count[0] + sizeof(block_t) <= input.size())
+	{
+		const auto ptr
+		{
+			reinterpret_cast<const u128x1_u *>(input.data() + count[0])
+		};
+
+		block = _mm_loadu_si128(ptr);
+		count += string_serialized(block, ~u8x16{0});
+	}
+
+	while(count[0] < input.size())
+	{
+		const size_t remain(input.size() - count[0]);
+		assert(remain < sizeof(block_t));
+
+		size_t j(0);
+		u8x16 mask{0};
+		for(; count[0] + j < input.size(); ++j)
+		{
+			block[j] = input[count[0] + j];
+			mask[j] = 0xff;
+		}
+
+		count += string_serialized(block, mask);
+	}
+
+	return count[1];
+}
+
+ircd::u64x2
+ircd::json::string_serialized(const u8x16 block,
+                              const u8x16 block_mask)
+{
+	const u8x16 is_esc
+	{
+		block == '\\'
+	};
+
+	const u8x16 is_quote
+	{
+		block == '"'
+	};
+
+	const u8x16 is_ctrl
+	{
+		block < 0x20
+	};
+
+	const u8x16 is_special
+	{
+		is_esc | is_quote | is_ctrl
+	};
+
+	const u64 regular_prefix_count
+	{
+		simd::clz(u64x2(is_special | ~block_mask)) / 8
+	};
+
+	// Fast-path; backward branch to count and consume uninteresting characters
+	// from the front of the input.
+	if(likely(regular_prefix_count))
+		return u64x2
+		{
+			regular_prefix_count, regular_prefix_count,
+		};
+
+	// Slow-path; decide what to do based on the next character.
+	switch(block[0])
+	{
+		// Covers the ctrl 0x00-0x20 range only; no other character here.
+		default:
+			assert(block[0] < 0x20);
+			__builtin_assume(block[0] < 0x20);
+			return string_serialized_ctrl(block, block_mask, is_ctrl);
+
+		// Unescaped quote: +1
+		case '"':
+			return u64x2
+			{
+				1, 2
+			};
+
+		// Escape sequence
+		case '\\': switch(block[1] & block_mask[1])
+		{
+			// Legitimately escaped single chars
+			case '"':
+			case 'b':
+			case 't':
+			case 'n':
+			case 'f':
+			case 'r':
+			case '0':
+				return u64x2
+				{
+					2, 2
+				};
+
+			case 'u':  // Possible utf-16 surrogate(s)
+				return string_serialized_utf16(block, block_mask);
+
+			// Unnecessary escape; unless it's the last char: -1
+			default:
+				return u64x2
+				{
+					1, block_mask[1]? 0UL: 2UL
+				};
+		};
+	}
+}
+
+ircd::u64x2
+ircd::json::string_serialized_utf16(const u8x16 block,
+                                    const u8x16 block_mask)
+{
+	const u32x4 is_surrogate
+	{
+		utf16::find_surrogate(block & block_mask)
+	};
+
+	const u32x4 unicode
+	{
+		utf16::decode_surrogate_aligned_next(block & block_mask)
+	};
+
+	const u32x4 is_ctrl
+	{
+		unicode < 0x20
+	};
+
+	// Determine the utf-8 encoding length for each codepoint but
+	// null out codepoints in the control character range.
+	const u32x4 length_encoded
+	{
+		utf8::length(unicode) & ~is_ctrl
+	};
+
+	const u32x4 ctrl_idx
+	{
+		unicode & is_ctrl
+	};
+
+	const i32x4 surrogate_len
+	{
+		ctrl_tab_len[ctrl_idx[0]],
+		ctrl_tab_len[ctrl_idx[1]],
+	};
+
+	// Supplement the escaped surrogate length for excluded codepoints.
+	const u32x4 length
+	{
+		(length_encoded | (is_ctrl & surrogate_len)) & is_surrogate
+	};
+
+	const auto total_length
+	{
+		length[0] + length[1]
+	};
+
+	const auto total_decoded
+	{
+		6UL * ((is_surrogate[0] & 1) + (is_surrogate[1] & 1))
+	};
+
+	return u64x2
+	{
+		total_decoded, total_length,
+	};
+}
+
+ircd::u64x2
+ircd::json::string_serialized_ctrl(const u8x16 block,
+                                   const u8x16 block_mask,
+                                   const u8x16 is_ctrl)
+{
+	assert(block[0] < 0x20);
+	const u8x16 ctrl_esc_len
+	{
+		lookup_ctrl_tab_len(block & is_ctrl)
+	};
+
+	const u64 ctrl_prefix_count
+	{
+		simd::clz(u64x2(~is_ctrl | ~block_mask)) / 8
+	};
+
+	u64 ret(0);
+	for(size_t i(0); i < ctrl_prefix_count; ++i)
+		ret += ctrl_esc_len[i];
+
+	return u64x2
+	{
+		ctrl_prefix_count, ret
+	};
+}
+
+/// Performs a parallel transform of control characters in the input into
+/// the length of their escape surrogate. The input character must be in
+/// the control character range.
+ircd::u8x16
+ircd::json::lookup_ctrl_tab_len(const u8x16 in)
+{
+	static const int32_t *const tab
+	{
+		ctrl_tab_len
+	};
+
+	size_t k(0);
+	i32x4 idx[4]
+	{
+		{ in[k++], in[k++], in[k++], in[k++] },
+		{ in[k++], in[k++], in[k++], in[k++] },
+		{ in[k++], in[k++], in[k++], in[k++] },
+		{ in[k++], in[k++], in[k++], in[k++] },
+	};
+
+	size_t i, j;
+	i32x8 res[2];
+	for(i = 0; i < 2; ++i)
+		for(j = 0; j < 8; ++j)
+			res[i][j] = tab[idx[i][j]];
+
+	i8x16 ret;
+	k = 0;
+	for(i = 0; i < 2; ++i)
+		for(j = 0; j < 8; ++j)
+			ret[k++] = res[i][j];
 
 	return ret;
 }

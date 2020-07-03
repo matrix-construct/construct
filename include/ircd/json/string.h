@@ -28,6 +28,16 @@ namespace ircd::json
 struct ircd::json::string
 :string_view
 {
+	// Note that the input argument is not a json::string; the caller must
+	// strip surrounding quotes from the view otherwise they will be counted
+	// with their missing escapes in the return value. This is by design to
+	// avoid unintentionally stripping quotes from actual payloads.
+	static size_t serialized(const string_view &in) noexcept;
+
+	// Transform input into canonical string content. The output buffer must
+	// be at least the size reported by serialized() on the same input.
+	static size_t stringify(const mutable_buffer &out, const string_view &in) noexcept;
+
 	string() = default;
 	string(json::string &&) = default;
 	string(const json::string &) = default;
