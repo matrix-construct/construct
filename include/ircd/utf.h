@@ -20,12 +20,17 @@ namespace ircd::utf
 /// Unicode Transformation Format (8-bit)
 namespace ircd::utf8
 {
-	// Get the utf8-encoded length from decoded codepoints.
+	// Get the utf8-encoded length from char32_t (decoded) codepoints
 	u32x16 length(const u32x16 codepoints) noexcept;
 	u32x8 length(const u32x8 codepoints) noexcept;
 	u32x4 length(const u32x4 codepoints) noexcept;
 
+	// Encode char32_t codepoints into respective utf-8 encodings
 	u32x16 encode(const u32x16 codepoints) noexcept;
+	u32x8 encode(const u32x8 codepoints) noexcept;
+	u32x4 encode(const u32x4 codepoints) noexcept;
+
+	// Decode utf-8 string into char32_t unicode codepoints
 	u32x16 decode(const u8x16 string) noexcept;
 }
 

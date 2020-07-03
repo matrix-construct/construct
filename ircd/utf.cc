@@ -296,32 +296,59 @@ noexcept
 	return integers;
 }
 
-/// Transform multiple char32_t codepoints to their utf-8 encodings in
-/// parallel, returning a sparse result in each char32_t (this does not
-/// compress the result down).
+namespace ircd::utf8
+{
+	template<class u32xN> static u32xN _encode(const u32xN codepoint) noexcept;
+}
+
+ircd::u32x4
+ircd::utf8::encode(const u32x4 codepoint)
+noexcept
+{
+	return _encode(codepoint);
+}
+
+ircd::u32x8
+ircd::utf8::encode(const u32x8 codepoint)
+noexcept
+{
+	return _encode(codepoint);
+}
+
 ircd::u32x16
 ircd::utf8::encode(const u32x16 codepoint)
 noexcept
 {
-	const u32x16 len
+	return _encode(codepoint);
+}
+
+/// Transform multiple char32_t codepoints to their utf-8 encodings in
+/// parallel, returning a sparse result in each char32_t (this does not
+/// compress the result down).
+template<class u32xN>
+u32xN
+ircd::utf8::_encode(const u32xN codepoint)
+noexcept
+{
+	const u32xN len
 	{
 		length(codepoint)
 	};
 
-	const u32x16 enc_2
+	const u32xN enc_2
 	{
 		(((codepoint >> 6) | 0xc0) & 0xff) // byte[0]
 		| ((((codepoint & 0x3f) | 0x80) &0xff) << 8) // byte[1]
 	};
 
-	const u32x16 enc_3
+	const u32xN enc_3
 	{
 		(((codepoint >> 12) | 0xe0) & 0xff) | // byte[0]
 		(((((codepoint >> 6) & 0x3f) | 0x80) & 0xff) << 8) | // byte[1]
 		((((codepoint & 0x3f) | 0x80) & 0xff) << 16) // byte[3]
 	};
 
-	const u32x16 enc_4
+	const u32xN enc_4
 	{
 		(((codepoint >> 18) | 0xf0) & 0xff) | // byte[0]
 		(((((codepoint >> 12) & 0x3f) | 0x80) & 0xff) << 8) | // byte[1]
