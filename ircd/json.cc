@@ -3983,16 +3983,19 @@ ircd::json::serialized(const value &v)
 			if(!v.string)
 				return size(empty_string);
 
-			thread_local char test_buffer[value::max_string_size];
-			const string_view sv{v.string, v.len};
-			mutable_buffer buf{test_buffer};
+			const string_view sv
+			{
+				v.string, v.len
+			};
 
-			if(v.serial)
-				printer(buf, printer.string, json::string(sv));
-			else
-				printer(buf, printer.string, sv);
+			const auto ret
+			{
+				v.serial?
+					json::string::serialized(json::string(sv)):
+					json::string::serialized(sv)
+			};
 
-			return begin(buf) - test_buffer;
+			return 1 + ret + 1;
 		}
 	};
 
