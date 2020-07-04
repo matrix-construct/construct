@@ -3341,16 +3341,9 @@ noexcept
 			string_stringify(block, mask)
 		};
 
-		char *const __restrict__ di
-		{
-			ircd::data(buf) + count[1]
-		};
-
-		block_t di_mask{0};
 		for(size_t i(0); i < consume[1] && i + count[1] < ircd::size(buf); ++i)
-			di_mask[i] = 0xff;
+			buf[i + count[1]] = block[i];
 
-		_mm_maskmoveu_si128(block, di_mask, di);
 		count += consume;
 	}
 
