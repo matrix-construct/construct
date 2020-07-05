@@ -35,22 +35,13 @@ noexcept
 		| ((input - 0x61 + 0x0a) & is_hex[2])
 	};
 
-	const u8x16 hex_upper
-	{
-		shr<16>(u128x1(hex_nibble))
-	};
-
-	const u8x16 hex_byte
-	{
-		(hex_upper << 4) | shr<24>(u128x1(hex_nibble))
-	};
-
 	const u128x1 is_hex_nibble
 	{
 		is_hex[0] | is_hex[1] | is_hex[2]
 	};
 
-	const u128x1 is_surrogate
+	// Masks the starting byte (the '\' char) of each valid surrogate.
+	const u32x4 is_surrogate
 	{
 		u128x1(input == '\\') &
 		shr<8>(u128x1(input == 'u')) &
@@ -60,28 +51,115 @@ noexcept
 		shr<40>(is_hex_nibble)
 	};
 
+	// is_surrogate may leave byte[0] and byte[6] (and possibly byte[12] which
+	// we don't care about here) as 0xff. Our result will be 4 byte codepoints
+	// matching those 6 byte inputs, so we shift the byte[6] over to byte[4]
+	// and stiffen the mask about to be generated.
 	const u32x4 surrogate_mask
 	{
-		0xffffffff
+		((is_surrogate & 0xff) | (is_surrogate >> 16)) == 0xffU
 	};
 
-	const u32x4 codepoint_mask
+	// Decide if one or two surrogates were actually input and assert that
+	// between both lanes if so.
+	const u32x4 surrogate_deuce
 	{
-		surrogate_mask[0],
-		surrogate_mask[1],
-		0,
-		0,
+		(surrogate_mask & shr<32>(u128x1(surrogate_mask))) |
+		(surrogate_mask & shl<32>(u128x1(surrogate_mask)))
 	};
 
-	const u8x16 codepoint
+	// ASCII to integral converion of the upper nibbles
+	const u8x16 hex_upper
 	{
-		hex_byte[2], hex_byte[0], 0, 0,
-		hex_byte[8], hex_byte[6], 0, 0,
-		0, 0, 0, 0,
-		0, 0, 0, 0,
+		shr<16>(u128x1(hex_nibble))
 	};
 
-	return u32x4(codepoint) & codepoint_mask;
+	// ASCII to integral converion of the lower nibbles
+	const u8x16 hex_lower
+	{
+		shr<24>(u128x1(hex_nibble))
+	};
+
+	// pack upper and lower nibbles into bytes, though these have a space
+	// between them when 4 nibbles becomes 2 bytes
+	const u8x16 hex_byte
+	{
+		(hex_upper << 4) | hex_lower
+	};
+
+	// Result for one or two unpaired surrogates
+	const u32x4 codepoint_unpaired
+	{
+		u8x16
+		{
+			hex_byte[2], hex_byte[0], 0, 0,
+			hex_byte[8], hex_byte[6], 0, 0,
+			0, 0, 0, 0,
+			0, 0, 0, 0,
+		}
+	};
+
+	// Determine if the unpaired codepoints can make a surrogate pair
+	const u32x4 surrogate_pair_range
+	{
+		codepoint_unpaired >= 0xd800U && codepoint_unpaired <= 0xdfffU
+	};
+
+	// Mask lane[0] if the codepoints are actually a surrogate pair
+	const u32x4 surrogate_paired
+	{
+		surrogate_pair_range & shr<32>(u128x1(surrogate_pair_range))
+	};
+
+	// Pre-processing shuffle for surrogate pair decode
+	const u32x4 codepoint_pre_paired
+	{
+		shr<16>(u128x1(codepoint_unpaired)) | codepoint_unpaired
+	};
+
+	// Decode surrogate pair
+	const u32x4 codepoint_paired
+	{
+		0x10000U +
+		((codepoint_pre_paired & 0x000003ffU) << 10) +
+		((codepoint_pre_paired & 0x03ff0000U) >> 16)
+	};
+
+	// Decide if the codepoint is in the supplementary plane (3+ bytes)
+	const u32x4 codepoint_high
+	{
+		(codepoint_paired > 0xffffU) & surrogate_paired
+	};
+
+	// Decide if the codepoint is in the BMP (2- bytes)
+	const u32x4 codepoint_low
+	{
+		(codepoint_paired <= 0xffffU) & ~(shl<32>(u128x1(codepoint_high)))
+	};
+
+	// When two surrogates in a pair are input, lane[0] only
+	const u32x4 ret_codepoint_paired
+	{
+		codepoint_paired & (surrogate_paired & surrogate_deuce)
+	};
+
+	// When two unrelated surrogates are input, lane[0] and lane[1]
+	const u32x4 ret_codepoint_unpaired
+	{
+		codepoint_unpaired & ~surrogate_pair_range & surrogate_deuce
+	};
+
+	// When one surrogate is input, only lane[0]
+	const u32x4 ret_codepoint_single
+	{
+		codepoint_unpaired & ~surrogate_pair_range & ~surrogate_deuce
+	};
+
+	return 0
+	| ret_codepoint_paired
+	| ret_codepoint_unpaired
+	| ret_codepoint_single
+	;
 }
 
 namespace ircd::utf16
