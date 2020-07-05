@@ -274,7 +274,7 @@ try
 	// most likely to provide a satisfying response.
 	opts.hint =
 	{
-		eval.opts->node_id?
+		!my_host(eval.opts->node_id)?
 			eval.opts->node_id:
 		!my_host(json::get<"origin"_>(event))?
 			string_view(json::get<"origin"_>(event)):
