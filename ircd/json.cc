@@ -3414,7 +3414,9 @@ ircd::json::string_stringify(u8x16 &__restrict__ block,
 		default:
 		{
 			assert(block[0] < 0x20);
-			__builtin_assume(block[0] < 0x20);
+			#if __has_builtin(__builtin_assume)
+				__builtin_assume(block[0] < 0x20);
+			#endif
 
 			const u8 idx{block[0]};
 			block = *reinterpret_cast<const u128x1 *>(ctrl_tab + idx);
@@ -3631,9 +3633,14 @@ ircd::json::string_serialized(const u8x16 block,
 	{
 		// Covers the ctrl 0x00-0x20 range only; no other character here.
 		default:
+		{
 			assert(block[0] < 0x20);
-			__builtin_assume(block[0] < 0x20);
+			#if __has_builtin(__builtin_assume)
+				__builtin_assume(block[0] < 0x20);
+			#endif
+
 			return string_serialized_ctrl(block, block_mask, is_ctrl);
+		}
 
 		// Unescaped quote: +1
 		case '"':
