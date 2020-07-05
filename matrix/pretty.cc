@@ -22,7 +22,7 @@ ircd::m::pretty_detailed(std::ostream &out,
 	{
 		event_idx?
 			m::cached_keys(event_idx, m::event::keys::selection{}):
-			m::event::keys::selection{}
+			m::event::keys::selection{m::event::keys::include{}}
 	};
 
 	const bool full_json
