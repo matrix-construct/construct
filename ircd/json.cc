@@ -3208,7 +3208,7 @@ decltype(ircd::json::ctrl_tab)
 ircd::json::ctrl_tab
 alignas(32)
 {
-	"\\0",
+	"\\u0000",
 	"\\u0001", "\\u0002", "\\u0003",
 	"\\u0004", "\\u0005", "\\u0006",
 	"\\u0007",
@@ -3231,7 +3231,7 @@ decltype(ircd::json::ctrl_tab_len)
 ircd::json::ctrl_tab_len
 alignas(32)
 {
-	2,
+	6,
 	6, 6, 6,
 	6, 6, 6,
 	6,
@@ -3444,7 +3444,6 @@ ircd::json::string_stringify(u8x16 &__restrict__ block,
 			case 'n':
 			case 'f':
 			case 'r':
-			case '0':
 				block[0] = '\\';
 				block[1] = block[1];
 				return u64x2
@@ -3654,7 +3653,6 @@ ircd::json::string_serialized(const u8x16 block,
 			case 'n':
 			case 'f':
 			case 'r':
-			case '0':
 				return u64x2
 				{
 					2, 2
