@@ -3488,7 +3488,7 @@ ircd::json::string_stringify_utf16(u8x16 &__restrict__ block,
 
 	const u32x4 length_encoded
 	{
-		utf8::length(unicode) & ~is_ctrl
+		utf8::length(unicode)
 	};
 
 	const u32x4 ctrl_idx
@@ -3502,9 +3502,22 @@ ircd::json::string_stringify_utf16(u8x16 &__restrict__ block,
 		u32(ctrl_tab_len[ctrl_idx[1]]),
 	};
 
+	const u128x1 is_non_bmp
+	{
+		unicode >= 0x10000U
+	};
+
+	const u32x4 is_surrogate_pair
+	{
+		is_non_bmp | shl<32>(is_non_bmp)
+	};
+
+	// Determine the utf-8 encoding length for each codepoint...
+	// Supplement the escaped surrogate length for excluded codepoints.
 	const u32x4 length
 	{
-		(length_encoded | length_surrogate) & is_surrogate
+		(length_encoded & ~is_ctrl) |
+		(length_surrogate & is_ctrl & ~is_surrogate_pair)
 	};
 
 	const u32x4 encoded_sparse
@@ -3524,15 +3537,15 @@ ircd::json::string_stringify_utf16(u8x16 &__restrict__ block,
 				ctrl_tab[ctrl_idx[i]][j]:
 				encoded[i * 4 + j];
 
-	const auto total_decoded
+	const auto surrogates
 	{
-		6UL * ((is_surrogate[0] & 1) + (is_surrogate[1] & 1))
+		simd::popcount(u64x2(simd::popmask(u8x16(is_surrogate))))
 	};
 
 	assert(di == length[0] + length[1]);
 	return u64x2
 	{
-		total_decoded, di
+		std::max(6U * surrogates, 1U), di
 	};
 }
 
@@ -3634,6 +3647,7 @@ ircd::json::string_serialized(const u8x16 block,
 		case '\\': switch(block[1] & block_mask[1])
 		{
 			// Legitimately escaped single chars
+			case '\\':
 			case '"':
 			case 'b':
 			case 't':
@@ -3678,11 +3692,9 @@ ircd::json::string_serialized_utf16(const u8x16 block,
 		unicode < 0x20
 	};
 
-	// Determine the utf-8 encoding length for each codepoint but
-	// null out codepoints in the control character range.
 	const u32x4 length_encoded
 	{
-		utf8::length(unicode) & ~is_ctrl
+		utf8::length(unicode)
 	};
 
 	const u32x4 ctrl_idx
@@ -3690,16 +3702,28 @@ ircd::json::string_serialized_utf16(const u8x16 block,
 		unicode & is_ctrl
 	};
 
-	const i32x4 surrogate_len
+	const i32x4 length_surrogate
 	{
 		ctrl_tab_len[ctrl_idx[0]],
 		ctrl_tab_len[ctrl_idx[1]],
 	};
 
+	const u128x1 is_non_bmp
+	{
+		unicode >= 0x10000U
+	};
+
+	const u32x4 is_surrogate_pair
+	{
+		is_non_bmp | shl<32>(is_non_bmp)
+	};
+
+	// Determine the utf-8 encoding length for each codepoint...
 	// Supplement the escaped surrogate length for excluded codepoints.
 	const u32x4 length
 	{
-		(length_encoded | (is_ctrl & surrogate_len)) & is_surrogate
+		(length_encoded & ~is_ctrl) |
+		(length_surrogate & is_ctrl & ~is_surrogate_pair)
 	};
 
 	const auto total_length
@@ -3707,14 +3731,14 @@ ircd::json::string_serialized_utf16(const u8x16 block,
 		length[0] + length[1]
 	};
 
-	const auto total_decoded
+	const auto surrogates
 	{
-		6UL * ((is_surrogate[0] & 1) + (is_surrogate[1] & 1))
+		simd::popcount(u64x2(simd::popmask(u8x16(is_surrogate))))
 	};
 
 	return u64x2
 	{
-		total_decoded, total_length,
+		std::max(6U * surrogates, 1U), total_length,
 	};
 }
 
