@@ -346,6 +346,46 @@ ircd::json::printer
 }
 const ircd::json::printer;
 
+template<class gen,
+         class... attr>
+[[gnu::always_inline]]
+inline void
+ircd::json::printer::operator()(mutable_buffer &out,
+                                gen&& g,
+                                attr&&... a)
+const
+{
+	++stats.print_calls;
+	const prof::scope_cycles timer{stats.print_cycles};
+	if(unlikely(!ircd::generate(out, std::forward<gen>(g), std::forward<attr>(a)...)))
+		throw print_error
+		{
+			"Failed to generate JSON"
+		};
+}
+
+template<class it_a,
+         class it_b,
+         class closure>
+[[gnu::always_inline]]
+inline void
+ircd::json::printer::list_protocol(mutable_buffer &out,
+                                   it_a it,
+                                   const it_b &end,
+                                   closure&& lambda)
+{
+	if(likely(it != end))
+	{
+		lambda(out, *it);
+		for(++it; it != end; ++it)
+		{
+			const auto &printer(json::printer);
+			printer(out, printer.value_sep);
+			lambda(out, *it);
+		}
+	}
+}
+
 inline void
 ircd::json::printer::string_generate(unused_type,
                                      string_context &g,
@@ -386,46 +426,6 @@ noexcept
 	state.generated += output_length;
 	state.overflow += overflow;
 	ret = !overflow;
-}
-
-template<class gen,
-         class... attr>
-[[gnu::always_inline]]
-inline void
-ircd::json::printer::operator()(mutable_buffer &out,
-                                gen&& g,
-                                attr&&... a)
-const
-{
-	++stats.print_calls;
-	const prof::scope_cycles timer{stats.print_cycles};
-	if(unlikely(!ircd::generate(out, std::forward<gen>(g), std::forward<attr>(a)...)))
-		throw print_error
-		{
-			"Failed to generate JSON"
-		};
-}
-
-template<class it_a,
-         class it_b,
-         class closure>
-[[gnu::always_inline]]
-inline void
-ircd::json::printer::list_protocol(mutable_buffer &out,
-                                   it_a it,
-                                   const it_b &end,
-                                   closure&& lambda)
-{
-	if(likely(it != end))
-	{
-		lambda(out, *it);
-		for(++it; it != end; ++it)
-		{
-			const auto &printer(json::printer);
-			printer(out, printer.value_sep);
-			lambda(out, *it);
-		}
-	}
 }
 
 template<class gen,
