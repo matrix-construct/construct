@@ -728,6 +728,7 @@ namespace ircd::m::fetch
 	extern conf::item<bool> check_event_id;
 	extern conf::item<bool> check_conforms;
 	extern conf::item<bool> check_signature;
+	extern conf::item<bool> check_redacted;
 }
 
 decltype(ircd::m::fetch::check_event_id)
@@ -741,6 +742,13 @@ decltype(ircd::m::fetch::check_conforms)
 ircd::m::fetch::check_conforms
 {
 	{ "name",     "ircd.m.fetch.check.conforms" },
+	{ "default",  true                          },
+};
+
+decltype(ircd::m::fetch::check_redacted)
+ircd::m::fetch::check_redacted
+{
+	{ "name",     "ircd.m.fetch.check.redacted" },
 	{ "default",  true                          },
 };
 
@@ -871,12 +879,22 @@ ircd::m::fetch::_check_event(const request &request,
 
 	if(check_conforms)
 	{
-		thread_local char buf[128];
-		const m::event::conforms conforms
+		m::event::conforms conforms
 		{
 			event
 		};
 
+		const bool redacted
+		{
+			check_redacted && conforms.has(m::event::conforms::MISMATCH_HASHES)?
+				bool(m::redacted(request.opts.event_id)):
+				false
+		};
+
+		if(redacted || !check_redacted)
+			conforms.del(m::event::conforms::MISMATCH_HASHES);
+
+		thread_local char buf[128];
 		const string_view failures
 		{
 			conforms.string(buf)
