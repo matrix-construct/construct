@@ -3482,6 +3482,11 @@ ircd::json::string_stringify_utf16(u8x16 &__restrict__ block,
 		utf16::find_surrogate(block & block_mask)
 	};
 
+	const u32x4 surrogate_mask
+	{
+		is_surrogate != 0U
+	};
+
 	const u32x4 is_ctrl
 	{
 		unicode < 0x20
@@ -3510,7 +3515,8 @@ ircd::json::string_stringify_utf16(u8x16 &__restrict__ block,
 
 	const u32x4 is_surrogate_pair
 	{
-		is_non_bmp | shl<32>(is_non_bmp)
+		(is_non_bmp | shl<32>(is_non_bmp)) &
+		(surrogate_mask | shr<32>(surrogate_mask))
 	};
 
 	// Determine the utf-8 encoding length for each codepoint...
@@ -3518,7 +3524,7 @@ ircd::json::string_stringify_utf16(u8x16 &__restrict__ block,
 	const u32x4 length
 	{
 		(length_encoded & ~is_ctrl) |
-		(length_surrogate & is_ctrl & ~is_surrogate_pair)
+		(length_surrogate & is_ctrl & ~is_surrogate_pair & surrogate_mask)
 	};
 
 	const u32x4 encoded_sparse
@@ -3687,6 +3693,11 @@ ircd::json::string_serialized_utf16(const u8x16 block,
 		utf16::find_surrogate(block & block_mask)
 	};
 
+	const u32x4 surrogate_mask
+	{
+		is_surrogate != 0U
+	};
+
 	const u32x4 unicode
 	{
 		utf16::decode_surrogate_aligned_next(block & block_mask)
@@ -3713,14 +3724,15 @@ ircd::json::string_serialized_utf16(const u8x16 block,
 		ctrl_tab_len[ctrl_idx[1]],
 	};
 
-	const u128x1 is_non_bmp
+	const u32x4 is_non_bmp
 	{
 		unicode >= 0x10000U
 	};
 
 	const u32x4 is_surrogate_pair
 	{
-		is_non_bmp | shl<32>(is_non_bmp)
+		(is_non_bmp | shl<32>(is_non_bmp)) &
+		(surrogate_mask | shr<32>(surrogate_mask))
 	};
 
 	// Determine the utf-8 encoding length for each codepoint...
@@ -3728,7 +3740,7 @@ ircd::json::string_serialized_utf16(const u8x16 block,
 	const u32x4 length
 	{
 		(length_encoded & ~is_ctrl) |
-		(length_surrogate & is_ctrl & ~is_surrogate_pair)
+		(length_surrogate & is_ctrl & ~is_surrogate_pair & surrogate_mask)
 	};
 
 	const auto total_length
