@@ -6,6 +6,7 @@ DEFS += \
 	###
 
 AM_CXXFLAGS = \
+	-flax-vector-conversions \
 	@EXTRA_CXXFLAGS@ \
 	###
 
