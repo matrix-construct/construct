@@ -741,7 +741,7 @@ decltype(ircd::m::fetch::check_conforms)
 ircd::m::fetch::check_conforms
 {
 	{ "name",     "ircd.m.fetch.check.conforms" },
-	{ "default",  false                         },
+	{ "default",  true                          },
 };
 
 decltype(ircd::m::fetch::check_signature)
