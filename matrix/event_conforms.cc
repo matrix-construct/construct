@@ -134,11 +134,43 @@ ircd::m::vm::conform_report
 		if(!opts.conforming)
 			return;
 
+		const bool redacted
+		{
+			// redacted hint given in options
+			opts.redacted != -1?
+				bool(opts.redacted):
+
+			// assume unredacted when user requires content
+			opts.require_content?
+				false:
+
+			// assume redacted when hash mismatch already allowed
+			(opts.non_conform.has(event::conforms::MISMATCH_HASHES))?
+				true:
+
+			// assume no redaction for hash match
+			(!eval.report.has(event::conforms::MISMATCH_HASHES))?
+				false:
+
+			// make query
+				bool(m::redacted(event.event_id))
+		};
+
+		auto report
+		{
+			eval.report
+		};;
+
+		// Allow content hash to fail on redacted events.
+		if(redacted)
+			report.del(event::conforms::MISMATCH_HASHES);
+
 		// Otherwise this will kill the eval
-		if(!eval.report.clean())
+		if(!report.clean())
 			throw error
 			{
-				fault::INVALID, "Non-conforming event: %s", string(eval.report)
+				fault::INVALID, "Non-conforming event: %s",
+				string(report)
 			};
 	}
 };
