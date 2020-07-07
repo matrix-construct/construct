@@ -41,7 +41,9 @@ namespace ircd::db
 decltype(ircd::db::database::allocator::ALIGN_DEFAULT)
 ircd::db::database::allocator::ALIGN_DEFAULT
 {
-	#if defined(__AVX__)
+	#if defined(__AVX512F__)
+		64
+	#elif defined(__AVX__)
 		32
 	#elif defined(__SSE__)
 		16
