@@ -2006,7 +2006,7 @@ ircd::db::database::column::column(database &d,
 ,allocator
 {
 	#ifdef IRCD_DB_HAS_ALLOCATOR
-	std::make_shared<struct database::allocator>(this->d, this, database::allocator::cache_arena)
+	std::make_shared<struct database::allocator>(this->d, this, database::allocator::cache_arena, descriptor.block_size)
 	#endif
 }
 ,handle
