@@ -58,6 +58,10 @@ namespace ircd::buffer
 	extern const mutable_buffer null_buffer;
 	extern const ilist<mutable_buffer> null_buffers;
 
+	// Misc utils
+	constexpr size_t padding(const size_t &size, const size_t &alignment);
+	constexpr size_t pad_to(const size_t &size, const size_t &alignment);
+
 	// Single buffer iteration of contents
 	template<class it> const it &begin(const buffer<it> &buffer);
 	template<class it> const it &end(const buffer<it> &buffer);
@@ -134,6 +138,10 @@ namespace ircd
 
 	using buffer::const_buffers;
 	using buffer::mutable_buffers;
+
+	using buffer::padded;
+	using buffer::padding;
+	using buffer::pad_to;
 
 	using buffer::size;
 	using buffer::data;
@@ -432,4 +440,20 @@ __attribute__((always_inline))
 ircd::buffer::begin(const buffer<it> &buffer)
 {
 	return get<0>(buffer);
+}
+
+constexpr size_t
+ircd::buffer::pad_to(const size_t &size,
+                     const size_t &alignment)
+{
+	return size + padding(size, alignment);
+}
+
+constexpr size_t
+ircd::buffer::padding(const size_t &size,
+                      const size_t &alignment)
+{
+	return likely(alignment)?
+		(alignment - (size % alignment)) % alignment:
+		0UL;
 }
