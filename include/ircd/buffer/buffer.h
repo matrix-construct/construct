@@ -73,6 +73,7 @@ namespace ircd::buffer
 	template<class it> bool operator!(const buffer<it> &buffer);
 	template<class it> size_t size(const buffer<it> &buffer);
 	template<class it> const it &data(const buffer<it> &buffer);
+	template<class it> bool padded(const buffer<it> &buffer, const size_t &alignment);
 	template<class it> bool aligned(const buffer<it> &buffer, const size_t &alignment);
 	template<class it> buffer<it> operator+(const buffer<it> &buffer, const size_t &bytes);
 	size_t overlap_count(const const_buffer &, const const_buffer &);
@@ -320,7 +321,18 @@ ircd::buffer::aligned(const buffer<it> &buffer,
                       const size_t &a)
 {
 	return likely(a)?
-		uintptr_t(data(buffer)) % a == 0 && size(buffer) % a == 0:
+		uintptr_t(data(buffer)) % a == 0 && padded(buffer, a):
+		true;
+}
+
+template<class it>
+inline bool
+__attribute__((always_inline))
+ircd::buffer::padded(const buffer<it> &buffer,
+                     const size_t &a)
+{
+	return likely(a)?
+		size(buffer) % a == 0:
 		true;
 }
 
