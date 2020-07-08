@@ -361,16 +361,16 @@ AC_ARG_ENABLE(profile, RB_HELP_STRING([--enable-profile], [Enable profiling]),
 	AM_COND_IF(GCC,
 	[
 		AC_MSG_RESULT([yes, adding -pg])
-		CXXFLAGS+=" -pg"
+		RB_VAR_PREPEND([CXXFLAGS], ["-pg"])
 		AC_DEFINE(CHARYBDIS_PROFILE, 1, [Define this if you are profiling.])
 	])
 
 	AM_COND_IF(CLANG,
 	[
 		AC_MSG_RESULT([yes, adding profiling flags])
-		CXXFLAGS+=" -fprofile-instr-generate"
-		CXXFLAGS+=" -fcoverage-mapping"
-		LDFLAGS+=" -fprofile-instr-generate"
+		RB_VAR_PREPEND([CXXFLAGS], ["-fprofile-instr-generate"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-fcoverage-mapping"])
+		RB_VAR_PREPEND([LDFLAGS], ["-fprofile-instr-generate"])
 		AC_DEFINE(CHARYBDIS_PROFILE, 1, [Define this if you are profiling.])
 	])
 ], [
@@ -415,11 +415,11 @@ AM_CONDITIONAL([GENERIC], [[[[ "$enable_generic" = "yes" ]]]])
 AM_COND_IF([GENERIC],
 [
 	machine_tuning="generic instruction set"
-	CXXFLAGS+=" -mtune=generic"
+	RB_VAR_PREPEND([CXXFLAGS], ["-mtune=generic"])
 ], [
 	machine_tuning="native instruction set"
-	CXXFLAGS+=" -march=native"
-	CXXFLAGS+=" -mtune=native"
+	RB_VAR_PREPEND([CXXFLAGS], ["-march=native"])
+	RB_VAR_PREPEND([CXXFLAGS], ["-mtune=native"])
 ])
 
 dnl
@@ -442,7 +442,7 @@ AM_CONDITIONAL([UNTUNED], [[[[ "$enable_untuned" = "yes" ]]]])
 AM_COND_IF([UNTUNED],
 [
 	machine_tuning="fully generic and untuned"
-	CXXFLAGS+=" -mno-default"
+	RB_VAR_PREPEND([CXXFLAGS], ["-mno-default"])
 ], [
 	CXXFLAGS+=""
 ])
@@ -493,24 +493,24 @@ AM_COND_IF([LD_GOLD],
 [
 	AM_COND_IF([GCC],
 	[
-		LDFLAGS+=" -Wl,-fuse-ld=gold"
-		LDFLAGS+=" -Wl,--gdb-index"
+		RB_VAR_PREPEND([LDFLAGS], ["-Wl,-fuse-ld=gold"])
+		RB_VAR_PREPEND([LDFLAGS], ["-Wl,--gdb-index"])
 	])
 
 	AM_COND_IF([CLANG],
 	[
-		LDFLAGS+=" -fuse-ld=gold"
-		LDFLAGS+=" -Wc,-fuse-ld=gold"
+		RB_VAR_PREPEND([LDFLAGS], ["-fuse-ld=gold"])
+		RB_VAR_PREPEND([LDFLAGS], ["-Wc,-fuse-ld=gold"])
 	])
 
-	LDFLAGS+=" -Wl,--warn-common"
-	LDFLAGS+=" -Wl,--warn-execstack"
-	LDFLAGS+=" -Wl,--detect-odr-violations"
-	LDFLAGS+=" -Wl,--rosegment"
-dnl	LDFLAGS+=" -Wl,--icf=all"
-	LDFLAGS+=" -Wl,-z,noexecstack"
-	LDFLAGS+=" -Wl,-z,combreloc"
-	LDFLAGS+=" -Wl,-z,text-unlikely-segment"
+	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--warn-common"])
+	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--warn-execstack"])
+	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--detect-odr-violations"])
+	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--rosegment"])
+dnl	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--icf=all"])
+	RB_VAR_PREPEND([LDFLAGS], ["-Wl,-z,noexecstack"])
+	RB_VAR_PREPEND([LDFLAGS], ["-Wl,-z,combreloc"])
+	RB_VAR_PREPEND([LDFLAGS], ["-Wl,-z,text-unlikely-segment"])
 ], [
 	AC_MSG_ERROR([Sorry, disabling the gold linker is not supported at this time.])
 ])
@@ -519,7 +519,7 @@ dnl
 dnl Optimization
 dnl
 
-CXXFLAGS+=" -O$optimize_level"
+RB_VAR_PREPEND([CXXFLAGS], ["-O$optimize_level"])
 
 AM_COND_IF([OPTIMIZE],
 [
@@ -527,30 +527,24 @@ AM_COND_IF([OPTIMIZE],
 
 	AM_COND_IF([GCC],
 	[
-		CXXFLAGS+=" -fgcse-sm"
-		CXXFLAGS+=" -fgcse-las"
-		CXXFLAGS+=" -fsched-stalled-insns=0"
-		CXXFLAGS+=" -fsched-pressure"
-		CXXFLAGS+=" -fsched-spec-load"
-dnl		CXXFLAGS+=" -fsched2-use-superblocks"
-dnl		CXXFLAGS+=" -fsched2-use-superblocks"
-		CXXFLAGS+=" -fira-hoist-pressure"
-		CXXFLAGS+=" -fbranch-target-load-optimize"
-		CXXFLAGS+=" -frerun-loop-opt"
-		CXXFLAGS+=" -fdevirtualize-at-ltrans"
-dnl		CXXFLAGS+=" -fbtr-bb-exclusive"
-		CXXFLAGS+=" -fipa-pta"
-		CXXFLAGS+=" -fmodulo-sched"
-		CXXFLAGS+=" -fmodulo-sched-allow-regmoves"
-		CXXFLAGS+=" -ftracer"
-		CXXFLAGS+=" -ftree-loop-im"
-		CXXFLAGS+=" -ftree-switch-conversion"
-
-		dnl Optimization options that aren't compatible with debugging.
-		AM_COND_IF([DEBUG], [],
-		[
-			CXXFLAGS+=""
-		])
+		RB_VAR_PREPEND([CXXFLAGS], ["-fgcse-sm"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-fgcse-las"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-fsched-stalled-insns=0"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-fsched-pressure"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-fsched-spec-load"])
+dnl		RB_VAR_PREPEND([CXXFLAGS], ["-fsched2-use-superblocks"])
+dnl		RB_VAR_PREPEND([CXXFLAGS], ["-fsched2-use-superblocks"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-fira-hoist-pressure"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-fbranch-target-load-optimize"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-frerun-loop-opt"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-fdevirtualize-at-ltrans"])
+dnl		RB_VAR_PREPEND([CXXFLAGS], ["-fbtr-bb-exclusive"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-fipa-pta"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-fmodulo-sched"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-fmodulo-sched-allow-regmoves"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-ftracer"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-ftree-loop-im"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-ftree-switch-conversion"])
 	])
 ], [
 	optimize="no"
@@ -558,29 +552,29 @@ dnl		CXXFLAGS+=" -fbtr-bb-exclusive"
 	dnl Optimization options we enable in non-optimized mode. These will be enabled
 	dnl in non-optimized mode as well as optimized mode so they are as similar as
 	dnl possible without impacting debuggability.
-	CXXFLAGS+=" -falign-functions"
-dnl	CXXFLAGS+=" -fdata-sections"
-dnl	CXXFLAGS+=" -ffunction-sections"
-	CXXFLAGS+=" -ftree-vectorize"
+	RB_VAR_PREPEND([CXXFLAGS], ["-falign-functions"])
+dnl	RB_VAR_PREPEND([CXXFLAGS], ["-fdata-sections"])
+dnl	RB_VAR_PREPEND([CXXFLAGS], ["-ffunction-sections"])
+	RB_VAR_PREPEND([CXXFLAGS], ["-ftree-vectorize"])
 
 	AM_COND_IF([GCC],
 	[
-		CXXFLAGS+=" -falign-labels"
-		CXXFLAGS+=" -falign-loops"
-		CXXFLAGS+=" -falign-jumps"
+		RB_VAR_PREPEND([CXXFLAGS], ["-falign-labels"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-falign-loops"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-falign-jumps"])
 
-		CXXFLAGS+=" -ftree-vrp"
-		CXXFLAGS+=" -ftree-dce"
-		CXXFLAGS+=" -ftree-dse"
-		CXXFLAGS+=" -ftree-loop-im"
-		CXXFLAGS+=" -ftree-switch-conversion"
+		RB_VAR_PREPEND([CXXFLAGS], ["-ftree-vrp"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-ftree-dce"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-ftree-dse"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-ftree-loop-im"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-ftree-switch-conversion"])
 	])
 ])
 
 AM_COND_IF([CLANG],
 [
-	CXXFLAGS+=" -fno-data-sections"
-	CXXFLAGS+=" -fno-function-sections"
+	RB_VAR_PREPEND([CXXFLAGS], ["-fno-data-sections"])
+	RB_VAR_PREPEND([CXXFLAGS], ["-fno-function-sections"])
 ])
 
 dnl
@@ -589,12 +583,12 @@ dnl
 
 AM_COND_IF([DEBUG],
 [
-	CXXFLAGS+=" -g"
-	CXXFLAGS+=" -ggdb"
+	RB_VAR_PREPEND([CXXFLAGS], ["-g"])
+	RB_VAR_PREPEND([CXXFLAGS], ["-ggdb"])
 	AM_COND_IF([GCC],
 	[
-		CXXFLAGS+=" -fvar-tracking"
-		CXXFLAGS+=" -fvar-tracking-assignments"
+		RB_VAR_PREPEND([CXXFLAGS], ["-fvar-tracking"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-fvar-tracking-assignments"])
 	])
 ], [
 	AM_COND_IF([COMPACT],
@@ -602,8 +596,8 @@ AM_COND_IF([DEBUG],
 
 	], [
 		dnl Note these flags are unreliable with LTO
-		CXXFLAGS+=" -g"
-		CXXFLAGS+=" -ggdb"
+		RB_VAR_PREPEND([CXXFLAGS], ["-g"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-ggdb"])
 	])
 ])
 
@@ -611,19 +605,17 @@ dnl  Creates an ELF section in the output which contains a list of
 dnl  the command line arguments used for compilation.
 AM_COND_IF([GCC],
 [
-	CXXFLAGS+=" -frecord-gcc-switches"
+	RB_VAR_PREPEND([CXXFLAGS], ["-frecord-gcc-switches"])
 ])
 
 AM_COND_IF([CLANG],
 [
-	CXXFLAGS+=" -grecord-gcc-switches"
+	RB_VAR_PREPEND([CXXFLAGS], ["-grecord-gcc-switches"])
 ])
 
-dnl CXXFLAGS+=" -mmpx"
-dnl CXXFLAGS+=" -fcheck-pointer-bounds"
 AM_COND_IF([GCC],
 [
-	CXXFLAGS+=" -fstack-protector-explicit"
+	RB_VAR_PREPEND([CXXFLAGS], ["-fstack-protector-explicit"])
 
 	dnl These flags should not be used on Intel-CET capable platforms
 	dnl TODO: XXX
@@ -631,42 +623,42 @@ AM_COND_IF([GCC],
 	[
 		AM_COND_IF([GENERIC],
 		[
-			CXXFLAGS+=" -fcf-protection=full"
+			RB_VAR_PREPEND([CXXFLAGS], ["-fcf-protection=full"])
 		], [
-			CXXFLAGS+=" -fcf-protection=none"
-			CXXFLAGS+=" -mmanual-endbr"
+			RB_VAR_PREPEND([CXXFLAGS], ["-fcf-protection=none"])
+			RB_VAR_PREPEND([CXXFLAGS], ["-mmanual-endbr"])
 		])
 	])
 ])
 
 AM_COND_IF([GCC],
 [
-	CXXFLAGS+=" -fvtable-verify=none"
+	RB_VAR_PREPEND([CXXFLAGS], ["-fvtable-verify=none"])
 ])
 
 AM_COND_IF([CLANG],
 [
-	CXXFLAGS+=" -fasm-blocks"
+	RB_VAR_PREPEND([CXXFLAGS], ["-fasm-blocks"])
 ])
 
 AM_COND_IF([GCC],
 [
-	CXXFLAGS+=" -fverbose-asm"
+	RB_VAR_PREPEND([CXXFLAGS], ["-fverbose-asm"])
 ])
 
 dnl Exception safety at instruction boundary rather than function boundary
 dnl This option is needed to enable noexcept(false) i.e to throw from a
 dnl destructor; without this noexcept(false) still terminates.
-CXXFLAGS+=" -fasynchronous-unwind-tables"
+RB_VAR_PREPEND([CXXFLAGS], ["-fasynchronous-unwind-tables"])
 
 dnl  -fvisibility-inlines-hidden - for optimization; note the address of inline
 dnl  functions won't be the same between translation units
-CXXFLAGS+=" -fvisibility-inlines-hidden"
+RB_VAR_PREPEND([CXXFLAGS], ["-fvisibility-inlines-hidden"])
 
 dnl see gcc(1)
 AM_COND_IF([GCC],
 [
-	CXXFLAGS+=" -fnothrow-opt"
+	RB_VAR_PREPEND([CXXFLAGS], ["-fnothrow-opt"])
 ])
 
 dnl This disables thread-safety for static variable initialization
@@ -676,7 +668,7 @@ dnl primarily single threaded. Even if other threads are spawned for special
 dnl tasks we consider the likelyhood of a static initialization race to either
 dnl be sufficiently low or simply immaterial for our uses of them.
 dnl
-CXXFLAGS+=" -fno-threadsafe-statics"
+RB_VAR_PREPEND([CXXFLAGS], ["-fno-threadsafe-statics"])
 
 dnl
 dnl Compiler warnings
@@ -802,7 +794,7 @@ AM_COND_IF([CLANG],
 ])
 
 dnl assume the warning flags
-CPPFLAGS+="$CWARNS"
+RB_VAR_PREPEND([CPPFLAGS], ["$CWARNS"])
 
 dnl mirror the base CFLAGS and CXXFLAGS up to this point
 CFLAGS="$CXXFLAGS"
@@ -856,8 +848,8 @@ AC_CHECK_SIZEOF(__int128_t)
 AC_CHECK_SIZEOF(__uint128_t)
 
 dnl -fsigned-char ensures 'char' is signed on all platforms
-CFLAGS+=" -fsigned-char"
-CXXFLAGS+=" -fsigned-char"
+RB_VAR_PREPEND([CFLAGS], ["-fsigned-char"])
+RB_VAR_PREPEND([CXXFLAGS], ["-fsigned-char"])
 
 
 dnl ***************************************************************************
@@ -1798,8 +1790,8 @@ RB_HELP_STRING([--with-imagemagick-libs=[[[DIR]]]], [Path to imagemagick library
 dnl push
 restore_cppflags=$CPPFLAGS
 restore_ldflags=$LDFLAGS
-CPPFLAGS+="${IMAGEMAGICK_CPPFLAGS}"
-LDFLAGS+="${IMAGEMAGICK_LDFLAGS}"
+RB_VAR_PREPEND([CPPFLAGS], ["${IMAGEMAGICK_CPPFLAGS}"])
+RB_VAR_PREPEND([LDFLAGS], ["${IMAGEMAGICK_LDFLAGS}"])
 
 RB_CHK_SYSHEADER([Magick++.h], [MAGICKPP_H])
 PKG_CHECK_MODULES(GraphicsMagickPP, [GraphicsMagick++],
