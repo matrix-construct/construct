@@ -32,7 +32,7 @@ ircd::buffer::stream_aligned(const mutable_buffer &dst,
                              const const_buffer &src)
 {
 	// Platforms that have non-temporal store support; this is all of x86_64
-	constexpr bool has_nontemporal_store
+	constexpr bool has_store
 	{
 		#if defined(__SSE2__) && !defined(RB_GENERIC)
 			true
@@ -43,7 +43,7 @@ ircd::buffer::stream_aligned(const mutable_buffer &dst,
 
 	// Platforms that have non-temporal load support; sidenote SSE4.1 can do
 	// 16 byte loads and AVX2 can do 32 byte loads; SSE2 cannot do loads.
-	constexpr bool has_nontemporal_load
+	constexpr bool has_load
 	{
 		#if defined(__AVX__) && !defined(RB_GENERIC)
 			true
@@ -83,7 +83,7 @@ ircd::buffer::stream_aligned(const mutable_buffer &dst,
 
 	// When the constexpr conditions aren't favorable we can fallback to
 	// normal copy here.
-	if constexpr(!has_nontemporal_store && !has_nontemporal_load)
+	if constexpr(!has_store && !has_load)
 		return copy(dst, src);
 
 	// Assert valid arguments
@@ -116,14 +116,14 @@ ircd::buffer::stream_aligned(const mutable_buffer &dst,
 		reinterpret_cast<const block_type *__restrict__>(data(src))
 	};
 
-	if constexpr(!has_nontemporal_load)
+	if constexpr(!has_load)
 		#pragma clang loop unroll(disable)
 		for(size_t i(0); i < latency; ++i)
 			__builtin_prefetch(in + i, 0, 0);
 
 	for(size_t i(0); i < copy_lines; i += file_lines)
 	{
-		if constexpr(!has_nontemporal_load)
+		if constexpr(!has_load)
 			for(size_t j(0); j < file_lines; ++j)
 				__builtin_prefetch(in + i + latency + j, 0, 0);
 
@@ -135,7 +135,7 @@ ircd::buffer::stream_aligned(const mutable_buffer &dst,
 			__builtin_nontemporal_store(block[j], out + i + j);
 	}
 
-	if constexpr(has_nontemporal_store)
+	if constexpr(has_store)
 		asm volatile ("sfence");
 
 	return copy_size;
