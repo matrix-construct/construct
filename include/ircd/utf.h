@@ -57,13 +57,13 @@ inline ircd::u8x16
 ircd::utf16::mask_surrogate(const u8x16 found)
 noexcept
 {
-	return u128x1
+	return u8x16
 	{
-		shl<0x08>(u128x1(found)) |
-		shl<0x10>(u128x1(found)) |
-		shl<0x18>(u128x1(found)) |
-		shl<0x20>(u128x1(found)) |
-		shl<0x28>(u128x1(found)) |
+		shl<0x08>(found) |
+		shl<0x10>(found) |
+		shl<0x18>(found) |
+		shl<0x20>(found) |
+		shl<0x28>(found) |
 		found
 	};
 }

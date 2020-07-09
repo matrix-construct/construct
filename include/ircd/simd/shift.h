@@ -48,7 +48,7 @@ noexcept
 		b % 8 == 0, "xmmx register only shifts right at bytewise resolution."
 	);
 
-	return _mm_bsrli_si128(a, b / 8);
+	return T(_mm_bsrli_si128(u128x1(a), b / 8));
 }
 #endif
 
@@ -65,7 +65,7 @@ noexcept
 		b % 8 == 0, "xmmx register only shifts left at bytewise resolution."
 	);
 
-	return _mm_bslli_si128(a, b / 8);
+	return T(_mm_bslli_si128(u128x1(a), b / 8));
 }
 #endif
 
@@ -82,7 +82,7 @@ noexcept
 		b % 8 == 0, "ymmx register only shifts right at bytewise resolution."
 	);
 
-	return _mm256_srli_si256(a, b / 8);
+	return T(_mm256_srli_si256(u256x1(a), b / 8));
 }
 #endif
 
@@ -99,6 +99,6 @@ noexcept
 		b % 8 == 0, "ymmx register only shifts left at bytewise resolution."
 	);
 
-	return _mm256_slli_si256(a, b / 8);
+	return T(_mm256_slli_si256(u256x1(a), b / 8));
 }
 #endif
