@@ -765,6 +765,7 @@ AM_COND_IF([GCC],
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wstack-usage=$STACK_USAGE_WARNING], charybdis_cv_c_gcc_w_stack_usage)
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wframe-larger-than=$FRAME_SIZE_WARNING], charybdis_cv_c_gcc_w_frame_larger_than)
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Walloca], charybdis_cv_c_gcc_w_alloca)
+	CHARYBDIS_C_GCC_TRY_FLAGS([-Wvector-operation-performance], charybdis_cv_c_gcc_w_vector_operation_performance)
 
 	AM_COND_IF([DEBUG],
 	[
