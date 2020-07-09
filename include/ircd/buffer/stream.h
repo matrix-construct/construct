@@ -129,10 +129,18 @@ ircd::buffer::stream_aligned(const mutable_buffer &dst,
 
 		block_type block[file_lines];
 		for(size_t j(0); j < file_lines; ++j)
-			block[j] = __builtin_nontemporal_load(in + i + j);
+			#if defined(__clang__)
+				block[j] = __builtin_nontemporal_load(in + i + j);
+			#else
+				block[j] = *(in + i + j); //TODO: XXX
+			#endif
 
 		for(size_t j(0); j < file_lines; ++j)
-			__builtin_nontemporal_store(block[j], out + i + j);
+			#if defined(__clang__)
+				__builtin_nontemporal_store(block[j], out + i + j);
+			#else
+				*(out + i + j) = block[j]; //TODO: XXX
+			#endif
 	}
 
 	if constexpr(has_store)
