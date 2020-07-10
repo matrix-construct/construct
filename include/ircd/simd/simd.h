@@ -55,7 +55,7 @@ noexcept
 		else
 			ret += __lzcnt64(__builtin_bswap64(a[i++])) & mask;
 	}
-	while(i < lanes(a));
+	while(i < lanes<T>());
 
 	return ret;
 }
@@ -67,7 +67,7 @@ inline uint
 ircd::simd::ctz(const T a)
 noexcept
 {
-	uint ret(0), i(lanes(a)), mask(-1U); do
+	uint ret(0), i(lanes<T>()), mask(-1U); do
 	{
 		if constexpr(sizeof_lane<T>() <= sizeof(u16))
 			ret += __lzcnt16(a[--i]) & mask;

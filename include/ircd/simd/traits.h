@@ -14,10 +14,10 @@
 namespace ircd::simd
 {
 	template<class T>
-	constexpr size_t sizeof_lane(T = {});
+	constexpr size_t sizeof_lane();
 
 	template<class T>
-	constexpr size_t lanes(T = {});
+	constexpr size_t lanes();
 
 	// lane number convenience constants
 	extern const u8x64    u8x64_lane_id;
@@ -41,7 +41,7 @@ namespace ircd::simd
 /// type name).
 template<class T>
 constexpr size_t
-ircd::simd::lanes(T)
+ircd::simd::lanes()
 {
 	constexpr size_t ret
 	{
@@ -59,7 +59,7 @@ ircd::simd::lanes(T)
 /// Get the size of each lane; i.e the size of one integral element.
 template<class T>
 constexpr size_t
-ircd::simd::sizeof_lane(T)
+ircd::simd::sizeof_lane()
 {
 	constexpr size_t ret
 	{
@@ -76,63 +76,63 @@ ircd::simd::sizeof_lane(T)
 
 template<>
 constexpr size_t
-ircd::simd::sizeof_lane(u128x1)
+ircd::simd::sizeof_lane<ircd::u128x1>()
 {
 	return 16;
 };
 
 template<>
 constexpr size_t
-ircd::simd::sizeof_lane(f128x1)
+ircd::simd::sizeof_lane<ircd::f128x1>()
 {
 	return 16;
 };
 
 template<>
 constexpr size_t
-ircd::simd::sizeof_lane(d128x1)
+ircd::simd::sizeof_lane<ircd::d128x1>()
 {
 	return 16;
 };
 
 template<>
 constexpr size_t
-ircd::simd::sizeof_lane(u256x1)
+ircd::simd::sizeof_lane<ircd::u256x1>()
 {
 	return 32;
 };
 
 template<>
 constexpr size_t
-ircd::simd::sizeof_lane(f256x1)
+ircd::simd::sizeof_lane<ircd::f256x1>()
 {
 	return 32;
 };
 
 template<>
 constexpr size_t
-ircd::simd::sizeof_lane(d256x1)
+ircd::simd::sizeof_lane<ircd::d256x1>()
 {
 	return 32;
 };
 
 template<>
 constexpr size_t
-ircd::simd::sizeof_lane(u512x1)
+ircd::simd::sizeof_lane<ircd::u512x1>()
 {
 	return 64;
 };
 
 template<>
 constexpr size_t
-ircd::simd::sizeof_lane(f512x1)
+ircd::simd::sizeof_lane<ircd::f512x1>()
 {
 	return 64;
 };
 
 template<>
 constexpr size_t
-ircd::simd::sizeof_lane(d512x1)
+ircd::simd::sizeof_lane<ircd::d512x1>()
 {
 	return 64;
 };
