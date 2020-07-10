@@ -61,6 +61,7 @@ namespace ircd::buffer
 	// Misc utils
 	constexpr size_t padding(const size_t &size, const size_t &alignment);
 	constexpr size_t pad_to(const size_t &size, const size_t &alignment);
+	bool aligned(const void *const &, const size_t &alignment);
 
 	// Single buffer iteration of contents
 	template<class it> const it &begin(const buffer<it> &buffer);
@@ -329,7 +330,7 @@ ircd::buffer::aligned(const buffer<it> &buffer,
                       const size_t &a)
 {
 	return likely(a)?
-		uintptr_t(data(buffer)) % a == 0 && padded(buffer, a):
+		aligned(data(buffer), a) && padded(buffer, a):
 		true;
 }
 
@@ -440,6 +441,13 @@ __attribute__((always_inline))
 ircd::buffer::begin(const buffer<it> &buffer)
 {
 	return get<0>(buffer);
+}
+
+inline bool
+ircd::buffer::aligned(const void *const &ptr,
+                      const size_t &alignment)
+{
+	return uintptr_t(ptr) % alignment == 0;
 }
 
 constexpr size_t
