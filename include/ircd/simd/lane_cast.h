@@ -29,8 +29,9 @@ ircd::simd::lane_cast(const T &in)
 		lanes<R>() == lanes<T>(), "Types must have matching number of lanes."
 	);
 
-	if constexpr(__has_builtin(__builtin_convertvector))
+	#if __has_builtin(__builtin_convertvector)
 		return __builtin_convertvector(in, R);
+	#endif
 
 	R ret;
 	for(size_t i(0); i < lanes<R>(); ++i)
