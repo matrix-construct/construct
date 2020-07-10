@@ -35,13 +35,13 @@ noexcept
 		| ((input - 0x61 + 0x0a) & is_hex[2])
 	};
 
-	const u128x1 is_hex_nibble
+	const u8x16 is_hex_nibble
 	{
 		is_hex[0] | is_hex[1] | is_hex[2]
 	};
 
 	// Masks the starting byte (the '\' char) of each valid surrogate.
-	const u32x4 is_surrogate
+	const u8x16 is_surrogate
 	{
 		(input == '\\') &
 		shr<8>(input == 'u') &
@@ -56,9 +56,9 @@ noexcept
 	// matching those 6 byte inputs, so we shift the byte[6] over to byte[4]
 	// and stiffen the mask about to be generated.
 	const u32x4 surrogate_mask
-	{
-		((is_surrogate & 0xff) | (is_surrogate >> 16)) == 0xffU
-	};
+	(
+		((u32x4(is_surrogate) & 0xff) | (u32x4(is_surrogate) >> 16)) == 0xffU
+	);
 
 	// Decide if one or two surrogates were actually input and assert that
 	// between both lanes if so.
@@ -89,7 +89,7 @@ noexcept
 
 	// Result for one or two unpaired surrogates
 	const u32x4 codepoint_unpaired
-	{
+	(
 		u8x16
 		{
 			hex_byte[2], hex_byte[0], 0, 0,
@@ -97,19 +97,19 @@ noexcept
 			0, 0, 0, 0,
 			0, 0, 0, 0,
 		}
-	};
+	);
 
 	// Determine if the unpaired codepoints can make a surrogate pair
 	const u32x4 surrogate_pair_range
-	{
+	(
 		codepoint_unpaired >= 0xd800U && codepoint_unpaired <= 0xdfffU
-	};
+	);
 
 	// Mask lane[0] if the codepoints are actually a surrogate pair
 	const u32x4 surrogate_paired
-	{
+	(
 		surrogate_pair_range & shr<32>(surrogate_pair_range)
-	};
+	);
 
 	// Pre-processing shuffle for surrogate pair decode
 	const u32x4 codepoint_pre_paired
@@ -127,9 +127,9 @@ noexcept
 
 	// Decide if the codepoint is in the supplementary plane (3+ bytes)
 	const u32x4 codepoint_high
-	{
+	(
 		(codepoint_paired > 0xffffU) & surrogate_paired
-	};
+	);
 
 	// Decide if the codepoint is in the BMP (2- bytes)
 	const u32x4 codepoint_low
@@ -165,7 +165,7 @@ noexcept
 namespace ircd::utf16
 {
 	static const u128x1 full_mask {~u128x1{0}};
-	extern const u128x1 truncation_table[6];
+	extern const u8x16 truncation_table[6];
 }
 
 decltype(ircd::utf16::truncation_table)
@@ -185,24 +185,29 @@ ircd::u8x16
 ircd::utf16::find_surrogate_partial(const u8x16 input)
 noexcept
 {
-	const u128x1 is_esc
-	{
+	const u8x16 is_esc
+	(
 		input == '\\'
-	};
+	);
 
-	const u128x1 is_u
-	{
+	const u8x16 is_u
+	(
 		input == 'u'
-	};
+	);
 
-	const u128x1 is_hex_nibble
+	const u8x16 hex_nibble[3]
 	{
-		(input >= '0' && input <= '9') ||
-		(input >= 'A' && input <= 'F') ||
-		(input >= 'a' && input <= 'f')
+		input >= '0' && input <= '9',
+		input >= 'A' && input <= 'F',
+		input >= 'a' && input <= 'f',
 	};
 
-	const u128x1 surrogate_sans[6]
+	const u8x16 is_hex_nibble
+	{
+		hex_nibble[0] | hex_nibble[1] | hex_nibble[2]
+	};
+
+	const u8x16 surrogate_sans[6]
 	{
 		// complete
 		is_esc
@@ -234,7 +239,7 @@ noexcept
 		is_esc,
 	};
 
-	const u128x1 ret
+	const u8x16 ret
 	{
 		(surrogate_sans[0] & truncation_table[0]) |
 		(surrogate_sans[1] & truncation_table[1]) |
@@ -251,11 +256,16 @@ ircd::u8x16
 ircd::utf16::find_surrogate(const u8x16 input)
 noexcept
 {
-	const u128x1 is_hex_nibble
+	const u8x16 hex_nibble[3]
 	{
-		(input >= '0' && input <= '9') ||
-		(input >= 'A' && input <= 'F') ||
-		(input >= 'a' && input <= 'f')
+		input >= '0' && input <= '9',
+		input >= 'A' && input <= 'F',
+		input >= 'a' && input <= 'f',
+	};
+
+	const u8x16 is_hex_nibble
+	{
+		hex_nibble[0] | hex_nibble[1] | hex_nibble[2]
 	};
 
 	const auto is_surrogate
@@ -300,24 +310,24 @@ ircd::utf8::decode(const u8x16 string)
 noexcept
 {
 	const u32x16 in
-	{
-		simd::lane_cast<u32x16>(string)
-	};
+	(
+		simd::lane_cast<u32x16, u8x16>(string)
+	);
 
 	const u32x16 is_single
-	{
+	(
 		(in & 0x80) == 0
-	};
+	);
 
 	const u32x16 is_lead
-	{
+	(
 		(in - 0xc2) <= 0x32
-	};
+	);
 
 	const u32x16 is_trail
-	{
+	(
 		in >= 0x80 && in < 0xbf
-	};
+	);
 
 	const u32x16 expect_trail
 	{
@@ -477,22 +487,41 @@ u32xN
 ircd::utf8::_length(const u32xN codepoint)
 noexcept
 {
-	const u32xN
-	length_1      { codepoint <= 0x7f                               },
-	length_2      { codepoint <= 0x7ff && codepoint > 0x7f          },
-	length_3_lo   { codepoint <= 0xd7ff && codepoint > 0x7ff        },
-	length_3_hi   { codepoint <= 0xffff && codepoint > 0xdfff       },
-	length_4      { codepoint <= 0x10ffff && codepoint > 0xffff     };
+	const u32xN len[5]
+	{
+		// length 1
+		codepoint <= 0x7f,
 
-	[[gnu::unused]] const u32xN // Preserved here for future reference
-	length_3_err  { codepoint <= 0xdfff && codepoint > 0xd7ff       },
-	length_err    { (codepoint > 0x10ffff) | length_3_err           };
+		// length 2
+		codepoint <= 0x7ff && codepoint > 0x7f,
+
+		// length 3 low
+		codepoint <= 0xd7ff && codepoint > 0x7ff,
+
+		// length 3 high
+		codepoint <= 0xffff && codepoint > 0xdfff,
+
+		// length 4
+		codepoint <= 0x10ffff && codepoint > 0xffff,
+	};
+
+	[[gnu::unused]] // Preserved here for future reference
+	const u32xN len_3_err
+	(
+		codepoint <= 0xdfff && codepoint > 0xd7ff
+	);
+
+	[[gnu::unused]] // Preserved here for future reference
+	const u32xN len_err
+	{
+		(codepoint > 0x10ffff) | len_3_err
+	};
 
 	return 0
-	| (length_1 & 1)
-	| (length_2 & 2)
-	| (length_3_lo & 3)
-	| (length_3_hi & 3)
-	| (length_4 & 4)
+	| (len[0] & 1)
+	| (len[1] & 2)
+	| (len[2] & 3)
+	| (len[3] & 3)
+	| (len[4] & 4)
 	;
 }

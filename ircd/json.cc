@@ -3308,9 +3308,9 @@ noexcept
 		};
 
 		block_t block
-		{
+		(
 			_mm_loadu_si128(si)
-		};
+		);
 
 		const u64x2 consume
 		{
@@ -3371,19 +3371,19 @@ ircd::json::string_stringify(u8x16 &__restrict__ block,
                              const u8x16 block_mask)
 {
 	const u8x16 is_esc
-	{
+	(
 		block == '\\'
-	};
+	);
 
 	const u8x16 is_quote
-	{
+	(
 		block == '"'
-	};
+	);
 
 	const u8x16 is_ctrl
-	{
+	(
 		block < 0x20
-	};
+	);
 
 	const u8x16 is_special
 	{
@@ -3478,19 +3478,19 @@ ircd::json::string_stringify_utf16(u8x16 &__restrict__ block,
 	};
 
 	const u32x4 is_surrogate
-	{
+	(
 		utf16::find_surrogate(block & block_mask)
-	};
+	);
 
 	const u32x4 surrogate_mask
-	{
+	(
 		is_surrogate != 0U
-	};
+	);
 
 	const u32x4 is_ctrl
-	{
+	(
 		unicode < 0x20
-	};
+	);
 
 	const u32x4 length_encoded
 	{
@@ -3508,10 +3508,10 @@ ircd::json::string_stringify_utf16(u8x16 &__restrict__ block,
 		u32(ctrl_tab_len[ctrl_idx[1]]),
 	};
 
-	const u128x1 is_non_bmp
-	{
+	const u32x4 is_non_bmp
+	(
 		unicode >= 0x10000U
-	};
+	);
 
 	const u32x4 is_surrogate_pair
 	{
@@ -3533,9 +3533,9 @@ ircd::json::string_stringify_utf16(u8x16 &__restrict__ block,
 	};
 
 	const u8x16 encoded
-	{
+	(
 		encoded_sparse
-	};
+	);
 
 	size_t di(0);
 	for(size_t i(0); i < 2; ++i)
@@ -3602,19 +3602,19 @@ ircd::json::string_serialized(const u8x16 block,
                               const u8x16 block_mask)
 {
 	const u8x16 is_esc
-	{
+	(
 		block == '\\'
-	};
+	);
 
 	const u8x16 is_quote
-	{
+	(
 		block == '"'
-	};
+	);
 
 	const u8x16 is_ctrl
-	{
+	(
 		block < 0x20
-	};
+	);
 
 	const u8x16 is_special
 	{
@@ -3689,14 +3689,14 @@ ircd::json::string_serialized_utf16(const u8x16 block,
                                     const u8x16 block_mask)
 {
 	const u32x4 is_surrogate
-	{
+	(
 		utf16::find_surrogate(block & block_mask)
-	};
+	);
 
 	const u32x4 surrogate_mask
-	{
+	(
 		is_surrogate != 0U
-	};
+	);
 
 	const u32x4 unicode
 	{
@@ -3704,9 +3704,9 @@ ircd::json::string_serialized_utf16(const u8x16 block,
 	};
 
 	const u32x4 is_ctrl
-	{
+	(
 		unicode < 0x20
-	};
+	);
 
 	const u32x4 length_encoded
 	{
@@ -3725,9 +3725,9 @@ ircd::json::string_serialized_utf16(const u8x16 block,
 	};
 
 	const u32x4 is_non_bmp
-	{
+	(
 		unicode >= 0x10000U
-	};
+	);
 
 	const u32x4 is_surrogate_pair
 	{
