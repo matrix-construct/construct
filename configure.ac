@@ -420,8 +420,12 @@ AM_COND_IF([GENERIC],
 	RB_VAR_PREPEND([CXXFLAGS], ["-mtune=generic"])
 ], [
 	machine_tuning="native instruction set"
-	RB_VAR_PREPEND([CXXFLAGS], ["-march=native"])
+
+	dnl AMD K10's SSE4a doesn't work with valgrind
+	RB_VAR_PREPEND([CXXFLAGS], ["-mno-sse4a"])
+
 	RB_VAR_PREPEND([CXXFLAGS], ["-mtune=native"])
+	RB_VAR_PREPEND([CXXFLAGS], ["-march=native"])
 ])
 
 dnl
