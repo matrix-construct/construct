@@ -104,6 +104,15 @@ AM_CONDITIONAL([SOLARIS],    [[[[ $host_os = *solaris* ]]]])
 
 RB_DEFINE_UNQUOTED([OS], ["$host_os"], [Host operating system])
 
+dnl
+dnl Standard libraries
+dnl
+
+AC_SEARCH_LIBS([__dynamic_cast], [c++], [],
+[
+	AC_MSG_ERROR([Please install libstdc++ on this system.])
+])
+
 dnl ***************************************************************************
 dnl
 dnl Developer options
