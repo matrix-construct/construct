@@ -145,12 +145,13 @@ ircd::info::dump_cpu_info()
 	#if defined(__i386__) or defined(__x86_64__)
 	log::info
 	{
-		log::star, "%s sse:%b sse2:%b sse3:%b ssse3:%b sse4.1:%b sse4.2:%b avx:%b avx2:%b constant_tsc:%b",
+		log::star, "%s sse:%b sse2:%b sse3:%b ssse3:%b sse4a:%b sse4.1:%b sse4.2:%b avx:%b avx2:%b constant_tsc:%b",
 		hardware::x86::vendor,
 		hardware::x86::sse,
 		hardware::x86::sse2,
 		hardware::x86::sse3,
 		hardware::x86::ssse3,
+		hardware::x86::sse4a,
 		hardware::x86::sse4_1,
 		hardware::x86::sse4_2,
 		hardware::x86::avx,
@@ -405,6 +406,12 @@ decltype(ircd::info::hardware::x86::ssse3)
 ircd::info::hardware::x86::ssse3
 {
 	bool(features & (uint128_t(1) << (64 + 9)))
+};
+
+decltype(ircd::info::hardware::x86::sse4a)
+ircd::info::hardware::x86::sse4a
+{
+	bool(_features & (uint128_t(1) << (64 + 6)))
 };
 
 decltype(ircd::info::hardware::x86::sse4_1)
@@ -799,6 +806,14 @@ ircd::info::hardware::cap
 		getauxval(AT_HWCAP2)
 	#else
 		0UL
+	#endif
+};
+
+decltype(ircd::info::hardware::virtualized)
+ircd::info::hardware::virtualized
+{
+	#ifdef __x86_64__
+		bool(x86::features & (uint128_t(1) << (64 + 31)))
 	#endif
 };
 

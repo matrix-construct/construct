@@ -98,6 +98,7 @@ namespace ircd::info::hardware
 	extern const size_t l3, l3_line, l3_tag, l3_assoc;
 	extern const size_t page_size;
 	extern const ulonglong cap[2];
+	extern const bool virtualized;
 }
 
 namespace ircd::info::hardware::x86
@@ -117,7 +118,7 @@ namespace ircd::info::hardware::x86
 
 	extern const string_view vendor;
 	extern const bool mmx, sse, sse2;
-	extern const bool sse3, ssse3, sse4_1, sse4_2;
+	extern const bool sse3, ssse3, sse4a, sse4_1, sse4_2;
 	extern const bool avx, avx2;
 	extern const bool tsc, tsc_constant;
 };
