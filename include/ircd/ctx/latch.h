@@ -58,10 +58,7 @@ inline void
 ircd::ctx::latch::wait()
 const
 {
-	d.wait([this]
-	{
-		return is_ready();
-	});
+	d.wait(std::bind(&latch::is_ready, this));
 }
 
 inline void
