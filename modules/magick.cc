@@ -17,7 +17,7 @@ namespace ircd::magick
 	struct transform;
 
 	[[noreturn]] static void handle_exception(const ExceptionType, const char *, const char *);
-	[[noreturn]] static void handle_fatal(const ExceptionType, const char *, const char *);
+	static void handle_fatal(const ExceptionType, const char *, const char *) __attribute__((noreturn));
 	static void handle_error(const ExceptionType, const char *, const char *) noexcept;
 	static void handle_warning(const ExceptionType, const char *, const char *) noexcept;
 	static void handle_log(const ExceptionType, const char *) noexcept;
