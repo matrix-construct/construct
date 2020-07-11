@@ -107,7 +107,7 @@ try
 	// Wait for any pending runlevel transition to complete before
 	// continuing with another transition.
 	if(ctx::current)
-		changed::dock.wait([]
+		changed::dock.wait([]() noexcept
 		{
 			return level == chadburn;
 		});

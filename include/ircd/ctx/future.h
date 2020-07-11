@@ -259,7 +259,7 @@ ircd::ctx::_wait_until(const future<T> &f,
 	if(unlikely(is(state, future_state::INVALID)))
 		throw no_state{};
 
-	return state.cond.wait_until(tp, [&state]
+	return state.cond.wait_until(tp, [&state]() noexcept
 	{
 		return !is(state, future_state::PENDING);
 	});

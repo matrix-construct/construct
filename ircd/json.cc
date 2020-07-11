@@ -787,7 +787,9 @@ void
 ircd::json::stack::append(const char &c)
 noexcept
 {
-	append(1, [&c](const mutable_buffer &buf)
+	append(1, [&c]
+	(const mutable_buffer &buf)
+	noexcept
 	{
 		buf[0] = c;
 		return 1;
@@ -800,6 +802,7 @@ noexcept
 {
 	append(s.size(), [&s]
 	(const mutable_buffer &buf)
+	noexcept
 	{
 		assert(ircd::size(buf) >= s.size());
 		return ircd::copy(buf, s);

@@ -107,7 +107,7 @@ ircd::ctx::queue<T, A>::pop()
 		this->w
 	};
 
-	d.wait([this]
+	d.wait([this]() noexcept
 	{
 		return !q.empty();
 	});
@@ -131,7 +131,7 @@ ircd::ctx::queue<T, A>::pop_for(const duration &dur)
 
 	const bool ready
 	{
-		d.wait_for(dur, [this]
+		d.wait_for(dur, [this]() noexcept
 		{
 			return !q.empty();
 		})
@@ -159,7 +159,7 @@ ircd::ctx::queue<T, A>::pop_until(time_point&& tp)
 
 	const bool ready
 	{
-		d.wait_until(tp, [this]
+		d.wait_until(tp, [this]() noexcept
 		{
 			return !q.empty();
 		})

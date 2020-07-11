@@ -868,6 +868,7 @@ const
 	bool ret{false};
 	for_each(key, [&ret]
 	(const auto &)
+	noexcept
 	{
 		ret = true;
 		return false;
@@ -883,6 +884,7 @@ const
 	size_t ret{0};
 	for_each(key, [&ret]
 	(const auto &)
+	noexcept
 	{
 		++ret;
 		return true;
@@ -969,6 +971,7 @@ const
 	string_view ret;
 	for_each(key, [&idx, &ret]
 	(const auto &query)
+	noexcept
 	{
 		if(!idx--)
 		{
@@ -1151,7 +1154,9 @@ ircd::http::writeline(window_buffer &write,
 void
 ircd::http::writeline(window_buffer &write)
 {
-	writeline(write, [](const mutable_buffer &out)
+	writeline(write, []
+	(const mutable_buffer &out)
+	noexcept
 	{
 		return 0;
 	});

@@ -224,14 +224,16 @@ ircd::ctx::ctx::wait()
 	// This is currently a dummy predicate; this is where we can take the
 	// user's real wakeup condition (i.e from a ctx::dock) and use it with
 	// an internal scheduler.
-	const predicate &predicate{[this]
+	const predicate &predicate{[this]()
+	noexcept
 	{
 		return notes > 0;
 	}};
 
 	// An interrupt invokes this closure to force the alarm to return.
 	const interruptor &interruptor{[this]
-	(ctx *const &interruptor) noexcept
+	(ctx *const &interruptor)
+	noexcept
 	{
 		wake();
 	}};
@@ -242,7 +244,8 @@ ircd::ctx::ctx::wait()
 	boost::system::error_code ec; continuation
 	{
 		predicate, interruptor, [this, &ec]
-		(auto &yield) noexcept
+		(auto &yield)
+		noexcept
 		{
 			alarm.async_wait(yield[ec]);
 		}
@@ -436,7 +439,8 @@ void
 ircd::ctx::notify(ctx &ctx,
                   threadsafe_t)
 {
-	signal(ctx, [&ctx]
+	signal(ctx, [&ctx]()
+	noexcept
 	{
 		notify(ctx);
 	});
@@ -949,29 +953,30 @@ ircd::ctx::stack::stack(const size_t &max)
 //
 
 decltype(ircd::ctx::continuation::true_predicate)
-ircd::ctx::continuation::asio_predicate{[]
-() -> bool
+ircd::ctx::continuation::asio_predicate{[]()
+noexcept -> bool
 {
 	return false;
 }};
 
 decltype(ircd::ctx::continuation::true_predicate)
-ircd::ctx::continuation::true_predicate{[]
-() -> bool
+ircd::ctx::continuation::true_predicate{[]()
+noexcept -> bool
 {
 	return true;
 }};
 
 decltype(ircd::ctx::continuation::false_predicate)
-ircd::ctx::continuation::false_predicate{[]
-() -> bool
+ircd::ctx::continuation::false_predicate{[]()
+noexcept -> bool
 {
 	return false;
 }};
 
 decltype(ircd::ctx::continuation::noop_interruptor)
 ircd::ctx::continuation::noop_interruptor{[]
-(ctx *const &interruptor) -> void
+(ctx *const &interruptor)
+noexcept -> void
 {
 	return;
 }};
@@ -1479,10 +1484,11 @@ try
 		this->working
 	};
 
-	const unwind avail([this]
+	const unwind avail{[this]()
+	noexcept
 	{
 		q_max.notify();
-	});
+	}};
 
 	// Execute the user's function
 	func();
@@ -2633,6 +2639,7 @@ ircd::ctx::condition_variable::notify_all()
 noexcept
 {
 	q.for_each([this](ctx &c)
+	noexcept
 	{
 		ircd::ctx::notify(c);
 	});
@@ -2645,6 +2652,7 @@ ircd::ctx::condition_variable::interrupt_all()
 noexcept
 {
 	q.for_each([this](ctx &c)
+	noexcept
 	{
 		ircd::ctx::interrupt(c);
 	});
@@ -2657,6 +2665,7 @@ ircd::ctx::condition_variable::terminate_all()
 noexcept
 {
 	q.for_each([this](ctx &c)
+	noexcept
 	{
 		ircd::ctx::terminate(c);
 	});
@@ -2668,8 +2677,8 @@ ircd::ctx::condition_variable::waiting(const ctx &a)
 const noexcept
 {
 	// for_each returns false if a was found
-	return !q.for_each(list::closure_bool_const{[&a]
-	(const ctx &b)
+	return !q.for_each(list::closure_bool_const{[&a](const ctx &b)
+	noexcept
 	{
 		// return false to break on equal
 		return std::addressof(a) != std::addressof(b);
@@ -2707,6 +2716,7 @@ ircd::ctx::dock::notify_all()
 noexcept
 {
 	q.for_each([this](ctx &c)
+	noexcept
 	{
 		ircd::ctx::notify(c);
 	});
@@ -2718,6 +2728,7 @@ ircd::ctx::dock::interrupt_all()
 noexcept
 {
 	q.for_each([this](ctx &c)
+	noexcept
 	{
 		ircd::ctx::interrupt(c);
 	});
@@ -2729,6 +2740,7 @@ ircd::ctx::dock::terminate_all()
 noexcept
 {
 	q.for_each([this](ctx &c)
+	noexcept
 	{
 		ircd::ctx::terminate(c);
 	});
@@ -2783,8 +2795,8 @@ ircd::ctx::dock::waiting(const ctx &a)
 const noexcept
 {
 	// for_each returns false if a was found
-	return !q.for_each(list::closure_bool_const{[&a]
-	(const ctx &b)
+	return !q.for_each(list::closure_bool_const{[&a](const ctx &b)
+	noexcept
 	{
 		// return false to break on equal
 		return std::addressof(a) != std::addressof(b);
@@ -2954,6 +2966,7 @@ const noexcept
 {
 	size_t i{0};
 	for_each([&i](const ctx &)
+	noexcept
 	{
 		++i;
 	});

@@ -97,7 +97,7 @@ ircd::ctx::mutex::lock()
 	assert(current);
 	deadlock_assertion();
 
-	q.wait([this]
+	q.wait([this]() noexcept
 	{
 		return !locked();
 	});
@@ -121,7 +121,7 @@ ircd::ctx::mutex::try_lock_until(const time_point &tp)
 
 	const bool success
 	{
-		q.wait_until(tp, [this]
+		q.wait_until(tp, [this]() noexcept
 		{
 			return !locked();
 		})
