@@ -28,8 +28,8 @@ struct ircd::util::construction
 
 template<class F,
          class... A>
-extern inline
-__attribute__((always_inline, gnu_inline, artificial))
+[[using gnu: always_inline, artificial]]
+inline
 ircd::util::construction::construction(F&& f,
                                        A&&... a)
 {

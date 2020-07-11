@@ -57,7 +57,7 @@ ircd::buffer::mutable_buffer::mutable_buffer(const std::function<void (const mut
 }
 
 template<size_t SIZE>
-inline __attribute__((always_inline, gnu_inline))
+inline __attribute__((always_inline))
 ircd::buffer::mutable_buffer::mutable_buffer(char (&buf)[SIZE])
 :buffer<char *>{buf, SIZE}
 {}
