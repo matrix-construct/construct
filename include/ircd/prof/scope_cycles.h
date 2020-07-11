@@ -43,7 +43,7 @@ template<bool fenced>
 inline //TODO: ???
 #else
 extern inline
-__attribute__((flatten, always_inline, gnu_inline, artificial))
+__attribute__((always_inline, gnu_inline, artificial))
 #endif
 ircd::prof::scope_cycles<fenced>::scope_cycles(uint64_t &result)
 noexcept
@@ -72,7 +72,7 @@ template<bool fenced>
 inline //TODO: ???
 #else
 extern inline
-__attribute__((flatten, always_inline, gnu_inline, artificial))
+__attribute__((always_inline, gnu_inline, artificial))
 #endif
 ircd::prof::scope_cycles<fenced>::~scope_cycles()
 noexcept
