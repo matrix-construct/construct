@@ -138,7 +138,7 @@ struct ircd::ctx::promise<void>
 //
 
 template<class T>
-void
+inline void
 ircd::ctx::promise<T>::set_value(T&& val)
 {
 	if(!valid())
@@ -166,7 +166,7 @@ ircd::ctx::promise<T>::set_value(T&& val)
 }
 
 template<class T>
-void
+inline void
 ircd::ctx::promise<T>::set_value(const T &val)
 {
 	if(!valid())
@@ -184,14 +184,14 @@ ircd::ctx::promise<T>::set_value(const T &val)
 }
 
 template<class T>
-ircd::ctx::shared_state<T> &
+inline ircd::ctx::shared_state<T> &
 ircd::ctx::promise<T>::state()
 {
 	return promise_base::state<T>();
 }
 
 template<class T>
-const ircd::ctx::shared_state<T> &
+inline const ircd::ctx::shared_state<T> &
 ircd::ctx::promise<T>::state()
 const
 {
@@ -233,7 +233,7 @@ const noexcept
 }
 
 template<class T>
-ircd::ctx::shared_state<T> &
+inline ircd::ctx::shared_state<T> &
 ircd::ctx::promise_base::state()
 noexcept
 {
@@ -241,7 +241,7 @@ noexcept
 }
 
 template<class T>
-const ircd::ctx::shared_state<T> &
+inline const ircd::ctx::shared_state<T> &
 ircd::ctx::promise_base::state()
 const noexcept
 {

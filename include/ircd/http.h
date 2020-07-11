@@ -392,7 +392,7 @@ const
 }
 
 template<class T>
-T
+inline T
 ircd::http::query::string::get(const string_view &key,
                                const T &def,
                                const size_t &idx)
@@ -407,7 +407,7 @@ catch(const bad_lex_cast &)
 }
 
 template<class T>
-T
+inline T
 ircd::http::query::string::at(const string_view &key,
                               const size_t &idx)
 const
@@ -416,6 +416,7 @@ const
 }
 
 template<class... args>
+inline
 ircd::http::error::error(const string_view &fmt,
                          const http::code &code,
                          args&&... a)

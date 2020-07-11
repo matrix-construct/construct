@@ -106,14 +106,14 @@ ircd::ctx::mutex::lock()
 }
 
 template<class duration>
-bool
+inline bool
 ircd::ctx::mutex::try_lock_for(const duration &d)
 {
 	return try_lock_until(system_clock::now() + d);
 }
 
 template<class time_point>
-bool
+inline bool
 ircd::ctx::mutex::try_lock_until(const time_point &tp)
 {
 	assert(current);

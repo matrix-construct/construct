@@ -97,6 +97,7 @@ struct ircd::ctx::scoped_future
 };
 
 template<class... T>
+inline
 ircd::ctx::scoped_future<T...>::~scoped_future()
 noexcept
 {
@@ -108,7 +109,7 @@ noexcept
 
 template<class T>
 template<class time_point>
-T
+inline T
 ircd::ctx::future<T>::get_until(const time_point &tp)
 {
 	this->wait_until(tp);
@@ -117,7 +118,7 @@ ircd::ctx::future<T>::get_until(const time_point &tp)
 
 template<class T>
 template<class duration>
-T
+inline T
 ircd::ctx::future<T>::get(const duration &d)
 {
 	this->wait(d);
@@ -125,7 +126,7 @@ ircd::ctx::future<T>::get(const duration &d)
 }
 
 template<class T>
-T
+inline T
 ircd::ctx::future<T>::get()
 {
 	wait();
@@ -140,7 +141,7 @@ ircd::ctx::future<T>::get()
 }
 
 template<class T>
-void
+inline void
 ircd::ctx::future<T>::wait()
 const
 {
@@ -156,7 +157,7 @@ const
 
 template<class T>
 template<class duration>
-void
+inline void
 ircd::ctx::future<T>::wait(const duration &d)
 const
 {
@@ -164,7 +165,7 @@ const
 }
 
 template<class duration>
-void
+inline void
 ircd::ctx::future<void>::wait(const duration &d)
 const
 {
@@ -173,7 +174,7 @@ const
 
 template<class T>
 template<class duration>
-bool
+inline bool
 ircd::ctx::future<T>::wait(const duration &d,
                            std::nothrow_t)
 const
@@ -182,7 +183,7 @@ const
 }
 
 template<class duration>
-bool
+inline bool
 ircd::ctx::future<void>::wait(const duration &d,
                               std::nothrow_t)
 const
@@ -192,7 +193,7 @@ const
 
 template<class T>
 template<class time_point>
-void
+inline void
 ircd::ctx::future<T>::wait_until(const time_point &tp)
 const
 {
@@ -201,7 +202,7 @@ const
 }
 
 template<class time_point>
-void
+inline void
 ircd::ctx::future<void>::wait_until(const time_point &tp)
 const
 {
@@ -211,7 +212,7 @@ const
 
 template<class T>
 template<class time_point>
-bool
+inline bool
 ircd::ctx::future<T>::wait_until(const time_point &tp,
                                  std::nothrow_t)
 const
@@ -220,7 +221,7 @@ const
 }
 
 template<class time_point>
-bool
+inline bool
 ircd::ctx::future<void>::wait_until(const time_point &tp,
                                     std::nothrow_t)
 const
@@ -239,7 +240,7 @@ const
 
 template<class T,
          class time_point>
-void
+inline void
 ircd::ctx::wait_until(const future<T> &f,
                       const time_point &tp)
 {
@@ -249,7 +250,7 @@ ircd::ctx::wait_until(const future<T> &f,
 
 template<class T,
          class time_point>
-bool
+inline bool
 ircd::ctx::_wait_until(const future<T> &f,
                        const time_point &tp,
                        std::nothrow_t)
@@ -265,14 +266,14 @@ ircd::ctx::_wait_until(const future<T> &f,
 }
 
 template<class T>
-ircd::ctx::shared_state<T> &
+inline ircd::ctx::shared_state<T> &
 ircd::ctx::state(future<T> &future)
 {
 	return future.state();
 }
 
 template<class T>
-const ircd::ctx::shared_state<T> &
+inline const ircd::ctx::shared_state<T> &
 ircd::ctx::state(const future<T> &future)
 {
 	return future.state();

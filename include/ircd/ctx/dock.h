@@ -88,7 +88,7 @@ noexcept
 
 /// Returns true if notified; false if timed out
 template<class duration>
-bool
+inline bool
 ircd::ctx::dock::wait_for(const duration &dur)
 {
 	static const duration zero(0);
@@ -110,7 +110,7 @@ ircd::ctx::dock::wait_for(const duration &dur)
 
 /// Returns true if predicate passed; false if timed out
 template<class duration>
-bool
+inline bool
 ircd::ctx::dock::wait_for(const duration &dur,
                           const predicate &pred)
 {
@@ -148,7 +148,7 @@ ircd::ctx::dock::wait_for(const duration &dur,
 
 /// Returns true if notified; false if timed out
 template<class time_point>
-bool
+inline bool
 ircd::ctx::dock::wait_until(time_point&& tp)
 {
 	assert(current);
@@ -168,7 +168,7 @@ ircd::ctx::dock::wait_until(time_point&& tp)
 
 /// Returns true if predicate passed; false if timed out
 template<class time_point>
-bool
+inline bool
 ircd::ctx::dock::wait_until(time_point&& tp,
                             const predicate &pred)
 {
