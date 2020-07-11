@@ -672,6 +672,11 @@ dnl be sufficiently low or simply immaterial for our uses of them.
 dnl
 RB_VAR_PREPEND([CXXFLAGS], ["-fno-threadsafe-statics"])
 
+AM_COND_IF([GCC],
+[
+	RB_VAR_PREPEND([CXXFLAGS], ["-flax-vector-conversions"])
+])
+
 dnl
 dnl Compiler warnings
 dnl

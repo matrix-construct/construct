@@ -5,7 +5,6 @@ DEFS += \
 	###
 
 AM_CXXFLAGS = \
-	-flax-vector-conversions \
 	-ftls-model=initial-exec \
 	@EXTRA_CXXFLAGS@ \
 	###

@@ -9,7 +9,6 @@ DEFS += \
 	###
 
 AM_CXXFLAGS = \
-	-flax-vector-conversions \
 	-ftls-model=global-dynamic \
 	@EXTRA_CXXFLAGS@ \
 	###
