@@ -47,27 +47,27 @@ BUILT_SOURCES = \
 	###
 
 ircd.h.gch: ircd.h
-	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -o ircd.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) ircd.h
+	$(CXX) $(AM_CXXFLAGS) $(CXXFLAGS) -o ircd.h.gch $(DEFS) $(AM_CPPFLAGS) $(CPPFLAGS) ircd.h
 
 ircd.pic.h.gch: ircd.h
 	cp ircd.h ircd.pic.h
-	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o ircd.pic.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC ircd.pic.h
+	$(CXX) $(AM_CXXFLAGS) $(CXXFLAGS) -fPIC -o ircd.pic.h.gch $(DEFS) $(AM_CPPFLAGS) $(CPPFLAGS) -DPIC ircd.pic.h
 
 matrix.h.gch: ircd.h matrix.h m/*.h m/*/*.h
-	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -o matrix.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) matrix.h
+	$(CXX) $(AM_CXXFLAGS) $(CXXFLAGS) -o matrix.h.gch $(DEFS) $(AM_CPPFLAGS) $(CPPFLAGS) matrix.h
 
 matrix.pic.h.gch: ircd.h matrix.h m/*.h m/*/*.h
 	cp matrix.h matrix.pic.h
-	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o matrix.pic.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC matrix.pic.h
+	$(CXX) $(AM_CXXFLAGS) $(CXXFLAGS) -fPIC -o matrix.pic.h.gch $(DEFS) $(AM_CPPFLAGS) $(CPPFLAGS) -DPIC matrix.pic.h
 
 spirit.h.gch: ircd.h
-	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o spirit.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC spirit.h
+	$(CXX) $(AM_CXXFLAGS) $(CXXFLAGS) -fPIC -o spirit.h.gch $(DEFS) $(AM_CPPFLAGS) $(CPPFLAGS) -DPIC spirit.h
 
 spirit.h.gch: \
 	AM_CXXFLAGS += @BOOST_CPPFLAGS@ $(LOWMEM_FLAGS)
 
 asio.h.gch: ircd.h
-	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o asio.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC asio.h
+	$(CXX) $(AM_CXXFLAGS) $(CXXFLAGS) -fPIC -o asio.h.gch $(DEFS) $(AM_CPPFLAGS) $(CPPFLAGS) -DPIC asio.h
 
 asio.h.gch: \
 	AM_CPPFLAGS += @BOOST_CPPFLAGS@ @SSL_CPPFLAGS@ @CRYPTO_CPPFLAGS@
