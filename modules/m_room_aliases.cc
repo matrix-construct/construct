@@ -85,7 +85,7 @@ try
 		at<"content"_>(event).get("aliases")
 	};
 
-	for(const json::string &alias : aliases) try
+	for(const json::string alias : aliases) try
 	{
 		m::room::aliases::cache::set(alias, room_id);
 

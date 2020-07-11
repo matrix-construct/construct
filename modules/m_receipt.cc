@@ -148,7 +148,7 @@ handle_m_receipt_m_read(const m::room::id &room_id,
 		json::get<"data"_>(receipt)
 	};
 
-	for(const json::string &event_id : event_ids) try
+	for(const json::string event_id : event_ids) try
 	{
 		handle_m_receipt_m_read(room_id, user_id, event_id, data);
 	}

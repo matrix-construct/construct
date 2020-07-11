@@ -86,7 +86,7 @@ ircd::m::push::match::match(const event &event,
 			return false;
 	}
 
-	for(const json::object &cond : json::get<"conditions"_>(rule))
+	for(const json::object cond : json::get<"conditions"_>(rule))
 		if(!match(event, push::cond(cond), opts))
 			return false;
 

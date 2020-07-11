@@ -217,7 +217,7 @@ try
 	// and topic keys.
 
 	size_t i(0);
-	for(const json::object &event : json::get<"initial_state"_>(c)) try
+	for(const json::object event : json::get<"initial_state"_>(c)) try
 	{
 		const json::string &type(event["type"]);
 		const json::string &state_key(event["state_key"]);
@@ -282,7 +282,7 @@ try
 
 	// invitation vector
 
-	for(const json::string &_user_id : json::get<"invite"_>(c)) try
+	for(const json::string _user_id : json::get<"invite"_>(c)) try
 	{
 		json::iov content;
 		const json::iov::add is_direct // Conditionally add is_direct

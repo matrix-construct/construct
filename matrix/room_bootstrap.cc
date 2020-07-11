@@ -569,7 +569,7 @@ try
 	std::vector<m::fed::key::server_key> queries;
 	queries.reserve(events.size());
 
-	for(const json::object &event : events)
+	for(const json::object event : events)
 		for(const auto &[server_name, signatures] : json::object(event["signatures"]))
 			for(const auto &[key_id, signature] : json::object(signatures))
 				queries.emplace_back(unquote(event.at("origin")), key_id);

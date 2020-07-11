@@ -456,7 +456,7 @@ ircd::net::dns::cache::for_each(const hostport &hp,
 	m::get(std::nothrow, event_idx, "content", [&state_key, &closure, &ret, &ts]
 	(const json::object &content)
 	{
-		for(const json::object &rr : json::array(content.get("")))
+		for(const json::object rr : json::array(content.get("")))
 		{
 			if(expired(rr, ts))
 				continue;
@@ -497,7 +497,7 @@ ircd::net::dns::cache::for_each(const string_view &type,
 		m::get(std::nothrow, event_idx, "content", [&state_key, &closure, &ret, &ts]
 		(const json::object &content)
 		{
-			for(const json::object &rr : json::array(content.get("")))
+			for(const json::object rr : json::array(content.get("")))
 			{
 				if(expired(rr, ts))
 					continue;

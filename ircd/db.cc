@@ -8794,7 +8794,7 @@ ircd::db::available()
 			fs::ls(dir)
 		};
 
-		for(const auto cpdir : checkpoints) try
+		for(const auto &cpdir : checkpoints) try
 		{
 			const auto checkpoint
 			{
