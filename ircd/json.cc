@@ -355,8 +355,11 @@ ircd::json::printer::operator()(mutable_buffer &out,
                                 attr&&... a)
 const
 {
+	#ifdef IRCD_JSON_PRINTER_STATS
 	++stats.print_calls;
 	const prof::scope_cycles timer{stats.print_cycles};
+	#endif
+
 	if(unlikely(!ircd::generate(out, std::forward<gen>(g), std::forward<attr>(a)...)))
 		throw print_error
 		{
@@ -452,8 +455,11 @@ ircd::json::parser::operator()(const char *&start,
                                attr&&...a)
 const
 {
+	#ifdef IRCD_JSON_PARSER_STATS
 	++stats.parse_calls;
 	const prof::scope_cycles timer{stats.parse_cycles};
+	#endif
+
 	return ircd::parse<parse_error>(start, stop, std::forward<gen>(g), std::forward<attr>(a)...);
 }
 
