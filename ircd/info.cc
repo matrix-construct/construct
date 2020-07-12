@@ -145,10 +145,11 @@ ircd::info::dump_cpu_info()
 	#if defined(__i386__) or defined(__x86_64__)
 	log::info
 	{
-		log::star, "%s sse:%b sse2:%b sse3:%b ssse3:%b sse4a:%b sse4.1:%b sse4.2:%b avx:%b avx2:%b constant_tsc:%b",
+		log::star, "%s %s sse3:%b ssse3:%b sse4a:%b sse4.1:%b sse4.2:%b avx:%b avx2:%b avx512f:%b constant_tsc:%b",
 		hardware::x86::vendor,
-		hardware::x86::sse,
-		hardware::x86::sse2,
+		hardware::virtualized?
+			"virtual"_sv:
+			"physical"_sv,
 		hardware::x86::sse3,
 		hardware::x86::ssse3,
 		hardware::x86::sse4a,
@@ -156,6 +157,7 @@ ircd::info::dump_cpu_info()
 		hardware::x86::sse4_2,
 		hardware::x86::avx,
 		hardware::x86::avx2,
+		hardware::x86::avx512f,
 		hardware::x86::tsc_constant,
 	};
 	#endif
@@ -378,12 +380,6 @@ ircd::info::hardware::x86::vendor{[]
 	};
 }()};
 
-decltype(ircd::info::hardware::x86::mmx)
-ircd::info::hardware::x86::mmx
-{
-	bool(features & (uint128_t(1) << (96 + 23)))
-};
-
 decltype(ircd::info::hardware::x86::sse)
 ircd::info::hardware::x86::sse
 {
@@ -436,6 +432,12 @@ decltype(ircd::info::hardware::x86::avx2)
 ircd::info::hardware::x86::avx2
 {
 	bool(features & (uint128_t(1) << (32 + 5)))
+};
+
+decltype(ircd::info::hardware::x86::avx512f)
+ircd::info::hardware::x86::avx512f
+{
+	bool(features & (uint128_t(1) << (32 + 16)))
 };
 
 decltype(ircd::info::hardware::x86::tsc)

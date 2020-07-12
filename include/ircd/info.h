@@ -117,9 +117,8 @@ namespace ircd::info::hardware::x86
 	extern const uint128_t _lwp;
 
 	extern const string_view vendor;
-	extern const bool mmx, sse, sse2;
-	extern const bool sse3, ssse3, sse4a, sse4_1, sse4_2;
-	extern const bool avx, avx2;
+	extern const bool sse, sse2, sse3, ssse3, sse4a, sse4_1, sse4_2;
+	extern const bool avx, avx2, avx512f;
 	extern const bool tsc, tsc_constant;
 };
 
