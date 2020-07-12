@@ -3041,36 +3041,18 @@ const
 	return true;
 }
 
-ircd::ctx::ctx *&
-ircd::ctx::list::prev(ctx *const &c)
+ircd::ctx::list::node &
+ircd::ctx::list::get(ctx &c)
 noexcept
 {
-	assert(c);
-	return c->node.prev;
+	return c.node;
 }
 
-ircd::ctx::ctx *&
-ircd::ctx::list::next(ctx *const &c)
+const ircd::ctx::list::node &
+ircd::ctx::list::get(const ctx &c)
 noexcept
 {
-	assert(c);
-	return c->node.next;
-}
-
-const ircd::ctx::ctx *
-ircd::ctx::list::prev(const ctx *const &c)
-noexcept
-{
-	assert(c);
-	return c->node.prev;
-}
-
-const ircd::ctx::ctx *
-ircd::ctx::list::next(const ctx *const &c)
-noexcept
-{
-	assert(c);
-	return c->node.next;
+	return c.node;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

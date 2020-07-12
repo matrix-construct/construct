@@ -40,6 +40,9 @@ struct ircd::ctx::list
 	ctx *head {nullptr};
 	ctx *tail {nullptr};
 
+	[[gnu::leaf]] static const node &get(const ctx &) noexcept;
+	[[gnu::leaf]] static node &get(ctx &) noexcept;
+
 	// Get next or prev entry in ctx
 	static const ctx *next(const ctx *const &) noexcept;
 	static const ctx *prev(const ctx *const &) noexcept;
@@ -169,4 +172,36 @@ ircd::ctx::list::front()
 const noexcept
 {
 	return head;
+}
+
+inline ircd::ctx::ctx *&
+ircd::ctx::list::prev(ctx *const &c)
+noexcept
+{
+	assert(c);
+	return get(*c).prev;
+}
+
+inline ircd::ctx::ctx *&
+ircd::ctx::list::next(ctx *const &c)
+noexcept
+{
+	assert(c);
+	return get(*c).next;
+}
+
+inline const ircd::ctx::ctx *
+ircd::ctx::list::prev(const ctx *const &c)
+noexcept
+{
+	assert(c);
+	return get(*c).prev;
+}
+
+inline const ircd::ctx::ctx *
+ircd::ctx::list::next(const ctx *const &c)
+noexcept
+{
+	assert(c);
+	return get(*c).next;
 }
