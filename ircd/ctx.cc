@@ -2824,7 +2824,6 @@ const noexcept
 // ctx_list.h
 //
 
-[[gnu::hot]]
 void
 ircd::ctx::list::remove(ctx *const &c)
 noexcept
@@ -2850,7 +2849,6 @@ noexcept
 	prev(c) = nullptr;
 }
 
-[[gnu::hot]]
 ircd::ctx::ctx *
 ircd::ctx::list::pop_back()
 noexcept
@@ -2883,7 +2881,6 @@ noexcept
 	return tail;
 }
 
-[[gnu::hot]]
 ircd::ctx::ctx *
 ircd::ctx::list::pop_front()
 noexcept
@@ -2916,7 +2913,6 @@ noexcept
 	return head;
 }
 
-[[gnu::hot]]
 void
 ircd::ctx::list::push_front(ctx *const &c)
 noexcept
@@ -2938,7 +2934,6 @@ noexcept
 	head = c;
 }
 
-[[gnu::hot]]
 void
 ircd::ctx::list::push_back(ctx *const &c)
 noexcept
@@ -3046,7 +3041,6 @@ const
 	return true;
 }
 
-[[gnu::hot]]
 ircd::ctx::ctx *&
 ircd::ctx::list::prev(ctx *const &c)
 noexcept
@@ -3055,7 +3049,6 @@ noexcept
 	return c->node.prev;
 }
 
-[[gnu::hot]]
 ircd::ctx::ctx *&
 ircd::ctx::list::next(ctx *const &c)
 noexcept
@@ -3064,7 +3057,6 @@ noexcept
 	return c->node.next;
 }
 
-[[gnu::hot]]
 const ircd::ctx::ctx *
 ircd::ctx::list::prev(const ctx *const &c)
 noexcept
@@ -3073,7 +3065,6 @@ noexcept
 	return c->node.prev;
 }
 
-[[gnu::hot]]
 const ircd::ctx::ctx *
 ircd::ctx::list::next(const ctx *const &c)
 noexcept
