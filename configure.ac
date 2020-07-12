@@ -5,6 +5,10 @@ AC_INIT([construct], [1.0-dev])
 AC_GNU_SOURCE
 AC_USE_SYSTEM_EXTENSIONS
 
+AC_CANONICAL_HOST
+AC_CANONICAL_BUILD
+AC_CANONICAL_TARGET
+
 AC_PREFIX_DEFAULT([/])
 AC_CONFIG_MACRO_DIR([tools/m4])
 AC_CONFIG_HEADER(include/ircd/config.h)
@@ -414,20 +418,6 @@ AC_ARG_ENABLE(generic, RB_HELP_STRING([--enable-generic], [Emit more generic cod
 
 AM_CONDITIONAL([GENERIC], [[[[ "$enable_generic" = "yes" ]]]])
 
-AM_COND_IF([GENERIC],
-[
-	machine_tuning="generic instruction set"
-	RB_VAR_PREPEND([CXXFLAGS], ["-mtune=generic"])
-], [
-	machine_tuning="native instruction set"
-
-	dnl AMD K10's SSE4a doesn't work with valgrind
-	RB_VAR_PREPEND([CXXFLAGS], ["-mno-sse4a"])
-
-	RB_VAR_PREPEND([CXXFLAGS], ["-mtune=native"])
-	RB_VAR_PREPEND([CXXFLAGS], ["-march=native"])
-])
-
 dnl
 dnl Untuned Mode compilation
 dnl
@@ -444,14 +434,6 @@ AC_ARG_ENABLE(untuned, RB_HELP_STRING([--enable-untuned], [Emit no special featu
 ])
 
 AM_CONDITIONAL([UNTUNED], [[[[ "$enable_untuned" = "yes" ]]]])
-
-AM_COND_IF([UNTUNED],
-[
-	machine_tuning="fully generic and untuned"
-	RB_VAR_PREPEND([CXXFLAGS], ["-mno-default"])
-], [
-	CXXFLAGS+=""
-])
 
 dnl
 dnl Disable third-party allocators
@@ -652,6 +634,10 @@ AM_COND_IF([GCC],
 	RB_VAR_PREPEND([CXXFLAGS], ["-fverbose-asm"])
 ])
 
+dnl
+dnl Misc
+dnl
+
 dnl Exception safety at instruction boundary rather than function boundary
 dnl This option is needed to enable noexcept(false) i.e to throw from a
 dnl destructor; without this noexcept(false) still terminates.
@@ -679,6 +665,35 @@ RB_VAR_PREPEND([CXXFLAGS], ["-fno-threadsafe-statics"])
 AM_COND_IF([GCC],
 [
 	RB_VAR_PREPEND([CXXFLAGS], ["-flax-vector-conversions"])
+])
+
+dnl
+dnl Machine Tuning
+dnl
+
+AM_COND_IF([UNTUNED],
+[
+	machine_tuning="generic ${host_cpu} and untuned"
+	RB_VAR_PREPEND([CXXFLAGS], ["-mno-default"])
+], [
+	AM_COND_IF([GENERIC],
+	[
+		machine_tuning="generic ${host_cpu} instruction set"
+		RB_VAR_PREPEND([CXXFLAGS], ["-mtune=generic"])
+	], [
+		machine_tuning="${host_cpu} native instruction set"
+		RB_VAR_PREPEND([CXXFLAGS], ["-mtune=native"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-march=native"])
+
+		dnl AMD K10's SSE4a doesn't work with valgrind
+		RB_VAR_PREPEND([CXXFLAGS], ["-mno-sse4a"])
+
+		AS_CASE([$host_cpu],
+		[x86_64],
+		[
+			RB_VAR_PREPEND([CXXFLAGS], ["-mfpmath=sse"])
+		])
+	])
 ])
 
 dnl
@@ -2378,16 +2393,17 @@ AC_OUTPUT
 
 dnl Make it look sexay!
 echo
-echo "Configured ........................ $PACKAGE_NAME $PACKAGE_VERSION"
 echo "Branding .......................... $BRANDING_NAME $BRANDING_VERSION"
+echo "Configured ........................ $PACKAGE_NAME $PACKAGE_VERSION"
 echo "Configuration time ................ $RB_DATESTR"
-echo "Host OS ........................... $host_os"
 echo "C Compiler ........................ $CC"
 echo "C Compiler flags (CFLAGS) ......... $CFLAGS"
 echo "C++ Compiler ...................... $CXX"
 echo "C++ Compiler flags (CXXFLAGS) ..... $CXXFLAGS"
 echo "Linker ............................ $LD"
 echo "Linker flags (LDFLAGS) ............ $LDFLAGS"
+echo "Targeting platform (host) ......... $host_cpu $host_vendor $host_os"
+echo "Developer platform (build) ........ $build_cpu $build_vendor $build_os"
 echo "Developer debug ................... $debug"
 echo "Developer assert .................. $assert ($assert_type)"
 echo "Developer profiling ............... $profiling"
