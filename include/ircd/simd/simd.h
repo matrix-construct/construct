@@ -38,6 +38,7 @@ namespace ircd
 /// targets and specializations are created.
 template<class T>
 inline uint
+__attribute__((target("lzcnt")))
 ircd::simd::clz(const T a)
 noexcept
 {
@@ -64,6 +65,7 @@ noexcept
 /// targets and specializations are created.
 template<class T>
 inline uint
+__attribute__((target("lzcnt")))
 ircd::simd::ctz(const T a)
 noexcept
 {
