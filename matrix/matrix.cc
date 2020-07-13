@@ -45,8 +45,6 @@ ircd::m::canon_service
 decltype(ircd::m::matrix::module_names)
 ircd::m::matrix::module_names
 {
-	"media_media",
-
 	"well_known",
 	"web_root",
 	"web_hook",
@@ -87,6 +85,8 @@ ircd::m::matrix::module_names
 	"m_room_server_acl",
 	"m_room_third_party_invite",
 	"m_vm_fetch",
+
+	"media_media",
 
 	"federation_backfill_ids",
 	"federation_backfill",
