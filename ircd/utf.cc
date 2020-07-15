@@ -281,26 +281,6 @@ noexcept
 	return is_surrogate;
 }
 
-/// Convert utf-16 two-byte surrogates (in big-endian) to char32_t codepoints
-/// in parallel. The result vector is twice the size as the input; no template
-/// is offered yet, just the dimensions someone needed for somewhere.
-ircd::u32x8
-ircd::utf16::convert_u32x8(const u8x16 string)
-noexcept
-{
-	return u32x8
-	{
-		string[0x01] | (u32(string[0x00]) << 8),
-		string[0x03] | (u32(string[0x02]) << 8),
-		string[0x05] | (u32(string[0x04]) << 8),
-		string[0x07] | (u32(string[0x06]) << 8),
-		string[0x09] | (u32(string[0x08]) << 8),
-		string[0x0b] | (u32(string[0x0a]) << 8),
-		string[0x0d] | (u32(string[0x0c]) << 8),
-		string[0x0f] | (u32(string[0x0e]) << 8),
-	};
-}
-
 //
 // utf8
 //
