@@ -366,7 +366,8 @@ noexcept
 
 namespace ircd::utf8
 {
-	template<class u32xN> static u32xN _encode(const u32xN codepoint) noexcept;
+	template<class u32xN>
+	static u32xN _encode(const u32xN codepoint) noexcept;
 }
 
 ircd::u32x4
@@ -379,22 +380,60 @@ noexcept
 ircd::u32x8
 ircd::utf8::encode(const u32x8 codepoint)
 noexcept
+#ifdef __AVX2__
 {
 	return _encode(codepoint);
 }
+#else // This block is only effective for GCC. Clang performs this automatically.
+{
+	u32x4 cp[2];
+	for(size_t i(0); i < 2; ++i)
+		for(size_t j(0); j < 4; ++j)
+			cp[i][j] = codepoint[(i + 1) * j];
+
+	cp[0] = _encode(cp[0]);
+	cp[1] = _encode(cp[1]);
+
+	u32x8 ret;
+	for(size_t i(0); i < 2; ++i)
+		for(size_t j(0); j < 4; ++j)
+			ret[(i + 1) * j] = cp[i][j];
+
+	return ret;
+}
+#endif
 
 ircd::u32x16
 ircd::utf8::encode(const u32x16 codepoint)
 noexcept
+#ifdef __AVX512F__
 {
 	return _encode(codepoint);
 }
+#else // This block is only effective for GCC. Clang performs this automatically.
+{
+	u32x8 cp[2];
+	for(size_t i(0); i < 2; ++i)
+		for(size_t j(0); j < 8; ++j)
+			cp[i][j] = codepoint[(i + 1) * j];
+
+	cp[0] = encode(cp[0]);
+	cp[1] = encode(cp[1]);
+
+	u32x16 ret;
+	for(size_t i(0); i < 2; ++i)
+		for(size_t j(0); j < 8; ++j)
+			ret[(i + 1) * j] = cp[i][j];
+
+	return ret;
+}
+#endif
 
 /// Transform multiple char32_t codepoints to their utf-8 encodings in
 /// parallel, returning a sparse result in each char32_t (this does not
 /// compress the result down).
 template<class u32xN>
-u32xN
+inline u32xN
 ircd::utf8::_encode(const u32xN codepoint)
 noexcept
 {
@@ -435,7 +474,8 @@ noexcept
 
 namespace ircd::utf8
 {
-	template<class u32xN> static u32xN _length(const u32xN codepoint) noexcept;
+	template<class u32xN>
+	static u32xN _length(const u32xN codepoint) noexcept;
 }
 
 ircd::u32x4
@@ -448,22 +488,60 @@ noexcept
 ircd::u32x8
 ircd::utf8::length(const u32x8 codepoint)
 noexcept
+#ifdef __AVX2__
 {
 	return _length(codepoint);
 }
+#else // This block is only effective for GCC. Clang performs this automatically.
+{
+	u32x4 cp[2];
+	for(size_t i(0); i < 2; ++i)
+		for(size_t j(0); j < 4; ++j)
+			cp[i][j] = codepoint[(i + 1) * j];
+
+	cp[0] = _length(cp[0]);
+	cp[1] = _length(cp[1]);
+
+	u32x8 ret;
+	for(size_t i(0); i < 2; ++i)
+		for(size_t j(0); j < 4; ++j)
+			ret[(i + 1) * j] = cp[i][j];
+
+	return ret;
+}
+#endif
 
 ircd::u32x16
 ircd::utf8::length(const u32x16 codepoint)
 noexcept
+#ifdef __AVX512F__
 {
 	return _length(codepoint);
 }
+#else // This block is only effective for GCC. Clang performs this automatically.
+{
+	u32x8 cp[2];
+	for(size_t i(0); i < 2; ++i)
+		for(size_t j(0); j < 8; ++j)
+			cp[i][j] = codepoint[(i + 1) * j];
+
+	cp[0] = length(cp[0]);
+	cp[1] = length(cp[1]);
+
+	u32x16 ret;
+	for(size_t i(0); i < 2; ++i)
+		for(size_t j(0); j < 8; ++j)
+			ret[(i + 1) * j] = cp[i][j];
+
+	return ret;
+}
+#endif
 
 /// Determine the utf-8 encoding length of multiple codepoints in parallel.
 /// The input vector char32_t codepoints and the output yields an integer
 /// of 0-4 for each lane.
 template<class u32xN>
-u32xN
+inline u32xN
 ircd::utf8::_length(const u32xN codepoint)
 noexcept
 {
