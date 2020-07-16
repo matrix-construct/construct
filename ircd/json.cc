@@ -3416,65 +3416,78 @@ ircd::json::string_stringify(u8x16 &__restrict__ block,
 			regular_prefix_count, regular_prefix_count,
 		};
 
-	// Slow-path; decide what to do based on the next character.
-	switch(block[0])
+	// Unescaped quote case
+	if(is_quote[0])
 	{
-		// Covers the ctrl 0x00-0x20 range only; no other character here.
-		default:
+		block[0] = '\\';
+		block[1] = '"';
+		return u64x2
 		{
-			assert(block[0] < 0x20);
-			#if __has_builtin(__builtin_assume)
-				__builtin_assume(block[0] < 0x20);
-			#endif
-
-			const u8 idx{block[0]};
-			block = *reinterpret_cast<const u128x1 *>(ctrl_tab + idx);
-			return u64x2
-			{
-				1, u64(ctrl_tab_len[idx])
-			};
-		}
-
-		// Unescaped quote
-		case '"':
-			block[0] = '\\';
-			block[1] = '"';
-			return u64x2
-			{
-				1, 2
-			};
-
-		// Escape sequence
-		case '\\': switch(block[1] & block_mask[1])
-		{
-			// Legitimately escaped single chars
-			case '\\':
-			case '"':
-			case 'b':
-			case 't':
-			case 'n':
-			case 'f':
-			case 'r':
-				block[0] = '\\';
-				block[1] = block[1];
-				return u64x2
-				{
-					2, 2
-				};
-
-			case 'u':  // Possible utf-16 surrogate(s)
-				return string_stringify_utf16(block, block_mask);
-
-			// Unnecessary escape; unless it's the last char.
-			default:
-				block[0] = '\\';
-				block[1] = '\\';
-				return u64x2
-				{
-					1, block_mask[1]? 0UL: 2UL
-				};
+			1, 2
 		};
 	}
+
+	// Control character case
+	if(is_ctrl[0])
+	{
+		const u8 idx{block[0]};
+		block = *reinterpret_cast<const u128x1 *>(ctrl_tab + idx);
+		return u64x2
+		{
+			1, u64(ctrl_tab_len[idx])
+		};
+	}
+
+	// Escape sequence case
+	assert(block[0] == '\\');
+
+	// Legitimately escaped sequence bank
+	const u8x16 cases
+	{
+		'b', 't', 'n', 'f', 'r', '"', '\\', 'u'
+	};
+
+	const u8x16 subject
+	{
+		simd::broad_cast(block, block[1]) &
+		simd::broad_cast(block_mask, block_mask[1])
+	};
+
+	const u8x16 match
+	(
+		subject == cases
+	);
+
+	const u64 match_depth
+	{
+		simd::clz(u64x2(match)) / 8
+	};
+
+	// Legitimately escaped single char
+	if(match_depth < 7)
+	{
+		block[0] = '\\';
+		block[1] = block[1];
+		return u64x2
+		{
+			2, 2
+		};
+	}
+
+	// Unnecessary escape; unless it's the last char.
+	if(match_depth > 7)
+	{
+		block[0] = '\\';
+		block[1] = '\\';
+		return u64x2
+		{
+			1, block_mask[1]? 0UL: 2UL
+		};
+	}
+
+	// Possible utf-16 surrogate(s)
+	assert(block[1] == 'u');
+	return string_stringify_utf16(block, block_mask);
 }
 
 ircd::u64x2
@@ -3610,6 +3623,8 @@ ircd::u64x2
 ircd::json::string_serialized(const u8x16 block,
                               const u8x16 block_mask)
 {
+	assert(block_mask[0] == 0xff);
+
 	const u8x16 is_esc
 	(
 		block == '\\'
@@ -3643,54 +3658,59 @@ ircd::json::string_serialized(const u8x16 block,
 			regular_prefix_count, regular_prefix_count,
 		};
 
-	// Slow-path; decide what to do based on the next character.
-	switch(block[0])
-	{
-		// Covers the ctrl 0x00-0x20 range only; no other character here.
-		default:
+	// Unescaped quote: +1
+	if(is_quote[0])
+		return u64x2
 		{
-			assert(block[0] < 0x20);
-			#if __has_builtin(__builtin_assume)
-				__builtin_assume(block[0] < 0x20);
-			#endif
-
-			return string_serialized_ctrl(block, block_mask, is_ctrl);
-		}
-
-		// Unescaped quote: +1
-		case '"':
-			return u64x2
-			{
-				1, 2
-			};
-
-		// Escape sequence
-		case '\\': switch(block[1] & block_mask[1])
-		{
-			// Legitimately escaped single chars
-			case '\\':
-			case '"':
-			case 'b':
-			case 't':
-			case 'n':
-			case 'f':
-			case 'r':
-				return u64x2
-				{
-					2, 2
-				};
-
-			case 'u':  // Possible utf-16 surrogate(s)
-				return string_serialized_utf16(block, block_mask);
-
-			// Unnecessary escape; unless it's the last char: -1
-			default:
-				return u64x2
-				{
-					1, block_mask[1]? 0UL: 2UL
-				};
+			1, 2
 		};
-	}
+
+	// Covers the ctrl 0x00-0x20 range only; no other character here.
+	if(is_ctrl[0])
+		return string_serialized_ctrl(block, block_mask, is_ctrl);
+
+	// Escape sequence
+	assert(block[0] == '\\');
+
+	// Legitimate escape bank
+	const u8x16 cases
+	{
+		'b', 't', 'n', 'f', 'r', '"', '\\', 'u'
+	};
+
+	const u8x16 subject
+	{
+		simd::broad_cast(block, block[1]) &
+		simd::broad_cast(block_mask, block_mask[1])
+	};
+
+	const u8x16 match
+	(
+		subject == cases
+	);
+
+	const u64 match_depth
+	{
+		simd::clz(u64x2(match)) / 8
+	};
+
+	// Legitimately escaped single char
+	if(match_depth < 7)
+		return u64x2
+		{
+			2, 2
+		};
+
+	// Unnecessary escape; unless it's the last char: -1
+	if(match_depth > 7)
+		return u64x2
+		{
+			1, block_mask[1]? 0UL: 2UL
+		};
+
+	// Possible utf-16 surrogate(s)
+	assert(block[1] == 'u');
+	return string_serialized_utf16(block, block_mask);
 }
 
 ircd::u64x2
