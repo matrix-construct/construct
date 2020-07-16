@@ -14,6 +14,7 @@
 #include "type.h"
 #include "traits.h"
 #include "lane_cast.h"
+#include "broad_cast.h"
 #include "shift.h"
 #include "print.h"
 
