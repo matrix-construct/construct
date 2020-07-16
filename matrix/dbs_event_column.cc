@@ -19,7 +19,7 @@ decltype(ircd::m::dbs::desc::_event__bloom__bits)
 ircd::m::dbs::desc::_event__bloom__bits
 {
 	{ "name",     "ircd.m.dbs.__event.bloom.bits" },
-	{ "default",  8L                              },
+	{ "default",  0L                              },
 };
 
 decltype(ircd::m::dbs::desc::event_id__block__size)
