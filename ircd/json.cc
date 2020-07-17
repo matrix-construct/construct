@@ -3405,7 +3405,7 @@ ircd::json::string_stringify(u8x16 &__restrict__ block,
 	// counting past the end of the string.
 	const u64 regular_prefix_count
 	{
-		simd::clz(u64x2(is_special | ~block_mask)) / 8
+		simd::lzcnt(u64x2(is_special | ~block_mask)) / 8
 	};
 
 	// Fast-path; backward branch to count and consume uninteresting characters
@@ -3460,7 +3460,7 @@ ircd::json::string_stringify(u8x16 &__restrict__ block,
 
 	const u64 match_depth
 	{
-		simd::clz(u64x2(match)) / 8
+		simd::lzcnt(u64x2(match)) / 8
 	};
 
 	// Legitimately escaped single char
@@ -3568,7 +3568,7 @@ ircd::json::string_stringify_utf16(u8x16 &__restrict__ block,
 
 	const auto surrogates
 	{
-		simd::popcount(u64x2(simd::popmask(u8x16(is_surrogate))))
+		simd::popcnt(u64x2(simd::popmask(u8x16(is_surrogate))))
 	};
 
 	assert(di == length[0] + length[1]);
@@ -3647,7 +3647,7 @@ ircd::json::string_serialized(const u8x16 block,
 
 	const u64 regular_prefix_count
 	{
-		simd::clz(u64x2(is_special | ~block_mask)) / 8
+		simd::lzcnt(u64x2(is_special | ~block_mask)) / 8
 	};
 
 	// Fast-path; backward branch to count and consume uninteresting characters
@@ -3691,7 +3691,7 @@ ircd::json::string_serialized(const u8x16 block,
 
 	const u64 match_depth
 	{
-		simd::clz(u64x2(match)) / 8
+		simd::lzcnt(u64x2(match)) / 8
 	};
 
 	// Legitimately escaped single char
@@ -3779,7 +3779,7 @@ ircd::json::string_serialized_utf16(const u8x16 block,
 
 	const auto surrogates
 	{
-		simd::popcount(u64x2(simd::popmask(u8x16(is_surrogate))))
+		simd::popcnt(u64x2(simd::popmask(u8x16(is_surrogate))))
 	};
 
 	return u64x2
@@ -3801,7 +3801,7 @@ ircd::json::string_serialized_ctrl(const u8x16 block,
 
 	const u64 ctrl_prefix_count
 	{
-		simd::clz(u64x2(~is_ctrl | ~block_mask)) / 8
+		simd::lzcnt(u64x2(~is_ctrl | ~block_mask)) / 8
 	};
 
 	u64 ret(0);
