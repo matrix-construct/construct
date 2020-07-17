@@ -43,6 +43,15 @@ __attribute__((target("lzcnt")))
 ircd::simd::clz(const T a)
 noexcept
 {
+	constexpr auto uses_bsr
+	{
+		#ifndef __LZCNT__
+			true
+		#else
+			false
+		#endif
+	};
+
 	uint ret(0), i(0); do
 	{
 		const auto mask
@@ -50,10 +59,16 @@ noexcept
 			boolmask(uint(ret == sizeof_lane<T>() * 8 * i))
 		};
 
-		if constexpr(sizeof_lane<T>() <= sizeof(u16))
+		if constexpr(sizeof_lane<T>() <= sizeof(u16) && uses_bsr)
+			ret += (15 - __lzcnt16(__builtin_bswap16(a[i++]))) & mask;
+		else if constexpr(sizeof_lane<T>() <= sizeof(u16))
 			ret += __lzcnt16(__builtin_bswap16(a[i++])) & mask;
+		else if constexpr(sizeof_lane<T>() <= sizeof(u32) && uses_bsr)
+			ret += (31 - __lzcnt32(__builtin_bswap32(a[i++]))) & mask;
 		else if constexpr(sizeof_lane<T>() <= sizeof(u32))
 			ret += __lzcnt32(__builtin_bswap32(a[i++])) & mask;
+		else if constexpr(uses_bsr)
+			ret += (63 - __lzcnt64(__builtin_bswap64(a[i++]))) & mask;
 		else
 			ret += __lzcnt64(__builtin_bswap64(a[i++])) & mask;
 	}
@@ -70,12 +85,27 @@ __attribute__((target("lzcnt")))
 ircd::simd::ctz(const T a)
 noexcept
 {
+	constexpr auto uses_bsr
+	{
+		#ifndef __LZCNT__
+			true
+		#else
+			false
+		#endif
+	};
+
 	uint ret(0), i(lanes<T>()), mask(-1U); do
 	{
-		if constexpr(sizeof_lane<T>() <= sizeof(u16))
+		if constexpr(sizeof_lane<T>() <= sizeof(u16) && uses_bsr)
+			ret += (15 - __lzcnt16(a[--i])) & mask;
+		else if constexpr(sizeof_lane<T>() <= sizeof(u16))
 			ret += __lzcnt16(a[--i]) & mask;
+		else if constexpr(sizeof_lane<T>() <= sizeof(u32) && uses_bsr)
+			ret += (31 - __lzcnt32(a[--i])) & mask;
 		else if constexpr(sizeof_lane<T>() <= sizeof(u32))
 			ret += __lzcnt32(a[--i]) & mask;
+		else if constexpr(uses_bsr)
+			ret += (63 - __lzcnt64(a[--i])) & mask;
 		else
 			ret += __lzcnt64(a[--i]) & mask;
 
