@@ -60,7 +60,7 @@ decltype(ircd::m::dbs::desc::room_state_space__bloom__bits)
 ircd::m::dbs::desc::room_state_space__bloom__bits
 {
 	{ "name",     "ircd.m.dbs._room_state_space.bloom.bits" },
-	{ "default",  10L                                       },
+	{ "default",  0L                                        },
 };
 
 const ircd::db::comparator

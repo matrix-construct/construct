@@ -55,7 +55,7 @@ decltype(ircd::m::dbs::desc::event_idx__bloom__bits)
 ircd::m::dbs::desc::event_idx__bloom__bits
 {
 	{ "name",     "ircd.m.dbs._event_idx.bloom.bits" },
-	{ "default",  12L                                },
+	{ "default",  0L                                 },
 };
 
 decltype(ircd::m::dbs::desc::event_idx)

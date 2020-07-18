@@ -55,7 +55,7 @@ decltype(ircd::m::dbs::desc::room_joined__bloom__bits)
 ircd::m::dbs::desc::room_joined__bloom__bits
 {
 	{ "name",     "ircd.m.dbs._room_joined.bloom.bits" },
-	{ "default",  6L                                   },
+	{ "default",  0L                                   },
 };
 
 /// Prefix transform for the room_joined

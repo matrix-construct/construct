@@ -55,7 +55,7 @@ decltype(ircd::m::dbs::desc::event_json__bloom__bits)
 ircd::m::dbs::desc::event_json__bloom__bits
 {
 	{ "name",     "ircd.m.dbs._event_json.bloom.bits" },
-	{ "default",  9L                                  },
+	{ "default",  0L                                  },
 };
 
 const ircd::db::descriptor

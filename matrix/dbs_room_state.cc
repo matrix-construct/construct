@@ -55,7 +55,7 @@ decltype(ircd::m::dbs::desc::room_state__bloom__bits)
 ircd::m::dbs::desc::room_state__bloom__bits
 {
 	{ "name",     "ircd.m.dbs._room_state.bloom.bits" },
-	{ "default",  10L                                 },
+	{ "default",  0L                                  },
 };
 
 /// prefix transform for type,state_key in room_id
