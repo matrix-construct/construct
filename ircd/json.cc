@@ -19,9 +19,6 @@ namespace ircd::json
 }
 #pragma GCC visibility pop
 
-decltype(ircd::json::stats)
-ircd::json::stats;
-
 #pragma GCC visibility push(internal)
 BOOST_FUSION_ADAPT_STRUCT
 (
@@ -345,6 +342,9 @@ ircd::json::printer
 	}
 }
 const ircd::json::printer;
+
+decltype(ircd::json::stats)
+ircd::json::stats;
 
 template<class gen,
          class... attr>
