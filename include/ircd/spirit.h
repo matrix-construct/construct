@@ -50,7 +50,6 @@ namespace spirit
 __attribute__((visibility("default")))
 {
 	template<class parent_error> struct expectation_failure;
-	struct substring_view;
 
 	IRCD_EXCEPTION(ircd::error, error);
 	IRCD_EXCEPTION(error, generator_error);
@@ -176,6 +175,10 @@ namespace ircd {
 namespace spirit
 __attribute__((visibility("internal")))
 {
+	struct substring_view;
+	struct custom_parser;
+	BOOST_SPIRIT_TERMINAL(custom);
+
 	template<class gen,
 	         class... attr>
 	bool parse(const char *&start, const char *const &stop, gen&&, attr&&...);
@@ -198,11 +201,57 @@ namespace ircd
 	using spirit::parse;
 }
 
-namespace ircd {
+namespace boost {
 namespace spirit
-__attribute__((visibility("default")))
+__attribute__((visibility("internal")))
 {
+	namespace qi
+	{
+		template<class modifiers>
+		struct make_primitive<ircd::spirit::tag::custom, modifiers>;
+	}
+
+	template<>
+	struct use_terminal<qi::domain, ircd::spirit::tag::custom>
+	:mpl::true_
+	{};
 }}
+
+struct [[gnu::visibility("internal")]]
+ircd::spirit::custom_parser
+:qi::primitive_parser<custom_parser>
+{
+	template<class context,
+	         class iterator>
+	struct attribute
+	{
+		using type = iterator;
+	};
+
+	template<class context>
+	boost::spirit::info what(context &) const
+	{
+		return boost::spirit::info("custom");
+	}
+
+	template<class iterator,
+	         class context,
+	         class skipper,
+	         class attr>
+	bool parse(iterator &, const iterator &, context &, const skipper &, attr &) const;
+};
+
+template<class modifiers>
+struct [[gnu::visibility("internal")]]
+boost::spirit::qi::make_primitive<ircd::spirit::tag::custom, modifiers>
+{
+	using result_type = ircd::spirit::custom_parser;
+
+	result_type operator()(unused_type, unused_type) const
+	{
+		return result_type{};
+	}
+};
 
 struct ircd::spirit::substring_view
 :ircd::string_view
