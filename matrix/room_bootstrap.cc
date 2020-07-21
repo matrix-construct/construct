@@ -258,6 +258,7 @@ try
 	vmopts.room_version = room_version;
 	vmopts.phase.reset(m::vm::phase::FETCH_PREV);
 	vmopts.phase.reset(m::vm::phase::FETCH_STATE);
+	vmopts.notify_servers = false;
 
 	m::roomstrap::fetch_keys(auth_chain);
 	m::roomstrap::eval_auth_chain(auth_chain, vmopts);
