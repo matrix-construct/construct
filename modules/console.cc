@@ -14433,7 +14433,7 @@ console_cmd__fed__auth(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "event_id", "remote", "ids_only"
+		"room_id", "event_id", "remote", "op", "oparg"
 	}};
 
 	const auto room_id
@@ -14453,7 +14453,7 @@ console_cmd__fed__auth(opt &out, const string_view &line)
 
 	const string_view &ids_only
 	{
-		param["ids_only"]
+		param["op"]
 	};
 
 	m::fed::event_auth::opts opts;
@@ -14487,10 +14487,30 @@ console_cmd__fed__auth(opt &out, const string_view &line)
 		return true;
 	}
 
-	if(param["ids_only"] == "raw")
+	if(param["op"] == "raw")
 	{
 		for(const string_view &event : auth_chain)
 			out << event << std::endl;
+
+		return true;
+	}
+
+	if(param["op"] == "eval")
+	{
+		m::vm::opts vmopts;
+		vmopts.node_id = opts.remote;
+		vmopts.nothrows = -1;
+		vmopts.room_head = false;
+		vmopts.room_head_resolve = true;
+		vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
+		vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
+		vmopts.notify_servers = false;
+		vmopts.auth = !has(param["oparg"], "noauth");
+		vmopts.replays = has(param["oparg"], "replay");
+		m::vm::eval eval
+		{
+			auth_chain, vmopts
+		};
 
 		return true;
 	}
