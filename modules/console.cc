@@ -13846,8 +13846,7 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 	vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
 	vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
 	vmopts.notify_servers = false;
-	char rembuf[256];
-	vmopts.node_id = string(rembuf, remote);
+	vmopts.node_id = remote;
 	m::vm::eval eval
 	{
 		vmopts
@@ -14145,8 +14144,7 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 	vmopts.room_head_resolve = true;
 	vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
 	vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
-	char rembuf[256];
-	vmopts.node_id = string(rembuf, remote);
+	vmopts.node_id = remote;
 	vmopts.notify_servers = false;
 	m::vm::eval eval
 	{
