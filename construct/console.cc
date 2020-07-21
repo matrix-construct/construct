@@ -527,6 +527,12 @@ void
 construct::console::show_message()
 const
 {
+	// Determine if the user is in -quiet mode or similar so we can skip this
+	// output too. Note that the level given here is arbitrary, but if they
+	// did suppress it we won't show this message either...
+	if(!ircd::log::console_enabled(ircd::log::level::NOTICE))
+		return;
+
 	std::call_once(seen_message, []
 	{
 		std::cout << console_message << generic_message;
