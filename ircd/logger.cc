@@ -691,6 +691,8 @@ noexcept
 		confs.at(lev)
 	};
 
+	// Note that CRITICAL messages unconditionally hit stderr even if their
+	// level and facility are muted.
 	const bool copy_to_stderr
 	{
 		bool(conf.console_stderr)
@@ -700,7 +702,8 @@ noexcept
 	const bool copy_to_stdout
 	{
 		bool(conf.console_stdout)
-		&& ((!console_quiet_stdout[lev] && log.cmasked) || log.snote == '*')
+		&& !console_quiet_stdout[lev]
+		&& log.cmasked
 	};
 
 	ret |= copy_to_stdout | copy_to_stderr;
