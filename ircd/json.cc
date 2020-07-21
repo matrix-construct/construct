@@ -148,9 +148,16 @@ ircd::json::parser
 		,"escaper"
 	};
 
+	const rule<> escape_sequence
+	{
+		escape >> escaper_nc
+		,"escape sequence"
+	};
+
 	const rule<string_view> chars
 	{
-		raw[*((char_ - escaped) | (escape >> escaper_nc))]
+		//raw[*((char_ - escaped) | (escape >> escaper_nc))]
+		raw[*((~char_('\x00', '\x1F') - char_("\x22\x5C")) | (escape >> escaper_nc))]
 		,"characters"
 	};
 
