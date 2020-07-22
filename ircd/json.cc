@@ -3339,17 +3339,11 @@ noexcept
 
 	while(count[0] < input.size())
 	{
-		const size_t remain
-		{
-			input.size() - count[0]
-		};
-
-		size_t j(0);
 		block_t block{0}, mask{0};
-		for(; j < remain && j < sizeof(block_t); ++j)
+		for(size_t i(0); count[0] + i < input.size() && i < sizeof(block_t); ++i)
 		{
-			block[j] = input[count[0] + j];
-			mask[j] = 0xff;
+			block[i] = input[count[0] + i];
+			mask[i] = 0xff;
 		}
 
 		const u64x2 consume
@@ -3357,8 +3351,8 @@ noexcept
 			string_stringify(block, mask)
 		};
 
-		for(size_t i(0); i < consume[1] && i + count[1] < ircd::size(buf); ++i)
-			buf[i + count[1]] = block[i];
+		for(size_t i(0); i < consume[1] && count[1] + i < ircd::size(buf); ++i)
+			buf[count[1] + i] = block[i];
 
 		count += consume;
 	}
