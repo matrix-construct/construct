@@ -3215,8 +3215,8 @@ namespace ircd::json
 	static u64x2 string_serialized_utf16(const u8x16 block, const u8x16 mask);
 	static u64x2 string_serialized(const u8x16 block, const u8x16 mask);
 
-	static u64x2 string_stringify_utf16(u8x16 &__restrict__ block, const u8x16 mask);
-	static u64x2 string_stringify(u8x16 &__restrict__ block, const u8x16 mask);
+	static u64x2 string_stringify_utf16(u8x16 &block, const u8x16 mask);
+	static u64x2 string_stringify(u8x16 &block, const u8x16 mask);
 }
 
 /// Escaped control character LUT.
@@ -3383,7 +3383,7 @@ noexcept
 /// note that null characters in the string are valid which we will escape.
 ///
 ircd::u64x2
-ircd::json::string_stringify(u8x16 &__restrict__ block,
+ircd::json::string_stringify(u8x16 &block,
                              const u8x16 block_mask)
 {
 	const u8x16 is_esc
@@ -3472,14 +3472,10 @@ ircd::json::string_stringify(u8x16 &__restrict__ block,
 
 	// Legitimately escaped single char
 	if(match_depth < 7)
-	{
-		block[0] = '\\';
-		block[1] = block[1];
 		return u64x2
 		{
 			2, 2
 		};
-	}
 
 	// Unnecessary escape; unless it's the last char.
 	if(match_depth > 7)
@@ -3498,7 +3494,7 @@ ircd::json::string_stringify(u8x16 &__restrict__ block,
 }
 
 ircd::u64x2
-ircd::json::string_stringify_utf16(u8x16 &__restrict__ block,
+ircd::json::string_stringify_utf16(u8x16 &block,
                                    const u8x16 block_mask)
 {
 	const u32x4 unicode
