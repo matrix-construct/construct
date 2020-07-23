@@ -206,7 +206,7 @@ ircd::unquote(std::string &&str)
 inline ircd::string_view
 ircd::unquote(const string_view &str)
 {
-	return strip(str, '"');
+	return strip(str, '"', 1);
 }
 
 /// Chomps delim from all of the string views in the iterable (iterators<T> are
