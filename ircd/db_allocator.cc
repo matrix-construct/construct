@@ -480,8 +480,11 @@ const noexcept
 		#endif
 	};
 
-	assert(ret % alignment == 0);
-	assert(alignment % sizeof(void *) == 0);
+	#ifndef IRCD_ALLOCATOR_USE_JEMALLOC
+		assert(ret % alignment == 0);
+		assert(alignment % sizeof(void *) == 0);
+	#endif
+
 	return ret;
 }
 
