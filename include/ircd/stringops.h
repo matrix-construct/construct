@@ -46,6 +46,8 @@ namespace ircd
 	// return view without leading and trailing occurrences of c
 	string_view strip(const string_view &str, const char &c = ' ');
 	string_view strip(const string_view &str, const string_view &c);
+	string_view strip(const string_view &str, const string_view &c, const size_t n);
+	string_view strip(const string_view &str, const char &c, const size_t n);
 
 	// split view on first match of delim; delim not included; if no delim then .second empty
 	std::pair<string_view, string_view> split(const string_view &str, const char &delim = ' ');
@@ -435,6 +437,24 @@ ircd::split(const string_view &str,
 	return pos != string_view::npos?
 		pair { str.substr(0, pos), str.substr(pos + 1) }:
 		pair { str, string_view{} };
+}
+
+/// Remove n leading and trailing instances of c from the returned view
+inline ircd::string_view
+ircd::strip(const string_view &str,
+            const string_view &c,
+            const size_t n)
+{
+	return lstrip(rstrip(str, c, n), c, n);
+}
+
+/// Remove n leading and trailing instances of c from the returned view
+inline ircd::string_view
+ircd::strip(const string_view &str,
+            const char &c,
+            const size_t n)
+{
+	return lstrip(rstrip(str, c, n), c, n);
 }
 
 /// Remove leading and trailing instances of c from the returned view
