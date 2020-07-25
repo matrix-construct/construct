@@ -182,23 +182,22 @@ get__thumbnail_local(client &client,
 		request.query.get("method", "scale"_sv)
 	};
 
-	std::pair<size_t, size_t> dimension
+	const size_t _dimension[]
 	{
 		request.query.get<size_t>("width", 0),
-		request.query.get<size_t>("height", 0)
+		request.query.get<size_t>("height", 0),
 	};
 
-	if(dimension.first)
+	const pair<size_t> dimension
 	{
-		dimension.first = std::max(dimension.first, size_t(width_min));
-		dimension.first = std::min(dimension.first, size_t(width_max));
-	}
+		_dimension[0]?
+			std::clamp(_dimension[0], size_t(width_min), size_t(width_max)):
+			_dimension[0],
 
-	if(dimension.second)
-	{
-		dimension.second = std::max(dimension.second, size_t(height_min));
-		dimension.second = std::min(dimension.second, size_t(height_max));
-	}
+		_dimension[1]?
+			std::clamp(_dimension[1], size_t(height_min), size_t(height_max)):
+			_dimension[1]
+	};
 
 	static const m::event::fetch::opts fopts
 	{
