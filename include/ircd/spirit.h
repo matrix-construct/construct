@@ -26,12 +26,19 @@
 // some false asserts around boolean character tests in spirit.
 #define BOOST_DISABLE_ASSERTS
 
-#pragma GCC visibility push(default)
+// This prevents spirit grammar rules from generating a very large and/or deep
+// call-graph where rules compose together using wrapped indirect calls through
+// boost::function -- this is higly inefficient as the grammar's logic ends up
+// being a fraction of the generated code and the rest is invocation related
+// overhead. By force-flattening here we can allow each entry-point into
+// spirit to compose rules at once and eliminate the wrapping complex.
+#pragma clang attribute push ([[gnu::always_inline]], apply_to = function)
+#pragma clang attribute push ([[gnu::flatten]], apply_to = function)
+
 #include <boost/config.hpp>
 #include <boost/function.hpp>
-#pragma GCC visibility pop
 
-#pragma GCC visibility push(hidden)
+#pragma GCC visibility push (internal)
 #include <boost/fusion/sequence.hpp>
 #include <boost/fusion/iterator.hpp>
 #include <boost/fusion/adapted.hpp>
@@ -44,6 +51,9 @@
 #include <boost/spirit/repository/include/qi_seek.hpp>
 #include <boost/spirit/repository/include/qi_subrule.hpp>
 #pragma GCC visibility pop
+
+#pragma clang attribute pop
+#pragma clang attribute pop
 
 namespace ircd {
 namespace spirit

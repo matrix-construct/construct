@@ -2370,16 +2370,6 @@ SPIRIT_UNIT_CPPFLAGS+=" -include ircd/spirit.h"
 
 AC_SUBST(SPIRIT_UNIT_CXXFLAGS)
 
-dnl Slightly more aggressive than the default of 250. A large number of
-dnl internal functions are generated out of some grammars at the default.
-dnl The more aggressive value embeds rules together for optimization but
-dnl may generate slightly larger functions.
-AM_COND_IF([CLANG],
-[
-	SPIRIT_UNIT_CXXFLAGS+=" -mllvm -inlinehint-threshold=1000"
-	SPIRIT_UNIT_CXXFLAGS+=" -mllvm -inline-threshold=400"
-])
-
 AM_COND_IF([GCC],
 [
 	SPIRIT_UNIT_CXXFLAGS+=" -fno-var-tracking"
