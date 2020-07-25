@@ -30,6 +30,10 @@
 	#include "file/file_util.h"
 #endif
 
+#if __has_include("table/block_fetcher.h")
+	#include "table/block_fetcher.h"
+#endif
+
 #if __has_include("file/sst_file_manager_impl.h")
 	#include "file/sst_file_manager_impl.h"
 #elif __has_include("util/sst_file_manager_impl.h")
@@ -374,7 +378,8 @@ rocksdb::ThreadLocalPtr::Fold(FoldFunc func,
 // available.
 //
 
-#if (__has_include("util/file_util.h") || __has_include("file/file_util.h")) && defined(IRCD_DB_BYPASS_CHECKSUM)
+#if defined(IRCD_DB_BYPASS_CHECKSUM) \
+&& (__has_include("util/file_util.h") || __has_include("file/file_util.h") || __has_include("table/block_fetcher.h"))
 void
 rocksdb::BlockFetcher::CheckBlockChecksum()
 {
