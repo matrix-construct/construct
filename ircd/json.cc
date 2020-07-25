@@ -80,7 +80,7 @@ ircd::json::parser
 	// numerical
 	const rule<> number_int
 	{
-		lit('0') | (char_("1-9") >> repeat(0, 18)[char_("0-9")])
+		(char_("1-9") >> repeat(0, 18)[char_("0-9")]) | lit('0')
 		,"integer"
 	};
 
