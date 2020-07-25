@@ -9071,6 +9071,9 @@ ircd::db::reflect(const rocksdb::BackgroundErrorReason &r)
 		case BackgroundErrorReason::kCompaction:     return "COMPACTION";
 		case BackgroundErrorReason::kWriteCallback:  return "WRITE";
 		case BackgroundErrorReason::kMemTable:       return "MEMTABLE";
+		#if 0 // unreleased
+		case BackgroundErrorReason::kManifestWrite:  return "MANIFESTWRITE";
+		#endif
 	}
 
 	return "??????";
