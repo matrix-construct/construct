@@ -264,7 +264,7 @@ delete__tags(client &client,
 
 	return m::resource::response
 	{
-		client, deleted? http::OK : http::NOT_FOUND
+		client, http::OK
 	};
 }
 
