@@ -189,6 +189,7 @@ ircd::m::vm::reflect(const enum phase &code)
 		case phase::RETIRE:       return "RETIRE";
 		case phase::NOTIFY:       return "NOTIFY";
 		case phase::EFFECTS:      return "EFFECTS";
+		case phase::_NUM_:        break;
 	}
 
 	return "??????";
