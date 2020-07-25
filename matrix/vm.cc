@@ -57,11 +57,10 @@ noexcept
 {
 	vm::ready = false;
 
-	if(!eval::list.empty())
+	if(eval::executing || eval::injecting)
 		log::warning
 		{
-			log, "Waiting for %zu evals (exec:%zu inject:%zu pending:%zu)",
-			eval::list.size(),
+			log, "Waiting for exec:%zu inject:%zu pending:%zu evaluations",
 			eval::executing,
 			eval::injecting,
 			sequence::pending,
