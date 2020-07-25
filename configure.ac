@@ -781,8 +781,8 @@ AM_COND_IF([DEBUG],
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-final-types], charybdis_cv_c_gcc_w_suggest_final_types)
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-final-methods], charybdis_cv_c_gcc_w_suggest_final_methods)
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-override], charybdis_cv_c_gcc_w_suggest_override)
-], [
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wmissing-noreturn], charybdis_cv_c_gcc_w_missing_noreturn)
+], [
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-unknown-attributes], charybdis_cv_c_gcc_w_unknown_attributes)
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-unknown-pragmas], charybdis_cv_c_gcc_w_unknown_pragmas)
 ])
