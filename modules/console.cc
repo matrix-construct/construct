@@ -3586,57 +3586,86 @@ try
 		const auto usage(db::usage(cache(database)));
 		const auto pinned(db::pinned(cache(database)));
 		const auto capacity(db::capacity(cache(database)));
-		const auto usage_pct
+		const auto util_pct
 		{
 			capacity > 0.0? (double(usage) / double(capacity)) : 0.0L
 		};
 
 		const auto hits(db::ticker(cache(database), db::ticker_id("rocksdb.block.cache.hit")));
 		const auto misses(db::ticker(cache(database), db::ticker_id("rocksdb.block.cache.miss")));
+		const auto hit_pct
+		{
+			(misses + hits) > 0? (double(hits) / double(hits + misses)) : 0.0L
+		};
+
 		const auto inserts(db::ticker(cache(database), db::ticker_id("rocksdb.block.cache.add")));
 		const auto inserts_bytes(db::ticker(cache(database), db::ticker_id("rocksdb.block.cache.data.bytes.insert")));
+		const auto ins_miss_pct
+		{
+			misses > 0.0? (double(inserts) / double(misses)) : 0.0L
+		};
+
+		const auto ins_hit_rat
+		{
+			inserts > 0.0? (double(hits) / double(inserts)) : 0.0L
+		};
 
 		out << std::left
-		    << std::setw(32) << "ROW"
+		    << std::setw(24) << "ROW"
 		    << std::right
-		    << " "
-		    << std::setw(7) << "PCT"
-		    << " "
-		    << std::setw(10) << "HITS"
-		    << " "
-		    << std::setw(9) << "MISSES"
-		    << " "
-		    << std::setw(9) << "INSERT"
 		    << " "
 		    << std::setw(26) << "CACHED"
 		    << " "
 		    << std::setw(26) << "CAPACITY"
 		    << " "
+		    << std::setw(9) << "UTIL%"
+		    << "  "
+		    << std::setw(11) << "HITS"
+		    << " "
+		    << std::setw(10) << "MISSES"
+		    << " "
+		    << std::setw(9) << "HIT%"
+		    << "  "
 		    << std::setw(26) << "INSERT TOTAL"
 		    << " "
+		    << std::setw(10) << "INSERT"
+		    << " "
+		    << std::setw(10) << "HIT:INS"
+		    << " "
+		    << std::setw(9) << "INSERT%"
+		    << "  "
 		    << std::setw(20) << "LOCKED"
 		    << " "
 		    << std::endl;
 
 		out << std::left
-		    << std::setw(32) << "*"
+		    << std::setw(24) << "*"
 		    << std::right
-		    << " "
-		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
-		    << "%"
-		    << " "
-		    << std::setw(10) << hits
-		    << " "
-		    << std::setw(9) << misses
-		    << " "
-		    << std::setw(9) << inserts
 		    << " "
 		    << std::setw(26) << std::right << pretty(iec(usage))
 		    << " "
 		    << std::setw(26) << std::right << pretty(iec(capacity))
 		    << " "
+		    << std::setw(8) << std::right << std::fixed << std::setprecision(2) << (util_pct * 100)
+		    << "%"
+		    << "  "
+		    << std::setw(11) << hits
+		    << " "
+		    << std::setw(10) << misses
+		    << " "
+		    << std::setw(8) << std::right << std::fixed << std::setprecision(2) << (hit_pct * 100)
+		    << "%"
+		    << "  "
 		    << std::setw(26) << std::right << pretty(iec(inserts_bytes))
 		    << " "
+		    << std::setw(10) << inserts
+		    << " "
+		    << std::setw(8) << std::right << std::fixed << std::setprecision(0) << ins_hit_rat
+		    << ":1"
+		    << " "
+		    << std::setw(8) << std::right << std::fixed << std::setprecision(2) << (ins_miss_pct * 100)
+		    << "%"
+		    << "  "
 		    << std::setw(20) << std::right << pretty(iec(pinned))
 		    << " "
 		    << std::endl
@@ -3648,23 +3677,29 @@ try
 	}
 
 	out << std::left
-	    << std::setw(32) << "COLUMN"
+	    << std::setw(24) << "COLUMN"
 	    << std::right
-	    << " "
-	    << std::setw(7) << "PCT"
-	    << " "
-	    << std::setw(10) << "HITS"
-	    << " "
-	    << std::setw(9) << "MISSES"
-	    << " "
-	    << std::setw(9) << "INSERT"
 	    << " "
 	    << std::setw(26) << "CACHED"
 	    << " "
 	    << std::setw(26) << "CAPACITY"
 	    << " "
-	    << std::setw(26) << "INSERT TOTAL"
+	    << std::setw(9) << "UTIL%"
+	    << "  "
+	    << std::setw(11) << "HITS"
 	    << " "
+	    << std::setw(10) << "MISSES"
+	    << " "
+	    << std::setw(9) << "HIT%"
+	    << "  "
+	    << std::setw(26) << "INSERT TOTAL"
+		<< " "
+	    << std::setw(10) << "INSERT"
+	    << " "
+	    << std::setw(10) << "HIT:INS"
+	    << " "
+	    << std::setw(9) << "INSERT%"
+	    << "  "
 	    << std::setw(20) << "LOCKED"
 	    << " "
 	    << std::endl;
@@ -3672,29 +3707,53 @@ try
 	const auto output{[&out]
 	(const string_view &column_name, const stats &s)
 	{
-		const auto pct
+		const auto util_pct
 		{
 			s.capacity > 0.0? (double(s.usage) / double(s.capacity)) : 0.0L
 		};
 
-		out << std::setw(32) << std::left << column_name
+		const auto hit_pct
+		{
+			(s.misses + s.hits) > 0.0? (double(s.hits) / double(s.hits + s.misses)) : 0.0L
+		};
+
+		const auto ins_miss_pct
+		{
+			s.misses > 0.0? (double(s.inserts) / double(s.misses)) : 0.0L
+		};
+
+		const auto ins_hit_rat
+		{
+			s.inserts > 0.0? (double(s.hits) / double(s.inserts)) : 0.0L
+		};
+
+		out << std::setw(24) << std::left << column_name
 		    << std::right
-		    << " "
-		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (pct * 100)
-		    << '%'
-		    << " "
-		    << std::setw(10) << s.hits
-		    << " "
-		    << std::setw(9) << s.misses
-		    << " "
-		    << std::setw(9) << s.inserts
 		    << " "
 		    << std::setw(26) << std::right << pretty(iec(s.usage))
 		    << " "
 		    << std::setw(26) << std::right << pretty(iec(s.capacity))
 		    << " "
+		    << std::setw(8) << std::right << std::fixed << std::setprecision(2) << (util_pct * 100)
+		    << '%'
+		    << "  "
+		    << std::setw(11) << s.hits
+		    << " "
+		    << std::setw(10) << s.misses
+		    << " "
+		    << std::setw(8) << std::right << std::fixed << std::setprecision(2) << (hit_pct * 100)
+		    << '%'
+		    << "  "
 		    << std::setw(26) << pretty(iec(s.inserts_bytes))
 		    << " "
+		    << std::setw(10) << s.inserts
+		    << " "
+		    << std::setw(8) << std::right << std::fixed << std::setprecision(0) << ins_hit_rat
+		    << ":1"
+		    << " "
+		    << std::setw(8) << std::right << std::fixed << std::setprecision(2) << (ins_miss_pct * 100)
+		    << '%'
+		    << "  "
 		    << std::setw(20) << std::right << pretty(iec(s.pinned))
 		    << " "
 		    << std::endl;
