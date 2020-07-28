@@ -2933,8 +2933,41 @@ try
 		db::database::get(dbname)
 	};
 
+	if(!database.slave)
+	{
+		out << dbname << " is the master. Can only refresh slaves." << std::endl;
+		return true;
+	}
+
+	const auto before_dbseq{sequence(database)};
+	const auto before_retired{m::vm::sequence::retired};
+
 	refresh(database);
-	out << "done" << std::endl;
+
+	m::event::id::buf event_id;
+	if(dbname == "events")
+		m::vm::sequence::retired = m::vm::sequence::get(event_id);
+
+	out
+	<< dbname << " refreshed from "
+	<< before_dbseq
+	<< " to "
+	<< sequence(database)
+	<< std::endl;
+
+	if(dbname == "events")
+	{
+		out
+		<< "latest event from "
+		<< before_retired
+		<< " to "
+		<< m::vm::sequence::retired
+		<< " ["
+		<< event_id
+		<< "]"
+		<< std::endl;
+	}
+
 	return true;
 }
 catch(const std::out_of_range &e)
