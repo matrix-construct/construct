@@ -7733,22 +7733,6 @@ ircd::db::cmp_string_view::cmp_string_view()
 {
 }
 
-bool
-ircd::db::cmp_string_view::less(const string_view &a,
-                                const string_view &b)
-noexcept
-{
-	return a < b;
-}
-
-bool
-ircd::db::cmp_string_view::equal(const string_view &a,
-                                 const string_view &b)
-noexcept
-{
-	return a == b;
-}
-
 //
 // reverse_cmp_string_view
 //
@@ -7773,14 +7757,6 @@ noexcept
 	/// appears to not be correct. The reversal also has to also come in
 	/// the form of a bytewise forward iteration.
 	return std::memcmp(a.data(), b.data(), std::min(a.size(), b.size())) > 0;
-}
-
-bool
-ircd::db::reverse_cmp_string_view::equal(const string_view &a,
-                                         const string_view &b)
-noexcept
-{
-	return a == b;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

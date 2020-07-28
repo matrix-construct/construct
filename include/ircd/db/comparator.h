@@ -46,8 +46,15 @@ struct ircd::db::comparator
 struct ircd::db::cmp_string_view
 :db::comparator
 {
-	static bool less(const string_view &a, const string_view &b) noexcept;
-	static bool equal(const string_view &a, const string_view &b) noexcept;
+	static bool less(const string_view &a, const string_view &b) noexcept
+	{
+		return a < b;
+	}
+
+	static bool equal(const string_view &a, const string_view &b) noexcept
+	{
+		return a == b;
+	}
 
 	cmp_string_view();
 };
@@ -56,7 +63,11 @@ struct ircd::db::reverse_cmp_string_view
 :db::comparator
 {
 	static bool less(const string_view &a, const string_view &b) noexcept;
-	static bool equal(const string_view &a, const string_view &b) noexcept;
+
+	static bool equal(const string_view &a, const string_view &b) noexcept
+	{
+		return a == b;
+	}
 
 	reverse_cmp_string_view();
 };
