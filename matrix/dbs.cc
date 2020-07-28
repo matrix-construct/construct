@@ -57,7 +57,7 @@ ircd::m::dbs::sst_write_buffer_size
 	{
 		static const string_view key{"writable_file_max_buffer_size"};
 		const size_t &value{sst_write_buffer_size};
-		if(events)
+		if(events && !events->slave)
 			db::setopt(*events, key, lex_cast(value));
 	}
 };

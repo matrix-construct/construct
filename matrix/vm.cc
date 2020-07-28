@@ -106,7 +106,7 @@ noexcept
 			db::sequence(*m::dbs::events) : 0UL,
 	};
 
-	assert(retired == sequence::retired);
+	assert(retired == sequence::retired || ircd::read_only);
 }
 
 //

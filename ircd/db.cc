@@ -1208,7 +1208,7 @@ try
 }
 ,read_only
 {
-	ircd::read_only
+	slave || ircd::read_only
 }
 ,env
 {
@@ -1281,7 +1281,9 @@ try
 
 	// limit maxfdto prevent too many small files degrading read perf; too low is
 	// bad for write perf.
-	opts->max_open_files = fs::support::rlimit_nofile();
+	opts->max_open_files = !slave?
+		fs::support::rlimit_nofile():
+		-1;
 
 	// TODO: Check if these values can be increased; RocksDB may keep
 	// thread_local state preventing values > 1.
@@ -2410,7 +2412,10 @@ ircd::db::sequence(const rocksdb::Snapshot *const &rs)
 ircd::db::database::snapshot::snapshot(database &d)
 :s
 {
-	d.d->GetSnapshot(),
+	!d.slave?
+		d.d->GetSnapshot():
+		nullptr,
+
 	[dp(weak_from(d))](const rocksdb::Snapshot *const s)
 	{
 		if(!s)
