@@ -36,7 +36,7 @@ struct ircd::db::comparator
 	using successor_function = void (std::string &);
 
 	string_view name;
-	std::function<less_function> less;
+	less_function *less {nullptr};
 	std::function<equal_function> equal;
 	std::function<separator_function> separator;
 	std::function<successor_function> successor;
