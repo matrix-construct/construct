@@ -30,11 +30,16 @@ namespace ircd::db
 
 struct ircd::db::comparator
 {
+	using less_function = bool (const string_view &, const string_view &);
+	using equal_function = bool (const string_view &, const string_view &);
+	using separator_function = void (std::string &, const string_view &);
+	using successor_function = void (std::string &);
+
 	string_view name;
-	std::function<bool (const string_view &, const string_view &)> less;
-	std::function<bool (const string_view &, const string_view &)> equal;
-	std::function<void (std::string &, const string_view &)> separator;
-	std::function<void (std::string &)> successor;
+	std::function<less_function> less;
+	std::function<equal_function> equal;
+	std::function<separator_function> separator;
+	std::function<successor_function> successor;
 	bool hashable {true};
 };
 
