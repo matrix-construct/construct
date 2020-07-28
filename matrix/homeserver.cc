@@ -260,7 +260,7 @@ try
 		_vm.reset(nullptr);
 	}};
 
-	if(dbs::events && sequence(*dbs::events) == 0)
+	if(!ircd::write_avoid && dbs::events && sequence(*dbs::events) == 0)
 	{
 		if(opts->bootstrap_vector_path)
 			bootstrap_event_vector(*this);
@@ -268,12 +268,16 @@ try
 			bootstrap(*this);
 	}
 
-	if(key && !key->verify_keys.empty())
-		m::keys::cache::set(key->verify_keys);
-
-	signon(*this);
 	mods::imports.emplace("net_dns_cache"s, "net_dns_cache"s);
-	m::init::backfill::init();
+
+	if(!ircd::write_avoid)
+	{
+		if(key && !key->verify_keys.empty())
+			m::keys::cache::set(key->verify_keys);
+
+		signon(*this);
+		m::init::backfill::init();
+	}
 }
 catch(const std::exception &e)
 {
@@ -300,7 +304,7 @@ noexcept try
 	server::init::wait();
 	m::sync::pool.join();
 
-	if(_vm)
+	if(!ircd::write_avoid && _vm)
 		signoff(*this);
 
 	///TODO: XXX primary
