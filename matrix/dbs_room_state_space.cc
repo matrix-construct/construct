@@ -68,7 +68,7 @@ ircd::m::dbs::desc::room_state_space__cmp
 {
 	"_room_state_space",
 	room_state_space__cmp_lt,
-	std::equal_to<string_view>{},
+	db::cmp_string_view::equal,
 };
 
 const ircd::db::prefix_transform

@@ -87,7 +87,7 @@ ircd::m::dbs::desc::event_refs__cmp
 {
 	"_event_refs",
 	event_refs__cmp_less,
-	std::equal_to<string_view>{},
+	db::cmp_string_view::equal,
 };
 
 const ircd::db::descriptor

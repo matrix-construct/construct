@@ -86,7 +86,7 @@ ircd::m::dbs::desc::room_events__cmp
 {
 	"_room_events",
 	room_events__cmp_lt,
-	std::equal_to<string_view>{},
+	db::cmp_string_view::equal,
 };
 
 /// This column stores events in sequence in a room. Consider the following:

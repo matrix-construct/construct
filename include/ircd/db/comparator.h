@@ -37,7 +37,7 @@ struct ircd::db::comparator
 
 	string_view name;
 	less_function *less {nullptr};
-	std::function<equal_function> equal;
+	equal_function *equal {nullptr};
 	std::function<separator_function> separator;
 	std::function<successor_function> successor;
 	bool hashable {true};
