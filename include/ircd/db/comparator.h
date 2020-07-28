@@ -46,8 +46,8 @@ struct ircd::db::comparator
 struct ircd::db::cmp_string_view
 :db::comparator
 {
-	static bool less(const string_view &a, const string_view &b);
-	static bool equal(const string_view &a, const string_view &b);
+	static bool less(const string_view &a, const string_view &b) noexcept;
+	static bool equal(const string_view &a, const string_view &b) noexcept;
 
 	cmp_string_view();
 };
@@ -55,8 +55,8 @@ struct ircd::db::cmp_string_view
 struct ircd::db::reverse_cmp_string_view
 :db::comparator
 {
-	static bool less(const string_view &a, const string_view &b);
-	static bool equal(const string_view &a, const string_view &b);
+	static bool less(const string_view &a, const string_view &b) noexcept;
+	static bool equal(const string_view &a, const string_view &b) noexcept;
 
 	reverse_cmp_string_view();
 };
@@ -65,13 +65,13 @@ template<class T>
 struct ircd::db::cmp_integer
 :db::comparator
 {
-	static bool less(const string_view &sa, const string_view &sb)
+	static bool less(const string_view &sa, const string_view &sb) noexcept
 	{
 		const byte_view<T> a{sa}, b{sb};
 		return a < b;
 	}
 
-	static bool equal(const string_view &sa, const string_view &sb)
+	static bool equal(const string_view &sa, const string_view &sb) noexcept
 	{
 		const byte_view<T> a{sa}, b{sb};
 		return a == b;
@@ -86,13 +86,13 @@ template<class T>
 struct ircd::db::reverse_cmp_integer
 :db::comparator
 {
-	static bool less(const string_view &sa, const string_view &sb)
+	static bool less(const string_view &sa, const string_view &sb) noexcept
 	{
 		const byte_view<T> a{sa}, b{sb};
 		return a > b;
 	}
 
-	static bool equal(const string_view &sa, const string_view &sb)
+	static bool equal(const string_view &sa, const string_view &sb) noexcept
 	{
 		return cmp_integer<T>::equal(sa, sb);
 	}

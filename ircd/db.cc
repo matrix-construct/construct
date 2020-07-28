@@ -7731,6 +7731,7 @@ ircd::db::cmp_string_view::cmp_string_view()
 bool
 ircd::db::cmp_string_view::less(const string_view &a,
                                 const string_view &b)
+noexcept
 {
 	return a < b;
 }
@@ -7738,6 +7739,7 @@ ircd::db::cmp_string_view::less(const string_view &a,
 bool
 ircd::db::cmp_string_view::equal(const string_view &a,
                                  const string_view &b)
+noexcept
 {
 	return a == b;
 }
@@ -7754,6 +7756,7 @@ ircd::db::reverse_cmp_string_view::reverse_cmp_string_view()
 bool
 ircd::db::reverse_cmp_string_view::less(const string_view &a,
                                         const string_view &b)
+noexcept
 {
 	/// RocksDB sez things will not work correctly unless a shorter string
 	/// result returns less than a longer string even if one intends some
@@ -7770,6 +7773,7 @@ ircd::db::reverse_cmp_string_view::less(const string_view &a,
 bool
 ircd::db::reverse_cmp_string_view::equal(const string_view &a,
                                          const string_view &b)
+noexcept
 {
 	return a == b;
 }
