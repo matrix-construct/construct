@@ -482,14 +482,19 @@ applyargs()
 	if(defaults)
 		ircd::defaults.set("true");
 
-	if(read_only)
-		ircd::read_only.set("true");
-
 	if(slave)
+	{
 		ircd::db::open_slave.set("true");
+		read_only = true; // slave implies read_only
+	}
 
-	// read_only implies write_avoid.
-	if(write_avoid || read_only)
+	if(read_only)
+	{
+		ircd::read_only.set("true");
+		write_avoid = true; // read_only implies write_avoid.
+	}
+
+	if(write_avoid)
 		ircd::write_avoid.set("true");
 
 	if(debugmode)
