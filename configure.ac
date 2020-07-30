@@ -624,10 +624,11 @@ AM_COND_IF([GCC],
 	RB_VAR_PREPEND([CXXFLAGS], ["-fvtable-verify=none"])
 ])
 
-AM_COND_IF([CLANG],
-[
-	RB_VAR_PREPEND([CXXFLAGS], ["-fasm-blocks"])
-])
+dnl Not useful without GCC support...
+dnl AM_COND_IF([CLANG],
+dnl [
+dnl 	RB_VAR_PREPEND([CXXFLAGS], ["-fasm-blocks"])
+dnl ])
 
 AM_COND_IF([GCC],
 [
