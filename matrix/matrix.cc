@@ -133,6 +133,7 @@ ircd::m::matrix::module_names
 	"client_presence",
 	"client_joined_groups",
 	"client_publicised_groups",
+	"client_create_group",
 	"client_login",
 	"client_logout",
 	"client_register_available",
