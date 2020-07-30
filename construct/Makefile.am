@@ -2,7 +2,7 @@ prefix = @prefix@
 
 AM_CXXFLAGS = \
 	-ftls-model=initial-exec \
-	@EXTRA_CXXFLAGS@ \
+	$(EXTRA_CXXFLAGS) \
 	###
 
 AM_CPPFLAGS = \
@@ -10,7 +10,7 @@ AM_CPPFLAGS = \
 	@BOOST_CPPFLAGS@ \
 	@SSL_CPPFLAGS@ \
 	@CRYPTO_CPPFLAGS@ \
-	@EXTRA_CPPFLAGS@ \
+	$(EXTRA_CPPFLAGS) \
 	###
 
 AM_LDFLAGS = \
@@ -28,7 +28,7 @@ AM_LDFLAGS = \
 	-L$(top_srcdir)/ircd \
 	-L$(top_srcdir)/modules \
 	$(PLATFORM_LDFLAGS) \
-	@EXTRA_LDFLAGS@ \
+	$(EXTRA_LDFLAGS) \
 	###
 
 bin_PROGRAMS = construct
@@ -47,7 +47,7 @@ construct_LDADD = \
 	@SSL_LIBS@ \
 	@CRYPTO_LIBS@ \
 	@MALLOC_LIBS@ \
-	@EXTRA_LIBS@ \
+	$(EXTRA_LIBS) \
 	###
 
 construct_SOURCES = \

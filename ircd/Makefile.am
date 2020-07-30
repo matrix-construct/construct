@@ -6,13 +6,13 @@ DEFS += \
 
 AM_CXXFLAGS = \
 	-ftls-model=initial-exec \
-	@EXTRA_CXXFLAGS@ \
+	$(EXTRA_CXXFLAGS) \
 	###
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-include ircd/ircd.pic.h \
-	@EXTRA_CPPFLAGS@ \
+	$(EXTRA_CPPFLAGS) \
 	###
 
 AM_LDFLAGS = \
@@ -29,7 +29,7 @@ AM_LDFLAGS = \
 	-Wl,-z,nodlopen \
 	-Wl,-z,lazy \
 	$(PLATFORM_LDFLAGS) \
-	@EXTRA_LDFLAGS@ \
+	$(EXTRA_LDFLAGS) \
 	###
 
 if CLANG
@@ -96,7 +96,7 @@ libircd_la_LIBADD = \
 	@LZ4_LIBS@ \
 	@Z_LIBS@ \
 	@MALLOC_LIBS@ \
-	@EXTRA_LIBS@ \
+	$(EXTRA_LIBS) \
 	###
 
 #

@@ -6,14 +6,14 @@ DEFS += \
 	###
 
 AM_CXXFLAGS = \
-	@EXTRA_CXXFLAGS@ \
+	$(EXTRA_CXXFLAGS) \
 	###
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-include ircd/matrix.pic.h \
 	-include ircd/mods/mapi.h \
-	@EXTRA_CPPFLAGS@ \
+	$(EXTRA_CPPFLAGS) \
 	###
 
 AM_LDFLAGS = \
@@ -24,7 +24,7 @@ AM_LDFLAGS = \
 	-Wl,-z,lazy \
 	-L$(top_srcdir)/ircd \
 	$(PLATFORM_LDFLAGS) \
-	@EXTRA_LDFLAGS@ \
+	$(EXTRA_LDFLAGS) \
 	###
 
 AM_LIBS = \

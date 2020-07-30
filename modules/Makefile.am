@@ -10,14 +10,14 @@ DEFS += \
 
 AM_CXXFLAGS = \
 	-ftls-model=global-dynamic \
-	@EXTRA_CXXFLAGS@ \
+	$(EXTRA_CXXFLAGS) \
 	###
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-include $(top_srcdir)/include/ircd/matrix.pic.h \
 	-include $(top_srcdir)/include/ircd/mods/mapi.h \
-	@EXTRA_CPPFLAGS@ \
+	$(EXTRA_CPPFLAGS) \
 	###
 
 #TODO: split options for if LD_GOLD
@@ -29,7 +29,7 @@ AM_LDFLAGS = \
 	-L$(top_srcdir)/ircd \
 	-L$(top_srcdir)/matrix \
 	$(PLATFORM_LDFLAGS) \
-	@EXTRA_LDFLAGS@ \
+	$(EXTRA_LDFLAGS) \
 	###
 
 ###############################################################################

@@ -39,6 +39,7 @@ AC_PROG_MAKE_SET
 AC_LANG(C++)
 AX_CXX_COMPILE_STDCXX([17], [gnu], [mandatory], 201703)
 
+
 dnl ***************************************************************************
 dnl
 dnl Makefile tree
@@ -70,6 +71,7 @@ dnl
 #AM_EXTRA_RECURSIVE_TARGETS([
 #	mrproper
 #])
+
 
 dnl ***************************************************************************
 dnl
@@ -116,6 +118,7 @@ AC_SEARCH_LIBS([__dynamic_cast], [c++], [],
 [
 	AC_MSG_ERROR([Please install libstdc++ on this system.])
 ])
+
 
 dnl ***************************************************************************
 dnl
@@ -464,6 +467,23 @@ AC_ARG_ENABLE(lowmem-compile, RB_HELP_STRING([--enable-lowmem-compile], [Enable 
 
 AM_CONDITIONAL([LOWMEM_COMPILE], [[[[ $lowmem_compile = "yes" ]]]])
 
+
+dnl ***************************************************************************
+dnl
+dnl Base Build Flags
+dnl
+
+dnl
+dnl Reserved for user
+dnl
+dnl ex. `make EXTRA_CXXFLAGS="-Weverything" ircd` to append CXXFLAGS
+
+dnl AC_SUBST(EXTRA_CPPFLAGS, "$EXTRA_CPPFLAGS")
+dnl AC_SUBST(EXTRA_CFLAGS, "$EXTRA_CFLAGS")
+dnl AC_SUBST(EXTRA_CXXFLAGS, "$EXTRA_CXXFLAGS")
+dnl AC_SUBST(EXTRA_LDFLAGS, "$EXTRA_LDFLAGS")
+dnl AC_SUBST(EXTRA_LIBS, "$EXTRA_LIBS")
+
 dnl
 dnl Gold linker
 dnl
@@ -501,6 +521,13 @@ dnl	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--icf=all"])
 	RB_VAR_PREPEND([LDFLAGS], ["-Wl,-z,text-unlikely-segment"])
 ], [
 	AC_MSG_ERROR([Sorry, disabling the gold linker is not supported at this time.])
+])
+
+dnl Note compact mode options available in both GOLD and LLD
+AM_COND_IF([COMPACT],
+[
+	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--strip-all"])
+	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--gc-sections"])
 ])
 
 dnl
@@ -1094,9 +1121,16 @@ dnl
 AM_COND_IF(MINGW,
 [
 	AC_DEFINE(HAVE_WIN32, [1], [Define to 1 if you are on windows])
-	LIBS="$LIBS -lws2_32 -liphlpapi"
-],[])
+	RB_VAR_PREPEND([LIBS], ["-lws2_32 -liphlpapi"])
+], [
 
+	RB_VAR_PREPEND([LIBS], ["-latomic"])
+	RB_VAR_PREPEND([LIBS], ["-lpthread"])
+	AM_COND_IF([GCC],
+	[
+		RB_VAR_PREPEND([CXXFLAGS], ["-pthread"])
+	])
+])
 
 AM_COND_IF(INTERIX,
 [
@@ -2213,31 +2247,49 @@ PKG_CHECK_MODULES(LLVM, [LLVM],
 
 AM_CONDITIONAL([LLVM], [test "x$have_libllvm" = "xyes" ])
 
-dnl
-dnl
-dnl Additional linkages
-dnl
-dnl
 
-AC_SUBST(EXTRA_CPPFLAGS)
-AC_SUBST(EXTRA_CXXFLAGS)
-AC_SUBST(EXTRA_LDFLAGS)
-AC_SUBST(EXTRA_LIBS)
+dnl ***************************************************************************
+dnl
+dnl Unit configuration macros
+dnl
+dnl These are used in various Makefiles on certain units which require them.
+dnl They are defined here to deduplicate between Makefile.
 
-AM_COND_IF([COMPACT],
+dnl Units which require boost::asio use these flags. This includes the
+dnl ircd/asio.h PCH, which includes ircd.h upstream in the precompile.
+AC_SUBST(ASIO_UNIT_CPPFLAGS)
+ASIO_UNIT_CPPFLAGS+=" $BOOST_CPPFLAGS"
+ASIO_UNIT_CPPFLAGS+=" $SSL_CPPFLAGS"
+ASIO_UNIT_CPPFLAGS+=" $CRYPTO_CPPFLAGS"
+ASIO_UNIT_CPPFLAGS+=" -include ircd/asio.h"
+
+dnl Units which include rocksdb headers use these flags.
+AC_SUBST(ROCKSDB_UNIT_CPPFLAGS)
+ROCKSDB_UNIT_CPPFLAGS+=" $ROCKSDB_CPPFLAGS"
+ROCKSDB_UNIT_CPPFLAGS+=" $SNAPPY_CPPFLAGS"
+ROCKSDB_UNIT_CPPFLAGS+=" $LZ4_CPPFLAGS"
+ROCKSDB_UNIT_CPPFLAGS+=" $Z_CPPFLAGS"
+
+dnl Units defining spirit grammars may benefit from special compiler flags due
+dnl to their various complexities. The ./configure may have generated flags
+dnl in $GRAMMAR_UNIT_CXXFLAGS to improve compile time and reduce debug symbol.
+AC_SUBST(SPIRIT_UNIT_CPPFLAGS)
+SPIRIT_UNIT_CPPFLAGS+=" $ICU_CPPFLAGS"
+SPIRIT_UNIT_CPPFLAGS+=" $BOOST_CPPFLAGS"
+SPIRIT_UNIT_CPPFLAGS+=" -include ircd/spirit.h"
+
+AC_SUBST(SPIRIT_UNIT_CXXFLAGS)
+
+AM_COND_IF([GCC],
 [
-	EXTRA_LDFLAGS+=" -Wl,--strip-all"
-	EXTRA_LDFLAGS+=" -Wl,--gc-sections"
-])
+	SPIRIT_UNIT_CXXFLAGS+=" -fno-var-tracking"
+	SPIRIT_UNIT_CXXFLAGS+=" -fno-var-tracking-assignments"
+	SPIRIT_UNIT_CXXFLAGS+=" -femit-struct-debug-baseonly"
 
-AM_COND_IF([MINGW],
-[
-
-], [
-	EXTRA_LIBS+="-lpthread -latomic"
-	AM_COND_IF([GCC],
+	AM_COND_IF([LOWMEM_COMPILE],
 	[
-		EXTRA_CXXFLAGS+=" -pthread"
+		SPIRIT_UNIT_CXXFLAGS+=" --param ggc-min-expand=1"
+		SPIRIT_UNIT_CXXFLAGS+=" -fno-ipa-pta"
 	])
 ])
 
@@ -2271,6 +2323,7 @@ RB_HELP_STRING([--with-mxid-maxlen=LENGTH],[Set the upper-bound mxid length to L
 ])
 
 RB_DEFINE_UNQUOTED([MXID_MAXLEN], [$MXID_MAXLEN], [Maximum string length of an MXID (not including null)])
+
 
 dnl ***************************************************************************
 dnl
@@ -2336,52 +2389,6 @@ AC_ARG_WITH(custom-version, RB_HELP_STRING([--with-custom-version=NAME], [Custom
 	BRANDING_VERSION="$RB_VERSION"
 	AC_DEFINE_UNQUOTED(BRANDING_VERSION, ["$BRANDING_VERSION"], [Current version])
 	AC_MSG_RESULT([no])
-])
-
-
-dnl ***************************************************************************
-dnl
-dnl Unit configuration macros
-dnl
-dnl These are used in various Makefiles on certain units which require them.
-dnl They are defined here to deduplicate between Makefile.
-
-dnl Units which require boost::asio use these flags. This includes the
-dnl ircd/asio.h PCH, which includes ircd.h upstream in the precompile.
-AC_SUBST(ASIO_UNIT_CPPFLAGS)
-ASIO_UNIT_CPPFLAGS+=" $BOOST_CPPFLAGS"
-ASIO_UNIT_CPPFLAGS+=" $SSL_CPPFLAGS"
-ASIO_UNIT_CPPFLAGS+=" $CRYPTO_CPPFLAGS"
-ASIO_UNIT_CPPFLAGS+=" -include ircd/asio.h"
-
-dnl Units which include rocksdb headers use these flags.
-AC_SUBST(ROCKSDB_UNIT_CPPFLAGS)
-ROCKSDB_UNIT_CPPFLAGS+=" $ROCKSDB_CPPFLAGS"
-ROCKSDB_UNIT_CPPFLAGS+=" $SNAPPY_CPPFLAGS"
-ROCKSDB_UNIT_CPPFLAGS+=" $LZ4_CPPFLAGS"
-ROCKSDB_UNIT_CPPFLAGS+=" $Z_CPPFLAGS"
-
-dnl Units defining spirit grammars may benefit from special compiler flags due
-dnl to their various complexities. The ./configure may have generated flags
-dnl in $GRAMMAR_UNIT_CXXFLAGS to improve compile time and reduce debug symbol.
-AC_SUBST(SPIRIT_UNIT_CPPFLAGS)
-SPIRIT_UNIT_CPPFLAGS+=" $ICU_CPPFLAGS"
-SPIRIT_UNIT_CPPFLAGS+=" $BOOST_CPPFLAGS"
-SPIRIT_UNIT_CPPFLAGS+=" -include ircd/spirit.h"
-
-AC_SUBST(SPIRIT_UNIT_CXXFLAGS)
-
-AM_COND_IF([GCC],
-[
-	SPIRIT_UNIT_CXXFLAGS+=" -fno-var-tracking"
-	SPIRIT_UNIT_CXXFLAGS+=" -fno-var-tracking-assignments"
-	SPIRIT_UNIT_CXXFLAGS+=" -femit-struct-debug-baseonly"
-
-	AM_COND_IF([LOWMEM_COMPILE],
-	[
-		SPIRIT_UNIT_CXXFLAGS+=" --param ggc-min-expand=1"
-		SPIRIT_UNIT_CXXFLAGS+=" -fno-ipa-pta"
-	])
 ])
 
 

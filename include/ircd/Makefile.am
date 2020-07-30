@@ -2,12 +2,12 @@ AUTOMAKE_OPTIONS = foreign
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
-	@EXTRA_CPPFLAGS@ \
+	$(EXTRA_CPPFLAGS) \
     ###
 
 AM_CXXFLAGS = \
 	-x c++-header \
-	@EXTRA_CXXFLAGS@ \
+	$(EXTRA_CXXFLAGS) \
 	###
 
 if GCC
