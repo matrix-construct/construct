@@ -71,6 +71,7 @@ namespace ircd
 #include "users.h"
 #include "rooms.h"
 #include "rooms_summary.h"
+#include "groups.h"
 #include "membership.h"
 #include "filter.h"
 #include "events.h"

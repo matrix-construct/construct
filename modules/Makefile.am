@@ -511,6 +511,27 @@ client_module_LTLIBRARIES += \
 	client/client_room_keys_keys.la \
 	###
 
+#
+# client/groups
+#
+
+client_client_groups_la_SOURCES = \
+	client/groups/profile.cc \
+	client/groups/summary.cc \
+	client/groups/categories.cc \
+	client/groups/roles.cc \
+	client/groups/rooms.cc \
+	client/groups/users.cc \
+	client/groups/invited_users.cc \
+	client/groups/settings.cc \
+	client/groups/self.cc \
+	client/groups/groups.cc \
+	###
+
+client_module_LTLIBRARIES += \
+	client/client_groups.la \
+	###
+
 ###############################################################################
 #
 # /_synapse/admin/
