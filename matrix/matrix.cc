@@ -155,6 +155,7 @@ ircd::m::matrix::module_names
 	"client_sync_account_data",
 	"client_sync_device_lists",
 	"client_sync_device_one_time_keys_count",
+	"client_sync_groups",
 	"client_sync_presence",
 	"client_sync_to_device",
 	"client_sync_rooms_account_data",
