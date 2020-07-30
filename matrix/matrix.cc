@@ -101,6 +101,7 @@ ircd::m::matrix::module_names
 	"federation_publicrooms",
 	"federation_query_auth",
 	"federation_query",
+	"federation_rooms",
 	"federation_sender",
 	"federation_send_join",
 	"federation_send_leave",
