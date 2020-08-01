@@ -51,6 +51,7 @@ namespace ircd::info
 	extern const versions sd6_version;
 
 	// System configuration / information
+	extern const size_t clk_tck;
 	extern const string_view clock_source;
 	extern const size_t aio_reqprio_max;
 	extern const size_t aio_max;

@@ -944,6 +944,20 @@ ircd::info::vdso_p
 // System configuration
 //
 
+#ifdef _SC_CLK_TCK
+decltype(ircd::info::clk_tck)
+ircd::info::clk_tck
+{
+	size_t(syscall(::sysconf, _SC_CLK_TCK))
+};
+#else
+decltype(ircd::info::clk_tck)
+ircd::info::clk_tck
+{
+	1 // prevent #DE
+};
+#endif
+
 static char ircd_info_clock_source[32];
 decltype(ircd::info::clock_source)
 ircd::info::clock_source
