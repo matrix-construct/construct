@@ -22,45 +22,10 @@ namespace ircd::cbor
 
 	enum major :uint8_t;
 	enum minor :uint8_t;
-	struct head;
 
 	string_view reflect(const enum major &);
-	enum major major(const const_buffer &);
+
 }
-
-/// Item head.
-///
-/// This object represents the head byte and any following-integer bytes under
-/// its const_buffer. If the major type has a payload, it starts immediately
-/// following the end of this object's buffer. The first byte of this object's
-/// buffer is the leading head byte. This object's buffer will never be empty()
-/// unless it's default-initialized (i.e not pointing at anything).
-///
-/// This is used to query information about the item from the head data.
-///
-struct ircd::cbor::head
-:const_buffer
-{
-	static uint8_t major(const uint8_t &);       // Major type
-	static uint8_t minor(const uint8_t &);       // Minor type
-	static size_t length(const uint8_t &);       // (1 + size(following()))
-
-	// Member ops when buffer has >= 1 byte
-	const uint8_t &leading() const;              // Reference the leading byte
-	enum major major() const;                    // major(leading())
-	enum minor minor() const;                    // minor(leading())
-	size_t length() const;                       // length(leading())
-
-	// Get bytes following leading byte based on major/minor
-	const_buffer following() const;
-	template<class T> const T &following() const;
-
-	// Construct from at least first byte of item or more
-	head(const const_buffer &);
-	head() = default;
-	head(head &&) = default;
-	head(const head &) = default;
-};
 
 /// RFC7049 Major type codes
 enum ircd::cbor::major

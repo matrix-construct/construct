@@ -76,7 +76,7 @@
 #include "color.h"
 #include "rfc1459.h"
 #include "json/json.h"
-#include "cbor/cbor.h"
+#include "cbor.h"
 #include "nacl.h"
 #include "ed25519.h"
 #include "openssl.h"
