@@ -88,6 +88,12 @@ ircd::mods::unload(mod &mod)
 		mod.location()
 	};
 
+	// Call the user's unloading function here.
+	assert(mod.header);
+	assert(mod.header->meta);
+	if(mod.header->meta->fini)
+		mod.header->meta->fini();
+
 	// Save the children! dlclose() does not like to be called recursively during static
 	// destruction of a module. The mod ctor recorded all of the modules loaded while this
 	// module was loading so we can reverse the record and unload them here.
@@ -97,41 +103,23 @@ ircd::mods::unload(mod &mod)
 	{
 		assert(ptr);
 		assert(ptr != std::addressof(mod));
-		const auto ret(shared_from(*ptr));
-		return ret.use_count() > 2? ret : std::shared_ptr<mods::mod>{};
+		return shared_from(*ptr);
 	});
-
-	// Call the user's unloading function here.
-	assert(mod.header);
-	assert(mod.header->meta);
-	if(mod.header->meta->fini)
-		mod.header->meta->fini();
-
-	log::debug
-	{
-		log, "Static unload for '%s' @ `%s' children:%zu loaded:%zu unloading:%zu attempting...",
-		mod.name(),
-		mod.location(),
-		children.size(),
-		mod.loaded.size(),
-		std::distance(begin(mod.unloading), end(mod.unloading)),
-	};
 
 	mapi::static_destruction = false;
 	mod.handle.unload();
 
+	mod.loaded.erase(mod.name());
+	mod.unloading.remove(&mod);
 	log::debug
 	{
-		log, "Static unload for '%s' complete=%b loaded:%zu unloading:%zu",
+		log, "Static unload for '%s' complete=%b loaded:%zu unloading:%zu children:%zu",
 		mod.name(),
 		mapi::static_destruction,
 		mod.loaded.size(),
 		std::distance(begin(mod.unloading), end(mod.unloading)),
+		children.size(),
 	};
-
-	assert(!mod.handle.is_loaded());
-	mod.loaded.erase(mod.name());
-	mod.unloading.remove(&mod);
 
 	if(!mapi::static_destruction)
 	{
@@ -141,6 +129,18 @@ ircd::mods::unload(mod &mod)
 	else log::info
 	{
 		log, "Unloaded '%s'", mod.name()
+	};
+
+	assert(!mod.handle.is_loaded());
+
+	log::debug
+	{
+		log, "Static unload for '%s' @ `%s' children:%zu loaded:%zu unloading:%zu attempting...",
+		mod.name(),
+		mod.location(),
+		children.size(),
+		mod.loaded.size(),
+		std::distance(begin(mod.unloading), end(mod.unloading)),
 	};
 
 	return true;
@@ -326,9 +326,10 @@ try
 		m->children.emplace_back(this);
 		log::debug
 		{
-			log, "Module '%s' recursively loaded by '%s'",
+			log, "Module '%s' recursively loaded by '%s' parents:%zd",
 			name(),
-			m->name()
+			m->name(),
+			std::distance(begin(loading), end(loading)),
 		};
 	}
 
