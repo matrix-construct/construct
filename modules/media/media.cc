@@ -215,8 +215,6 @@ ircd::m::media::init()
 void
 ircd::m::media::fini()
 {
-	magick_support.reset();
-
 	// The database close contains pthread_join()'s within RocksDB which
 	// deadlock under certain conditions when called during a dlclose()
 	// (i.e static destruction of this module). Therefor we must manually
