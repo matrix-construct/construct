@@ -62,46 +62,48 @@ ircd::m::sync::groups_linear(data &data)
 		data.membership, membership
 	};
 
-	bool ret{false};
+	json::stack::object _groups
+	{
+		*data.out, "groups"
+	};
 
-	return ret;
+	return false;
 }
 
 bool
 ircd::m::sync::groups_polylog(data &data)
 {
 	bool ret{false};
-
 	ret |= _groups_polylog(data, "join");
-	if(ret)
-		return ret;
-
 	ret |= _groups_polylog(data, "invite");
-	if(ret)
-		return ret;
-
 	ret |= _groups_polylog(data, "leave");
-	if(ret)
-		return ret;
-
 	return ret;
 }
 
 bool
 ircd::m::sync::_groups_polylog(data &data,
-                              const string_view &membership)
+                               const string_view &membership)
 {
 	const scope_restore theirs
 	{
 		data.membership, membership
 	};
 
-	json::stack::object object
+	json::stack::object _groups
 	{
 		*data.out, membership
 	};
 
-	bool ret{false};
-
-	return ret;
+	if(membership != "join")
+		return false;
+/*
+	for(const auto &group_id : groups)
+	{
+		json::stack::object
+		{
+			_groups, group_id
+		};
+	}
+*/
+	return false;
 }

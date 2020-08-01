@@ -8,40 +8,68 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd;
+namespace ircd::m::groups
+{
+	static resource::response handle_get(client &, const resource::request &);
+	extern resource::method get_joined_groups;
+	extern resource joined_groups_resource;
+}
 
-mapi::header
+ircd::mapi::header
 IRCD_MODULE
 {
 	"Client (unspecified) :Joined Groups",
 };
 
-resource
-joined_groups_resource
+decltype(ircd::m::groups::joined_groups_resource)
+ircd::m::groups::joined_groups_resource
 {
 	"/_matrix/client/r0/joined_groups",
 	{
-		"Unspecified"
+		"(Unspecified/undocumented)"
 	}
 };
 
-resource::response
-get__joined_groups(client &client,
-                   const resource::request &request)
+decltype(ircd::m::groups::get_joined_groups)
+ircd::m::groups::get_joined_groups
 {
-	return resource::response
+	joined_groups_resource, "GET", handle_get,
 	{
-		client, json::members
-		{
-			//TODO: Unknown yet if "groups" is really a member array, just
-			//TODO: a random guess which doesn't error riot.
-			{ "groups", json::empty_array }
-		}
-	};
-}
-
-resource::method
-get_method
-{
-	joined_groups_resource, "GET", get__joined_groups
+		get_joined_groups.REQUIRES_AUTH
+	}
 };
+
+ircd::m::resource::response
+ircd::m::groups::handle_get(client &client,
+                            const resource::request &request)
+{
+	resource::response::chunked response
+	{
+		client, http::OK
+	};
+
+	json::stack out
+	{
+		response.buf, response.flusher()
+	};
+
+	json::stack::object top
+	{
+		out
+	};
+
+	json::stack::array groups
+	{
+		top, "groups"
+	};
+
+	const m::id::group group_ids[]
+	{
+
+	};
+
+//	for(const auto &group_id : group_ids)
+//		groups.append(group_id);
+
+	return std::move(response);
+}
