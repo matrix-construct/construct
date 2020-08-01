@@ -188,12 +188,12 @@ identity_module_LTLIBRARIES = \
 media_moduledir = @moduledir@
 
 media_media_media_la_SOURCES = \
-	media/download.cc \
+	media/media.cc \
+	media/config.cc \
 	media/upload.cc \
+	media/download.cc \
 	media/thumbnail.cc \
 	media/preview_url.cc \
-	media/config.cc \
-	media/media.cc \
 	###
 
 media_module_LTLIBRARIES = \
