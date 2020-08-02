@@ -8,79 +8,23 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-namespace ircd
-{
-	template<class i8xN,
-	         size_t N>
-	static size_t indexof(const string_view &, const string_view *const &) noexcept;
-}
-
 size_t
-ircd::indexof(const string_view &s,
+ircd::indexof(const string_view &in,
               const string_views &tab)
 noexcept
 {
-	#if defined(__AVX__)
-		static const size_t N {32};
-		using i8xN = i8x32;
-	#elif defined(__SSE__)
-		static const size_t N {16};
-		using i8xN = i8x16;
-	#else
-		static const size_t N {1};
-		using i8xN = char __attribute__((vector_size(1)));
-	#endif
-
-	string_view a[N];
-	size_t i, j, ret;
-	for(i = 0; i < tab.size() / N; ++i)
+	const auto it
 	{
-		for(j = 0; j < N; ++j)
-			a[j] = tab[i * N + j];
+		std::find(tab.begin(), tab.end(), in)
+	};
 
-		if((ret = indexof<i8xN, N>(s, a)) != N)
-			return i * N + ret;
-	}
-
-	for(j = 0; j < tab.size() % N; ++j)
-		a[j] = tab[i * N + j];
-
-	for(; j < N; ++j)
-		a[j] = string_view{};
-
-	ret = i * N + indexof<i8xN, N>(s, a);
-	return std::min(ret, tab.size());
-}
-
-template<class i8xN,
-         size_t N>
-size_t
-ircd::indexof(const string_view &s,
-              const string_view *const &st)
-noexcept
-{
-	i8xN ct, res;
-	size_t i, j, k;
-	for(i = 0; i < N; ++i)
-		res[i] = true;
-
-	const size_t max(s.size());
-	for(i = 0, j = 0; i < max; i = (j < N)? i + 1 : max)
+	const auto ret
 	{
-		#pragma clang loop unroll (disable)
-		for(k = 0; k < N; ++k)
-		{
-			res[k] &= size(st[k]) > i;
-			ct[k] = res[k]? st[k][i]: 0;
-		}
+		std::distance(begin(tab), it)
+	};
 
-		res &= ct == s[i];
-		while(j < N && !res[j])
-			++j;
-	}
-
-	for(i = 0; i < N && !res[i]; ++i);
-	return i;
+	assert(size_t(ret) <= tab.size());
+	return ret;
 }
 
 ircd::string_view
