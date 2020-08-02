@@ -113,7 +113,7 @@ struct ircd::json::object
 
 template<ircd::json::name_hash_t key,
          class T>
-T
+inline T
 ircd::json::at(const object &object)
 try
 {
@@ -141,7 +141,7 @@ catch(const bad_lex_cast &e)
 }
 
 template<class T>
-T
+inline T
 ircd::json::object::at(const string_view &key)
 const try
 {
@@ -170,7 +170,7 @@ catch(const bad_lex_cast &e)
 
 template<ircd::json::name_hash_t key,
          class T>
-T
+inline T
 ircd::json::get(const object &object,
                 const T &def)
 try
@@ -198,7 +198,7 @@ catch(const bad_lex_cast &e)
 }
 
 template<class T>
-T
+inline T
 ircd::json::object::get(const string_view &key,
                         const T &def)
 const try

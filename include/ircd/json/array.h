@@ -76,7 +76,7 @@ struct ircd::json::array
 #include "array_iterator.h"
 
 template<class T>
-T
+inline T
 ircd::json::array::at(const size_t &i)
 const try
 {
