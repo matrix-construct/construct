@@ -379,28 +379,22 @@ ircd::m::fed::well_known::fetch(const mutable_buffer &buf,
 		wb, host(target), "GET", url, 0, {}, headers
 	};
 
-	const const_buffer out_head
-	{
-		wb.completed()
-	};
+	server::out out;
+	out.head = wb.completed();
 
 	// Remaining space in buffer is used for received head; note that below
 	// we specify this same buffer for in.content, but that's a trick
 	// recognized by ircd::server to place received content directly after
 	// head in this buffer without any additional dynamic allocation.
-	const mutable_buffer in_head
-	{
-		buf + size(out_head)
-	};
+	server::in in;
+	in.head = buf + size(out.head);
+	in.content = in.head;
 
 	server::request::opts opts;
 	opts.http_exceptions = false; // 3xx/4xx/5xx response won't throw.
 	server::request request
 	{
-		target,
-		{ out_head },
-		{ in_head, in_head },
-		&opts
+		target, std::move(out), std::move(in), &opts
 	};
 
 	const auto code
