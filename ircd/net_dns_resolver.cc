@@ -36,7 +36,7 @@ decltype(ircd::net::dns::resolver::retry_max)
 ircd::net::dns::resolver::retry_max
 {
 	{ "name",     "ircd.net.dns.resolver.retry_max" },
-	{ "default",   24L                              },
+	{ "default",   20L                              },
 };
 
 decltype(ircd::net::dns::resolver::servers)
