@@ -29,7 +29,7 @@ at(const tuple &t)
 		val<idx>(t)
 	};
 
-	if(!defined(json::value(ret)))
+	if(unlikely(!defined(json::value(ret))))
 		throw not_found
 		{
 			"%s", key<idx>(t)
@@ -53,7 +53,7 @@ at(tuple &t)
 		val<idx>(t)
 	};
 
-	if(!defined(json::value(ret)))
+	if(unlikely(!defined(json::value(ret))))
 		throw not_found
 		{
 			"%s", key<idx>(t)
