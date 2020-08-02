@@ -85,7 +85,7 @@ noexcept
 		const u128x1 mask        { _mm_and_si128(gte_A, lte_Z)     };
 		const u128x1 ctrl_mask   { _mm_and_si128(mask, addend)     };
 		const u128x1 result      { _mm_add_epi8(src, ctrl_mask)    };
-		                            _mm_storeu_si128(dst++, result);
+		                           _mm_storeu_si128(dst++, result);
 	}
 
 	const auto end{std::transform
