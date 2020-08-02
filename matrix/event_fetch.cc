@@ -258,6 +258,7 @@ ircd::m::event::fetch::fetch(const opts &opts)
 {
 }
 
+[[gnu::visibility("hidden")]]
 bool
 ircd::m::event::fetch::assign_from_json(const string_view &key)
 try
@@ -321,6 +322,7 @@ catch(const json::parse_error &e)
 	return false;
 }
 
+[[gnu::visibility("hidden")]]
 bool
 ircd::m::event::fetch::assign_from_row(const string_view &key)
 try
@@ -379,6 +381,7 @@ catch(const json::parse_error &e)
 	return false;
 }
 
+[[gnu::visibility("hidden")]]
 bool
 ircd::m::event::fetch::should_seek_json(const opts &opts)
 {
@@ -398,6 +401,7 @@ ircd::m::event::fetch::should_seek_json(const opts &opts)
 	return false;
 }
 
+[[gnu::visibility("hidden")]]
 ircd::string_view
 ircd::m::event::fetch::key(const event::idx *const &event_idx)
 {

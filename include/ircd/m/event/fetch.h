@@ -56,8 +56,8 @@ struct ircd::m::event::fetch
 	bool valid;
 	id::buf event_id_buf;
 
-	static string_view key(const event::idx *const &);
 	static bool should_seek_json(const opts &);
+	static string_view key(const event::idx *const &);
 	bool assign_from_row(const string_view &key);
 	bool assign_from_json(const string_view &key);
 
