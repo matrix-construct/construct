@@ -108,7 +108,9 @@ struct ircd::ios::descriptor
 	std::unique_ptr<struct stats> stats;
 	std::function<void *(handler &, const size_t &)> allocator;
 	std::function<void (handler &, void *const &, const size_t &)> deallocator;
-	bool continuation;
+	std::vector<std::array<uint64_t, 2>> history; // epoch, cycles
+	uint8_t history_pos {0};
+	bool continuation {false};
 
 	descriptor(const string_view &name,
 	           const decltype(allocator) & = default_allocator,

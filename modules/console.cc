@@ -1664,6 +1664,115 @@ console_cmd__ios(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__ios__record(opt &out, const string_view &line)
+{
+	std::map<uint64_t, std::tuple<uint64_t, const ios::descriptor *>> map;
+	for(const auto *const &descriptor : ios::descriptor::list)
+	{
+		assert(descriptor);
+		const auto &d(*descriptor);
+
+		const auto &history(d.history);
+		const auto &pos(d.history_pos);
+
+		for(size_t i(pos); i < 256; ++i)
+		{
+			if(!history[i][0])
+				continue;
+
+			map.emplace(history[i][0], std::make_tuple(history[i][1], descriptor));
+		}
+
+		for(size_t i(0); i < pos; ++i)
+		{
+			if(!history[i][0])
+				continue;
+
+			map.emplace(history[i][0], std::make_tuple(history[i][1], descriptor));
+		}
+	}
+
+	uint64_t last(0);
+	for(const auto &[epoch, tuple] : map)
+	{
+		const auto &[cyc, desc]
+		{
+			tuple
+		};
+
+		const char ch
+		{
+			epoch == last + 1? '|': 'T'
+		};
+
+		out
+		<< " " << ch
+		<< std::right
+		<< " " << std::setw(12) << epoch
+		<< " " << std::setw(12) << cyc
+		<< " " << std::left << std::setw(36) << desc->name;
+
+		out
+		<< std::endl;
+
+		last = epoch;
+	}
+
+	return true;
+}
+
+bool
+console_cmd__ios__history(opt &out, const string_view &line)
+{
+	for(const auto *const &descriptor : ios::descriptor::list)
+	{
+		assert(descriptor);
+		const auto &d(*descriptor);
+
+		const auto &history(d.history);
+		const auto &pos(d.history_pos);
+
+		out
+		<< std::left << std::setw(3) << d.id
+		<< " " << std::left << std::setw(48) << d.name
+		<< std::endl;
+
+		size_t k(0);
+		for(size_t i(pos); i < 256; ++i)
+		{
+			if(!history[i][0])
+				continue;
+
+			out
+			<< "[" << std::right << std::setw(9) << history[i][0]
+			<< " |" << std::right << std::setw(9) << history[i][1]
+			<< "] ";
+
+			if(++k % 12 == 0)
+				out << std::endl;
+		}
+
+		for(size_t i(0); i < pos; ++i)
+		{
+			if(!history[i][0])
+				continue;
+
+			out
+			<< "[" << std::right << std::setw(9) << history[i][0]
+			<< " |" << std::right << std::setw(9) << history[i][1]
+			<< "] ";
+
+			if(++k % 12 == 0)
+				out << std::endl;
+		}
+
+		out << std::endl;
+	}
+
+	return true;
+}
+
+bool
 console_cmd__ios__depth(opt &out, const string_view &line)
 {
 	uint64_t returned, executed, started;

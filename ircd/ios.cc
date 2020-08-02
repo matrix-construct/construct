@@ -100,6 +100,14 @@ ircd::ios::descriptor::descriptor(const string_view &name,
 {
 	deallocator?: default_deallocator
 }
+,history_pos
+{
+	0
+}
+,history
+(
+	256, {0}
+)
 ,continuation
 {
 	continuation
@@ -169,6 +177,11 @@ ircd::ios::descriptor::stats::operator+=(const stats &o)
 // handler
 //
 
+namespace ircd::ios
+{
+	constexpr bool profile_history {false};
+}
+
 decltype(ircd::ios::handler::current)
 thread_local
 ircd::ios::handler::current;
@@ -226,6 +239,14 @@ noexcept
 	stats.slice_last = slice_stop - handler->ts;
 	stats.slice_total += stats.slice_last;
 
+	if constexpr(profile_history)
+	{
+		assert(descriptor.history_pos < descriptor.history.size());
+		descriptor.history[descriptor.history_pos][0] = handler::epoch;
+		descriptor.history[descriptor.history_pos][1] = stats.slice_last;
+		++descriptor.history_pos;
+	}
+
 	assert(handler::current == handler);
 	handler::current = nullptr;
 }
@@ -236,14 +257,14 @@ ircd::ios::handler::enter(handler *const &handler)
 noexcept
 {
 	assert(!handler::current);
+	handler::current = handler;
+	++handler::epoch;
+
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
 
 	assert(descriptor.stats);
 	auto &stats(*descriptor.stats);
-
-	handler::current = handler;
-	++handler::epoch;
 	++stats.calls;
 
 	const auto last_ts
