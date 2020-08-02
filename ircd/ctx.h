@@ -20,7 +20,7 @@
 
 namespace ircd::ctx::prof
 {
-	void mark(const event &);
+	static void mark(const event &);
 }
 
 /// Internal context implementation

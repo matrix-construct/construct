@@ -1603,8 +1603,8 @@ ircd::ctx::prof::settings::slice_assertion
 	{ "persist",  false                           },
 };
 
-[[gnu::hot]]
-void
+[[using gnu: flatten, always_inline]]
+inline void
 ircd::ctx::prof::mark(const event &e)
 {
 	inc_ticker(e);
@@ -1619,7 +1619,6 @@ ircd::ctx::prof::mark(const event &e)
 	}
 }
 
-[[gnu::hot]]
 void
 ircd::ctx::prof::inc_ticker(const event &e)
 noexcept
@@ -1634,14 +1633,12 @@ noexcept
 		current->profile.event[uint8_t(e)]++;
 }
 
-[[gnu::hot]]
 void
 ircd::ctx::prof::handle_cur_enter()
 {
 	slice_enter();
 }
 
-[[gnu::hot]]
 void
 ircd::ctx::prof::handle_cur_leave()
 {
@@ -1649,7 +1646,6 @@ ircd::ctx::prof::handle_cur_leave()
 	check_slice();
 }
 
-[[gnu::hot]]
 void
 ircd::ctx::prof::handle_cur_yield()
 {
@@ -1658,14 +1654,12 @@ ircd::ctx::prof::handle_cur_yield()
 	check_stack();
 }
 
-[[gnu::hot]]
 void
 ircd::ctx::prof::handle_cur_continue()
 {
 	slice_enter();
 }
 
-[[gnu::hot]]
 void
 ircd::ctx::prof::slice_enter()
 noexcept
@@ -1676,7 +1670,6 @@ noexcept
 	assert(_slice_start >= _slice_stop);
 }
 
-[[gnu::hot]]
 void
 ircd::ctx::prof::slice_leave()
 noexcept
