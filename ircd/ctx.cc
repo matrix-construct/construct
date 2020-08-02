@@ -1629,8 +1629,15 @@ noexcept
 	_total.event[uint8_t(e)]++;
 
 	// Increment the ticker for the context's instance
-	if(likely(current))
-		current->profile.event[uint8_t(e)]++;
+	static uint64_t dummy;
+	uint64_t &ticker
+	{
+		current?
+			current->profile.event[uint8_t(e)]:
+			dummy
+	};
+
+	++ticker;
 }
 
 void
