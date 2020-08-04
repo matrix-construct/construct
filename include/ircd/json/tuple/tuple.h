@@ -194,12 +194,9 @@ tuple<T...>::tuple(const json::object &object,
 	object
 }
 {
-	std::for_each(std::begin(object), std::end(object), [this, &keys]
-	(const auto &member)
-	{
-		if(keys.has(member.first))
-			set(*this, member.first, member.second);
-	});
+	for(const auto &[key, val] : object)
+		if(keys.has(key))
+			set(*this, key, val);
 }
 
 template<class... T>
@@ -209,31 +206,22 @@ tuple<T...>::tuple(const json::object &object)
 	object
 }
 {
-	std::for_each(std::begin(object), std::end(object), [this]
-	(const auto &member)
-	{
-		set(*this, member.first, member.second);
-	});
+	for(const auto &[key, val] : object)
+		set(*this, key, val);
 }
 
 template<class... T>
 tuple<T...>::tuple(const json::iov &iov)
 {
-	std::for_each(std::begin(iov), std::end(iov), [this]
-	(const auto &member)
-	{
-		set(*this, member.first, member.second);
-	});
+	for(const auto &[key, val] : iov)
+		set(*this, key, val);
 }
 
 template<class... T>
 tuple<T...>::tuple(const json::members &members)
 {
-	std::for_each(std::begin(members), std::end(members), [this]
-	(const auto &member)
-	{
-		set(*this, member.first, member.second);
-	});
+	for(const auto &[key, val] : members)
+		set(*this, key, val);
 }
 
 template<class... T>
