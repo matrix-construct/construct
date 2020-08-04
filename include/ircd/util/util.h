@@ -223,16 +223,6 @@ struct values
 	}
 };
 
-/// Compile-time comparison of string literals
-///
-constexpr bool
-_constexpr_equal(const char *a,
-                 const char *b)
-noexcept
-{
-	return *a == *b && (*a == '\0' || _constexpr_equal(a + 1, b + 1));
-}
-
 /// Iterator based until() matching std::for_each except the function
 /// returns a bool to continue rather than void.
 ///

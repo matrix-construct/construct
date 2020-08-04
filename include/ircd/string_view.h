@@ -16,6 +16,8 @@ namespace ircd
 	struct string_view;
 
 	constexpr size_t _constexpr_strlen(const char *) noexcept;
+	constexpr bool _constexpr_equal(const char *a, const char *b) noexcept;
+
 	constexpr const char *data(const string_view &) noexcept;
 	constexpr size_t size(const string_view &) noexcept;
 	bool empty(const string_view &);
@@ -266,6 +268,16 @@ ircd::data(const string_view &str)
 noexcept
 {
 	return str.data();
+}
+
+/// Compile-time comparison of string literals
+///
+constexpr bool
+ircd::_constexpr_equal(const char *a,
+                       const char *b)
+noexcept
+{
+	return *a == *b && (*a == '\0' || _constexpr_equal(a + 1, b + 1));
 }
 
 [[gnu::pure]]
