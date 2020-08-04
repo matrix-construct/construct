@@ -187,6 +187,7 @@ namespace json {
 
 template<class... T>
 template<class U>
+inline
 tuple<T...>::tuple(const json::object &object,
                    const json::keys<U> &keys)
 :source
@@ -200,6 +201,7 @@ tuple<T...>::tuple(const json::object &object,
 }
 
 template<class... T>
+inline
 tuple<T...>::tuple(const json::object &object)
 :source
 {
@@ -211,6 +213,7 @@ tuple<T...>::tuple(const json::object &object)
 }
 
 template<class... T>
+inline
 tuple<T...>::tuple(const json::iov &iov)
 {
 	for(const auto &[key, val] : iov)
@@ -218,6 +221,7 @@ tuple<T...>::tuple(const json::iov &iov)
 }
 
 template<class... T>
+inline
 tuple<T...>::tuple(const json::members &members)
 {
 	for(const auto &[key, val] : members)
@@ -226,6 +230,7 @@ tuple<T...>::tuple(const json::members &members)
 
 template<class... T>
 template<class U>
+inline
 tuple<T...>::tuple(const tuple &t,
                    const keys<U> &keys)
 :source
@@ -243,6 +248,7 @@ tuple<T...>::tuple(const tuple &t,
 
 template<class... T>
 template<class... U>
+inline
 tuple<T...>::tuple(const tuple<U...> &t)
 :source
 {
@@ -358,7 +364,7 @@ noexcept
 #include "tool.h"
 
 template<class... T>
-ircd::json::tuple<T...>::operator
+inline ircd::json::tuple<T...>::operator
 crh::sha256::buf()
 const
 {
@@ -378,7 +384,7 @@ const
 }
 
 template<class... T>
-ircd::json::tuple<T...>::operator
+inline ircd::json::tuple<T...>::operator
 json::value()
 const
 {
