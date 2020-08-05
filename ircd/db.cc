@@ -7076,6 +7076,7 @@ noexcept
 
 // linkage for incmplete rocksdb::Iterator
 ircd::db::column::const_iterator_base::const_iterator_base()
+noexcept
 {
 }
 
@@ -7088,6 +7089,7 @@ noexcept
 ircd::db::column::const_iterator_base::const_iterator_base(database::column *const &c,
                                                            std::unique_ptr<rocksdb::Iterator> &&it,
                                                            gopts opts)
+noexcept
 :c{c}
 ,opts{std::move(opts)}
 ,it{std::move(it)}
@@ -7113,13 +7115,13 @@ const
 
 bool
 ircd::db::column::const_iterator_base::operator!()
-const
+const noexcept
 {
 	return !static_cast<bool>(*this);
 }
 
 ircd::db::column::const_iterator_base::operator bool()
-const
+const noexcept
 {
 	if(!it)
 		return false;
@@ -7132,12 +7134,14 @@ const
 
 bool
 ircd::db::operator!=(const column::const_iterator_base &a, const column::const_iterator_base &b)
+noexcept
 {
 	return !(a == b);
 }
 
 bool
 ircd::db::operator==(const column::const_iterator_base &a, const column::const_iterator_base &b)
+noexcept
 {
 	if(a && b)
 	{
@@ -7154,6 +7158,7 @@ ircd::db::operator==(const column::const_iterator_base &a, const column::const_i
 
 bool
 ircd::db::operator>(const column::const_iterator_base &a, const column::const_iterator_base &b)
+noexcept
 {
 	if(a && b)
 	{
@@ -7174,6 +7179,7 @@ ircd::db::operator>(const column::const_iterator_base &a, const column::const_it
 
 bool
 ircd::db::operator<(const column::const_iterator_base &a, const column::const_iterator_base &b)
+noexcept
 {
 	if(a && b)
 	{

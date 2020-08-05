@@ -192,10 +192,10 @@ struct ircd::db::column::delta
 
 namespace ircd::db
 {
-	bool operator==(const column::const_iterator_base &, const column::const_iterator_base &);
-	bool operator!=(const column::const_iterator_base &, const column::const_iterator_base &);
-	bool operator<(const column::const_iterator_base &, const column::const_iterator_base &);
-	bool operator>(const column::const_iterator_base &, const column::const_iterator_base &);
+	bool operator==(const column::const_iterator_base &, const column::const_iterator_base &) noexcept;
+	bool operator!=(const column::const_iterator_base &, const column::const_iterator_base &) noexcept;
+	bool operator<(const column::const_iterator_base &, const column::const_iterator_base &) noexcept;
+	bool operator>(const column::const_iterator_base &, const column::const_iterator_base &) noexcept;
 }
 
 /// Iteration over all keys down a column. Default construction is an invalid
@@ -219,7 +219,7 @@ struct ircd::db::column::const_iterator_base
 	std::unique_ptr<rocksdb::Iterator> it;
 	mutable value_type val;
 
-	const_iterator_base(database::column *const &, std::unique_ptr<rocksdb::Iterator> &&, db::gopts = {});
+	const_iterator_base(database::column *const &, std::unique_ptr<rocksdb::Iterator> &&, db::gopts = {}) noexcept;
 
   public:
 	explicit operator const database::column &() const;
@@ -230,21 +230,21 @@ struct ircd::db::column::const_iterator_base
 	explicit operator database::snapshot &();
 	explicit operator gopts &();
 
-	operator bool() const;
-	bool operator!() const;
+	operator bool() const noexcept;
+	bool operator!() const noexcept;
 
 	const value_type *operator->() const;
 	const value_type &operator*() const;
 
-	const_iterator_base();
+	const_iterator_base() noexcept;
 	const_iterator_base(const_iterator_base &&) noexcept;
 	const_iterator_base &operator=(const_iterator_base &&) noexcept;
 	~const_iterator_base() noexcept;
 
-	friend bool operator==(const const_iterator_base &, const const_iterator_base &);
-	friend bool operator!=(const const_iterator_base &, const const_iterator_base &);
-	friend bool operator<(const const_iterator_base &, const const_iterator_base &);
-	friend bool operator>(const const_iterator_base &, const const_iterator_base &);
+	friend bool operator==(const const_iterator_base &, const const_iterator_base &) noexcept;
+	friend bool operator!=(const const_iterator_base &, const const_iterator_base &) noexcept;
+	friend bool operator<(const const_iterator_base &, const const_iterator_base &) noexcept;
+	friend bool operator>(const const_iterator_base &, const const_iterator_base &) noexcept;
 
 	template<class pos> friend bool seek(column::const_iterator_base &, const pos &);
 };
