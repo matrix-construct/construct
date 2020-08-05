@@ -16,7 +16,10 @@ namespace ircd
 	struct string_view;
 
 	constexpr size_t _constexpr_strlen(const char *) noexcept;
+	template<size_t N> constexpr size_t _constexpr_strlen(const char (&)[N]) noexcept;
+
 	constexpr bool _constexpr_equal(const char *a, const char *b) noexcept;
+	template<size_t N0, size_t N1> constexpr bool _constexpr_equal(const char (&)[N0], const char (&)[N1]) noexcept;
 
 	constexpr const char *data(const string_view &) noexcept;
 	constexpr size_t size(const string_view &) noexcept;
@@ -270,17 +273,44 @@ noexcept
 	return str.data();
 }
 
-/// Compile-time comparison of string literals
-///
+template<size_t N0,
+         size_t N1>
 constexpr bool
-ircd::_constexpr_equal(const char *a,
-                       const char *b)
+ircd::_constexpr_equal(const char (&a)[N0],
+                       const char (&b)[N1])
+noexcept
+{
+	if constexpr(_constexpr_strlen(a) != _constexpr_strlen(b))
+		return false;
+
+	for(size_t i(0); i < _constexpr_strlen(a); ++i)
+		if constexpr(a[i] != b[i])
+			return false;
+
+	return true;
+}
+
+constexpr bool
+ircd::_constexpr_equal(const char *const a,
+                       const char *const b)
 noexcept
 {
 	return *a == *b && (*a == '\0' || _constexpr_equal(a + 1, b + 1));
 }
 
-[[gnu::pure]]
+template<size_t N>
+constexpr size_t
+ircd::_constexpr_strlen(const char (&a)[N])
+noexcept
+{
+	size_t i(0);
+	while(i < N)
+		if constexpr(a[i] == '\0')
+			return i;
+
+	return N;
+}
+
 constexpr size_t
 ircd::_constexpr_strlen(const char *const s)
 noexcept
