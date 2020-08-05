@@ -58,26 +58,26 @@ noexcept
 }
 
 template<class tuple,
-         size_t i>
+         size_t i,
+         size_t N>
 constexpr typename std::enable_if<i == size<tuple>(), size_t>::type
-indexof(const char *const &name)
+indexof(const char (&name)[N])
 noexcept
 {
 	return size<tuple>();
 }
 
 template<class tuple,
-         size_t i = 0>
-constexpr typename std::enable_if<i < size<tuple>(), size_t>::type
-indexof(const char *const &name)
+         size_t i = 0,
+         size_t N>
+inline constexpr typename std::enable_if<i < size<tuple>(), size_t>::type
+indexof(const char (&name)[N])
 noexcept
 {
-	constexpr auto equal
-	{
-		_constexpr_equal(key<tuple, i>(), name)
-	};
+	if(_constexpr_equal(key<tuple, i>(), name))
+		return i;
 
-	return equal? i : indexof<tuple, i + 1>(name);
+	return indexof<tuple, i + 1>(name);
 }
 
 template<class tuple,
@@ -91,16 +91,14 @@ noexcept
 
 template<class tuple,
          size_t i = 0>
-constexpr typename std::enable_if<i < size<tuple>(), size_t>::type
+inline constexpr typename std::enable_if<i < size<tuple>(), size_t>::type
 indexof(const string_view &name)
 noexcept
 {
-	const auto equal
-	{
-		name == key<tuple, i>()
-	};
+	if(name == key<tuple, i>())
+		return i;
 
-	return equal? i : indexof<tuple, i + 1>(name);
+	return indexof<tuple, i + 1>(name);
 }
 
 } // namespace json
