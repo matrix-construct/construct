@@ -102,6 +102,9 @@ const noexcept try
 		this->http::error::content
 	};
 
+	if(json::type(content, std::nothrow) == json::STRING)
+		return string_view{content};
+
 	const json::string &ret
 	{
 		content["error"]
@@ -122,6 +125,9 @@ const noexcept try
 	{
 		this->http::error::content
 	};
+
+	if(json::type(content, std::nothrow) == json::STRING)
+		return "M_UNKNOWN"_sv;
 
 	const json::string &ret
 	{
