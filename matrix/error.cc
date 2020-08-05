@@ -95,24 +95,42 @@ noexcept
 
 ircd::string_view
 ircd::m::error::errstr()
-const noexcept
+const noexcept try
 {
 	const json::object &content
 	{
 		this->http::error::content
 	};
 
-	return unquote(content.get("error"));
+	const json::string &ret
+	{
+		content["error"]
+	};
+
+	return ret;
+}
+catch(...)
+{
+	return "(There was an error with the error object)"_sv;
 }
 
 ircd::string_view
 ircd::m::error::errcode()
-const noexcept
+const noexcept try
 {
 	const json::object &content
 	{
 		this->http::error::content
 	};
 
-	return unquote(content.get("errcode", "M_UNKNOWN"_sv));
+	const json::string &ret
+	{
+		content.get("errcode", "M_UNKNOWN"_sv)
+	};
+
+	return ret;
+}
+catch(...)
+{
+	return "M_BAD_ERROR"_sv;
 }
