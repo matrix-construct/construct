@@ -31,12 +31,10 @@ constexpr typename std::enable_if<i < size<tuple>(), size_t>::type
 indexof()
 noexcept
 {
-	constexpr auto equal
-	{
-		name_hash(key<tuple, i>()) == hash
-	};
+	if constexpr(name_hash(key<tuple, i>()) == hash)
+		return i;
 
-	return equal? i : indexof<tuple, hash, i + 1>();
+	return indexof<tuple, hash, i + 1>();
 }
 
 template<class tuple,
