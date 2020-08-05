@@ -145,11 +145,12 @@ try
 	}
 
 	// If the iteration did not provide us with any heads from this origin
-	// and the opts require it, we find and add that here.
-	if(need_my_head)
+	// and the opts require it, we find and add that here. Also if no heads
+	// whatsoever have been found this branch is also taken.
+	if(need_my_head || size_t(limit) == opts.limit)
 		for(m::room::events it{head.room}; it; --it)
 		{
-			if(!event::my(it.event_idx()))
+			if(need_my_head && !event::my(it.event_idx()))
 				continue;
 
 			const auto event_id
