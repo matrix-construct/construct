@@ -135,6 +135,7 @@ noexcept
 {
 	until(t, [&name, &ret]
 	(const auto &key, auto&& val)
+	noexcept
 	{
 		if constexpr(std::is_assignable<R, decltype(val)>())
 		{

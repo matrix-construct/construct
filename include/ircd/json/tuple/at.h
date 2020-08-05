@@ -135,7 +135,7 @@ at(const tuple &t,
 	const R *ret;
 	const auto closure
 	{
-		[&name, &ret](const auto &key, const auto &val)
+		[&name, &ret](const auto &key, const auto &val) noexcept
 		{
 			if constexpr(std::is_assignable<R, decltype(val)>())
 			{
@@ -168,7 +168,7 @@ at(tuple &t,
 	R *ret;
 	const auto closure
 	{
-		[&name, &ret](const auto &key, auto &val)
+		[&name, &ret](const auto &key, auto &val) noexcept
 		{
 			if constexpr(std::is_assignable<R, decltype(val)>())
 			{
