@@ -48,6 +48,7 @@ ircd::json::strung::strung(const strung &s)
 {}
 
 template<class... T>
+inline
 ircd::json::strung::strung(T&&... t)
 :std::string
 {
