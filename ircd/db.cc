@@ -2150,7 +2150,11 @@ ircd::db::database::column::column(database &d,
 	//
 
 	// Block based table index type.
-	table_opts.format_version = 3; // RocksDB >= 5.15 compat only; otherwise use 2.
+	if constexpr(ROCKSDB_MAJOR > 6 || (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR >= 6))
+		table_opts.format_version = 5; // RocksDB >= 6.6.x compat only; otherwise use 4
+	else
+		table_opts.format_version = 4; // RocksDB >= 5.16.x compat only; otherwise use 3.
+
 	table_opts.index_type = rocksdb::BlockBasedTableOptions::kTwoLevelIndexSearch;
 	table_opts.index_block_restart_interval = 64;
 	table_opts.read_amp_bytes_per_bit = 8;
