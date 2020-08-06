@@ -348,3 +348,15 @@ ircd::json::operator!=(const value &a, const value &b)
 {
 	return !operator==(a, b);
 }
+
+inline bool
+ircd::json::defined(const value &a)
+{
+	return !a.undefined();
+}
+
+inline enum ircd::json::type
+ircd::json::type(const value &a)
+{
+	return static_cast<enum json::type>(a.type);
+}

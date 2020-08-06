@@ -4081,18 +4081,6 @@ ircd::json::serialized(const bool &b)
 	return b? t : f;
 }
 
-bool
-ircd::json::defined(const value &a)
-{
-	return !a.undefined();
-}
-
-enum ircd::json::type
-ircd::json::type(const value &a)
-{
-	return static_cast<enum json::type>(a.type);
-}
-
 //
 // value::value
 //
