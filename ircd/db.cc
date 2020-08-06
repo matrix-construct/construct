@@ -3862,17 +3862,9 @@ ircd::db::database::sst::info::info(const database &d_,
 ircd::db::database::sst::info &
 ircd::db::database::sst::info::operator=(rocksdb::LiveFileMetaData &&md)
 {
-	name = std::move(md.name);
-	path = std::move(md.db_path);
 	column = std::move(md.column_family_name);
-	size = std::move(md.size);
-	min_seq = std::move(md.smallest_seqno);
-	max_seq = std::move(md.largest_seqno);
-	min_key = std::move(md.smallestkey);
-	max_key = std::move(md.largestkey);
-	num_reads = std::move(md.num_reads_sampled);
 	level = std::move(md.level);
-	compacting = std::move(md.being_compacted);
+	this->operator=(static_cast<rocksdb::SstFileMetaData &&>(md));
 	return *this;
 }
 
