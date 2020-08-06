@@ -96,11 +96,7 @@ struct ircd::exception
   public:
 	const char *what() const noexcept override;
 
-	exception(generate_skip_t = {}) noexcept
-	{
-		buf[0] = '\0';
-	}
-
+	exception(generate_skip_t = {}) noexcept;
 	exception(exception &&) = delete;
 	exception(const exception &) = delete;
 	exception &operator=(exception &&) = delete;
@@ -144,6 +140,7 @@ struct name                                                                   \
 :parent                                                                       \
 {                                                                             \
     template<class... args>                                                   \
+    [[gnu::noinline]]                                                         \
     name(hide_name_t, const string_view &fmt, args&&... ap) noexcept          \
     :parent{generate_skip}                                                    \
     {                                                                         \
@@ -151,6 +148,7 @@ struct name                                                                   \
     }                                                                         \
                                                                               \
     template<class... args>                                                   \
+    [[gnu::noinline]]                                                         \
     name(hide_name_t, const string_view &fmt = " ") noexcept                  \
     :parent{generate_skip}                                                    \
     {                                                                         \
@@ -158,6 +156,7 @@ struct name                                                                   \
     }                                                                         \
                                                                               \
     template<class... args>                                                   \
+    [[gnu::noinline]]                                                         \
     name(const string_view &fmt, args&&... ap) noexcept                       \
     :parent{generate_skip}                                                    \
     {                                                                         \
@@ -165,12 +164,14 @@ struct name                                                                   \
     }                                                                         \
                                                                               \
     template<class... args>                                                   \
+    [[gnu::noinline]]                                                         \
     name(const string_view &fmt = " ") noexcept                               \
     :parent{generate_skip}                                                    \
     {                                                                         \
         generate(#name, fmt, ircd::va_rtti{});                                \
     }                                                                         \
                                                                               \
+    [[using gnu: flatten, always_inline]]                                     \
     name(generate_skip_t) noexcept                                            \
     :parent{generate_skip}                                                    \
     {                                                                         \
@@ -183,6 +184,7 @@ struct name                                                                   \
 :parent                                                                       \
 {                                                                             \
     template<class... args>                                                   \
+    [[gnu::noinline]]                                                         \
     name(const string_view &fmt, args&&... ap) noexcept                       \
     :parent{generate_skip}                                                    \
     {                                                                         \
@@ -190,12 +192,14 @@ struct name                                                                   \
     }                                                                         \
                                                                               \
     template<class... args>                                                   \
+    [[gnu::noinline]]                                                         \
     name(const string_view &fmt = " ") noexcept                               \
     :parent{generate_skip}                                                    \
     {                                                                         \
         generate(fmt, ircd::va_rtti{});                                       \
     }                                                                         \
                                                                               \
+    [[using gnu: flatten, always_inline]]                                     \
     name(generate_skip_t = {}) noexcept                                       \
     :parent{generate_skip}                                                    \
     {                                                                         \
@@ -239,4 +243,12 @@ std::exception_ptr
 ircd::make_system_eptr(args&&... a)
 {
 	return std::make_exception_ptr(make_system_error(std::forward<args>(a)...));
+}
+
+[[gnu::always_inline]]
+inline
+ircd::exception::exception(generate_skip_t)
+noexcept
+{
+	buf[0] = '\0';
 }

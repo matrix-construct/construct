@@ -38,9 +38,7 @@ class ircd::m::error
 
   protected:
 	IRCD_OVERLOAD(child)
-	template<class... args> error(child_t, args&&... a)
-	:error{std::forward<args>(a)...}
-	{}
+	template<class... args> error(child_t, args&&...);
 
   public:
 	string_view errcode() const noexcept;
@@ -78,19 +76,24 @@ class ircd::m::error
 struct _name_                                                           \
 : _parent_                                                              \
 {                                                                       \
+    [[gnu::noinline]]                                                   \
     _name_()                                                            \
     : _parent_                                                          \
     {                                                                   \
         child, _httpcode_, "M_"#_name_, "%s", http::status(_httpcode_)  \
     }{}                                                                 \
                                                                         \
-    template<class... args> _name_(const string_view &fmt, args&&... a) \
+    template<class... args>                                             \
+    [[gnu::noinline]]                                                   \
+    _name_(const string_view &fmt, args&&... a)                         \
     : _parent_                                                          \
     {                                                                   \
         child, _httpcode_, "M_"#_name_, fmt, std::forward<args>(a)...   \
     }{}                                                                 \
                                                                         \
-    template<class... args> _name_(child_t, args&&... a)                \
+    template<class... args>                                             \
+    [[gnu::noinline]]                                                   \
+    _name_(child_t, args&&... a)                                        \
     : _parent_                                                          \
     {                                                                   \
         child, std::forward<args>(a)...                                 \
@@ -116,6 +119,7 @@ namespace ircd::m
 }
 
 template<class... args>
+[[using gnu: flatten]]
 inline
 ircd::m::error::error(const http::code &status,
                       const string_view &errcode,
@@ -149,5 +153,16 @@ ircd::m::error::error(const string_view &errcode,
 :error
 {
 	http::INTERNAL_SERVER_ERROR, errcode, fmt, std::forward<args>(a)...
+}
+{}
+
+template<class... args>
+[[using gnu: flatten, always_inline]]
+inline
+ircd::m::error::error(child_t,
+                      args&&... a)
+:error
+{
+	std::forward<args>(a)...
 }
 {}

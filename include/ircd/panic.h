@@ -41,6 +41,7 @@ struct name                                                                   \
 :parent                                                                       \
 {                                                                             \
     template<class... args>                                                   \
+    [[gnu::noinline]]                                                         \
     name(const string_view &fmt, args&&... ap) noexcept                       \
     :parent{generate_skip}                                                    \
     {                                                                         \
@@ -49,6 +50,7 @@ struct name                                                                   \
     }                                                                         \
                                                                               \
     template<class... args>                                                   \
+    [[gnu::noinline]]                                                         \
     name(const string_view &fmt = " ") noexcept                               \
     :parent{generate_skip}                                                    \
     {                                                                         \
@@ -56,6 +58,7 @@ struct name                                                                   \
         ircd::panicking(*this);                                               \
     }                                                                         \
                                                                               \
+    [[gnu::always_inline]]                                                    \
     name(generate_skip_t)                                                     \
     :parent{generate_skip}                                                    \
     {                                                                         \
