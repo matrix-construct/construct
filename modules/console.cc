@@ -4422,25 +4422,25 @@ _print_sst_info_full(opt &out,
 
 	close_auto("name", f.name);
 	close_auto("directory", f.path);
+	close_auto("format", f.format);
 	close_auto("column ID", f.cfid);
 	close_auto("column", f.column);
-	close_auto("format", f.format);
-	close_auto("version", f.version);
-	close_auto("comparator", f.comparator);
-	close_auto("merge operator", f.merge_operator);
-	close_auto("prefix extractor", f.prefix_extractor);
+	close_auto("column comparator", f.comparator);
+	close_auto("column merge operator", f.merge_operator);
+	close_auto("column prefix extractor", f.prefix_extractor);
 	close_size("file size", f.size);
-	close_auto("creation", timestr(f.created, ircd::localtime));
+	close_auto("file creation", timestr(f.created, ircd::localtime));
+	close_auto("file version", f.version);
 	close_auto("level", f.level);
 	close_auto("lowest sequence", f.min_seq);
 	close_auto("highest sequence", f.max_seq);
 	close_auto("lowest key", min_key);
 	close_auto("highest key", max_key);
-	close_auto("fixed key length", f.fixed_key_len);
-	close_auto("range deletes", f.range_deletes);
-	close_auto("compacting", f.compacting? "yes"_sv : "no"_sv);
 	close_auto("compression", f.compression);
 	close_auto("delta encode", f.delta_encoding? "yes"_sv : "no"_sv);
+	close_auto("fixed key length", f.fixed_key_len);
+	close_auto("compacting", f.compacting? "yes"_sv : "no"_sv);
+	close_auto("range deletes", f.range_deletes);
 	close_auto("", "");
 
 	const auto blocks_size{f.keys_size + f.values_size};
