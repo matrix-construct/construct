@@ -167,7 +167,7 @@ noexcept
 }
 
 template<class tuple>
-constexpr bool
+inline bool
 key_exists(const string_view &key)
 {
 	return indexof<tuple>(key) < size<tuple>();

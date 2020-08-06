@@ -23,9 +23,18 @@ noexcept
 	return tuple_element<tuple, i>::key;
 }
 
+template<size_t i,
+         class tuple>
+inline enable_if_tuple<tuple, const char *>
+key(const tuple &t)
+noexcept
+{
+	return std::get<i>(t).key;
+}
+
 template<class tuple,
          size_t i>
-constexpr typename std::enable_if<i == tuple::size(), const char *>::type
+inline typename std::enable_if<i == tuple::size(), const char *>::type
 key(const size_t &j)
 noexcept
 {
@@ -34,22 +43,14 @@ noexcept
 
 template<class tuple,
          size_t i = 0>
-constexpr typename std::enable_if<i < tuple::size(), const char *>::type
+inline typename std::enable_if<i < tuple::size(), const char *>::type
 key(const size_t &j)
 noexcept
 {
-	return j == i?
-		tuple_element<tuple, i>::key:
-		key<tuple, i + 1>(j);
-}
+	if(likely(j != i))
+		return key<tuple, i + 1>(j);
 
-template<size_t i,
-         class tuple>
-enable_if_tuple<tuple, const char *>
-key(const tuple &t)
-noexcept
-{
-	return std::get<i>(t).key;
+	return tuple_element<tuple, i>::key;
 }
 
 } // namespace json
