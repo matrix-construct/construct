@@ -116,6 +116,7 @@ namespace ircd::m
 }
 
 template<class... args>
+inline
 ircd::m::error::error(const http::code &status,
                       const string_view &errcode,
                       const string_view &fmt,
@@ -126,7 +127,10 @@ ircd::m::error::error(const http::code &status,
 	{
 		const string_view str
 		{
-			fmt::sprintf{fmtbuf, fmt, std::forward<args>(a)...}
+			fmt::sprintf
+			{
+				fmtbuf, fmt, std::forward<args>(a)...
+			}
 		};
 
 		return json::members
@@ -138,6 +142,7 @@ ircd::m::error::error(const http::code &status,
 }{}
 
 template<class... args>
+inline
 ircd::m::error::error(const string_view &errcode,
                       const string_view &fmt,
                       args&&... a)
