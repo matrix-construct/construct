@@ -18,7 +18,7 @@ namespace ircd
 {
 	IRCD_EXCEPTION_HIDENAME(ircd::error, bad_lex_cast)
 
-	template<class T> bool lex_castable(const string_view &);
+	template<class T> bool lex_castable(const string_view &) noexcept;
 
 	template<class T> T lex_cast(std::string &);
 	template<class T> T lex_cast(const std::string &);
@@ -36,25 +36,25 @@ namespace ircd
 
 namespace ircd
 {
-	template<> bool lex_castable<std::string>(const string_view &);       // stub always true
-	template<> bool lex_castable<std::string_view>(const string_view &);  // stub always true
-	template<> bool lex_castable<string_view>(const string_view &);       // stub always true
-	template<> bool lex_castable<long double>(const string_view &);
-	template<> bool lex_castable<double>(const string_view &);
-	template<> bool lex_castable<float>(const string_view &);
-	template<> bool lex_castable<ulong>(const string_view &);
-	template<> bool lex_castable<long>(const string_view &);
-	template<> bool lex_castable<uint>(const string_view &);
-	template<> bool lex_castable<int>(const string_view &);
-	template<> bool lex_castable<ushort>(const string_view &);
-	template<> bool lex_castable<short>(const string_view &);
-	template<> bool lex_castable<uint8_t>(const string_view &);
-	template<> bool lex_castable<int8_t>(const string_view &);
-	template<> bool lex_castable<bool>(const string_view &);
-	template<> bool lex_castable<seconds>(const string_view &);
-	template<> bool lex_castable<milliseconds>(const string_view &);
-	template<> bool lex_castable<microseconds>(const string_view &);
-	template<> bool lex_castable<nanoseconds>(const string_view &);
+	template<> bool lex_castable<std::string>(const string_view &) noexcept;       // stub always true
+	template<> bool lex_castable<std::string_view>(const string_view &) noexcept;  // stub always true
+	template<> bool lex_castable<string_view>(const string_view &) noexcept;       // stub always true
+	template<> bool lex_castable<long double>(const string_view &) noexcept;
+	template<> bool lex_castable<double>(const string_view &) noexcept;
+	template<> bool lex_castable<float>(const string_view &) noexcept;
+	template<> bool lex_castable<ulong>(const string_view &) noexcept;
+	template<> bool lex_castable<long>(const string_view &) noexcept;
+	template<> bool lex_castable<uint>(const string_view &) noexcept;
+	template<> bool lex_castable<int>(const string_view &) noexcept;
+	template<> bool lex_castable<ushort>(const string_view &) noexcept;
+	template<> bool lex_castable<short>(const string_view &) noexcept;
+	template<> bool lex_castable<uint8_t>(const string_view &) noexcept;
+	template<> bool lex_castable<int8_t>(const string_view &) noexcept;
+	template<> bool lex_castable<bool>(const string_view &) noexcept;
+	template<> bool lex_castable<seconds>(const string_view &) noexcept;
+	template<> bool lex_castable<milliseconds>(const string_view &) noexcept;
+	template<> bool lex_castable<microseconds>(const string_view &) noexcept;
+	template<> bool lex_castable<nanoseconds>(const string_view &) noexcept;
 
 	template<> std::string &lex_cast(std::string &);                          // trivial
 	template<> std::string lex_cast(const std::string &);                     // trivial
@@ -236,6 +236,7 @@ template<class T>
 IRCD_LEX_CAST_UNNECESSARY
 bool
 ircd::lex_castable(const string_view &s)
+noexcept
 {
 	assert(0);
 	return false;
@@ -245,6 +246,7 @@ ircd::lex_castable(const string_view &s)
 template<>
 inline bool
 ircd::lex_castable<ircd::string_view>(const string_view &)
+noexcept
 {
 	return true;
 }
@@ -253,6 +255,7 @@ ircd::lex_castable<ircd::string_view>(const string_view &)
 template<>
 inline bool
 ircd::lex_castable<std::string_view>(const string_view &)
+noexcept
 {
 	return true;
 }
@@ -261,6 +264,7 @@ ircd::lex_castable<std::string_view>(const string_view &)
 template<>
 inline bool
 ircd::lex_castable<std::string>(const string_view &s)
+noexcept
 {
 	return true;
 }
