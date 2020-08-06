@@ -18,7 +18,7 @@ namespace ircd
 {
 	IRCD_EXCEPTION_HIDENAME(ircd::error, bad_lex_cast)
 
-	template<class T> bool lex_castable(const string_view &) noexcept;
+	template<class T> bool lex_castable(const string_view &) noexcept = delete;
 
 	template<class T> T lex_cast(std::string &);
 	template<class T> T lex_cast(const std::string &);
@@ -229,17 +229,6 @@ ircd::lex_cast(T t,
 {
 	assert(0);
 	return {};
-}
-
-/// Template basis; if no specialization is matched there is no fallback here
-template<class T>
-IRCD_LEX_CAST_UNNECESSARY
-bool
-ircd::lex_castable(const string_view &s)
-noexcept
-{
-	assert(0);
-	return false;
 }
 
 /// Trivial conversion; always returns true
