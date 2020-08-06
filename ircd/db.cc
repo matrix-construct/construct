@@ -2168,7 +2168,14 @@ ircd::db::database::column::column(database &d,
 	table_opts.pin_top_level_index_and_filter = false;
 	table_opts.pin_l0_filter_and_index_blocks_in_cache = false;
 	table_opts.partition_filters = true;
+
+	// Delta encoding is always used (option ignored) for table
+	// format_version >= 4 unless block_align=true.
 	table_opts.use_delta_encoding = false;
+
+	// Block alignment doesn't work if compression is enabled for this
+	// column. If not, we want block alignment for direct IO.
+	table_opts.block_align = this->options.compression == rocksdb::kNoCompression;
 
 	// Determine whether the index for this column should be compressed.
 	const bool is_string_index(this->descriptor->type.first == typeid(string_view));
@@ -2183,10 +2190,6 @@ ircd::db::database::column::column(database &d,
 
 	//table_opts.data_block_index_type = rocksdb::BlockBasedTableOptions::kDataBlockBinaryAndHash;
 	//table_opts.data_block_hash_table_util_ratio = 0.75;
-
-	// Block alignment doesn't work if compression is enabled for this
-	// column. If not, we want block alignment for direct IO.
-	table_opts.block_align = this->options.compression == rocksdb::kNoCompression;
 
 	// Setup the cache for assets.
 	const auto &cache_size(this->descriptor->cache_size);
