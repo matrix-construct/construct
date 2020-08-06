@@ -2107,7 +2107,7 @@ ircd::db::database::column::column(database &d,
 	this->options.num_levels = 7;
 	this->options.level0_file_num_compaction_trigger = 2;
 	this->options.level_compaction_dynamic_level_bytes = false;
-	this->options.ttl = 0;
+	//this->options.ttl = -2U;
 	#ifdef IRCD_DB_HAS_PERIODIC_COMPACTIONS
 	this->options.periodic_compaction_seconds = this->descriptor->compaction_period.count();
 	#endif
