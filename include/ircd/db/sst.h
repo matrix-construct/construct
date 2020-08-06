@@ -33,6 +33,8 @@ struct ircd::db::database::sst::info
 	std::string merge_operator;
 	std::string prefix_extractor;
 	std::string compression;
+	std::string checksum;
+	std::string checksum_func;
 	uint64_t format {0};
 	uint64_t cfid {0};
 	uint64_t size {0};

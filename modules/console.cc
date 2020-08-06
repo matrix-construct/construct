@@ -4431,6 +4431,8 @@ _print_sst_info_full(opt &out,
 	close_size("file size", f.size);
 	close_auto("file creation", timestr(f.created, ircd::localtime));
 	close_auto("file version", f.version);
+	close_auto("checksum function", f.checksum_func);
+	close_auto("checksum value", f.checksum);
 	close_auto("level", f.level);
 	close_auto("lowest sequence", f.min_seq);
 	close_auto("highest sequence", f.max_seq);

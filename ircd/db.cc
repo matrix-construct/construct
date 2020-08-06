@@ -3880,6 +3880,14 @@ ircd::db::database::sst::info::operator=(rocksdb::SstFileMetaData &&md)
 	max_key = std::move(md.largestkey);
 	num_reads = std::move(md.num_reads_sampled);
 	compacting = std::move(md.being_compacted);
+
+	#if ROCKSDB_MAJOR > 6 \
+	|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR > 8) \
+	|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR == 8 && ROCKSDB_PATCH >= 1)
+		checksum = std::move(md.file_checksum);
+		checksum_func = std::move(md.file_checksum_func_name);
+	#endif
+
 	return *this;
 }
 
