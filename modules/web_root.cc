@@ -80,6 +80,13 @@ root_path
 	{ "default",    string_view{webroot_path} },
 };
 
+conf::item<bool>
+root_cache_control_immutable
+{
+	{ "name",       "ircd.web.root.cache_control.immutable" },
+	{ "default",    true                                    },
+};
+
 void
 init_files()
 {
@@ -225,13 +232,29 @@ try
 		fs::read(fd, buffer)
 	};
 
+	static const string_view &cache_control_immutable
+	{
+		"Cache-Control: public, max-age=31536000, immutable\r\n"_sv
+	};
+
+	// Responses from this handler are assumed to be static content by
+	// default. Developers or applications with mutable static content
+	// can disable the header at runtime with this conf item.
+	const string_view &addl_headers
+	{
+		root_cache_control_immutable?
+			cache_control_immutable:
+			string_view{}
+	};
+
 	char content_type_buf[64];
 	resource::response
 	{
 		client,
 		http::OK,
 		content_type(content_type_buf, file_name, chunk),
-		file_size
+		file_size,
+		addl_headers,
 	};
 
 	const unwind_exceptional terminate{[&client]
