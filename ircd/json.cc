@@ -3301,9 +3301,7 @@ ircd::json::string::stringify(const mutable_buffer &buf,
 noexcept
 {
 	using block_t = u8x16;
-	using vec_t = u128x1;
-	using unaligned_vec_t = u128x1_u;
-	static_assert(sizeof(block_t) == sizeof(vec_t));
+	using block_t_u = u128x1_u;
 
 	u64x2 count{0}; // input pos, return value
 	while(count[0] + sizeof(block_t) <= input.size() && count[1] + sizeof(block_t) <= ircd::size(buf))
@@ -3315,25 +3313,21 @@ noexcept
 
 		const auto di
 		{
-			reinterpret_cast<u128x1_u *__restrict__>(ircd::data(buf) + count[1])
+			reinterpret_cast<block_t_u *>(ircd::data(buf) + count[1])
 		};
 
 		const auto si
 		{
-			reinterpret_cast<const u128x1_u *__restrict__>(input.data() + count[0])
+			reinterpret_cast<const block_t_u *>(input.data() + count[0])
 		};
 
-		block_t block
-		(
-			_mm_loadu_si128(si)
-		);
-
+		block_t block(*si);
 		const u64x2 consume
 		{
 			string_stringify(block, mask)
 		};
 
-		_mm_storeu_si128(di, block);
+		*di = block;
 		count += consume;
 	}
 
@@ -3580,21 +3574,24 @@ ircd::json::string::serialized(const string_view &input)
 noexcept
 {
 	using block_t = u8x16;
-	using vec_t = u128x1;
-	using unaligned_vec_t = u128x1_u;
-	static_assert(sizeof(block_t) == sizeof(vec_t));
+	using block_t_u = u128x1_u;
 
-	u8x16 block;
+	block_t block;
 	u64x2 count{0}; // input pos, return value
 	while(count[0] + sizeof(block_t) <= input.size())
 	{
-		const auto ptr
+		static const auto mask
 		{
-			reinterpret_cast<const u128x1_u *>(input.data() + count[0])
+			~block_t{0}
 		};
 
-		block = _mm_loadu_si128(ptr);
-		count += string_serialized(block, ~u8x16{0});
+		const auto si
+		{
+			reinterpret_cast<const block_t_u *>(input.data() + count[0])
+		};
+
+		block = *si;
+		count += string_serialized(block, mask);
 	}
 
 	while(count[0] < input.size())
@@ -3603,7 +3600,7 @@ noexcept
 		assert(remain < sizeof(block_t));
 
 		size_t j(0);
-		u8x16 mask{0};
+		block_t mask{0};
 		for(; count[0] + j < input.size(); ++j)
 		{
 			block[j] = input[count[0] + j];
