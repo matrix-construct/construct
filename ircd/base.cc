@@ -8,15 +8,18 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <boost/archive/iterators/base64_from_binary.hpp>
 #include <boost/archive/iterators/binary_from_base64.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 
 namespace ircd::base
 {
-	[[gcc::visibility("internal")]]
+	[[gnu::visibility("internal")]]
 	thread_local char conv_tmp_buf[64_KiB];
 }
+
+//
+// Conversion convenience suite
+//
 
 ircd::string_view
 ircd::b64urltob64(const mutable_buffer &out,
@@ -79,27 +82,72 @@ ircd::b64tob58(const mutable_buffer &out,
 	return b58encode(out, b64decode(base::conv_tmp_buf, in));
 }
 
-namespace [[gnu::visibility("hidden")]] ircd
+//
+// Base64 encode
+//
+
+namespace ircd::base
 {
-	const char _b64_pad_
+	using _b64_encoder = std::function<string_view (const mutable_buffer &, const const_buffer &)>;
+
+	constexpr char _b64_pad_
 	{
 		'='
 	};
 
-	using _b64_encoder = std::function<string_view (const mutable_buffer &, const const_buffer &)>;
+	[[using gnu: visibility("internal"), aligned(64)]]
+	extern const u8
+	b64_encode_lut[64],
+	b64_encode_permute_tab[64];
+
+	static u8x64 b64encode(const u8x64 in) noexcept;
 	static std::string _b64encode(const const_buffer &in, const _b64_encoder &);
 }
 
-namespace [[gnu::visibility("default")]] ircd
+// [00] - [25]  =>  A - Z
+// [26] - [51]  =>  a - z
+// [52] - [61]  =>  0 - 9
+// [62], [63]   =>  +, /
+decltype(ircd::base::b64_encode_lut)
+ircd::base::b64_encode_lut
 {
-	// this stub needed for clang
-}
+	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+	'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+	'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+	'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
+	'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
+	'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+	'w', 'x', 'y', 'z', '0', '1', '2', '3',
+	'4', '5', '6', '7', '8', '9', '+', '/',
+};
+
+/// From arXiv:1910.05109v1 [Mula, Lemire] 2 Oct 2019
+decltype(ircd::base::b64_encode_permute_tab)
+ircd::base::b64_encode_permute_tab
+{
+	0  + 1,   0  + 0,   0  + 2,   0  + 1,
+	3  + 1,   3  + 0,   3  + 2,   3  + 1,
+	6  + 1,   6  + 0,   6  + 2,   6  + 1,
+	9  + 1,   9  + 0,   9  + 2,   9  + 1,
+	12 + 1,   12 + 0,   12 + 2,   12 + 1,
+	15 + 1,   15 + 0,   15 + 2,   15 + 1,
+	18 + 1,   18 + 0,   18 + 2,   18 + 1,
+	21 + 1,   21 + 0,   21 + 2,   21 + 1,
+	24 + 1,   24 + 0,   24 + 2,   24 + 1,
+	27 + 1,   27 + 0,   27 + 2,   27 + 1,
+	30 + 1,   30 + 0,   30 + 2,   30 + 1,
+	33 + 1,   33 + 0,   33 + 2,   33 + 1,
+	36 + 1,   36 + 0,   36 + 2,   36 + 1,
+	39 + 1,   39 + 0,   39 + 2,   39 + 1,
+	42 + 1,   42 + 0,   42 + 2,   42 + 1,
+	45 + 1,   45 + 0,   45 + 2,   45 + 1,
+};
 
 /// Allocate and return a string without padding from the encoding of in
 std::string
 ircd::b64encode_unpadded(const const_buffer &in)
 {
-	return _b64encode(in, [](const auto &out, const auto &in)
+	return base::_b64encode(in, [](const auto &out, const auto &in)
 	{
 		return b64encode_unpadded(out, in);
 	});
@@ -109,7 +157,7 @@ ircd::b64encode_unpadded(const const_buffer &in)
 std::string
 ircd::b64encode(const const_buffer &in)
 {
-	return _b64encode(in, [](const auto &out, const auto &in)
+	return base::_b64encode(in, [](const auto &out, const auto &in)
 	{
 		return b64encode(out, in);
 	});
@@ -117,8 +165,8 @@ ircd::b64encode(const const_buffer &in)
 
 /// Internal; dedupes encoding functions that create and return a string
 static std::string
-ircd::_b64encode(const const_buffer &in,
-                 const _b64_encoder &encoder)
+ircd::base::_b64encode(const const_buffer &in,
+                       const _b64_encoder &encoder)
 {
 	// Allocate a buffer 1.33 times larger than input with pessimistic
 	// extra space for any padding and nulling.
@@ -151,7 +199,7 @@ ircd::b64encode(const mutable_buffer &out,
 	};
 
 	assert(size(encoded) + pads <= size(out));
-	memset(data(out) + size(encoded), _b64_pad_, pads);
+	memset(data(out) + size(encoded), base::_b64_pad_, pads);
 
 	const auto len
 	{
@@ -166,28 +214,104 @@ ircd::string_view
 ircd::b64encode_unpadded(const mutable_buffer &out,
                          const const_buffer &in)
 {
-	namespace iterators = boost::archive::iterators;
-	using transform = iterators::transform_width<unsigned char *, 6, 8>;
-	using b64fb = iterators::base64_from_binary<transform>;
-
-	const auto cpsz
+	const size_t res_len
 	{
-		std::min(size(in), size_t(size(out) * (3.0 / 4.0)))
+		size_t(ceil(size(in) * (4.0 / 3.0)))
 	};
 
-	const auto end
+	const size_t out_len
 	{
-		std::copy(b64fb(data(in)), b64fb(data(in) + cpsz), begin(out))
+		std::min(res_len, size(out))
 	};
 
-	const auto len
+	size_t i(0), j(0);
+	for(; i + 1 < (size(in) / 48) && i < (out_len / 64); ++i)
 	{
-		size_t(std::distance(begin(out), end))
-	};
+		// Destination is indexed at 64 byte stride
+		const auto di
+		{
+			reinterpret_cast<u512x1_u *>(data(out) + (i * 64))
+		};
 
-	assert(len <= size(out));
-	return { data(out), len };
+		// Source is indexed at 48 byte stride
+		const auto si
+		{
+			reinterpret_cast<const u512x1_u *>(data(in) + (i * 48))
+		};
+
+		*di = base::b64encode(*si);
+	}
+
+	for(; i * 48 < size(in); ++i)
+	{
+		u8x64 block{0};
+		for(j = 0; i * 48 + j < size(in); ++j)
+			block[j] = in[i * 48 + j];
+
+		block = base::b64encode(block);
+		for(j = 0; i * 64 + j < out_len; ++j)
+			out[i * 64 + j] = block[j];
+	}
+
+	return string_view
+	{
+		data(out), out_len
+	};
 }
+
+/// Returns 64 base64-encoded characters from 48 input characters. For any
+/// inputs less than 48 characters trail with null characters; caller computes
+/// result size. The following operations are performed on each triple of input
+/// characters resulting in four output characters:
+/// 0.  in[0] / 4;
+/// 1.  (in[1] / 16) + ((in[0] * 16) % 64);
+/// 2.  ((in[1] * 4) % 64) + (in[2] / 64);
+/// 3.  in[2] % 64;
+/// Based on https://arxiv.org/pdf/1910.05109 (and earlier work). No specific
+/// intrinsics are used here; instead we recite a kotodama divination known
+/// as "vector extensions" which by chance is visible to humans as C syntax.
+ircd::u8x64
+ircd::base::b64encode(const u8x64 in)
+noexcept
+{
+	static const int shift_ctrl[8]
+	{
+		(10 +  0),  ( 4 +  0),  (22 +  0),  (16 +  0),
+		(10 + 32),  ( 4 + 32),  (22 + 32),  (16 + 32),
+	};
+
+	size_t i, j, k;
+
+	// vpermb
+	u8x64 _perm;
+	for(k = 0; k < 64; ++k)
+		_perm[k] = in[b64_encode_permute_tab[k]];
+
+	// TODO: currently does not achieve vpmultshiftqb on avx512vbmi
+	u64x8 sh[8], perm(_perm);
+	for(i = 0; i < 8; ++i)
+		for(j = 0; j < 8; ++j)
+			sh[i][j] = perm[i] >> shift_ctrl[(i * 8 + j) % 8];
+
+	for(i = 0; i < 8; ++i)
+		for(j = 0; j < 8; ++j)
+			sh[i][j] &= 0x3f;
+
+	for(i = 0; i < 8; ++i)
+		for(j = 0; j < 8; ++j)
+			sh[i][j] = b64_encode_lut[sh[i][j]];
+
+	u8x64 ret;
+	for(i = 0, k = 0; i < 8; ++i)
+		for(j = 0; j < 8; ++j)
+			ret[k++] = sh[i][j];
+
+	return ret;
+}
+
+//
+// Base64 decode
+//
 
 std::string
 ircd::b64decode(const string_view &in)
@@ -226,7 +350,7 @@ ircd::b64decode(const mutable_buffer &out,
 
 	const auto pads
 	{
-		endswith_count(in, _b64_pad_)
+		endswith_count(in, base::_b64_pad_)
 	};
 
 	const auto e
@@ -243,13 +367,21 @@ ircd::b64decode(const mutable_buffer &out,
 	return { data(out), size_t(len) };
 }
 
-namespace ircd
+//
+// Base58
+//
+
+namespace ircd::base
 {
-	const auto &b58
+	static const auto &b58
 	{
 		"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"s
 	};
 }
+
+//
+// Base58 decode
+//
 
 std::string
 ircd::b58decode(const string_view &in)
@@ -290,7 +422,7 @@ ircd::b58decode(const mutable_buffer &buf,
 	size_t length(0);
 	for(size_t i(0); p != end(in); ++p, length = i, i = 0)
 	{
-		auto carry(b58.find(*p));
+		auto carry(base::b58.find(*p));
 		if(carry == std::string::npos)
 			throw std::out_of_range("Invalid base58 character");
 
@@ -308,6 +440,10 @@ ircd::b58decode(const mutable_buffer &buf,
 	memmove(it, data(out) + (size(out) - length), length);
 	return { begin(buf), it + length };
 }
+
+//
+// Base58 encode
+//
 
 std::string
 ircd::b58encode(const const_buffer &in)
@@ -357,7 +493,7 @@ ircd::b58encode(const mutable_buffer &buf,
 		begin(buf), std::transform(it, it + length, it, []
 		(const uint8_t &in)
 		{
-			return b58.at(in);
+			return base::b58.at(in);
 		})
 	};
 }
