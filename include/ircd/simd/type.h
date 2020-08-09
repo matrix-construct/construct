@@ -11,24 +11,28 @@
 #pragma once
 #define HAVE_IRCD_SIMD_TYPE_H
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpsabi"
+#pragma GCC diagnostic ignored "-Wpacked"
+
 /// Unaligned type wrapper macro
 #define IRCD_SIMD_TYPEDEF_UNALIGNED(TYPE, NAME)  \
-struct [[gnu::visibility("internal")]]           \
+struct                                           \
+__attribute__((packed))                          \
+__attribute__((aligned(1)))                      \
+__attribute__((visibility("internal")))          \
 NAME                                             \
 {                                                \
     TYPE val;                                    \
                                                  \
     operator TYPE () const { return val; }       \
-    operator TYPE &()      { return val; }       \
                                                  \
     template<class T> NAME &operator=(T&& t)     \
     {                                            \
         val = std::forward<T>(t);                \
         return *this;                            \
     }                                            \
-}                                                \
-__attribute__((packed))                          \
-__attribute__((aligned(1)))
+}
 
 //
 // scalar
@@ -153,6 +157,8 @@ namespace ircd
 	IRCD_SIMD_TYPEDEF_UNALIGNED(__m128d, d128x1_u);
 }
 #endif
+
+#pragma GCC diagnostic pop
 
 //
 // other words
