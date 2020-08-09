@@ -11,29 +11,6 @@
 #pragma once
 #define HAVE_IRCD_SIMD_TYPE_H
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpsabi"
-#pragma GCC diagnostic ignored "-Wpacked"
-
-/// Unaligned type wrapper macro
-#define IRCD_SIMD_TYPEDEF_UNALIGNED(TYPE, NAME)  \
-struct                                           \
-__attribute__((packed))                          \
-__attribute__((aligned(1)))                      \
-__attribute__((visibility("internal")))          \
-NAME                                             \
-{                                                \
-    TYPE val;                                    \
-                                                 \
-    operator TYPE () const { return val; }       \
-                                                 \
-    template<class T> NAME &operator=(T&& t)     \
-    {                                            \
-        val = std::forward<T>(t);                \
-        return *this;                            \
-    }                                            \
-}
-
 //
 // scalar
 //
@@ -78,10 +55,6 @@ namespace ircd
 	typedef __m512i       u512x1;    //  [_______________________________0________________________________|
 	typedef __m256i       u256x1;    //  [________________0________________|
 	typedef __m128i       u128x1;    //  [________0________|
-
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m512i, u512x1_u);
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m256i, u256x1_u);
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m128i, u128x1_u);
 }
 #endif
 
@@ -108,10 +81,6 @@ namespace ircd
 	typedef __m512i       i512x1;    //  [_______________________________0________________________________|
 	typedef __m256i       i256x1;    //  [________________0________________|
 	typedef __m128i       i128x1;    //  [________0________|
-
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m512i, i512x1_u);
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m256i, i256x1_u);
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m128i, i128x1_u);
 }
 #endif
 
@@ -130,10 +99,6 @@ namespace ircd
 	typedef __m512        f512x1;    //  [_______________________________0________________________________|
 	typedef __m256        f256x1;    //  [________________0________________|
 	typedef __m128        f128x1;    //  [____|____0____|____|
-
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m512, f512x1_u);
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m256, f256x1_u);
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m128, f128x1_u);
 }
 #endif
 
@@ -151,14 +116,8 @@ namespace ircd
 	typedef __m512d       d512x1;    //  [_______________________________0________________________________|
 	typedef __m256d       d256x1;    //  [________________0________________|
 	typedef __m128d       d128x1;    //  [________0________]
-
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m512d, d512x1_u);
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m256d, d256x1_u);
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m128d, d128x1_u);
 }
 #endif
-
-#pragma GCC diagnostic pop
 
 //
 // other words
