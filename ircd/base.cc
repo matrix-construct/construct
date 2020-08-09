@@ -24,6 +24,7 @@ namespace ircd::base
 ircd::string_view
 ircd::b64urltob64(const mutable_buffer &out,
                   const string_view &in)
+noexcept
 {
 	//TODO: optimize with single pass
 	string_view ret(in);
@@ -35,6 +36,7 @@ ircd::b64urltob64(const mutable_buffer &out,
 ircd::string_view
 ircd::b64tob64url(const mutable_buffer &out,
                   const string_view &in)
+noexcept
 {
 	//TODO: optimize with single pass
 	string_view ret(in);
@@ -145,6 +147,7 @@ ircd::base::b64_encode_permute_tab
 ircd::string_view
 ircd::b64encode(const mutable_buffer &out,
                 const const_buffer &in)
+noexcept
 {
 	const auto pads
 	{
@@ -171,6 +174,7 @@ ircd::b64encode(const mutable_buffer &out,
 ircd::string_view
 ircd::b64encode_unpadded(const mutable_buffer &out,
                          const const_buffer &in)
+noexcept
 {
 	const size_t res_len
 	{
@@ -362,6 +366,7 @@ ircd::b58decode(const mutable_buffer &buf,
 ircd::string_view
 ircd::b58encode(const mutable_buffer &buf,
                 const const_buffer &in)
+noexcept
 {
 	auto p(begin(in));
 	size_t zeroes(0);

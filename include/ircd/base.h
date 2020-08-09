@@ -16,7 +16,7 @@ namespace ircd
 	// Binary -> Base58 encode suite
 	constexpr size_t b58encode_size(const size_t &);
 	size_t b58encode_size(const const_buffer &in);
-	string_view b58encode(const mutable_buffer &out, const const_buffer &in);
+	string_view b58encode(const mutable_buffer &out, const const_buffer &in) noexcept;
 
 	// Base58 -> Binary decode suite
 	constexpr size_t b58decode_size(const size_t &);
@@ -26,12 +26,12 @@ namespace ircd
 	// Binary -> Base64 conversion suite
 	constexpr size_t b64encode_size(const size_t &);
 	size_t b64encode_size(const const_buffer &in);
-	string_view b64encode(const mutable_buffer &out, const const_buffer &in);
+	string_view b64encode(const mutable_buffer &out, const const_buffer &in) noexcept;
 
 	// Binary -> Base64 conversion without padding
 	constexpr size_t b64encode_unpadded_size(const size_t &);
 	size_t b64encode_unpadded_size(const const_buffer &in);
-	string_view b64encode_unpadded(const mutable_buffer &out, const const_buffer &in);
+	string_view b64encode_unpadded(const mutable_buffer &out, const const_buffer &in) noexcept;
 
 	// Base64 -> Binary conversion (padded or unpadded)
 	constexpr size_t b64decode_size(const size_t &);
@@ -42,8 +42,8 @@ namespace ircd
 	string_view b64tob58(const mutable_buffer &out, const string_view &in);
 	string_view b58tob64(const mutable_buffer &out, const string_view &in);
 	string_view b58tob64_unpadded(const mutable_buffer &out, const string_view &in);
-	string_view b64tob64url(const mutable_buffer &out, const string_view &in);
-	string_view b64urltob64(const mutable_buffer &out, const string_view &in);
+	string_view b64tob64url(const mutable_buffer &out, const string_view &in) noexcept;
+	string_view b64urltob64(const mutable_buffer &out, const string_view &in) noexcept;
 }
 
 inline size_t
