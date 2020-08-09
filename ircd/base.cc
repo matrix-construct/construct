@@ -88,8 +88,6 @@ ircd::b64tob58(const mutable_buffer &out,
 
 namespace ircd::base
 {
-	using _b64_encoder = std::function<string_view (const mutable_buffer &, const const_buffer &)>;
-
 	constexpr char _b64_pad_
 	{
 		'='
@@ -101,7 +99,6 @@ namespace ircd::base
 	b64_encode_permute_tab[64];
 
 	static u8x64 b64encode(const u8x64 in) noexcept;
-	static std::string _b64encode(const const_buffer &in, const _b64_encoder &);
 }
 
 // [00] - [25]  =>  A - Z
@@ -142,45 +139,6 @@ ircd::base::b64_encode_permute_tab
 	42 + 1,   42 + 0,   42 + 2,   42 + 1,
 	45 + 1,   45 + 0,   45 + 2,   45 + 1,
 };
-
-/// Allocate and return a string without padding from the encoding of in
-std::string
-ircd::b64encode_unpadded(const const_buffer &in)
-{
-	return base::_b64encode(in, [](const auto &out, const auto &in)
-	{
-		return b64encode_unpadded(out, in);
-	});
-}
-
-/// Allocate and return a string from the encoding of in
-std::string
-ircd::b64encode(const const_buffer &in)
-{
-	return base::_b64encode(in, [](const auto &out, const auto &in)
-	{
-		return b64encode(out, in);
-	});
-}
-
-/// Internal; dedupes encoding functions that create and return a string
-static std::string
-ircd::base::_b64encode(const const_buffer &in,
-                       const _b64_encoder &encoder)
-{
-	// Allocate a buffer 1.33 times larger than input with pessimistic
-	// extra space for any padding and nulling.
-	const auto max
-	{
-		ceil(size(in) * (4.0 / 3.0)) + 4
-	};
-
-	return string(max, [&in, &encoder]
-	(const mutable_buffer &buf)
-	{
-		return encoder(buf, in);
-	});
-}
 
 /// Encoding in to base64 at out. Out must be 1.33+ larger than in
 /// padding is not present in the returned view.
@@ -313,31 +271,6 @@ noexcept
 // Base64 decode
 //
 
-std::string
-ircd::b64decode(const string_view &in)
-{
-	// Allocate a buffer 75% than input with pessimistic extra space
-	const auto max
-	{
-		ceil(size(in) * 0.75) + 4
-	};
-
-	std::string ret(max, char{});
-	const mutable_buffer buf
-	{
-		const_cast<char *>(ret.data()), ret.size()
-	};
-
-	const auto decoded
-	{
-		b64decode(buf, in)
-	};
-
-	assert(size(decoded) <= ret.size());
-	ret.resize(size(decoded));
-	return ret;
-}
-
 /// Decode base64 from in to the buffer at out; out can be 75% of the size
 /// of in.
 ircd::const_buffer
@@ -383,25 +316,6 @@ namespace ircd::base
 // Base58 decode
 //
 
-std::string
-ircd::b58decode(const string_view &in)
-{
-	std::string ret(b58decode_size(in), char{});
-	const mutable_buffer buf
-	{
-		const_cast<char *>(ret.data()), ret.size()
-	};
-
-	const auto decoded
-	{
-		b58decode(buf, in)
-	};
-
-	assert(size(decoded) <= ret.size());
-	ret.resize(size(decoded));
-	return ret;
-}
-
 ircd::const_buffer
 ircd::b58decode(const mutable_buffer &buf,
                 const string_view &in)
@@ -444,16 +358,6 @@ ircd::b58decode(const mutable_buffer &buf,
 //
 // Base58 encode
 //
-
-std::string
-ircd::b58encode(const const_buffer &in)
-{
-	return string(b58encode_size(in), [&in]
-	(const mutable_buffer &buf)
-	{
-		return b58encode(buf, in);
-	});
-}
 
 ircd::string_view
 ircd::b58encode(const mutable_buffer &buf,
