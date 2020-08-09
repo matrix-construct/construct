@@ -97,8 +97,12 @@ namespace ircd::base
 
 	[[using gnu: visibility("internal"), aligned(64)]]
 	extern const u8
-	b64_encode_lut[64],
-	b64_encode_permute_tab[64];
+	b64_encode_permute_tab[64],
+	b64_encode_shift_ctrl[64];
+
+	[[using gnu: visibility("internal"), aligned(64)]]
+	extern const i32
+	b64_encode_lut[64];
 
 	static u8x64 b64encode(const u8x64 in) noexcept;
 }
@@ -120,6 +124,7 @@ ircd::base::b64_encode_lut
 	'4', '5', '6', '7', '8', '9', '+', '/',
 };
 
+/// For vpermb
 /// From arXiv:1910.05109v1 [Mula, Lemire] 2 Oct 2019
 decltype(ircd::base::b64_encode_permute_tab)
 ircd::base::b64_encode_permute_tab
@@ -140,6 +145,29 @@ ircd::base::b64_encode_permute_tab
 	39 + 1,   39 + 0,   39 + 2,   39 + 1,
 	42 + 1,   42 + 0,   42 + 2,   42 + 1,
 	45 + 1,   45 + 0,   45 + 2,   45 + 1,
+};
+
+/// For vpmultishiftqb
+/// From arXiv:1910.05109v1 [Mula, Lemire] 2 Oct 2019
+decltype(ircd::base::b64_encode_shift_ctrl)
+ircd::base::b64_encode_shift_ctrl
+{
+	(10 +  0),  ( 4 +  0),  (22 +  0),  (16 +  0),
+	(10 + 32),  ( 4 + 32),  (22 + 32),  (16 + 32),
+	(10 +  0),  ( 4 +  0),  (22 +  0),  (16 +  0),
+	(10 + 32),  ( 4 + 32),  (22 + 32),  (16 + 32),
+	(10 +  0),  ( 4 +  0),  (22 +  0),  (16 +  0),
+	(10 + 32),  ( 4 + 32),  (22 + 32),  (16 + 32),
+	(10 +  0),  ( 4 +  0),  (22 +  0),  (16 +  0),
+	(10 + 32),  ( 4 + 32),  (22 + 32),  (16 + 32),
+	(10 +  0),  ( 4 +  0),  (22 +  0),  (16 +  0),
+	(10 + 32),  ( 4 + 32),  (22 + 32),  (16 + 32),
+	(10 +  0),  ( 4 +  0),  (22 +  0),  (16 +  0),
+	(10 + 32),  ( 4 + 32),  (22 + 32),  (16 + 32),
+	(10 +  0),  ( 4 +  0),  (22 +  0),  (16 +  0),
+	(10 + 32),  ( 4 + 32),  (22 + 32),  (16 + 32),
+	(10 +  0),  ( 4 +  0),  (22 +  0),  (16 +  0),
+	(10 + 32),  ( 4 + 32),  (22 + 32),  (16 + 32),
 };
 
 /// Encoding in to base64 at out. Out must be 1.33+ larger than in
@@ -236,12 +264,6 @@ ircd::u8x64
 ircd::base::b64encode(const u8x64 in)
 noexcept
 {
-	static const int shift_ctrl[8]
-	{
-		(10 +  0),  ( 4 +  0),  (22 +  0),  (16 +  0),
-		(10 + 32),  ( 4 + 32),  (22 + 32),  (16 + 32),
-	};
-
 	size_t i, j, k;
 
 	// vpermb
@@ -253,20 +275,17 @@ noexcept
 	u64x8 sh[8], perm(_perm);
 	for(i = 0; i < 8; ++i)
 		for(j = 0; j < 8; ++j)
-			sh[i][j] = perm[i] >> shift_ctrl[(i * 8 + j) % 8];
+			sh[i][j] = perm[i] >> b64_encode_shift_ctrl[i * 8 + j];
 
+	// TODO: not needed if vpmultishiftqb is emitted.
 	for(i = 0; i < 8; ++i)
 		for(j = 0; j < 8; ++j)
 			sh[i][j] &= 0x3f;
 
-	for(i = 0; i < 8; ++i)
-		for(j = 0; j < 8; ++j)
-			sh[i][j] = b64_encode_lut[sh[i][j]];
-
 	u8x64 ret;
 	for(i = 0, k = 0; i < 8; ++i)
 		for(j = 0; j < 8; ++j)
-			ret[k++] = sh[i][j];
+			ret[k++] = b64_encode_lut[sh[i][j]];
 
 	return ret;
 }
