@@ -12,14 +12,6 @@
 #pragma STDC FENV_ACCESS on
 #endif
 
-std::fexcept_t
-ircd::fpe::set(const ushort &flags)
-{
-	std::fexcept_t theirs;
-	syscall(std::fesetexceptflag, &theirs, flags);
-	return theirs;
-}
-
 void
 ircd::fpe::_throw_errors(const ushort &flags)
 {

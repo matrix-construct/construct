@@ -14,6 +14,7 @@
 namespace ircd::fpe
 {
 	struct errors_handle;
+	struct scope_round;
 
 	string_view reflect_sicode(const int &);
 	string_view reflect(const ushort &flag);
@@ -21,9 +22,35 @@ namespace ircd::fpe
 
 	[[noreturn]] void _throw_errors(const ushort &flags);
 	void throw_errors(const ushort &flags);
-	std::fexcept_t set(const ushort &flag);
+
+	void set_round(const std::float_round_style &style);
+	std::fexcept_t set_excepts(const ushort &flag);
 }
 
+/// scope_round
+///
+struct ircd::fpe::scope_round
+{
+	int theirs
+	{
+		std::fegetround()
+	};
+
+	scope_round(const std::float_round_style &ours) noexcept
+	{
+		std::fesetround(ours);
+	}
+
+	scope_round(const scope_round &) = delete;
+	scope_round &operator=(const scope_round &) = delete;
+	~scope_round() noexcept
+	{
+		std::fesetround(theirs);
+	}
+};
+
+/// errors_handle
+///
 /// Perform a single floating point operation at a time within the scope
 /// of fpe::errors_handle. After each operation check the floating point
 /// unit for an error status flag and throw a C++ exception.
@@ -83,4 +110,22 @@ ircd::fpe::errors_handle::pending()
 const
 {
 	return std::fetestexcept(FE_ALL_EXCEPT);
+}
+
+//
+// ircd::fpe
+//
+
+inline std::fexcept_t
+ircd::fpe::set_excepts(const ushort &flags)
+{
+	std::fexcept_t theirs;
+	syscall(std::fesetexceptflag, &theirs, flags);
+	return theirs;
+}
+
+inline void
+ircd::fpe::set_round(const std::float_round_style &style)
+{
+	syscall(std::fesetround, style);
 }
