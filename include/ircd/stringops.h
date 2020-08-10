@@ -135,6 +135,7 @@ ircd::replace(const mutable_buffer &out,
 	if(data(in) == data(out))
 		return replace(mutable_buffer(data(out), cpsz), before, after);
 
+	assert(!overlap(out, in));
 	const auto &end_in
 	{
 		std::next(begin(in), cpsz)
@@ -145,7 +146,10 @@ ircd::replace(const mutable_buffer &out,
 		std::replace_copy(begin(in), end_in, begin(out), before, after)
 	};
 
-	return { begin(out), end_out };
+	return string_view
+	{
+		begin(out), end_out
+	};
 }
 
 inline ircd::string_view
@@ -154,7 +158,10 @@ ircd::replace(const mutable_buffer &s,
               const char &after)
 {
 	std::replace(begin(s), end(s), before, after);
-	return { data(s), size(s) };
+	return string_view
+	{
+		data(s), size(s)
+	};
 }
 
 inline std::string
