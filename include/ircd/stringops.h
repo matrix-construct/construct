@@ -97,8 +97,8 @@ namespace ircd
 	std::string replace(std::string, const string_view &before, const string_view &after);
 	std::string replace(const string_view &, const char &before, const string_view &after);
 	std::string replace(const string_view &, const string_view &before, const string_view &after);
-	string_view replace(const mutable_buffer &, const char &before, const char &after);
-	string_view replace(const mutable_buffer &out, const string_view &in, const char &before, const char &after);
+	string_view replace(const mutable_buffer &, const char &before, const char &after) noexcept;
+	string_view replace(const mutable_buffer &out, const string_view &in, const char &before, const char &after) noexcept;
 
 	// Change a single character's case
 	using std::tolower;
@@ -124,6 +124,7 @@ ircd::replace(const mutable_buffer &out,
               const string_view &in,
               const char &before,
               const char &after)
+noexcept
 {
 	const size_t cpsz
 	{
@@ -136,19 +137,22 @@ ircd::replace(const mutable_buffer &out,
 		return replace(mutable_buffer(data(out), cpsz), before, after);
 
 	assert(!overlap(out, in));
-	const auto &end_in
+	char *const __restrict__ outp
 	{
-		std::next(begin(in), cpsz)
+		begin(out)
 	};
 
-	const auto &end_out
+	const char *const __restrict__ inp
 	{
-		std::replace_copy(begin(in), end_in, begin(out), before, after)
+		begin(in)
 	};
+
+	for(size_t i(0); i < cpsz; ++i)
+		outp[i] = inp[i] != before? inp[i]: after;
 
 	return string_view
 	{
-		begin(out), end_out
+		begin(out), cpsz
 	};
 }
 
@@ -156,8 +160,16 @@ inline ircd::string_view
 ircd::replace(const mutable_buffer &s,
               const char &before,
               const char &after)
+noexcept
 {
-	std::replace(begin(s), end(s), before, after);
+	char *const __restrict__ p
+	{
+		begin(s)
+	};
+
+	for(size_t i(0); i < size(s); ++i)
+		p[i] = p[i] != before? p[i]: after;
+
 	return string_view
 	{
 		data(s), size(s)
@@ -189,7 +201,12 @@ ircd::replace(std::string s,
               const char &before,
               const char &after)
 {
-	std::replace(begin(s), end(s), before, after);
+	const auto &res
+	{
+		replace(mutable_buffer(s), before, after)
+	};
+
+	assert(res.data() == s.data());
 	return s;
 }
 
