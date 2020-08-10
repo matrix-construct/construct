@@ -8,9 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <boost/archive/iterators/binary_from_base64.hpp>
-#include <boost/archive/iterators/transform_width.hpp>
-
 #pragma GCC visibility push(internal)
 namespace ircd::b64
 {
@@ -22,7 +19,15 @@ namespace ircd::b64
 	[[gnu::aligned(64)]]
 	extern const u8
 	encode_permute_tab[64],
-	encode_shift_ctrl[64];
+	encode_shift_ctrl[64],
+	decode_permute_tab[64],
+	decode_permute_tab_le[64];
+
+	[[gnu::aligned(64)]]
+	extern const i32
+	decode_dictionary[256];
+
+	static u8x64 decode_block(const u8x64 in) noexcept;
 
 	template<const u8 (&dict)[64]>
 	static u8x64 encode_block(const u8x64 in) noexcept;
@@ -56,8 +61,47 @@ ircd::b64::dict_rfc4648
 	'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '_',
 };
 
+decltype(ircd::b64::decode_dictionary)
+ircd::b64::decode_dictionary
+{
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 7
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 15
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 23
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 31
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 39
+	0x00, 0x00, 0x00,   62,   63,   62, 0x00,   63, // 47
+	  52,   53,   54,   55,   56,   57,   58,   59, // 55
+	  60,   61, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 63
+	0x00,    0,    1,    2,    3,    4,    5,    6, // 71
+	   7,    8,    9,   10,   11,   12,   13,   14, // 79
+	  15,   16,   17,   18,   19,   20,   21,   22, // 87
+	  23,   24,   25, 0x00, 0x00, 0x00, 0x00,   63, // 95
+	0x00,   26,   27,   28,   29,   30,   31,   32, // 103
+	  33,   34,   35,   36,   37,   38,   39,   40, // 111
+	  41,   42,   43,   44,   45,   46,   47,   48, // 119
+	  49,   50,   51, 0x00, 0x00, 0x00, 0x00, 0x00, // 127
+};
+
+decltype(ircd::b64::decode_permute_tab)
+ircd::b64::decode_permute_tab
+{
+	 6,  0,  1,  2,  9, 10,  4,  5, 12, 13, 14,  8, 22, 16, 17, 18,
+	25, 26, 20, 21, 28, 29, 30, 24, 38, 32, 33, 34, 41, 42, 36, 37,
+	44, 45, 46, 40, 54, 48, 49, 50, 57, 58, 52, 53, 60, 61, 62, 56,
+	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+};
+
+/// byte-order swapped for each 32-bit word from above
+decltype(ircd::b64::decode_permute_tab_le)
+ircd::b64::decode_permute_tab_le
+{
+	 2,  1,  0,  6,  5,  4, 10,  9,  8, 14, 13, 12, 18, 17, 16, 22,
+	21, 20, 26, 25, 24, 30, 29, 28, 34, 33, 32, 38, 37, 36, 42, 41,
+	40, 46, 45, 44, 50, 49, 48, 54, 53, 52, 58, 57, 56, 62, 61, 60,
+	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+};
+
 /// For vpermb
-/// From arXiv:1910.05109v1 [Mula, Lemire] 2 Oct 2019
 decltype(ircd::b64::encode_permute_tab)
 ircd::b64::encode_permute_tab
 {
@@ -72,7 +116,6 @@ ircd::b64::encode_permute_tab
 };
 
 /// For vpmultishiftqb
-/// From arXiv:1910.05109v1 [Mula, Lemire] 2 Oct 2019
 decltype(ircd::b64::encode_shift_ctrl)
 ircd::b64::encode_shift_ctrl
 {
@@ -226,28 +269,85 @@ ircd::const_buffer
 ircd::b64::decode(const mutable_buffer &out,
                   const string_view &in)
 {
-	namespace iterators = boost::archive::iterators;
-	using b64bf = iterators::binary_from_base64<const char *>;
-	using transform = iterators::transform_width<b64bf, 8, 6>;
-
-	const auto pads
+	const size_t out_len
 	{
-		endswith_count(in, b64::pad)
+		std::min(decode_size(in), size(out))
 	};
 
-	const auto e
+	size_t i(0), j(0);
+	for(; i + 1 <= (size(in) / 64) && i + 1 <= (out_len / 48); ++i)
 	{
-		std::copy(transform(begin(in)), transform(begin(in) + size(in) - pads), begin(out))
-	};
+		// Destination is indexed at 48 byte stride
+		const auto di
+		{
+			reinterpret_cast<u512x1_u *__restrict__>(data(out) + (i * 48))
+		};
 
-	const auto len
-	{
-		std::distance(begin(out), e)
-	};
+		// Source is indexed at 64 byte stride
+		const auto si
+		{
+			reinterpret_cast<const u512x1_u *__restrict__>(data(in) + (i * 64))
+		};
 
-	assert(size_t(len) <= size(out));
-	return const_buffer
+		*di = decode_block(*si);
+	}
+
+	for(; i * 64 < size(in) && i * 48 < out_len; ++i)
 	{
-		data(out), size_t(len)
+		u8x64 block {0};
+		for(j = 0; j < 64 && i * 64 + j < size(in); ++j)
+			block[j] = in[i * 64 + j];
+
+		block = decode_block(block);
+		for(j = 0; j < 48 && i * 48 + j < out_len; ++j)
+			out[i * 48 + j] = block[j];
+	}
+
+	return string_view
+	{
+		data(out), out_len
 	};
+}
+
+/// Decode 64 base64 characters into a 48 byte result. The last 48 bytes of
+/// the returned vector are undefined for the caller.
+ircd::u8x64
+ircd::b64::decode_block(const u8x64 in)
+noexcept
+{
+	size_t i, j;
+
+	i32x16 zz[4];
+	for(i = 0; i < 4; ++i)
+		for(j = 0; j < 16; ++j)
+			zz[i][j] = decode_dictionary[in[i * 16 + j]];
+
+	u8x64 z;
+	for(i = 0; i < 4; ++i)
+		for(j = 0; j < 16; ++j)
+			z[i * 16 + j] = zz[i][j];
+
+	u16x32 al, ah;
+	for(i = 0, j = 0; i < 32; ++i)
+		ah[i] = z[j++],
+		al[i] = z[j++];
+
+	u16x32 a;
+	for(i = 0; i < 32; ++i)
+		a[i] = ah[i] * 64 + al[i];
+
+	u32x16 bl, bh;
+	for(i = 0, j = 0; i < 16; ++i)
+		bh[i] = a[j++],
+		bl[i] = a[j++];
+
+	u32x16 b;
+	for(i = 0; i < 16; ++i)
+		b[i] = bh[i] * 4096 + bl[i];
+
+	u8x64 d, c(b);
+	for(i = 0; i < 64; ++i)
+		d[i] = c[decode_permute_tab_le[i]];
+
+	return d;
 }

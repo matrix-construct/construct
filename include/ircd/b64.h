@@ -80,5 +80,5 @@ constexpr size_t
 ircd::b64::decode_size(const size_t &in)
 noexcept
 {
-	return (in * 0.75) + 1; //XXX: constexpr ceil()
+	return in * (3.0 / 4.0);
 }

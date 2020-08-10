@@ -205,7 +205,6 @@ libircd_la_SOURCES += ircd.cc
 # Specific unit configurations
 #
 
-b64.lo:               AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
 client.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 ctx_x86_64.lo:        AM_CPPFLAGS := -I$(top_srcdir)/include
 ctx.lo:               AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
