@@ -123,7 +123,7 @@ ircd::m::verify(const m::keys &keys)
 	{
 		[&key](auto &pk)
 		{
-			b64decode(pk, unquote(key.at("key")));
+			b64::decode(pk, unquote(key.at("key")));
 		}
 	};
 
@@ -146,7 +146,7 @@ ircd::m::verify(const m::keys &keys)
 	{
 		[&server_signatures, &key_id](auto &sig)
 		{
-			b64decode(sig, unquote(server_signatures.at(key_id)));
+			b64::decode(sig, unquote(server_signatures.at(key_id)));
 		}
 	};
 
@@ -639,7 +639,7 @@ noexcept try
 	char seed_buf[ed25519::SEED_SZ + 10];
 	const auto seed
 	{
-		b64decode(seed_buf, "YJDBA9Xnr2sVqXD9Vj7XVUnmFZcZrlw8Md7kMW+3XA1")
+		b64::decode(seed_buf, "YJDBA9Xnr2sVqXD9Vj7XVUnmFZcZrlw8Md7kMW+3XA1")
 	};
 
 	ed25519::pk pk;
@@ -659,12 +659,12 @@ noexcept try
 		char sigb64_buf[128];
 		const auto sigb64
 		{
-			b64encode_unpadded(sigb64_buf, sig)
+			b64::encode_unpadded(sigb64_buf, sig)
 		};
 
 		ed25519::sig unsig; const auto unsigb64
 		{
-			b64decode(unsig, sigb64)
+			b64::decode(unsig, sigb64)
 		};
 
 		return pk.verify(const_buffer{object}, unsig);

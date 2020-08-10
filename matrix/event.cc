@@ -107,13 +107,13 @@ ircd::m::make_id(const event &event,
                  id::event::buf &buf,
                  const const_buffer &hash)
 {
-	char readable[b64encode_size(sha256::digest_size)];
+	char readable[b64::encode_size(sha256::digest_size)];
 
 	if(version == "1" || version == "2")
 	{
 		const id::event ret
 		{
-			buf, b64tob64url(readable, b64encode_unpadded(readable, hash)), at<"origin"_>(event)
+			buf, b64::tob64url(readable, b64::encode_unpadded(readable, hash)), at<"origin"_>(event)
 		};
 
 		buf.assigned(ret);
@@ -123,7 +123,7 @@ ircd::m::make_id(const event &event,
 	{
 		const id::event ret
 		{
-			buf, b64encode_unpadded(readable, hash), string_view{}
+			buf, b64::encode_unpadded(readable, hash), string_view{}
 		};
 
 		buf.assigned(ret);
@@ -132,7 +132,7 @@ ircd::m::make_id(const event &event,
 
 	const id::event ret
 	{
-		buf, b64tob64url(readable, b64encode_unpadded(readable, hash)), string_view{}
+		buf, b64::tob64url(readable, b64::encode_unpadded(readable, hash)), string_view{}
 	};
 
 	buf.assigned(ret);
@@ -168,11 +168,11 @@ ircd::json::object
 ircd::m::make_hashes(const mutable_buffer &out,
                      const sha256::buf &hash)
 {
-	static const auto b64bufsz(b64encode_size(sizeof(hash)));
+	static const auto b64bufsz(b64::encode_size(sizeof(hash)));
 	thread_local char hashb64buf[b64bufsz];
 	const json::members hashes
 	{
-		{ "sha256", b64encode_unpadded(hashb64buf, hash) }
+		{ "sha256", b64::encode_unpadded(hashb64buf, hash) }
 	};
 
 	return json::stringify(mutable_buffer{out}, hashes);
@@ -245,7 +245,7 @@ ircd::m::verify_hash(const event &event,
 	};
 
 	thread_local char b64buf[hashb64sz];
-	return verify_sha256b64(event, b64encode_unpadded(b64buf, hash));
+	return verify_sha256b64(event, b64::encode_unpadded(b64buf, hash));
 }
 
 bool
@@ -290,10 +290,10 @@ ircd::m::event::signatures(const mutable_buffer &out,
 		m::public_key_id(m::my(origin))
 	};
 
-	thread_local char sigb64buf[b64encode_size(sizeof(sig))];
+	thread_local char sigb64buf[b64::encode_size(sizeof(sig))];
 	const json::members sigb64
 	{
-		{ public_key_id, b64encode_unpadded(sigb64buf, sig) }
+		{ public_key_id, b64::encode_unpadded(sigb64buf, sig) }
 	};
 
 	const json::members sigs
@@ -350,7 +350,7 @@ ircd::m::signatures(const mutable_buffer &out_,
 
 	static const auto sigb64bufsz
 	{
-		b64encode_size(sizeof(my_sig))
+		b64::encode_size(sizeof(my_sig))
 	};
 
 	thread_local char sigb64buf[sigb64bufsz];
@@ -358,7 +358,7 @@ ircd::m::signatures(const mutable_buffer &out_,
 	{
 		origin, json::members
 		{
-			{ public_key_id, b64encode_unpadded(sigb64buf, my_sig) }
+			{ public_key_id, b64::encode_unpadded(sigb64buf, my_sig) }
 		}
 	};
 
@@ -600,7 +600,7 @@ ircd::m::verify(const event &event,
 	{
 		[&origin_sigs, &keyid](auto &buf)
 		{
-			b64decode(buf, json::string(origin_sigs.at(keyid)));
+			b64::decode(buf, json::string(origin_sigs.at(keyid)));
 		}
 	};
 

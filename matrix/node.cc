@@ -77,7 +77,7 @@ ircd::m::node::room::room(const m::node &node)
 
 	const string_view b58
 	{
-		b58encode(buf, hash)
+		b58::encode(buf, hash)
 	};
 
 	return id::room::buf
@@ -105,7 +105,7 @@ const
 		{
 			[&keyb64](auto &buf)
 			{
-				b64decode(buf, keyb64);
+				b64::decode(buf, keyb64);
 			}
 		};
 

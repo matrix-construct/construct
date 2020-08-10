@@ -384,7 +384,7 @@ ircd::m::homeserver::key::key(const struct opts &opts)
 {
 	ircd::string(96, [this](const mutable_buffer &buf)
 	{
-		return b64encode_unpadded(buf, public_key);
+		return b64::encode_unpadded(buf, public_key);
 	})
 }
 ,public_key_id
@@ -433,7 +433,7 @@ ircd::m::homeserver::key::key(const struct opts &opts)
 		{
 			{ opts.origin, json::member
 			{
-				public_key_id, b64encode_unpadded(buf[1], sig)
+				public_key_id, b64::encode_unpadded(buf[1], sig)
 			}}
 		})
 	};

@@ -6895,7 +6895,7 @@ console_cmd__stage(opt &out, const string_view &line)
 	{
 		char buf[512];
 		if(!verify_hash(event))
-			out << "- HASH MISMATCH: " << b64encode_unpadded(buf, hash(event)) << std::endl;
+			out << "- HASH MISMATCH: " << b64::encode_unpadded(buf, hash(event)) << std::endl;
 	}
 	catch(const std::exception &e)
 	{

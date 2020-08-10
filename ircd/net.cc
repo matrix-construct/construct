@@ -123,7 +123,7 @@ ircd::net::peer_cert_der_sha256_b64(const mutable_buffer &buf,
 		peer_cert_der_sha256(shabuf, socket)
 	};
 
-	return b64encode_unpadded(buf, hash);
+	return b64::encode_unpadded(buf, hash);
 }
 
 ircd::const_buffer

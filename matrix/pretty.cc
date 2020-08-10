@@ -166,7 +166,7 @@ ircd::m::pretty_detailed(std::ostream &out,
 		char buf[512];
 		out
 		<< std::setw(9) << std::left << "!!! ERROR" << "  "
-		<< "HASH MISMATCH :" << b64encode_unpadded(buf, hash(event))
+		<< "HASH MISMATCH :" << b64::encode_unpadded(buf, hash(event))
 		<< std::endl;
 	}
 

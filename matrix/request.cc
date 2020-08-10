@@ -208,7 +208,7 @@ const
 		out, "X-Matrix origin=%s,key=\"%s\",sig=\"%s\"",
 		origin,
 		pkid,
-		b64encode_unpadded(sigb64, sig)
+		b64::encode_unpadded(sigb64, sig)
 	};
 }
 
@@ -221,7 +221,7 @@ const
 	{
 		[&sig_](auto &buf)
 		{
-			b64decode(buf, sig_);
+			b64::decode(buf, sig_);
 		}
 	};
 

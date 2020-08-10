@@ -145,7 +145,7 @@ const
 	char b58[size(hash) * 2];
 	return
 	{
-		buf, b58encode(b58, hash), origin(my())
+		buf, b58::encode(b58, hash), origin(my())
 	};
 }
 
@@ -258,7 +258,7 @@ ircd::m::gen_password_hash(const mutable_buffer &out,
 		sha256{supplied_password}
 	};
 
-	return b64encode_unpadded(out, hash);
+	return b64::encode_unpadded(out, hash);
 }
 
 //

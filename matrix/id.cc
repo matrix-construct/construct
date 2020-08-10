@@ -793,7 +793,7 @@ ircd::m::id::event::v3::v3(const mutable_buffer &out,
 	out[0] = '$';
 	const string_view hashb64
 	{
-		b64encode_unpadded(out + 1, hash)
+		b64::encode_unpadded(out + 1, hash)
 	};
 
 	return string_view
@@ -863,8 +863,8 @@ ircd::m::id::event::v4::v4(const mutable_buffer &out,
 
 	out[0] = '$';
 	string_view hashb64;
-	hashb64 = b64encode_unpadded(out + 1, hash);
-	hashb64 = b64tob64url(out + 1, hashb64);
+	hashb64 = b64::encode_unpadded(out + 1, hash);
+	hashb64 = b64::tob64url(out + 1, hashb64);
 	return string_view
 	{
 		ircd::data(out), 1 + ircd::size(hashb64)

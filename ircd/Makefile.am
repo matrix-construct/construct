@@ -131,7 +131,8 @@ libircd_la_SOURCES += globular.cc
 libircd_la_SOURCES += tokens.cc
 libircd_la_SOURCES += parse.cc
 libircd_la_SOURCES += rand.cc
-libircd_la_SOURCES += base.cc
+libircd_la_SOURCES += b64.cc
+libircd_la_SOURCES += b58.cc
 libircd_la_SOURCES += crh.cc
 libircd_la_SOURCES += fmt.cc
 libircd_la_SOURCES += json.cc
@@ -204,7 +205,7 @@ libircd_la_SOURCES += ircd.cc
 # Specific unit configurations
 #
 
-base.lo:              AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
+b64.lo:               AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
 client.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 ctx_x86_64.lo:        AM_CPPFLAGS := -I$(top_srcdir)/include
 ctx.lo:               AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}

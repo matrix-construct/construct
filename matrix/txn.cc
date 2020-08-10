@@ -132,7 +132,7 @@ ircd::m::txn::create_id(const mutable_buffer &out,
 
 	const string_view txnid
 	{
-		b58encode(out, hash)
+		b58::encode(out, hash)
 	};
 
 	return txnid;

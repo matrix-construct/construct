@@ -615,7 +615,7 @@ ircd::m::media::file::room_id(room::id::buf &out,
 
 	out =
 	{
-		b58encode(buf, hash), my_host()
+		b58::encode(buf, hash), my_host()
 	};
 
 	return out;
@@ -633,7 +633,7 @@ ircd::m::media::block::set(const m::room &room,
 {
 	static constexpr const auto bufsz
 	{
-		b58encode_size(sha256::digest_size)
+		b58::encode_size(sha256::digest_size)
 	};
 
 	char b58buf[bufsz];
@@ -661,7 +661,7 @@ ircd::m::media::block::set(const mutable_buffer &b58buf,
 
 	const string_view b58hash
 	{
-		b58encode(b58buf, hash)
+		b58::encode(b58buf, hash)
 	};
 
 	set(b58hash, block);
