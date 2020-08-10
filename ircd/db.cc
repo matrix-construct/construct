@@ -3778,11 +3778,26 @@ ircd::db::database::sst::dump::dump(db::column column,
 ircd::db::database::sst::info::vector::vector(const database &d)
 {
 	this->reserve(db::file_count(d));
-	for(const auto &c : d.columns)
+	for(const auto &c : d.columns) try
 	{
+		assert(c);
 		db::column column{*c};
 		for(auto &&info : vector(column))
 			this->emplace_back(std::move(info));
+	}
+	catch(const ctx::interrupted &)
+	{
+		throw;
+	}
+	catch(const std::exception &e)
+	{
+		log::error
+		{
+			log, "[%s] Failed to query files for '%s' :%s",
+			db::name(d),
+			db::name(*c),
+			e.what(),
+		};
 	}
 }
 
