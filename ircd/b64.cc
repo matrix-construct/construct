@@ -24,6 +24,7 @@ namespace ircd::b64
 	encode_permute_tab[64],
 	encode_shift_ctrl[64];
 
+	template<const u8 (&dict)[64]>
 	static u8x64 encode_block(const u8x64 in) noexcept;
 }
 #pragma GCC visibility pop
@@ -85,36 +86,9 @@ ircd::b64::encode_shift_ctrl
 	(10 +  0),  ( 4 +  0),  (22 +  0),  (16 +  0),  (10 + 32),  ( 4 + 32),  (22 + 32),  (16 + 32),
 };
 
-//
-// Conversion convenience suite
-//
-
-ircd::string_view
-ircd::b64::urltob64(const mutable_buffer &out,
-                    const string_view &in)
-noexcept
-{
-	//TODO: optimize with single pass
-	string_view ret(in);
-	ret = replace(out, ret, '-', '+');
-	ret = replace(out, ret, '_', '/');
-	return ret;
-}
-
-ircd::string_view
-ircd::b64::tob64url(const mutable_buffer &out,
-                    const string_view &in)
-noexcept
-{
-	//TODO: optimize with single pass
-	string_view ret(in);
-	ret = replace(out, ret, '+', '-');
-	ret = replace(out, ret, '/', '_');
-	return ret;
-}
-
 /// Encoding in to base64 at out. Out must be 1.33+ larger than in
 /// padding is not present in the returned view.
+template<const ircd::u8 (&dict)[64]>
 ircd::string_view
 ircd::b64::encode(const mutable_buffer &out,
                   const const_buffer &in)
@@ -127,7 +101,7 @@ noexcept
 
 	const auto encoded
 	{
-		encode_unpadded(out, in)
+		encode_unpadded<dict>(out, in)
 	};
 
 	assert(size(encoded) + pads <= size(out));
@@ -143,8 +117,11 @@ noexcept
 		data(out), len
 	};
 }
+template ircd::string_view ircd::b64::encode<ircd::b64::standard>(const mutable_buffer &, const const_buffer &) noexcept;
+template ircd::string_view ircd::b64::encode<ircd::b64::urlsafe>(const mutable_buffer &, const const_buffer &) noexcept;
 
 /// Encoding in to base64 at out. Out must be 1.33+ larger than in.
+template<const ircd::u8 (&dict)[64]>
 ircd::string_view
 ircd::b64::encode_unpadded(const mutable_buffer &out,
                            const const_buffer &in)
@@ -166,16 +143,16 @@ noexcept
 		// Destination is indexed at 64 byte stride
 		const auto di
 		{
-			reinterpret_cast<u512x1_u *>(data(out) + (i * 64))
+			reinterpret_cast<u512x1_u *__restrict__>(data(out) + (i * 64))
 		};
 
 		// Source is indexed at 48 byte stride
 		const auto si
 		{
-			reinterpret_cast<const u512x1_u *>(data(in) + (i * 48))
+			reinterpret_cast<const u512x1_u *__restrict__>(data(in) + (i * 48))
 		};
 
-		*di = encode_block(*si);
+		*di = encode_block<dict>(*si);
 	}
 
 	for(; i * 48 < size(in); ++i)
@@ -184,7 +161,7 @@ noexcept
 		for(j = 0; i * 48 + j < size(in); ++j)
 			block[j] = in[i * 48 + j];
 
-		block = encode_block(block);
+		block = encode_block<dict>(block);
 		for(j = 0; i * 64 + j < out_len; ++j)
 			out[i * 64 + j] = block[j];
 	}
@@ -194,6 +171,8 @@ noexcept
 		data(out), out_len
 	};
 }
+template ircd::string_view ircd::b64::encode_unpadded<ircd::b64::standard>(const mutable_buffer &, const const_buffer &) noexcept;
+template ircd::string_view ircd::b64::encode_unpadded<ircd::b64::urlsafe>(const mutable_buffer &, const const_buffer &) noexcept;
 
 /// Returns 64 base64-encoded characters from 48 input characters. For any
 /// inputs less than 48 characters trail with null characters; caller computes
@@ -206,15 +185,11 @@ noexcept
 /// Based on https://arxiv.org/pdf/1910.05109 (and earlier work). No specific
 /// intrinsics are used here; instead we recite a kotodama divination known
 /// as "vector extensions" which by chance is visible to humans as C syntax.
+template<const ircd::u8 (&dict)[64]>
 ircd::u8x64
 ircd::b64::encode_block(const u8x64 in)
 noexcept
 {
-	static const auto &dict
-	{
-		dict_rfc1421
-	};
-
 	size_t i, j, k;
 
 	// vpermb

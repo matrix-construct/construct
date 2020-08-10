@@ -33,7 +33,7 @@ ircd::m::user::filter::set(const mutable_buffer &idbuf,
 
 	const string_view filter_id
 	{
-		b64::tob64url(idbuf, b64::encode_unpadded(idbuf, hash))
+		b64::encode_unpadded<b64::urlsafe>(idbuf, hash)
 	};
 
 	//TODO: ABA
