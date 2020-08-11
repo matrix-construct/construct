@@ -29,7 +29,7 @@ namespace ircd::b64
 
 	static u8x64 decode_block(const u8x64 in) noexcept;
 
-	template<const u8 (&dict)[64]>
+	template<const dictionary &>
 	static u8x64 encode_block(const u8x64 in) noexcept;
 }
 #pragma GCC visibility pop
@@ -131,7 +131,7 @@ ircd::b64::encode_shift_ctrl
 
 /// Encoding in to base64 at out. Out must be 1.33+ larger than in
 /// padding is not present in the returned view.
-template<const ircd::u8 (&dict)[64]>
+template<const ircd::b64::dictionary &dict>
 ircd::string_view
 ircd::b64::encode(const mutable_buffer &out,
                   const const_buffer &in)
@@ -164,7 +164,7 @@ template ircd::string_view ircd::b64::encode<ircd::b64::standard>(const mutable_
 template ircd::string_view ircd::b64::encode<ircd::b64::urlsafe>(const mutable_buffer &, const const_buffer &) noexcept;
 
 /// Encoding in to base64 at out. Out must be 1.33+ larger than in.
-template<const ircd::u8 (&dict)[64]>
+template<const ircd::b64::dictionary &dict>
 ircd::string_view
 ircd::b64::encode_unpadded(const mutable_buffer &out,
                            const const_buffer &in)
@@ -228,7 +228,7 @@ template ircd::string_view ircd::b64::encode_unpadded<ircd::b64::urlsafe>(const 
 /// Based on https://arxiv.org/pdf/1910.05109 (and earlier work). No specific
 /// intrinsics are used here; instead we recite a kotodama divination known
 /// as "vector extensions" which by chance is visible to humans as C syntax.
-template<const ircd::u8 (&dict)[64]>
+template<const ircd::b64::dictionary &dict>
 ircd::u8x64
 ircd::b64::encode_block(const u8x64 in)
 noexcept

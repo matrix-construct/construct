@@ -13,11 +13,13 @@
 
 namespace ircd::b64
 {
-	[[gnu::aligned(64)]]
-	extern const u8
-	dict_rfc1421[64],     // [62] = '+', [63] = '/'
-	dict_rfc3501[64],     // [62] = '+', [63] = ','
-	dict_rfc4648[64];     // [62] = '-', [63] = '_'
+	using dictionary_element = char;
+	using dictionary = [[aligned(64)]] dictionary_element[64];
+
+	extern const dictionary
+	dict_rfc1421,           // [62] = '+', [63] = '/'
+	dict_rfc3501,           // [62] = '+', [63] = ','
+	dict_rfc4648;           // [62] = '-', [63] = '_'
 
 	static const auto
 	&standard { dict_rfc1421 },
@@ -34,10 +36,10 @@ namespace ircd::b64
 
 	const_buffer decode(const mutable_buffer &out, const string_view &in);
 
-	template<const u8 (&dict)[64] = standard>
+	template<const dictionary & = standard>
 	string_view encode(const mutable_buffer &out, const const_buffer &in) noexcept;
 
-	template<const u8 (&dict)[64] = standard>
+	template<const dictionary & = standard>
 	string_view encode_unpadded(const mutable_buffer &out, const const_buffer &in) noexcept;
 }
 
