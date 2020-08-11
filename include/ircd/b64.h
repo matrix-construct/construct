@@ -61,7 +61,12 @@ inline size_t
 ircd::b64::decode_size(const string_view &in)
 noexcept
 {
-	return decode_size(size(in));
+	const size_t pads
+	{
+		endswith_count(in, '=')
+	};
+
+	return decode_size(size(in) - pads);
 }
 
 constexpr size_t

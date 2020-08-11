@@ -181,7 +181,7 @@ noexcept
 	};
 
 	size_t i(0), j(0);
-	for(; i + 1 < (size(in) / 48) && i < (out_len / 64); ++i)
+	for(; i + 1 <= (size(in) / 48) && i <= (out_len / 64); ++i)
 	{
 		// Destination is indexed at 64 byte stride
 		const auto di
@@ -198,14 +198,14 @@ noexcept
 		*di = encode_block<dict>(*si);
 	}
 
-	for(; i * 48 < size(in); ++i)
+	for(; i * 48 < size(in) && i * 64 < out_len; ++i)
 	{
-		u8x64 block{0};
-		for(j = 0; i * 48 + j < size(in); ++j)
+		u8x64 block {0};
+		for(j = 0; j < 48 && i * 48 + j < size(in); ++j)
 			block[j] = in[i * 48 + j];
 
 		block = encode_block<dict>(block);
-		for(j = 0; i * 64 + j < out_len; ++j)
+		for(j = 0; j < 64 && i * 64 + j < out_len; ++j)
 			out[i * 64 + j] = block[j];
 	}
 
@@ -274,13 +274,23 @@ ircd::const_buffer
 ircd::b64::decode(const mutable_buffer &out,
                   const string_view &in)
 {
+	const size_t pads
+	{
+		endswith_count(in, '=')
+	};
+
+	const size_t in_len
+	{
+		size(in) - pads
+	};
+
 	const size_t out_len
 	{
-		std::min(decode_size(in), size(out))
+		std::min(decode_size(in_len), size(out))
 	};
 
 	size_t i(0), j(0);
-	for(; i + 1 <= (size(in) / 64) && i + 1 <= (out_len / 48); ++i)
+	for(; i + 1 <= (in_len / 64) && i + 1 <= (out_len / 48); ++i)
 	{
 		// Destination is indexed at 48 byte stride
 		const auto di
@@ -297,10 +307,10 @@ ircd::b64::decode(const mutable_buffer &out,
 		*di = decode_block(*si);
 	}
 
-	for(; i * 64 < size(in) && i * 48 < out_len; ++i)
+	for(; i * 64 < in_len && i * 48 < out_len; ++i)
 	{
 		u8x64 block {0};
-		for(j = 0; j < 64 && i * 64 + j < size(in); ++j)
+		for(j = 0; j < 64 && i * 64 + j < in_len; ++j)
 			block[j] = in[i * 64 + j];
 
 		block = decode_block(block);
