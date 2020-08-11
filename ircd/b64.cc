@@ -251,10 +251,15 @@ noexcept
 		for(j = 0; j < 8; ++j)
 			sh[i][j] &= 0x3f;
 
+	u32x8 res[8];
+	for(i = 0; i < 8; ++i)
+		for(j = 0; j < 8; ++j)
+			res[i][j] = dict[sh[i][j]];
+
 	u8x64 ret;
 	for(i = 0, k = 0; i < 8; ++i)
 		for(j = 0; j < 8; ++j)
-			ret[k++] = dict[sh[i][j]];
+			ret[k++] = res[i][j];
 
 	return ret;
 }

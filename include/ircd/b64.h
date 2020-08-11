@@ -13,7 +13,7 @@
 
 namespace ircd::b64
 {
-	using dictionary_element = char;
+	using dictionary_element = int;
 	using dictionary = [[aligned(64)]] dictionary_element[64];
 
 	extern const dictionary
