@@ -17,12 +17,12 @@ namespace ircd::b64
 	IRCD_EXCEPTION(error, invalid_encoding)
 
 	using dictionary_element = int;
-	using dictionary = [[aligned(64)]] dictionary_element[64];
+	using dictionary = dictionary_element[64];
 
 	extern const dictionary
-	dict_rfc1421,           // [62] = '+', [63] = '/'
-	dict_rfc3501,           // [62] = '+', [63] = ','
-	dict_rfc4648;           // [62] = '-', [63] = '_'
+	dict_rfc1421,   // [62] = '+', [63] = '/'
+	dict_rfc3501,   // [62] = '+', [63] = ','
+	dict_rfc4648;   // [62] = '-', [63] = '_'
 
 	static const auto
 	&standard { dict_rfc1421 },

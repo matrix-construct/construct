@@ -16,14 +16,12 @@ namespace ircd::b64
 		'='
 	};
 
-	[[gnu::aligned(64)]]
 	extern const u8
 	encode_permute_tab[64],
 	encode_shift_ctrl[64],
 	decode_permute_tab[64],
 	decode_permute_tab_le[64];
 
-	[[gnu::aligned(64)]]
 	extern const i32
 	decode_tab[256];
 
@@ -36,6 +34,7 @@ namespace ircd::b64
 
 decltype(ircd::b64::dict_rfc1421)
 ircd::b64::dict_rfc1421
+alignas(64)
 {
 	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
 	'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
@@ -45,6 +44,7 @@ ircd::b64::dict_rfc1421
 
 decltype(ircd::b64::dict_rfc3501)
 ircd::b64::dict_rfc3501
+alignas(64)
 {
 	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
 	'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
@@ -54,6 +54,7 @@ ircd::b64::dict_rfc3501
 
 decltype(ircd::b64::dict_rfc4648)
 ircd::b64::dict_rfc4648
+alignas(64)
 {
 	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
 	'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
@@ -63,6 +64,7 @@ ircd::b64::dict_rfc4648
 
 decltype(ircd::b64::decode_tab)
 ircd::b64::decode_tab
+alignas(64)
 {
 	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, // 7
 	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, // 15
@@ -100,6 +102,7 @@ ircd::b64::decode_tab
 
 decltype(ircd::b64::decode_permute_tab)
 ircd::b64::decode_permute_tab
+alignas(64)
 {
 	 6,  0,  1,  2,  9, 10,  4,  5, 12, 13, 14,  8, 22, 16, 17, 18,
 	25, 26, 20, 21, 28, 29, 30, 24, 38, 32, 33, 34, 41, 42, 36, 37,
@@ -110,6 +113,7 @@ ircd::b64::decode_permute_tab
 /// byte-order swapped for each 32-bit word from above
 decltype(ircd::b64::decode_permute_tab_le)
 ircd::b64::decode_permute_tab_le
+alignas(64)
 {
 	 2,  1,  0,  6,  5,  4, 10,  9,  8, 14, 13, 12, 18, 17, 16, 22,
 	21, 20, 26, 25, 24, 30, 29, 28, 34, 33, 32, 38, 37, 36, 42, 41,
@@ -120,6 +124,7 @@ ircd::b64::decode_permute_tab_le
 /// For vpermb
 decltype(ircd::b64::encode_permute_tab)
 ircd::b64::encode_permute_tab
+alignas(64)
 {
 	 0 + 1,    0 + 0,    0 + 2,    0 + 1,    3 + 1,    3 + 0,    3 + 2,    3 + 1,
 	 6 + 1,    6 + 0,    6 + 2,    6 + 1,    9 + 1,    9 + 0,    9 + 2,    9 + 1,
@@ -134,6 +139,7 @@ ircd::b64::encode_permute_tab
 /// For vpmultishiftqb
 decltype(ircd::b64::encode_shift_ctrl)
 ircd::b64::encode_shift_ctrl
+alignas(64)
 {
 	(10 +  0),  ( 4 +  0),  (22 +  0),  (16 +  0),  (10 + 32),  ( 4 + 32),  (22 + 32),  (16 + 32),
 	(10 +  0),  ( 4 +  0),  (22 +  0),  (16 +  0),  (10 + 32),  ( 4 + 32),  (22 + 32),  (16 + 32),
