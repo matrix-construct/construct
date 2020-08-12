@@ -27,10 +27,10 @@ namespace ircd::b64
 	extern const i32
 	decode_tab[256];
 
-	static void decode_block(u8x64 &block, i64x8 &err) noexcept;
+	static u8x64 decode_block(const u8x64 block, i64x8 &err) noexcept;
 
 	template<const dictionary &>
-	static u8x64 encode_block(const u8x64 in) noexcept;
+	static u8x64 encode_block(const u8x64 block) noexcept;
 }
 #pragma GCC visibility pop
 
@@ -163,14 +163,19 @@ noexcept
 		encode_unpadded<dict>(out, in)
 	};
 
-	assert(size(encoded) + pads <= size(out));
-	memset(data(out) + size(encoded), b64::pad, pads);
-
-	const auto len
+	const char _pad[2]
 	{
-		size(encoded) + pads
+		pads > 0? pad: '\0',
+		pads > 1? pad: '\0',
 	};
 
+	auto len
+	{
+		size(encoded)
+	};
+
+	len += copy(out + len, _pad[0]) & pads & 1;
+	len += copy(out + len, _pad[1]) & (pads >> 1) & 1;
 	return string_view
 	{
 		data(out), len
@@ -186,6 +191,16 @@ ircd::b64::encode_unpadded(const mutable_buffer &out,
                            const const_buffer &in)
 noexcept
 {
+	char *const __restrict__ dst
+	{
+		data(out)
+	};
+
+	const char *const __restrict__ src
+	{
+		data(in)
+	};
+
 	const size_t res_len
 	{
 		size_t(ceil(size(in) * (4.0 / 3.0)))
@@ -196,33 +211,38 @@ noexcept
 		std::min(res_len, size(out))
 	};
 
+	u8x64 block {0};
 	size_t i(0), j(0);
 	for(; i + 1 <= (size(in) / 48) && i <= (out_len / 64); ++i)
 	{
 		// Destination is indexed at 64 byte stride
 		const auto di
 		{
-			reinterpret_cast<u512x1_u *__restrict__>(data(out) + (i * 64))
+			reinterpret_cast<u512x1_u *__restrict__>(dst  + (i * 64))
 		};
 
 		// Source is indexed at 48 byte stride
 		const auto si
 		{
-			reinterpret_cast<const u512x1_u *__restrict__>(data(in) + (i * 48))
+			reinterpret_cast<const u512x1_u *__restrict__>(src + (i * 48))
 		};
 
-		*di = encode_block<dict>(*si);
+		block = *si;
+		block = encode_block<dict>(block);
+		*di = block;
 	}
 
 	for(; i * 48 < size(in) && i * 64 < out_len; ++i)
 	{
-		u8x64 block {0};
+		#if !defined(__AVX__)
+		#pragma clang loop unroll_count(2)
+		#endif
 		for(j = 0; j < 48 && i * 48 + j < size(in); ++j)
-			block[j] = in[i * 48 + j];
+			block[j] = src[i * 48 + j];
 
 		block = encode_block<dict>(block);
 		for(j = 0; j < 64 && i * 64 + j < out_len; ++j)
-			out[i * 64 + j] = block[j];
+			dst[i * 64 + j] = block[j];
 	}
 
 	return string_view
@@ -290,6 +310,16 @@ ircd::const_buffer
 ircd::b64::decode(const mutable_buffer &out,
                   const string_view &in)
 {
+	char *const __restrict__ dst
+	{
+		data(out)
+	};
+
+	const char *const __restrict__ src
+	{
+		data(in)
+	};
+
 	const size_t pads
 	{
 		endswith_count(in, '=')
@@ -313,29 +343,29 @@ ircd::b64::decode(const mutable_buffer &out,
 		// Destination is indexed at 48 byte stride
 		const auto di
 		{
-			reinterpret_cast<u512x1_u *__restrict__>(data(out) + (i * 48))
+			reinterpret_cast<u512x1_u *__restrict__>(dst + (i * 48))
 		};
 
 		// Source is indexed at 64 byte stride
 		const auto si
 		{
-			reinterpret_cast<const u512x1_u *__restrict__>(data(in) + (i * 64))
+			reinterpret_cast<const u512x1_u *__restrict__>(src + (i * 64))
 		};
 
 		block = *si;
-		decode_block(block, err);
+		block = decode_block(block, err);
 		*di = block;
 	}
 
 	for(; i * 64 < in_len && i * 48 < out_len; ++i)
 	{
 		for(j = 0; j < 64 && i * 64 + j < in_len; ++j)
-			block[j] = in[i * 64 + j];
+			block[j] = src[i * 64 + j];
 
 		const i8x64 err_(err);
-		decode_block(block, err);
+		block = decode_block(block, err);
 		for(j = 0; j < 48 && i * 48 + j < out_len; ++j)
-			out[i * 48 + j] = block[j];
+			dst[i * 48 + j] = block[j];
 
 		i8x64 _err(err);
 		for(; j < 64; ++j)
@@ -359,11 +389,11 @@ ircd::b64::decode(const mutable_buffer &out,
 	};
 }
 
-/// Decode 64 base64 characters into a 48 byte result. The last 48 bytes of
+/// Decode 64 base64 characters into a 48 byte result. The last 16 bytes of
 /// the returned vector are undefined for the caller.
-void
-ircd::b64::decode_block(u8x64 &__restrict__ block,
-                        i64x8 &__restrict__ err)
+ircd::u8x64
+ircd::b64::decode_block(const u8x64 block,
+                        i64x8 &__restrict__ err_)
 noexcept
 {
 	size_t i, j;
@@ -371,40 +401,33 @@ noexcept
 	i32x16 vals[4];
 	for(i = 0; i < 4; ++i)
 		for(j = 0; j < 16; ++j)
-			vals[i][j] = decode_tab[block[i * 16 + j]];
+			vals[i][j] = block[i * 16 + j],
+			vals[i][j] = decode_tab[vals[i][j]];
 
-	i32x16 errs[4];
+	i64x8 err;
+	i32x16 errs;
 	for(i = 0; i < 4; ++i)
-		errs[i] = vals[i] >= 64;
-
-	for(i = 0; i < 4; ++i)
-		for(j = 0; j < 16; ++j)
-			err[i * 2 + j / 8] |= errs[i][j];
-
-	u8x64 val;
-	for(i = 0; i < 4; ++i)
-		for(j = 0; j < 16; ++j)
-			val[i * 16 + j] = vals[i][j];
+		for(j = 0, errs = vals[i] >= 64; j < 16; ++j)
+			err[i * 2 + j / 8] = errs[j];
 
 	u16x32 al, ah;
-	for(i = 0, j = 0; i < 32; ++i)
-		ah[i] = val[j++],
-		al[i] = val[j++];
+	for(i = 0; i < 4; ++i)
+		for(j = 0; j < 8; ++j)
+			ah[i * 8 + j] = vals[i][j * 2 + 0],
+			al[i * 8 + j] = vals[i][j * 2 + 1];
 
 	u16x32 a;
 	for(i = 0; i < 32; ++i)
-		a[i] = ah[i] * 64 + al[i];
+		a[i] = ah[i] * 64U + al[i];
 
-	u32x16 bl, bh;
-	for(i = 0, j = 0; i < 16; ++i)
-		bh[i] = a[j++],
-		bl[i] = a[j++];
+	i32x16 b;
+	for(i = 0, j = 0; i < 16; ++i, j += 2)
+		b[i] = a[j] * 4096U + a[j + 1];
 
-	u32x16 b;
-	for(i = 0; i < 16; ++i)
-		b[i] = bh[i] * 4096 + bl[i];
-
-	u8x64 c(b);
+	u8x64 c(b), ret;
 	for(i = 0; i < 64; ++i)
-		block[i] = c[decode_permute_tab_le[i]];
+		ret[i] = c[decode_permute_tab_le[i]];
+
+	err_ |= err;
+	return ret;
 }
