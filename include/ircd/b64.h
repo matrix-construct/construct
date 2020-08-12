@@ -13,6 +13,9 @@
 
 namespace ircd::b64
 {
+	IRCD_EXCEPTION(ircd::error, error)
+	IRCD_EXCEPTION(error, invalid_encoding)
+
 	using dictionary_element = int;
 	using dictionary = [[aligned(64)]] dictionary_element[64];
 

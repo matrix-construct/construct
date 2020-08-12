@@ -25,9 +25,9 @@ namespace ircd::b64
 
 	[[gnu::aligned(64)]]
 	extern const i32
-	decode_dictionary[256];
+	decode_tab[256];
 
-	static u8x64 decode_block(const u8x64 in) noexcept;
+	static void decode_block(u8x64 &block, i64x8 &err) noexcept;
 
 	template<const dictionary &>
 	static u8x64 encode_block(const u8x64 in) noexcept;
@@ -61,25 +61,41 @@ ircd::b64::dict_rfc4648
 	'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '_',
 };
 
-decltype(ircd::b64::decode_dictionary)
-ircd::b64::decode_dictionary
+decltype(ircd::b64::decode_tab)
+ircd::b64::decode_tab
 {
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 7
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 15
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 23
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 31
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 39
-	0x00, 0x00, 0x00,   62,   63,   62, 0x00,   63, // 47
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, // 7
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, // 15
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, // 23
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, // 31
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, // 39
+	0x40, 0x40, 0x40,   62,   63,   62, 0x40,   63, // 47
 	  52,   53,   54,   55,   56,   57,   58,   59, // 55
-	  60,   61, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 63
-	0x00,    0,    1,    2,    3,    4,    5,    6, // 71
+	  60,   61, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, // 63
+	0x40,    0,    1,    2,    3,    4,    5,    6, // 71
 	   7,    8,    9,   10,   11,   12,   13,   14, // 79
 	  15,   16,   17,   18,   19,   20,   21,   22, // 87
-	  23,   24,   25, 0x00, 0x00, 0x00, 0x00,   63, // 95
-	0x00,   26,   27,   28,   29,   30,   31,   32, // 103
+	  23,   24,   25, 0x40, 0x40, 0x40, 0x40,   63, // 95
+	0x40,   26,   27,   28,   29,   30,   31,   32, // 103
 	  33,   34,   35,   36,   37,   38,   39,   40, // 111
 	  41,   42,   43,   44,   45,   46,   47,   48, // 119
-	  49,   50,   51, 0x00, 0x00, 0x00, 0x00, 0x00, // 127
+	  49,   50,   51, 0x40, 0x40, 0x40, 0x40, 0x40, // 127
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+	0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, // 255
 };
 
 decltype(ircd::b64::decode_permute_tab)
@@ -289,6 +305,8 @@ ircd::b64::decode(const mutable_buffer &out,
 		std::min(decode_size(in_len), size(out))
 	};
 
+	i64x8 err {0};
+	u8x64 block {0};
 	size_t i(0), j(0);
 	for(; i + 1 <= (in_len / 64) && i + 1 <= (out_len / 48); ++i)
 	{
@@ -304,19 +322,36 @@ ircd::b64::decode(const mutable_buffer &out,
 			reinterpret_cast<const u512x1_u *__restrict__>(data(in) + (i * 64))
 		};
 
-		*di = decode_block(*si);
+		block = *si;
+		decode_block(block, err);
+		*di = block;
 	}
 
 	for(; i * 64 < in_len && i * 48 < out_len; ++i)
 	{
-		u8x64 block {0};
 		for(j = 0; j < 64 && i * 64 + j < in_len; ++j)
 			block[j] = in[i * 64 + j];
 
-		block = decode_block(block);
+		const i8x64 err_(err);
+		decode_block(block, err);
 		for(j = 0; j < 48 && i * 48 + j < out_len; ++j)
 			out[i * 48 + j] = block[j];
+
+		i8x64 _err(err);
+		for(; j < 64; ++j)
+			_err[j] = 0 | err_[j];
+
+		err = _err;
 	}
+
+	for(size_t i(1); i < 8; ++i)
+		err[0] |= err[i];
+
+	if(unlikely(err[0]))
+		throw invalid_encoding
+		{
+			"base64 encoding contained invalid characters."
+		};
 
 	return string_view
 	{
@@ -326,26 +361,35 @@ ircd::b64::decode(const mutable_buffer &out,
 
 /// Decode 64 base64 characters into a 48 byte result. The last 48 bytes of
 /// the returned vector are undefined for the caller.
-ircd::u8x64
-ircd::b64::decode_block(const u8x64 in)
+void
+ircd::b64::decode_block(u8x64 &__restrict__ block,
+                        i64x8 &__restrict__ err)
 noexcept
 {
 	size_t i, j;
 
-	i32x16 zz[4];
+	i32x16 vals[4];
 	for(i = 0; i < 4; ++i)
 		for(j = 0; j < 16; ++j)
-			zz[i][j] = decode_dictionary[in[i * 16 + j]];
+			vals[i][j] = decode_tab[block[i * 16 + j]];
 
-	u8x64 z;
+	i32x16 errs[4];
+	for(i = 0; i < 4; ++i)
+		errs[i] = vals[i] >= 64;
+
 	for(i = 0; i < 4; ++i)
 		for(j = 0; j < 16; ++j)
-			z[i * 16 + j] = zz[i][j];
+			err[i * 2 + j / 8] |= errs[i][j];
+
+	u8x64 val;
+	for(i = 0; i < 4; ++i)
+		for(j = 0; j < 16; ++j)
+			val[i * 16 + j] = vals[i][j];
 
 	u16x32 al, ah;
 	for(i = 0, j = 0; i < 32; ++i)
-		ah[i] = z[j++],
-		al[i] = z[j++];
+		ah[i] = val[j++],
+		al[i] = val[j++];
 
 	u16x32 a;
 	for(i = 0; i < 32; ++i)
@@ -360,9 +404,7 @@ noexcept
 	for(i = 0; i < 16; ++i)
 		b[i] = bh[i] * 4096 + bl[i];
 
-	u8x64 d, c(b);
+	u8x64 c(b);
 	for(i = 0; i < 64; ++i)
-		d[i] = c[decode_permute_tab_le[i]];
-
-	return d;
+		block[i] = c[decode_permute_tab_le[i]];
 }
