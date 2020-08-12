@@ -39,10 +39,10 @@ namespace ircd::b64
 
 	const_buffer decode(const mutable_buffer &out, const string_view &in);
 
-	template<const dictionary & = standard>
+	template<const dictionary & = dict_rfc1421>
 	string_view encode(const mutable_buffer &out, const const_buffer &in) noexcept;
 
-	template<const dictionary & = standard>
+	template<const dictionary & = dict_rfc1421>
 	string_view encode_unpadded(const mutable_buffer &out, const const_buffer &in) noexcept;
 }
 
