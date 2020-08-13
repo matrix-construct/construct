@@ -26,10 +26,20 @@ namespace ircd::rfc3986
 	constexpr size_t DOMAIN_MAX        { rfc1035::NAME_MAX   };
 	constexpr size_t DOMAIN_BUFSIZE    { DOMAIN_MAX + 1      };
 
-	// urlencoding suite
+	// Percent-encode arbitrary string; binary/non-printable characters OK
 	string_view encode(const mutable_buffer &, const string_view &url);
+
+	// x-www-form-urlencoded generator. We make use of the existing key-value
+	// aggregator `json::members` for the inputs, but result is a www-form.
 	string_view encode(const mutable_buffer &, const json::members &);
+
+	// Decode percent-encoded strings. N.B. this refuses to decode potentially
+	// troublesome non-printable characters preventing accidental leakage into
+	// the system; exception will be thrown.
 	string_view decode(const mutable_buffer &, const string_view &url);
+
+	// Decode percent-encoded strings. N.B. this decodes into any character
+	// including control codes like %00 into '\0' etc. Use with caution.
 	const_buffer decode_unsafe(const mutable_buffer &, const string_view &url);
 
 	// extractor suite
@@ -39,9 +49,13 @@ namespace ircd::rfc3986
 
 namespace ircd
 {
+	/// Convenience namespace ircd::url allows developers to use `url::encode`
+	/// and `url::decode` rather than rfc3986:: explicitly.
 	namespace url = rfc3986;
 }
 
+/// URI component decomposition. The ctor will throw on invalid inputs. This
+/// device is completely thin and only creates views into the input string.
 struct ircd::rfc3986::uri
 {
 	string_view scheme;
@@ -55,8 +69,17 @@ struct ircd::rfc3986::uri
 	uri() = default;
 };
 
-namespace ircd { namespace rfc3986 { namespace parser
-__attribute__((visibility("default")))
+#pragma GCC visibility push(default)
+// Exposition of individual grammatical elements. Due to the diverse and
+// foundational applications of this unit, we offer a public list of references
+// to individual rules in the grammar; many of these are directly specified in
+// the RFC. Developers can select or compose from these elements while
+// developing within other units in the project. This avoids exposing a large
+// suite of arbitrary wrapper functions; instead abstract functions are offered
+// which take a reference to any apropos rule. To avoid exposure of
+// boost::spirit in project headers these types are carefully crafted thin forward
+// declarations, so spirit itself is not included here.
+namespace ircd::rfc3986::parser
 {
 	using it = const char *;
 	using unused = boost::spirit::unused_type;
@@ -121,7 +144,8 @@ __attribute__((visibility("default")))
 	extern const rule<> absolute_uri;
 	extern const rule<> uri;
 	extern const rule<> uri_ref;     // uri | relative_ref
-}}}
+}
+#pragma GCC visibility pop
 
 // Validator suite
 namespace ircd::rfc3986

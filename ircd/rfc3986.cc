@@ -8,20 +8,18 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-namespace ircd { namespace rfc3986
-__attribute__((visibility("hidden")))
+namespace ircd::rfc3986
 {
 	using namespace ircd::spirit;
 
 	struct encoder extern const encoder;
 	struct decoder extern const decoder;
-}}
+}
 
-namespace ircd { namespace rfc3986 { namespace parser
-__attribute__((visibility("hidden")))
+namespace ircd::rfc3986::parser
 {
 	using namespace ircd::spirit;
-}}}
+}
 
 decltype(ircd::rfc3986::parser::sub_delims)
 ircd::rfc3986::parser::sub_delims
@@ -385,6 +383,7 @@ ircd::rfc3986::parser::uri_ref
 // uri decompose
 //
 
+#pragma GCC visibility push(internal)
 BOOST_FUSION_ADAPT_STRUCT
 (
     ircd::rfc3986::uri,
@@ -395,6 +394,7 @@ BOOST_FUSION_ADAPT_STRUCT
     ( decltype(ircd::rfc3986::uri::query),     query     )
     ( decltype(ircd::rfc3986::uri::fragment),  fragment  )
 )
+#pragma GCC visibility pop
 
 ircd::rfc3986::uri::uri(const string_view &input)
 {
@@ -421,7 +421,8 @@ ircd::rfc3986::uri::uri(const string_view &input)
 // uri decoding
 //
 
-struct ircd::rfc3986::decoder
+struct [[gnu::visibility("internal")]]
+ircd::rfc3986::decoder
 :qi::grammar<const char *, mutable_buffer>
 {
 	template<class R = unused_type,
@@ -540,7 +541,8 @@ catch(const qi::expectation_failure<const char *> &e)
 // uri encoding
 //
 
-struct ircd::rfc3986::encoder
+struct [[gnu::visibility("internal")]]
+ircd::rfc3986::encoder
 :karma::grammar<char *, const string_view>
 {
 	template<class R = unused_type,
