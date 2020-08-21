@@ -88,12 +88,6 @@ ircd::mods::unload(mod &mod)
 		mod.location()
 	};
 
-	// Call the user's unloading function here.
-	assert(mod.header);
-	assert(mod.header->meta);
-	if(mod.header->meta->fini)
-		mod.header->meta->fini();
-
 	// Save the children! dlclose() does not like to be called recursively during static
 	// destruction of a module. The mod ctor recorded all of the modules loaded while this
 	// module was loading so we can reverse the record and unload them here.
@@ -105,6 +99,12 @@ ircd::mods::unload(mod &mod)
 		assert(ptr != std::addressof(mod));
 		return shared_from(*ptr);
 	});
+
+	// Call the user's unloading function here.
+	assert(mod.header);
+	assert(mod.header->meta);
+	if(mod.header->meta->fini)
+		mod.header->meta->fini();
 
 	mapi::static_destruction = false;
 	mod.handle.unload();
