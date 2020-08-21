@@ -219,7 +219,7 @@ noexcept
 
 	u8x64 block {0};
 	size_t i(0), j(0);
-	for(; i + 1 <= (size(in) / 48) && i <= (out_len / 64); ++i)
+	for(; i < size(in) / 48 && i < out_len / 64; ++i)
 	{
 		// Destination is indexed at 64 byte stride
 		const auto di
@@ -344,7 +344,7 @@ ircd::b64::decode(const mutable_buffer &out,
 	i64x8 err {0};
 	u8x64 block {0};
 	size_t i(0), j(0);
-	for(; i + 1 <= (in_len / 64) && i + 1 <= (out_len / 48); ++i)
+	for(; i < in_len / 64 && i < out_len / 48; ++i)
 	{
 		// Destination is indexed at 48 byte stride
 		const auto di
