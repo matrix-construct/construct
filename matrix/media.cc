@@ -239,11 +239,7 @@ ircd::m::media::file::write(const m::room &room,
 		64
 	};
 
-	static_assert
-	(
-		BLK_ENCODE_BUF_SZ >= b64::encode_size(BLK_SZ)
-	);
-
+	static_assert(BLK_ENCODE_BUF_SZ >= b64::encode_size(BLK_SZ));
 	const unique_mutable_buffer blk_encode_buf
 	{
 		BLK_ENCODE_BUF_SZ,
@@ -278,6 +274,7 @@ ircd::m::media::file::write(const m::room &room,
 			b64::encode(blk_encode_buf, blk_raw)
 		};
 
+		assert(size(blk) == b64::encode_size(blk_raw));
 		const auto event_id
 		{
 			send(room, user_id, "ircd.file.block.b64", json::members
@@ -288,7 +285,6 @@ ircd::m::media::file::write(const m::room &room,
 
 		off += size(blk_raw);
 		wrote += size(blk);
-		assert(size(blk) == b64::encode_size(blk_raw));
 	}
 
 	//assert(wrote == b64::encode_size(off));
@@ -342,7 +338,7 @@ ircd::m::media::file::read(const m::room &room,
 	encoding_bytes(0),
 	events_fetched(0),
 	events_prefetched(0);
-	for(; it; ++it)
+	for(; it; ++it) try
 	{
 		for(; epf && events_prefetched < events_fetched + events_prefetch; ++epf)
 			events_prefetched += epf.prefetch();
@@ -371,7 +367,7 @@ ircd::m::media::file::read(const m::room &room,
 			b64::decode(blk_decode_buf, blk_encoded)
 		};
 
-		#if 0
+		#ifdef IRCD_M_MEDIA_FILE_DEBUG
 		log::debug
 		{
 			log, "File %s read event_idx:%lu events[fetched:%zu prefetched:%zu] encoded:%zu decoded:%zu total_encoded:%zu total_decoded:%zu",
@@ -385,11 +381,28 @@ ircd::m::media::file::read(const m::room &room,
 			decoded_bytes,
 		};
 		#endif
+		assert(size(blk) == b64::decode_size(blk_encoded));
 
 		closure(blk);
 		decoded_bytes += size(blk);
 		encoding_bytes += size(blk_encoded);
-		assert(size(blk) == b64::decode_size(blk_encoded));
+	}
+	catch(const ctx::interrupted &)
+	{
+		throw;
+	}
+	catch(const std::exception &e)
+	{
+		log::error
+		{
+			log, "File %s block:%zu decoded:%zu :%s",
+			string_view{room.room_id},
+			events_fetched,
+			decoded_bytes,
+			e.what()
+		};
+
+		throw;
 	}
 
 	//assert(decoded_bytes == b64::decode_size(encoding_bytes));
