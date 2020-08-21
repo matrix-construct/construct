@@ -156,6 +156,7 @@ libircd_matrix_la_SOURCES += gossip.cc
 libircd_matrix_la_SOURCES += groups.cc
 libircd_matrix_la_SOURCES += request.cc
 libircd_matrix_la_SOURCES += keys.cc
+libircd_matrix_la_SOURCES += media.cc
 libircd_matrix_la_SOURCES += node.cc
 libircd_matrix_la_SOURCES += presence.cc
 libircd_matrix_la_SOURCES += pretty.cc

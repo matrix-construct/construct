@@ -14,6 +14,12 @@
 namespace ircd::m::media
 {
 	struct mxc;
+
+	extern log::log log;
+	extern conf::item<size_t> events_prefetch;
+	extern conf::item<seconds> download_timeout;
+	extern std::set<m::room::id> downloading;
+	extern ctx::dock downloading_dock;
 }
 
 namespace ircd::m::media::file
@@ -43,19 +49,6 @@ namespace ircd::m::media::file
 	         const m::room::id &room_id,
 	         string_view remote = {});
 };
-
-namespace ircd::m::media::block
-{
-	using closure = std::function<void (const const_buffer &)>;
-
-	bool prefetch(const string_view &hash);
-	bool get(const string_view &hash, const closure &);
-	const_buffer get(const mutable_buffer &out, const string_view &hash);
-
-	void set(const string_view &hash, const const_buffer &block);
-	string_view set(const mutable_buffer &hashbuf, const const_buffer &block);
-	m::event::id::buf set(const room &, const user::id &, const const_buffer &block);
-}
 
 struct ircd::m::media::mxc
 {
