@@ -373,11 +373,8 @@ ircd::b64::decode(const mutable_buffer &out,
 		for(j = 0; j < 48 && i * 48 + j < out_len; ++j)
 			dst[i * 48 + j] = block[j];
 
-		i8x64 _err(err);
 		for(; j < 64; ++j)
-			_err[j] = 0 | err_[j];
-
-		err = _err;
+			err[j] = 0 | err_[j];
 	}
 
 	for(size_t i(1); i < 8; ++i)
