@@ -241,7 +241,7 @@ ircd::m::media::file::write(const m::room &room,
 
 	static_assert
 	(
-		BLK_ENCODE_BUF_SZ >= b64::encode_unpadded_size(BLK_SZ)
+		BLK_ENCODE_BUF_SZ >= b64::encode_size(BLK_SZ)
 	);
 
 	const unique_mutable_buffer blk_encode_buf
@@ -275,23 +275,23 @@ ircd::m::media::file::write(const m::room &room,
 
 		const string_view blk
 		{
-			b64::encode_unpadded(blk_encode_buf, blk_raw)
+			b64::encode(blk_encode_buf, blk_raw)
 		};
 
 		const auto event_id
 		{
 			send(room, user_id, "ircd.file.block", json::members
 			{
-				{ "data.ub64", blk },
+				{ "data.b64", blk },
 			})
 		};
 
 		off += size(blk_raw);
 		wrote += size(blk);
-		assert(size(blk) == b64::encode_unpadded_size(blk_raw));
+		assert(size(blk) == b64::encode_size(blk_raw));
 	}
 
-	//assert(wrote == b64::encode_unpadded_size(off));
+	//assert(wrote == b64::encode_size(off));
 	assert(off == size(content));
 	return off;
 }
@@ -363,7 +363,7 @@ ircd::m::media::file::read(const m::room &room,
 
 		const json::string &blk_encoded
 		{
-			content["data.ub64"] // unpadded base64
+			content["data.b64"]
 		};
 
 		const const_buffer blk
