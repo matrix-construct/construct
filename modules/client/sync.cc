@@ -252,15 +252,10 @@ ircd::m::sync::handle_get(client &client,
 		)
 	};
 
-	static const http::header response_headers[]
-	{
-		{ "Cache-Control", "public, max-age=31536000, immutable" }
-	};
-
 	// Start the chunked encoded response.
 	resource::response::chunked response
 	{
-		client, http::OK, response_headers, buffer_size
+		client, http::OK, buffer_size
 	};
 
 	// Start the JSON stream for this response. As the sync items are iterated
