@@ -209,7 +209,7 @@ noexcept
 
 	const size_t res_len
 	{
-		size_t(ceil(size(in) * (4.0 / 3.0)))
+		encode_unpadded_size(in)
 	};
 
 	const size_t out_len

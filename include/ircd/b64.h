@@ -29,9 +29,9 @@ namespace ircd::b64
 	&mailbox  { dict_rfc3501 },
 	&urlsafe  { dict_rfc4648 };
 
-	constexpr size_t decode_size(const size_t &) noexcept;
-	constexpr size_t encode_size(const size_t &) noexcept;
-	constexpr size_t encode_unpadded_size(const size_t &) noexcept;
+	constexpr size_t decode_size(const size_t) noexcept;
+	constexpr size_t encode_size(const size_t) noexcept;
+	constexpr size_t encode_unpadded_size(const size_t) noexcept;
 
 	size_t decode_size(const string_view &in) noexcept;
 	size_t encode_size(const const_buffer &in) noexcept;
@@ -73,22 +73,47 @@ noexcept
 }
 
 constexpr size_t
-ircd::b64::encode_unpadded_size(const size_t &in)
+ircd::b64::encode_unpadded_size(const size_t in)
 noexcept
 {
-	return (in * (4.0 / 3.0)) + 1; //XXX: constexpr ceil()
+	constexpr long double A
+	{
+		4.0L / 3.0L
+	};
+
+	const auto e
+	{
+		in % 3 != 0
+	};
+
+	return A * in + e;
 }
 
 constexpr size_t
-ircd::b64::encode_size(const size_t &in)
+ircd::b64::encode_size(const size_t in)
 noexcept
 {
-	return ((in * (4.0 / 3.0)) + 1) + (3 - in % 3) % 3; //XXX: constexpr ceil
+	const auto base
+	{
+		encode_unpadded_size(in)
+	};
+
+	const size_t pads
+	{
+		(3 - in % 3) % 3
+	};
+
+	return base + pads;
 }
 
 constexpr size_t
-ircd::b64::decode_size(const size_t &in)
+ircd::b64::decode_size(const size_t in)
 noexcept
 {
-	return in * (3.0 / 4.0);
+	constexpr long double A
+	{
+		3.0L / 4.0L
+	};
+
+	return A * in;
 }
