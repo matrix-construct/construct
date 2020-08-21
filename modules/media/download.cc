@@ -100,10 +100,10 @@ get__download_local(client &client,
 
 	// Get the file's total size
 	size_t file_size{0};
-	state.get("ircd.file.stat", "size", [&file_size]
+	state.get("ircd.file.stat.size", "", [&file_size]
 	(const m::event &event)
 	{
-		file_size = at<"content"_>(event).get<size_t>("value");
+		file_size = at<"content"_>(event).get<size_t>("bytes");
 	});
 
 	// Get the MIME type
@@ -113,12 +113,12 @@ get__download_local(client &client,
 		"application/octet-stream"
 	};
 
-	state.get("ircd.file.stat", "type", [&type_buf, &content_type]
+	state.get("ircd.file.stat.type", "", [&type_buf, &content_type]
 	(const m::event &event)
 	{
-		const auto &value
+		const json::string &value
 		{
-			unquote(at<"content"_>(event).at("value"))
+			at<"content"_>(event).at("mime_type")
 		};
 
 		content_type =

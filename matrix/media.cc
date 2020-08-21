@@ -250,14 +250,14 @@ ircd::m::media::file::write(const m::room &room,
 		BLK_ENCODE_BUF_ALIGN,
 	};
 
-	send(room, user_id, "ircd.file.stat", "size", json::members
+	send(room, user_id, "ircd.file.stat.size", "", json::members
 	{
-		{ "value", long(size(content)) }
+		{ "bytes", long(size(content)) }
 	});
 
-	send(room, user_id, "ircd.file.stat", "type", json::members
+	send(room, user_id, "ircd.file.stat.type", "", json::members
 	{
-		{ "value", content_type }
+		{ "mime_type", content_type }
 	});
 
 	size_t off{0}, wrote{0};
@@ -280,9 +280,9 @@ ircd::m::media::file::write(const m::room &room,
 
 		const auto event_id
 		{
-			send(room, user_id, "ircd.file.block", json::members
+			send(room, user_id, "ircd.file.block.b64", json::members
 			{
-				{ "data.b64", blk },
+				{ "data", blk },
 			})
 		};
 
@@ -353,7 +353,7 @@ ircd::m::media::file::read(const m::room &room,
 			*it
 		};
 
-		if(json::get<"type"_>(event) != "ircd.file.block")
+		if(json::get<"type"_>(event) != "ircd.file.block.b64")
 			continue;
 
 		const json::object content
@@ -363,7 +363,7 @@ ircd::m::media::file::read(const m::room &room,
 
 		const json::string &blk_encoded
 		{
-			content["data.b64"]
+			content["data"]
 		};
 
 		const const_buffer blk
