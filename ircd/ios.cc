@@ -100,14 +100,14 @@ ircd::ios::descriptor::descriptor(const string_view &name,
 {
 	deallocator?: default_deallocator
 }
-,history_pos
-{
-	0
-}
 ,history
 (
 	256, {0}
 )
+,history_pos
+{
+	0
+}
 ,continuation
 {
 	continuation
