@@ -37,6 +37,8 @@ BOOST_FUSION_ADAPT_STRUCT
 )
 #pragma GCC visibility pop
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuninitialized"
 struct [[gnu::visibility("internal")]]
 ircd::json::parser
 :qi::grammar<const char *, unused_type>
@@ -221,7 +223,7 @@ ircd::json::parser
 	         class... attr>
 	bool operator()(const char *const &start, const char *const &stop, gen&&, attr&&...) const;
 
-	parser()
+	parser() noexcept
 	:parser::base_type{rule<>{}} // required by spirit
 	{
 		// synthesized repropagation of recursive rules
@@ -236,6 +238,7 @@ ircd::json::parser
 	}
 }
 const ircd::json::parser;
+#pragma GCC diagnostic pop
 
 struct [[gnu::visibility("internal")]]
 ircd::json::printer
@@ -333,7 +336,7 @@ ircd::json::printer
 	         class... attr>
 	void operator()(mutable_buffer &out, gen&&, attr&&...) const;
 
-	printer()
+	printer() noexcept
 	:printer::base_type{rule<>{}}
 	{
 		// synthesized repropagation of recursive rules
