@@ -207,7 +207,13 @@ noexcept
 	// needs to be tied off here instead.
 	if(!ret)
 	{
-		stats.slice_last = cycles() - handler->ts;
+		const auto last_ts
+		{
+			std::exchange(handler->ts, cycles())
+		};
+
+		assert(handler->ts >= last_ts);
+		stats.slice_last = handler->ts - last_ts;
 		stats.slice_total += stats.slice_last;
 
 		assert(handler::current == handler);
@@ -228,15 +234,15 @@ noexcept
 	assert(descriptor.stats);
 	auto &stats(*descriptor.stats);
 
-	const auto slice_stop
+	const auto slice_start
 	{
-		cycles()
+		std::exchange(handler->ts, cycles())
 	};
 
 	// NOTE: will fail without constant_tsc;
 	// NOTE: may fail without nonstop_tsc after OS suspend mode
-	assert(slice_stop >= handler->ts);
-	stats.slice_last = slice_stop - handler->ts;
+	assert(handler->ts >= slice_start);
+	stats.slice_last = handler->ts - slice_start;
 	stats.slice_total += stats.slice_last;
 
 	if constexpr(profile_history)

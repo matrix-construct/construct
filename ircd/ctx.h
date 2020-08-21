@@ -32,6 +32,7 @@ struct ircd::ctx::ctx
 
 	static uint64_t id_ctr;                      // monotonic
 	static ios::descriptor ios_desc;
+	static ios::handler ios_handler;
 
 	uint64_t id {++id_ctr};                      // Unique runtime ID
 	string_view name;                            // User given name (optional)

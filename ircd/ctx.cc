@@ -56,6 +56,13 @@ ircd::ctx::ctx::ios_desc
 	"ircd::ctx::ctx"
 };
 
+/// This is a pseudo ircd::ios handler. See ios_desc
+decltype(ircd::ctx::ctx::ios_handler)
+ircd::ctx::ctx::ios_handler
+{
+	&ios_desc
+};
+
 /// Internal context struct ctor
 ircd::ctx::ctx::ctx(const string_view &name,
                     const size_t &stack_max,
@@ -103,8 +110,36 @@ ircd::ctx::ctx::spawn(context::function func)
 		std::bind(&ctx::operator(), this, ph::_1, std::move(func))
 	};
 
+	auto *const parent_context
+	{
+		ircd::ctx::current
+	};
+
+	auto *const parent_handler
+	{
+		ircd::ios::handler::current
+	};
+
 	mark(prof::event::SPAWN);
-	boost::asio::spawn(ios::get(), std::move(bound), attrs);
+	if(!parent_context) try
+	{
+		ios::handler::leave(parent_handler);
+		boost::asio::spawn(ios::get(), std::move(bound), attrs);
+		ios::handler::enter(parent_handler);
+	}
+	catch(...)
+	{
+		ios::handler::enter(parent_handler);
+		throw;
+	}
+	else continuation
+	{
+		continuation::false_predicate, continuation::noop_interruptor, [&attrs, &bound]
+		(auto &yield)
+		{
+			boost::asio::spawn(ios::get(), std::move(bound), attrs);
+		}
+	};
 }
 
 /// Base frame for a context.
@@ -1538,19 +1573,17 @@ ircd::ctx::debug_stats(const pool &pool)
 
 namespace ircd::ctx::prof
 {
-	thread_local ulong _slice_start;     // Current/last time slice started
-	thread_local ulong _slice_stop;      // Last time slice ended
-	thread_local ticker _total;          // Totals kept for all contexts.
+	thread_local ticker _total;                // Totals kept for all contexts.
 
 	static void check_stack();
 	static void check_slice();
-	static void slice_enter() noexcept;
 	static void slice_leave() noexcept;
+	static void slice_enter() noexcept;
 
-	static void handle_cur_continue();
 	static void handle_cur_yield();
 	static void handle_cur_leave();
-	static void handle_cur_enter();
+	static void handle_cur_continue() noexcept;
+	static void handle_cur_enter() noexcept;
 
 	static void inc_ticker(const event &e) noexcept;
 }
@@ -1642,6 +1675,14 @@ noexcept
 
 void
 ircd::ctx::prof::handle_cur_enter()
+noexcept
+{
+	slice_enter();
+}
+
+void
+ircd::ctx::prof::handle_cur_continue()
+noexcept
 {
 	slice_enter();
 }
@@ -1662,49 +1703,35 @@ ircd::ctx::prof::handle_cur_yield()
 }
 
 void
-ircd::ctx::prof::handle_cur_continue()
-{
-	slice_enter();
-}
-
-void
 ircd::ctx::prof::slice_enter()
 noexcept
 {
-	assert(ctx::ios_desc.stats);
-	++ctx::ios_desc.stats->calls;
-	_slice_start = cycles();
-	assert(_slice_start >= _slice_stop);
+	ios::handler::enter(&ctx::ios_handler);
 }
 
 void
 ircd::ctx::prof::slice_leave()
 noexcept
 {
-	_slice_stop = cycles();
-
-	// NOTE: will fail without constant_tsc;
-	// NOTE: may fail without nonstop_tsc after OS suspend mode
-	assert(_slice_stop >= _slice_start);
-
-	auto &c(cur());
-	const auto last_slice
-	{
-		_slice_stop - _slice_start
-	};
+	ios::handler::leave(&ctx::ios_handler);
 
 	static constexpr auto pos
 	{
 		size_t(prof::event::CYCLES)
 	};
 
-	_total.event.at(pos) += last_slice;
+	assert(ctx::ios_desc.stats);
+	const auto &last_slice
+	{
+		ctx::ios_desc.stats->slice_last
+	};
+
+	auto &c(cur());
 	c.profile.event.at(pos) += last_slice;
-	assert(c.ios_desc.stats);
-	c.ios_desc.stats->slice_total += last_slice;
-	c.ios_desc.stats->slice_last = last_slice;
 	c.stack.at = stack_at_here();
 	c.stack.peak = std::max(c.stack.at, c.stack.peak);
+
+	_total.event.at(pos) += last_slice;
 }
 
 #ifndef NDEBUG
@@ -1717,10 +1744,10 @@ ircd::ctx::prof::check_slice()
 		c.flags & context::SLICE_EXEMPT
 	};
 
-	assert(_slice_stop >= _slice_start);
-	const auto last_slice
+	assert(ctx::ios_desc.stats);
+	const auto &last_slice
 	{
-		_slice_stop - _slice_start
+		ctx::ios_desc.stats->slice_last
 	};
 
 	// Slice warning
@@ -1838,11 +1865,11 @@ noexcept
 }
 
 [[gnu::hot]]
-const ulong &
+ulong
 ircd::ctx::prof::cur_slice_start()
 noexcept
 {
-	return _slice_start;
+	return ctx::ios_handler.ts;
 }
 
 [[gnu::hot]]

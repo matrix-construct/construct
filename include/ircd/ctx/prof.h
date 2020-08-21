@@ -44,7 +44,7 @@ namespace ircd::ctx::prof
 	const uint64_t &get(const ctx &c, const event &);
 
 	// current slice state
-	const ulong &cur_slice_start() noexcept;
+	ulong cur_slice_start() noexcept;
 	ulong cur_slice_cycles() noexcept;
 
 	// test accessors
