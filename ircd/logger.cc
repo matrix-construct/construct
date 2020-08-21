@@ -535,20 +535,13 @@ noexcept
 	// grab the ios slice counter.
 	const auto &epoch
 	{
-		ctx::current? ctx::epoch() : ios::epoch()
+		ios::epoch()
 	};
 
-	// With two possible slice epoch counters, the number of characters
-	// required for the epoch column might be different between two adjacent
-	// log messages. To maintain alignment we use this monotonic counter which
-	// gets bumped the first time either epoch value requires more columns. To
-	// minimize overhead here we simply settle for 3 different widths.
-	static size_t epoch_width{6}; epoch_width =
-		epoch < 1'000'000UL?
-			std::max(epoch_width, 6UL):
-		epoch < 100'000'000UL?
-			std::max(epoch_width, 8UL):
-			std::max(epoch_width, 12UL);
+	static const size_t epoch_width
+	{
+		12
+	};
 
 	// Compose the prefix sequence into the buffer through stringstream
 	std::stringstream s;
