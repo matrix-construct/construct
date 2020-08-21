@@ -21,20 +21,18 @@ namespace ircd
 	using prof::cycles;
 }
 
-#if defined(__x86_64__) || defined(__i386__)
 /// Monotonic reference cycles (since system boot)
 extern inline uint64_t
 __attribute__((flatten, always_inline, gnu_inline, artificial))
 ircd::prof::cycles()
 noexcept
 {
-	return x86::rdtsc();
+	#if defined(__x86_64__) || defined(__i386__)
+		return x86::rdtsc();
+	#elif defined(__aarch64__)
+		return arm::read_virtual_counter();
+	#else
+		static_assert(false, "Select reference cycle counter for platform.");
+		return 0;
+	#endif
 }
-#else
-ircd::prof::cycles()
-noexcept
-{
-	static_assert(false, "Select reference cycle counter for platform.");
-	return 0;
-}
-#endif

@@ -34,6 +34,7 @@ namespace ircd::prof
 }
 
 #include "x86.h"
+#include "arm.h"
 #include "vg.h"
 #include "type.h"
 #include "cycles.h"
