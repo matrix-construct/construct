@@ -180,8 +180,8 @@ noexcept
 		size(encoded)
 	};
 
-	len += copy(out + len, _pad[0]) & pads & 1;
-	len += copy(out + len, _pad[1]) & (pads >> 1) & 1;
+	len += copy(out + len, _pad[0]) & (pads > 0);
+	len += copy(out + len, _pad[1]) & (pads > 1);
 	return string_view
 	{
 		data(out), len
