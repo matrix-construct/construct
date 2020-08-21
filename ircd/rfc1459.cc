@@ -13,22 +13,30 @@ namespace ircd::rfc1459
 	using namespace ircd::spirit;
 }
 
-namespace ircd { namespace rfc1459 { namespace parse
-__attribute__((visibility("hidden")))
+#pragma GCC visibility push(internal)
+namespace ircd::rfc1459::parse
 {
-	template<class it, class top> struct grammar;
-	struct capstan extern const capstan;
+	template<class it> struct grammar;
 	struct head extern const head;
-}}}
+	struct capstan extern const capstan;
+}
+#pragma GCC visibility pop
 
-namespace ircd { namespace rfc1459 { namespace gen
-__attribute__((visibility("hidden")))
+#pragma GCC visibility push(internal)
+namespace ircd::rfc1459::gen
 {
 	using ircd::spirit::buffer;
 
-	template<class it, class top> struct grammar;
-}}}
+	template<class it> struct grammar;
+	struct carriage extern const carriage;
+	struct generate_prefix extern const generate_prefix;
+	struct generate_middle extern const generate_middle;
+	struct generate_command extern const generate_command;
+	struct generate_trailing extern const generate_trailing;
+}
+#pragma GCC visibility pop
 
+#pragma GCC visibility push(internal)
 BOOST_FUSION_ADAPT_STRUCT
 (
 	ircd::rfc1459::pfx
@@ -36,7 +44,9 @@ BOOST_FUSION_ADAPT_STRUCT
 	,( decltype(ircd::rfc1459::pfx::user),  user )
 	,( decltype(ircd::rfc1459::pfx::host),  host )
 )
+#pragma GCC visibility pop
 
+#pragma GCC visibility push(internal)
 BOOST_FUSION_ADAPT_STRUCT
 (
 	ircd::rfc1459::line
@@ -44,6 +54,7 @@ BOOST_FUSION_ADAPT_STRUCT
 	,( decltype(ircd::rfc1459::line::cmd),   cmd  )
 	,( decltype(ircd::rfc1459::line::parv),  parv )
 )
+#pragma GCC visibility pop
 
 /* The grammar template class.
  * This aggregates all the rules under one template to make composing them easier.
@@ -53,10 +64,10 @@ BOOST_FUSION_ADAPT_STRUCT
  * a class was created `struct head` specifying grammar::line as the top rule, and
  * rfc1459::line as the top output target to parse into.
  */
-template<class it,
-         class top>
-struct ircd::rfc1459::parse::grammar
-:qi::grammar<it, top>
+template<class it>
+struct [[gnu::visibility("internal")]]
+ircd::rfc1459::parse::grammar
+:qi::grammar<it, unused_type>
 {
 	qi::rule<it> space;
 	qi::rule<it> colon;
@@ -80,15 +91,38 @@ struct ircd::rfc1459::parse::grammar
 	qi::rule<it, rfc1459::line> line;
 	qi::rule<it, std::deque<rfc1459::line>> tape;
 
-	grammar(qi::rule<it, top> &top_rule);
+	grammar() noexcept;
 };
 
-template<class it,
-         class top>
-ircd::rfc1459::parse::grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
-:qi::grammar<it, top>::base_type
+// Instantiate the input grammar to parse a const char* buffer into an rfc1459::line object.
+// The top rule is inherited and then specified as grammar::line, which is compatible
+// with an rfc1459::line object.
+//
+struct [[gnu::visibility("internal")]]
+ircd::rfc1459::parse::head
+:parse::grammar<const char *>
 {
-	top_rule
+	head() = default;
+}
+const ircd::rfc1459::parse::head;
+
+// Instantiate the input grammar to parse a const char* buffer into an rfc1459::tape object.
+// The top rule is now grammar::tape and the target object is an rfc1459::tape deque.
+//
+struct [[gnu::visibility("internal")]]
+ircd::rfc1459::parse::capstan
+:parse::grammar<const char *>
+{
+	capstan() = default;
+}
+const ircd::rfc1459::parse::capstan;
+
+template<class it>
+ircd::rfc1459::parse::grammar<it>::grammar()
+noexcept
+:qi::grammar<it, unused_type>::base_type
+{
+	qi::rule<it>{}
 }
 ,space // A single space character
 {
@@ -187,31 +221,10 @@ ircd::rfc1459::parse::grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
 {
 }
 
-// Instantiate the input grammar to parse a const char* buffer into an rfc1459::line object.
-// The top rule is inherited and then specified as grammar::line, which is compatible
-// with an rfc1459::line object.
-//
-struct ircd::rfc1459::parse::head
-:parse::grammar<const char *, rfc1459::line>
-{
-    head(): grammar{line} {}
-}
-const ircd::rfc1459::parse::head;
-
-// Instantiate the input grammar to parse a const char* buffer into an rfc1459::tape object.
-// The top rule is now grammar::tape and the target object is an rfc1459::tape deque.
-//
-struct ircd::rfc1459::parse::capstan
-:parse::grammar<const char *, std::deque<rfc1459::line>>
-{
-    capstan(): grammar{tape} {}
-}
-const ircd::rfc1459::parse::capstan;
-
-template<class it,
-         class top>
-struct ircd::rfc1459::gen::grammar
-:karma::grammar<it, top>
+template<class it>
+struct [[gnu::visibility("internal")]]
+ircd::rfc1459::gen::grammar
+:karma::grammar<it, unused_type>
 {
 	std::string trail_save;
 
@@ -234,15 +247,55 @@ struct ircd::rfc1459::gen::grammar
 	karma::rule<it, rfc1459::cmd> command;
 	karma::rule<it, rfc1459::line> line;
 
-	grammar(karma::rule<it, top> &top_rule);
+	grammar() noexcept;
 };
 
-template<class it,
-         class top>
-ircd::rfc1459::gen::grammar<it, top>::grammar(karma::rule<it, top> &top_rule)
-:karma::grammar<it, top>::base_type
+struct [[gnu::visibility("internal")]]
+ircd::rfc1459::gen::carriage
+:gen::grammar<karma::ostream_iterator<char>>
 {
-	top_rule
+	carriage() = default;
+}
+const ircd::rfc1459::gen::carriage;
+
+struct [[gnu::visibility("internal")]]
+ircd::rfc1459::gen::generate_middle
+:gen::grammar<karma::ostream_iterator<char>>
+{
+	generate_middle() = default;
+}
+const ircd::rfc1459::gen::generate_middle;
+
+struct [[gnu::visibility("internal")]]
+ircd::rfc1459::gen::generate_trailing
+:gen::grammar<karma::ostream_iterator<char>>
+{
+	generate_trailing() = default;
+}
+const ircd::rfc1459::gen::generate_trailing;
+
+struct [[gnu::visibility("internal")]]
+ircd::rfc1459::gen::generate_command
+:gen::grammar<karma::ostream_iterator<char>>
+{
+	generate_command() = default;
+}
+const ircd::rfc1459::gen::generate_command;
+
+struct [[gnu::visibility("internal")]]
+ircd::rfc1459::gen::generate_prefix
+:gen::grammar<karma::ostream_iterator<char>>
+{
+	generate_prefix() = default;
+}
+const ircd::rfc1459::gen::generate_prefix;
+
+template<class it>
+ircd::rfc1459::gen::grammar<it>::grammar()
+noexcept
+:karma::grammar<it>::base_type
+{
+	karma::rule<it>{}
 }
 ,space // A single space character
 {
@@ -329,13 +382,6 @@ ircd::rfc1459::gen::grammar<it, top>::grammar(karma::rule<it, top> &top_rule)
 std::ostream &
 ircd::rfc1459::operator<<(std::ostream &s, const line &line)
 {
-	struct carriage
-	:gen::grammar<karma::ostream_iterator<char>, rfc1459::line>
-	{
-		carriage(): grammar{grammar::line} {}
-	}
-	static const carriage;
-
 	if(!line.pfx.empty())
 		s << line.pfx << ' ';
 
@@ -352,28 +398,14 @@ ircd::rfc1459::operator<<(std::ostream &s, const parv &parv)
 {
 	using karma::delimit;
 
-	struct generate_middle
-	:gen::grammar<karma::ostream_iterator<char>, string_view>
-	{
-		generate_middle(): grammar{grammar::middle} {}
-	}
-	static const generate_middle;
-
-	struct generate_trailing
-	:gen::grammar<karma::ostream_iterator<char>, string_view>
-	{
-		generate_trailing(): grammar{grammar::trailing} {}
-	}
-	static const generate_trailing;
-
 	ssize_t i(0);
 	karma::ostream_iterator<char> osi(s);
 	for(; i < ssize_t(parv.size()) - 1; ++i)
-		if(!karma::generate(osi, delimit[generate_middle], parv.at(i)))
+		if(!karma::generate(osi, delimit[gen::generate_middle], parv.at(i)))
 			throw syntax_error("Invalid middle parameter");
 
 	if(!parv.empty())
-		if(!karma::generate(osi, generate_trailing, parv.at(parv.size() - 1)))
+		if(!karma::generate(osi, gen::generate_trailing, parv.at(parv.size() - 1)))
 			throw syntax_error("Invalid trailing parameter");
 
 	return s;
@@ -382,15 +414,8 @@ ircd::rfc1459::operator<<(std::ostream &s, const parv &parv)
 std::ostream &
 ircd::rfc1459::operator<<(std::ostream &s, const cmd &cmd)
 {
-	struct generate_command
-	:gen::grammar<karma::ostream_iterator<char>, rfc1459::cmd>
-	{
-		generate_command(): grammar{grammar::command} {}
-	}
-	static const generate_command;
-
 	karma::ostream_iterator<char> osi(s);
-	if(!karma::generate(osi, generate_command, cmd))
+	if(!karma::generate(osi, gen::generate_command, cmd))
 		throw syntax_error("Bad command or numeric name");
 
 	return s;
@@ -399,15 +424,8 @@ ircd::rfc1459::operator<<(std::ostream &s, const cmd &cmd)
 std::ostream &
 ircd::rfc1459::operator<<(std::ostream &s, const pfx &pfx)
 {
-	struct generate_prefix
-	:gen::grammar<karma::ostream_iterator<char>, rfc1459::pfx>
-	{
-		generate_prefix(): grammar{grammar::prefix} {}
-	}
-	static const generate_prefix;
-
 	karma::ostream_iterator<char> osi(s);
-	if(!karma::generate(osi, generate_prefix, pfx))
+	if(!karma::generate(osi, gen::generate_prefix, pfx))
 		throw syntax_error("Invalid prefix");
 
 	return s;
@@ -417,12 +435,7 @@ ircd::rfc1459::line::line(const char *&start,
                           const char *const &stop)
 try
 {
-	static const auto &grammar
-	{
-		parse::head
-	};
-
-	ircd::parse(start, stop, grammar, *this);
+	ircd::parse(start, stop, parse::head, *this);
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
@@ -457,7 +470,10 @@ ircd::rfc1459::character::charset(const attr &attr)
 {
 	uint8_t buf[256];
 	const size_t len(charset(attr, buf, sizeof(buf)));
-	return { reinterpret_cast<const char *>(buf), len };
+	return
+	{
+		reinterpret_cast<const char *>(buf), len
+	};
 }
 
 size_t
@@ -484,7 +500,10 @@ ircd::rfc1459::character::gather(const attr &attr)
 {
 	uint8_t buf[256];
 	const size_t len(gather(attr, buf, sizeof(buf)));
-	return { reinterpret_cast<const char *>(buf), len };
+	return
+	{
+		reinterpret_cast<const char *>(buf), len
+	};
 }
 
 size_t
