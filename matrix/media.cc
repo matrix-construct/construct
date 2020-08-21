@@ -425,7 +425,7 @@ ircd::m::media::file::room_id(room::id::buf &out,
 
 	out =
 	{
-		b58::encode(buf, hash), my_host()
+		b64::encode_unpadded<b64::urlsafe>(buf, hash), my_host()
 	};
 
 	return out;
