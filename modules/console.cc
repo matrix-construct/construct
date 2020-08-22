@@ -265,6 +265,24 @@ console_command_derived(opt &out, const string_view &line)
 	if(lex_castable<int>(id))
 		return console_command_numeric(out, line);
 
+	// Branch if the line starts with just a sigil (but not an identifier).
+	// In this case we'll expand the sigil to its name as a convenience for
+	// the apropos command suite.
+	if(m::has_sigil(id) && size(id) == 1)
+	{
+		char lower_buf[16];
+		const fmt::snstringf expanded_line
+		{
+			size(line) + 16, "%s %s",
+			tolower(lower_buf, reflect(m::sigil(id))),
+			tokens_after(line, ' ', 0),
+		};
+
+		return _console_command(out, expanded_line);
+	}
+
+	// Branch if the line starts with an identifier; identifiers are
+	// themselves convenience commands.
 	if(m::has_sigil(id)) switch(m::sigil(id))
 	{
 		case m::id::EVENT:
