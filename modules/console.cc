@@ -8724,7 +8724,7 @@ console_cmd__rooms__head__reset(opt &out, const string_view &line)
 bool console_cmd__room__events(opt &out, const string_view &line);
 
 bool
-console_cmd__room__top(opt &out, const string_view &line)
+console_cmd__room(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -11571,7 +11571,7 @@ console_id__room(opt &out,
 		return console_cmd__room__get(out, line);
 
 	//TODO: XXX more detailed summary
-	return console_cmd__room__top(out, line);
+	return console_cmd__room(out, line);
 }
 
 //
