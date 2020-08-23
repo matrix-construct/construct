@@ -90,19 +90,9 @@ try
 		16_KiB
 	};
 
-	const auto pair
+	const auto &[head, content]
 	{
 		download(buf, mxc, remote)
-	};
-
-	const auto &head
-	{
-		pair.first
-	};
-
-	const const_buffer &content
-	{
-		pair.second
 	};
 
 	char mime_type_buf[64];
