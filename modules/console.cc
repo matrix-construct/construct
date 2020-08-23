@@ -249,6 +249,8 @@ bool console_id__user(opt &, const m::user::id &id, const string_view &line);
 bool console_id__room(opt &, const m::room::id &id, const string_view &line);
 bool console_id__event(opt &, const m::event::id &id, const string_view &line);
 bool console_id__device(opt &, const m::device::id &id, const string_view &line);
+bool console_id__group(opt &, const m::id::group &, const string_view &line);
+bool console_id__node(opt &, const string_view &id, const string_view &line);
 bool console_json(const json::object &);
 
 int
@@ -296,6 +298,12 @@ console_command_derived(opt &out, const string_view &line)
 
 		case m::id::DEVICE:
 			return console_id__device(out, id, line);
+
+		case m::id::GROUP:
+			return console_id__group(out, id, line);
+
+		case m::id::NODE:
+			return console_id__node(out, id, line);
 
 		case m::id::ROOM_ALIAS:
 		{
@@ -13034,6 +13042,25 @@ console_cmd__user__typing(opt &out, const string_view &line)
 //
 
 bool
+console_cmd__node(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"node_id"
+	}};
+
+	return true;
+}
+
+bool
+console_id__node(opt &out,
+                 const string_view &id,
+                 const string_view &line)
+{
+	return console_cmd__node(out, line);
+}
+
+bool
 console_cmd__node__keys(opt &out, const string_view &line)
 {
 	const params param{line, " ",
@@ -16004,4 +16031,27 @@ console_cmd__icu(opt &out, const string_view &line)
 		<< std::endl;
 
 	return true;
+}
+
+//
+// group
+//
+
+bool
+console_cmd__group(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"group_id"
+	}};
+
+	return true;
+}
+
+bool
+console_id__group(opt &out,
+                  const m::id::group &id,
+                  const string_view &line)
+{
+	return console_cmd__group(out, line);
 }
