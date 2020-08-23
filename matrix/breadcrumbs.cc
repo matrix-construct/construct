@@ -31,8 +31,8 @@ const
 	get(std::nothrow, [&closure, &ret]
 	(const json::array &rooms)
 	{
-		for(const json::string &room : rooms)
-			if(!closure(room))
+		for(const json::string room_id : rooms)
+			if(!closure(room_id))
 			{
 				ret = false;
 				break;
