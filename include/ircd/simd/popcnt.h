@@ -40,6 +40,7 @@ noexcept
 /// Convenience template. Extends a bool value where the lsb is 1 or 0 into a
 /// mask value like the result of vector comparisons.
 template<class T>
+[[gnu::always_inline]]
 inline T
 ircd::simd::boolmask(const T a)
 noexcept
@@ -51,6 +52,7 @@ noexcept
 /// sometimes one might need an actual value of 1 for accumulators or maybe
 /// some bool-type reason...
 template<class T>
+[[gnu::always_inline]]
 inline T
 ircd::simd::popmask(const T a)
 noexcept

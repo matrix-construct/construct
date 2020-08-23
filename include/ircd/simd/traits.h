@@ -40,7 +40,8 @@ namespace ircd::simd
 /// Get number of lanes for vector type (the number after the x in the
 /// type name).
 template<class T>
-constexpr size_t
+[[gnu::always_inline]]
+inline constexpr size_t
 ircd::simd::lanes()
 {
 	constexpr size_t ret
@@ -58,7 +59,8 @@ ircd::simd::lanes()
 
 /// Get the size of each lane; i.e the size of one integral element.
 template<class T>
-constexpr size_t
+[[gnu::always_inline]]
+inline constexpr size_t
 ircd::simd::sizeof_lane()
 {
 	constexpr size_t ret
