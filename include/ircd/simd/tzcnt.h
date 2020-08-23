@@ -17,49 +17,40 @@ namespace ircd::simd
 }
 
 /// Convenience template. Unfortunately this drops to scalar until specific
-/// targets and specializations are created.
+/// targets and specializations are created. The behavior of can differ among
+/// platforms; we use lzcnt when available, otherwise we account for bsr.
 template<class T>
 inline uint
-__attribute__((target("lzcnt")))
 ircd::simd::tzcnt(const T a)
 noexcept
 {
-    // The behavior of lzcnt/tzcnt can differ among platforms; when false we
-    // lzcnt/tzcnt to fall back to bsr/bsf-like behavior.
-	constexpr auto bitscan
+	uint ret(0), i(lanes<T>() - 1), mask(-1U); do
 	{
-		#ifdef __LZCNT__
-			false
-		#else
-			true
-		#endif
-	};
-
-	uint ret(0), i(lanes<T>()), mask(-1U); do
-	{
-		if constexpr(bitscan && sizeof_lane<T>() <= sizeof(u16))
-			ret += (15 - __lzcnt16(a[--i])) & mask;
+		if constexpr(sizeof_lane<T>() <= sizeof(u8))
+			ret += mask & __builtin_ctz(a[i] | 0xffffff00U);
 
 		else if constexpr(sizeof_lane<T>() <= sizeof(u16))
-			ret += __lzcnt16(a[--i]) & mask;
-
-		else if constexpr(bitscan && sizeof_lane<T>() <= sizeof(u32))
-			ret += (31 - __lzcnt32(a[--i])) & mask;
+			ret += mask & __builtin_ctz(__builtin_bswap16(a[i]) | 0xffff0000U);
 
 		else if constexpr(sizeof_lane<T>() <= sizeof(u32))
-			ret += __lzcnt32(a[--i]) & mask;
+			ret += mask &
+			(
+				(boolmask(uint(a[i] != 0)) & __builtin_ctz(__builtin_bswap32(a[i])))
+				| (boolmask(uint(a[i] == 0)) & 32U)
+			);
 
-		else if constexpr(bitscan)
-			ret += (63 - __lzcnt64(a[--i])) & mask;
-
-		else
-			ret += __lzcnt64(a[--i]) & mask;
+		else if constexpr(sizeof_lane<T>() <= sizeof(u64))
+			ret += mask &
+			(
+				(boolmask(uint(a[i] != 0)) & __builtin_ctzl(__builtin_bswap64(a[i])))
+				| (boolmask(uint(a[i] == 0)) & 64U)
+			);
 
 		static const auto lane_bits(sizeof_lane<T>() * 8);
 		mask &= boolmask(uint(ret % lane_bits == 0));
 		mask &= boolmask(uint(ret != 0));
 	}
-	while(i);
+	while(i--);
 
 	return ret;
 }
