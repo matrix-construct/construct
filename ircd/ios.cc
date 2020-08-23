@@ -410,20 +410,20 @@ ircd::ios::dispatch::dispatch(descriptor &descriptor,
                               synchronous_t,
                               const std::function<void ()> &function)
 {
-	const ctx::uninterruptible::nothrow ui;
+	const ctx::uninterruptible ui;
 
-	ctx::latch latch(1);
-	dispatch(descriptor, [&function, &latch]
+	assert(function);
+	ctx::continuation
 	{
-		const unwind uw{[&latch]
+		continuation::false_predicate, continuation::noop_interruptor, [&descriptor, &function]
+		(auto &yield)
 		{
-			latch.count_down();
-		}};
-
-		function();
-	});
-
-	latch.wait();
+			dispatch(descriptor, [&function]
+			{
+				function();
+			});
+		}
+	};
 }
 
 [[gnu::hot]]
