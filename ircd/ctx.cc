@@ -3068,6 +3068,7 @@ const
 	return true;
 }
 
+[[gnu::hot]]
 ircd::ctx::list::node &
 ircd::ctx::list::get(ctx &c)
 noexcept
@@ -3075,6 +3076,7 @@ noexcept
 	return c.node;
 }
 
+[[gnu::hot]]
 const ircd::ctx::list::node &
 ircd::ctx::list::get(const ctx &c)
 noexcept

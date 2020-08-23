@@ -40,8 +40,8 @@ struct ircd::ctx::list
 	ctx *head {nullptr};
 	ctx *tail {nullptr};
 
-	[[gnu::leaf]] static const node &get(const ctx &) noexcept;
-	[[gnu::leaf]] static node &get(ctx &) noexcept;
+	static const node &get(const ctx &) noexcept;
+	static node &get(ctx &) noexcept;
 
 	// Get next or prev entry in ctx
 	static const ctx *next(const ctx *const &) noexcept;
