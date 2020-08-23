@@ -12809,7 +12809,7 @@ console_cmd__user__ignores(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__user__breadcrumb_rooms(opt &out, const string_view &line)
+console_cmd__user__breadcrumbs(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -12821,12 +12821,12 @@ console_cmd__user__breadcrumb_rooms(opt &out, const string_view &line)
 		param.at("user_id")
 	};
 
-	const m::breadcrumb_rooms breadcrumb_rooms
+	const m::breadcrumbs breadcrumbs
 	{
 		user_id
 	};
 
-	breadcrumb_rooms.for_each([&out]
+	breadcrumbs.for_each([&out]
 	(const string_view &room_id)
 	{
 		out << room_id << std::endl;

@@ -1,7 +1,7 @@
-// Matrix Construct
+// The Construct
 //
-// Copyright (C) Matrix Construct Developers, Authors & Contributors
-// Copyright (C) 2016-2019 Jason Volk <jason@zemos.net>
+// Copyright (C) The Construct Developers, Authors & Contributors
+// Copyright (C) 2016-2020 Jason Volk <jason@zemos.net>
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -9,14 +9,14 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_BREADCRUMB_ROOMS_H
+#define HAVE_IRCD_M_BREADCRUMBS_H
 
 namespace ircd::m
 {
-	struct breadcrumb_rooms;
+	struct breadcrumbs;
 }
 
-struct ircd::m::breadcrumb_rooms
+struct ircd::m::breadcrumbs
 {
 	using closure = std::function<void (const string_view &)>;
 	using closure_bool = std::function<bool (const string_view &)>;
@@ -35,7 +35,7 @@ struct ircd::m::breadcrumb_rooms
 	event::id::buf add(const string_view &) const;
 	event::id::buf del(const string_view &) const;
 
-	breadcrumb_rooms(const m::user &user)
+	breadcrumbs(const m::user &user)
 	:account_data{user}
 	{}
 };

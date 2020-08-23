@@ -1,7 +1,7 @@
-// Matrix Construct
+// The Construct
 //
-// Copyright (C) Matrix Construct Developers, Authors & Contributors
-// Copyright (C) 2016-2019 Jason Volk <jason@zemos.net>
+// Copyright (C) The Construct Developers, Authors & Contributors
+// Copyright (C) 2016-2020 Jason Volk <jason@zemos.net>
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -9,7 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 ircd::m::event::id::buf
-ircd::m::breadcrumb_rooms::set(const json::array &rooms)
+ircd::m::breadcrumbs::set(const json::array &rooms)
 const
 {
 	const json::strung object
@@ -20,11 +20,11 @@ const
 		}
 	};
 
-	return account_data.set("im.vector.riot.breadcrumb_rooms", object);
+	return account_data.set("im.vector.setting.breadcrumbs", object);
 }
 
 bool
-ircd::m::breadcrumb_rooms::for_each(const closure_bool &closure)
+ircd::m::breadcrumbs::for_each(const closure_bool &closure)
 const
 {
 	bool ret{true};
@@ -43,22 +43,22 @@ const
 }
 
 void
-ircd::m::breadcrumb_rooms::get(const closure &closure)
+ircd::m::breadcrumbs::get(const closure &closure)
 const
 {
 	if(!get(std::nothrow, closure))
 		throw m::NOT_FOUND
 		{
-			"User has no breadcrumb_rooms set in their account_data."
+			"User has no breadcrumbs set in their account_data."
 		};
 }
 
 bool
-ircd::m::breadcrumb_rooms::get(std::nothrow_t,
-                               const closure &closure)
+ircd::m::breadcrumbs::get(std::nothrow_t,
+                          const closure &closure)
 const
 {
-	return account_data.get(std::nothrow, "im.vector.riot.breadcrumb_rooms", [&closure]
+	return account_data.get(std::nothrow, "im.vector.setting.breadcrumbs", [&closure]
 	(const string_view &key, const json::object &object)
 	{
 		const json::array &rooms

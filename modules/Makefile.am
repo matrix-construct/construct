@@ -88,7 +88,7 @@ endif IMAGEMAGICK
 
 m_moduledir = @moduledir@
 
-m_breadcrumb_rooms_la_SOURCES = m_breadcrumb_rooms.cc
+m_breadcrumbs_la_SOURCES = m_breadcrumbs.cc
 m_bridge_la_SOURCES = m_bridge.cc
 m_command_la_SOURCES = m_command.cc
 m_control_la_SOURCES = m_control.cc
@@ -119,7 +119,7 @@ m_room_third_party_invite_la_SOURCES = m_room_third_party_invite.cc
 m_vm_fetch_la_SOURCES = m_vm_fetch.cc
 
 m_module_LTLIBRARIES = \
-	m_breadcrumb_rooms.la \
+	m_breadcrumbs.la \
 	m_bridge.la \
 	m_command.la \
 	m_control.la \

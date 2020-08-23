@@ -57,7 +57,7 @@ ircd::m::matrix::module_names
 	"identity_v1",
 
 	"m_noop",
-	"m_breadcrumb_rooms",
+	"m_breadcrumbs",
 	"m_bridge",
 	"m_command",
 	"m_control",

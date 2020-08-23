@@ -92,7 +92,7 @@ namespace ircd
 #include "bridge.h"
 #include "sync/sync.h"
 #include "fetch.h"
-#include "breadcrumb_rooms.h"
+#include "breadcrumbs.h"
 #include "media.h"
 #include "search.h"
 #include "gossip.h"
