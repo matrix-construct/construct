@@ -3403,7 +3403,7 @@ ircd::json::string_stringify(u8x16 &block,
 	// counting past the end of the string.
 	const u64 regular_prefix_count
 	{
-		simd::lzcnt(u64x2(is_special | ~block_mask)) / 8
+		simd::lzcnt(is_special | ~block_mask) / 8
 	};
 
 	// Fast-path; backward branch to count and consume uninteresting characters
@@ -3458,7 +3458,7 @@ ircd::json::string_stringify(u8x16 &block,
 
 	const u64 match_depth
 	{
-		simd::lzcnt(u64x2(match)) / 8
+		simd::lzcnt(match) / 8
 	};
 
 	// Legitimately escaped single char
@@ -3644,7 +3644,7 @@ ircd::json::string_serialized(const u8x16 block,
 
 	const u64 regular_prefix_count
 	{
-		simd::lzcnt(u64x2(is_special | ~block_mask)) / 8
+		simd::lzcnt(is_special | ~block_mask) / 8
 	};
 
 	// Fast-path; backward branch to count and consume uninteresting characters
@@ -3688,7 +3688,7 @@ ircd::json::string_serialized(const u8x16 block,
 
 	const u64 match_depth
 	{
-		simd::lzcnt(u64x2(match)) / 8
+		simd::lzcnt(match) / 8
 	};
 
 	// Legitimately escaped single char
@@ -3798,7 +3798,7 @@ ircd::json::string_serialized_ctrl(const u8x16 block,
 
 	const u64 ctrl_prefix_count
 	{
-		simd::lzcnt(u64x2(~is_ctrl | ~block_mask)) / 8
+		simd::lzcnt(~is_ctrl | ~block_mask) / 8
 	};
 
 	u64 ret(0);

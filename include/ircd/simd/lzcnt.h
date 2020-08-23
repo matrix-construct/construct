@@ -11,17 +11,37 @@
 #pragma once
 #define HAVE_IRCD_SIMD_LZCNT_H
 
+// This suite is for counting leading zero bits of a word T. It is not for
+// per-lane clz'ing; for this reason all overloads are explicitly instantiated
+// and optimal conversions are performed.
 namespace ircd::simd
 {
-	template<class T> uint lzcnt(const T) noexcept;
+	template<class T> uint _lzcnt(const T) noexcept;
+	template<class T> uint lzcnt(const T) noexcept = delete;
+	template<> uint lzcnt(const u512x1) noexcept;
+	template<> uint lzcnt(const u256x1) noexcept;
+	template<> uint lzcnt(const u128x1) noexcept;
+	template<> uint lzcnt(const u64x8) noexcept;
+	template<> uint lzcnt(const u64x4) noexcept;
+	template<> uint lzcnt(const u64x2) noexcept;
+	template<> uint lzcnt(const u32x16) noexcept;
+	template<> uint lzcnt(const u32x8) noexcept;
+	template<> uint lzcnt(const u32x4) noexcept;
+	template<> uint lzcnt(const u16x32) noexcept;
+	template<> uint lzcnt(const u16x16) noexcept;
+	template<> uint lzcnt(const u16x8) noexcept;
+	template<> uint lzcnt(const u8x64) noexcept;
+	template<> uint lzcnt(const u8x32) noexcept;
+	template<> uint lzcnt(const u8x16) noexcept;
 }
 
 /// Convenience template. Unfortunately this drops to scalar until specific
 /// targets and specializations are created. The behavior can differ among
 /// platforms; we make use of lzcnt if available otherwise we account for bsr.
 template<class T>
+[[gnu::always_inline]]
 inline uint
-ircd::simd::lzcnt(const T a)
+ircd::simd::_lzcnt(const T a)
 noexcept
 {
 	uint ret(0);
@@ -54,4 +74,124 @@ noexcept
 	}
 
 	return ret;
+}
+
+template<>
+inline uint
+ircd::simd::lzcnt(const u512x1 a)
+noexcept
+{
+	return _lzcnt(u64x8(a));
+}
+
+template<>
+inline uint
+ircd::simd::lzcnt(const u256x1 a)
+noexcept
+{
+	return _lzcnt(u64x4(a));
+}
+
+template<>
+inline uint
+ircd::simd::lzcnt(const u128x1 a)
+noexcept
+{
+	return _lzcnt(u64x2(a));
+}
+
+template<>
+inline uint
+ircd::simd::lzcnt(const u64x8 a)
+noexcept
+{
+	return _lzcnt(u64x8(a));
+}
+
+template<>
+inline uint
+ircd::simd::lzcnt(const u64x4 a)
+noexcept
+{
+	return _lzcnt(u64x4(a));
+}
+
+template<>
+inline uint
+ircd::simd::lzcnt(const u64x2 a)
+noexcept
+{
+	return _lzcnt(u64x2(a));
+}
+
+template<>
+inline uint
+ircd::simd::lzcnt(const u32x16 a)
+noexcept
+{
+	return _lzcnt(u64x8(a));
+}
+
+template<>
+inline uint
+ircd::simd::lzcnt(const u32x8 a)
+noexcept
+{
+	return _lzcnt(u64x4(a));
+}
+
+template<>
+inline uint
+ircd::simd::lzcnt(const u32x4 a)
+noexcept
+{
+	return _lzcnt(u64x2(a));
+}
+
+template<>
+inline uint
+ircd::simd::lzcnt(const u16x32 a)
+noexcept
+{
+	return _lzcnt(u64x8(a));
+}
+
+template<>
+inline uint
+ircd::simd::lzcnt(const u16x16 a)
+noexcept
+{
+	return _lzcnt(u64x4(a));
+}
+
+template<>
+inline uint
+ircd::simd::lzcnt(const u16x8 a)
+noexcept
+{
+	return _lzcnt(u64x2(a));
+}
+
+template<>
+inline uint
+ircd::simd::lzcnt(const u8x64 a)
+noexcept
+{
+	return _lzcnt(u64x8(a));
+}
+
+template<>
+inline uint
+ircd::simd::lzcnt(const u8x32 a)
+noexcept
+{
+	return _lzcnt(u64x4(a));
+}
+
+template<>
+inline uint
+ircd::simd::lzcnt(const u8x16 a)
+noexcept
+{
+	return _lzcnt(u64x2(a));
 }
