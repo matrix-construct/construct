@@ -25,7 +25,7 @@ namespace ircd::db
 	bool for_each(database &d, const uint64_t &seq, const seq_closure_bool &);
 	void for_each(database &d, const uint64_t &seq, const seq_closure &);
 	void get(database &d, const uint64_t &seq, const seq_closure &);
-	std::string debug(const txn &);
+	string_view debug(const mutable_buffer &out, const txn &);
 }
 
 struct ircd::db::txn

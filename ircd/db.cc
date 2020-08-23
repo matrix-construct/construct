@@ -4655,11 +4655,12 @@ ircd::db::for_each(database &d,
 	return true;
 }
 
-std::string
-ircd::db::debug(const txn &t)
+ircd::string_view
+ircd::db::debug(const mutable_buffer &buf,
+                const txn &t)
 {
 	const rocksdb::WriteBatch &wb(t);
-	return db::debug(wb);
+	return db::debug(buf, wb);
 }
 
 void
@@ -7991,37 +7992,43 @@ ircd::db::commit(database &d,
 	};
 
 	#ifdef RB_DEBUG
+	char dbuf[192];
 	log::debug
 	{
 		log, "[%s] %lu COMMIT %s in %ld$us",
 		d.name,
 		sequence(d),
-		debug(batch),
+		debug(dbuf, batch),
 		timer.at<microseconds>().count()
 	};
 	#endif
 }
 
-std::string
-ircd::db::debug(const rocksdb::WriteBatch &batch)
+ircd::string_view
+ircd::db::debug(const mutable_buffer &buf,
+                const rocksdb::WriteBatch &batch)
 {
-	return ircd::string(512, [&batch]
-	(const mutable_buffer &ret)
+	const auto len(snprintf
+	(
+		data(buf), size(buf),
+		"%d deltas; size:%zuB %s+%s+%s+%s+%s+%s+%s+%s+%s"
+		,batch.Count()
+		,batch.GetDataSize()
+		,batch.HasPut()? "PUT": ""
+		,batch.HasDelete()? "DEL": ""
+		,batch.HasSingleDelete()? "SDL": ""
+		,batch.HasDeleteRange()? "DRG": ""
+		,batch.HasMerge()? "MRG": ""
+		,batch.HasBeginPrepare()? "BEG": ""
+		,batch.HasEndPrepare()? "END": ""
+		,batch.HasCommit()? "COM-": ""
+		,batch.HasRollback()? "RB^": ""
+	));
+
+	return string_view
 	{
-		return snprintf(data(ret), size(ret)+1,
-		                "%d deltas; size:%zuB %s+%s+%s+%s+%s+%s+%s+%s+%s",
-		                batch.Count(),
-		                batch.GetDataSize(),
-		                batch.HasPut()? "PUT" : "",
-		                batch.HasDelete()? "DEL" : "",
-		                batch.HasSingleDelete()? "SDL" : "",
-		                batch.HasDeleteRange()? "DRG" : "",
-		                batch.HasMerge()? "MRG" : "",
-		                batch.HasBeginPrepare()? "BEG" : "",
-		                batch.HasEndPrepare()? "END" : "",
-		                batch.HasCommit()? "COM-" : "",
-		                batch.HasRollback()? "RB^" : "");
-	});
+		data(buf), len
+	};
 }
 
 bool

@@ -129,7 +129,7 @@ namespace ircd::db
 	rocksdb::Status _read(column &, const string_view &key, const rocksdb::ReadOptions &, const column::view_closure & = {});
 
 	// [SET] writebatch suite
-	std::string debug(const rocksdb::WriteBatch &);
+	string_view debug(const mutable_buffer &, const rocksdb::WriteBatch &);
 	bool has(const rocksdb::WriteBatch &, const op &);
 	void commit(database &, rocksdb::WriteBatch &, const rocksdb::WriteOptions &);
 	void commit(database &, rocksdb::WriteBatch &, const sopts &);
