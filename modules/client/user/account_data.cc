@@ -34,9 +34,14 @@ put__account_data(client &client,
 		request
 	};
 
+	const m::user::account_data account_data
+	{
+		user
+	};
+
 	const auto event_id
 	{
-		m::user::account_data{user}.set(type, value)
+		account_data.set(type, value)
 	};
 
 	return m::resource::response
@@ -62,7 +67,12 @@ get__account_data(client &client,
 		url::decode(typebuf, request.parv[2])
 	};
 
-	m::user::account_data{user}.get(type, [&client]
+	const m::user::account_data account_data
+	{
+		user
+	};
+
+	account_data.get(type, [&client]
 	(const string_view &type, const json::object &value)
 	{
 		resource::response
