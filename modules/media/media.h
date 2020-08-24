@@ -16,8 +16,6 @@ namespace ircd::m::media
 	static void fini();
 
 	extern log::log log;
-	extern std::unique_ptr<m::media::magick> magick_support;
-
 	extern conf::item<bool> blocks_cache_enable;
 	extern conf::item<bool> blocks_cache_comp_enable;
 	extern conf::item<size_t> blocks_cache_size;

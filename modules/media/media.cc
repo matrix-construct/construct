@@ -10,14 +10,6 @@
 
 #include "media.h"
 
-struct ircd::m::media::magick
-{
-	module modules
-	{
-		"magick"
-	};
-};
-
 ircd::mapi::header
 IRCD_MODULE
 {
@@ -25,9 +17,6 @@ IRCD_MODULE
 	ircd::m::media::init,
 	ircd::m::media::fini
 };
-
-decltype(ircd::m::media::magick_support)
-ircd::m::media::magick_support;
 
 decltype(ircd::m::media::log)
 ircd::m::media::log
@@ -192,24 +181,6 @@ ircd::m::media::init()
 	// the database was just loaded to set the cache size.
 	conf::reset("ircd.media.blocks.cache.size");
 	conf::reset("ircd.media.blocks.cache_comp.size");
-
-	// conditions to load the magick.so module
-	const bool enable_magick
-	{
-		// used by the thumbnailer
-		thumbnail::enable
-
-		// support is available
-		&& mods::available("magick")
-	};
-
-	if(enable_magick)
-		magick_support.reset(new media::magick{});
-	else
-		log::warning
-		{
-			log, "GraphicsMagick support is disabled or unavailable."
-		};
 }
 
 void

@@ -267,11 +267,6 @@ get__thumbnail_local(client &client,
 			copied
 		};
 
-	const bool available
-	{
-		m::media::magick_support
-	};
-
 	const auto mime_type
 	{
 		split(content_type, ';').first
@@ -303,14 +298,11 @@ get__thumbnail_local(client &client,
 		// Access denied for this operation
 		|| !permitted
 
-		// The thumbnailer is not loaded or available on this system.
-		|| !available
-
 		//  Arguments invalid.
 		|| !valid_args
 	};
 
-	if(fallback && available && enable)
+	if(fallback && enable)
 		log::dwarning
 		{
 			"Not thumbnailing %s/%s [%s] '%s' bytes:%zu :%s",
