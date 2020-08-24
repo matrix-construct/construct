@@ -296,6 +296,7 @@ noexcept try
 	fs::init _fs_;           // Local filesystem
 	magic::init _magic_;     // libmagic
 	ctx::ole::init _ole_;    // Thread OffLoad Engine
+	magick::init _magick_;   // ImageMagick
 	openssl::init _ossl_;    // openssl crypto
 	net::init _net_;         // Networking
 	db::init _db_;           // RocksDB

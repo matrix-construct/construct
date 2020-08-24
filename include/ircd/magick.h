@@ -22,9 +22,16 @@ namespace ircd::magick
 	struct scale;
 	struct thumbnail;
 	struct thumbcrop;
+	struct init;
 
 	extern const info::versions version_api, version_abi;
 }
+
+struct ircd::magick::init
+{
+	init();
+	~init() noexcept;
+};
 
 /// Composite thumbnailer to resize close to the requested dimension but
 /// preserving original aspect ratio; then crop to requested dimension.

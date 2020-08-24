@@ -76,6 +76,7 @@ libircd_la_LDFLAGS = \
 	@CRYPTO_LDFLAGS@ \
 	@SODIUM_LDFLAGS@ \
 	@MAGIC_LDFLAGS@ \
+	@IMAGEMAGICK_LDFLAGS@ \
 	@SNAPPY_LDFLAGS@ \
 	@LZ4_LDFLAGS@ \
 	@Z_LDFLAGS@ \
@@ -92,6 +93,7 @@ libircd_la_LIBADD = \
 	@CRYPTO_LIBS@ \
 	@SODIUM_LIBS@ \
 	@MAGIC_LIBS@ \
+	@IMAGEMAGICK_LIBS@ \
 	@SNAPPY_LIBS@ \
 	@LZ4_LIBS@ \
 	@Z_LIBS@ \
@@ -174,6 +176,9 @@ endif
 if PBC
 libircd_la_SOURCES += pbc.cc
 endif
+if IMAGEMAGICK
+libircd_la_SOURCES += magick.cc
+endif
 libircd_la_SOURCES += openssl.cc
 libircd_la_SOURCES += rfc1459.cc
 libircd_la_SOURCES += rfc3986.cc
@@ -242,6 +247,9 @@ prof.lo:              AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
 if MAGIC
 magic.lo:             AM_CPPFLAGS := @MAGIC_CPPFLAGS@ ${AM_CPPFLAGS}
 endif
+if IMAGEMAGICK
+magick.lo:            AM_CPPFLAGS := @IMAGEMAGICK_CPPFLAGS@ ${AM_CPPFLAGS}
+endif IMAGEMAGICK
 mods.lo:              AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 net.lo:               AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 net_addrs.lo:         AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}

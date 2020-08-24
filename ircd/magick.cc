@@ -1,7 +1,7 @@
-// Matrix Construct
+// The Construct
 //
-// Copyright (C) Matrix Construct Developers, Authors & Contributors
-// Copyright (C) 2016-2019 Jason Volk <jason@zemos.net>
+// Copyright (C) The Construct Developers, Authors & Contributors
+// Copyright (C) 2016-2020 Jason Volk <jason@zemos.net>
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,9 +30,6 @@ namespace ircd::magick
 	template<class R, class F, class... A> static R callex(F&&, A&&...);
 	template<class F, class... A> static void callpf(F&&, A&&...);
 
-	static void init();
-	static void fini();
-
 	extern bool call_ready;
 	extern ctx::dock call_dock;
 	extern ctx::mutex call_mutex;
@@ -56,14 +53,6 @@ struct ircd::magick::transform
 	using transformer = std::function<Image *(const input &)>;
 
 	transform(const const_buffer &, const output &, const transformer &);
-};
-
-ircd::mapi::header
-IRCD_MODULE
-{
-	"GraphicsMagick Library support for media manipulation",
-	ircd::magick::init,
-	ircd::magick::fini
 };
 
 decltype(ircd::magick::log)
@@ -211,8 +200,7 @@ InitializeMagickSignalHandlers(void)
 // init
 //
 
-void
-ircd::magick::init()
+ircd::magick::init::init()
 {
 	log::info
 	{
@@ -260,8 +248,8 @@ ircd::magick::init()
 	};
 }
 
-void
-ircd::magick::fini()
+ircd::magick::init::~init()
+noexcept
 {
 	log::debug
 	{
@@ -281,7 +269,6 @@ ircd::magick::fini()
 // thumbcrop
 //
 
-IRCD_MODULE_EXPORT
 ircd::magick::thumbcrop::thumbcrop(const const_buffer &in,
                                    const dimensions &req,
                                    const result_closure &out)
@@ -295,11 +282,9 @@ ircd::magick::thumbcrop::thumbcrop(const const_buffer &in,
 			std::get<const Image *>(image)
 		};
 
-		const auto &req_x(req.first);
-		const auto &req_y(req.second);
 		const auto &img_x(img_p->columns);
 		const auto &img_y(img_p->rows);
-
+		const auto &[req_x, req_y] {req};
 		const bool aspect
 		{
 			req_x * img_y < req_y * img_x
@@ -339,7 +324,6 @@ ircd::magick::thumbcrop::thumbcrop(const const_buffer &in,
 // thumbnail
 //
 
-IRCD_MODULE_EXPORT
 ircd::magick::thumbnail::thumbnail(const const_buffer &in,
                                    const dimensions &dim,
                                    const result_closure &out)
@@ -357,7 +341,6 @@ ircd::magick::thumbnail::thumbnail(const const_buffer &in,
 // scale
 //
 
-IRCD_MODULE_EXPORT
 ircd::magick::scale::scale(const const_buffer &in,
                            const dimensions &dim,
                            const result_closure &out)
@@ -375,7 +358,6 @@ ircd::magick::scale::scale(const const_buffer &in,
 // shave
 //
 
-IRCD_MODULE_EXPORT
 ircd::magick::shave::shave(const const_buffer &in,
                            const dimensions &dim,
                            const offset &off,
@@ -402,7 +384,6 @@ ircd::magick::shave::shave(const const_buffer &in,
 // crop
 //
 
-IRCD_MODULE_EXPORT
 ircd::magick::crop::crop(const const_buffer &in,
                          const dimensions &dim,
                          const offset &off,
@@ -429,7 +410,6 @@ ircd::magick::crop::crop(const const_buffer &in,
 // transform (internal)
 //
 
-IRCD_MODULE_EXPORT
 ircd::magick::transform::transform(const const_buffer &input,
                                    const output &output,
                                    const transformer &transformer)
@@ -476,7 +456,6 @@ ircd::magick::transform::transform(const const_buffer &input,
 // display (internal)
 //
 
-IRCD_MODULE_EXPORT
 ircd::magick::display::display(const const_buffer &input)
 {
 	const custom_ptr<ImageInfo> input_info
@@ -497,7 +476,6 @@ ircd::magick::display::display(const const_buffer &input)
 	};
 }
 
-IRCD_MODULE_EXPORT
 ircd::magick::display::display(const ImageInfo &info,
                                Image &image)
 {

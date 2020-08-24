@@ -68,19 +68,6 @@ module_LTLIBRARIES += llvm.la
 
 endif LLVM
 
-#
-# {Image|Graphics}Magick Support
-#
-if IMAGEMAGICK
-
-magick_la_SOURCES = magick.cc
-magick_la_CPPFLAGS = $(AM_CPPFLAGS) @IMAGEMAGICK_CPPFLAGS@
-magick_la_LDFLAGS = $(AM_LDFLAGS) @IMAGEMAGICK_LDFLAGS@
-magick_la_LIBADD = $(AM_LIBS) @IMAGEMAGICK_LIBS@
-module_LTLIBRARIES += magick.la
-
-endif IMAGEMAGICK
-
 ###############################################################################
 #
 # Messages / protocol
