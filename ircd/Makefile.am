@@ -141,21 +141,6 @@ libircd_la_SOURCES += conf.cc
 libircd_la_SOURCES += stats.cc
 libircd_la_SOURCES += logger.cc
 libircd_la_SOURCES += run.cc
-if MAGIC
-libircd_la_SOURCES += magic.cc
-endif
-if SODIUM
-libircd_la_SOURCES += sodium.cc
-endif
-if PBC
-libircd_la_SOURCES += pbc.cc
-endif
-libircd_la_SOURCES += openssl.cc
-libircd_la_SOURCES += rfc1459.cc
-libircd_la_SOURCES += rfc3986.cc
-libircd_la_SOURCES += rfc1035.cc
-libircd_la_SOURCES += http.cc
-libircd_la_SOURCES += http2.cc
 libircd_la_SOURCES += prof.cc
 if LINUX
 libircd_la_SOURCES += prof_linux.cc
@@ -180,6 +165,21 @@ libircd_la_SOURCES += mods.cc
 if LINUX
 libircd_la_SOURCES += mods_ldso.cc
 endif
+if MAGIC
+libircd_la_SOURCES += magic.cc
+endif
+if SODIUM
+libircd_la_SOURCES += sodium.cc
+endif
+if PBC
+libircd_la_SOURCES += pbc.cc
+endif
+libircd_la_SOURCES += openssl.cc
+libircd_la_SOURCES += rfc1459.cc
+libircd_la_SOURCES += rfc3986.cc
+libircd_la_SOURCES += rfc1035.cc
+libircd_la_SOURCES += http.cc
+libircd_la_SOURCES += http2.cc
 libircd_la_SOURCES += db_fixes.cc
 libircd_la_SOURCES += db_port.cc
 libircd_la_SOURCES += db_allocator.cc
