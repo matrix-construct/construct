@@ -47,6 +47,7 @@ namespace ircd::fs
 #include "opts.h"
 #include "dev.h"
 #include "fd.h"
+#include "map.h"
 #include "wait.h"
 #include "read.h"
 #include "write.h"

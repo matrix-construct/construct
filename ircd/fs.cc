@@ -1732,6 +1732,132 @@ noexcept
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// fs/map.h
+//
+
+namespace ircd::fs
+{
+	static uint flags(const map::opts &);
+	static uint prot(const map::opts &);
+}
+
+ircd::fs::map::map(const fd &fd,
+                   const opts &opts,
+                   const size_t &size)
+{
+	const auto map_size
+	{
+		size?: fs::size(fd)
+	};
+
+	void *const &ptr
+	{
+		::mmap(nullptr, map_size, prot(opts), flags(opts), int(fd), opts.offset)
+	};
+
+	if(unlikely(ptr == MAP_FAILED))
+		throw_system_error(errno);
+
+	static_cast<mutable_buffer &>(*this) = mutable_buffer
+	{
+		reinterpret_cast<char *>(ptr),
+		map_size
+	};
+}
+
+ircd::fs::map::~map()
+noexcept try
+{
+	if(mutable_buffer::null())
+		return;
+
+	syscall(::munmap, data(*this), size(*this));
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "munmap(%p, %zu) :%s",
+		data(static_cast<mutable_buffer &>(*this)),
+		size(static_cast<mutable_buffer &>(*this)),
+		e.what(),
+	};
+}
+
+ircd::fs::map &
+ircd::fs::map::operator=(map &&other)
+noexcept
+{
+	auto &ours
+	{
+		static_cast<mutable_buffer &>(*this)
+	};
+
+	auto &theirs
+	{
+		static_cast<mutable_buffer &>(other)
+	};
+
+	this->~map();
+	ours = theirs;
+	theirs = {};
+	return *this;
+}
+
+uint
+ircd::fs::prot(const map::opts &opts)
+{
+	uint ret
+	{
+		PROT_NONE
+	};
+
+	if(opts.mode & std::ios::in)
+		ret |= PROT_READ;
+
+	if(opts.mode & std::ios::out)
+		ret |= PROT_WRITE;
+
+	assert(!opts.execute);
+	if((false) && opts.execute)
+		ret |= PROT_EXEC;
+
+	return ret;
+}
+
+uint
+ircd::fs::flags(const map::opts &opts)
+{
+	uint ret
+	{
+		0
+	};
+
+	if(opts.shared)
+		ret |= MAP_SHARED;
+	else
+		ret |= MAP_PRIVATE;
+
+	#if defined(MAP_NONBLOCK)
+	if(!opts.blocking)
+		ret |= MAP_NONBLOCK;
+	#endif
+
+	#if defined(MAP_POPULATE)
+	if(opts.populate)
+		ret |= MAP_POPULATE;
+	#endif
+
+	#if defined(MAP_NORESERVE)
+	if(!opts.reserve)
+		ret |= MAP_NORESERVE;
+	#endif
+
+	return ret;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // fs/fd.h
 //
 
