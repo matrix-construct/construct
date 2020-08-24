@@ -806,45 +806,50 @@ ircd::fs::fincore(const fd &fd,
                   const size_t &count,
                   const read_opts &opts)
 {
-	assert(opts.offset % info::page_size == 0);
+	using word_t = unsigned long long;
+	thread_local std::array<word_t, 64> tls_vec;
+
+	fs::map::opts map_opts;
+	map_opts.offset = buffer::align(opts.offset, info::page_size);
+	map_opts.blocking = false;
 	const size_t &map_size
 	{
 		count?: size(fd)
 	};
 
-	void *const &map
+	const size_t &map_pages
 	{
-		::mmap(nullptr, map_size, PROT_NONE, MAP_NONBLOCK | MAP_SHARED, int(fd), opts.offset)
+		(map_size + info::page_size - 1) / info::page_size
 	};
 
-	if(unlikely(map == MAP_FAILED))
-		throw_system_error(errno);
-
-	const custom_ptr<void> map_ptr
+	const size_t &vec_size
 	{
-		map, [&map_size](void *const &map)
-		{
-			syscall(::munmap, map, map_size);
-		}
+		std::max(map_pages / sizeof(word_t), 1UL)
 	};
 
-	using word_t = unsigned long long;
-	thread_local std::array<word_t, 64> tls_vec;
-
-	const size_t vec_size
+	const size_t &dynamic_vec_size
 	{
-		std::max(((map_size + info::page_size - 1) / info::page_size) / sizeof(word_t), 1UL)
-	};
-
-	assert(vec_size > 0 && vec_size < map_size);
-	const auto dynamic_vec_size
-	{
-		vec_size > tls_vec.size()? vec_size : 0UL
+		vec_size > tls_vec.size()?
+			vec_size:
+			0UL
 	};
 
 	std::vector<word_t> dynamic_vec(dynamic_vec_size);
-	auto *const vec(dynamic_vec_size? dynamic_vec.data(): tls_vec.data());
-	return fincore(map, map_size, reinterpret_cast<uint8_t *>(vec), vec_size);
+	auto *const vec
+	{
+		dynamic_vec_size?
+			dynamic_vec.data():
+			tls_vec.data()
+	};
+
+	assert(map_opts.offset % 4096 == 0);
+	const fs::map map
+	{
+		fd, map_opts, map_size
+	};
+
+	assert(vec_size > 0 && vec_size <= map_size);
+	return fincore(data(map), map_size, reinterpret_cast<uint8_t *>(vec), vec_size);
 }
 
 bool
