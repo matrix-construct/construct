@@ -76,6 +76,8 @@ struct ircd::m::homeserver
 	}
 	modules;
 
+	void bootstrap();
+
 	homeserver(const struct opts *const &);
 	~homeserver() noexcept;
 
