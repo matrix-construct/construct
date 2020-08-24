@@ -87,65 +87,46 @@ ircd::m::events::rebuild()
 void
 ircd::m::events::dump__file(const string_view &filename)
 {
-	fs::fd::opts fileopts(std::ios::out | std::ios::app);
-	fileopts.dontneed = true;
-	const fs::fd file
+	static const fs::fd::opts fileopts
 	{
-		filename, fileopts
+		std::ios::out | std::ios::app
 	};
 
-	const unique_buffer<mutable_buffer> buf
-	{
-		size_t(dump_buffer_size)
-	};
-
-	char *pos{data(buf)};
-	size_t foff{0}, ecount{0}, acount{0}, errcount{0};
 	static const db::gopts gopts
 	{
 		db::get::NO_CACHE, db::get::NO_CHECKSUM
 	};
 
-	for(auto it(dbs::event_json.begin(gopts)); it; ++it) try
+	auto _fileopts(fileopts);
+	_fileopts.dontneed = true;
+	const fs::fd file
 	{
-		const event::idx seq
-		{
-			byte_view<uint64_t>(it->first)
-		};
+		filename, _fileopts
+	};
 
-		const string_view source
-		{
-			it->second
-		};
+	const unique_buffer<mutable_buffer> buf
+	{
+		size_t(dump_buffer_size), 512
+	};
 
-		const auto remain
+	event::idx seq{0};
+	size_t foff{0}, ecount{0}, acount{0}, errcount{0};
+	json::stack out
+	{
+		buf, [&](const const_buffer &buf)
 		{
-			size_t(data(buf) + size(buf) - pos)
-		};
-
-		assert(remain >= event::MAX_SIZE && remain <= size(buf));
-		const mutable_buffer mb
-		{
-			pos, remain
-		};
-
-		pos += copy(mb, source);
-		++ecount;
-		if(pos + event::MAX_SIZE > data(buf) + size(buf))
-		{
-			const const_buffer cb
+			const auto wrote
 			{
-				data(buf), pos
+				fs::append(file, buf)
 			};
 
-			foff += size(fs::append(file, cb));
-			pos = data(buf);
+			foff += size(wrote);
 			if(acount++ % 256 == 0)
 			{
 				char pbuf[48];
 				log::info
 				{
-					"dump[%s] %0.2lf%% @ seq %zu of %zu; %zu events; %s in %zu writes; %zu errors",
+					"dump[%s] %0.2lf%% @ seq %zu of %zu; %zu events; %s in %zu writes; %zu errors; wrote %zu",
 					filename,
 					(seq / double(m::vm::sequence::retired)) * 100.0,
 					seq,
@@ -153,10 +134,34 @@ ircd::m::events::dump__file(const string_view &filename)
 					ecount,
 					pretty(pbuf, iec(foff)),
 					acount,
-					errcount
+					errcount,
+					size(wrote),
 				};
 			}
+
+			return wrote;
 		}
+	};
+
+	json::stack::array top
+	{
+		out
+	};
+
+	for(auto it(dbs::event_json.begin(gopts)); it; ++it) try
+	{
+		seq = byte_view<uint64_t>
+		{
+			it->first
+		};
+
+		const json::object source
+		{
+			it->second
+		};
+
+		top.append(source);
+		++ecount;
 	}
 	catch(const ctx::interrupted &)
 	{
@@ -176,13 +181,8 @@ ircd::m::events::dump__file(const string_view &filename)
 		};
 	}
 
-	if(pos > data(buf))
-	{
-		const const_buffer cb{data(buf), pos};
-		foff += size(fs::append(file, cb));
-		++acount;
-	}
-
+	top.~array();
+	out.flush(true);
 	log::notice
 	{
 		log, "dump[%s] complete events:%zu using %s in writes:%zu errors:%zu",
