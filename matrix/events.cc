@@ -214,7 +214,7 @@ ircd::m::events::for_each(const range &range,
 		if(!closure(event_idx, event))
 			return false;
 
-		return --limit;
+		return --limit > 0L;
 	});
 }
 
@@ -235,7 +235,7 @@ ircd::m::events::for_each(const range &range,
 	auto start
 	{
 		ascending?
-			range.first:
+			std::min(range.first, vm::sequence::retired + 1):
 			std::min(range.first, vm::sequence::retired)
 	};
 
@@ -284,7 +284,7 @@ ircd::m::events::for_each(const range &range,
 		if(!closure(event_idx))
 			return false;
 
-		return --limit;
+		return --limit > 0L;
 	}});
 
 	return true;
