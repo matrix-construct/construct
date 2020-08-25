@@ -111,6 +111,9 @@ ircd::m::room::bootstrap::bootstrap(m::event::id::buf &event_id_buf,
 			hosts[0]
 	};
 
+	if(!host && !event_id_buf)
+		return;
+
 	log::info
 	{
 		log, "Starting in %s for %s to '%s' joined:%b ver:%s",
@@ -121,14 +124,13 @@ ircd::m::room::bootstrap::bootstrap(m::event::id::buf &event_id_buf,
 		room_version,
 	};
 
-
 	if(existing_join)
 		event_id_buf = m::event_id(std::nothrow, member_event_idx);
 
-	if(!event_id_buf)
+	if(host && !event_id_buf)
 		event_id_buf = m::roomstrap::make_join(host, room_id, user_id, room_version_buf);
 
-	if(!room_version)
+	if(host && !room_version)
 		m::roomstrap::make_join(host, room_id, user_id, room_version_buf);
 
 	assert(event_id_buf);
