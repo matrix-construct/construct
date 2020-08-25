@@ -4657,10 +4657,43 @@ ircd::db::for_each(database &d,
 
 ircd::string_view
 ircd::db::debug(const mutable_buffer &buf,
-                const txn &t)
+                const txn &t,
+                const ulong &fmt)
 {
-	const rocksdb::WriteBatch &wb(t);
-	return db::debug(buf, wb);
+	size_t len(0);
+
+	if(fmt >= 0)
+	{
+		const rocksdb::WriteBatch &wb(t);
+		len += size(db::debug(buf, wb));
+	}
+
+	if(fmt == 1)
+	{
+		for_each(t, [&buf, &len]
+		(const delta &d)
+		{
+			char pbuf[2][64];
+			len += copy(buf + len, '\n');
+			len += fmt::sprintf
+			{
+				buf + len, "%18s %-12s | [%s...] %-20s => [%s...] %-20s",
+				std::get<delta::COL>(d),
+				reflect(std::get<delta::OP>(d)),
+				"????????"_sv, //std::get<d.KEY>(d),
+				pretty(pbuf[0], iec(size(std::get<delta::KEY>(d)))),
+				"????????"_sv, //std::get<d.VAL>(d),
+				pretty(pbuf[1], iec(size(std::get<delta::VAL>(d)))),
+			};
+		});
+
+		len += copy(buf + len, '\n');
+	}
+
+	return string_view
+	{
+		data(buf), len
+	};
 }
 
 void
@@ -8008,12 +8041,13 @@ ircd::string_view
 ircd::db::debug(const mutable_buffer &buf,
                 const rocksdb::WriteBatch &batch)
 {
+	char pbuf[48] {0};
 	const auto len(snprintf
 	(
 		data(buf), size(buf),
-		"%d deltas; size:%zuB %s+%s+%s+%s+%s+%s+%s+%s+%s"
+		"%d deltas; %s %s+%s+%s+%s+%s+%s+%s+%s+%s"
 		,batch.Count()
-		,batch.GetDataSize()
+		,pretty(pbuf, iec(batch.GetDataSize())).data()
 		,batch.HasPut()? "PUT": ""
 		,batch.HasDelete()? "DEL": ""
 		,batch.HasSingleDelete()? "SDL": ""
