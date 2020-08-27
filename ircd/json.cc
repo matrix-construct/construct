@@ -430,15 +430,9 @@ noexcept
 		std::min(output_length, size(state.out))
 	};
 
-	const size_t overflow
-	{
-		output_length - consumed
-	};
-
 	state.consumed += consume(state.out, consumed);
 	state.generated += output_length;
-	state.overflow += overflow;
-	ret = !overflow;
+	ret = state.generated == state.consumed;
 }
 
 template<class gen,

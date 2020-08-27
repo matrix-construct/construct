@@ -325,23 +325,18 @@ ircd::spirit::expectation_failure<parent>::expectation_failure(const qi::expecta
 struct [[gnu::visibility("hidden")]]
 ircd::spirit::generator_state
 {
-	/// Destination buffer (used like window_buffer).
+	/// User's buffer.
 	mutable_buffer &out;
 
-	/// Current consumption count of the destination buffer.
-	ssize_t consumed {0};
+	/// Previous in buffer stack
+	struct generator_state *prev {nullptr};
 
-	/// The number of attemtped generated characters to the destination. This
-	/// can be larger than the consumed counter to indicate the destination
-	/// buffer is insufficient. Note that characters are otherwise quietly
-	/// discarded when the destination (out) is full.
-	ssize_t generated {0};
+	/// The number of characters we're storing in buffer
+	size_t consumed {0};
 
-	/// Internal state for buffer_sink::copy()
-	ssize_t last_generated {0}, last_width {0};
-
-	/// Count of rejected from the destination buffer.
-	ssize_t overflow {0};
+	/// The number of characters attempted, which may be larger than
+	/// the buffer capacity indicating an overflow amount.
+	size_t generated {0};
 };
 
 template<bool truncation,
@@ -376,30 +371,30 @@ ircd::spirit::generate(mutable_buffer &out,
 		karma::generate(sink, std::forward<gen>(g), std::forward<attr>(a)...)
 	};
 
+	assert(state.generated >= state.consumed);
+	const auto overflow
+	{
+		state.generated - state.consumed
+	};
+
 	if constexpr(truncation)
 	{
-		assert(begin(out) <= end(out));
-		begin(out) = state.overflow? end(out): begin(out);
-		assert(!state.overflow || begin(out) == end(out));
+		begin(out) = begin(out) > end(out)? end(out): begin(out);
 		assert(begin(out) <= end(out));
 		return ret;
 	}
 
-	if(unlikely(state.overflow || begin(out) > end(out)))
+	if(unlikely(overflow || begin(out) > end(out)))
 	{
-		char pbuf[2][48];
-		const auto required
-		{
-			max + state.overflow?:
-				std::distance(start, begin(out))
-		};
-
+		begin(out) = start;
 		assert(begin(out) <= end(out));
+
+		char pbuf[2][48];
 		throw buffer_overrun
 		{
 			"Insufficient buffer of %s; required at least %s",
-			pretty(pbuf[0], iec(max)),
-			pretty(pbuf[1], iec(required)),
+			pretty(pbuf[0], iec(state.consumed)),
+			pretty(pbuf[1], iec(state.generated)),
 		};
 	}
 
@@ -458,10 +453,178 @@ ircd::spirit::attr_at(semantic_context&& c)
 	return boost::fusion::at_c<idx>(c.attributes);
 }
 
+//
+// boost::spirit::karma
+//
+
 namespace boost::spirit::karma::detail
 {
-	template<> bool buffer_sink::copy(ircd::spirit::sink_type &, size_t maxwidth) const;
-	template<> void buffer_sink::output(const char &);
+	template<> struct enable_buffering<ircd::spirit::sink_type>;
+}
+
+template<>
+struct boost::spirit::karma::detail::enable_buffering<ircd::spirit::sink_type>
+{
+	size_t width
+	{
+		0
+	};
+
+	ircd::unique_mutable_buffer buffer
+	{
+		std::min(width, 65536UL)
+	};
+
+	struct ircd::spirit::generator_state state
+	{
+		buffer, ircd::spirit::generator_state
+	};
+
+	ircd::scope_restore<struct ircd::spirit::generator_state *> stack_state
+	{
+		ircd::spirit::generator_state, std::addressof(state)
+	};
+
+	std::size_t buffer_size() const
+	{
+		return state.generated;
+	}
+
+	void disable()
+	{
+		const auto width
+		{
+			this->width != -1UL? this->width: state.consumed
+		};
+
+		assert(width >= state.consumed);
+		const size_t off
+		{
+			width - state.consumed
+		};
+
+		const ircd::const_buffer src
+		{
+			state.out, state.consumed
+		};
+
+		const ircd::mutable_buffer dst
+		{
+			state.out + off
+		};
+
+		const auto moved
+		{
+			ircd::move(dst, src)
+		};
+
+		assert(moved == state.consumed);
+		state.consumed = 0;
+	}
+
+	bool buffer_copy(std::size_t maxwidth = std::size_t(-1))
+	{
+		assert(state.prev);
+		auto &prev
+		{
+			*state.prev
+		};
+
+		const bool prev_base
+		{
+			prev.prev == nullptr
+		};
+
+		const auto width
+		{
+			this->width != -1UL? this->width: state.consumed
+		};
+
+		const ircd::const_buffer src
+		{
+			state.out, std::max(state.consumed, width)
+		};
+
+		const ircd::mutable_buffer dst
+		{
+			data(prev.out) - (prev_base? state.consumed: 0),
+			prev_base? state.consumed: size(prev.out)
+		};
+
+		const auto copied
+		{
+			ircd::copy(dst, src)
+		};
+
+		prev.generated += state.generated;
+		prev.consumed += copied;
+		return true; // sink.good();
+	}
+
+	template<typename OutputIterator>
+	bool buffer_copy_to(OutputIterator& sink, std::size_t maxwidth = std::size_t(-1)) const
+	{
+		ircd::always_assert(false);
+		return true;
+	}
+
+	template <typename RestIterator>
+	bool buffer_copy_rest(RestIterator& sink, std::size_t start_at = 0) const
+	{
+		ircd::always_assert(false);
+		return true;
+	}
+
+	enable_buffering(ircd::spirit::sink_type &sink,
+	                 std::size_t width = std::size_t(-1))
+	:width
+	{
+		width
+	}
+	{
+		assert(size(buffer) != 0);
+	}
+
+	~enable_buffering() noexcept
+	{
+		assert(ircd::spirit::generator_state == &state);
+		//disable();
+	}
+};
+
+template<>
+inline bool
+boost::spirit::karma::detail::buffering_policy::output(const char &value)
+{
+	assert(ircd::spirit::generator_state);
+	auto *state
+	{
+		ircd::spirit::generator_state
+	};
+
+	const bool buffering
+	{
+		this->buffer != nullptr
+	};
+
+	const bool base
+	{
+		state->prev == nullptr
+	};
+
+	const auto dst
+	{
+		state->out + (!base || buffering? state->consumed: 0)
+	};
+
+	const auto copied
+	{
+		ircd::copy(dst, value)
+	};
+
+	state->generated += sizeof(char);
+	state->consumed += copied;
+	return !buffering;
 }
 
 template<>
@@ -478,108 +641,6 @@ boost::spirit::karma::detail::counting_policy<ircd::spirit::sink_type>::output(c
 {
 }
 #endif
-
-#if 0
-template<>
-inline bool
-boost::spirit::karma::detail::buffering_policy::output(const char &value)
-{
-	if(likely(this->buffer != nullptr))
-	{
-		this->buffer->output(value);
-		return false;
-	}
-	else return true;
-}
-#endif
-
-template<>
-inline void
-boost::spirit::karma::detail::buffer_sink::output(const char &value)
-{
-	assert(ircd::spirit::generator_state);
-	#if __has_builtin(__builtin_assume)
-		__builtin_assume(ircd::spirit::generator_state != nullptr);
-	#endif
-
-	auto &state
-	{
-		*ircd::spirit::generator_state
-	};
-
-	const auto &consumed
-	{
-		ircd::consume(state.out, ircd::copy(state.out, value))
-	};
-
-	assert(consumed <= 1UL);
-	this->width += consumed;
-	state.overflow += !consumed;
-	state.generated++;
-}
-
-template<>
-inline bool
-boost::spirit::karma::detail::buffer_sink::copy(ircd::spirit::sink_type &sink,
-                                                size_t maxwidth)
-const
-{
-	assert(ircd::spirit::generator_state);
-	#if __has_builtin(__builtin_assume)
-		__builtin_assume(ircd::spirit::generator_state != nullptr);
-	#endif
-
-	auto &state
-	{
-		*ircd::spirit::generator_state
-	};
-
-	assert(state.last_generated >= 0);
-	assert(state.generated >= state.last_generated);
-	const auto &width_diff
-	{
-		state.last_generated == state.generated?
-			ssize_t(this->width) - state.last_width:
-			ssize_t(this->width)
-	};
-
-	assert(width_diff >= -state.consumed);
-	assert(state.generated >= state.consumed);
-	state.consumed += width_diff;
-
-	assert(state.consumed >= 0);
-	const auto &rewind_count
-	{
-		state.generated - state.consumed
-	};
-
-	const auto &rewind
-	{
-		rewind_count >= 0L?
-			std::min(rewind_count, state.generated):
-			0L
-	};
-
-	assert(rewind >= 0L);
-	assert(rewind <= state.generated);
-	std::get<0>(state.out) -= rewind;
-	state.generated -= rewind;
-
-	assert(state.generated >= 0);
-	state.last_generated = state.generated;
-	state.last_width = this->width;
-	return true; //sink.good();
-}
-
-template<>
-inline bool
-boost::spirit::karma::detail::buffer_sink::copy_rest(ircd::spirit::sink_type &sink,
-                                                     size_t start_at)
-const
-{
-	assert(false);
-	return true; //sink.good();
-}
 
 template<>
 inline bool
