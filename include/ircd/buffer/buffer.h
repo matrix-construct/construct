@@ -156,6 +156,7 @@ namespace ircd
 	using buffer::size;
 	using buffer::data;
 	using buffer::copy;
+	using buffer::move;
 	using buffer::consume;
 	using buffer::begin;
 	using buffer::end;
