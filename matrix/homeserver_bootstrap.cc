@@ -22,7 +22,7 @@ try
 
 	assert(opts);
 	if(opts->bootstrap_vector_path)
-		bootstrap_event_vector(*this);
+		return bootstrap_event_vector(*this);
 
 	assert(this->self);
 	const m::user::id &my_id
@@ -30,22 +30,10 @@ try
 		this->self
 	};
 
-	if(my_id.hostname() == "localhost")
-		log::warning
-		{
-			"The server's name is configured to localhost. This is probably not what you want."
-		};
-
-	m::user me
+	const m::user me
 	{
 		my_id
 	};
-
-	if(!exists(me))
-	{
-		create(me);
-		me.activate();
-	}
 
 	const m::node my_node
 	{
@@ -57,9 +45,6 @@ try
 		my_node
 	};
 
-	if(!exists(node_room))
-		create(node_room, me);
-
 	const m::room::id::buf my_room_id
 	{
 		"ircd", origin(*this)
@@ -69,24 +54,6 @@ try
 	{
 		my_room_id
 	};
-
-	if(!exists(my_room))
-		create(my_room, me);
-
-	if(!membership(my_room, me, "join"))
-		join(my_room, me);
-
-	if(!my_room.has("m.room.name", ""))
-		send(my_room, me, "m.room.name", "",
-		{
-			{ "name", "IRCd's Room" }
-		});
-
-	if(!my_room.has("m.room.topic", ""))
-		send(my_room, me, "m.room.topic", "",
-		{
-			{ "topic", "The daemon's den." }
-		});
 
 	const m::room::id::buf conf_room_id
 	{
@@ -98,15 +65,6 @@ try
 		conf_room_id
 	};
 
-	if(!exists(conf_room))
-		create(conf_room, me);
-
-	if(!conf_room.has("m.room.name",""))
-		send(conf_room, me, "m.room.name", "",
-		{
-			{ "name", "Server Configuration" }
-		});
-
 	const m::room::id::buf tokens_room_id
 	{
 		"tokens", origin(*this)
@@ -116,15 +74,6 @@ try
 	{
 		tokens_room_id
 	};
-
-	if(!exists(tokens_room))
-		create(tokens_room, me);
-
-	if(!tokens_room.has("m.room.name",""))
-		send(tokens_room, me, "m.room.name", "",
-		{
-			{ "name", "User Tokens" }
-		});
 
 	const m::room::id::buf public_room_id
 	{
@@ -136,9 +85,6 @@ try
 		public_room_id
 	};
 
-	if(!exists(public_room))
-		create(public_room, me);
-
 	const m::room::id::buf alias_room_id
 	{
 		"alias", origin(*this)
@@ -148,9 +94,6 @@ try
 	{
 		alias_room_id
 	};
-
-	if(!exists(alias_room))
-		create(alias_room, me);
 
 	const m::room::id::buf control_room_id
 	{
@@ -162,15 +105,6 @@ try
 		control_room_id
 	};
 
-	if(!exists(control_room))
-		create(control_room, me);
-
-	if(!control_room.has("m.room.name", ""))
-		send(control_room, me, "m.room.name", "",
-		{
-			{ "name", "Control Room" }
-		});
-
 	const m::room::id::buf bridge_room_id
 	{
 		"bridge", origin(*this)
@@ -181,8 +115,51 @@ try
 		bridge_room_id
 	};
 
-	if(!exists(bridge_room))
-		create(bridge_room, me);
+	if(my_id.hostname() == "localhost")
+		log::warning
+		{
+			"The server's name is configured to localhost. This is probably not what you want."
+		};
+
+	assert(key);
+	assert(!key->verify_keys.empty());
+	m::keys::cache::set(key->verify_keys);
+
+	create(me);
+	const_cast<m::user &>(me).activate();
+
+	create(my_room, me);
+	create(conf_room, me);
+	create(tokens_room, me);
+	create(public_room, me);
+	create(alias_room, me);
+	create(control_room, me);
+	create(bridge_room, me);
+
+	send(my_room, me, "m.room.name", "",
+	{
+		{ "name", "IRCd's Room" }
+	});
+
+	send(my_room, me, "m.room.topic", "",
+	{
+		{ "topic", "The daemon's den." }
+	});
+
+	send(conf_room, me, "m.room.name", "",
+	{
+		{ "name", "Server Configuration" }
+	});
+
+	send(tokens_room, me, "m.room.name", "",
+	{
+		{ "name", "User Tokens" }
+	});
+
+	send(control_room, me, "m.room.name", "",
+	{
+		{ "name", "Control Room" }
+	});
 
 	log::info
 	{
@@ -224,68 +201,46 @@ try
 		path, fileopts
 	};
 
+	fs::map::opts map_opts(fileopts);
+	const fs::map map
+	{
+		file, map_opts
+	};
+
+	char pbuf[2][48];
 	log::notice
 	{
-		log, "Bootstrapping database from event vector @ `%s'",
+		log, "Bootstrapping database from event vector @ `%s' %s",
 		path,
+		pretty(pbuf[0], iec(size(map))),
 	};
 
-	const unique_mutable_buffer mb
+	const json::array events
 	{
-		4_MiB
+		const_buffer{map}
 	};
 
-	const_buffer buf;
-	fs::read_opts ropts;
-	size_t reads(0), events(0);
-	while(!!(buf = read(file, mb, ropts)))
+	vm::opts vmopts;
+	vmopts.non_conform.set(event::conforms::MISMATCH_ORIGIN_SENDER);
+	vmopts.phase.reset();
+	vmopts.phase[vm::phase::CONFORM] = true;
+	vmopts.phase[vm::phase::INDEX] = true;
+	vmopts.phase[vm::phase::WRITE] = true;
+	vmopts.infolog_accept = true;
+
+	util::timer stopwatch;
+	vm::eval eval
 	{
-		++reads;
-		const json::vector vec{buf};
-		const size_t _events(events);
-		for(auto it(begin(vec)); it != end(vec); ) try
-		{
-			ropts.offset += size(string_view(*it));
-			const m::event event{*it};
+		events, vmopts
+	};
 
-			++events;
-			++it;
-		}
-		catch(const json::parse_error &)
-		{
-			if(_events == events)
-				throw;
-			else
-				break;
-		}
-		catch(const std::exception &e)
-		{
-			log::error
-			{
-				log, "Bootstrap event %zu :%s",
-				events,
-				e.what()
-			};
-		}
-
-		char pbuf[48];
-		log::info
-		{
-			log, "Bootstrapping progress %zu events; %s in %zu reads...",
-			events,
-			pretty(pbuf, iec(ropts.offset)),
-			reads,
-		};
-	}
-
-	char pbuf[48];
-	log::info
+	log::notice
 	{
-		log, "Bootstrapped %zu events in %s from %zu reads of `%s'",
-		events,
-		pretty(pbuf, iec(ropts.offset)),
-		reads,
+		log, "Bootstrapped %zu in %s from `%s' in %s",
+		vm::sequence::retired,
+		pretty(pbuf[0], iec(size(string_view(events)))),
 		path,
+		stopwatch.pretty(pbuf[1]),
 	};
 }
 catch(const std::exception &e)
