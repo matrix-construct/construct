@@ -1070,6 +1070,7 @@ ircd::http::writechunk(window_buffer &buf,
 	writeline(buf, [&chunk_size]
 	(const mutable_buffer &out) -> size_t
 	{
+		assert(size(out) >= (8 + 1));
 		return ::snprintf(data(out), size(out), "%08x", chunk_size);
 	});
 }
