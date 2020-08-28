@@ -327,7 +327,7 @@ struct [[gnu::visibility("hidden")]]
 ircd::spirit::generator_state
 {
 	/// The number of instances stacked behind the current state
-	static size_t depth() noexcept;
+	static uint depth() noexcept;
 
 	/// User's buffer.
 	mutable_buffer &out;
@@ -336,18 +336,18 @@ ircd::spirit::generator_state
 	struct generator_state *prev {nullptr};
 
 	/// The number of characters we're storing in buffer
-	size_t consumed {0};
+	uint consumed {0};
 
 	/// The number of characters attempted, which may be larger than
 	/// the buffer capacity indicating an overflow amount.
-	size_t generated {0};
+	uint generated {0};
 };
 
-inline size_t
+inline uint
 ircd::spirit::generator_state::depth()
 noexcept
 {
-	size_t ret(0);
+	uint ret(0);
 	for(auto p(ircd::spirit::generator_state); p; p = p->prev)
 		++ret;
 
@@ -478,14 +478,15 @@ namespace boost::spirit::karma::detail
 }
 
 template<>
-struct boost::spirit::karma::detail::enable_buffering<ircd::spirit::sink_type>
+struct [[gnu::visibility("internal")]]
+boost::spirit::karma::detail::enable_buffering<ircd::spirit::sink_type>
 {
-	size_t width
+	uint width
 	{
 		0
 	};
 
-	size_t depth
+	uint depth
 	{
 		ircd::spirit::generator_state::depth()
 	};
@@ -497,8 +498,8 @@ struct boost::spirit::karma::detail::enable_buffering<ircd::spirit::sink_type>
 			data(ircd::spirit::generator_state->out),
 
 		depth?
-			size(ircd::spirit::generator_state->out):
-			std::min(width, sizeof(ircd::spirit::generator_buffer[depth])),
+			std::min(width, uint(sizeof(ircd::spirit::generator_buffer[depth - 1]))):
+			size(ircd::spirit::generator_state->out),
 	};
 
 	struct ircd::spirit::generator_state state
@@ -520,11 +521,11 @@ struct boost::spirit::karma::detail::enable_buffering<ircd::spirit::sink_type>
 	{
 		const auto width
 		{
-			this->width != -1UL? this->width: state.consumed
+			this->width != -1U? this->width: state.consumed
 		};
 
 		assert(width >= state.consumed);
-		const size_t off
+		const uint off
 		{
 			width - state.consumed
 		};
@@ -551,6 +552,10 @@ struct boost::spirit::karma::detail::enable_buffering<ircd::spirit::sink_type>
 	bool buffer_copy(std::size_t maxwidth = std::size_t(-1))
 	{
 		assert(state.prev);
+		#if __has_builtin(__builtin_assume)
+			__builtin_assume(state.prev != nullptr);
+		#endif
+
 		auto &prev
 		{
 			*state.prev
@@ -563,7 +568,7 @@ struct boost::spirit::karma::detail::enable_buffering<ircd::spirit::sink_type>
 
 		const auto width
 		{
-			this->width != -1UL? this->width: state.consumed
+			this->width != -1U? this->width: state.consumed
 		};
 
 		const ircd::const_buffer src
@@ -605,10 +610,11 @@ struct boost::spirit::karma::detail::enable_buffering<ircd::spirit::sink_type>
 	                 std::size_t width = std::size_t(-1))
 	:width
 	{
-		width
+		uint(width)
 	}
 	{
 		assert(size(buffer) != 0);
+		assert(this->depth <= 8);
 	}
 
 	~enable_buffering() noexcept
@@ -623,9 +629,13 @@ inline bool
 boost::spirit::karma::detail::buffering_policy::output(const char &value)
 {
 	assert(ircd::spirit::generator_state);
-	auto *state
+	#if __has_builtin(__builtin_assume)
+		__builtin_assume(ircd::spirit::generator_state != nullptr);
+	#endif
+
+	auto &state
 	{
-		ircd::spirit::generator_state
+		*ircd::spirit::generator_state
 	};
 
 	const bool buffering
@@ -635,12 +645,17 @@ boost::spirit::karma::detail::buffering_policy::output(const char &value)
 
 	const bool base
 	{
-		state->prev == nullptr
+		state.prev == nullptr
+	};
+
+	const uint off
+	{
+		ircd::boolmask<uint>(!base | buffering) & state.consumed
 	};
 
 	const auto dst
 	{
-		state->out + (!base || buffering? state->consumed: 0)
+		state.out + off
 	};
 
 	const auto copied
@@ -648,8 +663,8 @@ boost::spirit::karma::detail::buffering_policy::output(const char &value)
 		ircd::copy(dst, value)
 	};
 
-	state->generated += sizeof(char);
-	state->consumed += copied;
+	state.consumed += copied;
+	state.generated += sizeof(char);
 	return !buffering;
 }
 
