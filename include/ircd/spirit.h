@@ -680,8 +680,51 @@ template<>
 inline void
 boost::spirit::karma::detail::counting_policy<ircd::spirit::sink_type>::output(const char &value)
 {
+	assert(count == nullptr);
 }
 #endif
+
+template<>
+template<>
+inline bool
+boost::spirit::karma::detail::disabling_output_iterator
+<
+	boost::spirit::karma::detail::buffering_policy,
+	boost::spirit::karma::detail::counting_policy<ircd::spirit::sink_type>,
+	boost::spirit::karma::detail::position_policy
+>
+::output(const char &value)
+{
+	assert(do_output);
+	this->counting_policy::output(value);
+	this->tracking_policy::output(value);
+	return this->buffering_policy::output(value);
+}
+
+template<>
+template<>
+inline void
+ircd::spirit::sink_type::operator=(const char &value)
+{
+	this->base_iterator::output(value);
+}
+
+template<>
+inline ircd::spirit::sink_type &
+ircd::spirit::sink_type::operator++()
+{
+	(*sink) += !this->base_iterator::has_buffer();
+	return *this;
+}
+
+template<>
+inline ircd::spirit::sink_type
+ircd::spirit::sink_type::operator++(int)
+{
+	auto copy(*this);
+	(*sink) += !this->base_iterator::has_buffer();
+	return copy;
+}
 
 template<>
 inline bool
