@@ -472,8 +472,14 @@ ircd::m::pretty_oneline(std::ostream &s,
 
 	if(event.event_id && event.event_id.version() != "1")
 		s << event.event_id << ' ';
-	else if(!event.event_id)
+	else if(!event.event_id) try
+	{
 		s << m::event::id::v4{sdbuf, event} << ' ';
+	}
+	catch(const std::exception &e)
+	{
+		s << "$[" << e.what() << "] ";
+	}
 
 	if(json::get<"origin_server_ts"_>(event) != json::undefined_number)
 		s << smalldate(sdbuf, json::get<"origin_server_ts"_>(event) / 1000L) << ' ';
