@@ -779,6 +779,11 @@ ircd::m::vm::execute_pdu(eval &eval,
 	// Allocate transaction; discover shared-sequenced evals.
 	if(likely(opts.phase[phase::INDEX]))
 	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::INDEX
+		};
+
 		if(!eval.txn && parent_post)
 			eval.txn = eval.parent->txn;
 
@@ -791,16 +796,8 @@ ircd::m::vm::execute_pdu(eval &eval,
 					0,                               // max_bytes (no max)
 				}
 			);
-	}
 
-	// Transaction composition.
-	if(likely(opts.phase[phase::INDEX]))
-	{
-		const scope_restore eval_phase
-		{
-			eval.phase, phase::INDEX
-		};
-
+		// Transaction composition.
 		write_append(eval, event);
 	}
 
