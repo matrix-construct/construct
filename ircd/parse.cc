@@ -25,7 +25,13 @@
 
 thread_local
 decltype(ircd::spirit::rule_buffer)
-ircd::spirit::rule_buffer;
+ircd::spirit::rule_buffer
+alignas(64);
+
+thread_local
+decltype(ircd::spirit::generator_buffer)
+ircd::spirit::generator_buffer
+alignas(64);
 
 thread_local
 decltype(ircd::spirit::generator_state)

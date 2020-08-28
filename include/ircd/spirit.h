@@ -178,6 +178,7 @@ __attribute__((visibility("default")))
 {
 	// parse.cc
 	extern thread_local char rule_buffer[64];
+	extern thread_local char generator_buffer[8][64_KiB];
 	extern thread_local struct generator_state *generator_state;
 }}
 
@@ -325,6 +326,9 @@ ircd::spirit::expectation_failure<parent>::expectation_failure(const qi::expecta
 struct [[gnu::visibility("hidden")]]
 ircd::spirit::generator_state
 {
+	/// The number of instances stacked behind the current state
+	static size_t depth() noexcept;
+
 	/// User's buffer.
 	mutable_buffer &out;
 
@@ -338,6 +342,17 @@ ircd::spirit::generator_state
 	/// the buffer capacity indicating an overflow amount.
 	size_t generated {0};
 };
+
+inline size_t
+ircd::spirit::generator_state::depth()
+noexcept
+{
+	size_t ret(0);
+	for(auto p(ircd::spirit::generator_state); p; p = p->prev)
+		++ret;
+
+	return ret;
+}
 
 template<bool truncation,
          class gen,
@@ -470,9 +485,20 @@ struct boost::spirit::karma::detail::enable_buffering<ircd::spirit::sink_type>
 		0
 	};
 
-	ircd::unique_mutable_buffer buffer
+	size_t depth
 	{
-		std::min(width, 65536UL)
+		ircd::spirit::generator_state::depth()
+	};
+
+	ircd::mutable_buffer buffer
+	{
+		depth?
+			ircd::spirit::generator_buffer[depth - 1]:
+			data(ircd::spirit::generator_state->out),
+
+		depth?
+			size(ircd::spirit::generator_state->out):
+			std::min(width, sizeof(ircd::spirit::generator_buffer[depth])),
 	};
 
 	struct ircd::spirit::generator_state state
@@ -547,8 +573,8 @@ struct boost::spirit::karma::detail::enable_buffering<ircd::spirit::sink_type>
 
 		const ircd::mutable_buffer dst
 		{
-			data(prev.out) - (prev_base? state.consumed: 0),
-			prev_base? state.consumed: size(prev.out)
+			data(prev.out) - (prev_base? state.consumed: -prev.consumed),
+			prev_base? state.consumed: (size(prev.out) - prev.consumed)
 		};
 
 		const auto copied
