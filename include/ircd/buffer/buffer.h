@@ -272,7 +272,11 @@ __attribute__((always_inline))
 ircd::buffer::reverse(const mutable_buffer &dst,
                       const const_buffer &src)
 {
-	const size_t ret{std::min(size(dst), size(src))};
+	const size_t ret
+	{
+		std::min(size(dst), size(src))
+	};
+
 	std::reverse_copy(data(src), data(src) + ret, data(dst));
 	return ret;
 }
@@ -283,7 +287,11 @@ __attribute__((always_inline))
 ircd::buffer::operator+=(buffer<it> &buffer,
                          const size_t &bytes)
 {
-	const size_t &advance(std::min(bytes, size(buffer)));
+	const size_t &advance
+	{
+		std::min(bytes, size(buffer))
+	};
+
 	consume(buffer, advance);
 	return buffer;
 }
@@ -329,8 +337,9 @@ __attribute__((always_inline))
 ircd::buffer::operator+(const buffer<it> &buffer,
                         const size_t &bytes)
 {
-	const size_t advance{std::min(bytes, size(buffer))};
-	return { begin(buffer) + advance, size(buffer) - advance };
+	auto ret(buffer);
+	ret += bytes;
+	return ret;
 }
 
 template<class it>
