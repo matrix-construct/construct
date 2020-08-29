@@ -1,0 +1,132 @@
+// The Construct
+//
+// Copyright (C) The Construct Developers, Authors & Contributors
+// Copyright (C) 2016-2020 Jason Volk <jason@zemos.net>
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice is present in all copies. The
+// full license for this software is available in the LICENSE file.
+
+#pragma once
+#define HAVE_IRCD_SPIRIT_PARSE_H
+
+namespace ircd {
+namespace spirit
+__attribute__((visibility("internal")))
+{
+	struct substring_view;
+	struct custom_parser;
+	BOOST_SPIRIT_TERMINAL(custom);
+
+	template<class gen,
+	         class... attr>
+	bool parse(const char *&start, const char *const &stop, gen&&, attr&&...);
+
+	template<class parent_error,
+	         size_t error_show_max  = 48,
+	         class gen,
+	         class... attr>
+	bool parse(const char *&start, const char *const &stop, gen&&, attr&&...);
+}}
+
+namespace boost {
+namespace spirit
+__attribute__((visibility("internal")))
+{
+	namespace qi
+	{
+		template<class modifiers>
+		struct make_primitive<ircd::spirit::tag::custom, modifiers>;
+	}
+
+	template<>
+	struct use_terminal<qi::domain, ircd::spirit::tag::custom>
+	:mpl::true_
+	{};
+}}
+
+struct [[gnu::visibility("internal")]]
+ircd::spirit::custom_parser
+:qi::primitive_parser<custom_parser>
+{
+	template<class context,
+	         class iterator>
+	struct attribute
+	{
+		using type = iterator;
+	};
+
+	template<class context>
+	boost::spirit::info what(context &) const
+	{
+		return boost::spirit::info("custom");
+	}
+
+	template<class iterator,
+	         class context,
+	         class skipper,
+	         class attr>
+	bool parse(iterator &, const iterator &, context &, const skipper &, attr &) const;
+};
+
+template<class modifiers>
+struct [[gnu::visibility("internal")]]
+boost::spirit::qi::make_primitive<ircd::spirit::tag::custom, modifiers>
+{
+	using result_type = ircd::spirit::custom_parser;
+
+	result_type operator()(unused_type, unused_type) const
+	{
+		return result_type{};
+	}
+};
+
+struct ircd::spirit::substring_view
+:ircd::string_view
+{
+	using _iterator = boost::spirit::karma::detail::indirect_iterator<const char *>;
+	using _iterator_range = boost::iterator_range<_iterator>;
+
+	using ircd::string_view::string_view;
+	explicit substring_view(const _iterator_range &range)
+	:ircd::string_view
+	{
+		std::addressof(*range.begin()), std::addressof(*range.end())
+	}
+	{}
+};
+
+template<class parent_error,
+         size_t error_show_max,
+         class gen,
+         class... attr>
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline bool
+ircd::spirit::parse(const char *&start,
+                    const char *const &stop,
+                    gen&& g,
+                    attr&&... a)
+try
+{
+	return qi::parse(start, stop, std::forward<gen>(g), std::forward<attr>(a)...);
+}
+catch(const qi::expectation_failure<const char *> &e)
+{
+	throw expectation_failure<parent_error>
+	{
+		e, start, error_show_max
+	};
+}
+
+template<class gen,
+         class... attr>
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline bool
+ircd::spirit::parse(const char *&start,
+                    const char *const &stop,
+                    gen&& g,
+                    attr&&... a)
+{
+	return qi::parse(start, stop, std::forward<gen>(g), std::forward<attr>(a)...);
+}
