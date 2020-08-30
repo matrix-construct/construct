@@ -14,6 +14,12 @@
 /// it involves extremely expensive boost headers for creating formal spirit
 /// grammars. This file is automatically included in the spirit.h group.
 
+#ifdef __clang__
+	#define IRCD_SPIRIT_GSPTR_LINKAGE static
+#else
+	#define IRCD_SPIRIT_GSPTR_LINKAGE extern
+#endif
+
 namespace ircd {
 namespace spirit
 __attribute__((visibility("default")))
@@ -21,7 +27,7 @@ __attribute__((visibility("default")))
 	IRCD_EXCEPTION(error, generator_error);
 	IRCD_EXCEPTION(generator_error, buffer_overrun);
 
-	static thread_local struct generator_state *generator_state {nullptr};
+	IRCD_SPIRIT_GSPTR_LINKAGE thread_local struct generator_state *generator_state;
 	extern thread_local char generator_buffer[8][64_KiB];
 }}
 
