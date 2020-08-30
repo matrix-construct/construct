@@ -163,9 +163,18 @@ ircd::json::parser
 		,"characters"
 	};
 
+	template<class block_t> static u64x2 string_content_block(const block_t, const block_t) noexcept;
+	const custom_parser string_content{};
+	const rule<string_view> string_chars
+	{
+		string_content
+		,"characters"
+	};
+
 	const rule<string_view> string
 	{
-		quote >> chars >> (!escape >> quote)
+		//quote >> chars >> (!escape >> quote)
+		quote >> raw[string_chars] >> quote
 		,"string"
 	};
 
@@ -465,6 +474,140 @@ const
 	#endif
 
 	return ircd::parse<parse_error>(start, stop, std::forward<gen>(g), std::forward<attr>(a)...);
+}
+
+template<class iterator,
+         class context,
+         class skipper,
+         class attr>
+inline bool
+ircd::json::custom_parser::parse(iterator &__restrict__ start,
+                                 const iterator &__restrict__ stop,
+                                 context &g,
+                                 const skipper &,
+                                 attr &)
+const
+{
+	// Clang scales between 128bit and 256bit systems when we use the 256 bit
+	// type (note that performance even improves on some 128 bit systems). GCC
+	// falls back to scalar instead, so we have to case 128bit systems on GCC.
+	#if defined(__AVX__) || defined(__clang__)
+		using block_t = u8x32;
+		using block_t_u = u256x1_u;
+	#else
+		using block_t = u8x16;
+		using block_t_u = u128x1_u;
+	#endif
+
+	assert(start <= stop);
+	const auto max
+	{
+		size_t(std::distance(start, stop))
+	};
+
+	block_t block;
+	u64x2 count{0}; // length word, error word
+	while(!count[1] && count[0] + sizeof(block_t) <= max)
+	{
+		const auto si
+		{
+			reinterpret_cast<const block_t_u *>(start + count[0])
+		};
+
+		block = *si;
+		count += json::parser::string_content_block(block, ~block_t{0});
+	}
+
+	while(!count[1] && count[0] < max)
+	{
+		const size_t remain(max - count[0]);
+		assert(remain < sizeof(block_t));
+
+		size_t j(0);
+		block_t mask{0};
+		for(; count[0] + j < max; ++j)
+		{
+			block[j] = start[count[0] + j];
+			mask[j] = 0xff;
+		}
+
+		count += json::parser::string_content_block(block, mask);
+	}
+
+	attr_at<0>(g) = string_view
+	{
+		start, count[0]
+	};
+
+	start += count[0] & boolmask<u64>(count[1] == 1);
+	return count[1] == 1;
+}
+
+template<class block_t>
+inline ircd::u64x2
+ircd::json::parser::string_content_block(const block_t block,
+                                         const block_t block_mask)
+noexcept
+{
+	assert(block_mask[0] == 0xff);
+	const block_t is_esc
+	(
+		block == '\\'
+	);
+
+	const block_t is_quote
+	(
+		block == '"'
+	);
+
+	const block_t is_ctrl
+	(
+		block < 0x20
+	);
+
+	const block_t is_special
+	{
+		is_esc | is_quote | is_ctrl
+	};
+
+	const block_t is_regular
+	{
+		simd::sum_and(~is_special)
+	};
+
+	if(likely(is_regular[0]))
+		return u64x2
+		{
+			sizeof(block), 0
+		};
+
+	const u64 regular_prefix_count
+	{
+		simd::lzcnt(is_special | ~block_mask) / 8
+	};
+
+	if(likely(regular_prefix_count))
+		return u64x2
+		{
+			regular_prefix_count, 0
+		};
+
+	const u64 err
+	{
+		popmask<u64>(is_quote[0])
+		| boolmask<u64>(is_ctrl[0])
+		| boolmask<u64>(is_esc[0] & ~block_mask[1])
+	};
+
+	const u64 add
+	{
+		1UL + popmask<u64>(is_esc[0] & (is_quote[1] | is_esc[1]) & block_mask[1])
+	};
+
+	return u64x2
+	{
+		add & boolmask<u64>(err == 0), err
+	};
 }
 
 [[gnu::noinline]]
