@@ -276,27 +276,40 @@ boost::spirit::karma::detail::enable_buffering<ircd::spirit::sink_type>::buffer_
 
 	const auto width
 	{
-		this->width != -1U? this->width: state.consumed
-	};
-
-	const ircd::const_buffer src
-	{
-		state.out, std::max(state.consumed, width)
+		this->width != -1U?
+			this->width:
+			state.consumed
 	};
 
 	const auto dst_disp
 	{
-		prev_base? -ssize_t(state.consumed): ssize_t(prev.consumed)
+		prev_base?
+			-ssize_t(state.consumed):
+			ssize_t(prev.consumed)
+	};
+
+	const auto dst_over
+	{
+		std::begin(prev.out) > std::end(prev.out)?
+			std::distance(std::end(prev.out), std::begin(prev.out)):
+			0L
 	};
 
 	const auto dst_size
 	{
-		prev_base? state.consumed: size(prev.out) - prev.consumed
+		prev_base?
+			std::max(state.consumed - dst_over, 0L):
+			size(prev.out) - prev.consumed
 	};
 
 	const ircd::mutable_buffer dst
 	{
 		data(prev.out) + dst_disp, dst_size
+	};
+
+	const ircd::const_buffer src
+	{
+		state.out, std::max(state.consumed, width)
 	};
 
 	const auto copied
