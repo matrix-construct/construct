@@ -21,7 +21,7 @@ __attribute__((visibility("default")))
 	IRCD_EXCEPTION(error, generator_error);
 	IRCD_EXCEPTION(generator_error, buffer_overrun);
 
-	extern thread_local struct generator_state *generator_state;
+	static thread_local struct generator_state *generator_state {nullptr};
 	extern thread_local char generator_buffer[8][64_KiB];
 }}
 
@@ -260,10 +260,6 @@ inline bool
 boost::spirit::karma::detail::enable_buffering<ircd::spirit::sink_type>::buffer_copy(std::size_t maxwidth)
 {
 	assert(state.prev);
-	#if __has_builtin(__builtin_assume)
-		__builtin_assume(state.prev != nullptr);
-	#endif
-
 	auto &prev
 	{
 		*state.prev
@@ -327,10 +323,6 @@ inline bool
 boost::spirit::karma::detail::buffering_policy::output(const char &value)
 {
 	assert(ircd::spirit::generator_state);
-	#if __has_builtin(__builtin_assume)
-		__builtin_assume(ircd::spirit::generator_state != nullptr);
-	#endif
-
 	auto &state
 	{
 		*ircd::spirit::generator_state
