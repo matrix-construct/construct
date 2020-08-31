@@ -256,8 +256,8 @@ noexcept
 		data(out), out_len
 	};
 }
-template ircd::string_view ircd::b64::encode_unpadded<ircd::b64::standard>(const mutable_buffer &, const const_buffer &) noexcept;
-template ircd::string_view ircd::b64::encode_unpadded<ircd::b64::urlsafe>(const mutable_buffer &, const const_buffer &) noexcept;
+template ircd::string_view ircd::b64::encode_unpadded<ircd::b64::dict_rfc1421>(const mutable_buffer &, const const_buffer &) noexcept;
+template ircd::string_view ircd::b64::encode_unpadded<ircd::b64::dict_rfc4648>(const mutable_buffer &, const const_buffer &) noexcept;
 
 /// Returns 64 base64-encoded characters from 48 input characters. For any
 /// inputs less than 48 characters trail with null characters; caller computes
@@ -373,13 +373,10 @@ ircd::b64::decode(const mutable_buffer &out,
 		for(j = 0; j < 48 && i * 48 + j < out_len; ++j)
 			dst[i * 48 + j] = block[j];
 
-		for(; j < 64; ++j)
-			err[j] = 0 | err_[j];
+		err = simd::sum_or(err_);
 	}
 
-	for(size_t i(1); i < 8; ++i)
-		err[0] |= err[i];
-
+	err = simd::sum_or(err);
 	if(unlikely(err[0]))
 		throw invalid_encoding
 		{
