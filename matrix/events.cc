@@ -172,7 +172,7 @@ ircd::m::events::dump__file(const string_view &filename)
 		++errcount;
 		log::error
 		{
-			"dump[%s] events; %s in %zu writes; %zu errors :%s",
+			"dump[%s] %zu events; %zu writes; %zu errors :%s",
 			filename,
 			ecount,
 			acount,
