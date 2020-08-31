@@ -195,7 +195,6 @@ try
 	};
 
 	fs::fd::opts fileopts(std::ios::in);
-	fileopts.sequential = true;
 	const fs::fd file
 	{
 		path, fileopts
@@ -215,19 +214,33 @@ try
 		pretty(pbuf[0], iec(size(map))),
 	};
 
+	// This array is backed by the mmap
 	const json::array events
 	{
 		const_buffer{map}
 	};
 
+	// Options for eval. This eval disables all phases except a select few.
+	// These may change based on assumptions about the input.
 	vm::opts vmopts;
-	vmopts.non_conform.set(event::conforms::MISMATCH_ORIGIN_SENDER);
 	vmopts.phase.reset();
 	vmopts.phase[vm::phase::CONFORM] = true;
 	vmopts.phase[vm::phase::INDEX] = true;
 	vmopts.phase[vm::phase::WRITE] = true;
-	vmopts.infolog_accept = true;
 
+	// Required for internal rooms; //TODO: XXX
+	vmopts.non_conform.set(event::conforms::MISMATCH_ORIGIN_SENDER);
+
+	// Indicates the input JSON is canonical (to optimize eval).
+	//vmopts.json_source = true;
+
+	// Sorting may be slow for large inputs; but the alternative may be also...
+	//vmopts.ordered = true;
+
+	// Outputs to infolog for each event; may be noisy;
+	vmopts.infolog_accept = false;
+
+	// Perform the eval
 	util::timer stopwatch;
 	vm::eval eval
 	{
