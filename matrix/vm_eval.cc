@@ -369,10 +369,13 @@ ircd::m::vm::eval::eval(const json::array &pdus,
                         const vm::opts &opts)
 :eval{opts}
 {
+	std::vector<m::event> events(begin(pdus), end(pdus));
+
 	// Sort the events first to avoid complicating the evals; the events might
 	// be from different rooms but it doesn't matter.
-	std::vector<m::event> events(begin(pdus), end(pdus));
-	std::sort(begin(events), end(events));
+	if(likely(!opts.ordered))
+		std::sort(begin(events), end(events));
+
 	operator()(events);
 }
 

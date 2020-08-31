@@ -274,6 +274,10 @@ struct ircd::m::vm::opts
 	/// being evaluated may race through the core.
 	bool unique {true};
 
+	/// When true, events in array inputs are evaluated as they are provided
+	/// without any reordering before eval.
+	bool ordered {false};
+
 	/// If the input event has a reference to already-strung json we can use
 	/// that directly when writing to the DB. When this is false we will
 	/// re-stringify the event internally either from a referenced source or
