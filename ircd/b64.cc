@@ -365,19 +365,20 @@ ircd::b64::decode(const mutable_buffer &out,
 
 	for(; i * 64 < in_len && i * 48 < out_len; ++i)
 	{
+		u8x64 mask {0};
 		for(j = 0; j < 64 && i * 64 + j < in_len; ++j)
-			block[j] = src[i * 64 + j];
+			block[j] = src[i * 64 + j],
+			mask[j] = 0xff;
 
-		const i8x64 err_(err);
-		block = decode_block(block, err);
+		i64x8 _err {0};
+		block = decode_block(block, _err);
 		for(j = 0; j < 48 && i * 48 + j < out_len; ++j)
 			dst[i * 48 + j] = block[j];
 
-		err = simd::sum_or(err_);
+		err |= _err & i64x8(mask);
 	}
 
-	err = simd::sum_or(err);
-	if(unlikely(err[0]))
+	if(unlikely(simd::sum_or(u64x8(err))[0]))
 		throw invalid_encoding
 		{
 			"base64 encoding contained invalid characters."
@@ -393,7 +394,7 @@ ircd::b64::decode(const mutable_buffer &out,
 /// the returned vector are undefined for the caller.
 ircd::u8x64
 ircd::b64::decode_block(const u8x64 block,
-                        i64x8 &__restrict__ err_)
+                        i64x8 &__restrict__ err)
 noexcept
 {
 	size_t i, j;
@@ -404,11 +405,11 @@ noexcept
 			vals[i][j] = block[i * 16 + j],
 			vals[i][j] = decode_tab[vals[i][j]];
 
-	i64x8 err;
+	u8x64 _err;
 	i32x16 errs;
 	for(i = 0; i < 4; ++i)
 		for(j = 0, errs = vals[i] >= 64; j < 16; ++j)
-			err[i * 2 + j / 8] = errs[j];
+			_err[i * 16 + j] = errs[j];
 
 	u16x32 al, ah;
 	for(i = 0; i < 4; ++i)
@@ -428,6 +429,6 @@ noexcept
 	for(i = 0; i < 64; ++i)
 		ret[i] = c[decode_permute_tab_le[i]];
 
-	err_ |= err;
+	err |= i64x8(_err);
 	return ret;
 }
