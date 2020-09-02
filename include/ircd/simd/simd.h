@@ -20,7 +20,8 @@
 #include "popcnt.h"
 #include "lzcnt.h"
 #include "tzcnt.h"
-#include "sum.h"
+#include "sum_or.h"
+#include "sum_and.h"
 #include "print.h"
 
 namespace ircd
