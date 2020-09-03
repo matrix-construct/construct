@@ -27,8 +27,15 @@ __attribute__((visibility("default")))
 	IRCD_EXCEPTION(error, generator_error);
 	IRCD_EXCEPTION(generator_error, buffer_overrun);
 
-	IRCD_SPIRIT_GSPTR_LINKAGE thread_local struct generator_state *generator_state;
-	extern thread_local char generator_buffer[8][64_KiB];
+	constexpr size_t
+	generator_buffer_size {64_KiB},
+	generator_buffer_count {8};
+
+	IRCD_SPIRIT_GSPTR_LINKAGE thread_local struct generator_state *
+	generator_state;
+
+	extern thread_local char
+	generator_buffer[generator_buffer_count][generator_buffer_size];
 }}
 
 namespace ircd {
@@ -44,7 +51,10 @@ __attribute__((visibility("internal")))
 		| karma::generator_properties::disabling
 	>;
 
-	using sink_type = karma::detail::output_iterator<char *, prop_mask, unused_type>;
+	using sink_type = karma::detail::output_iterator
+	<
+		char *, prop_mask, unused_type
+	>;
 
 	template<bool truncation = false,
 	         class gen,
@@ -52,23 +62,46 @@ __attribute__((visibility("internal")))
 	bool generate(mutable_buffer &out, gen&&, attr&&...);
 }}
 
+/// This structure is a shadow for the default spirit::karma buffering
+/// stack. They conduct buffering by allocating and copying standard strings
+/// to implement certain karma directives like "right_align[]" etc. Instead
+/// we reimplement optimized buffering with assumptions specific to our
+/// application's tolerances. We assume a maximum size of a buffer and maximum
+/// height of any stack growing from an ircd::spirit::generate() call without
+/// need for reentrancy. This gives us the ability to pre-allocate thread_local
+/// buffers.
 struct [[gnu::visibility("hidden")]]
 ircd::spirit::generator_state
 {
-	/// The number of instances stacked behind the current state
+	/// The number of instances stacked behind the current state. This should
+	/// never be greater than the generator_buffer_count
 	static uint depth() noexcept;
 
-	/// User's buffer.
+	/// Destination buffer for this level of the stack. For depth=0 this will
+	/// be the user's buffer, otherwise it will be the thread-local generator
+	/// buffer at depth - 1.
+	///
+	/// N.B. The `begin()` of this buffer will be advanced by spirit when the
+	/// depth=0 as part of the output iterator process. It is never touched when
+	/// depth>0 because it directly refers to one of the static buffers.
 	mutable_buffer &out;
 
-	/// Previous in buffer stack
+	/// Previous in buffer stack. This is null for the instance created in the
+	/// frame for ircd::spirit::generate(), which is the base of the stack.
 	struct generator_state *prev {nullptr};
 
-	/// The number of characters we're storing in buffer
+	/// The number of characters we're storing in buffer at `out`. When
+	/// `depth>0` this will be the number of characters stored in one of the
+	/// static buffers between `begin(out), begin(out)+consumed` and safely
+	/// saturates at the maximum size of the buffer. When `depth=0` this
+	/// indicates the number of characters *behind* `begin(out)` it still
+	/// safely saturates at the maximum size of the user's buffer.
 	uint consumed {0};
 
-	/// The number of characters attempted, which may be larger than
-	/// the buffer capacity indicating an overflow amount.
+	/// The number of characters attempted, which may be larger than the buffer
+	/// capacity and value stored in `consumed`. Thus the difference between
+	/// generated and consumed is an overflow value which estimates the number
+	/// of characters which would've been required for the generation.
 	uint generated {0};
 };
 
@@ -82,13 +115,22 @@ ircd::spirit::generate(mutable_buffer &out,
                        attr&&... a)
 
 {
-	const auto max(size(out));
-	const auto start(data(out));
+	// Save the user buffer as originally provided in case we need to restore it.
+	const mutable_buffer user
+	{
+		out
+	};
+
+	// Base instance for the buffering stack (see `struct generator_state`).
 	struct generator_state state
 	{
 		out
 	};
 
+	// Set the thread-local generator_state pointer to our stack instance. This
+	// will cooperatively restore whatever value was previously there, though
+	// it should be null.
+	assert(!generator_state);
 	const scope_restore _state
 	{
 		generator_state, &state
@@ -99,17 +141,21 @@ ircd::spirit::generate(mutable_buffer &out,
 		begin(out)
 	};
 
+	// Enter into `spirit::karma` to execute the generator
 	const auto ret
 	{
 		karma::generate(sink, std::forward<gen>(g), std::forward<attr>(a)...)
 	};
 
+	// Determine if the user's buffer was enough to store the result; if not
+	// there will be an overflow value.
 	assert(state.generated >= state.consumed);
 	const auto overflow
 	{
 		state.generated - state.consumed
 	};
 
+	// Compile-time branch for generators that tolerate truncation (i.e. fmt::)
 	if constexpr(truncation)
 	{
 		begin(out) = begin(out) > end(out)? end(out): begin(out);
@@ -117,9 +163,11 @@ ircd::spirit::generate(mutable_buffer &out,
 		return ret;
 	}
 
+	// Branch to throw an exception for generators that do not tolerate
+	// truncated results (i.e. json::).
 	if(unlikely(overflow || begin(out) > end(out)))
 	{
-		begin(out) = start;
+		begin(out) = begin(user);
 		assert(begin(out) <= end(out));
 
 		char pbuf[2][48];
@@ -131,7 +179,7 @@ ircd::spirit::generate(mutable_buffer &out,
 		};
 	}
 
-	assert(begin(out) >= end(out) - max);
+	assert(begin(out) >= end(out) - size(user));
 	assert(begin(out) <= end(out));
 	return ret;
 }
