@@ -253,7 +253,7 @@ noexcept
 
 	log::notice
 	{
-		"IRCd resuming service in runlevel:%s.",
+		"IRCd resuming service in runlevel %s.",
 		reflect(run::level),
 	};
 }
