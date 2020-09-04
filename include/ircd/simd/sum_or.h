@@ -9,7 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_SIMD_SUM_H
+#define HAVE_IRCD_SIMD_SUM_OR_H
 
 namespace ircd::simd
 {
