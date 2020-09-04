@@ -252,23 +252,31 @@ noexcept
 	return ret;
 }
 
-ircd::u8x16
-ircd::utf16::find_surrogate(const u8x16 input)
+namespace ircd::utf16
+{
+	template u8x16 utf16::find_surrogate<u8x16>(const u8x16) noexcept;
+	template u8x32 utf16::find_surrogate<u8x32>(const u8x32) noexcept;
+	template u8x64 utf16::find_surrogate<u8x64>(const u8x64) noexcept;
+}
+
+template<class u8xN>
+u8xN
+ircd::utf16::find_surrogate(const u8xN input)
 noexcept
 {
-	const u8x16 hex_nibble[3]
+	const u8xN hex_nibble[3]
 	{
 		input >= '0' && input <= '9',
 		input >= 'A' && input <= 'F',
 		input >= 'a' && input <= 'f',
 	};
 
-	const u8x16 is_hex_nibble
+	const u8xN is_hex_nibble
 	{
 		hex_nibble[0] | hex_nibble[1] | hex_nibble[2]
 	};
 
-	const auto is_surrogate
+	const u8xN is_surrogate
 	{
 		(input == '\\') &
 		shr<8>(input == 'u') &
@@ -366,10 +374,10 @@ noexcept
 
 namespace ircd::utf8
 {
-	template<class u32xN>
-	static u32xN _encode(const u32xN codepoint) noexcept;
+	template<class u32xN> static u32xN _encode(const u32xN codepoint) noexcept;
 }
 
+template<>
 ircd::u32x4
 ircd::utf8::encode(const u32x4 codepoint)
 noexcept
@@ -377,6 +385,7 @@ noexcept
 	return _encode(codepoint);
 }
 
+template<>
 ircd::u32x8
 ircd::utf8::encode(const u32x8 codepoint)
 noexcept
@@ -403,6 +412,7 @@ noexcept
 }
 #endif
 
+template<>
 ircd::u32x16
 ircd::utf8::encode(const u32x16 codepoint)
 noexcept
@@ -474,10 +484,10 @@ noexcept
 
 namespace ircd::utf8
 {
-	template<class u32xN>
-	static u32xN _length(const u32xN codepoint) noexcept;
+	template<class u32xN> static u32xN _length(const u32xN codepoint) noexcept;
 }
 
+template<>
 ircd::u32x4
 ircd::utf8::length(const u32x4 codepoint)
 noexcept
@@ -485,6 +495,7 @@ noexcept
 	return _length(codepoint);
 }
 
+template<>
 ircd::u32x8
 ircd::utf8::length(const u32x8 codepoint)
 noexcept
@@ -511,6 +522,7 @@ noexcept
 }
 #endif
 
+template<>
 ircd::u32x16
 ircd::utf8::length(const u32x16 codepoint)
 noexcept

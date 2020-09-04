@@ -21,14 +21,10 @@ namespace ircd::utf
 namespace ircd::utf8
 {
 	// Get the utf8-encoded length from char32_t (decoded) codepoints
-	u32x16 length(const u32x16 codepoints) noexcept;
-	u32x8 length(const u32x8 codepoints) noexcept;
-	u32x4 length(const u32x4 codepoints) noexcept;
+	template<class u32xN> u32xN length(const u32xN codepoints) noexcept;
 
 	// Encode char32_t codepoints into respective utf-8 encodings
-	u32x16 encode(const u32x16 codepoints) noexcept;
-	u32x8 encode(const u32x8 codepoints) noexcept;
-	u32x4 encode(const u32x4 codepoints) noexcept;
+	template<class u32xN> u32xN encode(const u32xN codepoints) noexcept;
 
 	// Decode utf-8 string into char32_t unicode codepoints
 	u32x16 decode(const u8x16 string) noexcept;
@@ -38,10 +34,10 @@ namespace ircd::utf8
 namespace ircd::utf16
 {
 	// mask all surrogate characters from find_() result
-	u8x16 mask_surrogate(const u8x16 found) noexcept;
+	template<class u8xN> u8xN mask_surrogate(const u8xN found) noexcept;
 
 	// scan for utf-16 surrogates
-	u8x16 find_surrogate(const u8x16 input) noexcept;
+	template<class u8xN> u8xN find_surrogate(const u8xN input) noexcept;
 
 	// scan for utf-16 surrogates including incomplete sequences truncated
 	u8x16 find_surrogate_partial(const u8x16 input) noexcept;
@@ -50,11 +46,15 @@ namespace ircd::utf16
 	u32x4 decode_surrogate_aligned_next(const u8x16 input) noexcept;
 }
 
-inline ircd::u8x16
-ircd::utf16::mask_surrogate(const u8x16 found)
+/// The vector returned by find_surrogate() masks the leading character of
+/// every valid surrogate (i.e. the '\'). This is a convenience to mask
+/// the full surrogate from such a result.
+template<class u8xN>
+inline u8xN
+ircd::utf16::mask_surrogate(const u8xN found)
 noexcept
 {
-	return u8x16
+	return u8xN
 	{
 		shl<0x08>(found) |
 		shl<0x10>(found) |
