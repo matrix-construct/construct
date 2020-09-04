@@ -3709,6 +3709,10 @@ ircd::json::string_stringify_utf16(u8x16 &block,
 	};
 }
 
+/// Determine the length of the JSON string value after canonization by
+/// string::stringify() on the input. See the docs for string::stringify()
+/// as most details are the same here, except this has no output stream
+/// or transformation logic.
 size_t
 ircd::json::string::serialized(const string_view &input)
 noexcept
