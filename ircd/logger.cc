@@ -195,8 +195,7 @@ ircd::log::flush()
 		file[lev].flush();
 	});
 
-	std::flush(out_console);
-	std::flush(err_console);
+	out_console << std::flush;
 }
 
 void
@@ -663,7 +662,7 @@ noexcept
 	check(file[lev]);
 	file[lev].write(data(msg), size(msg));
 	if(conf.file_flush)
-		std::flush(file[lev]);
+		file[lev].flush();
 }
 
 decltype(ircd::log::log_to_stdout)
@@ -716,7 +715,7 @@ noexcept
 		check(out_console);
 		out_console.write(data(msg), size(msg));
 		if(conf.console_flush)
-			std::flush(out_console);
+			out_console << std::flush;
 	}
 }
 
@@ -740,7 +739,6 @@ noexcept try
 
 	fprintf(stderr, "log stream(%p) fatal: %s\n", (const void *)&s, buf);
 	fprintf(stdout, "log stream(%p) fatal: %s\n", (const void *)&s, buf);
-	fflush(stderr);
 	fflush(stdout);
 	s.exceptions(s.eofbit | s.failbit | s.badbit);
 	throw std::runtime_error(buf);
@@ -749,7 +747,6 @@ catch(const std::exception &e)
 {
 	fprintf(stderr, "%s\n", e.what());
 	fprintf(stdout, "%s\n", e.what());
-	fflush(stderr);
 	fflush(stdout);
 	ircd::terminate();
 }
