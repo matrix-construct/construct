@@ -22,6 +22,7 @@
 #include "tzcnt.h"
 #include "sum_or.h"
 #include "sum_and.h"
+#include "sum_add.h"
 #include "print.h"
 
 namespace ircd
