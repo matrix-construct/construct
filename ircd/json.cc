@@ -3534,6 +3534,18 @@ ircd::json::string_stringify(u8x16 &block,
 		is_esc | is_quote | is_ctrl
 	};
 
+	const u8x16 any_special
+	{
+		simd::sum_or(is_special | ~block_mask)
+	};
+
+	// Fastest-path; backward branch to count and consume all of the input.
+	if(likely(!any_special[0]))
+		return u64x2
+		{
+			sizeof(u8x16), sizeof(u8x16)
+		};
+
 	// Count the number of uninteresting characters from the front of the
 	// block. With the special characters masked, we count leading zeroes.
 	// The inverted block_mask generates non-zero bits to terminate any
@@ -3782,6 +3794,18 @@ ircd::json::string_serialized(const u8x16 block,
 	{
 		is_esc | is_quote | is_ctrl
 	};
+
+	const u8x16 any_special
+	{
+		simd::sum_or(is_special | ~block_mask)
+	};
+
+	// Fastest-path; backward branch to count and consume all of the input.
+	if(likely(!any_special[0]))
+		return u64x2
+		{
+			sizeof(u8x16), sizeof(u8x16)
+		};
 
 	const u64 regular_prefix_count
 	{
