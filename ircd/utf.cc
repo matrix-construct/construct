@@ -137,6 +137,12 @@ noexcept
 		(codepoint_paired <= 0xffffU) & ~(shl<32>(codepoint_high))
 	};
 
+	// When one surrogate is input, only lane[0]
+	const u32x4 ret_codepoint_single
+	{
+		codepoint_unpaired & ~surrogate_pair_range & ~surrogate_deuce
+	};
+
 	// When two surrogates in a pair are input, lane[0] only
 	const u32x4 ret_codepoint_paired
 	{
@@ -149,16 +155,14 @@ noexcept
 		codepoint_unpaired & ~surrogate_pair_range & surrogate_deuce
 	};
 
-	// When one surrogate is input, only lane[0]
-	const u32x4 ret_codepoint_single
-	{
-		codepoint_unpaired & ~surrogate_pair_range & ~surrogate_deuce
-	};
+	static const u32x4
+	mask_one { -1U,  0U,  0U,  0U, },
+	mask_two { -1U, -1U,  0U,  0U, };
 
 	return 0
-	| ret_codepoint_paired
-	| ret_codepoint_unpaired
-	| ret_codepoint_single
+	| (ret_codepoint_single & mask_one)
+	| (ret_codepoint_paired & mask_one)
+	| (ret_codepoint_unpaired & mask_two)
 	;
 }
 
