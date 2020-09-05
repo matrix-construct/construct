@@ -23,9 +23,7 @@
 #include "popcnt.h"
 #include "lzcnt.h"
 #include "tzcnt.h"
-#include "sum_or.h"
-#include "sum_and.h"
-#include "sum_add.h"
+#include "lateral.h"
 #include "print.h"
 
 namespace ircd
@@ -41,4 +39,6 @@ namespace ircd
 	using simd::popcnt;
 	using simd::popmask;
 	using simd::boolmask;
+
+	using simd::lateral;
 }

@@ -378,7 +378,7 @@ ircd::b64::decode(const mutable_buffer &out,
 		err |= _err & i64x8(mask);
 	}
 
-	if(unlikely(simd::sum_or(u64x8(err))[0]))
+	if(unlikely(simd::lateral<std::bit_or>(u64x8(err))[0]))
 		throw invalid_encoding
 		{
 			"base64 encoding contained invalid characters."
