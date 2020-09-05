@@ -110,3 +110,17 @@ struct ircd::magick::job
 	string_view description;   // only valid for current job duration
 	std::exception_ptr eptr;   // apropos exception reference
 };
+
+// inline stubs when magick disabled/unavailable.
+#if !IRCD_USE_MAGICK
+
+inline
+ircd::magick::init::init()
+{}
+
+inline
+ircd::magick::init::~init()
+noexcept
+{}
+
+#endif IRCD_USE_MAGICK

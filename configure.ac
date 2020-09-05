@@ -1892,6 +1892,14 @@ LDFLAGS=$restore_ldflags
 
 AM_CONDITIONAL([IMAGEMAGICK], [test "x$have_imagemagick" = "xyes"])
 
+dnl IRCD_ENABLE_MAGICK is always defined for use in a constexpr if
+AM_COND_IF([IMAGEMAGICK],
+[
+	IRCD_DEFINE(USE_MAGICK, [1], [Magick support is available and enabled])
+], [
+	IRCD_DEFINE(USE_MAGICK, [0], [Magick support is unavailable or disabled])
+])
+
 dnl
 dnl
 dnl boost support

@@ -292,8 +292,11 @@ get__thumbnail_local(client &client,
 
 	const bool fallback // Reasons to just send the original image
 	{
+		// Not available in build
+		!IRCD_USE_MAGICK
+
 		// Disabled by configuration
-		!enable
+		|| !enable
 
 		// Access denied for this operation
 		|| !permitted
