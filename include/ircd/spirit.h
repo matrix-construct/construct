@@ -39,6 +39,17 @@
 #include <boost/function.hpp>
 
 #pragma GCC visibility push (internal)
+
+namespace boost::spirit::qi
+{
+	using std::function;
+}
+
+namespace boost::spirit::karma
+{
+	using std::function;
+}
+
 #include <boost/fusion/sequence.hpp>
 #include <boost/fusion/iterator.hpp>
 #include <boost/fusion/adapted.hpp>
@@ -50,8 +61,8 @@
 #include <boost/spirit/include/phoenix.hpp>
 #include <boost/spirit/repository/include/qi_seek.hpp>
 #include <boost/spirit/repository/include/qi_subrule.hpp>
-#pragma GCC visibility pop
 
+#pragma GCC visibility pop
 #pragma clang attribute pop
 #pragma clang attribute pop
 
