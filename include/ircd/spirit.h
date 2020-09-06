@@ -40,12 +40,7 @@
 
 #pragma GCC visibility push (internal)
 
-namespace boost::spirit::qi
-{
-	using std::function;
-}
-
-namespace boost::spirit::karma
+namespace boost::spirit
 {
 	using std::function;
 }
