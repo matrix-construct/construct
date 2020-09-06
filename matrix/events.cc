@@ -347,6 +347,18 @@ ircd::m::events::for_each(const range &range,
 // events::state
 //
 
+namespace ircd::m::events::content
+{
+	extern conf::item<size_t> readahead;
+}
+
+decltype(ircd::m::events::content::readahead)
+ircd::m::events::content::readahead
+{
+	{ "name",     "ircd.m.events.content.readahead" },
+	{ "default",  long(4_MiB)                       },
+};
+
 bool
 ircd::m::events::content::for_each(const closure &closure)
 {
@@ -360,13 +372,15 @@ ircd::m::events::content::for_each(const closure &closure)
 		dbs::event_column.at(content_idx)
 	};
 
-	static const db::gopts gopts
+	db::gopts gopts
 	{
 		db::get::NO_CACHE,
 		db::get::NO_CHECKSUM
 	};
 
-	for(auto it(column.begin(gopts)); bool(it); ++it)
+	gopts.readahead = size_t(readahead);
+	auto it(column.begin(gopts));
+	for(; it; ++it)
 	{
 		const auto &event_idx
 		{
