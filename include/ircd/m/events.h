@@ -84,6 +84,14 @@ namespace ircd::m::events::state
 	bool for_each(const closure &);
 }
 
+/// Interface to scan the content of events
+namespace ircd::m::events::content
+{
+	using closure = std::function<bool (const event::idx &, const json::object &)>;
+
+	bool for_each(const closure &);
+}
+
 /// Range to start (inclusive) and stop (exclusive). If start is greater than
 /// stop a reverse iteration will occur. -1 (or unsigned max value) can be used
 /// to start or stop at the end. 0 can be used to start or stop at the beginning.

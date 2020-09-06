@@ -348,6 +348,48 @@ ircd::m::events::for_each(const range &range,
 //
 
 bool
+ircd::m::events::content::for_each(const closure &closure)
+{
+	constexpr auto content_idx
+	{
+		json::indexof<event, "content"_>()
+	};
+
+	db::column &column
+	{
+		dbs::event_column.at(content_idx)
+	};
+
+	static const db::gopts gopts
+	{
+		db::get::NO_CACHE,
+		db::get::NO_CHECKSUM
+	};
+
+	for(auto it(column.begin(gopts)); bool(it); ++it)
+	{
+		const auto &event_idx
+		{
+			byte_view<uint64_t>(it->first)
+		};
+
+		const json::object &content
+		{
+			it->second
+		};
+
+		if(!closure(event_idx, content))
+			return false;
+	}
+
+	return true;
+}
+
+//
+// events::state
+//
+
+bool
 ircd::m::events::state::for_each(const closure &closure)
 {
 	static const tuple none
