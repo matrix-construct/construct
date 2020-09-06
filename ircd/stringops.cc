@@ -64,28 +64,28 @@ noexcept
 		std::next(begin(in), std::min(size(in), size(out)))
 	};
 
-	const u128x1 *src_
+	auto *src_
 	{
-		reinterpret_cast<const u128x1 *>(begin(in))
+		reinterpret_cast<const __m128i_u *>(begin(in))
 	};
 
-	u128x1 *dst
+	auto *dst
 	{
-		reinterpret_cast<u128x1 *>(begin(out))
+		reinterpret_cast<__m128i_u *>(begin(out))
 	};
 
-	while(intptr_t(src_) < intptr_t(stop) - ssize_t(sizeof(u128x1)))
+	while(intptr_t(src_) < intptr_t(stop) - ssize_t(sizeof(m128u)))
 	{
-		const u128x1 lit_A1      { _mm_set1_epi8('A' - 1)          };
-		const u128x1 lit_Z1      { _mm_set1_epi8('Z' + 1)          };
-		const u128x1 addend      { _mm_set1_epi8('a' - 'A')        };
-		const u128x1 src         { _mm_loadu_si128(src_++)         };
-		const u128x1 gte_A       { _mm_cmpgt_epi8(src, lit_A1)     };
-		const u128x1 lte_Z       { _mm_cmplt_epi8(src, lit_Z1)     };
-		const u128x1 mask        { _mm_and_si128(gte_A, lte_Z)     };
-		const u128x1 ctrl_mask   { _mm_and_si128(mask, addend)     };
-		const u128x1 result      { _mm_add_epi8(src, ctrl_mask)    };
-		                           _mm_storeu_si128(dst++, result);
+		const auto lit_A1      { _mm_set1_epi8('A' - 1)          };
+		const auto lit_Z1      { _mm_set1_epi8('Z' + 1)          };
+		const auto addend      { _mm_set1_epi8('a' - 'A')        };
+		const auto src         { _mm_loadu_si128(src_++)         };
+		const auto gte_A       { _mm_cmpgt_epi8(src, lit_A1)     };
+		const auto lte_Z       { _mm_cmplt_epi8(src, lit_Z1)     };
+		const auto mask        { _mm_and_si128(gte_A, lte_Z)     };
+		const auto ctrl_mask   { _mm_and_si128(mask, addend)     };
+		const auto result      { _mm_add_epi8(src, ctrl_mask)    };
+		                         _mm_storeu_si128(dst++, result);
 	}
 
 	const auto end{std::transform

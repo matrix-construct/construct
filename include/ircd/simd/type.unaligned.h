@@ -38,52 +38,72 @@ NAME                                             \
 // unsigned
 //
 
-#ifdef HAVE_X86INTRIN_H
+namespace ircd::simd
+{
+	IRCD_SIMD_TYPEDEF_UNALIGNED(m512i, u512x1_u);
+	IRCD_SIMD_TYPEDEF_UNALIGNED(m256i, u256x1_u);
+	IRCD_SIMD_TYPEDEF_UNALIGNED(m128i, u128x1_u);
+}
+
 namespace ircd
 {
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m512i, u512x1_u);
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m256i, u256x1_u);
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m128i, u128x1_u);
+	using simd::u512x1_u;
+	using simd::u256x1_u;
+	using simd::u128x1_u;
 }
-#endif
 
 //
 // signed
 //
 
-#ifdef HAVE_X86INTRIN_H
+namespace ircd::simd
+{
+	IRCD_SIMD_TYPEDEF_UNALIGNED(m512i, i512x1_u);
+	IRCD_SIMD_TYPEDEF_UNALIGNED(m256i, i256x1_u);
+	IRCD_SIMD_TYPEDEF_UNALIGNED(m128i, i128x1_u);
+}
+
 namespace ircd
 {
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m512i, i512x1_u);
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m256i, i256x1_u);
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m128i, i128x1_u);
+	using simd::i512x1_u;
+	using simd::i256x1_u;
+	using simd::i128x1_u;
 }
-#endif
 
 //
 // single precision
 //
 
-#ifdef HAVE_X86INTRIN_H
+namespace ircd::simd
+{
+	IRCD_SIMD_TYPEDEF_UNALIGNED(m512f, f512x1_u);
+	IRCD_SIMD_TYPEDEF_UNALIGNED(m256f, f256x1_u);
+	IRCD_SIMD_TYPEDEF_UNALIGNED(m128f, f128x1_u);
+}
+
 namespace ircd
 {
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m512, f512x1_u);
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m256, f256x1_u);
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m128, f128x1_u);
+	using simd::f512x1_u;
+	using simd::f256x1_u;
+	using simd::f128x1_u;
 }
-#endif
 
 //
 // double precision
 //
 
-#ifdef HAVE_X86INTRIN_H
+namespace ircd::simd
+{
+	IRCD_SIMD_TYPEDEF_UNALIGNED(m512d, d512x1_u);
+	IRCD_SIMD_TYPEDEF_UNALIGNED(m256d, d256x1_u);
+	IRCD_SIMD_TYPEDEF_UNALIGNED(m128d, d128x1_u);
+}
+
 namespace ircd
 {
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m512d, d512x1_u);
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m256d, d256x1_u);
-	IRCD_SIMD_TYPEDEF_UNALIGNED(__m128d, d128x1_u);
+	using simd::d512x1_u;
+	using simd::d256x1_u;
+	using simd::d128x1_u;
 }
-#endif
 
 #pragma GCC diagnostic pop
