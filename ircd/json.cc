@@ -1632,7 +1632,7 @@ ircd::json::stack::array::append(const json::value &value)
 {
 	assert(s);
 	_pre_append();
-	const unwind post{[this]
+	const unwind_nominal post{[this]
 	{
 		_post_append();
 	}};
@@ -1811,7 +1811,7 @@ ircd::json::stack::member::append(const json::value &value)
 {
 	assert(s);
 	_pre_append();
-	const unwind post{[this]
+	const unwind_nominal post{[this]
 	{
 		_post_append();
 	}};
