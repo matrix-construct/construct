@@ -1746,6 +1746,98 @@ namespace ircd::fs
 	static uint prot(const map::opts &);
 }
 
+#if defined(MADV_NORMAL) && defined(POSIX_MADV_NORMAL)
+	static_assert(MADV_NORMAL == POSIX_MADV_NORMAL);
+#endif
+
+#if defined(MADV_SEQUENTIAL) && defined(POSIX_MADV_SEQUENTIAL)
+	static_assert(MADV_SEQUENTIAL == POSIX_MADV_SEQUENTIAL);
+#endif
+
+#if defined(MADV_RANDOM) && defined(POSIX_MADV_RANDOM)
+	static_assert(MADV_RANDOM == POSIX_MADV_RANDOM);
+#endif
+
+#if defined(MADV_WILLNEED) && defined(POSIX_MADV_WILLNEED)
+	static_assert(MADV_WILLNEED == POSIX_MADV_WILLNEED);
+#endif
+
+#if defined(MADV_DONTNEED) && defined(POSIX_MADV_DONTNEED)
+	static_assert(MADV_DONTNEED == POSIX_MADV_DONTNEED);
+#endif
+
+size_t
+ircd::fs::evict(const map &map,
+                const size_t &len,
+                const opts &opts)
+{
+	return advise(map, POSIX_MADV_DONTNEED, len, opts);
+}
+
+#if defined(HAVE_MADVISE) && defined(__linux__)
+size_t
+ircd::fs::advise(const map &map,
+                 const int &advice,
+                 const size_t &len,
+                 const opts &opts)
+{
+	const size_t offset
+	{
+		buffer::align(opts.offset, info::page_size)
+	};
+
+	const mutable_buffer buf
+	{
+		map + offset, len
+	};
+
+	assert(aligned(buf, info::page_size));
+	switch(const auto res(::madvise(data(buf), size(buf), advice)); res)
+	{
+		case 0:
+			return size(buf);          // success
+
+		default:
+			throw_system_error(res);   // error
+	}
+
+	__builtin_unreachable();
+}
+#elif defined(HAVE_POSIX_MADVISE)
+size_t
+ircd::fs::advise(const map &map,
+                 const int &advice,
+                 const size_t &len,
+                 const opts &opts)
+{
+	const mutable_buffer buf
+	{
+		map + opts.offset, len
+	};
+
+	const auto res
+	{
+		syscall(::posix_madvise, data(buf), size(buf), advice)
+	};
+
+	return size(buf);
+}
+#else
+#warning "posix_madvise(2) not available for this compilation."
+size_t
+ircd::fs::advise(const map &map,
+                 const int &advice,
+                 const size_t &len,
+                 const opts &opts)
+{
+	return 0;
+}
+#endif
+
+//
+// map::map
+//
+
 ircd::fs::map::map(const fd &fd,
                    const opts &opts,
                    const size_t &size)
@@ -1768,6 +1860,19 @@ ircd::fs::map::map(const fd &fd,
 		reinterpret_cast<char *>(ptr),
 		map_size
 	};
+
+	const int advise
+	{
+		#if defined(HAVE_POSIX_MADVISE)
+		opts.random?      POSIX_MADV_RANDOM:
+		opts.sequential?  POSIX_MADV_SEQUENTIAL:
+		opts.dontneed?    POSIX_MADV_DONTNEED:
+		#endif
+		0
+	};
+
+	if(advise)
+		fs::advise(*this, advise, map_size);
 }
 
 ircd::fs::map::~map()
@@ -1808,6 +1913,10 @@ noexcept
 	theirs = {};
 	return *this;
 }
+
+//
+// util
+//
 
 uint
 ircd::fs::prot(const map::opts &opts)

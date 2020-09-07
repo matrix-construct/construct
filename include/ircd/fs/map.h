@@ -14,6 +14,9 @@
 namespace ircd::fs
 {
 	struct map;
+
+	size_t advise(const map &, const int &, const size_t &, const opts & = opts_default);
+	size_t evict(const map &, const size_t &size, const opts & = opts_default);
 }
 
 /// Interface to map file into memory.

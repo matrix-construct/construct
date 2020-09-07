@@ -1060,8 +1060,11 @@ dnl
 
 AC_CHECK_FUNCS([          \
 	backtrace             \
+	fadvise               \
+	madvise               \
 	mlock2                \
 	posix_fadvise         \
+	posix_madvise         \
 	preadv2               \
 	pwritev2              \
 	strlcat               \
