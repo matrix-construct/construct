@@ -111,36 +111,38 @@ ircd::m::events::dump__file(const string_view &filename)
 
 	event::idx seq{0};
 	size_t foff{0}, ecount{0}, acount{0}, errcount{0};
+	const auto flusher{[&](const const_buffer &buf)
+	{
+		const const_buffer wrote
+		{
+			fs::append(file, buf)
+		};
+
+		foff += size(wrote);
+		if(acount++ % 256 == 0)
+		{
+			char pbuf[48];
+			log::info
+			{
+				"dump[%s] %0.2lf%% @ seq %zu of %zu; %zu events; %s in %zu writes; %zu errors; wrote %zu",
+				filename,
+				(seq / double(m::vm::sequence::retired)) * 100.0,
+				seq,
+				m::vm::sequence::retired,
+				ecount,
+				pretty(pbuf, iec(foff)),
+				acount,
+				errcount,
+				size(wrote),
+			};
+		}
+
+		return wrote;
+	}};
+
 	json::stack out
 	{
-		buf, [&](const const_buffer &buf)
-		{
-			const auto wrote
-			{
-				fs::append(file, buf)
-			};
-
-			foff += size(wrote);
-			if(acount++ % 256 == 0)
-			{
-				char pbuf[48];
-				log::info
-				{
-					"dump[%s] %0.2lf%% @ seq %zu of %zu; %zu events; %s in %zu writes; %zu errors; wrote %zu",
-					filename,
-					(seq / double(m::vm::sequence::retired)) * 100.0,
-					seq,
-					m::vm::sequence::retired,
-					ecount,
-					pretty(pbuf, iec(foff)),
-					acount,
-					errcount,
-					size(wrote),
-				};
-			}
-
-			return wrote;
-		}
+		buf, flusher
 	};
 
 	json::stack::array top
