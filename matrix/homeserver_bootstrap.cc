@@ -206,29 +206,39 @@ try
 		file, map_opts
 	};
 
-	char pbuf[2][48];
-	log::notice
-	{
-		log, "Bootstrapping database from event vector @ `%s' %s",
-		path,
-		pretty(pbuf[0], iec(size(map))),
-	};
-
 	// This array is backed by the mmap
 	const json::array events
 	{
 		const_buffer{map}
 	};
 
+	char pbuf[2][48];
+	log::notice
+	{
+		log, "Bootstrapping database from events @ `%s' %s",
+		path,
+		pretty(pbuf[0], iec(size(map))),
+	};
+
 	// Options for eval. This eval disables all phases except a select few.
 	// These may change based on assumptions about the input.
 	vm::opts vmopts;
 	vmopts.phase.reset();
-	vmopts.phase[vm::phase::CONFORM] = true;
+
+	// Primary interest is to perform the INDEX and WRITE phase which create
+	// a database transaction and commit it respectively.
 	vmopts.phase[vm::phase::INDEX] = true;
 	vmopts.phase[vm::phase::WRITE] = true;
 
-	// Required for internal rooms; //TODO: XXX
+	// Perform normal static-conformity checks; there's no reason to accept
+	// inputs that wouldn't normally be accepted. While inputs are supposed
+	// to be trusted and authentic, their correctness should still be checked;
+	// attempting to recover from a catastrophic failure might be the reason
+	// for the rebuild.
+	vmopts.phase[vm::phase::CONFORM] = true;
+
+	//TODO: XXX
+	// This workaround is required for internal rooms to work, for now.
 	vmopts.non_conform.set(event::conforms::MISMATCH_ORIGIN_SENDER);
 
 	// Indicates the input JSON is canonical (to optimize eval).
