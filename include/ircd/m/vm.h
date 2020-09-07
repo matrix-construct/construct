@@ -328,6 +328,10 @@ struct ircd::m::vm::opts
 	/// reason to ever adjust this.
 	size_t reserve_index {1024};
 
+	/// Coarse limit for array evals. The counter is incremented for every
+	/// event; both accepted and faulted.
+	size_t limit = -1;
+
 	/// Mask of faults that are not thrown as exceptions out of eval(). If
 	/// masked, the fault is returned from eval(). By default, the EXISTS
 	/// fault is masked which means existing events won't kill eval loops.

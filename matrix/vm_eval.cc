@@ -370,6 +370,8 @@ ircd::m::vm::eval::eval(const json::array &pdus,
 :eval{opts}
 {
 	std::vector<m::event> events(begin(pdus), end(pdus));
+	if(events.size() > opts.limit)
+		events.resize(opts.limit);
 
 	// Sort the events first to avoid complicating the evals; the events might
 	// be from different rooms but it doesn't matter.
@@ -411,8 +413,8 @@ ircd::m::vm::eval::operator()(const vector_view<m::event> &events)
 
 	// Conduct each eval without letting any one exception ruin things for the
 	// others, including an interrupt. The only exception is a termination.
-	size_t ret(0);
-	for(auto it(begin(events)); it != end(events); ++it) try
+	size_t ret(0), i(0);
+	for(auto it(begin(events)); it != end(events) && i < opts->limit; ++it, ++i) try
 	{
 		const m::event &event
 		{
