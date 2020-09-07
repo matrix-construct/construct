@@ -8449,118 +8449,46 @@ console_cmd__eval(opt &out, const string_view &line)
 bool
 console_cmd__eval__file(opt &out, const string_view &line)
 {
-	const params token{line, " ",
+	const params param{line, " ",
 	{
-		"file path", "limit", "start", "room_id/event_id/sender"
+		"path", "limit"
 	}};
 
 	const auto path
 	{
-		token.at(0)
-	};
-
-	const fs::fd file
-	{
-		path
+		param.at("path")
 	};
 
 	const auto limit
 	{
-		token.at<size_t>(1, 0)
+		param.at<size_t>("limit", -1UL)
 	};
 
-	const auto start
+	fs::fd::opts file_opts(std::ios::in);
+	const fs::fd file
 	{
-		token[2]? lex_cast<size_t>(token[2]) : 0
+		path, file_opts
 	};
 
-	const string_view id{token[3]};
-	const string_view room_id
+	fs::map::opts map_opts(file_opts);
+	const fs::map map
 	{
-		id && m::sigil(id) == m::id::ROOM? id : string_view{}
+		file, map_opts
 	};
 
-	const string_view event_id
+	// This array is backed by the mmap
+	const json::array events
 	{
-		id && m::sigil(id) == m::id::EVENT? id : string_view{}
+		const_buffer{map}
 	};
 
-	const string_view sender
+	m::vm::opts vm_opts;
+	vm_opts.infolog_accept = true;
+	vm_opts.limit = limit;
+	m::vm::eval
 	{
-		id && m::sigil(id) == m::id::USER? id : string_view{}
+		events, vm_opts
 	};
-
-	m::vm::opts opts;
-	m::vm::eval eval
-	{
-		opts
-	};
-
-	size_t foff{0};
-	size_t i(0), j(0), r(0);
-	for(; !limit || i < limit; ++r)
-	{
-		static char buf[512_KiB];
-		const string_view read
-		{
-			fs::read(file, buf, foff)
-		};
-
-		size_t boff(0);
-		json::object object;
-		json::vector vector{read};
-		for(; boff < size(read) && (!limit || i < limit); ) try
-		{
-			object = *begin(vector);
-			boff += size(string_view{object});
-			vector = { data(read) + boff, size(read) - boff };
-			const m::event event
-			{
-				object
-			};
-
-			if(room_id && json::get<"room_id"_>(event) != room_id)
-				continue;
-
-			if(event_id && event.event_id != event_id)
-				continue;
-
-			if(sender && json::get<"sender"_>(event) != sender)
-				continue;
-
-			if(j++ < start)
-				continue;
-
-			eval(event);
-			++i;
-		}
-		catch(const json::parse_error &e)
-		{
-			break;
-		}
-		catch(const std::exception &e)
-		{
-			out << fmt::snstringf
-			{
-				128, "Error at i=%zu j=%zu r=%zu foff=%zu boff=%zu\n",
-				i, j, r, foff, boff
-			};
-
-			out << string_view{object} << std::endl;
-			out << e.what() << std::endl;
-			return true;
-		}
-
-		foff += boff;
-		if(foff > 0 && boff == 0)
-			break;
-	}
-
-	out << "Executed " << i
-	    << " of " << j << " events"
-	    << " in " << foff << " bytes"
-	    << " using " << r << " reads"
-	    << std::endl;
 
 	return true;
 }
