@@ -147,22 +147,6 @@ noexcept
 }
 #endif
 
-#if defined(HAVE_X86INTRIN_H) && defined(__AVX512F__)
-template<int b,
-         class T>
-[[using gnu: always_inline, gnu_inline, artificial]]
-extern inline typename std::enable_if<sizeof(T) == 64, T>::type
-ircd::simd::shr(const T a)
-noexcept
-{
-	static_assert
-	(
-		b % 8 == 0, "ymmx register only shifts right at bytewise resolution."
-	);
-
-	return T(_mm512_srli_si512(u512x1(a), b / 8));
-}
-#else
 template<int b,
          class T>
 [[using gnu: always_inline, gnu_inline, artificial]]
@@ -172,24 +156,7 @@ noexcept
 {
 	return _shr<b, u8x64>(a);
 }
-#endif
 
-#if defined(HAVE_X86INTRIN_H) && defined(__AVX512F__)
-template<int b,
-         class T>
-[[using gnu: always_inline, gnu_inline, artificial]]
-extern inline typename std::enable_if<sizeof(T) == 64, T>::type
-ircd::simd::shl(const T a)
-noexcept
-{
-	static_assert
-	(
-		b % 8 == 0, "ymmx register only shifts left at bytewise resolution."
-	);
-
-	return T(_mm512_slli_si512(u512x1(a), b / 8));
-}
-#else
 template<int b,
          class T>
 [[using gnu: always_inline, gnu_inline, artificial]]
@@ -199,7 +166,6 @@ noexcept
 {
 	return _shl<b, u8x64>(a);
 }
-#endif
 
 template<int b,
          class V,
