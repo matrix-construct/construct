@@ -3728,6 +3728,7 @@ try
 
 	struct stats
 	{
+		size_t count;
 		size_t usage;
 		size_t pinned;
 		size_t capacity;
@@ -3738,6 +3739,7 @@ try
 
 		stats &operator+=(const stats &b)
 		{
+			count += b.count;
 			usage += b.usage;
 			pinned += b.pinned;
 			capacity += b.capacity;
@@ -3751,6 +3753,7 @@ try
 
 	if(!colname)
 	{
+		const auto count(db::count(cache(database)));
 		const auto usage(db::usage(cache(database)));
 		const auto pinned(db::pinned(cache(database)));
 		const auto capacity(db::capacity(cache(database)));
@@ -3778,6 +3781,11 @@ try
 			inserts > 0.0? (double(hits) / double(inserts)) : 0.0L
 		};
 
+		const auto ins_cnt_rat
+		{
+			count > 0.0? (double(inserts) / double(count)) : 0.0L
+		};
+
 		out << std::left
 		    << std::setw(24) << "ROW"
 		    << std::right
@@ -3801,6 +3809,10 @@ try
 		    << std::setw(10) << "HIT:INS"
 		    << " "
 		    << std::setw(9) << "INSERT%"
+		    << "  "
+		    << std::setw(8) << "COUNT"
+		    << " "
+		    << std::setw(10) << "INS:CNT"
 		    << "  "
 		    << std::setw(20) << "LOCKED"
 		    << " "
@@ -3833,6 +3845,11 @@ try
 		    << " "
 		    << std::setw(8) << std::right << std::fixed << std::setprecision(2) << (ins_miss_pct * 100)
 		    << "%"
+		    << "  "
+		    << std::setw(8) << std::right << count
+		    << " "
+		    << std::setw(8) << std::right << std::fixed << std::setprecision(0) << ins_cnt_rat
+		    << ":1"
 		    << "  "
 		    << std::setw(20) << std::right << pretty(iec(pinned))
 		    << " "
@@ -3868,6 +3885,10 @@ try
 	    << " "
 	    << std::setw(9) << "INSERT%"
 	    << "  "
+	    << std::setw(8) << "COUNT"
+	    << " "
+	    << std::setw(10) << "INS:CNT"
+	    << "  "
 	    << std::setw(20) << "LOCKED"
 	    << " "
 	    << std::endl;
@@ -3893,6 +3914,11 @@ try
 		const auto ins_hit_rat
 		{
 			s.inserts > 0.0? (double(s.hits) / double(s.inserts)) : 0.0L
+		};
+
+		const auto ins_cnt_rat
+		{
+			s.count > 0.0? (double(s.inserts) / double(s.count)) : 0.0L
 		};
 
 		out << std::setw(24) << std::left << column_name
@@ -3921,6 +3947,11 @@ try
 		    << " "
 		    << std::setw(8) << std::right << std::fixed << std::setprecision(2) << (ins_miss_pct * 100)
 		    << '%'
+		    << "  "
+		    << std::setw(8) << std::right << s.count
+		    << " "
+		    << std::setw(8) << std::right << std::fixed << std::setprecision(0) << ins_cnt_rat
+		    << ":1"
 		    << "  "
 		    << std::setw(20) << std::right << pretty(iec(s.pinned))
 		    << " "
@@ -3955,6 +3986,7 @@ try
 
 		const stats uncompressed
 		{
+			db::count(cache(column)),
 			db::usage(cache(column)),
 			db::pinned(cache(column)),
 			db::capacity(cache(column)),
@@ -3966,6 +3998,7 @@ try
 
 		const stats compressed
 		{
+			db::count(cache_compressed(column)),
 			db::usage(cache_compressed(column)),
 			0,
 			db::capacity(cache_compressed(column)),

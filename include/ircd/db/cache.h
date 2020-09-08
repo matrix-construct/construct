@@ -41,6 +41,10 @@ namespace ircd::db
 	size_t pinned(const rocksdb::Cache &);
 	size_t pinned(const rocksdb::Cache *const &);
 
+	// Get number of entries
+	size_t count(const rocksdb::Cache &);
+	size_t count(const rocksdb::Cache *const &);
+
 	// Test if key exists
 	bool exists(const rocksdb::Cache &, const string_view &key);
 	bool exists(const rocksdb::Cache *const &, const string_view &key);
@@ -131,6 +135,14 @@ ircd::db::exists(const rocksdb::Cache *const &cache,
 	return cache?
 		exists(*cache, key):
 		false;
+}
+
+inline size_t
+ircd::db::count(const rocksdb::Cache *const &cache)
+{
+	return cache?
+		count(*cache):
+		0UL;
 }
 
 inline size_t

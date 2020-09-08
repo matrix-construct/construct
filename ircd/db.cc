@@ -7570,6 +7570,19 @@ ircd::db::exists(const rocksdb::Cache &cache_,
 }
 
 size_t
+ircd::db::count(const rocksdb::Cache &cache)
+{
+	size_t ret(0);
+	for_each(cache, [&ret]
+	(const const_buffer &)
+	{
+		++ret;
+	});
+
+	return ret;
+}
+
+size_t
 ircd::db::pinned(const rocksdb::Cache &cache)
 {
 	return cache.GetPinnedUsage();
