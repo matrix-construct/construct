@@ -23,9 +23,11 @@ __attribute__((aligned(1)))                      \
 __attribute__((visibility("internal")))          \
 NAME                                             \
 {                                                \
+    using value_type = TYPE;                     \
+                                                 \
     TYPE val;                                    \
                                                  \
-    operator TYPE () const { return val; }       \
+    operator TYPE() const { return val; }        \
                                                  \
     template<class T> NAME &operator=(T&& t)     \
     {                                            \
