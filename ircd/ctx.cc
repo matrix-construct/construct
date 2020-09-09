@@ -92,6 +92,7 @@ noexcept
 	assert(yc == nullptr); // Check that the context isn't active.
 }
 
+/// Internal wrapper for asio::spawn; never call directly.
 void
 IRCD_CTX_STACK_PROTECT
 ircd::ctx::ctx::spawn(context::function func)
@@ -120,8 +121,8 @@ ircd::ctx::ctx::spawn(context::function func)
 		ircd::ios::handler::current
 	};
 
-	mark(prof::event::SPAWN);
-	if(!parent_context) try
+	assert(!parent_context);
+	assert(parent_handler); try
 	{
 		ios::handler::leave(parent_handler);
 		boost::asio::spawn(ios::get(), std::move(bound), attrs);
@@ -132,14 +133,6 @@ ircd::ctx::ctx::spawn(context::function func)
 		ios::handler::enter(parent_handler);
 		throw;
 	}
-	else continuation
-	{
-		continuation::false_predicate, continuation::noop_interruptor, [&attrs, &bound]
-		(auto &yield)
-		{
-			boost::asio::spawn(ios::get(), std::move(bound), attrs);
-		}
-	};
 }
 
 /// Base frame for a context.
@@ -1205,32 +1198,31 @@ ircd::ctx::context::context(const string_view &name,
 			this->detach();
 	}};
 
+	// Indicates to the profiler that this context is spawning a child.
+	if(likely(ircd::ctx::current))
+		mark(prof::event::SPAWN);
+
+	// Branch to spawn via POST mechanism. This is an asynchronous method which
+	// returns immediately so this context doesn't yield. The spawning occurs
+	// sometime after this context next yields. This is the primary method to
+	// spawn contexts. Note: This is the method to spawn contexts when this
+	// parent is not itself a context as yielding is not possible anyway.
+	assert(c->flags & POST || ircd::ctx::current);
 	if(c->flags & POST)
-	{
 		ios::post(desc[0], std::move(spawn));
-		return;
-	}
 
-	continuation
-	{
-		continuation::false_predicate, continuation::noop_interruptor, [&spawn, this]
-		(auto &yield)
-		{
-			if(c->flags & DISPATCH)
-			{
-				ios::dispatch(desc[2], std::move(spawn));
-				return;
-			}
+	// (experimental) Branch to spawn via defer mechanism.
+	else if(c->flags & DEFER)
+		ios::defer(desc[1], ios::synchronous, std::move(spawn));
 
-			if(c->flags & DEFER)
-			{
-				ios::defer(desc[1], std::move(spawn));
-				return;
-			}
-
-			spawn();
-		}
-	};
+	// Branch to spawn via dispatch mechanism. This context will yield while
+	// the spawning takes place on this stack. This is the closest to a direct
+	// context switch since we don't call spawn() directly from this frame
+	// which allows the ctx/ios infrastructure to account for the context
+	// switch. Note: This is also the default method when no flags are given
+	// and this parent is another context.
+	else if(c->flags & DISPATCH || (true))
+		ios::dispatch(desc[2], ios::synchronous, std::move(spawn));
 }
 
 ircd::ctx::context::context(context &&other)
