@@ -499,48 +499,29 @@ const
 		using block_t_u = u128x1_u;
 	#endif
 
-	assert(start <= stop);
-	const auto max
+	static const auto each_block
 	{
-		size_t(std::distance(start, stop))
+		json::parser::string_content_block<block_t>
 	};
 
-	block_t block;
-	u64x2 count{0}; // length word, error word
-	while(!count[1] && count[0] + sizeof(block_t) <= max)
+	assert(start <= stop);
+	const u64x2 max
 	{
-		const auto si
-		{
-			reinterpret_cast<const block_t_u *>(start + count[0])
-		};
+		0, size_t(std::distance(start, stop))
+	};
 
-		block = *si;
-		count += json::parser::string_content_block(block, ~block_t{0});
-	}
-
-	while(!count[1] && count[0] < max)
+	const auto count
 	{
-		const size_t remain(max - count[0]);
-		assert(remain < sizeof(block_t));
-
-		size_t j(0);
-		block_t mask{0};
-		for(; count[0] + j < max; ++j)
-		{
-			block[j] = start[count[0] + j];
-			mask[j] = 0xff;
-		}
-
-		count += json::parser::string_content_block(block, mask);
-	}
+		simd::stream<block_t_u, block_t>(start, max, each_block)
+	};
 
 	attr_at<0>(g) = string_view
 	{
-		start, count[0]
+		start, count[1]
 	};
 
-	start += count[0] & boolmask<u64>(count[1] == 1);
-	return count[1] == 1;
+	start += count[1] & boolmask<u64>(count[0] == 1);
+	return count[0] == 1;
 }
 
 template<class block_t>
@@ -578,7 +559,7 @@ noexcept
 	if(likely(is_regular[0]))
 		return u64x2
 		{
-			sizeof(block), 0
+			0, sizeof(block)
 		};
 
 	const u64 regular_prefix_count
@@ -589,7 +570,7 @@ noexcept
 	if(likely(regular_prefix_count))
 		return u64x2
 		{
-			regular_prefix_count, 0
+			0, regular_prefix_count
 		};
 
 	const u64 err
@@ -606,7 +587,7 @@ noexcept
 
 	return u64x2
 	{
-		add & boolmask<u64>(err == 0), err
+		err, add & boolmask<u64>(err == 0)
 	};
 }
 
@@ -3443,64 +3424,26 @@ noexcept
 	using block_t = u8x16;
 	using block_t_u = u128x1_u;
 
-	u64x2 count{0}; // input pos, return value
-	while(count[0] + sizeof(block_t) <= input.size() && count[1] + sizeof(block_t) <= ircd::size(buf))
+	const u64x2 max
 	{
-		static const auto mask
-		{
-			~block_t{0}
-		};
+		ircd::size(buf), ircd::size(input),
+	};
 
-		const auto di
-		{
-			reinterpret_cast<block_t_u *>(ircd::data(buf) + count[1])
-		};
-
-		const auto si
-		{
-			reinterpret_cast<const block_t_u *>(input.data() + count[0])
-		};
-
-		block_t block(*si);
-		const u64x2 consume
-		{
-			string_stringify(block, mask)
-		};
-
-		*di = block;
-		count += consume;
-	}
-
-	while(count[0] < input.size())
+	const auto consumed
 	{
-		block_t block{0}, mask{0};
-		for(size_t i(0); count[0] + i < input.size() && i < sizeof(block_t); ++i)
-		{
-			block[i] = input[count[0] + i];
-			mask[i] = 0xff;
-		}
+		simd::stream<block_t_u, block_t>(ircd::data(buf), ircd::data(input), max, string_stringify)
+	};
 
-		const u64x2 consume
-		{
-			string_stringify(block, mask)
-		};
-
-		for(size_t i(0); i < consume[1] && count[1] + i < ircd::size(buf); ++i)
-			buf[count[1] + i] = block[i];
-
-		count += consume;
-	}
-
-	return count[1];
+	return consumed[0]; // output pos (bytes written)
 }
 
-/// Returns two addends to the outer loop. The first advances the input string
+/// Returns two addends to the outer loop. The second advances the input string
 /// pointer any number of bytes; the block for the next invocation will start
 /// at the new offset. This function may want to advance the input less than
 /// the full block width if there's a possibility something important is being
 /// split between blocks (i.e. an escaped utf-16 surrogate pair of 12 chars);
 /// next invocation will then encounter the contiguous sequence without issue.
-/// The second value is added to the final return count to indicate the length
+/// The first value is added to the final return count to indicate the length
 /// of the input string in serialized form after correction. Partial sequences
 /// trailing off the block are not counted here so they can be pushed over to
 /// the next invocation.
@@ -3570,7 +3513,7 @@ ircd::json::string_stringify(u8x16 &block,
 		block[1] = '"';
 		return u64x2
 		{
-			1, 2
+			2, 1
 		};
 	}
 
@@ -3581,7 +3524,7 @@ ircd::json::string_stringify(u8x16 &block,
 		block = *reinterpret_cast<const u128x1 *>(ctrl_tab + idx);
 		return u64x2
 		{
-			1, u64(ctrl_tab_len[idx])
+			u64(ctrl_tab_len[idx]), 1
 		};
 	}
 
@@ -3624,7 +3567,7 @@ ircd::json::string_stringify(u8x16 &block,
 		block[1] = '\\';
 		return u64x2
 		{
-			1, block_mask[1]? 0UL: 2UL
+			block_mask[1]? 0UL: 2UL, 1
 		};
 	}
 
@@ -3717,7 +3660,7 @@ ircd::json::string_stringify_utf16(u8x16 &block,
 	assert(di == length[0] + length[1]);
 	return u64x2
 	{
-		std::max(6U * surrogates, 1U), di
+		di, std::max(6U * surrogates, 1U)
 	};
 }
 
@@ -3732,41 +3675,17 @@ noexcept
 	using block_t = u8x16;
 	using block_t_u = u128x1_u;
 
-	block_t block;
-	u64x2 count{0}; // input pos, return value
-	while(count[0] + sizeof(block_t) <= input.size())
+	const u64x2 max
 	{
-		static const auto mask
-		{
-			~block_t{0}
-		};
+		0, ircd::size(input)
+	};
 
-		const auto si
-		{
-			reinterpret_cast<const block_t_u *>(input.data() + count[0])
-		};
-
-		block = *si;
-		count += string_serialized(block, mask);
-	}
-
-	while(count[0] < input.size())
+	const auto count
 	{
-		const size_t remain(input.size() - count[0]);
-		assert(remain < sizeof(block_t));
+		simd::stream<block_t_u, block_t>(ircd::data(input), max, string_serialized)
+	};
 
-		size_t j(0);
-		block_t mask{0};
-		for(; count[0] + j < input.size(); ++j)
-		{
-			block[j] = input[count[0] + j];
-			mask[j] = 0xff;
-		}
-
-		count += string_serialized(block, mask);
-	}
-
-	return count[1];
+	return count[0];
 }
 
 ircd::u64x2
@@ -3824,7 +3743,7 @@ ircd::json::string_serialized(const u8x16 block,
 	if(is_quote[0])
 		return u64x2
 		{
-			1, 2
+			2, 1
 		};
 
 	// Covers the ctrl 0x00-0x20 range only; no other character here.
@@ -3867,7 +3786,7 @@ ircd::json::string_serialized(const u8x16 block,
 	if(match_depth > 7)
 		return u64x2
 		{
-			1, block_mask[1]? 0UL: 2UL
+			block_mask[1]? 0UL: 2UL, 1
 		};
 
 	// Possible utf-16 surrogate(s)
@@ -3946,7 +3865,7 @@ ircd::json::string_serialized_utf16(const u8x16 block,
 
 	return u64x2
 	{
-		std::max(6U * surrogates, 1U), total_length,
+		total_length, std::max(6U * surrogates, 1U)
 	};
 }
 
@@ -3972,7 +3891,7 @@ ircd::json::string_serialized_ctrl(const u8x16 block,
 
 	return u64x2
 	{
-		ctrl_prefix_count, ret
+		ret, ctrl_prefix_count
 	};
 }
 

@@ -24,6 +24,7 @@
 #include "lzcnt.h"
 #include "tzcnt.h"
 #include "lateral.h"
+#include "stream.h"
 #include "print.h"
 
 namespace ircd
