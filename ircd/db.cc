@@ -2156,7 +2156,7 @@ ircd::db::database::column::column(database &d,
 		table_opts.format_version = 4; // RocksDB >= 5.16.x compat only; otherwise use 3.
 
 	table_opts.index_type = rocksdb::BlockBasedTableOptions::kTwoLevelIndexSearch;
-	table_opts.index_block_restart_interval = 64;
+	table_opts.index_block_restart_interval = 16;
 	table_opts.read_amp_bytes_per_bit = 8;
 
 	// Specify that index blocks should use the cache. If not, they will be
@@ -2186,7 +2186,7 @@ ircd::db::database::column::column(database &d,
 	table_opts.block_size = this->descriptor->block_size;
 	table_opts.metadata_block_size = this->descriptor->meta_block_size;
 	table_opts.block_size_deviation = 50;
-	table_opts.block_restart_interval = 64;
+	table_opts.block_restart_interval = 32;
 
 	//table_opts.data_block_index_type = rocksdb::BlockBasedTableOptions::kDataBlockBinaryAndHash;
 	//table_opts.data_block_hash_table_util_ratio = 0.75;
