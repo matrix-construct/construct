@@ -183,3 +183,8 @@ constexpr const char *const ircd::m::name::app_display_name;
 constexpr const char *const ircd::m::name::profile_tag;
 constexpr const char *const ircd::m::name::lang;
 constexpr const char *const ircd::m::name::append;
+
+constexpr const char *const ircd::m::name::body;
+constexpr const char *const ircd::m::name::msgtype;
+constexpr const char *const ircd::m::name::format;
+constexpr const char *const ircd::m::name::formatted_body;

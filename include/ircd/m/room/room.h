@@ -121,6 +121,7 @@ struct ircd::m::room
 	struct aliases;
 	struct stats;
 	struct server_acl;
+	struct message;
 	struct bootstrap;
 
 	using id = m::id::room;
@@ -198,6 +199,7 @@ struct ircd::m::room
 #include "aliases.h"
 #include "stats.h"
 #include "server_acl.h"
+#include "message.h"
 #include "bootstrap.h"
 
 inline
