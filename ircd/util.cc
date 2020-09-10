@@ -283,31 +283,46 @@ ircd::util::timer::timer(const std::function<void ()> &func)
 void
 ircd::util::timer::stop()
 {
-	if(stopped())
-		return;
+	const auto now
+	{
+		!stopped()?
+			clock::now():
+			start
+	};
 
-	const auto now(clock::now());
-	accumulator += std::chrono::duration_cast<decltype(accumulator)>(now - start);
+	const auto elapsed
+	{
+		duration_cast<decltype(accumulator)>(now - start)
+	};
+
+	accumulator += elapsed;
 	start = clock::time_point::min();
 }
 
 void
 ircd::util::timer::cont()
 {
-	if(!stopped())
+	const auto now
 	{
-		const auto now(clock::now());
-		accumulator += std::chrono::duration_cast<decltype(accumulator)>(now - start);
-	}
+		clock::now()
+	};
 
-	start = clock::now();
+	const auto elapsed
+	{
+		!stopped()?
+			duration_cast<decltype(accumulator)>(now - start):
+			decltype(accumulator)(0)
+	};
+
+	accumulator += elapsed;
+	start = now;
 }
 
 std::string
 ircd::util::timer::pretty(const int &fmt)
 const
 {
-	return util::pretty(at(), fmt);
+	return util::pretty(at<nanoseconds>(), fmt);
 }
 
 ircd::string_view
@@ -315,14 +330,7 @@ ircd::util::timer::pretty(const mutable_buffer &out,
                           const int &fmt)
 const
 {
-	return util::pretty(out, at(), fmt);
-}
-
-bool
-ircd::util::timer::stopped()
-const
-{
-	return start == clock::time_point::min();
+	return util::pretty(out, at<nanoseconds>(), fmt);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
