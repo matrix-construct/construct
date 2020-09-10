@@ -136,10 +136,10 @@ noexcept
 /// and can be any size.
 ///
 /// * variable-stride: progress for each iteration of the loop across the input
-/// and output buffers is not fixed; the transform function may advance the
-/// pointer one to sizeof(block_t) bytes each iteration. Due to these
-/// characteristics, unaligned bytes may be redundantly loaded and non-temporal
-/// features are not used to optimize the operation.
+/// and buffer is not fixed; the transform function may advance the pointer
+/// one to sizeof(block_t) bytes each iteration. Due to these characteristics,
+/// unaligned bytes may be redundantly loaded and non-temporal features are
+/// not used to optimize the operation.
 ///
 /// u64x2 counter lanes = { available_to_user, input_length }; The argument
 /// `max` gives the buffer size in that format. The return value is the
