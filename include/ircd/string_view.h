@@ -23,10 +23,13 @@ namespace ircd
 
 	constexpr const char *data(const string_view &) noexcept;
 	constexpr size_t size(const string_view &) noexcept;
+
 	bool empty(const string_view &);
 	bool operator!(const string_view &);
 	bool defined(const string_view &);
 	bool null(const string_view &);
+
+	int cmp(const string_view &, const string_view &) noexcept;
 
 	constexpr string_view operator ""_sv(const char *const literal, const size_t size);
 }
@@ -233,6 +236,38 @@ constexpr ircd::string_view
 ircd::operator ""_sv(const char *const literal, const size_t size)
 {
 	return string_view{literal, size};
+}
+
+inline int
+ircd::cmp(const string_view &a,
+          const string_view &b)
+noexcept
+{
+	const auto res
+	{
+		#if __has_builtin(__builtin_memcmp_inline) && !defined(RB_GENERIC)
+			__builtin_memcmp_inline(a.data(), b.data(), std::min(a.size(), b.size()))
+		#else
+			__builtin_memcmp(a.data(), b.data(), std::min(a.size(), b.size()))
+		#endif
+	};
+
+	const auto zf
+	{
+		boolmask<uint>(res == 0)
+	};
+
+	const auto lt
+	{
+		boolmask<uint>(a.size() < b.size())
+	};
+
+	const auto gt
+	{
+		boolmask<uint>(a.size() > b.size())
+	};
+
+	return (~zf & res) | (zf & lt & -1U) | (zf & gt & 1U);
 }
 
 inline bool
