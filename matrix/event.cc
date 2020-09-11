@@ -983,29 +983,66 @@ ircd::m::degree(const event::prev &prev)
 bool
 ircd::m::operator>=(const event &a, const event &b)
 {
-	//assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
-	return json::get<"depth"_>(a) >= json::get<"depth"_>(b);
+	const int room_id_cmp
+	{
+		cmp(json::get<"room_id"_>(a), json::get<"room_id"_>(b))
+	};
+
+	const auto depth_gte
+	{
+		json::get<"depth"_>(a) >= json::get<"depth"_>(b)
+	};
+
+	return room_id_cmp > 0 || (room_id_cmp == 0 && depth_gte);
 }
 
 bool
 ircd::m::operator<=(const event &a, const event &b)
 {
-	//assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
-	return json::get<"depth"_>(a) <= json::get<"depth"_>(b);
+	const int room_id_cmp
+	{
+		cmp(json::get<"room_id"_>(a), json::get<"room_id"_>(b))
+	};
+
+	const auto depth_lte
+	{
+		json::get<"depth"_>(a) <= json::get<"depth"_>(b)
+	};
+
+	return room_id_cmp < 0 || (room_id_cmp == 0 && depth_lte);
 }
 
 bool
 ircd::m::operator>(const event &a, const event &b)
 {
-	//assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
-	return json::get<"depth"_>(a) > json::get<"depth"_>(b);
+	const int room_id_cmp
+	{
+		cmp(json::get<"room_id"_>(a), json::get<"room_id"_>(b))
+	};
+
+	const auto depth_gt
+	{
+		json::get<"depth"_>(a) > json::get<"depth"_>(b)
+	};
+
+	return room_id_cmp > 0 || (room_id_cmp == 0 && depth_gt);
 }
 
 bool
-ircd::m::operator<(const event &a, const event &b)
+ircd::m::operator<(const event &a,
+                   const event &b)
 {
-	//assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
-	return json::get<"depth"_>(a) < json::get<"depth"_>(b);
+	const int room_id_cmp
+	{
+		cmp(json::get<"room_id"_>(a), json::get<"room_id"_>(b))
+	};
+
+	const auto depth_lt
+	{
+		json::get<"depth"_>(a) < json::get<"depth"_>(b)
+	};
+
+	return room_id_cmp < 0 || (room_id_cmp == 0 && depth_lt);
 }
 
 bool
