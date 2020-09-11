@@ -5434,8 +5434,14 @@ try
 	{
 		out << std::endl;
 		_print_sst_info_header(out);
-		const db::database::sst::info::vector v{c};
-		for(const auto &info : v)
+		db::database::sst::info::vector vector{c};
+		std::sort(begin(vector), end(vector), []
+		(const auto &a, const auto &b)
+		{
+			return a.created < b.created;
+		});
+
+		for(const auto &info : vector)
 			_print_sst_info(out, info);
 	}
 	else
