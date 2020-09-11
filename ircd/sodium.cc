@@ -126,7 +126,12 @@ try
 		reinterpret_cast<char *>(key.get()), SK_SZ
 	};
 
-	if(!fs::exists(filename) && !ircd::write_avoid)
+	const bool exists
+	{
+		filename && fs::exists(filename)
+	};
+
+	if(!exists && !ircd::write_avoid)
 	{
 		nacl::throw_on_error
 		{
@@ -134,6 +139,12 @@ try
 		};
 
 		fs::write(filename, key_data);
+	}
+	else if(!exists)
+	{
+		zero(pk);
+		key.reset();
+		return;
 	}
 	else fs::read(filename, key_data);
 

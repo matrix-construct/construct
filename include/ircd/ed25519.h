@@ -32,6 +32,9 @@ class ircd::ed25519::sk
 	std::unique_ptr<uint8_t[], void (*)(void *)> key;
 
   public:
+	operator bool() const    { return bool(key);  }
+	bool operator!() const   { return !key;       }
+
 	sig sign(const const_buffer &msg) const;
 
 	sk(const string_view &filename, pk *const & = nullptr);
