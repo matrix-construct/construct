@@ -414,6 +414,9 @@ ircd::m::homeserver::key::key(const struct opts &opts)
 		key
 	};
 
+	if(!secret_key)
+		return std::move(ret);
+
 	const ed25519::sig sig
 	{
 		secret_key.sign(const_buffer(ret))
@@ -440,6 +443,17 @@ ircd::m::homeserver::key::key(const struct opts &opts)
 	return std::move(ret);
 }()}
 {
+	if(!secret_key)
+	{
+		log::warning
+		{
+			m::log, "Cannot issue events originating from '%s' :No signing key available.",
+			opts.origin,
+		};
+
+		return;
+	}
+
 	log::info
 	{
 		m::log, "Secret key for %s at `%s'. Public key is %s identified as '%s'",
