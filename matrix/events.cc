@@ -142,7 +142,10 @@ ircd::m::events::dump__file(const string_view &filename)
 
 	json::stack out
 	{
-		buf, flusher
+		buf,
+		flusher,
+		-1UL,        // high watermark
+		size(buf)    // low watermark
 	};
 
 	json::stack::array top
@@ -160,6 +163,11 @@ ircd::m::events::dump__file(const string_view &filename)
 		const json::object source
 		{
 			it->second
+		};
+
+		const json::stack::checkpoint cp
+		{
+			out
 		};
 
 		top.append(source);
