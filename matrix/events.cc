@@ -109,6 +109,7 @@ ircd::m::events::dump__file(const string_view &filename)
 		size_t(dump_buffer_size), 512
 	};
 
+	util::timer timer;
 	event::idx seq{0};
 	size_t foff{0}, ecount{0}, acount{0}, errcount{0};
 	const auto flusher{[&](const const_buffer &buf)
@@ -121,19 +122,20 @@ ircd::m::events::dump__file(const string_view &filename)
 		foff += size(wrote);
 		if(acount++ % 256 == 0)
 		{
-			char pbuf[48];
+			char pbuf[2][48];
 			log::info
 			{
-				"dump[%s] %0.2lf%% @ seq %zu of %zu; %zu events; %s in %zu writes; %zu errors; wrote %zu",
+				"dump[%s] %0.2lf%% @ seq %zu of %zu; %zu events; %s in %zu writes; %zu errors; wrote %zu; %s elapsed",
 				filename,
 				(seq / double(m::vm::sequence::retired)) * 100.0,
 				seq,
 				m::vm::sequence::retired,
 				ecount,
-				pretty(pbuf, iec(foff)),
+				pretty(pbuf[0], iec(foff)),
 				acount,
 				errcount,
 				size(wrote),
+				timer.pretty(pbuf[1]),
 			};
 		}
 
@@ -193,14 +195,17 @@ ircd::m::events::dump__file(const string_view &filename)
 
 	top.~array();
 	out.flush(true);
+
+	char pbuf[48];
 	log::notice
 	{
-		log, "dump[%s] complete events:%zu using %s in writes:%zu errors:%zu",
+		log, "dump[%s] complete events:%zu using %s in writes:%zu errors:%zu; %s elapsed",
 		filename,
 		ecount,
 		pretty(iec(foff)),
 		acount,
 		errcount,
+		timer.pretty(pbuf),
 	};
 }
 
