@@ -2078,10 +2078,10 @@ ircd::db::database::column::column(database &d,
 
 	//TODO: descriptor / conf
 
-	this->options.write_buffer_size = 4_MiB;
-	this->options.max_write_buffer_number = 8;
-	this->options.min_write_buffer_number_to_merge = 4;
-	this->options.max_write_buffer_number_to_maintain = 0;
+	this->options.write_buffer_size = 1_MiB;
+	this->options.max_write_buffer_number = 16;
+	this->options.min_write_buffer_number_to_merge = 2;
+	this->options.max_write_buffer_number_to_maintain = 8;
 
 	// Conf item can be set to disable automatic compactions. For developers
 	// and debugging; good for valgrind.
@@ -2089,8 +2089,12 @@ ircd::db::database::column::column(database &d,
 
 	// Set the compaction style; we don't override this in the descriptor yet.
 	//this->options.compaction_style = rocksdb::kCompactionStyleNone;
-	this->options.compaction_style = rocksdb::kCompactionStyleLevel;
+	//this->options.compaction_style = rocksdb::kCompactionStyleLevel;
 	//this->options.compaction_style = rocksdb::kCompactionStyleUniversal;
+	this->options.compaction_style =
+		this->descriptor->compaction_pri.empty() || this->descriptor->compaction_pri == "Universal"?
+			rocksdb::kCompactionStyleUniversal:
+			rocksdb::kCompactionStyleLevel;
 
 	// Set the compaction priority from string in the descriptor
 	this->options.compaction_pri =
@@ -2105,8 +2109,9 @@ ircd::db::database::column::column(database &d,
 			rocksdb::CompactionPri::kOldestLargestSeqFirst;
 
 	this->options.num_levels = 7;
-	this->options.level0_file_num_compaction_trigger = 7;
 	this->options.level_compaction_dynamic_level_bytes = false;
+	this->options.level0_file_num_compaction_trigger = 8;
+
 	//this->options.ttl = -2U;
 	#ifdef IRCD_DB_HAS_PERIODIC_COMPACTIONS
 	this->options.periodic_compaction_seconds = this->descriptor->compaction_period.count();
@@ -2137,13 +2142,13 @@ ircd::db::database::column::column(database &d,
 
 	// Universal compaction options; these are unused b/c we don't use this
 	// style; they are here for hacking an experimentation for now.
-	this->options.compaction_options_universal.size_ratio = 1;
-	this->options.compaction_options_universal.min_merge_width = 2;
-	this->options.compaction_options_universal.max_merge_width = UINT_MAX;
-	this->options.compaction_options_universal.max_size_amplification_percent = 200;
+	this->options.compaction_options_universal.size_ratio = 67;
+	this->options.compaction_options_universal.min_merge_width = 8;
+	this->options.compaction_options_universal.max_merge_width = 10;
+	this->options.compaction_options_universal.max_size_amplification_percent = 1000;
 	this->options.compaction_options_universal.compression_size_percent = -1;
 	this->options.compaction_options_universal.stop_style = rocksdb::kCompactionStopStyleTotalSize;
-	this->options.compaction_options_universal.allow_trivial_move = false;;
+	this->options.compaction_options_universal.allow_trivial_move = false;
 
 	//
 	// Table options
@@ -2156,7 +2161,7 @@ ircd::db::database::column::column(database &d,
 		table_opts.format_version = 4; // RocksDB >= 5.16.x compat only; otherwise use 3.
 
 	table_opts.index_type = rocksdb::BlockBasedTableOptions::kTwoLevelIndexSearch;
-	table_opts.index_block_restart_interval = 16;
+	table_opts.index_block_restart_interval = 1;
 	table_opts.read_amp_bytes_per_bit = 8;
 
 	// Specify that index blocks should use the cache. If not, they will be
@@ -2186,7 +2191,7 @@ ircd::db::database::column::column(database &d,
 	table_opts.block_size = this->descriptor->block_size;
 	table_opts.metadata_block_size = this->descriptor->meta_block_size;
 	table_opts.block_size_deviation = 50;
-	table_opts.block_restart_interval = 32;
+	table_opts.block_restart_interval = 16;
 
 	//table_opts.data_block_index_type = rocksdb::BlockBasedTableOptions::kDataBlockBinaryAndHash;
 	//table_opts.data_block_hash_table_util_ratio = 0.75;

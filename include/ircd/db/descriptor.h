@@ -91,7 +91,7 @@ struct ircd::db::descriptor
 	db::compactor compactor {};
 
 	/// Compaction priority algorithm
-	std::string compaction_pri {"kOldestLargestSeqFirst"};
+	std::string compaction_pri {};
 
 	/// Compaction related parameters. see: rocksdb/advanced_options.h
 	struct

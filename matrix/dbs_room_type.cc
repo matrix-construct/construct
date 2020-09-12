@@ -140,6 +140,15 @@ ircd::m::dbs::desc::room_type
 
 	// meta_block size
 	size_t(room_type__meta_block__size),
+
+	// compression
+	"kLZ4Compression;kSnappyCompression"s,
+
+	// compactor
+	{},
+
+	// compaction priority algorithm
+	"kOldestSmallestSeqFirst"s,
 };
 
 //
