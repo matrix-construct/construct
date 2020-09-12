@@ -201,6 +201,7 @@ try
 	};
 
 	fs::map::opts map_opts(fileopts);
+	map_opts.sequential = true;
 	const fs::map map
 	{
 		file, map_opts
@@ -212,12 +213,21 @@ try
 		const_buffer{map}
 	};
 
-	char pbuf[2][48];
+	char pbuf[4][48];
 	log::notice
 	{
 		log, "Bootstrapping database from events @ `%s' %s",
 		path,
 		pretty(pbuf[0], iec(size(map))),
+	};
+
+	auto &current(ctx::cur());
+	const run::changed handle_quit
+	{
+		run::level::QUIT, [&current]
+		{
+			ctx::interrupt(current);
+		}
 	};
 
 	// Options for eval. This eval disables all phases except a select few.
@@ -243,6 +253,7 @@ try
 
 	// Indicates the input JSON is canonical (to optimize eval).
 	//vmopts.json_source = true;
+	vmopts.non_conform.set(event::conforms::MISMATCH_HASHES);
 
 	// Sorting may be slow for large inputs; but the alternative may be also...
 	//vmopts.ordered = true;
@@ -250,16 +261,75 @@ try
 	// Outputs to infolog for each event; may be noisy;
 	vmopts.infolog_accept = false;
 
+	static const size_t window_size
+	{
+		8_MiB
+	};
+
+	size_t count {0}, ebytes[2] {0}, accept {0}, exists {0};
+	vm::eval execute
+	{
+		vmopts
+	};
+
 	// Perform the eval
 	util::timer stopwatch;
-	vm::eval eval
+	for(auto it(begin(events)); it != end(events); ++it)
 	{
-		events, vmopts
-	};
+		const json::object object
+		{
+			*it
+		};
+
+		const m::event event
+		{
+			object
+		};
+
+		const auto code
+		{
+			execute(event)
+		};
+
+		accept += code == vm::fault::ACCEPT;
+		exists += code == vm::fault::EXISTS;
+		ebytes[1] += object.string_view::size();
+		count += 1;
+
+		const size_t mapped
+		{
+			ebytes[1] > ebytes[0]?
+				ebytes[1] - ebytes[0]:
+				0UL
+		};
+
+		if(mapped >= window_size)
+		{
+			auto opts(map_opts);
+			opts.offset = ebytes[0];
+			ebytes[0] += evict(map, mapped, opts);
+
+			log::info
+			{
+				log, "Bootstrap retired:%zu count:%zu accept:%zu exists:%zu %s in %s at %s/s",
+				vm::sequence::retired,
+				count,
+				accept,
+				exists,
+				pretty(pbuf[0], iec(ebytes[1])),
+				stopwatch.pretty(pbuf[1]),
+				pretty(pbuf[2], iec(ebytes[1] / std::max(stopwatch.at<seconds>().count(),1L)), 1),
+			};
+
+			ctx::yield();
+			ctx::interruption_point();
+		}
+	}
 
 	log::notice
 	{
-		log, "Bootstrapped %zu in %s from `%s' in %s",
+		log, "Bootstrapped count:%zu retired:%zu in %s from `%s' in %s",
+		count,
 		vm::sequence::retired,
 		pretty(pbuf[0], iec(size(string_view(events)))),
 		path,
@@ -268,19 +338,18 @@ try
 }
 catch(const std::exception &e)
 {
-	log::logf
-	{
-		log, log::level::CRITICAL,
-		"Failed to bootstrap server '%s' on network '%s' :%s",
-		server_name(homeserver),
-		origin(homeserver),
-		e.what(),
-	};
-
 	throw ircd::error
 	{
 		"bootstrap %s :%s",
 		server_name(homeserver),
 		e.what(),
+	};
+}
+catch(const ctx::terminated &)
+{
+	throw ircd::error
+	{
+		"bootstrap %s :terminated without completion",
+		server_name(homeserver),
 	};
 }
