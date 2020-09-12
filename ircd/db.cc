@@ -1285,15 +1285,13 @@ try
 		fs::support::rlimit_nofile():
 		-1;
 
-	// TODO: Check if these values can be increased; RocksDB may keep
-	// thread_local state preventing values > 1.
 	opts->max_background_jobs = 16;
-	opts->max_background_flushes = 1;
-	opts->max_background_compactions = 1;
+	opts->max_background_flushes = 8;
+	opts->max_background_compactions = 4;
 
-	opts->max_total_wal_size = 96_MiB; //TODO: conf
-	opts->db_write_buffer_size = 96_MiB; //TODO: conf
-	//opts->max_log_file_size = 32_MiB; //TODO: conf
+	opts->max_total_wal_size = 96_MiB;
+	opts->db_write_buffer_size = 96_MiB;
+	//opts->max_log_file_size = 32_MiB;
 
 	//TODO: range_sync
 	opts->bytes_per_sync = 0;
@@ -1338,7 +1336,7 @@ try
 		0;
 
 	// Use the determined direct io value for writes as well.
-	//opts->use_direct_io_for_flush_and_compaction = opts->use_direct_reads;
+	opts->use_direct_io_for_flush_and_compaction = opts->use_direct_reads;
 
 	// Doesn't appear to be in effect when direct io is used. Not supported by
 	// all filesystems so disabled for now.
