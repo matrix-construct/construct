@@ -66,7 +66,6 @@ post__upload(client &client,
 	};
 
 	m::vm::copts vmopts;
-	vmopts.history = false;
 	const m::room room
 	{
 		room_id, &vmopts

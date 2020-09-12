@@ -905,12 +905,18 @@ ircd::m::vm::write_append(eval &eval,
 	wopts.interpose = eval.txn.get();
 	wopts.event_idx = eval.sequence;
 	wopts.json_source = opts.json_source;
-	wopts.appendix.set(dbs::appendix::ROOM_STATE_SPACE, opts.history);
 
 	// Don't update or resolve the room head with this shit.
-	const bool dummy_event(json::get<"type"_>(event) == "org.matrix.dummy_event");
-	wopts.appendix.set(dbs::appendix::ROOM_HEAD, opts.room_head && !dummy_event);
-	wopts.appendix.set(dbs::appendix::ROOM_HEAD_RESOLVE, opts.room_head_resolve);
+	const bool dummy_event
+	{
+		json::get<"type"_>(event) == "org.matrix.dummy_event"
+	};
+
+	wopts.appendix.set
+	(
+		dbs::appendix::ROOM_HEAD,
+		wopts.appendix[dbs::appendix::ROOM_HEAD] && !dummy_event
+	);
 
 	if(opts.present && json::get<"state_key"_>(event))
 	{
@@ -943,7 +949,7 @@ ircd::m::vm::write_append(eval &eval,
 			//XXX
 			const auto &[pass, fail]
 			{
-				opts.auth && !eval.room_internal?
+				opts.phase[phase::AUTH_PRES] && !eval.room_internal?
 					room::auth::check_present(event):
 					room::auth::passfail{true, {}}
 			};
@@ -957,8 +963,17 @@ ircd::m::vm::write_append(eval &eval,
 					what(fail),
 				};
 
-			wopts.appendix.set(dbs::appendix::ROOM_STATE, pass);
-			wopts.appendix.set(dbs::appendix::ROOM_JOINED, pass);
+			wopts.appendix.set
+			(
+				dbs::appendix::ROOM_STATE,
+				pass && wopts.appendix[dbs::appendix::ROOM_STATE]
+			);
+
+			wopts.appendix.set
+			(
+				dbs::appendix::ROOM_JOINED,
+				pass && wopts.appendix[dbs::appendix::ROOM_JOINED]
+			);
 		}
 	}
 
