@@ -124,7 +124,11 @@ noexcept
 		count += consume;
 	}
 
-	return count;
+	return u64x2
+	{
+		std::min(count[0], max[0]),
+		std::min(count[1], max[1]),
+	};
 }
 
 /// Streaming consumer
@@ -209,5 +213,9 @@ noexcept
 		count += consume;
 	}
 
-	return count;
+	return u64x2
+	{
+		count[0],
+		std::min(count[1], max[1])
+	};
 }
