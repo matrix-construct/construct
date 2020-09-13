@@ -1778,6 +1778,18 @@ ircd::fs::evict(const map &map,
 	#endif
 }
 
+size_t
+ircd::fs::prefetch(const map &map,
+                   const size_t &len,
+                   const opts &opts)
+{
+	#if defined(POSIX_MADV_WILLNEED)
+		return advise(map, POSIX_MADV_WILLNEED, len, opts);
+	#else
+		return 0;
+	#endif
+}
+
 #if defined(HAVE_MADVISE) && defined(__linux__)
 size_t
 ircd::fs::advise(const map &map,
