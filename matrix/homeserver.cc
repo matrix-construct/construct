@@ -258,7 +258,14 @@ try
 		_vm.reset(nullptr);
 	}};
 
-	if(!ircd::write_avoid && dbs::events && sequence(*dbs::events) == 0)
+	const bool need_bootstrap
+	{
+		(sequence(*dbs::events) == 0 || opts->bootstrap_vector_path)
+		&& !ircd::write_avoid
+		&& dbs::events
+	};
+
+	if(need_bootstrap)
 		bootstrap();
 
 	mods::imports.emplace("net_dns_cache"s, "net_dns_cache"s);
