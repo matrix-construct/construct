@@ -258,6 +258,17 @@ try
 	// Sorting may be slow for large inputs; but the alternative may be also...
 	//vmopts.ordered = true;
 
+	// Optimize eval if we guarantee there's only one copy of each event
+	// in the input. This particular option is if we can at least guarantee
+	// duplicates aren't near each other in the array (there should be no
+	// duplicates).
+	vmopts.unique = false;
+
+	// Optimize eval if we guarantee there's only one copy of each event
+	// in the input. If there are duplicates anywhere in the input they will
+	// be replayed, which is really bad.
+	vmopts.replays = true;
+
 	// Outputs to infolog for each event; may be noisy;
 	vmopts.infolog_accept = false;
 
