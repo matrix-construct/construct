@@ -255,26 +255,23 @@ try
 	//vmopts.json_source = true;
 	vmopts.non_conform.set(event::conforms::MISMATCH_HASHES);
 
-	// Sorting may be slow for large inputs; but the alternative may be also...
-	//vmopts.ordered = true;
-
-	// Optimize eval if we guarantee there's only one copy of each event
-	// in the input. This particular option is if we can at least guarantee
-	// duplicates aren't near each other in the array (there should be no
-	// duplicates).
+	// Optimize eval if we assume there's only one copy of each event in the
+	// input array.
 	vmopts.unique = false;
 
 	// Optimize eval if we guarantee there's only one copy of each event
-	// in the input. If there are duplicates anywhere in the input they will
-	// be replayed, which is really bad.
-	vmopts.replays = true;
+	// in the input. This assumption is made when bootstrapping fresh DB.
+	vmopts.replays = sequence(*dbs::events) == 0;
+
+	// Error control
+	//vmopts.nothrows = -1UL;
 
 	// Outputs to infolog for each event; may be noisy;
 	vmopts.infolog_accept = false;
 
 	static const size_t window_size
 	{
-		8_MiB
+		4_MiB
 	};
 
 	size_t count {0}, ebytes[2] {0}, accept {0}, exists {0};
@@ -302,34 +299,40 @@ try
 			execute(event)
 		};
 
+		count += 1;
 		accept += code == vm::fault::ACCEPT;
 		exists += code == vm::fault::EXISTS;
 		ebytes[1] += object.string_view::size();
-		count += 1;
-
-		const size_t mapped
+		const size_t incore
 		{
 			ebytes[1] > ebytes[0]?
 				ebytes[1] - ebytes[0]:
 				0UL
 		};
 
-		if(mapped >= window_size)
+		if(incore >= window_size)
 		{
 			auto opts(map_opts);
 			opts.offset = ebytes[0];
-			ebytes[0] += evict(map, mapped, opts);
+			ebytes[0] += evict(map, incore, opts);
+
+			const auto db_bytes
+			{
+				db::ticker(*dbs::events, "rocksdb.bytes.written")
+			};
 
 			log::info
 			{
-				log, "Bootstrap retired:%zu count:%zu accept:%zu exists:%zu %s in %s at %s/s",
+				log, "Bootstrap retired:%zu count:%zu accept:%zu exists:%zu %s in %s | %zu event/s; input %s/s; output %s/s",
 				vm::sequence::retired,
 				count,
 				accept,
 				exists,
 				pretty(pbuf[0], iec(ebytes[1])),
 				stopwatch.pretty(pbuf[1]),
+				(count / std::max(stopwatch.at<seconds>().count(), 1L)),
 				pretty(pbuf[2], iec(ebytes[1] / std::max(stopwatch.at<seconds>().count(),1L)), 1),
+				pretty(pbuf[3], iec(db_bytes / std::max(stopwatch.at<seconds>().count(),1L)), 1),
 			};
 
 			ctx::yield();
