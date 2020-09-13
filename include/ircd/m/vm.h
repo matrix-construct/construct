@@ -98,11 +98,10 @@ struct ircd::m::vm::eval
 	void mfetch_keys() const;
 
   public:
-	operator const event::id::buf &() const;
-
-	fault operator()(const event &);
-	size_t operator()(const vector_view<m::event> &);
-	fault operator()(json::iov &event, const json::iov &content); //inject
+	operator const event::id::buf &() const
+	{
+		return event_id;
+	}
 
 	eval(const vm::opts &);
 	eval(const vm::copts &);

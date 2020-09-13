@@ -355,14 +355,14 @@ ircd::m::vm::eval::eval(json::iov &event,
                         const vm::copts &opts)
 :eval{opts}
 {
-	operator()(event, content);
+	inject(*this, event, content);
 }
 
 ircd::m::vm::eval::eval(const event &event,
                         const vm::opts &opts)
 :eval{opts}
 {
-	operator()(event);
+	execute(*this, event);
 }
 
 ircd::m::vm::eval::eval(const json::array &pdus,
@@ -378,7 +378,7 @@ ircd::m::vm::eval::eval(const json::array &pdus,
 	if(likely(!opts.ordered))
 		std::sort(begin(events), end(events));
 
-	operator()(events);
+	execute(*this, events);
 }
 
 ircd::m::vm::eval::eval(const vector_view<m::event> &events,
@@ -397,34 +397,6 @@ noexcept
 		assert(parent->child == this);
 		parent->child = nullptr;
 	}
-}
-
-/// Inject a new event originating from this server.
-///
-ircd::m::vm::fault
-ircd::m::vm::eval::operator()(json::iov &event,
-                              const json::iov &contents)
-{
-	return vm::inject(*this, event, contents);
-}
-
-size_t
-ircd::m::vm::eval::operator()(const vector_view<m::event> &events)
-{
-	return vm::execute(*this, events);
-}
-
-ircd::m::vm::fault
-ircd::m::vm::eval::operator()(const event &event)
-{
-	return vm::execute(*this, event);
-}
-
-ircd::m::vm::eval::operator
-const event::id::buf &()
-const
-{
-	return event_id;
 }
 
 void

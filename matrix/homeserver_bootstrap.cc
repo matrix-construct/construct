@@ -275,7 +275,7 @@ try
 	};
 
 	size_t count {0}, ebytes[2] {0}, accept {0}, exists {0};
-	vm::eval execute
+	vm::eval eval
 	{
 		vmopts
 	};
@@ -296,7 +296,7 @@ try
 
 		const auto code
 		{
-			execute(event)
+			execute(eval, event)
 		};
 
 		count += 1;
