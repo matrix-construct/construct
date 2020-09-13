@@ -871,39 +871,48 @@ if test "$ac_cv_header_machine_endian_h" = "no" ; then
 fi
 
 AC_TYPE_PID_T
+AC_TYPE_UID_T
+AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_TYPE_SSIZE_T
-AC_TYPE_UID_T
-AC_TYPE_PID_T
+AC_TYPE_INTPTR_T
+AC_TYPE_UINTPTR_T
 
-AC_CHECK_TYPES([char8_t])
-AC_CHECK_TYPES([char16_t])
-AC_CHECK_TYPES([char32_t])
-AC_CHECK_TYPES([intptr_t])
-AC_CHECK_TYPES([uintptr_t])
-AC_CHECK_TYPES([int128_t])
-AC_CHECK_TYPES([uint128_t])
-AC_CHECK_TYPES([__int128])
-AC_CHECK_TYPES([__int128_t])
-AC_CHECK_TYPES([__uint128_t])
-AC_CHECK_TYPES([long double])
-
+dnl C standard type sizes on this platform
 AC_CHECK_SIZEOF([char])
-AC_CHECK_SIZEOF([char8_t])
-AC_CHECK_SIZEOF([char16_t])
-AC_CHECK_SIZEOF([char32_t])
 AC_CHECK_SIZEOF([short])
 AC_CHECK_SIZEOF([int])
-AC_CHECK_SIZEOF([long])
-AC_CHECK_SIZEOF([long long])
 AC_CHECK_SIZEOF([float])
+AC_CHECK_SIZEOF([long])
 AC_CHECK_SIZEOF([double])
+AC_CHECK_SIZEOF([long long])
 AC_CHECK_SIZEOF([long double])
+
+dnl Check for the C++11/C++20 unicode character types and sizes
+AC_CHECK_TYPES([char8_t])
+AC_CHECK_SIZEOF([char8_t])
+AC_CHECK_TYPES([char16_t])
+AC_CHECK_SIZEOF([char16_t])
+AC_CHECK_TYPES([char32_t])
+AC_CHECK_SIZEOF([char32_t])
+
+dnl Probe the details of 128-bit arithmetic support on this platform.
+dnl see: include/ircd/portable.h
+AC_CHECK_TYPES([int128_t])
 AC_CHECK_SIZEOF([int128_t])
+AC_CHECK_TYPES([uint128_t])
 AC_CHECK_SIZEOF([uint128_t])
+AC_CHECK_TYPES([__int128])
 AC_CHECK_SIZEOF([__int128])
+AC_CHECK_TYPES([__int128_t])
 AC_CHECK_SIZEOF([__int128_t])
+AC_CHECK_TYPES([__uint128_t])
 AC_CHECK_SIZEOF([__uint128_t])
+
+dnl Gauge the support of experimental compact floating point formats
+AC_CHECK_SIZEOF([__fp16])
+AC_CHECK_SIZEOF([__bf16])
+AC_CHECK_SIZEOF([_Float16])
 
 dnl -fsigned-char ensures 'char' is signed on all platforms
 RB_VAR_PREPEND([CFLAGS], ["-fsigned-char"])
