@@ -269,12 +269,13 @@ try
 	// Outputs to infolog for each event; may be noisy;
 	vmopts.infolog_accept = false;
 
-	static const size_t window_size
+	static const size_t batch_max
 	{
-		4_MiB
+		2048
 	};
 
-	size_t count {0}, ebytes[2] {0}, accept {0}, exists {0};
+	size_t count {0}, ebytes[2] {0, 1}, accept {0};
+	std::vector<m::event> vec(1024);
 	vm::eval eval
 	{
 		vmopts
@@ -282,27 +283,31 @@ try
 
 	// Perform the eval
 	util::timer stopwatch;
-	for(auto it(begin(events)); it != end(events); ++it)
+	auto it(begin(events));
+	while(it != end(events))
 	{
-		const json::object object
+		size_t i(0);
+		for(; i < vec.size() && it != end(events); ++i, ++it)
 		{
-			*it
+			const string_view &elem(*it);
+			vec[i] = json::object{elem};
+			ebytes[1] += elem.size() + 1;
+		}
+
+		const size_t accepted
+		{
+			execute(eval, vector_view<const m::event>
+			{
+				vec.data(), vec.data() + i
+			})
 		};
 
-		const m::event event
-		{
-			object
-		};
+		assert(i >= accepted);
+		accept += accepted;
+		count += i;
 
-		const auto code
-		{
-			execute(eval, event)
-		};
-
-		count += 1;
-		accept += code == vm::fault::ACCEPT;
-		exists += code == vm::fault::EXISTS;
-		ebytes[1] += object.string_view::size();
+		auto opts(map_opts);
+		opts.offset = ebytes[0];
 		const size_t incore
 		{
 			ebytes[1] > ebytes[0]?
@@ -310,34 +315,28 @@ try
 				0UL
 		};
 
-		if(incore >= window_size)
+		ebytes[0] += evict(map, incore, opts);
+
+		const auto db_bytes
 		{
-			auto opts(map_opts);
-			opts.offset = ebytes[0];
-			ebytes[0] += evict(map, incore, opts);
+			db::ticker(*dbs::events, "rocksdb.bytes.written")
+		};
 
-			const auto db_bytes
-			{
-				db::ticker(*dbs::events, "rocksdb.bytes.written")
-			};
+		log::info
+		{
+			log, "Bootstrap retired:%zu count:%zu accept:%zu %s in %s | %zu event/s; input %s/s; output %s/s",
+			vm::sequence::retired,
+			count,
+			accept,
+			pretty(pbuf[0], iec(ebytes[1])),
+			stopwatch.pretty(pbuf[1]),
+			(count / std::max(stopwatch.at<seconds>().count(), 1L)),
+			pretty(pbuf[2], iec(ebytes[1] / std::max(stopwatch.at<seconds>().count(),1L)), 1),
+			pretty(pbuf[3], iec(db_bytes / std::max(stopwatch.at<seconds>().count(),1L)), 1),
+		};
 
-			log::info
-			{
-				log, "Bootstrap retired:%zu count:%zu accept:%zu exists:%zu %s in %s | %zu event/s; input %s/s; output %s/s",
-				vm::sequence::retired,
-				count,
-				accept,
-				exists,
-				pretty(pbuf[0], iec(ebytes[1])),
-				stopwatch.pretty(pbuf[1]),
-				(count / std::max(stopwatch.at<seconds>().count(), 1L)),
-				pretty(pbuf[2], iec(ebytes[1] / std::max(stopwatch.at<seconds>().count(),1L)), 1),
-				pretty(pbuf[3], iec(db_bytes / std::max(stopwatch.at<seconds>().count(),1L)), 1),
-			};
-
-			ctx::yield();
-			ctx::interruption_point();
-		}
+		ctx::yield();
+		ctx::interruption_point();
 	}
 
 	log::notice
