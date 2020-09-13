@@ -8,9 +8,12 @@ DEFS += \
 	-DIRCD_UNIT_MODULE \
 	###
 
+CXXFLAGS += \
+	$(EXTRA_CXXFLAGS) \
+	###
+
 AM_CXXFLAGS = \
 	-ftls-model=global-dynamic \
-	$(EXTRA_CXXFLAGS) \
 	###
 
 AM_CPPFLAGS = \

@@ -5,8 +5,11 @@ DEFS += \
 	-DIRCD_MATRIX_UNIT \
 	###
 
-AM_CXXFLAGS = \
+CXXFLAGS += \
 	$(EXTRA_CXXFLAGS) \
+	###
+
+AM_CXXFLAGS = \
 	###
 
 AM_CPPFLAGS = \

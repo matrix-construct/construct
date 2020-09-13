@@ -1,8 +1,11 @@
 prefix = @prefix@
 
+CXXFLAGS += \
+	$(EXTRA_CXXFLAGS) \
+	###
+
 AM_CXXFLAGS = \
 	-ftls-model=initial-exec \
-	$(EXTRA_CXXFLAGS) \
 	###
 
 AM_CPPFLAGS = \
