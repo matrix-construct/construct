@@ -385,7 +385,7 @@ ircd::m::vm::eval::eval(const vector_view<m::event> &events,
                         const vm::opts &opts)
 :eval{opts}
 {
-	operator()(events);
+	execute(*this, events);
 }
 
 ircd::m::vm::eval::~eval()
@@ -399,47 +399,6 @@ noexcept
 	}
 }
 
-size_t
-ircd::m::vm::eval::operator()(const vector_view<m::event> &events)
-{
-	assert(opts);
-	const scope_restore eval_pdus
-	{
-		this->pdus, events
-	};
-
-	if(likely(opts->phase[phase::VERIFY] && opts->mfetch_keys))
-		mfetch_keys();
-
-	// Conduct each eval without letting any one exception ruin things for the
-	// others, including an interrupt. The only exception is a termination.
-	size_t ret(0), i(0);
-	for(auto it(begin(events)); it != end(events) && i < opts->limit; ++it, ++i) try
-	{
-		const m::event &event
-		{
-			*it
-		};
-
-		const auto status
-		{
-			operator()(event)
-		};
-
-		ret += status == fault::ACCEPT;
-	}
-	catch(const ctx::interrupted &e)
-	{
-		throw;
-	}
-	catch(const std::exception &e)
-	{
-		continue;
-	}
-
-	return ret;
-}
-
 /// Inject a new event originating from this server.
 ///
 ircd::m::vm::fault
@@ -447,6 +406,12 @@ ircd::m::vm::eval::operator()(json::iov &event,
                               const json::iov &contents)
 {
 	return vm::inject(*this, event, contents);
+}
+
+size_t
+ircd::m::vm::eval::operator()(const vector_view<m::event> &events)
+{
+	return vm::execute(*this, events);
 }
 
 ircd::m::vm::fault

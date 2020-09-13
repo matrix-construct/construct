@@ -7246,9 +7246,9 @@ console_cmd__stage__eval(opt &out, const string_view &line)
 
 	if(id == -1)
 		for(size_t i(0); i < stage.size(); ++i)
-			eval(m::event{stage.at(i)});
+			execute(eval, m::event{stage.at(i)});
 	else
-		eval(m::event{stage.at(id)});
+		execute(eval, m::event{stage.at(id)});
 
 	return true;
 }
@@ -7274,9 +7274,9 @@ console_cmd__stage__commit(opt &out, const string_view &line)
 
 	if(id == -1)
 		for(size_t i(0); i < stage.size(); ++i)
-			eval(m::event{stage.at(i)});
+			execute(eval, m::event{stage.at(i)});
 	else
-		eval(m::event{stage.at(id)});
+		execute(eval, m::event{stage.at(id)});
 
 	return true;
 }
@@ -14069,7 +14069,7 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 	};
 
 	for(const auto &event : events)
-		eval(event);
+		execute(eval, event);
 
 	return true;
 }

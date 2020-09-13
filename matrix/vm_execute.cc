@@ -128,6 +128,51 @@ ircd::m::vm::effect_hook
 // execute
 //
 
+size_t
+ircd::m::vm::execute(eval &eval,
+                     const vector_view<const event> &events)
+{
+	assert(eval.opts);
+	const auto &opts
+	{
+		*eval.opts
+	};
+
+	const scope_restore eval_pdus
+	{
+		eval.pdus, events
+	};
+
+	if(likely(opts.phase[phase::VERIFY] && opts.mfetch_keys))
+		eval.mfetch_keys();
+
+	size_t ret(0), i(0);
+	for(auto it(begin(events)); it != end(events) && i < opts.limit; ++it, ++i) try
+	{
+		const m::event &event
+		{
+			*it
+		};
+
+		const auto status
+		{
+			execute(eval, event)
+		};
+
+		ret += status == fault::ACCEPT;
+	}
+	catch(const ctx::interrupted &)
+	{
+		throw;
+	}
+	catch(const std::exception &)
+	{
+		continue;
+	}
+
+	return ret;
+}
+
 ircd::m::vm::fault
 ircd::m::vm::execute(eval &eval,
                      const event &event)

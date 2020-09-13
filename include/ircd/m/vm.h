@@ -37,6 +37,7 @@ namespace ircd::m::vm
 	string_view loghead(const eval &);    // single tls buffer
 
 	fault execute(eval &, const event &);
+	size_t execute(eval &, const vector_view<const event> &);
 	fault inject(eval &, json::iov &, const json::iov &);
 }
 
@@ -83,7 +84,7 @@ struct ircd::m::vm::eval
 	uint64_t sequence {0};
 	std::shared_ptr<db::txn> txn;
 
-	vector_view<m::event> pdus;
+	vector_view<const m::event> pdus;
 	const json::iov *issue {nullptr};
 	const event *event_ {nullptr};
 	string_view room_id;
