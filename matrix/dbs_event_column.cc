@@ -230,7 +230,7 @@ decltype(ircd::m::dbs::desc::content__block__size)
 ircd::m::dbs::desc::content__block__size
 {
 	{ "name",     "ircd.m.dbs.content.block.size"  },
-	{ "default",  2048L                            },
+	{ "default",  long(1_KiB)                      },
 };
 
 decltype(ircd::m::dbs::desc::content__meta_block__size)
