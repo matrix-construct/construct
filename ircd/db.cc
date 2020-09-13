@@ -2075,8 +2075,20 @@ ircd::db::database::column::column(database &d,
 	//this->options.bottommost_compression_opts = this->options.compression_opts;
 
 	//TODO: descriptor / conf
+	static const auto write_buffer_blocks{2048L};
+	static const long write_buffer_size_minmax[]
+	{
+		256_KiB, 4_MiB
+	};
 
-	this->options.write_buffer_size = 1_MiB;
+	// Derive the write buffer size from the block size
+	this->options.write_buffer_size = std::clamp
+	(
+		write_buffer_blocks * long(this->descriptor->block_size),
+		write_buffer_size_minmax[0],
+		write_buffer_size_minmax[1]
+	);
+
 	this->options.max_write_buffer_number = 16;
 	this->options.min_write_buffer_number_to_merge = 2;
 	this->options.max_write_buffer_number_to_maintain = 8;
