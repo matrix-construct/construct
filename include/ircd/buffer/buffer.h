@@ -287,12 +287,7 @@ __attribute__((always_inline))
 ircd::buffer::operator+=(buffer<it> &buffer,
                          const size_t &bytes)
 {
-	const size_t &advance
-	{
-		std::min(bytes, size(buffer))
-	};
-
-	consume(buffer, advance);
+	consume(buffer, bytes);
 	return buffer;
 }
 
@@ -304,9 +299,14 @@ ircd::buffer::consume(buffer<it> &buffer,
 {
 	assert(!null(buffer));
 	assert(bytes <= size(buffer));
-	get<0>(buffer) += bytes;
+	const size_t &advance
+	{
+		std::min(bytes, size(buffer))
+	};
+
+	get<0>(buffer) += advance;
 	assert(get<0>(buffer) <= get<1>(buffer));
-	return bytes;
+	return advance;
 }
 
 inline bool
