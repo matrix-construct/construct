@@ -2150,11 +2150,10 @@ ircd::db::database::column::column(database &d,
 		});
 	}
 
-	// Universal compaction options; these are unused b/c we don't use this
-	// style; they are here for hacking an experimentation for now.
+	// Universal compaction mode options
 	this->options.compaction_options_universal.size_ratio = 67;
 	this->options.compaction_options_universal.min_merge_width = 8;
-	this->options.compaction_options_universal.max_merge_width = 10;
+	this->options.compaction_options_universal.max_merge_width = 16;
 	this->options.compaction_options_universal.max_size_amplification_percent = 1000;
 	this->options.compaction_options_universal.compression_size_percent = -1;
 	this->options.compaction_options_universal.stop_style = rocksdb::kCompactionStopStyleTotalSize;
