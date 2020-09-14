@@ -146,31 +146,45 @@ ircd::m::vm::execute(eval &eval,
 	if(likely(opts.phase[phase::VERIFY] && opts.mfetch_keys))
 		eval.mfetch_keys();
 
-	size_t ret(0), i(0);
-	for(auto it(begin(events)); it != end(events) && i < opts.limit; ++it, ++i) try
+	size_t accepted(0), existed(0), i, j, k;
+	for(i = 0; i < events.size() && i < opts.limit; i += j)
 	{
-		const m::event &event
+		id::event ids[64];
+		for(j = 0; j < 64 && i + j < events.size() && i + j < opts.limit; ++j)
+			ids[j] = events[i + j].event_id;
+
+		// Bitset indicating which events already exist.
+		const uint64_t exists
 		{
-			*it
+			!opts.replays?
+				m::exists(vector_view<const id::event>(ids, j)):
+				0UL
 		};
 
-		const auto status
+		existed += __builtin_popcountl(exists);
+		for(k = 0; k < j; ++k) try
 		{
-			execute(eval, event)
-		};
+			if(exists & (1 << k))
+				continue;
 
-		ret += status == fault::ACCEPT;
-	}
-	catch(const ctx::interrupted &)
-	{
-		throw;
-	}
-	catch(const std::exception &)
-	{
-		continue;
+			const auto status
+			{
+				execute(eval, events[i + k])
+			};
+
+			accepted += status == fault::ACCEPT;
+		}
+		catch(const ctx::interrupted &)
+		{
+			throw;
+		}
+		catch(const std::exception &)
+		{
+			continue;
+		}
 	}
 
-	return ret;
+	return accepted;
 }
 
 ircd::m::vm::fault
