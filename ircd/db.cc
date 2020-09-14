@@ -2075,10 +2075,10 @@ ircd::db::database::column::column(database &d,
 	//this->options.bottommost_compression_opts = this->options.compression_opts;
 
 	//TODO: descriptor / conf
-	static const auto write_buffer_blocks{2048L};
+	static const auto write_buffer_blocks {2048L};
 	static const long write_buffer_size_minmax[]
 	{
-		256_KiB, 4_MiB
+		256_KiB, 8_MiB
 	};
 
 	// Derive the write buffer size from the block size
@@ -2089,9 +2089,18 @@ ircd::db::database::column::column(database &d,
 		write_buffer_size_minmax[1]
 	);
 
-	this->options.max_write_buffer_number = 16;
+	this->options.max_write_buffer_number = 32;
 	this->options.min_write_buffer_number_to_merge = 2;
-	this->options.max_write_buffer_number_to_maintain = 8;
+	this->options.max_write_buffer_number_to_maintain = 0;
+	#if ROCKSDB_MAJOR > 6 \
+	|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR > 5) \
+	|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR == 5 && ROCKSDB_PATCH >= 2)
+		this->options.max_write_buffer_size_to_maintain = 0; //this->options.write_buffer_size * 4;
+	#endif
+
+	this->options.level0_file_num_compaction_trigger = 8;
+	this->options.level0_slowdown_writes_trigger = 32;
+	this->options.level0_stop_writes_trigger = 64;
 
 	// Conf item can be set to disable automatic compactions. For developers
 	// and debugging; good for valgrind.
@@ -2120,7 +2129,6 @@ ircd::db::database::column::column(database &d,
 
 	this->options.num_levels = 7;
 	this->options.level_compaction_dynamic_level_bytes = false;
-	this->options.level0_file_num_compaction_trigger = 8;
 
 	//this->options.ttl = -2U;
 	#ifdef IRCD_DB_HAS_PERIODIC_COMPACTIONS
