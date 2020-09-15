@@ -2936,7 +2936,7 @@ noexcept
 		info.file_path,
 	};
 
-	assert(info.thread_id == ctx::id(*ctx::current));
+	//assert(info.thread_id == ctx::id(*ctx::current));
 }
 
 void
@@ -2958,7 +2958,7 @@ noexcept
 		info.cf_name,
 	};
 
-	assert(info.thread_id == ctx::id(*ctx::current));
+	//assert(info.thread_id == ctx::id(*ctx::current));
 }
 
 void
@@ -9199,7 +9199,7 @@ ircd::db::reflect(const rocksdb::Env::IOPriority &p)
 	{
 		case rocksdb::Env::IOPriority::IO_LOW:     return "IO_LOW"_sv;
 		case rocksdb::Env::IOPriority::IO_HIGH:    return "IO_HIGH"_sv;
-		case rocksdb::Env::IOPriority::IO_TOTAL:   assert(0); break;
+		case rocksdb::Env::IOPriority::IO_TOTAL:   break;
 	}
 
 	return "IO_????"_sv;
