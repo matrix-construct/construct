@@ -1807,7 +1807,7 @@ ircd::fs::advise(const map &map,
 		map + offset, len
 	};
 
-	assert(aligned(buf, info::page_size));
+	assert(aligned(data(buf), info::page_size));
 	switch(const auto res(::madvise(data(buf), size(buf), advice)); res)
 	{
 		case 0:
