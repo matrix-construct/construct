@@ -65,6 +65,7 @@ namespace ircd::db
 
 	// state
 	extern log::log rog;
+	extern conf::item<bool> enable_wal;
 	extern conf::item<size_t> request_pool_size;
 	extern conf::item<size_t> request_pool_stack_size;
 	extern ctx::pool::opts request_pool_opts;

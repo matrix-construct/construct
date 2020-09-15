@@ -8965,12 +8965,20 @@ ircd::db::make_opts(const sopts &opts)
 	return ret;
 }
 
+decltype(ircd::db::enable_wal)
+ircd::db::enable_wal
+{
+	{ "name",      "ircd.db.wal.enable" },
+	{ "default",   true                 },
+	{ "persist",   false                },
+};
+
 rocksdb::WriteOptions &
 ircd::db::operator+=(rocksdb::WriteOptions &ret,
                      const sopts &opts)
 {
 	ret.sync = test(opts, set::FSYNC);
-	ret.disableWAL = test(opts, set::NO_JOURNAL);
+	ret.disableWAL = !enable_wal || test(opts, set::NO_JOURNAL);
 	ret.ignore_missing_column_families = test(opts, set::NO_COLUMN_ERR);
 	ret.no_slowdown = test(opts, set::NO_BLOCKING);
 	ret.low_pri = test(opts, set::PRIO_LOW);
