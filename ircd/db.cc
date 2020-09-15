@@ -1234,6 +1234,10 @@ try
 {
 	std::make_unique<struct wal_filter>(this)
 }
+,rate_limiter
+{
+	std::make_unique<struct rate_limiter>(this)
+}
 ,allocator
 {
 	#ifdef IRCD_DB_HAS_ALLOCATOR
@@ -1388,6 +1392,9 @@ try
 
 	// Setup WAL filter
 	opts->wal_filter = this->wal_filter.get();
+
+	// Setup Rate Limiter
+	opts->rate_limiter = this->rate_limiter;
 
 	// Setup SST file mgmt
 	opts->sst_file_manager = this->ssts;
@@ -3689,6 +3696,126 @@ const noexcept
 {
 	assert(d);
 	return db::name(*d).c_str();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// database::rate_limiter
+//
+
+ircd::db::database::rate_limiter::rate_limiter(database *const &d)
+:d{d}
+{
+}
+
+ircd::db::database::rate_limiter::~rate_limiter()
+noexcept
+{
+}
+
+void
+ircd::db::database::rate_limiter::SetBytesPerSecond(int64_t bytes_per_second)
+noexcept
+{
+	log::debug
+	{
+		log, "[%s] Rate Limiter update rate %zu -> %zu bytes per second",
+		db::name(*d),
+		this->bytes_per_second,
+		bytes_per_second,
+	};
+
+	this->bytes_per_second = bytes_per_second;
+}
+
+size_t
+ircd::db::database::rate_limiter::RequestToken(size_t bytes,
+                                               size_t alignment,
+                                               IOPriority prio,
+                                               Statistics *const stats,
+                                               OpType type)
+noexcept
+{
+	log::debug
+	{
+		log, "[%s] Rate Limiter request bytes:%zu alignment:%zu prio:%s type:%s",
+		db::name(*d),
+		bytes,
+		alignment,
+		reflect(prio),
+		type == OpType::kWrite?
+			"WRITE"_sv:
+		type == OpType::kRead?
+			"READ"_sv:
+			"????"_sv,
+	};
+
+	assert(prio <= IOPriority::IO_TOTAL);
+	{
+		int64_t i(prio == IOPriority::IO_TOTAL? 0: prio); do
+		{
+			requests[i].bytes += bytes;
+			requests[i].count += 1;
+		}
+		while(++i < prio);
+	}
+
+	//assert(stats);
+	//stats->recordTick(rocksdb::Tickers::RATE_LIMIT_DELAY_MILLIS, 0);
+	//stats->recordTick(rocksdb::Tickers::NUMBER_RATE_LIMITER_DRAINS, 0);
+	//stats->recordTick(rocksdb::Tickers::HARD_RATE_LIMIT_DELAY_COUNT, 0);
+	//stats->recordTick(rocksdb::Tickers::SOFT_RATE_LIMIT_DELAY_COUNT, 0);
+
+	return bytes;
+}
+
+int64_t
+ircd::db::database::rate_limiter::GetTotalBytesThrough(const IOPriority prio)
+const noexcept
+{
+	int64_t ret(0);
+	int64_t i(prio == IOPriority::IO_TOTAL? 0: prio); do
+	{
+		ret += requests[i].bytes;
+	}
+	while(++i < prio);
+	return ret;
+}
+
+int64_t
+ircd::db::database::rate_limiter::GetTotalRequests(const IOPriority prio)
+const noexcept
+{
+	int64_t ret(0);
+	int64_t i(prio == IOPriority::IO_TOTAL? 0: prio); do
+	{
+		ret += requests[i].count;
+	}
+	while(++i < prio);
+	return ret;
+}
+
+int64_t
+ircd::db::database::rate_limiter::GetSingleBurstBytes()
+const noexcept
+{
+	always_assert(false);
+	return bytes_per_second;
+}
+
+int64_t
+ircd::db::database::rate_limiter::GetBytesPerSecond()
+const noexcept
+{
+	return bytes_per_second;
+}
+
+bool
+ircd::db::database::rate_limiter::IsRateLimited(OpType op)
+noexcept
+{
+	always_assert(false);
+	return false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

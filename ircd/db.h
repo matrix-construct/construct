@@ -53,6 +53,7 @@
 #include <rocksdb/sst_dump_tool.h>
 #include <rocksdb/compaction_filter.h>
 #include <rocksdb/wal_filter.h>
+#include <rocksdb/rate_limiter.h>
 
 namespace ircd::db
 {
@@ -491,6 +492,33 @@ struct ircd::db::database::logger final
 
 	logger(database *const &d);
 	~logger() noexcept override;
+};
+
+struct ircd::db::database::rate_limiter
+:std::enable_shared_from_this<struct database::rate_limiter>
+,rocksdb::RateLimiter
+{
+	using Statistics = rocksdb::Statistics;
+	using IOPriority = rocksdb::Env::IOPriority;
+
+	database *d {nullptr}; struct
+	{
+		int64_t count {0}, bytes {0};
+	}
+	requests[IOPriority::IO_TOTAL];
+	int64_t bytes_per_second {1_GiB};
+
+	bool IsRateLimited(OpType) noexcept override;
+	int64_t GetBytesPerSecond() const noexcept override;
+	int64_t GetSingleBurstBytes() const noexcept override;
+	int64_t GetTotalRequests(const IOPriority) const noexcept override;
+	int64_t GetTotalBytesThrough(const IOPriority) const noexcept override;
+
+	size_t RequestToken(size_t, size_t, IOPriority, Statistics *, OpType) noexcept override;
+	void SetBytesPerSecond(int64_t) noexcept override;
+
+	rate_limiter(database *const &);
+	~rate_limiter() noexcept;
 };
 
 //
