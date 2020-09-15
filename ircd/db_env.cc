@@ -2552,7 +2552,7 @@ ircd::db::database::env::writable_file_direct::write_unaligned_buf(const const_b
 	// alignment boundary.
 	const const_buffer under_buf
 	{
-		data(buf), std::min(remain(uintptr_t(data(buf))), size(buf))
+		buf, std::min(remain(uintptr_t(data(buf))), size(buf))
 	};
 
 	// Window on the data from the alignment boundary to the end of the
@@ -2591,7 +2591,7 @@ ircd::db::database::env::writable_file_direct::write_unaligned_off(const const_b
 	// the temporary this->buffer
 	const const_buffer src
 	{
-		data(buf), std::min(size(buf), buffer_remain())
+		buf, std::min(size(buf), buffer_remain())
 	};
 
 	// Window on the remaining space in the temporary this->buffer.
@@ -2683,13 +2683,13 @@ ircd::db::database::env::writable_file_direct::_write_aligned(const const_buffer
 	// This portion will be written
 	const const_buffer aligned_buf
 	{
-		data(buf), blocks(size(buf)) * alignment
+		buf, blocks(size(buf)) * alignment
 	};
 
 	// This trailing portion will be returned to caller
 	const const_buffer ret
 	{
-		data(buf) + size(aligned_buf), size(buf) - size(aligned_buf)
+		buf + size(aligned_buf), size(buf) - size(aligned_buf)
 	};
 
 	assert(!empty(aligned_buf) || size(buf) < alignment);
