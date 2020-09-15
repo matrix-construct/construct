@@ -149,6 +149,9 @@ namespace ircd
 	using buffer::const_buffers;
 	using buffer::mutable_buffers;
 
+	using buffer::aligned;
+	using buffer::align;
+	using buffer::align_up;
 	using buffer::padded;
 	using buffer::padding;
 	using buffer::pad_to;
