@@ -4751,6 +4751,9 @@ ircd::json::stringify(mutable_buffer &buf,
 size_t
 ircd::json::serialized(const string_view &v)
 {
+	if(v.empty() && defined(v))
+		return size(empty_string);
+
 	// Query the json::type of the input string here in relaxed mode. The
 	// json::value ctor uses strict_t by default which is a full validation;
 	// we don't care about that for the serialized() suite.
@@ -4759,9 +4762,7 @@ ircd::json::serialized(const string_view &v)
 		v, json::type(v, std::nothrow)
 	};
 
-	return v.empty() && defined(value)?
-		size(empty_string):
-		serialized(value);
+	return serialized(value);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
