@@ -1340,7 +1340,7 @@ try
 		0;
 
 	// Use the determined direct io value for writes as well.
-	opts->use_direct_io_for_flush_and_compaction = opts->use_direct_reads;
+	//opts->use_direct_io_for_flush_and_compaction = opts->use_direct_reads;
 
 	// Doesn't appear to be in effect when direct io is used. Not supported by
 	// all filesystems so disabled for now.
