@@ -11,16 +11,24 @@ AM_CXXFLAGS = \
 	###
 
 if GCC
-AM_CXXFLAGS += \
-	-fpch-deps \
-	###
+AM_CXXFLAGS += -fpch-deps
+endif
+
+if CLANG
+AM_CPPFLAGS += -fpch-preprocess
+endif
+
+if CLANG10
+AM_CXXFLAGS += -fpch-validate-input-files-content
+endif
+
+if CLANG11
+AM_CXXFLAGS += -fpch-instantiate-templates
 endif
 
 if DEBUG
 if GCC
-AM_CXXFLAGS += \
-	-fmax-errors=2 \
-	###
+AM_CXXFLAGS += -fmax-errors=2
 endif
 endif
 
