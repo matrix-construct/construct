@@ -17,13 +17,12 @@ void
 ircd::m::homeserver::bootstrap()
 try
 {
-	assert(dbs::events);
-	assert(db::sequence(*dbs::events) == 0);
-
 	assert(opts);
+	assert(dbs::events);
 	if(opts->bootstrap_vector_path)
 		return bootstrap_event_vector(*this);
 
+	assert(db::sequence(*dbs::events) == 0);
 	assert(this->self);
 	const m::user::id &my_id
 	{
@@ -189,6 +188,7 @@ void
 ircd::m::bootstrap_event_vector(homeserver &homeserver)
 try
 {
+	assert(homeserver.opts);
 	const string_view &path
 	{
 		homeserver.opts->bootstrap_vector_path
