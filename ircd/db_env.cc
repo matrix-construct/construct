@@ -2741,19 +2741,19 @@ ircd::db::database::env::writable_file_direct::_write__aligned(const const_buffe
 }
 
 size_t
+ircd::db::database::env::writable_file_direct::buffer_remain()
+const
+{
+	return size(buffer) - buffer_consumed();
+}
+
+size_t
 ircd::db::database::env::writable_file_direct::buffer_consumed()
 const
 {
 	return likely(alignment != 0)?
-		logical_offset % alignment:
+		logical_offset % size(buffer):
 		0UL;
-}
-
-size_t
-ircd::db::database::env::writable_file_direct::buffer_remain()
-const
-{
-	return remain(logical_offset);
 }
 
 size_t
