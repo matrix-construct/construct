@@ -276,7 +276,7 @@ try
 	if(!ircd::maintenance)
 		signon(*this);
 
-	if(!ircd::maintenance)
+	if(!ircd::maintenance && opts->backfill)
 		m::init::backfill::init();
 }
 catch(const std::exception &e)

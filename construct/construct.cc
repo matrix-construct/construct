@@ -23,6 +23,7 @@ bool quietmode;
 bool single;
 bool debugmode;
 bool nolisten;
+bool nobackfill;
 bool noautomod;
 bool nocompact;
 bool checkdb;
@@ -56,6 +57,7 @@ lgetopt opts[]
 	{ "console",    &cmdline,       lgetopt::BOOL,    "Drop to a command line immediately after startup" },
 	{ "execute",    &execute,       lgetopt::STRINGS, "Execute command lines immediately after startup" },
 	{ "nolisten",   &nolisten,      lgetopt::BOOL,    "Normal execution but without listening sockets" },
+	{ "nobackfill", &nobackfill,    lgetopt::BOOL,    "Disable initial backfill jobs after startup." },
 	{ "noautomod",  &noautomod,     lgetopt::BOOL,    "Normal execution but without autoloading modules" },
 	{ "nocompact",  &nocompact,     lgetopt::BOOL,    "Disable automatic database compaction" },
 	{ "checkdb",    &checkdb,       lgetopt::BOOL,    "Perform complete checks of databases when opening" },
@@ -212,6 +214,7 @@ noexcept try
 			opts.origin = origin;
 			opts.server_name = server_name;
 			opts.bootstrap_vector_path = bootstrap;
+			opts.backfill = !nobackfill;
 			const ircd::custom_ptr<ircd::m::homeserver> homeserver
 			{
 				// 6.1

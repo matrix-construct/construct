@@ -151,4 +151,7 @@ struct ircd::m::homeserver::opts
 	/// may contain additional events as well; the server will continue its
 	/// operation after having processed these events.
 	string_view bootstrap_vector_path;
+
+	/// Whether to run initial backfill jobs after startup.
+	bool backfill {true};
 };
