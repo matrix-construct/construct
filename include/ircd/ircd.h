@@ -111,11 +111,13 @@ namespace ircd
 	extern const info::versions version_api;
 	extern const info::versions version_abi;
 
+	// Operating Mode Selectors
 	extern conf::item<bool> restart;
 	extern conf::item<bool> debugmode;
-	extern conf::item<bool> read_only;
-	extern conf::item<bool> write_avoid;
+	extern conf::item<bool> maintenance;
 	extern conf::item<bool> soft_assert;
+	extern conf::item<bool> write_avoid;     // implies maintenance
+	extern conf::item<bool> read_only;       // implies write_avoid
 	extern conf::item<bool> defaults;
 
 	// Informational

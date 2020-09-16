@@ -261,7 +261,6 @@ try
 	const bool need_bootstrap
 	{
 		(sequence(*dbs::events) == 0 || opts->bootstrap_vector_path)
-		&& !ircd::write_avoid
 		&& dbs::events
 	};
 
@@ -271,13 +270,14 @@ try
 	mods::imports.emplace("net_dns_cache"s, "net_dns_cache"s);
 
 	if(!ircd::write_avoid)
-	{
 		if(key && !key->verify_keys.empty())
 			m::keys::cache::set(key->verify_keys);
 
+	if(!ircd::maintenance)
 		signon(*this);
+
+	if(!ircd::maintenance)
 		m::init::backfill::init();
-	}
 }
 catch(const std::exception &e)
 {
@@ -304,7 +304,7 @@ noexcept try
 	server::init::wait();
 	m::sync::pool.join();
 
-	if(!ircd::write_avoid && _vm)
+	if(!ircd::maintenance && _vm)
 		signoff(*this);
 
 	///TODO: XXX primary
@@ -826,7 +826,7 @@ ircd::m::offline_status_msg
 void
 ircd::m::signon(homeserver &homeserver)
 {
-	if(!ircd::write_avoid && vm::sequence::retired != 0)
+	if(vm::sequence::retired != 0)
 		presence::set(homeserver.self, "online", online_status_msg);
 }
 
@@ -834,7 +834,7 @@ void
 ircd::m::signoff(homeserver &homeserver)
 noexcept try
 {
-	if(!std::uncaught_exceptions() && !ircd::write_avoid && vm::sequence::retired != 0)
+	if(!std::uncaught_exceptions() && vm::sequence::retired != 0)
 		presence::set(homeserver.self, "offline", offline_status_msg);
 }
 catch(const std::exception &e)

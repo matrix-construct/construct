@@ -136,7 +136,7 @@ ircd::log::init()
 		console_disable(level::DWARNING);
 	}
 
-	if(!ircd::write_avoid || ircd::debugmode)
+	if(!ircd::write_avoid)
 	{
 		mkdir();
 		open();

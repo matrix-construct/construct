@@ -41,6 +41,33 @@ ircd::version_abi
 	"IRCd", info::versions::ABI, 0, {0, 0, 0}, ircd::info::version
 };
 
+/// Courtesy indicator; this item allows the library to indicate to the
+/// embedder that they should restart their application (or reload this library
+/// if available). The use-case here is for features like the `restart` command
+/// in the console module. Such a command triggers a normal quit and the
+/// application may exit normally; therefor the embedder should check this
+/// item to perform a restart rather than exiting.
+decltype(ircd::restart)
+ircd::restart
+{
+	{ "name",     "ircd.restart"       },
+	{ "default",  false                },
+	{ "persist",  false                },
+};
+
+/// Coarse mode indicator for debug/developer behavior when and if possible.
+/// For example: additional log messages may be enabled by this mode. This
+/// option is technically effective in both release builds and debug builds
+/// but it controls far less in non-debug builds. This item may be toggled
+/// at any time. It doesn't change operational functionality.
+decltype(ircd::debugmode)
+ircd::debugmode
+{
+	{ "name",     "ircd.debugmode"     },
+	{ "default",  false                },
+	{ "persist",  false                },
+};
+
 /// When assertions are enabled this further softens runtime behavior to be
 /// non-disruptive/non-terminating for diagnostic purposes. Debugging/developer
 /// use only. This item may be toggled at any time.
@@ -52,6 +79,26 @@ ircd::soft_assert
 	{ "persist",  false                },
 };
 
+/// Coarse mode declaration for "maintenance mode" a.k.a. "single user mode"
+/// which is intended to be similar to normal operating mode but without
+/// services to clients or some background tasks. It is implied and set when
+/// write_avoid=true which is itself implied and set by read_only.
+decltype(ircd::maintenance)
+ircd::maintenance
+{
+	{
+		{ "name",     "ircd.maintenance"   },
+		{ "default",  false                },
+		{ "persist",  false                },
+	}, []
+	{
+		if(!maintenance)
+			return;
+
+		net::listen.set("false");
+	}
+};
+
 /// Coarse mode indicator for degraded operation known as "write-avoid" which
 /// is similar to read_only but not hard-enforced. Writes may still occur,
 /// such as those manually triggered by an admin. All subsystems and background
@@ -59,9 +106,18 @@ ircd::soft_assert
 decltype(ircd::write_avoid)
 ircd::write_avoid
 {
-	{ "name",     "ircd.write_avoid"   },
-	{ "default",  false                },
-	{ "persist",  false                },
+	{
+		{ "name",     "ircd.write_avoid"   },
+		{ "default",  false                },
+		{ "persist",  false                },
+	}, []
+	{
+		if(!write_avoid)
+			return;
+
+		maintenance.set("true");
+		db::auto_compact.set("false");
+	}
 };
 
 /// Coarse mode declaration for read-only behavior. All subsystems and feature
@@ -71,30 +127,17 @@ ircd::write_avoid
 decltype(ircd::read_only)
 ircd::read_only
 {
-	{ "name",     "ircd.read_only"     },
-	{ "default",  false                },
-	{ "persist",  false                },
-};
+	{
+		{ "name",     "ircd.read_only"     },
+		{ "default",  false                },
+		{ "persist",  false                },
+	}, []
+	{
+		if(!read_only)
+			return;
 
-/// Coarse mode indicator for debug/developer behavior when and if possible.
-/// For example: additional log messages may be enabled by this mode. This
-/// option is technically effective in both release builds and debug builds
-/// but it controls far less in non-debug builds. This item may be toggled
-/// at any time.
-decltype(ircd::debugmode)
-ircd::debugmode
-{
-	{ "name",     "ircd.debugmode"     },
-	{ "default",  false                },
-	{ "persist",  false                },
-};
-
-decltype(ircd::restart)
-ircd::restart
-{
-	{ "name",     "ircd.restart"       },
-	{ "default",  false                },
-	{ "persist",  false                },
+		write_avoid.set("true");
+	}
 };
 
 /// Main context pointer placement.

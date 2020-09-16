@@ -114,16 +114,6 @@ ircd::m::init::backfill::init()
 		return;
 	}
 
-	if(ircd::read_only || ircd::write_avoid)
-	{
-		log::warning
-		{
-			log, "Not performing initial backfill because write-avoid flag is set."
-		};
-
-		return;
-	}
-
 	assert(!worker_context);
 	worker_context.reset(new context
 	{

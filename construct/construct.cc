@@ -472,12 +472,14 @@ enable_coredumps()
 void
 applyargs()
 {
-	if(single)
+	if(single && !bootstrap)
 	{
-		nolisten = true;
-		write_avoid = true;
+		ircd::write_avoid.set("true");
 		cmdline = true;
 	}
+
+	if(bootstrap)
+		ircd::maintenance.set("true");
 
 	if(defaults)
 		ircd::defaults.set("true");
