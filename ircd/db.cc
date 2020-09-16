@@ -2932,45 +2932,44 @@ noexcept
 //
 
 void
-ircd::db::database::events::OnFlushCompleted(rocksdb::DB *const db,
-                                             const rocksdb::FlushJobInfo &info)
-noexcept
-{
-	log::info
-	{
-		log, "[%s] job:%d ctx:%lu flush ended writes[slow:%d stop:%d] seq[%zu -> %zu] %s '%s' `%s'",
-		d->name,
-		info.job_id,
-		info.thread_id,
-		info.triggered_writes_slowdown,
-		info.triggered_writes_stop,
-		info.smallest_seqno,
-		info.largest_seqno,
-		reflect(info.flush_reason),
-		info.cf_name,
-		info.file_path,
-	};
-
-	//assert(info.thread_id == ctx::id(*ctx::current));
-}
-
-void
 ircd::db::database::events::OnFlushBegin(rocksdb::DB *const db,
                                          const rocksdb::FlushJobInfo &info)
 noexcept
 {
 	log::info
 	{
-		log, "[%s] job:%d ctx:%lu flush start writes[slow:%d stop:%d] seq[%zu -> %zu] %s '%s'",
+		log, "[%s] job:%d ctx:%lu flush start '%s' :%s",
 		d->name,
 		info.job_id,
 		info.thread_id,
-		info.triggered_writes_slowdown,
-		info.triggered_writes_stop,
+		info.cf_name,
+		reflect(info.flush_reason),
+	};
+
+	//assert(info.thread_id == ctx::id(*ctx::current));
+}
+
+void
+ircd::db::database::events::OnFlushCompleted(rocksdb::DB *const db,
+                                             const rocksdb::FlushJobInfo &info)
+noexcept
+{
+	char pbuf[2][48];
+	log::info
+	{
+		log, "[%s] job:%d ctx:%lu flush ended seq[%lu -> %lu] idxs:%lu blks:%lu keys:%lu deletes:%lu data[%s] '%s' `%s'",
+		d->name,
+		info.job_id,
+		info.thread_id,
 		info.smallest_seqno,
 		info.largest_seqno,
-		reflect(info.flush_reason),
+		info.table_properties.index_partitions,
+		info.table_properties.num_data_blocks,
+		info.table_properties.num_entries,
+		info.table_properties.num_deletions,
+		pretty(pbuf[1], iec(info.table_properties.data_size)),
 		info.cf_name,
+		info.file_path,
 	};
 
 	//assert(info.thread_id == ctx::id(*ctx::current));
@@ -2991,7 +2990,7 @@ noexcept
 	log::logf
 	{
 		log, level,
-		"[%s] job:%d ctx:%lu compacted level[%d -> %d] files[%zu -> %zu] %s '%s' (%d): %s",
+		"[%s] job:%d ctx:%lu compct done level[%d -> %d] files[%zu -> %zu] %s '%s' (%d): %s",
 		d->name,
 		info.job_id,
 		info.thread_id,
@@ -3010,25 +3009,29 @@ noexcept
 		info.stats.total_input_bytes == info.stats.total_output_bytes
 	};
 
-	log::debug
+	char pbuf[8][48];
+	size_t i(0);
+	log::logf
 	{
-		log, "[%s] job:%d keys[in:%zu out:%zu upd:%zu] bytes[%s -> %s] falloc:%s write:%s rsync:%s fsync:%s total:%s",
+		log, log::level::DEBUG,
+		"[%s] job:%d compacted keys[in:%zu out:%zu upd:%zu] bytes[%s -> %s] falloc:%s write:%s rsync:%s fsync:%s total:%s",
 		d->name,
 		info.job_id,
 		info.stats.num_input_records,
 		info.stats.num_output_records,
 		info.stats.num_records_replaced,
-		pretty(iec(info.stats.total_input_bytes)),
-		bytes_same? "same": pretty(iec(info.stats.total_output_bytes)),
-		pretty(nanoseconds(info.stats.file_prepare_write_nanos), true),
-		pretty(nanoseconds(info.stats.file_write_nanos), true),
-		pretty(nanoseconds(info.stats.file_range_sync_nanos), true),
-		pretty(nanoseconds(info.stats.file_fsync_nanos), true),
-		pretty(microseconds(info.stats.elapsed_micros), true),
+		pretty(pbuf[i++], iec(info.stats.total_input_bytes)),
+		bytes_same? "same": pretty(pbuf[i++], iec(info.stats.total_output_bytes)),
+		pretty(pbuf[i++], nanoseconds(info.stats.file_prepare_write_nanos), true),
+		pretty(pbuf[i++], nanoseconds(info.stats.file_write_nanos), true),
+		pretty(pbuf[i++], nanoseconds(info.stats.file_range_sync_nanos), true),
+		pretty(pbuf[i++], nanoseconds(info.stats.file_fsync_nanos), true),
+		pretty(pbuf[i++], microseconds(info.stats.elapsed_micros), true),
 	};
+	assert(i <= 8);
 
 	if(info.stats.num_corrupt_keys > 0)
-		log::error
+		log::critical
 		{
 			log, "[%s] job:%d reported %lu corrupt keys.",
 			d->name,
