@@ -37,7 +37,7 @@ class ircd::ed25519::sk
 
 	sig sign(const const_buffer &msg) const;
 
-	sk(const string_view &filename, pk *const & = nullptr);
+	sk(const string_view &filename, pk *const & = nullptr, const bool &create = false);
 	sk(pk *const &, const const_buffer &seed);
 	sk(): key{nullptr, std::free} {}
 };

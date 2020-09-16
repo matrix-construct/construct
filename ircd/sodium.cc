@@ -103,7 +103,8 @@ ircd::ed25519::sk::sk(pk *const &pk_arg,
 }
 
 ircd::ed25519::sk::sk(const string_view &filename,
-                      pk *const &pk_arg)
+                      pk *const &pk_arg,
+                      const bool &create)
 try
 :key
 {
@@ -131,7 +132,7 @@ try
 		filename && fs::exists(filename)
 	};
 
-	if(!exists && !ircd::write_avoid)
+	if(!exists && create)
 	{
 		nacl::throw_on_error
 		{

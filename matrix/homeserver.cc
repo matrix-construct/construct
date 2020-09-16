@@ -378,7 +378,7 @@ ircd::m::homeserver::key::key(const struct opts &opts)
 }()}
 ,secret_key
 {
-	secret_key_path, &public_key
+	secret_key_path, &public_key, !ircd::write_avoid
 }
 ,public_key_b64
 {
