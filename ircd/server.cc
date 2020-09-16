@@ -2468,6 +2468,13 @@ try
 		buffer + copied
 	};
 
+	if(unlikely(empty(remaining)))
+		throw buffer_overrun
+		{
+			"Buffer of %zu bytes is insufficient to receive the HTTP request.",
+			size(buffer),
+		};
+
 	const const_buffer view
 	{
 		read(remaining)
