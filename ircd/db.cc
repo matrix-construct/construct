@@ -2105,10 +2105,6 @@ ircd::db::database::column::column(database &d,
 		this->options.max_write_buffer_size_to_maintain = 0; //this->options.write_buffer_size * 4;
 	#endif
 
-	this->options.level0_file_num_compaction_trigger = 8;
-	this->options.level0_slowdown_writes_trigger = 32;
-	this->options.level0_stop_writes_trigger = 64;
-
 	// Conf item can be set to disable automatic compactions. For developers
 	// and debugging; good for valgrind.
 	this->options.disable_auto_compactions = !bool(db::auto_compact);
@@ -2134,17 +2130,24 @@ ircd::db::database::column::column(database &d,
 			rocksdb::CompactionPri::kOldestLargestSeqFirst:
 			rocksdb::CompactionPri::kOldestLargestSeqFirst;
 
+	this->options.level0_stop_writes_trigger = 64;
+	this->options.level0_slowdown_writes_trigger = 32;
+	this->options.level0_file_num_compaction_trigger = 8;
+
+	// Universal compaction mode options
+	this->options.compaction_options_universal.size_ratio = 66;
+	this->options.compaction_options_universal.min_merge_width = 8;
+	this->options.compaction_options_universal.max_merge_width = 16;
+	this->options.compaction_options_universal.max_size_amplification_percent = 1000;
+	this->options.compaction_options_universal.compression_size_percent = -1;
+	this->options.compaction_options_universal.stop_style = rocksdb::kCompactionStopStyleTotalSize;
+	this->options.compaction_options_universal.allow_trivial_move = false;
+
+	// Level compaction mode options
 	this->options.num_levels = 7;
 	this->options.level_compaction_dynamic_level_bytes = false;
-
-	//this->options.ttl = -2U;
-	#ifdef IRCD_DB_HAS_PERIODIC_COMPACTIONS
-	this->options.periodic_compaction_seconds = this->descriptor->compaction_period.count();
-	#endif
-
 	this->options.target_file_size_base = this->descriptor->target_file_size.base;
 	this->options.target_file_size_multiplier = this->descriptor->target_file_size.multiplier;
-
 	this->options.max_bytes_for_level_base = this->descriptor->max_bytes_for_level[0].base;
 	this->options.max_bytes_for_level_multiplier = this->descriptor->max_bytes_for_level[0].multiplier;
 	this->options.max_bytes_for_level_multiplier_additional = std::vector<int>(this->options.num_levels, 1);
@@ -2165,14 +2168,10 @@ ircd::db::database::column::column(database &d,
 		});
 	}
 
-	// Universal compaction mode options
-	this->options.compaction_options_universal.size_ratio = 67;
-	this->options.compaction_options_universal.min_merge_width = 8;
-	this->options.compaction_options_universal.max_merge_width = 16;
-	this->options.compaction_options_universal.max_size_amplification_percent = 1000;
-	this->options.compaction_options_universal.compression_size_percent = -1;
-	this->options.compaction_options_universal.stop_style = rocksdb::kCompactionStopStyleTotalSize;
-	this->options.compaction_options_universal.allow_trivial_move = false;
+	//this->options.ttl = -2U;
+	#ifdef IRCD_DB_HAS_PERIODIC_COMPACTIONS
+	this->options.periodic_compaction_seconds = this->descriptor->compaction_period.count();
+	#endif
 
 	//
 	// Table options
