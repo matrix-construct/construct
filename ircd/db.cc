@@ -2935,9 +2935,9 @@ ircd::db::database::events::OnFlushBegin(rocksdb::DB *const db,
                                          const rocksdb::FlushJobInfo &info)
 noexcept
 {
-	log::info
+	log::debug
 	{
-		log, "[%s] job:%d ctx:%lu flush start '%s' :%s",
+		log, "[%s] job:%d ctx:%lu flushed start '%s' :%s",
 		d->name,
 		info.job_id,
 		info.thread_id,
@@ -2956,7 +2956,7 @@ noexcept
 	char pbuf[2][48];
 	log::info
 	{
-		log, "[%s] job:%d ctx:%lu flush ended seq[%lu -> %lu] idxs:%lu blks:%lu keys:%lu deletes:%lu data[%s] '%s' `%s'",
+		log, "[%s] job:%d ctx:%lu flushed seq[%lu -> %lu] idxs:%lu blks:%lu keys:%lu deletes:%lu data[%s] '%s' `%s'",
 		d->name,
 		info.job_id,
 		info.thread_id,
@@ -2986,13 +2986,23 @@ noexcept
 			log::level::ERROR
 	};
 
+	char prebuf[128];
+	const string_view prefix
+	{
+		fmt::sprintf
+		{
+			prebuf, "[%s] job:%d ctx:%lu compact",
+			d->name,
+			info.job_id,
+			info.thread_id,
+		}
+	};
+
 	log::logf
 	{
 		log, level,
-		"[%s] job:%d ctx:%lu compct done level[%d -> %d] files[%zu -> %zu] %s '%s' (%d): %s",
-		d->name,
-		info.job_id,
-		info.thread_id,
+		"%s lev[%d -> %d] files[%zu -> %zu] %s '%s' (%d): %s",
+		prefix,
 		info.base_input_level,
 		info.output_level,
 		info.input_files.size(),
@@ -3010,12 +3020,10 @@ noexcept
 
 	char pbuf[8][48];
 	size_t i(0);
-	log::logf
+	log::info
 	{
-		log, log::level::DEBUG,
-		"[%s] job:%d compacted keys[in:%zu out:%zu upd:%zu] bytes[%s -> %s] falloc:%s write:%s rsync:%s fsync:%s total:%s",
-		d->name,
-		info.job_id,
+		log, "%s key[%zu -> %zu (%zu)] %s -> %s | falloc:%s write:%s rsync:%s fsync:%s total:%s",
+		prefix,
 		info.stats.num_input_records,
 		info.stats.num_output_records,
 		info.stats.num_records_replaced,
