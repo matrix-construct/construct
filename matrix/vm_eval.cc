@@ -409,59 +409,57 @@ const
 	std::set<server_key> miss;
 	for(const auto &event : this->pdus)
 	{
+		assert(opts);
+		const auto &origin
+		{
+			json::get<"origin"_>(event)?
+				string_view{json::get<"origin"_>(event)}:
+				m::user::id{json::get<"sender"_>(event)}.host()
+		};
+
 		// When the node_id is set (eval on behalf of remote) we only parallel
 		// fetch keys from that node for events from that node. This is to
 		// prevent amplification. Note that these will still be evaluated and
 		// key fetching may be attempted, but not here.
-		assert(opts);
-		const auto &origin(json::get<"origin"_>(event));
 		if(opts->node_id && opts->node_id != origin)
 			continue;
 
-		const json::object &signature
-		{
-			json::get<"signatures"_>(event).get(origin)
-		};
-
-		for(const auto &[key_id, sig] : signature)
-		{
-			const server_key key(origin, key_id);
-			const auto it(miss.lower_bound(key));
-			if(it != end(miss) && *it == key)
-				continue;
-
-			if(m::keys::cache::has(origin, key_id))
-				continue;
-
-			miss.emplace_hint(it, key);
-		}
+		for(const auto &[server_name, signatures] : at<"signatures"_>(event))
+			for(const auto &[key_id, signature] : json::object(signatures))
+				if(!m::keys::cache::has(origin, key_id))
+					miss.emplace(origin, key_id);
 	}
 
-	//TODO: XXX
-	const std::vector<server_key> queries(begin(miss), end(miss));
-	if(!queries.empty())
-		log::debug
-		{
-			log, "%s fetching %zu new keys from %zu events...",
-			loghead(*this),
-			queries.size(),
-			this->pdus.size(),
-		};
+	if(miss.empty())
+		return;
+
+	log::debug
+	{
+		log, "%s fetching %zu new keys from %zu events...",
+		loghead(*this),
+		miss.size(),
+		this->pdus.size(),
+	};
+
+	const std::vector<server_key> queries
+	(
+		begin(miss), end(miss)
+	);
 
 	const size_t fetched
 	{
-		!queries.empty()?
-			m::keys::fetch(queries):
-			0UL
+		m::keys::fetch(queries)
 	};
 
-	if(fetched)
-		log::info
-		{
-			log, "%s fetched %zu of %zu new keys from %zu events",
-			loghead(*this),
-			fetched,
-			queries.size(),
-			this->pdus.size(),
-		};
+	if(!fetched)
+		return;
+
+	log::info
+	{
+		log, "%s fetched %zu of %zu new keys from %zu events",
+		loghead(*this),
+		fetched,
+		miss.size(),
+		this->pdus.size(),
+	};
 }
