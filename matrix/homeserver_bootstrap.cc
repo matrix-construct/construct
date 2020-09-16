@@ -339,6 +339,15 @@ try
 		ctx::interruption_point();
 	}
 
+	// Manual flush of the memtables is required in case the user disabled the
+	// WAL (which is advised in the documentation). If this isn't run several
+	// thousand keys in memory will be dropped inconsistently between database
+	// columns. If WAL is enabled then it tidies the DB up just as well.
+	{
+		const bool blocking(true), allow_stall(true);
+		db::sort(*dbs::events, blocking, allow_stall);
+	}
+
 	log::notice
 	{
 		log, "Bootstrapped count:%zu retired:%zu in %s from `%s' in %s",
