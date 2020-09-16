@@ -240,6 +240,10 @@ try
 	vmopts.phase[vm::phase::INDEX] = true;
 	vmopts.phase[vm::phase::WRITE] = true;
 
+	// Optimize the bootstrap by not updating room heads at every step.
+	vmopts.wopts.appendix[dbs::appendix::ROOM_HEAD] = false;
+	vmopts.wopts.appendix[dbs::appendix::ROOM_HEAD_RESOLVE] = false;
+
 	// Perform normal static-conformity checks; there's no reason to accept
 	// inputs that wouldn't normally be accepted. While inputs are supposed
 	// to be trusted and authentic, their correctness should still be checked;
