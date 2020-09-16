@@ -16,7 +16,6 @@ namespace ircd::m::roomstrap
 	static event::id::buf make_join(const string_view &host, const room::id &, const user::id &, const mutable_buffer &);
 	static send_join_response send_join(const string_view &host, const room::id &, const event::id &, const json::object &event);
 	static void broadcast_join(const room &, const event &, const string_view &exclude);
-	static void fetch_keys(const json::array &events);
 	static void eval_auth_chain(const json::array &auth_chain, vm::opts);
 	static void eval_state(const json::array &state, vm::opts);
 	static void backfill(const string_view &host, const room::id &, const event::id &, vm::opts);
@@ -262,12 +261,8 @@ try
 	vmopts.phase.reset(m::vm::phase::FETCH_STATE);
 	vmopts.notify_servers = false;
 
-	m::roomstrap::fetch_keys(auth_chain);
 	m::roomstrap::eval_auth_chain(auth_chain, vmopts);
-
-	m::roomstrap::fetch_keys(state);
 	m::roomstrap::eval_state(state, vmopts);
-
 	m::roomstrap::backfill(host, room_id, event_id, vmopts);
 
 	// After we just received and processed all of this state with only a
@@ -563,56 +558,6 @@ catch(const std::exception &e)
 	// This needs to rethrow because any failure coming out of vm::eval to
 	// process the auth_chain is a showstopper.
 	throw;
-}
-
-void
-ircd::m::roomstrap::fetch_keys(const json::array &events)
-try
-{
-	std::vector<m::fed::key::server_key> queries;
-	queries.reserve(events.size());
-
-	for(const json::object event : events)
-		for(const auto &[server_name, signatures] : json::object(event["signatures"]))
-			for(const auto &[key_id, signature] : json::object(signatures))
-				queries.emplace_back(unquote(event.at("origin")), key_id);
-
-	std::sort(begin(queries), end(queries));
-	queries.erase(std::unique(begin(queries), end(queries)), end(queries));
-
-	log::info
-	{
-		log, "Fetching %zu keys for %zu events...",
-		queries.size(),
-		events.size(),
-	};
-
-	const size_t fetched
-	{
-		m::keys::fetch(queries)
-	};
-
-	log::info
-	{
-		log, "Fetched %zu of %zu keys for %zu events",
-		fetched,
-		queries.size(),
-		events.size(),
-	};
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		log, "Error when fetching keys for %zu events :%s",
-		events.size(),
-	};
-
-	// All errors for the parallel key fetch are logged and then suppressed
-	// here. This operation is an optimization; if there's an unexpected
-	// failure here keys will just be fetched in the eval loop and bootstrap
-	// will just be really slow.
-	//throw;
 }
 
 ircd::m::roomstrap::send_join_response
