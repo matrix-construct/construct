@@ -5564,6 +5564,7 @@ try
 	const auto print_head{[&out]
 	{
 		out
+		<< std::setw(4) << std::left << "ID" << ' '
 		<< std::setw(40) << std::right << "NAME" << ' '
 		<< std::setw(40) << std::left << "ADDRESS" << ' '
 		<< std::setw(23) << std::right << "READ-TOTAL" << ' '
@@ -5596,6 +5597,7 @@ try
 
 		char pbuf[32];
 		out
+		<< std::setw(4) << std::left << peer.id << ' '
 		<< std::setw(40) << std::right << host << ' '
 		<< std::setw(40) << std::left << net::ipport{peer.remote} << ' '
 		<< std::setw(23) << std::right << pretty(pbuf, iec(peer.read_total())) << ' '
