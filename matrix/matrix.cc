@@ -84,7 +84,6 @@ ircd::m::matrix::module_names
 	"m_room_redaction",
 	"m_room_server_acl",
 	"m_room_third_party_invite",
-	"m_vm_fetch",
 
 	"media_media",
 

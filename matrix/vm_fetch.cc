@@ -1,7 +1,7 @@
-// Matrix Construct
+// The Construct
 //
-// Copyright (C) Matrix Construct Developers, Authors & Contributors
-// Copyright (C) 2016-2018 Jason Volk <jason@zemos.net>
+// Copyright (C) The Construct Developers, Authors & Contributors
+// Copyright (C) 2016-2020 Jason Volk <jason@zemos.net>
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -34,12 +34,6 @@ namespace ircd::m::vm::fetch
 	extern hookfn<vm::eval &> state_hook;
 	extern log::log log;
 }
-
-ircd::mapi::header
-IRCD_MODULE
-{
-    "Matrix VM Fetch Unit"
-};
 
 decltype(ircd::m::vm::fetch::log)
 ircd::m::vm::fetch::log

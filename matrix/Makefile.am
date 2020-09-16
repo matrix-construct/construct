@@ -170,6 +170,7 @@ libircd_matrix_la_SOURCES += vm.cc
 libircd_matrix_la_SOURCES += vm_eval.cc
 libircd_matrix_la_SOURCES += vm_inject.cc
 libircd_matrix_la_SOURCES += vm_execute.cc
+libircd_matrix_la_SOURCES += vm_fetch.cc
 libircd_matrix_la_SOURCES += init_backfill.cc
 libircd_matrix_la_SOURCES += homeserver.cc
 libircd_matrix_la_SOURCES += homeserver_bootstrap.cc
