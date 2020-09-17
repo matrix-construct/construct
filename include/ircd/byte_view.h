@@ -13,7 +13,10 @@
 
 namespace ircd
 {
-	template<class T = string_view> struct byte_view;
+	template<class T = string_view,
+	         bool safety = true>
+	struct byte_view;
+
 	template<> struct byte_view<string_view>;
 }
 
@@ -39,19 +42,13 @@ struct ircd::byte_view<ircd::string_view>
 };
 
 /// string_view -> bytes
-template<class T>
+template<class T,
+         bool safety>
 struct ircd::byte_view
 {
 	string_view s;
 
-	operator const T &() const
-	{
-		assert(sizeof(T) <= size(s));
-		if(unlikely(sizeof(T) > s.size()))
-			throw std::bad_cast();
-
-		return *reinterpret_cast<const T *>(s.data());
-	}
+	operator const T &() const;
 
 	byte_view(const string_view &s = {})
 	:s{s}
@@ -62,3 +59,18 @@ struct ircd::byte_view
 	:s{byte_view<string_view>{t}}
 	{}
 };
+
+template<class T,
+         bool safety>
+inline ircd::byte_view<T, safety>::operator
+const T &()
+const
+{
+	assert(sizeof(T) <= size(s));
+
+	if constexpr(safety)
+		if(unlikely(sizeof(T) > s.size()))
+			throw std::bad_cast();
+
+	return *reinterpret_cast<const T *>(s.data());
+}
