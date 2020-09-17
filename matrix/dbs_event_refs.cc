@@ -275,28 +275,37 @@ ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
 	if(!m::room::auth::is_power_event(event))
 		return;
 
-	const event::prev prev{event};
-	for(size_t i(0); i < prev.auth_events_count(); ++i)
+	const event::prev prev
 	{
-		const event::id &auth_id
-		{
-			prev.auth_event(i)
-		};
+		event
+	};
 
-		const event::idx &auth_idx
-		{
-			find_event_idx(auth_id, opts)
-		};
+	const size_t count
+	{
+		std::min(prev.auth_events_count(), event::prev::MAX)
+	};
 
-		if(unlikely(!auth_idx))
+	event::id auth_id[count];
+	event::idx auth_idx[count];
+	for(size_t i(0); i < count; ++i)
+		auth_id[i] = prev.auth_event(i);
+
+	const auto found
+	{
+		find_event_idx({auth_idx, count}, {auth_id, count}, opts)
+	};
+
+	for(size_t i(0); i < count; ++i)
+	{
+		if(unlikely(!auth_idx[i]))
 		{
 			if(opts.appendix.test(appendix::EVENT_HORIZON))
-				_index_event_horizon(txn, event, opts, auth_id);
+				_index_event_horizon(txn, event, opts, auth_id[i]);
 
 			log::error
 			{
 				log, "No index found to ref %s AUTH of %s",
-				string_view{auth_id},
+				string_view{auth_id[i]},
 				string_view{event.event_id}
 			};
 
@@ -304,11 +313,11 @@ ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
 		}
 
 		thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
-		assert(opts.event_idx != 0 && auth_idx != 0);
-		assert(opts.event_idx != auth_idx);
+		assert(opts.event_idx != 0 && auth_idx[i] != 0);
+		assert(opts.event_idx != auth_idx[i]);
 		const string_view &key
 		{
-			event_refs_key(buf, auth_idx, ref::NEXT_AUTH, opts.event_idx)
+			event_refs_key(buf, auth_idx[i], ref::NEXT_AUTH, opts.event_idx)
 		};
 
 		db::txn::append
