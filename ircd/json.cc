@@ -165,16 +165,10 @@ ircd::json::parser
 
 	template<class block_t> static u64x2 string_content_block(const block_t, const block_t) noexcept;
 	const custom_parser string_content{};
-	const rule<string_view> string_chars
-	{
-		string_content
-		,"characters"
-	};
-
 	const rule<string_view> string
 	{
 		//quote >> chars >> (!escape >> quote)
-		quote >> raw[string_chars] >> quote
+		string_content
 		,"string"
 	};
 
@@ -476,6 +470,10 @@ const
 	return ircd::parse<parse_error>(start, stop, std::forward<gen>(g), std::forward<attr>(a)...);
 }
 
+/// The input covers everything from the alleged start of our alleged string
+/// to the end of whatever the user provided. Returns true if successful and
+/// the result string_view is set in the context attribute; the iterator is
+/// advanced.
 template<class iterator,
          class context,
          class skipper,
@@ -499,29 +497,53 @@ const
 		using block_t_u = u128x1_u;
 	#endif
 
+	assert(start <= stop);
+	const size_t input_max
+	{
+		size_t(std::distance(start, stop))
+	};
+
+	// The input is a priori invalid if the length is not greater than "" or
+	// the first character is not quote.
+	const bool input_valid
+	{
+		input_max >= 2 && start[0] == '"'
+	};
+
+	// When the input is valid subtract one for the new max length. Otherwise
+	// we mask this length to zero to void the remainder of this frame.
+	const u64x2 max
+	{
+		0, (input_max - 1) & boolmask<u64>(input_valid)
+	};
+
 	static const auto each_block
 	{
 		json::parser::string_content_block<block_t>
 	};
 
-	assert(start <= stop);
-	const u64x2 max
-	{
-		0, size_t(std::distance(start, stop))
-	};
-
 	const auto count
 	{
-		simd::stream<block_t_u, block_t>(start, max, each_block)
+		simd::stream<block_t_u, block_t>(start + 1, max, each_block)
 	};
 
+	const bool ok
+	{
+		count[0] == 1
+	};
+
+	// Set the result in the context attribute. This covers the string content
+	// without surrounding quotes.
 	attr_at<0>(g) = string_view
 	{
-		start, count[1]
+		start + ok, count[1] & boolmask<u64>(ok)
 	};
 
-	start += count[1] & boolmask<u64>(count[0] == 1);
-	return count[0] == 1;
+	// Advance the iterator the length of the full string including quotes
+	// iff this parser was successful.
+	start += (1 + count[1] + 1) & boolmask<u64>(ok);
+
+	return ok;
 }
 
 template<class block_t>
