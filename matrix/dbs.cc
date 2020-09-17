@@ -390,16 +390,39 @@ ircd::m::dbs::_index_room_redact(db::txn &txn,
 }
 
 // NOTE: QUERY
-ircd::m::event::idx
-ircd::m::dbs::find_event_idx(const event::id &event_id,
+size_t
+ircd::m::dbs::find_event_idx(const vector_view<event::idx> &idx,
+                             const vector_view<const event::id> &event_id,
                              const write_opts &wopts)
 {
-	event::idx ret{0};
-	if(wopts.interpose)
-		ret = wopts.interpose->val(db::op::SET, "_event_idx", event_id, 0UL);
+	const size_t num
+	{
+		std::min(idx.size(), event_id.size())
+	};
 
-	if(wopts.allow_queries && !ret)
-		ret = m::index(std::nothrow, event_id); // query
+	size_t ret(0);
+	if(wopts.interpose)
+		for(size_t i(0); i < num; ++i)
+		{
+			idx[i] = wopts.interpose->val(db::op::SET, "_event_idx", event_id[i], 0UL);
+			ret += idx[i] != 0;
+		}
+
+	// Taken when everything satisfied by interpose
+	if(ret == num || !wopts.allow_queries)
+		return ret;
+
+	// Only do parallel m::index() if there's no results from the prior
+	// queries; they'll get clobbered by the parallel m::index().
+	if(likely(!ret))
+		return m::index(idx, event_id);
+
+	// Fallback to serial queries.
+	for(size_t i(0); i < num; ++i)
+	{
+		idx[i] = m::index(std::nothrow, event_id[i]);
+		ret += idx[i] != 0;
+	}
 
 	return ret;
 }

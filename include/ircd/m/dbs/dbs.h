@@ -201,5 +201,17 @@ struct ircd::m::dbs::init
 // Internal utils (here for now)
 namespace ircd::m::dbs
 {
+	size_t find_event_idx(const vector_view<event::idx> &out, const vector_view<const event::id> &in, const write_opts &);
 	event::idx find_event_idx(const event::id &, const write_opts &);
+}
+
+inline ircd::m::event::idx
+ircd::m::dbs::find_event_idx(const event::id &event_id,
+                             const write_opts &wopts)
+{
+	event::idx ret{0};
+	const vector_view<event::idx> out(&ret, 1);
+	const vector_view<const event::id> in(&event_id, 1);
+	find_event_idx(out, in, wopts);
+	return ret;
 }
