@@ -425,7 +425,7 @@ ircd::http::error::error(const string_view &fmt,
 	code,
 	fmt::snstringf //TODO: XXX fmt::sstringf
 	{
-		3192, fmt, std::forward<args>(a)...
+		3072, fmt, std::forward<args>(a)...
 	}
 }
 {}
