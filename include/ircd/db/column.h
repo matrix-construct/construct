@@ -15,6 +15,10 @@ namespace ircd::db
 {
 	struct column;
 
+	using columns = vector_view<column>;
+	using keys = vector_view<const string_view>;
+	using bufs = vector_view<mutable_buffer>;
+
 	// Information about a column
 	uint32_t id(const column &);
 	const std::string &name(const column &);
@@ -45,8 +49,8 @@ namespace ircd::db
 	bool prefetch(column &, const string_view &key, const gopts & = {});
 
 	// [GET] Tests if multiple keys exist in parallel; returns bitset
-	uint64_t has(const vector_view<column> &, const vector_view<const string_view> &keys, const gopts & = {});
-	uint64_t has(column &, const vector_view<const string_view> &keys, const gopts & = {});
+	uint64_t has(const columns &, const keys &, const gopts & = {});
+	uint64_t has(column &, const keys &, const gopts & = {});
 
 	// [GET] Query space usage
 	size_t bytes(column &, const std::pair<string_view, string_view> &range, const gopts & = {});

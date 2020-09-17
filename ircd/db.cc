@@ -6944,22 +6944,30 @@ ircd::db::has(column &column,
 
 uint64_t
 ircd::db::has(column &column,
-              const vector_view<const string_view> &key,
+              const keys &key,
               const gopts &opts)
 {
-	const size_t num(key.size());
-	return has({&column, 1}, key, opts);
+	const columns columns
+	{
+		&column, 1
+	};
+
+	return has(columns, key, opts);
 }
 
 uint64_t
-ircd::db::has(const vector_view<column> &c,
-              const vector_view<const string_view> &key,
+ircd::db::has(const columns &c,
+              const keys &key,
               const gopts &gopts)
 {
 	if(c.empty())
 		return 0UL;
 
-	const size_t num(key.size());
+	const auto &num
+	{
+		key.size()
+	};
+
 	if(unlikely(!num || num > 64))
 		throw std::out_of_range
 		{
