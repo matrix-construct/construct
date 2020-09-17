@@ -6256,232 +6256,6 @@ const
 // db/column.h
 //
 
-std::string
-ircd::db::read(column &column,
-               const string_view &key,
-               const gopts &gopts)
-{
-	std::string ret;
-	const auto closure([&ret]
-	(const string_view &src)
-	{
-		ret.assign(begin(src), end(src));
-	});
-
-	column(key, closure, gopts);
-	return ret;
-}
-
-ircd::string_view
-ircd::db::read(column &column,
-               const string_view &key,
-               const mutable_buffer &buf,
-               const gopts &gopts)
-{
-	string_view ret;
-	const auto closure([&ret, &buf]
-	(const string_view &src)
-	{
-		ret = { data(buf), copy(buf, src) };
-	});
-
-	column(key, closure, gopts);
-	return ret;
-}
-
-std::string
-ircd::db::read(column &column,
-               const string_view &key,
-               bool &found,
-               const gopts &gopts)
-{
-	std::string ret;
-	const auto closure([&ret]
-	(const string_view &src)
-	{
-		ret.assign(begin(src), end(src));
-	});
-
-	found = column(key, std::nothrow, closure, gopts);
-	return ret;
-}
-
-ircd::string_view
-ircd::db::read(column &column,
-               const string_view &key,
-               bool &found,
-               const mutable_buffer &buf,
-               const gopts &gopts)
-{
-	string_view ret;
-	const auto closure([&buf, &ret]
-	(const string_view &src)
-	{
-		ret = { data(buf), copy(buf, src) };
-	});
-
-	found = column(key, std::nothrow, closure, gopts);
-	return ret;
-}
-
-rocksdb::Cache *
-ircd::db::cache(column &column)
-{
-	database::column &c(column);
-	return c.table_opts.block_cache.get();
-}
-
-rocksdb::Cache *
-ircd::db::cache_compressed(column &column)
-{
-	database::column &c(column);
-	return c.table_opts.block_cache_compressed.get();
-}
-
-const rocksdb::Cache *
-ircd::db::cache(const column &column)
-{
-	const database::column &c(column);
-	return c.table_opts.block_cache.get();
-}
-
-const rocksdb::Cache *
-ircd::db::cache_compressed(const column &column)
-{
-	const database::column &c(column);
-	return c.table_opts.block_cache_compressed.get();
-}
-
-template<>
-ircd::db::prop_str
-ircd::db::property(const column &column,
-                   const string_view &name)
-{
-	std::string ret;
-	database::column &c(const_cast<db::column &>(column));
-	database &d(const_cast<db::column &>(column));
-	if(!d.d->GetProperty(c, slice(name), &ret))
-		throw not_found
-		{
-			"'property '%s' for column '%s' in '%s' not found.",
-			name,
-			db::name(column),
-			db::name(d)
-		};
-
-	return ret;
-}
-
-template<>
-ircd::db::prop_int
-ircd::db::property(const column &column,
-                   const string_view &name)
-{
-	uint64_t ret(0);
-	database::column &c(const_cast<db::column &>(column));
-	database &d(const_cast<db::column &>(column));
-	if(!d.d->GetIntProperty(c, slice(name), &ret))
-		throw not_found
-		{
-			"property '%s' for column '%s' in '%s' not found or not an integer.",
-			name,
-			db::name(column),
-			db::name(d)
-		};
-
-	return ret;
-}
-
-template<>
-ircd::db::prop_map
-ircd::db::property(const column &column,
-                   const string_view &name)
-{
-	std::map<std::string, std::string> ret;
-	database::column &c(const_cast<db::column &>(column));
-	database &d(const_cast<db::column &>(column));
-	if(!d.d->GetMapProperty(c, slice(name), &ret))
-		ret.emplace(std::string{name}, property<std::string>(column, name));
-
-	return ret;
-}
-
-ircd::db::options
-ircd::db::getopt(const column &column)
-{
-	database &d(const_cast<db::column &>(column));
-	database::column &c(const_cast<db::column &>(column));
-	return options
-	{
-		static_cast<rocksdb::ColumnFamilyOptions>(d.d->GetOptions(c))
-	};
-}
-
-size_t
-ircd::db::bytes(const column &column)
-{
-	rocksdb::ColumnFamilyMetaData cfm;
-	database &d(const_cast<db::column &>(column));
-	database::column &c(const_cast<db::column &>(column));
-	assert(bool(c.handle));
-	d.d->GetColumnFamilyMetaData(c.handle.get(), &cfm);
-	return cfm.size;
-}
-
-size_t
-ircd::db::file_count(const column &column)
-{
-	rocksdb::ColumnFamilyMetaData cfm;
-	database &d(const_cast<db::column &>(column));
-	database::column &c(const_cast<db::column &>(column));
-	assert(bool(c.handle));
-	d.d->GetColumnFamilyMetaData(c.handle.get(), &cfm);
-	return cfm.file_count;
-}
-
-uint32_t
-ircd::db::id(const column &column)
-{
-	const database::column &c(column);
-	return id(c);
-}
-
-const std::string &
-ircd::db::name(const column &column)
-{
-	const database::column &c(column);
-	return name(c);
-}
-
-const ircd::db::descriptor &
-ircd::db::describe(const column &column)
-{
-	const database::column &c(column);
-	return describe(c);
-}
-
-std::vector<std::string>
-ircd::db::files(const column &column)
-{
-	database::column &c(const_cast<db::column &>(column));
-	database &d(*c.d);
-
-	rocksdb::ColumnFamilyMetaData cfmd;
-	d.d->GetColumnFamilyMetaData(c, &cfmd);
-
-	size_t count(0);
-	for(const auto &level : cfmd.levels)
-		count += level.files.size();
-
-	std::vector<std::string> ret;
-	ret.reserve(count);
-	for(auto &level : cfmd.levels)
-		for(auto &file : level.files)
-			ret.emplace_back(std::move(file.name));
-
-	return ret;
-}
-
 void
 ircd::db::drop(column &column)
 {
@@ -6807,6 +6581,74 @@ ircd::db::write(column &column,
 	};
 }
 
+std::string
+ircd::db::read(column &column,
+               const string_view &key,
+               const gopts &gopts)
+{
+	std::string ret;
+	const auto closure([&ret]
+	(const string_view &src)
+	{
+		ret.assign(begin(src), end(src));
+	});
+
+	column(key, closure, gopts);
+	return ret;
+}
+
+ircd::string_view
+ircd::db::read(column &column,
+               const string_view &key,
+               const mutable_buffer &buf,
+               const gopts &gopts)
+{
+	string_view ret;
+	const auto closure([&ret, &buf]
+	(const string_view &src)
+	{
+		ret = { data(buf), copy(buf, src) };
+	});
+
+	column(key, closure, gopts);
+	return ret;
+}
+
+std::string
+ircd::db::read(column &column,
+               const string_view &key,
+               bool &found,
+               const gopts &gopts)
+{
+	std::string ret;
+	const auto closure([&ret]
+	(const string_view &src)
+	{
+		ret.assign(begin(src), end(src));
+	});
+
+	found = column(key, std::nothrow, closure, gopts);
+	return ret;
+}
+
+ircd::string_view
+ircd::db::read(column &column,
+               const string_view &key,
+               bool &found,
+               const mutable_buffer &buf,
+               const gopts &gopts)
+{
+	string_view ret;
+	const auto closure([&buf, &ret]
+	(const string_view &src)
+	{
+		ret = { data(buf), copy(buf, src) };
+	});
+
+	found = column(key, std::nothrow, closure, gopts);
+	return ret;
+}
+
 size_t
 ircd::db::bytes_value(column &column,
                       const string_view &key,
@@ -6837,58 +6679,6 @@ ircd::db::bytes(column &column,
 	uint64_t ret[1] {0};
 	d.d->GetApproximateSizes(c, range, 1, ret);
 	return ret[0];
-}
-
-//
-// db::prefetch
-//
-
-bool
-ircd::db::prefetch(column &column,
-                   const string_view &key,
-                   const gopts &gopts)
-{
-	static construction instance
-	{
-		[] { prefetcher = new struct prefetcher(); }
-	};
-
-	assert(prefetcher);
-	return (*prefetcher)(column, key, gopts);
-}
-
-//
-// db::cached
-//
-
-#if 0
-bool
-ircd::db::cached(column &column,
-                 const string_view &key,
-                 const gopts &gopts)
-{
-	return exists(cache(column), key);
-}
-#endif
-
-bool
-ircd::db::cached(column &column,
-                 const string_view &key,
-                 const gopts &gopts)
-{
-	database &d(column);
-	database::column &c(column);
-
-	auto opts(make_opts(gopts));
-	opts.read_tier = NON_BLOCKING;
-	opts.fill_cache = false;
-
-	std::unique_ptr<rocksdb::Iterator> it;
-	if(!seek(c, key, opts, it))
-		return false;
-
-	assert(bool(it));
-	return valid_eq(*it, key);
 }
 
 bool
@@ -6994,6 +6784,208 @@ ircd::db::has(const columns &c,
 	});
 
 	return ret;
+}
+
+bool
+ircd::db::prefetch(column &column,
+                   const string_view &key,
+                   const gopts &gopts)
+{
+	static construction instance
+	{
+		[] { prefetcher = new struct prefetcher(); }
+	};
+
+	assert(prefetcher);
+	return (*prefetcher)(column, key, gopts);
+}
+
+#if 0
+bool
+ircd::db::cached(column &column,
+                 const string_view &key,
+                 const gopts &gopts)
+{
+	return exists(cache(column), key);
+}
+#endif
+
+bool
+ircd::db::cached(column &column,
+                 const string_view &key,
+                 const gopts &gopts)
+{
+	database &d(column);
+	database::column &c(column);
+
+	auto opts(make_opts(gopts));
+	opts.read_tier = NON_BLOCKING;
+	opts.fill_cache = false;
+
+	std::unique_ptr<rocksdb::Iterator> it;
+	if(!seek(c, key, opts, it))
+		return false;
+
+	assert(bool(it));
+	return valid_eq(*it, key);
+}
+
+rocksdb::Cache *
+ircd::db::cache(column &column)
+{
+	database::column &c(column);
+	return c.table_opts.block_cache.get();
+}
+
+rocksdb::Cache *
+ircd::db::cache_compressed(column &column)
+{
+	database::column &c(column);
+	return c.table_opts.block_cache_compressed.get();
+}
+
+const rocksdb::Cache *
+ircd::db::cache(const column &column)
+{
+	const database::column &c(column);
+	return c.table_opts.block_cache.get();
+}
+
+const rocksdb::Cache *
+ircd::db::cache_compressed(const column &column)
+{
+	const database::column &c(column);
+	return c.table_opts.block_cache_compressed.get();
+}
+
+template<>
+ircd::db::prop_str
+ircd::db::property(const column &column,
+                   const string_view &name)
+{
+	std::string ret;
+	database::column &c(const_cast<db::column &>(column));
+	database &d(const_cast<db::column &>(column));
+	if(!d.d->GetProperty(c, slice(name), &ret))
+		throw not_found
+		{
+			"'property '%s' for column '%s' in '%s' not found.",
+			name,
+			db::name(column),
+			db::name(d)
+		};
+
+	return ret;
+}
+
+template<>
+ircd::db::prop_int
+ircd::db::property(const column &column,
+                   const string_view &name)
+{
+	uint64_t ret(0);
+	database::column &c(const_cast<db::column &>(column));
+	database &d(const_cast<db::column &>(column));
+	if(!d.d->GetIntProperty(c, slice(name), &ret))
+		throw not_found
+		{
+			"property '%s' for column '%s' in '%s' not found or not an integer.",
+			name,
+			db::name(column),
+			db::name(d)
+		};
+
+	return ret;
+}
+
+template<>
+ircd::db::prop_map
+ircd::db::property(const column &column,
+                   const string_view &name)
+{
+	std::map<std::string, std::string> ret;
+	database::column &c(const_cast<db::column &>(column));
+	database &d(const_cast<db::column &>(column));
+	if(!d.d->GetMapProperty(c, slice(name), &ret))
+		ret.emplace(std::string{name}, property<std::string>(column, name));
+
+	return ret;
+}
+
+ircd::db::options
+ircd::db::getopt(const column &column)
+{
+	database &d(const_cast<db::column &>(column));
+	database::column &c(const_cast<db::column &>(column));
+	return options
+	{
+		static_cast<rocksdb::ColumnFamilyOptions>(d.d->GetOptions(c))
+	};
+}
+
+size_t
+ircd::db::bytes(const column &column)
+{
+	rocksdb::ColumnFamilyMetaData cfm;
+	database &d(const_cast<db::column &>(column));
+	database::column &c(const_cast<db::column &>(column));
+	assert(bool(c.handle));
+	d.d->GetColumnFamilyMetaData(c.handle.get(), &cfm);
+	return cfm.size;
+}
+
+size_t
+ircd::db::file_count(const column &column)
+{
+	rocksdb::ColumnFamilyMetaData cfm;
+	database &d(const_cast<db::column &>(column));
+	database::column &c(const_cast<db::column &>(column));
+	assert(bool(c.handle));
+	d.d->GetColumnFamilyMetaData(c.handle.get(), &cfm);
+	return cfm.file_count;
+}
+
+std::vector<std::string>
+ircd::db::files(const column &column)
+{
+	database::column &c(const_cast<db::column &>(column));
+	database &d(*c.d);
+
+	rocksdb::ColumnFamilyMetaData cfmd;
+	d.d->GetColumnFamilyMetaData(c, &cfmd);
+
+	size_t count(0);
+	for(const auto &level : cfmd.levels)
+		count += level.files.size();
+
+	std::vector<std::string> ret;
+	ret.reserve(count);
+	for(auto &level : cfmd.levels)
+		for(auto &file : level.files)
+			ret.emplace_back(std::move(file.name));
+
+	return ret;
+}
+
+const ircd::db::descriptor &
+ircd::db::describe(const column &column)
+{
+	const database::column &c(column);
+	return describe(c);
+}
+
+const std::string &
+ircd::db::name(const column &column)
+{
+	const database::column &c(column);
+	return name(c);
+}
+
+uint32_t
+ircd::db::id(const column &column)
+{
+	const database::column &c(column);
+	return id(c);
 }
 
 //
