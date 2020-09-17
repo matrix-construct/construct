@@ -206,30 +206,39 @@ ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::NEXT)));
 
-	const event::prev prev{event};
-	for(size_t i(0); i < prev.prev_events_count(); ++i)
+	const event::prev prev
 	{
-		const event::id &prev_id
-		{
-			prev.prev_event(i)
-		};
+		event
+	};
 
-		const event::idx &prev_idx
-		{
-			find_event_idx(prev_id, opts)
-		};
+	const size_t count
+	{
+		std::min(prev.prev_events_count(), event::prev::MAX)
+	};
 
-		if(opts.appendix.test(appendix::EVENT_HORIZON) && !prev_idx)
+	event::id prev_id[count];
+	event::idx prev_idx[count];
+	for(size_t i(0); i < count; ++i)
+		prev_id[i] = prev.prev_event(i);
+
+	const auto found
+	{
+		find_event_idx({prev_idx, count}, {prev_id, count}, opts)
+	};
+
+	for(size_t i(0); i < count; ++i)
+	{
+		if(opts.appendix.test(appendix::EVENT_HORIZON) && !prev_idx[i])
 		{
-			_index_event_horizon(txn, event, opts, prev_id);
+			_index_event_horizon(txn, event, opts, prev_id[i]);
 			continue;
 		}
-		else if(!prev_idx)
+		else if(!prev_idx[i])
 		{
 			log::dwarning
 			{
 				log, "No index found to ref %s PREV of %s",
-				string_view{prev_id},
+				string_view{prev_id[i]},
 				string_view{event.event_id},
 			};
 
@@ -237,11 +246,11 @@ ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
 		}
 
 		thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
-		assert(opts.event_idx != 0 && prev_idx != 0);
-		assert(opts.event_idx != prev_idx);
+		assert(opts.event_idx != 0 && prev_idx[i] != 0);
+		assert(opts.event_idx != prev_idx[i]);
 		const string_view &key
 		{
-			event_refs_key(buf, prev_idx, ref::NEXT, opts.event_idx)
+			event_refs_key(buf, prev_idx[i], ref::NEXT, opts.event_idx)
 		};
 
 		db::txn::append
