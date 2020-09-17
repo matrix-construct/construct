@@ -91,3 +91,73 @@ ircd::m::index(std::nothrow_t,
 		closure(event_idx);
 	});
 }
+
+size_t
+ircd::m::index(const vector_view<event::idx> &out_,
+               const vector_view<const event::id> &in_)
+{
+	static const size_t batch_max
+	{
+		64
+	};
+
+	const size_t max
+	{
+		std::min(out_.size(), in_.size())
+	};
+
+	auto &column
+	{
+		dbs::event_idx
+	};
+
+	size_t ret(0);
+	for(size_t i(0); i < max; i += batch_max)
+	{
+		const size_t num
+		{
+			i + batch_max > max? max - i: batch_max
+		};
+
+		const vector_view<event::idx> out
+		(
+			out_.data() + i, num
+		);
+
+		const vector_view<const event::id> in
+		(
+			in_.data() + i, num
+		);
+
+		const vector_view<const string_view> keys
+		(
+			static_cast<const string_view *>(in.data()), in.size()
+		);
+
+		mutable_buffer buf[num];
+		for(size_t j(0); j < num; ++j)
+		{
+			buf[j] = mutable_buffer
+			{
+				reinterpret_cast<char *>(out.data() + j),
+				sizeof(out[j])
+			};
+
+			zero(buf[j]);
+		}
+
+		const vector_view<mutable_buffer> bufs
+		(
+			buf, num
+		);
+
+		const uint64_t found_mask
+		{
+			db::read(column, keys, bufs)
+		};
+
+		ret += __builtin_popcountl(found_mask);
+	}
+
+	return ret;
+}
