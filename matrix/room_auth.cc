@@ -574,14 +574,19 @@ ircd::m::room::auth::static_idx(const event &event)
 			count,
 		};
 
-	return
+	size_t i(0);
+	m::event::id ids[5];
+	std::array<m::event::idx, 5> idxs {{0}};
+	for(; i < count && i < 5; ++i)
+		ids[i] = refs.auth_event(i);
+
+	assert(i <= idxs.size());
+	const auto found
 	{
-		count > 0? m::index(refs.auth_event(0)): 0UL,
-		count > 1? m::index(refs.auth_event(1)): 0UL,
-		count > 2? m::index(refs.auth_event(2)): 0UL,
-		count > 3? m::index(refs.auth_event(3)): 0UL,
-		count > 4? m::index(refs.auth_event(4)): 0UL,
+		m::index(idxs, vector_view<const m::event::id>(ids, i))
 	};
+
+	return idxs;
 }
 
 std::array<ircd::m::event::idx, 5>
