@@ -2979,11 +2979,17 @@ ircd::db::database::events::OnCompactionCompleted(rocksdb::DB *const db,
                                                   const rocksdb::CompactionJobInfo &info)
 noexcept
 {
+	using rocksdb::CompactionReason;
+
 	const log::level level
 	{
-		info.status == rocksdb::Status::OK()?
-			log::level::INFO:
-			log::level::ERROR
+		info.status != rocksdb::Status::OK()?
+			log::level::ERROR:
+		info.compaction_reason == CompactionReason::kUniversalSizeAmplification?
+			log::level::WARNING:
+		info.compaction_reason == CompactionReason::kUniversalSortedRunNum?
+			log::level::WARNING:
+			log::level::INFO
 	};
 
 	char prebuf[128];
