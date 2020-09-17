@@ -4065,6 +4065,12 @@ ircd::db::database::sst::info::operator=(rocksdb::SstFileMetaData &&md)
 		checksum_func = std::move(md.file_checksum_func_name);
 	#endif
 
+	#if ROCKSDB_MAJOR > 6 \
+	|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR > 7) \
+	|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR == 7 && ROCKSDB_PATCH >= 3)
+		created = std::move(md.file_creation_time);
+	#endif
+
 	return *this;
 }
 
