@@ -856,29 +856,34 @@ const
 		if(!seek(std::nothrow, e, idx))
 			continue;
 
-		const m::event::prev prev{e};
-		for(size_t i(0); i < prev.auth_events_count() && i < 4; ++i)
+		const event::prev prev{e};
+		const size_t count
 		{
-			const m::event::id &auth_event_id
-			{
-				prev.auth_event(i)
-			};
+			std::min(prev.auth_events_count(), 5UL)
+		};
 
-			const auto &auth_event_idx
-			{
-				m::index(std::nothrow, auth_event_id)
-			};
+		event::id auth_id[count];
+		event::idx auth_idx[count];
+		for(size_t i(0); i < count; ++i)
+			auth_id[i] = prev.auth_event(i);
 
-			if(!auth_event_idx)
+		const auto found
+		{
+			m::index({auth_idx, count}, {auth_id, count})
+		};
+
+		for(size_t i(0); i < count; ++i)
+		{
+			if(!auth_idx[i])
 				continue;
 
-			auto it(ae.lower_bound(auth_event_idx));
-			if(it == end(ae) || *it != auth_event_idx)
+			auto it(ae.lower_bound(auth_idx[i]));
+			if(it == end(ae) || *it != auth_idx[i])
 			{
-				seek(std::nothrow, a, auth_event_idx);
-				ae.emplace_hint(it, auth_event_idx);
+				seek(std::nothrow, a, auth_idx[i]);
+				ae.emplace_hint(it, auth_idx[i]);
 				if(a.valid)
-					aq.emplace_back(auth_event_idx);
+					aq.emplace_back(auth_idx[i]);
 			}
 		}
 	}
