@@ -1385,7 +1385,7 @@ try
 	// This prevents the creation of additional SST files and lots of I/O on
 	// either DB open and close.
 	opts->avoid_flush_during_recovery = true;
-	opts->avoid_flush_during_shutdown = true;
+	opts->avoid_flush_during_shutdown = false;
 
 	// Setup env
 	opts->env = env.get();
@@ -2082,7 +2082,7 @@ ircd::db::database::column::column(database &d,
 	//this->options.bottommost_compression_opts = this->options.compression_opts;
 
 	//TODO: descriptor / conf
-	static const auto write_buffer_blocks {2048L};
+	static const auto write_buffer_blocks {4096L};
 	static const long write_buffer_size_minmax[]
 	{
 		256_KiB, 8_MiB
@@ -2131,17 +2131,20 @@ ircd::db::database::column::column(database &d,
 			rocksdb::CompactionPri::kOldestLargestSeqFirst;
 
 	this->options.level0_stop_writes_trigger = 64;
-	this->options.level0_slowdown_writes_trigger = 32;
-	this->options.level0_file_num_compaction_trigger = 8;
+	this->options.level0_slowdown_writes_trigger = 48;
+	this->options.level0_file_num_compaction_trigger =
+		this->options.compaction_style == rocksdb::kCompactionStyleUniversal? 8: 4;
 
 	// Universal compaction mode options
-	this->options.compaction_options_universal.size_ratio = 66;
-	this->options.compaction_options_universal.min_merge_width = 8;
-	this->options.compaction_options_universal.max_merge_width = 16;
-	this->options.compaction_options_universal.max_size_amplification_percent = 1000;
-	this->options.compaction_options_universal.compression_size_percent = -1;
-	this->options.compaction_options_universal.stop_style = rocksdb::kCompactionStopStyleTotalSize;
-	this->options.compaction_options_universal.allow_trivial_move = false;
+	auto &universal(this->options.compaction_options_universal);
+	//universal.stop_style = rocksdb::kCompactionStopStyleSimilarSize;
+	universal.stop_style = rocksdb::kCompactionStopStyleTotalSize;
+	universal.allow_trivial_move = false;
+	universal.compression_size_percent = -1;
+	universal.max_size_amplification_percent = 6667;
+	universal.size_ratio = 36;
+	universal.min_merge_width = 8;
+	universal.max_merge_width = 32;
 
 	// Level compaction mode options
 	this->options.num_levels = 7;
