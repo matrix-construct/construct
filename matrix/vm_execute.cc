@@ -230,6 +230,27 @@ try
 			eval.room_id,
 	};
 
+	// Determine if this is an internal room creation event
+	const bool is_internal_room_create
+	{
+		json::get<"type"_>(event) == "m.room.create" &&
+		json::get<"sender"_>(event) &&
+		m::myself(json::get<"sender"_>(event))
+	};
+
+	// Query for whether the room apropos is an internal room.
+	const scope_restore room_internal
+	{
+		eval.room_internal,
+		eval.room_internal?
+			eval.room_internal:
+		is_internal_room_create?
+			true:
+		eval.room_id && my(room::id(eval.room_id))?
+			m::internal(eval.room_id):
+			false
+	};
+
 	// Procure the room version.
 	char room_version_buf[room::VERSION_MAX_SIZE];
 	const scope_restore eval_room_version
@@ -251,27 +272,6 @@ try
 
 		// Make a query for the room version into the stack buffer.
 		m::version(room_version_buf, room{eval.room_id}, std::nothrow)
-	};
-
-	// Determine if this is an internal room creation event
-	const bool is_internal_room_create
-	{
-		json::get<"type"_>(event) == "m.room.create" &&
-		json::get<"sender"_>(event) &&
-		m::myself(json::get<"sender"_>(event))
-	};
-
-	// Query for whether the room apropos is an internal room.
-	const scope_restore room_internal
-	{
-		eval.room_internal,
-		eval.room_internal?
-			eval.room_internal:
-		is_internal_room_create?
-			true:
-		eval.room_id && my(room::id(eval.room_id))?
-			m::internal(eval.room_id):
-			false
 	};
 
 	// We have to set the event_id in the event instance if it didn't come
