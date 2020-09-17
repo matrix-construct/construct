@@ -40,6 +40,11 @@ struct ircd::m::event::prev
 	json::property<name::prev_events, json::array>
 >
 {
+	static constexpr const size_t &MAX
+	{
+		20
+	};
+
 	std::tuple<event::id, json::object> auth_events(const size_t &idx) const;
 	std::tuple<event::id, json::object> prev_events(const size_t &idx) const;
 
