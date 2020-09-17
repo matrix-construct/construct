@@ -6581,6 +6581,74 @@ ircd::db::write(column &column,
 	};
 }
 
+uint64_t
+ircd::db::read(column &column,
+               const keys &keys,
+               const bufs &bufs,
+               const gopts &opts)
+{
+	const columns columns
+	{
+		&column, 1
+	};
+
+	return read(columns, keys, bufs, opts);
+}
+
+uint64_t
+ircd::db::read(const columns &c,
+               const keys &key,
+               const bufs &buf,
+               const gopts &gopts)
+{
+	if(c.empty())
+		return 0UL;
+
+	const auto &num
+	{
+		key.size()
+	};
+
+	if(unlikely(!num || num > 64 || num > buf.size()))
+		throw std::out_of_range
+		{
+			"db::read() :too many columns or vector size mismatch"
+		};
+
+	_read_op op[num];
+	for(size_t i(0); i < num; ++i)
+		op[i] =
+		{
+			c[std::min(c.size() - 1, i)], key[i]
+		};
+
+	uint64_t i(0), ret(0);
+	auto opts(make_opts(gopts));
+	_read({op, num}, opts, [&i, &ret, &buf]
+	(column &, const column::delta &d, const rocksdb::Status &s)
+	{
+		const auto &val
+		{
+			std::get<column::delta::VAL>(d)
+		};
+
+		buf[i] = mutable_buffer
+		{
+			buf[i], size(val)
+		};
+
+		const auto copied
+		{
+			copy(buf[i], val)
+		};
+
+		ret |= (uint64_t(s.ok()) << i++);
+		return true;
+	});
+
+	return ret;
+}
+
 std::string
 ircd::db::read(column &column,
                const string_view &key,

@@ -65,6 +65,11 @@ namespace ircd::db
 	string_view read(column &, const string_view &key, bool &found, const mutable_buffer &, const gopts & = {});
 	std::string read(column &, const string_view &key, bool &found, const gopts & = {});
 
+	// [GET] Parallel copy into your buffers; your mutable_buffer is resized
+	// tight to the result size. Returns bitset for existential report.
+	uint64_t read(const columns &, const keys &, const bufs &, const gopts & = {});
+	uint64_t read(column &, const keys &, const bufs &, const gopts & = {});
+
 	// [SET] Write data to the db
 	void write(column &, const string_view &key, const const_buffer &value, const sopts & = {});
 
