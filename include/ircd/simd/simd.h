@@ -19,6 +19,7 @@
 #include "split.h"
 #include "lower.h"
 #include "upper.h"
+#include "gather.h"
 #include "shift.h"
 #include "popcnt.h"
 #include "lzcnt.h"
