@@ -53,21 +53,27 @@ ircd::m::event::idx
 ircd::m::index(std::nothrow_t,
                const event::id &event_id)
 {
-	auto &column
+	static auto &column
 	{
 		dbs::event_idx
 	};
 
-	bool found;
-	alignas(8) char buf[8] {0};
+	bool found {false};
+	event::idx ret {0};
 	if(likely(event_id))
-		read(column, event_id, found, buf);
-
-	constexpr bool safety(false); // we know buf is the right size
-	return byte_view<event::idx, safety>
 	{
-		buf
-	};
+		const mutable_buffer buf
+		{
+			reinterpret_cast<char *>(&ret), sizeof(ret)
+		};
+
+		const string_view val
+		{
+			read(column, event_id, found, buf)
+		};
+	}
+
+	return ret & boolmask<event::idx>(found);
 }
 
 bool
