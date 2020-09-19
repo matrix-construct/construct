@@ -4424,9 +4424,19 @@ _print_sst_info(opt &out,
 	    <<         std::setw(1) << std::left << (f.delta_encoding? 'D' : ' ')
 	    <<         std::setw(1) << std::left << (true? ' ' : ' ')
 	    << "  " << std::setw(24) << std::left << pretty(pbuf, iec(f.size))
-	    << "  " << std::setw(10) << std::right << f.min_seq << " : " << std::setw(10) << std::left << f.max_seq
-	    << "  " << std::setw(10) << std::right << min_key << " : " << std::setw(10) << std::left << max_key
-	    << "  " << std::setw(10) << std::right << f.num_reads
+	    ;
+
+	if(f.min_seq)
+		out << "  " << std::setw(10) << std::right << f.min_seq << " : " << std::setw(10) << std::left << f.max_seq;
+	else
+		out << "  " << std::setw(10) << std::right << ' ' << "   " << std::setw(10) << std::left << "<sorted>";
+
+	if(min_key)
+		out << "  " << std::setw(10) << std::right << min_key << " : " << std::setw(10) << std::left << max_key;
+	else
+		out << "  " << std::setw(10) << std::right << ' ' << "   " << std::setw(10) << std::left << "<string>";
+
+	out << "  " << std::setw(10) << std::right << f.num_reads
 	    << "  " << std::setw(10) << std::right << f.entries
 	    << "  " << std::setw(10) << std::right << f.data_blocks
 	    << "  " << std::setw(7) << std::right << f.index_parts
