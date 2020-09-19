@@ -146,8 +146,8 @@ ircd::m::events::dump__file(const string_view &filename)
 	{
 		buf,
 		flusher,
-		-1UL,        // high watermark
-		size(buf)    // low watermark
+		-1UL,               // high watermark
+		size(buf) - 64_KiB  // low watermark
 	};
 
 	json::stack::array top
