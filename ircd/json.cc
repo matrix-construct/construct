@@ -1077,14 +1077,15 @@ noexcept try
 			invalidate_checkpoints()
 		};
 
-		log::dwarning
-		{
-			"Flushing json::stack(%p) bytes:%zu level:%zu checkpoints:%zu",
-			this,
-			size(buf.completed()),
-			level,
-			invalidated,
-		};
+		if(invalidated)
+			log::dwarning
+			{
+				"Flushing json::stack(%p) bytes:%zu level:%zu checkpoints:%zu",
+				this,
+				size(buf.completed()),
+				level,
+				invalidated,
+			};
 	}
 
 	// The user returns the portion of the buffer they were able to flush
@@ -1111,8 +1112,11 @@ size_t
 ircd::json::stack::invalidate_checkpoints()
 {
 	size_t ret(0);
-	for(auto cp(this->cp); cp; cp = cp->pc, ++ret)
+	for(auto cp(this->cp); cp; cp = cp->pc)
+	{
+		ret += cp->s != nullptr;
 		cp->s = nullptr;
+	}
 
 	this->cp = nullptr;
 	return ret;
