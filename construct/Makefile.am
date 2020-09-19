@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = foreign
+
 prefix = @prefix@
 
 CXXFLAGS += \
