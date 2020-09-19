@@ -1983,16 +1983,13 @@ ircd::server::link::cleanup_canceled()
 	// link if it's timing out.
 	assert(dead <= tag_committed());
 	if(dead && dead == tag_committed())
-	{
-		log::dwarning
-		{
-			log, "%s closing link since all %zu committed tags are dead in the pipe",
-			loghead(*this),
-			dead,
-		};
-
-		close();
-	}
+		if(close())
+			log::dwarning
+			{
+				log, "%s closing link since all %zu committed tags are dead in the pipe",
+				loghead(*this),
+				dead,
+			};
 }
 
 bool
@@ -3838,6 +3835,7 @@ ircd::server::tag::read_chunk_dynamic_content(const const_buffer &buffer,
 		return {};
 
 	assert(state.chunk_read <= state.content_read);
+	assert(state.chunk_length != size_t(-1));
 	state.chunk_length = size_t(-1);
 	state.chunk_read = 0;
 	return {};
@@ -3878,6 +3876,7 @@ ircd::server::chunk_dynamic_content_completed(tag &tag,
 	assert(state.content_read >= state.chunk_length);
 	assert(state.content_read >= state.chunk_read);
 	assert(state.chunk_length >= state.chunk_read);
+	assert(state.chunk_length != size_t(-1));
 	if(state.chunk_length > 0)
 		return;
 
