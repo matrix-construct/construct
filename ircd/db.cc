@@ -1305,7 +1305,7 @@ try
 	// this size. The compaction process is composing a buffer of this size
 	// between those writes. Too large a buffer will hog the CPU and starve
 	// other ircd::ctx's. Too small a buffer will be inefficient.
-	opts->writable_file_max_buffer_size = 4_MiB; //TODO: conf
+	opts->writable_file_max_buffer_size = 2_MiB; //TODO: conf
 
 	// MUST be 1 (no subcompactions) or rocksdb spawns internal std::thread.
 	opts->max_subcompactions = 1;
@@ -1336,7 +1336,7 @@ try
 
 	// For the read-side of the compaction process.
 	opts->compaction_readahead_size = !opts->use_direct_reads?
-		512_KiB: //TODO: conf
+		2_MiB: //TODO: conf
 		0;
 
 	// Use the determined direct io value for writes as well.
@@ -2121,7 +2121,7 @@ ircd::db::database::column::column(database &d,
 	this->options.level0_stop_writes_trigger = 64;
 	this->options.level0_slowdown_writes_trigger = 48;
 	this->options.level0_file_num_compaction_trigger =
-		this->options.compaction_style == rocksdb::kCompactionStyleUniversal? 8: 4;
+		this->options.compaction_style == rocksdb::kCompactionStyleUniversal? 12: 4;
 
 	// Universal compaction mode options
 	auto &universal(this->options.compaction_options_universal);
@@ -2164,38 +2164,21 @@ ircd::db::database::column::column(database &d,
 	this->options.periodic_compaction_seconds = this->descriptor->compaction_period.count();
 	#endif
 
-	// Compression type
+	// Compression
 	this->options.compression = find_supported_compression(this->descriptor->compression);
 	//this->options.compression = rocksdb::kNoCompression;
 
-	// Specify compression type per level
-	this->options.compression_per_level =
-	{
-		// 0: uncompressed unsorted
-		rocksdb::kNoCompression,
-
-		// 1: uncompressed sorted
-		rocksdb::kNoCompression,
-
-		// 2, 3, 4: compressed sorted
-		this->options.compression,
-		this->options.compression,
-		this->options.compression,
-		this->options.compression,
-
-		// 6: highly compressed sorted
-		this->options.compression == rocksdb::kLZ4Compression?
-			rocksdb::kLZ4HCCompression:
-			this->options.compression,
-	};
-
 	// Compression options
 	this->options.compression_opts.enabled = true;
-	this->options.compression_opts.max_dict_bytes = 0;//8_MiB;
+	this->options.compression_opts.max_dict_bytes = 0; // ??
+	if(this->options.compression == rocksdb::kZSTD)
+		this->options.compression_opts.level = -3;
 
 	// Bottommost compression
-	this->options.bottommost_compression = this->options.compression_per_level.back();
+	this->options.bottommost_compression = this->options.compression;
 	this->options.bottommost_compression_opts = this->options.compression_opts;
+	if(this->options.bottommost_compression == rocksdb::kZSTD)
+		this->options.bottommost_compression_opts.level = 0;
 
 	//
 	// Table options
@@ -2208,26 +2191,13 @@ ircd::db::database::column::column(database &d,
 		table_opts.format_version = 4; // RocksDB >= 5.16.x compat only; otherwise use 3.
 
 	table_opts.index_type = rocksdb::BlockBasedTableOptions::kTwoLevelIndexSearch;
-	table_opts.index_block_restart_interval = 1;
 	table_opts.read_amp_bytes_per_bit = 8;
-
-	// Specify that index blocks should use the cache. If not, they will be
-	// pre-read into RAM by rocksdb internally. Because of the above
-	// TwoLevelIndex + partition_filters configuration on RocksDB v5.15 it's
-	// better to use pre-read except in the case of a massive database.
-	table_opts.cache_index_and_filter_blocks = true;
-	table_opts.cache_index_and_filter_blocks_with_high_priority = true;
-	table_opts.pin_top_level_index_and_filter = false;
-	table_opts.pin_l0_filter_and_index_blocks_in_cache = false;
-	table_opts.partition_filters = true;
 
 	// Delta encoding is always used (option ignored) for table
 	// format_version >= 4 unless block_align=true.
 	table_opts.use_delta_encoding = false;
-
-	// Block alignment doesn't work if compression is enabled for this
-	// column. If not, we want block alignment for direct IO.
-	table_opts.block_align = this->options.compression == rocksdb::kNoCompression;
+	table_opts.block_restart_interval = 8;
+	table_opts.index_block_restart_interval = 1; // >1 slows down iterations
 
 	// Determine whether the index for this column should be compressed.
 	const bool is_string_index(this->descriptor->type.first == typeid(string_view));
@@ -2238,10 +2208,25 @@ ircd::db::database::column::column(database &d,
 	table_opts.block_size = this->descriptor->block_size;
 	table_opts.metadata_block_size = this->descriptor->meta_block_size;
 	table_opts.block_size_deviation = 50;
-	table_opts.block_restart_interval = 16;
+
+	// Block alignment doesn't work if compression is enabled for this
+	// column. If not, we want block alignment for direct IO.
+	table_opts.block_align =
+		this->options.compression == rocksdb::kNoCompression ||
+		this->options.compression == rocksdb::kDisableCompressionOption;
 
 	//table_opts.data_block_index_type = rocksdb::BlockBasedTableOptions::kDataBlockBinaryAndHash;
 	//table_opts.data_block_hash_table_util_ratio = 0.75;
+
+	// Specify that index blocks should use the cache. If not, they will be
+	// pre-read into RAM by rocksdb internally. Because of the above
+	// TwoLevelIndex + partition_filters configuration on RocksDB v5.15 it's
+	// better to use pre-read except in the case of a massive database.
+	table_opts.cache_index_and_filter_blocks = true;
+	table_opts.cache_index_and_filter_blocks_with_high_priority = true;
+	table_opts.pin_top_level_index_and_filter = false;
+	table_opts.pin_l0_filter_and_index_blocks_in_cache = false;
+	table_opts.partition_filters = true;
 
 	// Setup the cache for assets.
 	const auto &cache_size(this->descriptor->cache_size);
