@@ -21,6 +21,7 @@
 #include "upper.h"
 #include "mask.h"
 #include "gather.h"
+#include "scatter.h"
 #include "shl.h"
 #include "shr.h"
 #include "rol.h"
