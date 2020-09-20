@@ -8955,8 +8955,8 @@ namespace ircd::db
 decltype(ircd::db::compression_default)
 ircd::db::compression_default
 {
-	{ "name",     "ircd.db.compression.default"        },
-	{ "default",  "kLZ4Compression;kSnappyCompression" },
+	{ "name",     "ircd.db.compression.default"              },
+	{ "default",  "kZSTD;kLZ4Compression;kSnappyCompression" },
 };
 
 rocksdb::CompressionType
