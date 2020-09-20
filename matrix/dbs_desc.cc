@@ -414,7 +414,7 @@ ircd::m::dbs::desc::events__default
 	"default",
 
 	// explanation
-	R"(This column is unused but required by the database software.
+	R"(Unused but required by the database software.
 
 	)",
 
