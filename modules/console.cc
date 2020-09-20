@@ -5456,7 +5456,13 @@ try
 	}
 	else
 	{
-		out << std::endl;
+		out
+		<< std::endl
+		<< std::left << std::setfill (' ') << std::setw(3) << "ID"
+		<< " " << std::setw(20) << "NAME"
+		<< " " << std::right << std::setw(12) << "KEYS"
+		<< "   " << std::left << std::setw(24) << "SIZE (COMPRESSED)"
+		<< " :" << "DESCRIPTION" << std::endl;
 		for(const auto &column : d.columns)
 		{
 			const auto explain
@@ -5464,9 +5470,15 @@ try
 				split(db::describe(*column).explain, '\n').first
 			};
 
+			const auto &num_keys
+			{
+				db::property<db::prop_int>(*column, "rocksdb.estimate-num-keys")
+			};
+
 			out << std::left << std::setfill (' ') << std::setw(3) << db::id(*column)
 			    << " " << std::setw(20) << db::name(*column)
-			    << " " << std::setw(24) << pretty(iec(db::bytes(*column)))
+			    << " " << std::right << std::setw(12) << num_keys
+			    << "   " << std::left << std::setw(24) << pretty(iec(db::bytes(*column)))
 			    << " :" << explain << std::endl;
 		}
 	}
