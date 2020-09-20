@@ -14,6 +14,9 @@
 namespace ircd::simd
 {
 	template<class T>
+	using lane_type = typename std::remove_reference<decltype(T{}[0])>::type;
+
+	template<class T>
 	constexpr size_t sizeof_lane();
 
 	template<class T>
