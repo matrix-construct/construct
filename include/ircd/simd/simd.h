@@ -22,6 +22,8 @@
 #include "gather.h"
 #include "shl.h"
 #include "shr.h"
+#include "rol.h"
+#include "ror.h"
 #include "popcnt.h"
 #include "lzcnt.h"
 #include "tzcnt.h"
@@ -35,6 +37,9 @@ namespace ircd
 
 	using simd::shl;
 	using simd::shr;
+
+	using simd::rol;
+	using simd::ror;
 
 	using simd::lzcnt;
 	using simd::tzcnt;
