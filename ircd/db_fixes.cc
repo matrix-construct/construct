@@ -48,6 +48,10 @@
 	#error "RocksDB util/thread_local.h is not available. Cannot interpose bugfixes."
 #endif
 
+#if __has_include("table/block_based/reader_common.h")
+	#include "table/block_based/reader_common.h"
+#endif
+
 #include "db_has.h"
 #include "db_env.h"
 
@@ -384,5 +388,18 @@ void
 rocksdb::BlockFetcher::CheckBlockChecksum()
 {
 	//assert(false);
+}
+#endif
+
+#if defined(IRCD_DB_BYPASS_CHECKSUM) \
+&& __has_include("table/block_based/reader_common.h")
+rocksdb::Status
+rocksdb::VerifyBlockChecksum(ChecksumType type,
+                             const char *const data,
+                             size_t block_size,
+                             const std::string& file_name,
+                             uint64_t offset)
+{
+	return Status::OK();
 }
 #endif
