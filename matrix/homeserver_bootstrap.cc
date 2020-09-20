@@ -273,23 +273,19 @@ try
 	// Outputs to infolog for each event; may be noisy;
 	vmopts.infolog_accept = false;
 
-	static const size_t batch_max
-	{
-		2048
-	};
-
+	static const size_t batch_max {2048};
+	std::vector<m::event> vec(batch_max);
 	size_t count {0}, ebytes[2] {0, 1}, accept {0};
-	std::vector<m::event> vec(1024);
 	vm::eval eval
 	{
 		vmopts
 	};
 
-	// Perform the eval
 	util::timer stopwatch;
 	auto it(begin(events));
 	while(it != end(events))
 	{
+		// page in the JSON
 		size_t i(0);
 		for(; i < vec.size() && it != end(events); ++i, ++it)
 		{
@@ -298,6 +294,7 @@ try
 			ebytes[1] += elem.size() + 1;
 		}
 
+		// process the event batch
 		const size_t accepted
 		{
 			execute(eval, vector_view<const m::event>
@@ -319,11 +316,17 @@ try
 				0UL
 		};
 
+		// advise dontneed
 		ebytes[0] += evict(map, incore, opts);
 
 		const auto db_bytes
 		{
 			db::ticker(*dbs::events, "rocksdb.bytes.written")
+		};
+
+		const auto elapsed
+		{
+			stopwatch.at<seconds>().count()
 		};
 
 		log::info
@@ -334,9 +337,9 @@ try
 			accept,
 			pretty(pbuf[0], iec(ebytes[1])),
 			stopwatch.pretty(pbuf[1]),
-			(count / std::max(stopwatch.at<seconds>().count(), 1L)),
-			pretty(pbuf[2], iec(ebytes[1] / std::max(stopwatch.at<seconds>().count(),1L)), 1),
-			pretty(pbuf[3], iec(db_bytes / std::max(stopwatch.at<seconds>().count(),1L)), 1),
+			(count / std::max(elapsed, 1L)),
+			pretty(pbuf[2], iec(ebytes[1] / std::max(elapsed, 1L)), 1),
+			pretty(pbuf[3], iec(db_bytes / std::max(elapsed, 1L)), 1),
 		};
 
 		ctx::yield();
