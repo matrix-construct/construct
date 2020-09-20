@@ -84,8 +84,9 @@ struct ircd::db::descriptor
 
 	/// Compression algorithm for this column. Empty string is equal to
 	/// kNoCompression. List is semicolon separated to allow fallbacks in
-	/// case the first algorithms are not supported.
-	std::string compression {"kLZ4Compression;kSnappyCompression"};
+	/// case the first algorithms are not supported. "default" will be
+	// replaced by the string in the ircd.db.compression.default conf item.
+	std::string compression {"default"};
 
 	/// User given compaction callback surface.
 	db::compactor compactor {};

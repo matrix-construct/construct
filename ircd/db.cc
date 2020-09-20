@@ -8947,12 +8947,31 @@ catch(const not_found &)
 // Misc
 //
 
+namespace ircd::db
+{
+	extern conf::item<std::string> compression_default;
+}
+
+decltype(ircd::db::compression_default)
+ircd::db::compression_default
+{
+	{ "name",     "ircd.db.compression.default"        },
+	{ "default",  "kLZ4Compression;kSnappyCompression" },
+};
+
 rocksdb::CompressionType
-ircd::db::find_supported_compression(const std::string &list)
+ircd::db::find_supported_compression(const std::string &input)
 {
 	rocksdb::CompressionType ret
 	{
 		rocksdb::kNoCompression
+	};
+
+	const auto &list
+	{
+		input == "default"?
+			string_view{compression_default}:
+			string_view{input}
 	};
 
 	tokens(list, ';', [&ret]

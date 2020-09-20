@@ -134,7 +134,7 @@ ircd::m::dbs::desc::room_state
 	size_t(room_state__meta_block__size),
 
 	// compression
-	"kLZ4Compression;kSnappyCompression"s,
+	"default"s,
 
 	// compactor
 	{},

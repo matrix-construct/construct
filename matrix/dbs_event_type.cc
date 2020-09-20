@@ -119,7 +119,7 @@ ircd::m::dbs::desc::event_type
 	size_t(event_type__meta_block__size),
 
 	// compression
-	"kLZ4Compression;kSnappyCompression"s,
+	"default"s,
 
 	// compactor
 	{},

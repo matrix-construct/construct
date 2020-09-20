@@ -130,7 +130,7 @@ ircd::m::dbs::desc::event_horizon
 	size_t(event_horizon__meta_block__size),
 
 	// compression
-	"kLZ4Compression;kSnappyCompression"s,
+	"default"s,
 
 	// compactor
 	{},

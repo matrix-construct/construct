@@ -125,7 +125,7 @@ ircd::m::dbs::desc::room_joined
 	size_t(room_joined__meta_block__size),
 
 	// compression
-	"kLZ4Compression;kSnappyCompression"s,
+	"default"s,
 
 	// compactor
 	{},

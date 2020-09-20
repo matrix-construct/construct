@@ -107,7 +107,7 @@ ircd::m::dbs::desc::event_json
 	size_t(event_json__meta_block__size),
 
 	// compression
-	"kLZ4Compression;kSnappyCompression"s,
+	"default"s,
 
 	// compactor
 	{},
