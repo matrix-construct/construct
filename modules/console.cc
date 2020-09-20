@@ -4543,32 +4543,24 @@ _print_sst_info_full(opt &out,
 	close_size("filter size", f.filter_size);
 	close_auto("filter average per-key", f.filter_size / double(f.entries));
 	close_auto("filter average per-block", f.filter_size / double(f.data_blocks));
-	close_auto("filter percent of index", 100.0 * (f.filter_size / double(f.index_size)));
-	close_auto("filter percent of data", 100.0 * (f.filter_size / double(f.data_size)));
-	close_auto("filter percent of keys", 100.0 * (f.filter_size / double(f.keys_size)));
-	close_auto("filter percent of values", 100.0 * (f.filter_size / double(f.values_size)));
 	close_auto("", "");
 
 	close_auto("blocks", f.data_blocks);
 	close_size("blocks size", blocks_size);
 	close_size("blocks average size", blocks_size / double(f.data_blocks));
-	close_auto("blocks percent of keys", 100.0 * (f.data_blocks / double(f.entries)));
 	close_auto("", "");
 
 	close_auto("keys", f.entries);
 	close_size("keys size", f.keys_size);
 	close_size("keys average size", f.keys_size / double(f.entries));
-	close_auto("keys percent of values", 100.0 * (f.keys_size / double(f.values_size)));
-	close_auto("keys average per-block", f.entries / double(f.data_blocks));
-	close_auto("keys average per-index", f.entries / double(f.index_parts));
+	close_auto("keys percent of blocks", 100.0 * (f.keys_size / double(blocks_size)));
 	close_auto("", "");
 
 	close_auto("values", f.entries);
 	close_size("values size", f.values_size);
 	close_size("values average size", f.values_size / double(f.entries));
-	close_size("values average size per-block", f.values_size / double(f.data_blocks));
-	close_auto("values average per-block", f.entries / double(f.data_blocks));
 	close_auto("values average per-index", f.entries / double(f.index_parts));
+	close_auto("values average per-block", f.entries / double(f.data_blocks));
 	close_auto("", "");
 }
 
