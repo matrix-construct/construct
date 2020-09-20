@@ -19,6 +19,7 @@
 #include "split.h"
 #include "lower.h"
 #include "upper.h"
+#include "mask.h"
 #include "gather.h"
 #include "shl.h"
 #include "shr.h"

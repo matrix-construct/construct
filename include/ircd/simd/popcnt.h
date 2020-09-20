@@ -13,8 +13,6 @@
 
 namespace ircd::simd
 {
-	template<class T> T popmask(const T) noexcept;
-	template<class T> T boolmask(const T) noexcept;
 	template<class T> uint popcnt(const T) noexcept;
 }
 
@@ -35,27 +33,4 @@ noexcept
 			ret += __builtin_popcountll(a[i]);
 
 	return ret;
-}
-
-/// Convenience template. Extends a bool value where the lsb is 1 or 0 into a
-/// mask value like the result of vector comparisons.
-template<class T>
-[[gnu::always_inline]]
-inline T
-ircd::simd::boolmask(const T a)
-noexcept
-{
-	return ~(popmask(a) - 1);
-}
-
-/// Convenience template. Vector compare instructions yield 0xff on equal;
-/// sometimes one might need an actual value of 1 for accumulators or maybe
-/// some bool-type reason...
-template<class T>
-[[gnu::always_inline]]
-inline T
-ircd::simd::popmask(const T a)
-noexcept
-{
-	return a & 1;
 }
