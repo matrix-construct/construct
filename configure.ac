@@ -1623,6 +1623,48 @@ AM_COND_IF([MAGIC],
 
 dnl
 dnl
+dnl zstd
+dnl
+dnl
+
+AC_SUBST(ZSTD_CPPFLAGS)
+AC_SUBST(ZSTD_LDFLAGS)
+AC_SUBST(ZSTD_LIBS)
+
+AC_ARG_WITH(zstd-includes,
+RB_HELP_STRING([--with-zstd-includes=[[[DIR]]]], [Path to zstd include directory]),
+[
+	ZSTD_CPPFLAGS="-I$withval"
+], [])
+
+AC_ARG_WITH(zstd-libs,
+RB_HELP_STRING([--with-zstd-libs=[[[DIR]]]], [Path to zstd library directory]),
+[
+	ZSTD_LDFLAGS="-L$withval"
+], [])
+
+RB_CHK_SYSHEADER(zstd.h, [ZSTD_H])
+PKG_CHECK_MODULES(zstd, [zstd],
+[
+	have_zstd="yes"
+], [
+	AC_CHECK_LIB(zstd, ZSTD_versionNumber,
+	[
+		have_zstd="yes"
+	], [
+		have_zstd="no"
+	])
+])
+
+AM_CONDITIONAL([ZSTD], [test "x$have_zstd" = "xyes"])
+
+AM_COND_IF([ZSTD],
+[
+	ZSTD_LIBS="-lzstd"
+])
+
+dnl
+dnl
 dnl zlib support
 dnl
 dnl
@@ -2310,6 +2352,7 @@ ASIO_UNIT_CPPFLAGS+=" -include ircd/asio.h"
 dnl Units which include rocksdb headers use these flags.
 AC_SUBST(ROCKSDB_UNIT_CPPFLAGS)
 ROCKSDB_UNIT_CPPFLAGS+=" $ROCKSDB_CPPFLAGS"
+ROCKSDB_UNIT_CPPFLAGS+=" $ZSTD_CPPFLAGS"
 ROCKSDB_UNIT_CPPFLAGS+=" $SNAPPY_CPPFLAGS"
 ROCKSDB_UNIT_CPPFLAGS+=" $LZ4_CPPFLAGS"
 ROCKSDB_UNIT_CPPFLAGS+=" $Z_CPPFLAGS"
@@ -2470,10 +2513,11 @@ echo "Building boost .................... $with_included_boost"
 echo "Building RocksDB .................. $with_included_rocksdb"
 echo "Building JS (SpiderMonkey) ........ $with_included_js"
 echo "IPv6 support ...................... $ipv6"
-echo "Unicode support ................... $have_icuuc"
+echo "Unicode (icuuc) support ........... $have_icuuc"
 echo "Ziplinks (libz) support ........... $have_zlib"
-echo "LZ4 support ....................... $have_lz4"
 echo "Snappy support .................... $have_snappy"
+echo "LZ4 support ....................... $have_lz4"
+echo "Zstandard ......................... $have_zstd"
 echo "GNU MP support .................... $have_gmp"
 echo "Crypto support .................... $have_crypto"
 echo "Sodium support .................... $have_sodium"
