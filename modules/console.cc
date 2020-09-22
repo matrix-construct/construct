@@ -5434,7 +5434,7 @@ try
 
 	if(c)
 	{
-		out << std::endl;
+		out << "\n--- files:" << std::endl;
 		_print_sst_info_header(out);
 		db::database::sst::info::vector vector{c};
 		std::sort(begin(vector), end(vector), []
@@ -5445,6 +5445,10 @@ try
 
 		for(const auto &info : vector)
 			_print_sst_info(out, info);
+
+		out << std::setfill(' ');
+		out << "\n--- caches:" << std::endl;
+		console_cmd__db__cache(out, line);
 	}
 	else
 	{
