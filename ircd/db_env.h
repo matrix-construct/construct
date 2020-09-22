@@ -10,7 +10,8 @@
 
 /// Internal environment hookup.
 ///
-struct ircd::db::database::env final
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::env final
 :rocksdb::Env
 {
 	struct writable_file;
@@ -93,7 +94,8 @@ struct ircd::db::database::env final
 	~env() noexcept;
 };
 
-struct ircd::db::database::env::directory final
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::env::directory final
 :rocksdb::Directory
 {
 	using Status = rocksdb::Status;
@@ -107,7 +109,8 @@ struct ircd::db::database::env::directory final
 	~directory() noexcept;
 };
 
-struct ircd::db::database::env::file_lock final
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::env::file_lock final
 :rocksdb::FileLock
 {
 	database &d;
@@ -116,7 +119,8 @@ struct ircd::db::database::env::file_lock final
 	~file_lock() noexcept;
 };
 
-struct ircd::db::database::env::random_access_file final
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::env::random_access_file final
 :rocksdb::RandomAccessFile
 {
 	using Status = rocksdb::Status;
@@ -146,7 +150,8 @@ struct ircd::db::database::env::random_access_file final
 	~random_access_file() noexcept;
 };
 
-struct ircd::db::database::env::random_rw_file final
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::env::random_rw_file final
 :rocksdb::RandomRWFile
 {
 	using Status = rocksdb::Status;
@@ -175,7 +180,8 @@ struct ircd::db::database::env::random_rw_file final
 	~random_rw_file() noexcept;
 };
 
-struct ircd::db::database::env::sequential_file final
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::env::sequential_file final
 :rocksdb::SequentialFile
 {
 	using Status = rocksdb::Status;
@@ -203,7 +209,8 @@ struct ircd::db::database::env::sequential_file final
 	~sequential_file() noexcept;
 };
 
-struct ircd::db::database::env::writable_file
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::env::writable_file
 :rocksdb::WritableFile
 {
 	using Status = rocksdb::Status;
@@ -251,7 +258,8 @@ struct ircd::db::database::env::writable_file
 	~writable_file() noexcept;
 };
 
-struct ircd::db::database::env::writable_file_direct final
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::env::writable_file_direct final
 :writable_file
 {
 	size_t alignment {0};

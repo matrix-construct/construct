@@ -11,7 +11,8 @@
 #pragma once
 #define HAVE_IRCD_DB_ENV_STATE_H
 
-struct ircd::db::database::env::state
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::env::state
 {
 	struct task;
 	struct pool;
@@ -30,7 +31,8 @@ struct ircd::db::database::env::state
 	~state() noexcept;
 };
 
-struct ircd::db::database::env::state::pool
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::env::state::pool
 {
 	using Priority = rocksdb::Env::Priority;
 	using IOPriority = rocksdb::Env::IOPriority;
@@ -60,7 +62,8 @@ struct ircd::db::database::env::state::pool
 	~pool() noexcept;
 };
 
-struct ircd::db::database::env::state::task
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::env::state::task
 {
 	void (*func)(void *arg);
 	void (*cancel)(void *arg);

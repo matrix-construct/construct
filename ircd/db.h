@@ -55,6 +55,12 @@
 #include <rocksdb/wal_filter.h>
 #include <rocksdb/rate_limiter.h>
 
+#include "db_has.h"
+#include "db_port.h"
+#include "db_env.h"
+#include "db_env_state.h"
+
+#pragma GCC visibility push(hidden)
 namespace ircd::db
 {
 	struct throw_on_error;
@@ -137,15 +143,7 @@ namespace ircd::db
 	void commit(database &, rocksdb::WriteBatch &, const sopts &);
 	void append(rocksdb::WriteBatch &, column &, const column::delta &delta);
 	void append(rocksdb::WriteBatch &, const cell::delta &delta);
-}
 
-#include "db_has.h"
-#include "db_port.h"
-#include "db_env.h"
-#include "db_env_state.h"
-
-namespace ircd::db
-{
 	const descriptor &describe(const database::column &);
 	const std::string &name(const database::column &);
 	uint32_t id(const database::column &);
@@ -156,10 +154,12 @@ namespace ircd::db
 	std::shared_ptr<const database::column> shared_from(const database::column &);
 	std::shared_ptr<database::column> shared_from(database::column &);
 }
+#pragma GCC visibility pop
 
 #ifdef IRCD_DB_HAS_ALLOCATOR
 /// Dynamic memory
-struct ircd::db::database::allocator final
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::allocator final
 :rocksdb::MemoryAllocator
 {
 	static const size_t ALIGN_DEFAULT;
@@ -190,7 +190,8 @@ struct ircd::db::database::allocator final
 };
 #endif
 
-struct ircd::db::database::cache final
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::cache final
 :rocksdb::Cache
 {
 	using Slice = rocksdb::Slice;
@@ -241,7 +242,8 @@ struct ircd::db::database::cache final
 	~cache() noexcept override;
 };
 
-struct ircd::db::database::comparator final
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::comparator final
 :rocksdb::Comparator
 {
 	using Slice = rocksdb::Slice;
@@ -260,7 +262,8 @@ struct ircd::db::database::comparator final
 	comparator(database *const &d, db::comparator user);
 };
 
-struct ircd::db::database::prefix_transform final
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::prefix_transform final
 :rocksdb::SliceTransform
 {
 	using Slice = rocksdb::Slice;
@@ -281,7 +284,8 @@ struct ircd::db::database::prefix_transform final
 	{}
 };
 
-struct ircd::db::database::mergeop final
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::mergeop final
 :std::enable_shared_from_this<struct ircd::db::database::mergeop>
 ,rocksdb::AssociativeMergeOperator
 {
@@ -295,7 +299,8 @@ struct ircd::db::database::mergeop final
 	~mergeop() noexcept;
 };
 
-struct ircd::db::database::compaction_filter final
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::compaction_filter final
 :rocksdb::CompactionFilter
 {
 	using Slice = rocksdb::Slice;
@@ -312,7 +317,8 @@ struct ircd::db::database::compaction_filter final
 	~compaction_filter() noexcept override;
 };
 
-struct ircd::db::database::stats final
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::stats final
 :rocksdb::Statistics
 {
 	static constexpr auto NUM_TICKER { rocksdb::TICKER_ENUM_MAX };
@@ -349,7 +355,8 @@ struct ircd::db::database::stats final
 	~stats() noexcept;
 };
 
-struct ircd::db::database::stats::passthru final
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::stats::passthru final
 :rocksdb::Statistics
 {
 	std::array<rocksdb::Statistics *, 2> pass {{nullptr}};
@@ -367,7 +374,8 @@ struct ircd::db::database::stats::passthru final
 	~passthru() noexcept;
 };
 
-struct ircd::db::database::column final
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::column final
 :std::enable_shared_from_this<database::column>
 ,rocksdb::ColumnFamilyDescriptor
 {
@@ -400,7 +408,8 @@ struct ircd::db::database::column final
 	~column() noexcept;
 };
 
-struct ircd::db::txn::handler
+struct [[gnu::visibility("hidden")]]
+ircd::db::txn::handler
 :rocksdb::WriteBatch::Handler
 {
 	using Status = rocksdb::Status;
@@ -433,7 +442,8 @@ struct ircd::db::txn::handler
 };
 
 /// Callback surface for iterating/recovering the write-ahead-log journal.
-struct ircd::db::database::wal_filter
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::wal_filter
 :rocksdb::WalFilter
 {
 	using WriteBatch = rocksdb::WriteBatch;
@@ -455,7 +465,8 @@ struct ircd::db::database::wal_filter
 	~wal_filter() noexcept;
 };
 
-struct ircd::db::database::events final
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::events final
 :std::enable_shared_from_this<struct ircd::db::database::events>
 ,rocksdb::EventListener
 {
@@ -479,7 +490,8 @@ struct ircd::db::database::events final
 	{}
 };
 
-struct ircd::db::database::logger final
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::logger final
 :std::enable_shared_from_this<struct database::logger>
 ,rocksdb::Logger
 {
@@ -495,7 +507,8 @@ struct ircd::db::database::logger final
 	~logger() noexcept override;
 };
 
-struct ircd::db::database::rate_limiter
+struct [[gnu::visibility("hidden")]]
+ircd::db::database::rate_limiter
 :std::enable_shared_from_this<struct database::rate_limiter>
 ,rocksdb::RateLimiter
 {
@@ -526,12 +539,14 @@ struct ircd::db::database::rate_limiter
 // util
 //
 
-struct ircd::db::throw_on_error
+struct [[gnu::visibility("hidden")]]
+ircd::db::throw_on_error
 {
 	throw_on_error(const rocksdb::Status & = rocksdb::Status::OK());
 };
 
-struct ircd::db::error_to_status
+struct [[gnu::visibility("hidden")]]
+ircd::db::error_to_status
 :rocksdb::Status
 {
 	error_to_status(const std::error_code &);
