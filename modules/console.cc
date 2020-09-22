@@ -15196,9 +15196,15 @@ console_cmd__fed__key(opt &out, const string_view &line)
 	};
 
 	pretty(out, key);
-	out << std::endl
-	    << string_view{response}
-	    << std::endl;
+	out << std::endl;
+	out << string_view{response};
+	out << std::endl;
+
+	if(!m::verify(key, std::nothrow))
+		out << "SIGNATURE FAILIED" << std::endl;
+
+	if(expired(key))
+		out << "EXPIRED" << std::endl;
 
 	return true;
 }
