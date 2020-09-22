@@ -270,8 +270,10 @@ noexcept try
 			// and not taken the second time.
 			if(level == ircd::run::level::LOAD && !context && !nomatrix)
 			{
+				using namespace ircd::util;
+
 				// 3 Launch the homeserver context (asynchronous).
-				context = { "matrix", ircd::context::POST, homeserver };
+				context = { "matrix", 1_MiB, ircd::context::POST, homeserver };
 
 				// 4 Yield until the homeserver function notifies `start`; waiting
 				// here prevents ircd::main() from entering runlevel RUN.
