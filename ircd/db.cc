@@ -6011,19 +6011,6 @@ ircd::db::cell::operator()(const op &op,
 	write(cell::delta{op, *this, val}, sopts);
 }
 
-ircd::db::cell::operator
-string_view()
-{
-	return val();
-}
-
-ircd::db::cell::operator
-string_view()
-const
-{
-	return val();
-}
-
 ircd::string_view
 ircd::db::cell::val()
 {
@@ -6264,13 +6251,6 @@ const
 	}
 
 	return val;
-}
-
-const ircd::db::domain::const_iterator_base::value_type *
-ircd::db::domain::const_iterator_base::operator->()
-const
-{
-	return &this->operator*();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -7409,20 +7389,6 @@ const
 	val.first = db::key(*it);
 	val.second = db::val(*it);
 	return val;
-}
-
-const ircd::db::column::const_iterator_base::value_type *
-ircd::db::column::const_iterator_base::operator->()
-const
-{
-	return &operator*();
-}
-
-bool
-ircd::db::column::const_iterator_base::operator!()
-const noexcept
-{
-	return !static_cast<bool>(*this);
 }
 
 ircd::db::column::const_iterator_base::operator bool()

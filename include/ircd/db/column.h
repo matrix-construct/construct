@@ -280,6 +280,20 @@ struct ircd::db::column::const_reverse_iterator
 	using const_iterator_base::const_iterator_base;
 };
 
+inline const ircd::db::column::const_iterator_base::value_type *
+ircd::db::column::const_iterator_base::operator->()
+const
+{
+	return &operator*();
+}
+
+inline bool
+ircd::db::column::const_iterator_base::operator!()
+const noexcept
+{
+	return !static_cast<bool>(*this);
+}
+
 inline ircd::db::column::const_iterator_base::operator
 gopts &()
 {

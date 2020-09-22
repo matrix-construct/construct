@@ -97,3 +97,10 @@ struct ircd::db::domain::const_reverse_iterator
 
 	using domain::const_iterator_base::const_iterator_base;
 };
+
+inline const ircd::db::domain::const_iterator_base::value_type *
+ircd::db::domain::const_iterator_base::operator->()
+const
+{
+	return &this->operator*();
+}

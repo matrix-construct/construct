@@ -133,3 +133,16 @@ ircd::db::operator<<(std::ostream &s, const cell &c)
 	s << string_view{c};
 	return s;
 }
+
+inline ircd::db::cell::operator
+string_view()
+{
+    return val();
+}
+
+inline ircd::db::cell::operator
+string_view()
+const
+{
+    return val();
+}
