@@ -7407,24 +7407,43 @@ bool
 ircd::db::operator!=(const column::const_iterator_base &a, const column::const_iterator_base &b)
 noexcept
 {
-	return !(a == b);
+	const uint operands
+	{
+		uint(bool(a)) +
+		uint(bool(b))
+	};
+
+	// Two invalid iterators are equal; one invalid iterator is not.
+	if(likely(operands <= 1))
+		return operands == 1;
+
+	// Two valid iterators are compared
+	assert(operands == 2);
+	const auto &ak(a.it->key());
+	const auto &bk(b.it->key());
+	return ak.compare(bk) != 0;
 }
 
 bool
 ircd::db::operator==(const column::const_iterator_base &a, const column::const_iterator_base &b)
 noexcept
 {
-	if(a && b)
+	const uint operands
+	{
+		uint(bool(a)) +
+		uint(bool(b))
+	};
+
+	// Two valid iterators are compared
+	if(likely(operands > 1))
 	{
 		const auto &ak(a.it->key());
 		const auto &bk(b.it->key());
 		return ak.compare(bk) == 0;
 	}
 
-	if(!a && !b)
-		return true;
-
-	return false;
+	// Two invalid iterators are equal; one invalid iterator is not.
+	return operands == 0;
 }
 
 bool
