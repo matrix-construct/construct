@@ -533,9 +533,12 @@ applyargs()
 		ircd::db::open_recover.set("recover");
 
 	if(repairdb)
+	{
 		ircd::db::open_repair.set("true");
-	else
-		ircd::db::open_repair.set("false");
+		nocompact = true;
+		cmdline = true;
+	}
+	else ircd::db::open_repair.set("false");
 
 	if(nocompact)
 		ircd::db::auto_compact.set("false");
