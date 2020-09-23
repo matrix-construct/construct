@@ -3249,6 +3249,7 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 				beyond_head
 		};
 
+		assert(!state.chunk_length);
 		state.chunk_length = -1;
 		const const_buffer overrun
 		{
@@ -3528,6 +3529,7 @@ ircd::server::tag::read_chunk_head(const const_buffer &buffer,
 	};
 
 	assert(state.chunk_length >= 2);
+	assert(state.chunk_length != size_t(-1));
 	read_chunk_content(partial_chunk, done);
 
 	if(done || empty(overrun))
@@ -3585,6 +3587,9 @@ ircd::server::tag::read_chunk_content(const const_buffer &buffer,
 
 	assert(state.chunk_read == state.chunk_length);
 	assert(state.chunk_read <= state.content_read);
+	assert(state.chunk_length != size_t(-1));
+	assert(state.chunk_length != 0 || done);
+	assert(state.chunk_read != 0 || done);
 	state.chunk_length = size_t(-1);
 	state.chunk_read = 0;
 	return {};
@@ -3600,11 +3605,13 @@ ircd::server::chunk_content_completed(tag &tag,
 
 	// Remove the terminator from the total length state.
 	assert(state.content_length >= size(http::line::terminator));
+	assert(state.content_read >= size(http::line::terminator));
 	state.content_length -= size(http::line::terminator);
 	state.content_read -= size(http::line::terminator);
 
 	// Remove the terminator from the chunk length state.
-	assert(state.chunk_length >= 2);
+	assert(state.chunk_length >= size(http::line::terminator));
+	assert(state.chunk_read >= size(http::line::terminator));
 	assert(state.chunk_read == state.chunk_length);
 	state.chunk_length -= size(http::line::terminator);
 	state.chunk_read -= size(http::line::terminator);
@@ -3821,6 +3828,7 @@ ircd::server::tag::read_chunk_dynamic_content(const const_buffer &buffer,
 	assert(state.chunk_read <= state.content_read);
 	assert(state.chunk_read <= state.chunk_length);
 	assert(state.content_length >= state.chunk_length);
+	assert(state.content_length >= state.chunk_read);
 
 	// Invoke the user's optional progress callback; this function
 	// should be marked noexcept for the time being.
@@ -3836,6 +3844,8 @@ ircd::server::tag::read_chunk_dynamic_content(const const_buffer &buffer,
 
 	assert(state.chunk_read <= state.content_read);
 	assert(state.chunk_length != size_t(-1));
+	assert(state.chunk_length != 0 || done);
+	assert(state.chunk_read != 0 || done);
 	state.chunk_length = size_t(-1);
 	state.chunk_read = 0;
 	return {};
