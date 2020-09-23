@@ -2752,12 +2752,15 @@ noexcept
 
 	// The cancellation is a straightforward facsimile except in the case of
 	// dynamic chunked encoding mode where we need to add additional scratch.
+	assert(tag.state.head_read <= size(request.in.head));
 	const size_t additional_scratch
 	{
 		tag.state.chunk_length != 0 && null(request.in.content)?
-			std::max(tag.state.head_rem, size_t(8_KiB)) : 0_KiB
+			tag.state.head_rem:
+			0_KiB
 	};
 
+	assert(additional_scratch <= 64_KiB); // sanity
 	const size_t cancellation_size
 	{
 		size(request.out) + size(request.in) + additional_scratch
@@ -2774,6 +2777,7 @@ noexcept
 	// user's buffers.
 
 	assert(!tag.cancellation);
+	assert(cancellation_size < 64_MiB); // sanity
 	tag.cancellation = unique_buffer<mutable_buffer>
 	{
 		cancellation_size
@@ -2796,7 +2800,10 @@ noexcept
 	// dynamic chunked encoding mode where we need to add additional scratch.
 	const mutable_buffer in_head{ptr, size(request.in.head)};
 	tag.request->in.head = in_head;
-	ptr += size(in_head) + additional_scratch;
+	ptr += size(in_head);
+
+	const mutable_buffer in_scratch{ptr, additional_scratch};
+	ptr += size(in_scratch);
 
 	const mutable_buffer in_content{ptr, size(request.in.content)};
 	// The nullity (btw that's a real word) of in.content has to be preserved
@@ -2862,6 +2869,26 @@ noexcept
 		const mutable_buffer dst
 		{
 			in_head
+		};
+
+		copy(dst, src);
+	}
+
+	// If the chunk head (in dynamic mode) is not complete at this point we
+	// copy that portion. This is where the scratch area after the real head
+	// is used.
+	if(tag.state.chunk_length != 0 && null(request.in.content))
+	{
+		assert(tag.state.content_read >= tag.state.chunk_read);
+		const const_buffer src
+		{
+			data(request.in.head) + tag.state.head_read,
+			tag.state.chunk_read
+		};
+
+		const mutable_buffer dst
+		{
+			in_scratch
 		};
 
 		copy(dst, src);
