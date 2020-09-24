@@ -63,7 +63,9 @@ handle_m_fully_read(client &client,
 
 	const m::event::id &event_id
 	{
-		event_id_buf?: m::event::id{input}
+		event_id_buf?
+			m::event::id{event_id_buf}:
+			m::event::id{input}
 	};
 
 	const m::user::room_account_data account_data
@@ -78,7 +80,7 @@ handle_m_fully_read(client &client,
 	{
 		const json::string &prior_id
 		{
-			content.get("event_id")
+			content["event_id"]
 		};
 
 		duplicate = prior_id == event_id;
