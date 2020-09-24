@@ -6578,12 +6578,12 @@ console_cmd__client(opt &out, const string_view &line)
 
 	const params param{line, " ",
 	{
-		"[reqs|id]",
+		"[request|id]",
 	}};
 
 	const bool &reqs
 	{
-		param[0] == "reqs"
+		param[0] == "request"
 	};
 
 	const auto &idnum
