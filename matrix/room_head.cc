@@ -76,8 +76,7 @@ try
 	bool need_top_head{opts.need_top_head};
 	bool need_my_head{opts.need_my_head};
 	ssize_t limit(opts.limit);
-	head.for_each([&]
-	(const event::idx &event_idx, const event::id &event_id)
+	head.for_each([&](const event::idx &event_idx, const event::id &event_id)
 	{
 		// Determine the depth for metrics
 		const int64_t depth

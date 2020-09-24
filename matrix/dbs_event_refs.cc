@@ -219,11 +219,14 @@ ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
 	event::id prev_id[count];
 	event::idx prev_idx[count];
 	for(size_t i(0); i < count; ++i)
-		prev_id[i] = prev.prev_event(i);
+		prev_id[i] = prev.prev_event(i),
+		prev_idx[i] = 0;
 
-	const auto found
+	auto _opts(opts);
+	_opts.interpose = {};
+	const size_t found
 	{
-		find_event_idx({prev_idx, count}, {prev_id, count}, opts)
+		find_event_idx({prev_idx, count}, {prev_id, count}, _opts)
 	};
 
 	for(size_t i(0); i < count; ++i)
@@ -245,9 +248,11 @@ ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
 			continue;
 		}
 
-		thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
-		assert(opts.event_idx != 0 && prev_idx[i] != 0);
 		assert(opts.event_idx != prev_idx[i]);
+		assert(prev_idx[i] < opts.event_idx);
+		assert(prev_idx[i] <= vm::sequence::retired);
+		assert(prev_idx[i] != 0 && opts.event_idx != 0);
+		thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
 		const string_view &key
 		{
 			event_refs_key(buf, prev_idx[i], ref::NEXT, opts.event_idx)

@@ -405,6 +405,7 @@ ircd::m::dbs::find_event_idx(const vector_view<event::idx> &idx,
 		for(size_t i(0); i < num; ++i)
 		{
 			idx[i] = wopts.interpose->val(db::op::SET, "_event_idx", event_id[i], 0UL);
+			assert(!idx[i] || idx[i] >= vm::sequence::retired);
 			ret += idx[i] != 0;
 		}
 
@@ -421,6 +422,7 @@ ircd::m::dbs::find_event_idx(const vector_view<event::idx> &idx,
 	for(size_t i(0); i < num; ++i)
 	{
 		idx[i] = m::index(std::nothrow, event_id[i]);
+		assert(idx[i] < vm::sequence::retired);
 		ret += idx[i] != 0;
 	}
 
