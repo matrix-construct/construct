@@ -1419,13 +1419,16 @@ dnl RB_CHK_SYSHEADER(unicode/idna.h, [UNICODE_IDNA_H])
 
 dnl RB_CHK_SYSHEADER(unicode/utmscale.h, [UNICODE_UTMSCALE_H])
 
+have_icu="no"
 PKG_CHECK_MODULES(icuuc, [icuuc],
 [
+	have_icu="yes"
 	have_icuuc="yes"
 	ICU_LIBS+=" -licuuc"
 ], [
 	AC_CHECK_LIB([icuuc], [_init],
 	[
+		have_icu="yes"
 		have_icuuc="yes"
 		ICU_LIBS+=" -licuuc"
 	], [
@@ -1434,6 +1437,7 @@ PKG_CHECK_MODULES(icuuc, [icuuc],
 ])
 
 AM_CONDITIONAL([ICUUC], [test "x$have_icuuc" = "xyes" ])
+AM_CONDITIONAL([ICU], [test "x$have_icu" = "xyes" ])
 
 dnl
 dnl

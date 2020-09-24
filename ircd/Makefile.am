@@ -129,7 +129,9 @@ libircd_la_SOURCES += demangle.cc
 libircd_la_SOURCES += backtrace.cc
 libircd_la_SOURCES += simd.cc
 libircd_la_SOURCES += fpe.cc
+if ICU
 libircd_la_SOURCES += icu.cc
+endif
 libircd_la_SOURCES += utf.cc
 libircd_la_SOURCES += timedate.cc
 libircd_la_SOURCES += lex_cast.cc
