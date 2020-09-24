@@ -2955,10 +2955,21 @@ ircd::db::database::events::OnFlushCompleted(rocksdb::DB *const db,
                                              const rocksdb::FlushJobInfo &info)
 noexcept
 {
+	const auto num_deletions
+	{
+		#if ROCKSDB_MAJOR > 5 \
+		|| (ROCKSDB_MAJOR == 5 && ROCKSDB_MINOR > 18) \
+		|| (ROCKSDB_MAJOR == 5 && ROCKSDB_MINOR == 18 && ROCKSDB_PATCH >= 3)
+			info.table_properties.num_deletions
+		#else
+			0UL
+		#endif
+	};
+
 	char pbuf[2][48];
 	log::info
 	{
-		log, "[%s] job:%d ctx:%lu flushed seq[%lu -> %lu] idxs:%lu blks:%lu keys:%lu deletes:%lu data[%s] '%s' `%s'",
+		log, "[%s] job:%d ctx:%lu flushed seq[%lu -> %lu] idxs:%lu blks:%lu keys:%lu dels:%lu data[%s] '%s' `%s'",
 		d->name,
 		info.job_id,
 		info.thread_id,
@@ -2967,7 +2978,7 @@ noexcept
 		info.table_properties.index_partitions,
 		info.table_properties.num_data_blocks,
 		info.table_properties.num_entries,
-		info.table_properties.num_deletions,
+		num_deletions,
 		pretty(pbuf[1], iec(info.table_properties.data_size)),
 		info.cf_name,
 		info.file_path,
