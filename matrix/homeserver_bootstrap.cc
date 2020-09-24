@@ -343,6 +343,7 @@ try
 		};
 
 		ctx::yield();
+		ctx::yield();
 		ctx::interruption_point();
 	}
 

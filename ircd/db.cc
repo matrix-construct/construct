@@ -3158,6 +3158,8 @@ noexcept
 		info.num_entries,
 		info.num_deletes
 	};
+
+	ctx::yield();
 }
 
 void
@@ -3250,6 +3252,8 @@ void
 ircd::db::database::events::OnStallConditionsChanged(const rocksdb::WriteStallInfo &info)
 noexcept
 {
+	using rocksdb::WriteStallCondition;
+
 	const auto level
 	{
 		info.condition.cur == rocksdb::WriteStallCondition::kNormal?
@@ -3266,6 +3270,16 @@ noexcept
 		reflect(info.condition.prev),
 		reflect(info.condition.cur)
 	};
+
+	int i
+	{
+		info.condition.prev == WriteStallCondition::kDelayed? 4:
+		info.condition.prev == WriteStallCondition::kStopped? 8:
+		0
+	};
+
+	while(i--)
+		ctx::yield();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
