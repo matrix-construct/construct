@@ -1277,29 +1277,19 @@ try
 	opts->create_if_missing = true;
 	opts->create_missing_column_families = true;
 
-	// Uses thread_local counters in rocksdb and probably useless for ircd::ctx.
-	opts->enable_thread_tracking = false;
-
-	// MUST be 0 or std::threads are spawned in rocksdb.
-	opts->max_file_opening_threads = 0;
-
 	// limit maxfdto prevent too many small files degrading read perf; too low is
 	// bad for write perf.
 	opts->max_open_files = !slave?
 		fs::support::rlimit_nofile():
 		-1;
 
+	// MUST be 0 or std::threads are spawned in rocksdb.
+	opts->max_file_opening_threads = 0;
+
 	opts->max_background_jobs = 16;
 	opts->max_background_flushes = 8;
 	opts->max_background_compactions = 4;
-
-	opts->max_total_wal_size = 96_MiB;
-	opts->db_write_buffer_size = 96_MiB;
-	//opts->max_log_file_size = 32_MiB;
-
-	//TODO: range_sync
-	opts->bytes_per_sync = 0;
-	opts->wal_bytes_per_sync = 0;
+	opts->max_subcompactions = 1;
 
 	// For the write-side of a compaction process: writes will be of approx
 	// this size. The compaction process is composing a buffer of this size
@@ -1307,25 +1297,33 @@ try
 	// other ircd::ctx's. Too small a buffer will be inefficient.
 	opts->writable_file_max_buffer_size = 2_MiB; //TODO: conf
 
-	// MUST be 1 (no subcompactions) or rocksdb spawns internal std::thread.
-	opts->max_subcompactions = 1;
+	// For the read-side of the compaction process.
+	opts->compaction_readahead_size = !opts->use_direct_reads?
+		2_MiB: //TODO: conf
+		0;
 
-	// Disable noise
-	opts->stats_dump_period_sec = 0;
+	opts->max_total_wal_size = 96_MiB;
+	opts->db_write_buffer_size = 96_MiB;
 
-	// Disables the timer to delete unused files; this operation occurs
-	// instead with our compaction operations so we don't need to complicate.
-	opts->delete_obsolete_files_period_micros = 0;
-	opts->keep_log_file_num = 16;
+	//TODO: range_sync
+	opts->bytes_per_sync = 0;
+	opts->wal_bytes_per_sync = 0;
 
-	// These values prevent codepaths from being taken in rocksdb which may
-	// introduce issues for ircd::ctx. We should still fully investigate
-	// if any of these features can safely be used.
+	// This prevents the creation of additional SST files and lots of I/O on
+	// either DB open and close.
+	opts->avoid_flush_during_recovery = true;
+	opts->avoid_flush_during_shutdown = false;
+
 	opts->allow_concurrent_memtable_write = true;
 	opts->enable_write_thread_adaptive_yield = false;
 	opts->enable_pipelined_write = false;
 	opts->write_thread_max_yield_usec = 0;
 	opts->write_thread_slow_yield_usec = 0;
+
+	// Doesn't appear to be in effect when direct io is used. Not supported by
+	// all filesystems so disabled for now.
+	// TODO: use fs::support::test_fallocate() test similar to direct_io_test_file.
+	opts->allow_fallocate = false;
 
 	// Detect if O_DIRECT is possible if db::init left a file in the
 	// database directory claiming such. User can force no direct io
@@ -1334,22 +1332,8 @@ try
 		fs::exists(direct_io_test_file_path):
 		false;
 
-	// For the read-side of the compaction process.
-	opts->compaction_readahead_size = !opts->use_direct_reads?
-		2_MiB: //TODO: conf
-		0;
-
 	// Use the determined direct io value for writes as well.
 	//opts->use_direct_io_for_flush_and_compaction = opts->use_direct_reads;
-
-	// Doesn't appear to be in effect when direct io is used. Not supported by
-	// all filesystems so disabled for now.
-	// TODO: use fs::support::test_fallocate() test similar to direct_io_test_file.
-	opts->allow_fallocate = false;
-
-	#ifdef RB_DEBUG
-	opts->dump_malloc_stats = true;
-	#endif
 
 	// Default corruption tolerance is zero-tolerance; db fails to open with
 	// error by default to inform the user. The rest of the options are
@@ -1382,11 +1366,6 @@ try
 	if(string_view(open_recover) == "tolerate")
 		opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kTolerateCorruptedTailRecords;
 
-	// This prevents the creation of additional SST files and lots of I/O on
-	// either DB open and close.
-	opts->avoid_flush_during_recovery = true;
-	opts->avoid_flush_during_shutdown = false;
-
 	// Setup env
 	opts->env = env.get();
 
@@ -1399,10 +1378,15 @@ try
 	// Setup SST file mgmt
 	opts->sst_file_manager = this->ssts;
 
+	// Setup row cache.
+	opts->row_cache = this->row_cache;
+
 	// Setup logging
 	logger->SetInfoLogLevel(ircd::debugmode? rocksdb::DEBUG_LEVEL : rocksdb::WARN_LEVEL);
 	opts->info_log_level = logger->GetInfoLogLevel();
 	opts->info_log = logger;
+	opts->keep_log_file_num = 1;
+	//opts->max_log_file_size = 32_MiB;
 
 	// Setup event and statistics callbacks
 	opts->listeners.emplace_back(this->events);
@@ -1417,13 +1401,22 @@ try
 		this->stats->stats_level_ = rocksdb::kAll;
 	#endif
 
+	opts->stats_dump_period_sec = 0; // Disable noise
 	opts->statistics = this->stats;
+
+	#ifdef RB_DEBUG
+	opts->dump_malloc_stats = true;
+	#endif
+
+	// Disables the timer to delete unused files; this operation occurs
+	// instead with our compaction operations so we don't need to complicate.
+	opts->delete_obsolete_files_period_micros = 0;
+
+	// Uses thread_local counters in rocksdb and probably useless for ircd::ctx.
+	opts->enable_thread_tracking = false;
 
 	// Setup performance metric options
 	//rocksdb::SetPerfLevel(rocksdb::PerfLevel::kDisable);
-
-	// Setup row cache.
-	opts->row_cache = this->row_cache;
 
 	return opts;
 }()}
