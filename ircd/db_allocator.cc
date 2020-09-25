@@ -16,6 +16,12 @@
 	#warning "Consider upgrading to rocksdb 5.18+ for improved memory management."
 #endif
 
+#if defined(IRCD_ALLOCATOR_USE_JEMALLOC) && defined(HAVE_JEMALLOC_H)
+	#define IRCD_DB_USE_JEMALLOC
+#else
+	#warning "Consider building with jemalloc for improved memory management."
+#endif
+
 //
 // database::allocator
 //
@@ -24,7 +30,7 @@
 
 namespace ircd::db
 {
-	#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+	#ifdef IRCD_DB_USE_JEMALLOC
 	static void *cache_arena_handle_alloc(extent_hooks_t *, void *, size_t, size_t, bool *, bool *, uint) noexcept;
 	static bool cache_arena_handle_dalloc(extent_hooks_t *, void *, size_t, bool, uint) noexcept;
 	static void cache_arena_handle_destroy(extent_hooks_t *, void *, size_t, bool, uint) noexcept;
@@ -78,7 +84,7 @@ ircd::db::database::allocator::cache_arena;
 void
 ircd::db::database::allocator::init()
 {
-	#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+	#ifdef IRCD_DB_USE_JEMALLOC
 	cache_arena = ircd::allocator::get<unsigned>("arenas.create");
 
 	char extent_hooks_keybuf[32];
@@ -105,7 +111,7 @@ void
 ircd::db::database::allocator::fini()
 noexcept
 {
-	#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+	#ifdef IRCD_DB_USE_JEMALLOC
 	if(likely(cache_arena != 0))
 	{
 		char keybuf[64];
@@ -122,7 +128,7 @@ noexcept
 	#endif
 }
 
-#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+#ifdef IRCD_DB_USE_JEMALLOC
 void *
 ircd::db::cache_arena_handle_alloc(extent_hooks_t *const hooks,
                                    void *const new_addr,
@@ -171,7 +177,7 @@ noexcept
 }
 #endif
 
-#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+#ifdef IRCD_DB_USE_JEMALLOC
 bool
 ircd::db::cache_arena_handle_dalloc(extent_hooks_t *hooks,
                                     void *const ptr,
@@ -213,7 +219,7 @@ noexcept
 }
 #endif
 
-#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+#ifdef IRCD_DB_USE_JEMALLOC
 void
 ircd::db::cache_arena_handle_destroy(extent_hooks_t *hooks,
                                      void *const ptr,
@@ -250,7 +256,7 @@ noexcept
 }
 #endif
 
-#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+#ifdef IRCD_DB_USE_JEMALLOC
 bool
 ircd::db::cache_arena_handle_commit(extent_hooks_t *const hooks,
                                     void *const ptr,
@@ -280,7 +286,7 @@ noexcept
 }
 #endif
 
-#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+#ifdef IRCD_DB_USE_JEMALLOC
 bool
 ircd::db::cache_arena_handle_decommit(extent_hooks_t *const hooks,
                                       void *const ptr,
@@ -310,7 +316,7 @@ noexcept
 }
 #endif
 
-#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+#ifdef IRCD_DB_USE_JEMALLOC
 bool
 ircd::db::cache_arena_handle_purge_lazy(extent_hooks_t *const hooks,
                                         void *const ptr,
@@ -340,7 +346,7 @@ noexcept
 }
 #endif
 
-#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+#ifdef IRCD_DB_USE_JEMALLOC
 bool
 ircd::db::cache_arena_handle_purge_forced(extent_hooks_t *const hooks,
                                           void *const ptr,
@@ -370,7 +376,7 @@ noexcept
 }
 #endif
 
-#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+#ifdef IRCD_DB_USE_JEMALLOC
 bool
 ircd::db::cache_arena_handle_split(extent_hooks_t *const hooks,
                                    void *const ptr,
@@ -402,7 +408,7 @@ noexcept
 }
 #endif
 
-#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+#ifdef IRCD_DB_USE_JEMALLOC
 bool
 ircd::db::cache_arena_handle_merge(extent_hooks_t *const hooks,
                                    void *const addr_a,
@@ -449,7 +455,7 @@ ircd::db::database::allocator::allocator(database *const &d,
 ,arena_flags
 {
 	0
-	#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+	#ifdef IRCD_DB_USE_JEMALLOC
 	| MALLOCX_ARENA(this->arena)
 	| MALLOCX_ALIGN(this->alignment)
 	| MALLOCX_TCACHE_NONE
@@ -471,7 +477,7 @@ const noexcept
 {
 	const size_t ret
 	{
-		#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+		#ifdef IRCD_DB_USE_JEMALLOC
 			sallocx(ptr, arena_flags)
 		#else
 			size % alignment != 0?
@@ -480,7 +486,7 @@ const noexcept
 		#endif
 	};
 
-	#ifndef IRCD_ALLOCATOR_USE_JEMALLOC
+	#ifndef IRCD_DB_USE_JEMALLOC
 		assert(ret % alignment == 0);
 		assert(alignment % sizeof(void *) == 0);
 	#endif
@@ -492,7 +498,7 @@ void
 ircd::db::database::allocator::Deallocate(void *const ptr)
 noexcept
 {
-	#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+	#ifdef IRCD_DB_USE_JEMALLOC
 		dallocx(ptr, arena_flags);
 	#else
 		std::free(ptr);
@@ -508,7 +514,7 @@ noexcept
 
 	const auto ptr
 	{
-		#ifdef IRCD_ALLOCATOR_USE_JEMALLOC
+		#ifdef IRCD_DB_USE_JEMALLOC
 			mallocx(size, arena_flags)
 		#else
 			ircd::allocator::aligned_alloc(alignment, size).release()
