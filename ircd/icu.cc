@@ -312,11 +312,13 @@ ircd::icu::utf8::decode(char32_t *const &out,
 		reinterpret_cast<const uint8_t *>(data(in))
 	};
 
-	size_t ret(0), off(0);
-	for(; ret < max && off < size(in); ++ret)
-		U8_NEXT(_in, off, size(in), out[ret]);
+	size_t ret(0);
+	int32_t off(0);
+	const int32_t size_in(size(in));
+	for(; ret < max && off < size_in; ++ret)
+		U8_NEXT(_in, off, size_in, out[ret]);
 
-	assert(off <= size(in));
+	assert(off <= size_in);
 	assert(ret <= max);
 	return ret;
 }
