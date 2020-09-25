@@ -768,6 +768,17 @@ ircd::m::type(const mutable_buffer &buf,
 	return ret;
 }
 
+bool
+ircd::m::contains(const id::room &room_id,
+                  const event::idx &event_idx)
+{
+	return m::query(event_idx, "room_id", [&room_id]
+	(const string_view &_room_id) -> bool
+	{
+		return _room_id == room_id;
+	});
+}
+
 ircd::m::id::user::buf
 ircd::m::creator(const id::room &room_id)
 {

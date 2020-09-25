@@ -32,6 +32,7 @@ namespace ircd::m
 	bool internal(const id::room &);
 	bool federated(const id::room &);
 	bool creator(const id::room &, const id::user &);
+	bool contains(const id::room &, const event::idx &);
 	bool membership(const room &, const id::user &, const string_view & = "join");
 	bool join_rule(const room &, const string_view &rule);
 	bool visible(const room &, const string_view &mxid, const m::event *const & = nullptr);
