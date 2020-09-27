@@ -104,6 +104,12 @@ ircd::json::parser
 		,"number"
 	};
 
+	const rule<> number_begin
+	{
+		char_("0-9-")
+		,"first character of number"
+	};
+
 	// string
 	const rule<> utf16_surrogate
 	{
@@ -211,7 +217,7 @@ ircd::json::parser
 		(&quote >> string)
 		| (&object_begin >> object(depth + 1))
 		| (&array_begin >> array(depth + 1))
-		| number
+		| (&number_begin >> number)
 		| lit_true
 		| lit_false
 		| lit_null
@@ -233,7 +239,7 @@ ircd::json::parser
 		value %= (&quote >> string)
 		| (&object_begin >> object(depth + 1))
 		| (&array_begin >> array(depth + 1))
-		| number
+		| (&number_begin >> number)
 		| lit_true
 		| lit_false
 		| lit_null
@@ -4814,11 +4820,11 @@ namespace ircd::json
 decltype(ircd::json::type_parse_is)
 ircd::json::type_parse_is
 {
-	{ -parser.ws >> parser.quote                           },
-	{ -parser.ws >> parser.object_begin                    },
-	{ -parser.ws >> parser.array_begin                     },
-	{ -parser.ws >> parser.number >> -parser.ws >> eoi     },
-	{ -parser.ws >> parser.literal >> -parser.ws >> eoi    },
+	{ -parser.ws >> parser.quote                              },
+	{ -parser.ws >> parser.object_begin                       },
+	{ -parser.ws >> parser.array_begin                        },
+	{ -parser.ws >> parser.number_begin                       },
+	{ -parser.ws >> parser.literal >> -parser.ws >> eoi       },
 };
 
 //TODO: XXX array designated initializers
@@ -4828,7 +4834,7 @@ ircd::json::type_parse_is_strict
 	{ -parser.ws >> &parser.quote >> parser.string >> -parser.ws >> eoi            },
 	{ -parser.ws >> &parser.object_begin >> parser.object(0) >> -parser.ws >> eoi  },
 	{ -parser.ws >> &parser.array_begin >> parser.array(0) >> -parser.ws >> eoi    },
-	{ -parser.ws >> parser.number >> -parser.ws >> eoi                             },
+	{ -parser.ws >> &parser.number_begin >> parser.number >> -parser.ws >> eoi     },
 	{ -parser.ws >> parser.literal >> -parser.ws >> eoi                            },
 };
 
