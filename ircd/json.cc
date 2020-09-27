@@ -164,7 +164,7 @@ ircd::json::parser
 	};
 
 	template<class block_t> static u64x2 string_content_block(const block_t, const block_t) noexcept;
-	const custom_parser string_content{};
+	const custom_parser<0> string_content{};
 	const rule<string_view> string
 	{
 		//quote >> chars >> (!escape >> quote)
@@ -474,16 +474,17 @@ const
 /// to the end of whatever the user provided. Returns true if successful and
 /// the result string_view is set in the context attribute; the iterator is
 /// advanced.
+template<>
 template<class iterator,
          class context,
          class skipper,
          class attr>
 inline bool
-ircd::json::custom_parser::parse(iterator &__restrict__ start,
-                                 const iterator &__restrict__ stop,
-                                 context &g,
-                                 const skipper &,
-                                 attr &)
+ircd::json::custom_parser<0>::parse(iterator &__restrict__ start,
+                                    const iterator &__restrict__ stop,
+                                    context &g,
+                                    const skipper &,
+                                    attr &)
 const
 {
 	// Clang scales between 128bit and 256bit systems when we use the 256 bit

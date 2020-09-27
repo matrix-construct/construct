@@ -16,8 +16,11 @@ namespace spirit
 __attribute__((visibility("internal")))
 {
 	struct substring_view;
-	struct custom_parser;
-	BOOST_SPIRIT_TERMINAL(custom);
+
+	template<size_t id> struct custom_parser;
+	BOOST_SPIRIT_TERMINAL(custom0);
+	BOOST_SPIRIT_TERMINAL(custom1);
+	BOOST_SPIRIT_TERMINAL(custom2);
 
 	template<class gen,
 	         class... attr>
@@ -37,18 +40,35 @@ __attribute__((visibility("internal")))
 	namespace qi
 	{
 		template<class modifiers>
-		struct make_primitive<ircd::spirit::tag::custom, modifiers>;
+		struct make_primitive<ircd::spirit::tag::custom0, modifiers>;
+
+		template<class modifiers>
+		struct make_primitive<ircd::spirit::tag::custom1, modifiers>;
+
+		template<class modifiers>
+		struct make_primitive<ircd::spirit::tag::custom2, modifiers>;
 	}
 
 	template<>
-	struct use_terminal<qi::domain, ircd::spirit::tag::custom>
+	struct use_terminal<qi::domain, ircd::spirit::tag::custom0>
+	:mpl::true_
+	{};
+
+	template<>
+	struct use_terminal<qi::domain, ircd::spirit::tag::custom1>
+	:mpl::true_
+	{};
+
+	template<>
+	struct use_terminal<qi::domain, ircd::spirit::tag::custom2>
 	:mpl::true_
 	{};
 }}
 
+template<size_t id>
 struct [[gnu::visibility("internal")]]
 ircd::spirit::custom_parser
-:qi::primitive_parser<custom_parser>
+:qi::primitive_parser<custom_parser<id>>
 {
 	template<class context,
 	         class iterator>
@@ -72,9 +92,33 @@ ircd::spirit::custom_parser
 
 template<class modifiers>
 struct [[gnu::visibility("internal")]]
-boost::spirit::qi::make_primitive<ircd::spirit::tag::custom, modifiers>
+boost::spirit::qi::make_primitive<ircd::spirit::tag::custom0, modifiers>
 {
-	using result_type = ircd::spirit::custom_parser;
+	using result_type = ircd::spirit::custom_parser<0>;
+
+	result_type operator()(unused_type, unused_type) const
+	{
+		return result_type{};
+	}
+};
+
+template<class modifiers>
+struct [[gnu::visibility("internal")]]
+boost::spirit::qi::make_primitive<ircd::spirit::tag::custom1, modifiers>
+{
+	using result_type = ircd::spirit::custom_parser<1>;
+
+	result_type operator()(unused_type, unused_type) const
+	{
+		return result_type{};
+	}
+};
+
+template<class modifiers>
+struct [[gnu::visibility("internal")]]
+boost::spirit::qi::make_primitive<ircd::spirit::tag::custom2, modifiers>
+{
+	using result_type = ircd::spirit::custom_parser<2>;
 
 	result_type operator()(unused_type, unused_type) const
 	{
