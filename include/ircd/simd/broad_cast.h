@@ -16,6 +16,20 @@ namespace ircd::simd
 	template<class T,
 	         class V>
 	T broad_cast(T, const V) noexcept;
+
+	template<class T,
+	         class V>
+	T broad_cast(const V) noexcept;
+}
+
+template<class T,
+         class V>
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline T
+ircd::simd::broad_cast(const V v)
+noexcept
+{
+	return broad_cast(T{}, v);
 }
 
 template<class T,
