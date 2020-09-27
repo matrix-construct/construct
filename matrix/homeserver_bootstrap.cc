@@ -189,9 +189,19 @@ ircd::m::bootstrap_event_vector(homeserver &homeserver)
 try
 {
 	assert(homeserver.opts);
+	const auto &hs_opts
+	{
+		*homeserver.opts
+	};
+
 	const string_view &path
 	{
-		homeserver.opts->bootstrap_vector_path
+		hs_opts.bootstrap_vector_path
+	};
+
+	const bool validate_json_only
+	{
+		has(string_view(ircd::diagnostic), "valid-json")
 	};
 
 	fs::fd::opts fileopts(std::ios::in);
@@ -289,18 +299,28 @@ try
 		size_t i(0);
 		for(; i < vec.size() && it != end(events); ++i, ++it)
 		{
+			// Account for the bytes of the value plus one `,` separator
 			const string_view &elem(*it);
-			vec[i] = json::object{elem};
 			ebytes[1] += elem.size() + 1;
+
+			// In validate mode there's no need to load up the event tuple
+			if(validate_json_only)
+				continue;
+
+			vec[i] = json::object{elem};
 		}
 
-		// process the event batch
+		const vector_view<const m::event> batch
+		{
+			vec.data(), vec.data() + i
+		};
+
+		// process the event batch; make the batch size 0 for validate
 		const size_t accepted
 		{
-			execute(eval, vector_view<const m::event>
-			{
-				vec.data(), vec.data() + i
-			})
+			validate_json_only?
+				0UL:
+				execute(eval, batch)
 		};
 
 		assert(i >= accepted);
@@ -318,6 +338,10 @@ try
 
 		// advise dontneed
 		ebytes[0] += evict(map, incore, opts);
+
+		if(validate_json_only)
+			if(count % (batch_max * 64) != 0)
+				continue;
 
 		const auto db_bytes
 		{
@@ -351,6 +375,7 @@ try
 	// WAL (which is advised in the documentation). If this isn't run several
 	// thousand keys in memory will be dropped inconsistently between database
 	// columns. If WAL is enabled then it tidies the DB up just as well.
+	if(likely(sequence(*dbs::events) > 0))
 	{
 		const bool blocking(true), allow_stall(true);
 		db::sort(*dbs::events, blocking, allow_stall);
