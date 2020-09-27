@@ -267,6 +267,12 @@ try
 	if(need_bootstrap)
 		bootstrap();
 
+	// If the database is empty here there's nothing left to do; this is not
+	// an error. When something tries to use this empty homeserver that is
+	// where the error will be.
+	if(sequence(*dbs::events) == 0)
+		return;
+
 	mods::imports.emplace("net_dns_cache"s, "net_dns_cache"s);
 
 	if(!ircd::write_avoid)
