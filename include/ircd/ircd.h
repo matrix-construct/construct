@@ -111,6 +111,9 @@ namespace ircd
 	extern const info::versions version_api;
 	extern const info::versions version_abi;
 
+	// Diagnostic Mode Options
+	extern conf::item<std::string> diagnostic;
+
 	// Operating Mode Selectors
 	extern conf::item<bool> restart;
 	extern conf::item<bool> debugmode;

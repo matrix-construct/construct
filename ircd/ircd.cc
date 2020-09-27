@@ -140,6 +140,21 @@ ircd::read_only
 	}
 };
 
+/// Diagnostic options selection. This indicates whether any tests or special
+/// behavior should occur rather than normal operation; also allowing for
+/// fine-grained options to be conveyed to such tests/diagnostics. While this
+/// appears here as coarse library-wide option it does not on its own affect
+/// normal server operations just by being set. It affect things only if
+/// specific functionality checks and alters its behavior based on the value
+/// of this string contextually.
+decltype(ircd::diagnostic)
+ircd::diagnostic
+{
+	{ "name",     "ircd.diagnostic"     },
+	{ "default",  string_view{}         },
+	{ "persist",  false                 },
+};
+
 /// Main context pointer placement.
 decltype(ircd::main_context)
 ircd::main_context;

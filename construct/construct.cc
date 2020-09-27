@@ -46,6 +46,7 @@ bool nomatrix;
 bool matrix {true}; // matrix server by default.
 bool defaults;
 const char *bootstrap;
+const char *diagnostic;
 
 lgetopt opts[]
 {
@@ -80,6 +81,7 @@ lgetopt opts[]
 	{ "matrix",     &matrix,        lgetopt::BOOL,    "Allow loading the matrix application module" },
 	{ "defaults",   &defaults,      lgetopt::BOOL,    "Use configuration defaults without database load for this execution" },
 	{ "bootstrap",  &bootstrap,     lgetopt::STRING,  "Bootstrap fresh database from event vector" },
+	{ "diagnostic", &diagnostic,    lgetopt::STRING,  "Specify a diagnostic type in conjunction with other commands" },
 	{ nullptr,      nullptr,        lgetopt::STRING,  nullptr },
 };
 
@@ -477,6 +479,9 @@ enable_coredumps()
 void
 applyargs()
 {
+	if(diagnostic)
+		ircd::diagnostic.set(diagnostic);
+
 	if(single && !bootstrap)
 	{
 		ircd::write_avoid.set("true");
