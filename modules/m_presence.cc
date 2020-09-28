@@ -41,6 +41,14 @@ federation_send
 	{ "default",  false                             },
 };
 
+/// Minimum time between presence events for the same user
+conf::item<seconds>
+federation_rate_user
+{
+	{ "name",     "ircd.m.presence.federation.rate.user" },
+	{ "default",  305L                                   },
+};
+
 log::log
 presence_log
 {
@@ -159,16 +167,29 @@ try
 			json::get<"origin_server_ts"_>(event) - now_active_ago
 		};
 
+		const time_t ts_diff
+		{
+			ircd::time<milliseconds>() - json::get<"origin_server_ts"_>(existing_event)
+		};
+
+		// Ignore any spam on a per-user basis here.
+		if(seconds(ts_diff / 1000) < seconds(federation_rate_user))
+			useful = false;
+
 		// First way to filter out the synapse presence spam bug is seeing
 		// if the update is older than the last update.
-		if(now_active_absolute < prev_active_absolute)
+		else if(now_active_absolute < prev_active_absolute)
 			useful = false;
+
 		else if(json::get<"presence"_>(object) != unquote(existing_object.get("presence")))
 			useful = true;
+
 		else if(json::get<"currently_active"_>(object) != existing_object.get<bool>("currently_active"))
 			useful = true;
+
 		else if(json::get<"currently_active"_>(object))
 			useful = true;
+
 		else
 			useful = false;
 	}};
