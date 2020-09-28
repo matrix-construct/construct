@@ -178,17 +178,28 @@ noexcept try
 
 	// The smoketest uses this ircd::run::level callback to set a flag when
 	// each ircd::run::level is reached. All flags must be set to pass. The
-	// smoketest is inert unless the -smoketest program option is used. Note
-	// the special case for run::level::RUN, which initiates the transition
-	// to QUIT; the ircd::post allows any operations queued in the io_context
-	// to run in case the smoketest isn't the only callback being invoked.
+	// smoketest is inert unless the -smoketest program option is used.
 	const ircd::run::changed smoketester
 	{
 		[](const auto &level)
 		{
 			smoketest.at(size_t(level) + 1) = true;
-			if(smoketest[0] && level == ircd::run::level::RUN)
-				ircd::post {[] { ircd::quit(); }};
+			if(!smoketest[0])
+				return;
+
+			if(level != ircd::run::level::RUN)
+				return;
+
+			if(construct::console::active())
+			{
+				construct::console::quit_when_done = true;
+				return;
+			};
+
+			ircd::post
+			{
+				ircd::quit
+			};
 		}
 	};
 

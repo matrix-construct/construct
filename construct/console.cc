@@ -71,6 +71,9 @@ construct::console::seen_message;
 decltype(construct::console::queue)
 construct::console::queue;
 
+decltype(construct::console::quit_when_done)
+construct::console::quit_when_done;
+
 bool
 construct::console::spawn()
 {
@@ -154,6 +157,9 @@ try
 		while(handle_line())
 			if(!next_command())
 				break;
+
+		if(quit_when_done)
+			ircd::post{ircd::quit};
 
 		return;
 	}

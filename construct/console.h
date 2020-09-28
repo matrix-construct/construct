@@ -19,6 +19,7 @@ struct construct::console
 	static const ircd::string_view console_message;
 	static std::once_flag seen_message;
 	static std::deque<std::string> queue;
+	static bool quit_when_done;
 
 	std::string line;
 	std::string record_path;
