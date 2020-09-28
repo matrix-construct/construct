@@ -45,7 +45,6 @@ namespace ircd::m
 	event signatures(const mutable_buffer &, const m::event &);
 	event essential(event, const mutable_buffer &content);
 
-	bool verify_sha256b64(const event &, const string_view &);
 	bool verify_hash(const event &, const sha256::buf &);
 	bool verify_hash(const event &);
 

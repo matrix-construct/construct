@@ -237,20 +237,7 @@ ircd::m::verify_hash(const event &event)
 
 bool
 ircd::m::verify_hash(const event &event,
-                     const sha256::buf &hash)
-{
-	static constexpr size_t hashb64sz
-	{
-		size_t(sha256::digest_size * 1.34) + 1
-	};
-
-	thread_local char b64buf[hashb64sz];
-	return verify_sha256b64(event, b64::encode_unpadded(b64buf, hash));
-}
-
-bool
-ircd::m::verify_sha256b64(const event &event,
-                          const string_view &b64)
+                     const sha256::buf &actual)
 try
 {
 	const json::object &object
@@ -263,7 +250,14 @@ try
 		object.at("sha256")
 	};
 
-	return hash == b64;
+	thread_local char buf[32];
+	const auto claim
+	{
+		b64::decode(buf, hash)
+	};
+
+	static_assert(sizeof(buf) == sizeof(actual));
+	return memcmp(buf, ircd::data(actual), sizeof(buf)) == 0;
 }
 catch(const json::not_found &)
 {
