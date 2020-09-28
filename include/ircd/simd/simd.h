@@ -31,6 +31,7 @@
 #include "tzcnt.h"
 #include "lateral.h"
 #include "any.h"
+#include "all.h"
 #include "stream.h"
 #include "print.h"
 
