@@ -33,14 +33,16 @@ inline namespace util
 	std::string pretty(const human_readable_size &, const uint &fmt = 0);
 
 	// Human readable time suite (for timers and counts; otherwise see date.h)
-	string_view pretty_nanoseconds(const mutable_buffer &out, const long double &, const uint &fmt = 0);
-	template<class r, class p> string_view pretty(const mutable_buffer &out, const duration<r, p> &, const uint &fmt = 0);
+	string_view pretty(const mutable_buffer &out, const nanoseconds &, const uint &fmt = 0);
+	string_view pretty(const mutable_buffer &out, const microseconds &, const uint &fmt = 0);
+	string_view pretty(const mutable_buffer &out, const milliseconds &, const uint &fmt = 0);
+	string_view pretty(const mutable_buffer &out, const seconds &, const uint &fmt = 0);
 	template<class r, class p> std::string pretty(const duration<r, p> &, const uint &fmt = 0);
 }}
 
 template<class rep,
          class period>
-std::string
+inline std::string
 ircd::util::pretty(const duration<rep, period> &d,
                    const uint &fmt)
 {
@@ -49,17 +51,4 @@ ircd::util::pretty(const duration<rep, period> &d,
 	{
 		return pretty(out, d, fmt);
 	});
-}
-
-template<class rep,
-         class period>
-ircd::string_view
-ircd::util::pretty(const mutable_buffer &out,
-                   const duration<rep, period> &d,
-                   const uint &fmt)
-{
-	using nanoseconds_ld = duration<long double, nanoseconds::period>;
-
-	const auto &ns(duration_cast<nanoseconds_ld>(d));
-	return pretty_nanoseconds(out, ns.count(), fmt);
 }
