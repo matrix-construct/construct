@@ -83,7 +83,7 @@ try
 		content.get("push")
 	};
 
-	for(const json::object &presence : push)
+	for(const json::object presence : push)
 		handle_edu_m_presence_object(event, presence);
 }
 catch(const std::exception &e)
