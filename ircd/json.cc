@@ -580,12 +580,7 @@ noexcept
 		is_esc | is_quote | is_ctrl
 	};
 
-	const block_t is_regular
-	{
-		simd::lateral<std::bit_and>(~is_special)
-	};
-
-	if(likely(is_regular[0]))
+	if(likely(simd::all(~is_special)))
 		return u64x2
 		{
 			0, sizeof(block)
@@ -3510,13 +3505,8 @@ ircd::json::string_stringify(u8x16 &block,
 		is_esc | is_quote | is_ctrl
 	};
 
-	const u8x16 any_special
-	{
-		simd::lateral<std::bit_or>(is_special | ~block_mask)
-	};
-
 	// Fastest-path; backward branch to count and consume all of the input.
-	if(likely(!any_special[0]))
+	if(likely(!simd::any(is_special | ~block_mask)))
 		return u64x2
 		{
 			sizeof(u8x16), sizeof(u8x16)
@@ -3747,13 +3737,8 @@ ircd::json::string_serialized(const u8x16 block,
 		is_esc | is_quote | is_ctrl
 	};
 
-	const u8x16 any_special
-	{
-		simd::lateral<std::bit_or>(is_special | ~block_mask)
-	};
-
 	// Fastest-path; backward branch to count and consume all of the input.
-	if(likely(!any_special[0]))
+	if(likely(!simd::any(is_special | ~block_mask)))
 		return u64x2
 		{
 			sizeof(u8x16), sizeof(u8x16)
