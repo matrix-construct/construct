@@ -122,20 +122,25 @@ ircd::m::events::dump__file(const string_view &filename)
 		foff += size(wrote);
 		if(acount++ % 256 == 0)
 		{
-			char pbuf[2][48];
+			const auto elapsed
+			{
+				std::max(timer.at<seconds>().count(), 1L)
+			};
+
+			char pbuf[3][48];
 			log::info
 			{
-				"dump[%s] %0.2lf%% @ seq %zu of %zu; %zu events; %s in %zu writes; %zu errors; wrote %zu; %s elapsed",
+				"dump[%s] %0.2lf%% @ seq %zu of %zu; %zu events; %zu events/s; wrote %s; %s/s; %s elapsed; errors %zu",
 				filename,
 				(seq / double(m::vm::sequence::retired)) * 100.0,
 				seq,
 				m::vm::sequence::retired,
 				ecount,
+				(ecount / elapsed),
 				pretty(pbuf[0], iec(foff)),
-				acount,
+				pretty(pbuf[1], iec(foff / elapsed), 1),
+				ircd::pretty(pbuf[2], seconds(elapsed)),
 				errcount,
-				size(wrote),
-				timer.pretty(pbuf[1]),
 			};
 		}
 
