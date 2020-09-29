@@ -571,11 +571,6 @@ ircd::m::vm::execute_pdu(eval &eval,
 		sequence::pending
 	};
 
-	const scope_restore remove_txn
-	{
-		eval.txn, std::shared_ptr<db::txn>{}
-	};
-
 	const scope_notify sequence_dock
 	{
 		sequence::dock, scope_notify::all
@@ -842,6 +837,9 @@ ircd::m::vm::execute_pdu(eval &eval,
 		{
 			eval.phase, phase::INDEX
 		};
+
+		if(eval.txn)
+			eval.txn->clear();
 
 		if(!eval.txn && parent_post)
 			eval.txn = eval.parent->txn;
