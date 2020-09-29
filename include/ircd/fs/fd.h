@@ -81,6 +81,10 @@ struct ircd::fs::fd::opts
 	/// prevent file from being created when opened with a write-mode.
 	bool create {true};
 
+	/// Allows file to opened if and only if it doesn't exist and will be
+	/// created by this open().
+	bool exclusive {false};
+
 	/// Advise for random access (ignored when direct=true)
 	bool random {false};
 

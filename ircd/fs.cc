@@ -2385,6 +2385,7 @@ const
 	ret.cloexec = ret.flags & O_CLOEXEC;
 	ret.create = ret.flags & O_CREAT;
 	ret.blocking = ret.flags & O_NONBLOCK;
+	ret.exclusive = ret.flags & O_EXCL;
 	return ret;
 }
 
@@ -2397,6 +2398,7 @@ ircd::fs::flags(const fd::opts &opts)
 	ret |= opts.cloexec? O_CLOEXEC : 0UL;
 	ret |= opts.create? O_CREAT : 0UL;
 	ret |= !opts.blocking? O_NONBLOCK : 0UL;
+	ret |= opts.exclusive? O_EXCL : 0UL;
 	return ret;
 }
 
