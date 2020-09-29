@@ -8,16 +8,21 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd;
+namespace ircd::m
+{
+	static resource::response federation_version__get(client &, const resource::request &);
+	extern resource::method federation_version_get;
+	extern resource federation_version;
+}
 
-mapi::header
+ircd::mapi::header
 IRCD_MODULE
 {
 	"Federation 2.2 :Version"
 };
 
-m::resource
-version_resource
+decltype(ircd::m::federation_version)
+ircd::m::federation_version
 {
 	"/_matrix/federation/v1/version",
 	{
@@ -25,14 +30,25 @@ version_resource
 	}
 };
 
-m::resource::response
-get__version(client &client,
-             const m::resource::request &request)
+decltype(ircd::m::federation_version_get)
+ircd::m::federation_version_get
+{
+	federation_version, "GET", federation_version__get
+};
+
+ircd::m::resource::response
+ircd::m::federation_version__get(client &client,
+                                 const resource::request &request)
 {
 	const json::members server
 	{
-		{ "name",     ircd::info::name    },
-		{ "version",  ircd::info::version },
+		{ "name",     ircd::info::name              },
+		{ "version",  ircd::info::version           },
+		{ "branch",   ircd::info::branch            },
+		{ "commit",   ircd::info::commit            },
+		{ "compiler", ircd::info::compiler          },
+		{ "kernel",   ircd::info::kernel_name       },
+		{ "arch",     ircd::info::hardware::arch    },
 	};
 
 	return m::resource::response
@@ -43,9 +59,3 @@ get__version(client &client,
 		}
 	};
 }
-
-m::resource::method
-method_get
-{
-	version_resource, "GET", get__version
-};
