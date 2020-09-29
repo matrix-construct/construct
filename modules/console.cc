@@ -4379,10 +4379,11 @@ _print_sst_info_header(opt &out)
 	out << std::left << std::setfill(' ')
 	    << std::setw(12) << "name"
 	    << "  " << std::setw(32) << "creation"
-	    << std::right
-	    << "  " << std::setw(5) << "press"
-	    << std::left
 	    << "  " << std::setw(3) << "flt"
+	    << std::right
+	    << "  " << std::setw(7) << "pressed"
+	    << std::left
+	    << "  " << std::setw(5) << "press"
 	    << "  " << std::setw(24) << "file size"
 	    << "  " << std::setw(23) << "sequence number"
 	    << "  " << std::setw(23) << "key range"
@@ -4415,14 +4416,21 @@ _print_sst_info(opt &out,
 			0UL
 	};
 
+	const auto blocks_size{f.keys_size + f.values_size};
+	const auto compression_pct
+	{
+		100 - 100.0L * (f.data_size / double(blocks_size))
+	};
+
 	char tmbuf[64], pbuf[48];
 	out << std::left << std::setfill(' ')
 	    << std::setw(12) << f.name
 	    << "  " << std::setw(32) << std::left << (f.created? timef(tmbuf, f.created, ircd::localtime) : string_view{})
-	    << "  " << std::setw(5) << std::right << trunc(f.compression, 5)
-	    << "  " << std::setw(1) << std::left << (!f.filter.empty()? 'F' : ' ')
-	    <<         std::setw(1) << std::left << (f.delta_encoding? 'D' : ' ')
-	    <<         std::setw(1) << std::left << (true? ' ' : ' ')
+	    << "  " << std::setw(1) << std::left << (!f.filter.empty()? 'F' : '-')
+	    <<         std::setw(1) << std::left << (f.delta_encoding? 'D' : '-')
+	    <<         std::setw(1) << std::left << (true? '-' : '-')
+	    << "  " << std::setw(6) << std::right << std::fixed << std::setprecision(2) << compression_pct << '%'
+	    << "  " << std::setw(5) << std::left << trunc(f.compression, 5)
 	    << "  " << std::setw(24) << std::left << pretty(pbuf, iec(f.size))
 	    ;
 
