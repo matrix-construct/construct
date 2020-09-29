@@ -3700,7 +3700,10 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 	assert(size(chunk_head_scratch) >= state.chunk_read + size(buffer));
 	const const_buffer chunk_head_buffer
 	{
-		chunk_head_scratch, state.chunk_read + size(buffer)
+		recursion_level > 0? buffer: const_buffer
+		{
+			chunk_head_scratch, state.chunk_read + size(buffer)
+		}
 	};
 
 	// informal search for head terminator
@@ -3718,15 +3721,16 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 	}
 
 	// This indicates how much head was just received from this buffer only.
-	assert(pos + size(http::line::terminator) >= state.chunk_read);
+	assert(recursion_level == 0 || pos + size(http::line::terminator) <= size(buffer));
+	assert(recursion_level >= 1 || pos + size(http::line::terminator) <= size(chunk_head_buffer));
 	const size_t addl_head_bytes
 	{
-		pos + size(http::line::terminator) - state.chunk_read
+		std::min(pos + size(http::line::terminator), size(buffer))
 	};
 
 	// The received buffer may go past the end of the head.
 	assert(addl_head_bytes >= size(http::line::terminator));
-	assert(addl_head_bytes <= size(buffer));
+	assert(size(buffer) >= addl_head_bytes);
 	const size_t beyond_head_length
 	{
 		size(buffer) - addl_head_bytes
