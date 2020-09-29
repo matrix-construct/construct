@@ -168,8 +168,12 @@ ircd::json::object
 ircd::m::make_hashes(const mutable_buffer &out,
                      const sha256::buf &hash)
 {
-	static const auto b64bufsz(b64::encode_size(sizeof(hash)));
-	thread_local char hashb64buf[b64bufsz];
+	static const auto b64bufsz
+	{
+		b64::encode_size(sizeof(hash))
+	};
+
+	char hashb64buf[b64bufsz];
 	const json::members hashes
 	{
 		{ "sha256", b64::encode_unpadded(hashb64buf, hash) }
@@ -250,14 +254,20 @@ try
 		object.at("sha256")
 	};
 
-	thread_local char buf[32];
+	char buf[32];
 	const auto claim
 	{
 		b64::decode(buf, hash)
 	};
 
 	static_assert(sizeof(buf) == sizeof(actual));
-	return memcmp(buf, ircd::data(actual), sizeof(buf)) == 0;
+	if(unlikely(ircd::size(claim) != sizeof(actual)))
+		return false;
+
+	if(memcmp(buf, ircd::data(actual), sizeof(buf)) != 0)
+		return false;
+
+	return true;
 }
 catch(const json::not_found &)
 {
@@ -284,7 +294,7 @@ ircd::m::event::signatures(const mutable_buffer &out,
 		m::public_key_id(m::my(origin))
 	};
 
-	thread_local char sigb64buf[b64::encode_size(sizeof(sig))];
+	char sigb64buf[b64::encode_size(sizeof(sig))];
 	const json::members sigb64
 	{
 		{ public_key_id, b64::encode_unpadded(sigb64buf, sig) }
@@ -347,7 +357,7 @@ ircd::m::signatures(const mutable_buffer &out_,
 		b64::encode_size(sizeof(my_sig))
 	};
 
-	thread_local char sigb64buf[sigb64bufsz];
+	char sigb64buf[sigb64bufsz];
 	const json::member my_sig_member
 	{
 		origin, json::members
