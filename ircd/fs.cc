@@ -2378,6 +2378,9 @@ const
 	if((ret.flags & O_RDWR) == O_RDWR)
 		ret.mode = std::ios::in | std::ios::out;
 
+	if((ret.flags & O_TRUNC) == O_TRUNC)
+		ret.mode = std::ios::trunc;
+
 	ret.direct = ret.flags & O_DIRECT;
 	ret.cloexec = ret.flags & O_CLOEXEC;
 	ret.create = ret.flags & O_CREAT;
