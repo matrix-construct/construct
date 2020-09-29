@@ -87,18 +87,19 @@ ircd::m::events::rebuild()
 void
 ircd::m::events::dump__file(const string_view &filename)
 {
-	static const fs::fd::opts fileopts
-	{
-		std::ios::out | std::ios::app
-	};
-
 	static const db::gopts gopts
 	{
 		db::get::NO_CACHE, db::get::NO_CHECKSUM
 	};
 
+	static const fs::fd::opts fileopts
+	{
+		std::ios::out
+	};
+
 	auto _fileopts(fileopts);
-	_fileopts.dontneed = true;
+	_fileopts.exclusive = true;   // error if exists
+	_fileopts.dontneed = true;    // fadvise
 	const fs::fd file
 	{
 		filename, _fileopts
