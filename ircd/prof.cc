@@ -144,7 +144,7 @@ noexcept
 		ctx::current?
 			id(ctx::cur()):
 			0,
-		pretty_nanoseconds(tmbuf, total, true),
+		pretty(tmbuf, nanoseconds(total), true),
 		reason
     };
 }
