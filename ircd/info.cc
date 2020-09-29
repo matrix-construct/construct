@@ -515,6 +515,30 @@ noexcept
 // Generic / Standard
 //
 
+decltype(ircd::info::hardware::arch)
+ircd::info::hardware::arch
+{
+	#if defined(__x86_64__)
+		"x86_64"
+	#elif defined(__aarch64__)
+		"aarch64"
+	#else
+		"undefined"
+	#endif
+};
+
+decltype(ircd::info::hardware::endian)
+ircd::info::hardware::endian
+{
+	#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+		"big"
+	#elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+		"little"
+	#else
+		"undefined"
+	#endif
+};
+
 decltype(ircd::info::hardware::max_align)
 ircd::info::hardware::max_align
 {
@@ -1047,7 +1071,7 @@ ircd::info::dump_lib_info()
 	log::info
 	{
 		log::star, "%s SD-6 %s. glibcxx %s. glibc %s. boost %s. RocksDB %s. sodium %s. %s. magic %ld.",
-		string_view{RB_CXX},
+		string_view{compiler},
 		string_view{sd6_version},
 		string_view{glibcxx_version_api},
 		string_view{glibc_version_api},
@@ -1070,6 +1094,12 @@ ircd::info::dump_lib_info()
 		long(magic::version_abi),
 	};
 }
+
+decltype(ircd::info::compiler)
+ircd::info::compiler
+{
+	split(RB_CXX, ' ').first
+};
 
 //
 // gnuc

@@ -41,6 +41,7 @@ namespace ircd::info
 	extern const time_t configured_time;
 	extern const string_view configured;
 	extern const string_view compiled;
+	extern const string_view compiler;
 
 	// Toolchain and library information
 	extern const versions gnuc_version;
@@ -83,6 +84,8 @@ namespace ircd::info
 
 namespace ircd::info::hardware
 {
+	extern const string_view arch;
+	extern const string_view endian;
 	extern const size_t max_align;
 	extern const size_t hardware_concurrency;
 	extern const size_t destructive_interference;
