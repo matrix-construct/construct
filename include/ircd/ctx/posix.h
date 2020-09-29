@@ -17,15 +17,20 @@ noexcept;
 
 extern "C" int
 ircd_pthread_join(pthread_t __th,
-                  void **__thread_return);
+                  void **__thread_return)
+noexcept;
 
 extern "C" int
 ircd_pthread_tryjoin_np(pthread_t __th,
-                        void **__thread_return);
+                        void **__thread_return)
+noexcept;
+
 extern "C" int
 ircd_pthread_timedjoin_np(pthread_t __th,
                           void **__thread_return,
-                          const struct timespec *__abstime);
+                          const struct timespec *__abstime)
+noexcept;
+
 extern "C" int
 ircd_pthread_detach(pthread_t __th)
 noexcept;
@@ -42,7 +47,8 @@ ircd_pthread_atfork(void (*__prepare)(void),
 noexcept;
 
 extern "C" void
-ircd_pthread_exit(void *const retval);
+ircd_pthread_exit(void *const retval)
+noexcept;
 
 extern "C" pthread_t
 ircd_pthread_self(void)
@@ -54,7 +60,8 @@ noexcept;
 
 extern "C" int
 ircd_pthread_once(pthread_once_t *__once_control,
-                  void (*__init_routine)(void));
+                  void (*__init_routine)(void))
+noexcept;
 
 //
 // Cancellation
@@ -62,15 +69,21 @@ ircd_pthread_once(pthread_once_t *__once_control,
 
 extern "C" int
 ircd_pthread_setcancelstate(int __state,
-                            int *__oldstate);
+                            int *__oldstate)
+noexcept;
+
 extern "C" int
 ircd_pthread_setcanceltype(int __type,
-                           int *__oldtype);
+                           int *__oldtype)
+noexcept;
+
 extern "C" int
-ircd_pthread_cancel(pthread_t __th);
+ircd_pthread_cancel(pthread_t __th)
+noexcept;
 
 extern "C" void
-ircd_pthread_testcancel(void);
+ircd_pthread_testcancel(void)
+noexcept;
 
 //
 // Scheduling
@@ -541,18 +554,21 @@ noexcept;
 
 extern "C" int
 ircd_pthread_cond_wait(pthread_cond_t *const __restrict __cond,
-                       pthread_mutex_t *const __restrict __mutex);
+                       pthread_mutex_t *const __restrict __mutex)
+noexcept;
 
 extern "C" int
 ircd_pthread_cond_timedwait(pthread_cond_t *const __restrict __cond,
                             pthread_mutex_t *const __restrict __mutex,
-                            const struct timespec *__restrict __abstime);
+                            const struct timespec *__restrict __abstime)
+noexcept;
 
 extern "C" int
 ircd_pthread_cond_clockwait(pthread_cond_t *__restrict __cond,
                             pthread_mutex_t *__restrict __mutex,
                             __clockid_t __clock_id,
-                            const struct timespec *__restrict __abstime);
+                            const struct timespec *__restrict __abstime)
+noexcept;
 
 //
 // Condition Variable Attributes

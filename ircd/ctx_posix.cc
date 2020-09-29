@@ -107,6 +107,7 @@ IRCD_WRAP(pthread_join, "__wrap_pthread_join",
 int
 ircd_pthread_join(pthread_t __th,
                   void **__thread_return)
+noexcept
 {
 	ircd::log::debug
 	{
@@ -136,6 +137,7 @@ ircd_pthread_join(pthread_t __th,
 int
 ircd_pthread_tryjoin_np(pthread_t __th,
                         void **__thread_return)
+noexcept
 {
 	always_assert(false);
 	return EINVAL;
@@ -156,6 +158,7 @@ int
 ircd_pthread_timedjoin_np(pthread_t __th,
                           void **__thread_return,
                           const struct timespec *__abstime)
+noexcept
 {
 	//TODO: XXX ctx timed join
 	ircd_pthread_join(__th, __thread_return);
@@ -163,7 +166,9 @@ ircd_pthread_timedjoin_np(pthread_t __th,
 }
 
 void
+__attribute__((noreturn))
 ircd_pthread_exit(void *const retval)
+noexcept
 {
 	always_assert(false);
 	__builtin_unreachable();
@@ -228,6 +233,7 @@ noexcept
 int
 ircd_pthread_once(pthread_once_t *__once_control,
                   void (*__init_routine)(void))
+noexcept
 {
 	static_assert(sizeof(std::atomic<int>) == sizeof(pthread_once_t));
 
@@ -255,6 +261,7 @@ ircd_pthread_once(pthread_once_t *__once_control,
 int
 ircd_pthread_setcancelstate(int __state,
                             int *__oldstate)
+noexcept
 {
 	always_assert(false);
 	return EINVAL;
@@ -263,6 +270,7 @@ ircd_pthread_setcancelstate(int __state,
 int
 ircd_pthread_setcanceltype(int __type,
                            int *__oldtype)
+noexcept
 {
 	always_assert(false);
 	return EINVAL;
@@ -270,6 +278,7 @@ ircd_pthread_setcanceltype(int __type,
 
 int
 ircd_pthread_cancel(pthread_t __th)
+noexcept
 {
 	always_assert(false);
 	return EINVAL;
@@ -277,6 +286,7 @@ ircd_pthread_cancel(pthread_t __th)
 
 void
 ircd_pthread_testcancel(void)
+noexcept
 {
 	always_assert(false);
 }
@@ -1283,6 +1293,7 @@ noexcept
 int
 ircd_pthread_cond_wait(pthread_cond_t *const __restrict __cond,
                        pthread_mutex_t *const __restrict __mutex)
+noexcept
 {
 	assert(__cond);
 	assert(__mutex);
@@ -1305,6 +1316,7 @@ int
 ircd_pthread_cond_timedwait(pthread_cond_t *const __restrict __cond,
                             pthread_mutex_t *const __restrict __mutex,
                             const struct timespec *__restrict __abstime)
+noexcept
 {
 	using namespace std::chrono;
 
@@ -1349,6 +1361,7 @@ ircd_pthread_cond_clockwait(pthread_cond_t *__restrict __cond,
                             pthread_mutex_t *__restrict __mutex,
                             __clockid_t __clock_id,
                             const struct timespec *__restrict __abstime)
+noexcept
 {
 	always_assert(false);
 	return EINVAL;
