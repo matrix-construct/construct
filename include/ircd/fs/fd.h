@@ -77,9 +77,9 @@ struct ircd::fs::fd::opts
 	/// (O_CLOEXEC) Close this descriptor on an exec().
 	bool cloexec {true};
 
-	/// Prevents file from being created if it doesn't exist. This clears
-	/// any implied O_CREAT from the open_mode ctor and in flags too.
-	bool nocreate {false};
+	/// Allows file to be created if it doesn't exist. Set this to false to
+	/// prevent file from being created when opened with a write-mode.
+	bool create {true};
 
 	/// Advise for random access (ignored when direct=true)
 	bool random {false};

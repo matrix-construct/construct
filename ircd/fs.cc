@@ -2380,7 +2380,7 @@ const
 
 	ret.direct = ret.flags & O_DIRECT;
 	ret.cloexec = ret.flags & O_CLOEXEC;
-	ret.nocreate = ~ret.flags & O_CREAT;
+	ret.create = ret.flags & O_CREAT;
 	ret.blocking = ret.flags & O_NONBLOCK;
 	return ret;
 }
@@ -2392,7 +2392,7 @@ ircd::fs::flags(const fd::opts &opts)
 	ret |= fs::flags(opts.mode);
 	ret |= opts.direct? O_DIRECT : 0UL;
 	ret |= opts.cloexec? O_CLOEXEC : 0UL;
-	ret &= opts.nocreate? ~O_CREAT : ret;
+	ret |= opts.create? O_CREAT : 0UL;
 	ret |= !opts.blocking? O_NONBLOCK : 0UL;
 	return ret;
 }
