@@ -4120,8 +4120,8 @@ ircd::db::database::sst::info::operator=(rocksdb::TableProperties &&tp)
 	format = std::move(tp.format_version);
 	cfid = std::move(tp.column_family_id);
 	data_size = std::move(tp.data_size);
-	index_size = std::move(tp.index_size);
-	top_index_size = std::move(tp.top_level_index_size);
+	index_data_size = std::move(tp.index_size);
+	index_root_size = std::move(tp.top_level_index_size);
 	filter_size = std::move(tp.filter_size);
 	keys_size = std::move(tp.raw_key_size);
 	values_size = std::move(tp.raw_value_size);
@@ -4133,6 +4133,17 @@ ircd::db::database::sst::info::operator=(rocksdb::TableProperties &&tp)
 	created = std::move(tp.creation_time);
 	oldest_key = std::move(tp.oldest_key_time);
 	delta_encoding = std::move(tp.index_value_is_delta_encoded);
+
+	blocks_size = keys_size + values_size;
+	index_size = index_data_size + index_root_size;
+	head_size = index_size + filter_size;
+	file_size = head_size + data_size;
+
+	const long double _blocks_size(std::max(blocks_size, 1UL));
+	compression_pct = compression != "NoCompression"?
+		(100 - 100.0L * (data_size / _blocks_size)):
+		0.0;
+
 	return *this;
 }
 

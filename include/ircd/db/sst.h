@@ -38,12 +38,16 @@ struct ircd::db::database::sst::info
 	uint64_t format {0};
 	uint64_t cfid {0};
 	uint64_t size {0};
+	uint64_t head_size {0};         // index_size + filter_size
 	uint64_t data_size {0};
-	uint64_t index_size {0};
-	uint64_t top_index_size {0};
+	uint64_t file_size {0};         // head_size + data_size
+	uint64_t index_root_size {0};
+	uint64_t index_data_size {0};
+	uint64_t index_size {0};        // index_root_size + index_data_size
 	uint64_t filter_size {0};
 	uint64_t keys_size {0};
 	uint64_t values_size {0};
+	uint64_t blocks_size {0};       // keys_size + values_size
 	uint64_t index_parts {0};
 	uint64_t data_blocks {0};
 	uint64_t entries {0};
@@ -60,6 +64,7 @@ struct ircd::db::database::sst::info
 	time_t created {0};
 	time_t oldest_key {0};
 	bool delta_encoding {false};
+	float compression_pct {0.0};
 
 	info(const database &, const string_view &filename);
 	info() = default;

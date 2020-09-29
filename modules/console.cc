@@ -4416,12 +4416,6 @@ _print_sst_info(opt &out,
 			0UL
 	};
 
-	const auto blocks_size{f.keys_size + f.values_size};
-	const auto compression_pct
-	{
-		100 - 100.0L * (f.data_size / double(blocks_size))
-	};
-
 	char tmbuf[64], pbuf[48];
 	out << std::left << std::setfill(' ')
 	    << std::setw(12) << f.name
@@ -4429,7 +4423,7 @@ _print_sst_info(opt &out,
 	    << "  " << std::setw(1) << std::left << (!f.filter.empty()? 'F' : '-')
 	    <<         std::setw(1) << std::left << (f.delta_encoding? 'D' : '-')
 	    <<         std::setw(1) << std::left << (true? '-' : '-')
-	    << "  " << std::setw(6) << std::right << std::fixed << std::setprecision(2) << compression_pct << '%'
+	    << "  " << std::setw(6) << std::right << std::fixed << std::setprecision(2) << f.compression_pct << '%'
 	    << "  " << std::setw(5) << std::left << trunc(f.compression, 5)
 	    << "  " << std::setw(24) << std::left << pretty(pbuf, iec(f.size))
 	    ;
@@ -4522,29 +4516,24 @@ _print_sst_info_full(opt &out,
 	close_auto("range deletes", f.range_deletes);
 	close_auto("", "");
 
-	const auto blocks_size{f.keys_size + f.values_size};
-	const auto index_size{f.index_size + f.top_index_size};
-	const auto overhead_size{index_size + f.filter_size};
-	const auto file_size{overhead_size + f.data_size};
-
-	close_size("size", file_size);
-	close_size("head size", overhead_size);
+	close_size("size", f.file_size);
+	close_size("head size", f.head_size);
 	close_size("data size", f.data_size);
 	close_size("data blocks average size", f.data_size / double(f.data_blocks));
-	close_auto("data compression percent", 100 - 100.0L * (f.data_size / double(blocks_size)));
+	close_auto("data compression percent", 100 - 100.0L * (f.data_size / double(f.blocks_size)));
 	close_auto("", "");
 
-	close_size("index size", index_size);
-	close_size("index root size", f.top_index_size);
+	close_size("index size", f.index_size);
+	close_size("index root size", f.index_root_size);
+	close_size("index data size", f.index_data_size);
 	close_auto("index data blocks", f.index_parts);
-	close_size("index data size", f.index_size);
-	close_size("index data block average size", f.index_size / double(f.index_parts));
-	close_size("index data average per-key", f.index_size / double(f.entries));
-	close_size("index data average per-block", f.index_size / double(f.data_blocks));
-	close_auto("index root percent of index", 100.0 * (f.top_index_size / double(f.index_size)));
-	close_auto("index data percent of keys", 100.0 * (f.index_size / double(f.keys_size)));
-	close_auto("index data percent of values", 100.0 * (f.index_size / double(f.values_size)));
-	close_auto("index data percent of data", 100.0 * (f.index_size / double(f.data_size)));
+	close_size("index data block average size", f.index_data_size / double(f.index_parts));
+	close_size("index data average per-key", f.index_data_size / double(f.entries));
+	close_size("index data average per-block", f.index_data_size / double(f.data_blocks));
+	close_auto("index root percent of index", 100.0 * (f.index_root_size / double(f.index_data_size)));
+	close_auto("index data percent of keys", 100.0 * (f.index_data_size / double(f.keys_size)));
+	close_auto("index data percent of values", 100.0 * (f.index_data_size / double(f.values_size)));
+	close_auto("index data percent of data", 100.0 * (f.index_data_size / double(f.data_size)));
 	close_auto("", "");
 
 	close_auto("filter", f.filter);
@@ -4554,14 +4543,14 @@ _print_sst_info_full(opt &out,
 	close_auto("", "");
 
 	close_auto("blocks", f.data_blocks);
-	close_size("blocks size", blocks_size);
-	close_size("blocks average size", blocks_size / double(f.data_blocks));
+	close_size("blocks size", f.blocks_size);
+	close_size("blocks average size", f.blocks_size / double(f.data_blocks));
 	close_auto("", "");
 
 	close_auto("keys", f.entries);
 	close_size("keys size", f.keys_size);
 	close_size("keys average size", f.keys_size / double(f.entries));
-	close_auto("keys percent of blocks", 100.0 * (f.keys_size / double(blocks_size)));
+	close_auto("keys percent of blocks", 100.0 * (f.keys_size / double(f.blocks_size)));
 	close_auto("", "");
 
 	close_auto("values", f.entries);
@@ -4734,8 +4723,8 @@ try
 		{
 			total.size += info.size;
 			total.data_size += info.data_size;
-			total.index_size += info.index_size;
-			total.top_index_size += info.top_index_size;
+			total.index_data_size += info.index_data_size;
+			total.index_root_size += info.index_root_size;
 			total.filter_size += info.filter_size;
 			total.keys_size += info.keys_size;
 			total.values_size += info.values_size;
