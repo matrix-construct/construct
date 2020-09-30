@@ -295,25 +295,6 @@ having only received two out of the three transmissions in the previous round.
               |
 ```
 
-
-
-```
-                  [0]
-           [1]           [B]
-
-      [2]                     [A]
-
-
-    [3]                         [9]
-
-
-      [4]                     [8]
-
-           [5]           [7]
-                  [6]
-
-```
-
 #### Coherence
 
 Keen observers may have realized by now this system is not fully coherent.
