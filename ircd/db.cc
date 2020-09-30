@@ -4120,8 +4120,9 @@ ircd::db::database::sst::info::operator=(rocksdb::TableProperties &&tp)
 	format = std::move(tp.format_version);
 	cfid = std::move(tp.column_family_id);
 	data_size = std::move(tp.data_size);
-	index_data_size = std::move(tp.index_size);
 	index_root_size = std::move(tp.top_level_index_size);
+	index_data_size = std::move(tp.index_size);
+	index_data_size -= index_root_size;
 	filter_size = std::move(tp.filter_size);
 	keys_size = std::move(tp.raw_key_size);
 	values_size = std::move(tp.raw_value_size);
@@ -4137,11 +4138,22 @@ ircd::db::database::sst::info::operator=(rocksdb::TableProperties &&tp)
 	blocks_size = keys_size + values_size;
 	index_size = index_data_size + index_root_size;
 	head_size = index_size + filter_size;
-	file_size = head_size + data_size;
+	file_size = head_size + blocks_size;
 
-	const long double _blocks_size(std::max(blocks_size, 1UL));
-	compression_pct = compression != "NoCompression"?
-		(100 - 100.0L * (data_size / _blocks_size)):
+	meta_size = size > data_size?
+		size - data_size:
+		0UL;
+
+	compression_pct = size?
+		100 - 100.0L * (size / (long double)file_size):
+		0.0;
+
+	index_compression_pct = index_size?
+		100 - 100.0L * (meta_size / (long double)index_size):
+		0.0;
+
+	blocks_compression_pct = data_size?
+		100 - 100.0L * (data_size / (long double)blocks_size):
 		0.0;
 
 	return *this;

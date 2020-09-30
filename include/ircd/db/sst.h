@@ -41,6 +41,7 @@ struct ircd::db::database::sst::info
 	uint64_t head_size {0};         // index_size + filter_size
 	uint64_t data_size {0};
 	uint64_t file_size {0};         // head_size + data_size
+	uint64_t meta_size {0};         // size - data_size (???)
 	uint64_t index_root_size {0};
 	uint64_t index_data_size {0};
 	uint64_t index_size {0};        // index_root_size + index_data_size
@@ -65,6 +66,8 @@ struct ircd::db::database::sst::info
 	time_t oldest_key {0};
 	bool delta_encoding {false};
 	float compression_pct {0.0};
+	float index_compression_pct {0.0};
+	float blocks_compression_pct {0.0};
 
 	info(const database &, const string_view &filename);
 	info() = default;
