@@ -422,7 +422,6 @@ ircd::m::dbs::find_event_idx(const vector_view<event::idx> &idx,
 	for(size_t i(0); i < num; ++i)
 	{
 		idx[i] = m::index(std::nothrow, event_id[i]);
-		assert(idx[i] < vm::sequence::retired);
 		ret += idx[i] != 0;
 	}
 
