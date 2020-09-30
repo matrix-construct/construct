@@ -82,7 +82,6 @@ namespace ircd::buffer
 
 	// Single buffer observer utils
 	template<class it> bool null(const buffer<it> &buffer);
-	template<class it> bool full(const buffer<it> &buffer);
 	template<class it> bool empty(const buffer<it> &buffer);
 	template<class it> bool operator!(const buffer<it> &buffer);
 	template<class it> size_t size(const buffer<it> &buffer);
@@ -399,14 +398,6 @@ __attribute__((always_inline))
 ircd::buffer::empty(const buffer<it> &buffer)
 {
 	return null(buffer) || std::distance(get<0>(buffer), get<1>(buffer)) == 0;
-}
-
-template<class it>
-inline bool
-__attribute__((always_inline))
-ircd::buffer::full(const buffer<it> &buffer)
-{
-	return std::distance(get<0>(buffer), get<1>(buffer)) == 0;
 }
 
 template<class it>
