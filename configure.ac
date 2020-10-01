@@ -724,13 +724,11 @@ AM_COND_IF([UNTUNED],
 		RB_VAR_PREPEND([CXXFLAGS], ["-mtune=native"])
 		RB_VAR_PREPEND([CXXFLAGS], ["-march=native"])
 
-		dnl AMD K10's SSE4a doesn't work with valgrind
-		RB_VAR_PREPEND([CXXFLAGS], ["-mno-sse4a"])
-
 		AS_CASE([$host_cpu],
 		[x86_64],
 		[
-			RB_VAR_PREPEND([CXXFLAGS], ["-mfpmath=sse"])
+			dnl AMD K10's SSE4a doesn't work with valgrind
+			RB_VAR_PREPEND([CXXFLAGS], ["-mno-sse4a"])
 		])
 	])
 ])
