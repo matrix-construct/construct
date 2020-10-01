@@ -119,7 +119,7 @@ ircd::m::fed::send::send(const string_view &txnid,
 		thread_local char txnidbuf[256];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			buf, "/_matrix/federation/v1/send/%s/",
+			buf, "/_matrix/federation/v1/send/%s",
 			url::encode(txnidbuf, txnid),
 		};
 
