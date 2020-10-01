@@ -570,7 +570,25 @@ console_cmd__bt(opt &out, const string_view &line)
 bool
 console_cmd__restart(opt &out, const string_view &line)
 {
-	ircd::restart.set("true");
+	std::string argv(line);
+
+	size_t swargs(0), posargs(0);
+	ircd::tokens(line, ' ', [&swargs, &posargs]
+	(const auto &token)
+	{
+		swargs += startswith(token, '-');
+		posargs += !startswith(token, '-');
+	});
+
+	if(!posargs)
+	{
+		argv += swargs? " "_sv: ""_sv;
+		argv += m::origin(m::my());
+		argv += ' ';
+		argv += m::server_name(m::my());
+	}
+
+	ircd::restart.set(argv);
 	ircd::quit();
 	return false;
 }

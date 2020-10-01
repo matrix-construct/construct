@@ -41,17 +41,24 @@ ircd::version_abi
 	"IRCd", info::versions::ABI, 0, {0, 0, 0}, ircd::info::version
 };
 
-/// Courtesy indicator; this item allows the library to indicate to the
-/// embedder that they should restart their application (or reload this library
-/// if available). The use-case here is for features like the `restart` command
-/// in the console module. Such a command triggers a normal quit and the
-/// application may exit normally; therefor the embedder should check this
-/// item to perform a restart rather than exiting.
+/// This item allows the library to indicate to the embedder that they should
+/// restart their application (or reload this library if available). The
+/// use-case here is for features like the `restart` command in the console
+/// module. Such a command triggers a normal quit and the application may exit
+/// normally; therefor the embedder should check this item to perform a restart
+/// rather than exiting.
+///
+/// This item is a string to allow for different program options at restart.
+/// For now this is limited to space-separated arguments without respect for
+/// quoting (for now), so no arguments can have spaces.
+///
+/// Empty string disables restart. The name of the executable should not be
+/// prefixed to the string.
 decltype(ircd::restart)
 ircd::restart
 {
 	{ "name",     "ircd.restart"       },
-	{ "default",  false                },
+	{ "default",  std::string{}        },
 	{ "persist",  false                },
 };
 

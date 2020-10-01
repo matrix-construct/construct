@@ -108,6 +108,7 @@ const char *const usererrstr
 ***
 )"};
 
+[[noreturn]] static void do_restart(char *const *const &argv, char *const *const &envp);
 static bool startup_checks();
 static void applyargs();
 static void enable_coredumps();
@@ -375,7 +376,7 @@ noexcept try
 	// The restart flag can be set by the console command "restart" which
 	// calls ircd::quit() to clean break from the run() loop.
 	if(ircd::restart)
-		ircd::syscall(::execve, _argv[0], _argv, _envp);
+		do_restart(_argv, _envp);
 
 	return EXIT_SUCCESS;
 }
@@ -484,6 +485,26 @@ enable_coredumps()
 {
 }
 #endif
+
+void
+do_restart(char *const *const &_argv,
+           char *const *const &_envp)
+{
+	const auto args
+	{
+		ircd::replace(std::string(ircd::restart) + ' ', ' ', '\0')
+	};
+
+	std::vector<char *> argv{_argv[0]};
+	for(size_t i(0); i < args.size(); ++i)
+	{
+		argv.emplace_back(const_cast<char *>(args.data() + i));
+		for(; i < args.size() && args.at(i) != '\0'; ++i);
+	}
+
+	argv.emplace_back(nullptr);
+	ircd::syscall(::execve, _argv[0], argv.data(), _envp);
+}
 
 /// These operations are safe to call before ircd::init() and anytime after
 /// static initialization.

@@ -114,8 +114,10 @@ namespace ircd
 	// Diagnostic Mode Options
 	extern conf::item<std::string> diagnostic;
 
+	// Restart-Assist
+	extern conf::item<std::string> restart;
+
 	// Operating Mode Selectors
-	extern conf::item<bool> restart;
 	extern conf::item<bool> debugmode;
 	extern conf::item<bool> maintenance;
 	extern conf::item<bool> soft_assert;
