@@ -4541,6 +4541,7 @@ _print_sst_info_full(opt &out,
 	close_size("file head phys size", f.meta_size);
 	close_size("file head virt size", f.head_size);
 	close_auto("file head compress percent", 100 - 100.0L * (f.meta_size / (long double)f.head_size));
+	close_auto("", "");
 
 	close_size("index size", f.index_size);
 	close_size("index head size", f.index_root_size);
