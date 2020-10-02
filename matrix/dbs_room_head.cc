@@ -11,6 +11,13 @@
 decltype(ircd::m::dbs::room_head)
 ircd::m::dbs::room_head;
 
+decltype(ircd::m::dbs::desc::room_head__comp)
+ircd::m::dbs::desc::room_head__comp
+{
+	{ "name",     "ircd.m.dbs._room_head.comp" },
+	{ "default",  string_view{}                },
+};
+
 decltype(ircd::m::dbs::desc::room_head__block__size)
 ircd::m::dbs::desc::room_head__block__size
 {
@@ -118,7 +125,7 @@ ircd::m::dbs::desc::room_head
 	size_t(room_head__meta_block__size),
 
 	// compression
-	{}, // no compression for this column
+	string_view{room_head__comp},
 
 	// compactor
 	{},

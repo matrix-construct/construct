@@ -16,6 +16,13 @@ namespace ircd::m::dbs
 decltype(ircd::m::dbs::room_state_space)
 ircd::m::dbs::room_state_space;
 
+decltype(ircd::m::dbs::desc::room_state_space__comp)
+ircd::m::dbs::desc::room_state_space__comp
+{
+	{ "name",     "ircd.m.dbs._room_state_space.comp" },
+	{ "default",  "default"                           },
+};
+
 decltype(ircd::m::dbs::desc::room_state_space__block__size)
 ircd::m::dbs::desc::room_state_space__block__size
 {
@@ -134,7 +141,7 @@ ircd::m::dbs::desc::room_state_space
 	size_t(room_state_space__meta_block__size),
 
 	// compression
-	"default"s,
+	string_view{room_state_space__comp},
 
 	// compactor
 	{},

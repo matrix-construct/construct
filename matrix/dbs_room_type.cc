@@ -16,6 +16,13 @@ namespace ircd::m::dbs
 decltype(ircd::m::dbs::room_type)
 ircd::m::dbs::room_type;
 
+decltype(ircd::m::dbs::desc::room_type__comp)
+ircd::m::dbs::desc::room_type__comp
+{
+	{ "name",     "ircd.m.dbs._room_type.comp" },
+	{ "default",  "default"                    },
+};
+
 decltype(ircd::m::dbs::desc::room_type__block__size)
 ircd::m::dbs::desc::room_type__block__size
 {
@@ -142,7 +149,7 @@ ircd::m::dbs::desc::room_type
 	size_t(room_type__meta_block__size),
 
 	// compression
-	"default"s,
+	string_view{room_type__comp},
 
 	// compactor
 	{},

@@ -21,6 +21,7 @@ namespace ircd::m::dbs
 
 namespace ircd::m::dbs::desc
 {
+	extern conf::item<std::string> event_json__comp;
 	extern conf::item<size_t> event_json__block__size;
 	extern conf::item<size_t> event_json__meta_block__size;
 	extern conf::item<size_t> event_json__cache__size;

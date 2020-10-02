@@ -11,6 +11,13 @@
 decltype(ircd::m::dbs::event_json)
 ircd::m::dbs::event_json;
 
+decltype(ircd::m::dbs::desc::event_json__comp)
+ircd::m::dbs::desc::event_json__comp
+{
+	{ "name",     "ircd.m.dbs._event_json.comp" },
+	{ "default",  "default"                     },
+};
+
 decltype(ircd::m::dbs::desc::event_json__block__size)
 ircd::m::dbs::desc::event_json__block__size
 {
@@ -107,7 +114,7 @@ ircd::m::dbs::desc::event_json
 	size_t(event_json__meta_block__size),
 
 	// compression
-	"default"s,
+	string_view{event_json__comp},
 
 	// compactor
 	{},

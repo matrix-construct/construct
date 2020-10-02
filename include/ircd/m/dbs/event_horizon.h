@@ -31,6 +31,7 @@ namespace ircd::m::dbs
 
 namespace ircd::m::dbs::desc
 {
+	extern conf::item<std::string> event_horizon__comp;
 	extern conf::item<size_t> event_horizon__block__size;
 	extern conf::item<size_t> event_horizon__meta_block__size;
 	extern conf::item<size_t> event_horizon__cache__size;

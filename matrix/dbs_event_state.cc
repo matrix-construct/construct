@@ -16,6 +16,13 @@ namespace ircd::m::dbs
 decltype(ircd::m::dbs::event_state)
 ircd::m::dbs::event_state;
 
+decltype(ircd::m::dbs::desc::event_state__comp)
+ircd::m::dbs::desc::event_state__comp
+{
+	{ "name",     "ircd.m.dbs._event_state.comp" },
+	{ "default",  "default"                      },
+};
+
 decltype(ircd::m::dbs::desc::event_state__block__size)
 ircd::m::dbs::desc::event_state__block__size
 {
@@ -116,7 +123,7 @@ ircd::m::dbs::desc::event_state
 	size_t(event_state__meta_block__size),
 
 	// compression
-	"default"s,
+	string_view{event_state__comp},
 
 	// compactor
 	{},

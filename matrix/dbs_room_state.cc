@@ -11,6 +11,13 @@
 decltype(ircd::m::dbs::room_state)
 ircd::m::dbs::room_state;
 
+decltype(ircd::m::dbs::desc::room_state__comp)
+ircd::m::dbs::desc::room_state__comp
+{
+	{ "name",     "ircd.m.dbs._room_state.comp" },
+	{ "default",  "default"                     },
+};
+
 decltype(ircd::m::dbs::desc::room_state__block__size)
 ircd::m::dbs::desc::room_state__block__size
 {
@@ -134,7 +141,7 @@ ircd::m::dbs::desc::room_state
 	size_t(room_state__meta_block__size),
 
 	// compression
-	"default"s,
+	string_view{room_state__comp},
 
 	// compactor
 	{},

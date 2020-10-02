@@ -11,6 +11,13 @@
 decltype(ircd::m::dbs::event_horizon)
 ircd::m::dbs::event_horizon;
 
+decltype(ircd::m::dbs::desc::event_horizon__comp)
+ircd::m::dbs::desc::event_horizon__comp
+{
+	{ "name",     "ircd.m.dbs._event_horizon.comp" },
+	{ "default",  "default"                        },
+};
+
 decltype(ircd::m::dbs::desc::event_horizon__block__size)
 ircd::m::dbs::desc::event_horizon__block__size
 {
@@ -130,7 +137,7 @@ ircd::m::dbs::desc::event_horizon
 	size_t(event_horizon__meta_block__size),
 
 	// compression
-	"default"s,
+	string_view{event_horizon__comp},
 
 	// compactor
 	{},

@@ -15,11 +15,29 @@
 decltype(ircd::m::dbs::event_column)
 ircd::m::dbs::event_column;
 
+decltype(ircd::m::dbs::desc::_event__comp)
+ircd::m::dbs::desc::_event__comp
+{
+	{ "name",     "ircd.m.dbs.__event.comp" },
+	{ "default",  "default"                 },
+};
+
 decltype(ircd::m::dbs::desc::_event__bloom__bits)
 ircd::m::dbs::desc::_event__bloom__bits
 {
 	{ "name",     "ircd.m.dbs.__event.bloom.bits" },
 	{ "default",  0L                              },
+};
+
+//
+// event_id
+//
+
+decltype(ircd::m::dbs::desc::event_id__comp)
+ircd::m::dbs::desc::event_id__comp
+{
+	{ "name",     "ircd.m.dbs.event_id.comp" },
+	{ "default",  string_view{_event__comp}  },
 };
 
 decltype(ircd::m::dbs::desc::event_id__block__size)
@@ -118,11 +136,21 @@ ircd::m::dbs::desc::event_id
 
 	// meta_block size
 	size_t(event_id__meta_block__size),
+
+	// compression
+	string_view{event_id__comp},
 };
 
 //
 // type
 //
+
+decltype(ircd::m::dbs::desc::type__comp)
+ircd::m::dbs::desc::type__comp
+{
+	{ "name",     "ircd.m.dbs.type.comp"     },
+	{ "default",  string_view{_event__comp}  },
+};
 
 decltype(ircd::m::dbs::desc::type__block__size)
 ircd::m::dbs::desc::type__block__size
@@ -220,11 +248,21 @@ ircd::m::dbs::desc::type
 
 	// meta_block size
 	size_t(type__meta_block__size),
+
+	// compression
+	string_view{type__comp},
 };
 
 //
 // content
 //
+
+decltype(ircd::m::dbs::desc::content__comp)
+ircd::m::dbs::desc::content__comp
+{
+	{ "name",     "ircd.m.dbs.content.comp"  },
+	{ "default",  string_view{_event__comp}  },
+};
 
 decltype(ircd::m::dbs::desc::content__block__size)
 ircd::m::dbs::desc::content__block__size
@@ -322,11 +360,21 @@ ircd::m::dbs::desc::content
 
 	// meta_block size
 	size_t(content__meta_block__size),
+
+	// compression
+	string_view{content__comp},
 };
 
 //
 // room_id
 //
+
+decltype(ircd::m::dbs::desc::room_id__comp)
+ircd::m::dbs::desc::room_id__comp
+{
+	{ "name",     "ircd.m.dbs.room_id.comp"  },
+	{ "default",  string_view{_event__comp}  },
+};
 
 decltype(ircd::m::dbs::desc::room_id__block__size)
 ircd::m::dbs::desc::room_id__block__size
@@ -423,11 +471,21 @@ ircd::m::dbs::desc::room_id
 
 	// meta_block size
 	size_t(room_id__meta_block__size),
+
+	// compression
+	string_view{room_id__comp},
 };
 
 //
 // sender
 //
+
+decltype(ircd::m::dbs::desc::sender__comp)
+ircd::m::dbs::desc::sender__comp
+{
+	{ "name",     "ircd.m.dbs.sender.comp"   },
+	{ "default",  string_view{_event__comp}  },
+};
 
 decltype(ircd::m::dbs::desc::sender__block__size)
 ircd::m::dbs::desc::sender__block__size
@@ -524,11 +582,21 @@ ircd::m::dbs::desc::sender
 
 	// meta_block size
 	size_t(sender__meta_block__size),
+
+	// compression
+	string_view{sender__comp},
 };
 
 //
 // state_key
 //
+
+decltype(ircd::m::dbs::desc::state_key__comp)
+ircd::m::dbs::desc::state_key__comp
+{
+	{ "name",     "ircd.m.dbs.state_key.comp"  },
+	{ "default",  string_view{_event__comp}    },
+};
 
 decltype(ircd::m::dbs::desc::state_key__block__size)
 ircd::m::dbs::desc::state_key__block__size
@@ -627,11 +695,21 @@ ircd::m::dbs::desc::state_key
 
 	// meta_block size
 	size_t(state_key__meta_block__size),
+
+	// compression
+	string_view{state_key__comp},
 };
 
 //
 // origin_server_ts
 //
+
+decltype(ircd::m::dbs::desc::origin_server_ts__comp)
+ircd::m::dbs::desc::origin_server_ts__comp
+{
+	{ "name",     "ircd.m.dbs.origin_server_ts.comp"  },
+	{ "default",  string_view{_event__comp}           },
+};
 
 decltype(ircd::m::dbs::desc::origin_server_ts__block__size)
 ircd::m::dbs::desc::origin_server_ts__block__size
@@ -729,11 +807,21 @@ ircd::m::dbs::desc::origin_server_ts
 
 	// meta_block size
 	size_t(origin_server_ts__meta_block__size),
+
+	// compression
+	string_view{origin_server_ts__comp},
 };
 
 //
 // depth
 //
+
+decltype(ircd::m::dbs::desc::depth__comp)
+ircd::m::dbs::desc::depth__comp
+{
+	{ "name",     "ircd.m.dbs.depth.comp"   },
+	{ "default",  string_view{_event__comp} },
+};
 
 decltype(ircd::m::dbs::desc::depth__block__size)
 ircd::m::dbs::desc::depth__block__size
@@ -824,6 +912,9 @@ ircd::m::dbs::desc::depth
 
 	// meta_block size
 	size_t(depth__meta_block__size),
+
+	// compression
+	string_view{depth__comp},
 };
 
 void

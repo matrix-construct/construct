@@ -11,6 +11,13 @@
 decltype(ircd::m::dbs::event_sender)
 ircd::m::dbs::event_sender;
 
+decltype(ircd::m::dbs::desc::event_sender__comp)
+ircd::m::dbs::desc::event_sender__comp
+{
+	{ "name",     "ircd.m.dbs._event_sender.comp" },
+	{ "default",  "default"                       },
+};
+
 decltype(ircd::m::dbs::desc::event_sender__block__size)
 ircd::m::dbs::desc::event_sender__block__size
 {
@@ -142,7 +149,7 @@ ircd::m::dbs::desc::event_sender
 	size_t(event_sender__meta_block__size),
 
 	// compression
-	"default"s,
+	string_view{event_sender__comp},
 
 	// compactor
 	{},

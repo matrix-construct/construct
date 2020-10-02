@@ -48,6 +48,7 @@ namespace ircd::m::dbs
 
 namespace ircd::m::dbs::desc
 {
+	extern conf::item<std::string> event_refs__comp;
 	extern conf::item<size_t> event_refs__block__size;
 	extern conf::item<size_t> event_refs__meta_block__size;
 	extern conf::item<size_t> event_refs__cache__size;

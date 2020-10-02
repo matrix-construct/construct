@@ -17,6 +17,13 @@ namespace ircd::m::dbs
 decltype(ircd::m::dbs::room_events)
 ircd::m::dbs::room_events;
 
+decltype(ircd::m::dbs::desc::room_events__comp)
+ircd::m::dbs::desc::room_events__comp
+{
+	{ "name",     "ircd.m.dbs._room_events.comp" },
+	{ "default",  "default"                      },
+};
+
 decltype(ircd::m::dbs::desc::room_events__block__size)
 ircd::m::dbs::desc::room_events__block__size
 {
@@ -155,6 +162,9 @@ ircd::m::dbs::desc::room_events
 
 	// meta_block size
 	size_t(room_events__meta_block__size),
+
+	// compression
+	string_view{room_events__comp},
 };
 
 //

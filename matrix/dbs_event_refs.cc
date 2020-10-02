@@ -23,6 +23,13 @@ namespace ircd::m::dbs
 decltype(ircd::m::dbs::event_refs)
 ircd::m::dbs::event_refs;
 
+decltype(ircd::m::dbs::desc::event_refs__comp)
+ircd::m::dbs::desc::event_refs__comp
+{
+	{ "name",     "ircd.m.dbs._event_refs.comp" },
+	{ "default",  "default"                     },
+};
+
 decltype(ircd::m::dbs::desc::event_refs__block__size)
 ircd::m::dbs::desc::event_refs__block__size
 {
@@ -154,7 +161,7 @@ ircd::m::dbs::desc::event_refs
 	size_t(event_refs__meta_block__size),
 
 	// compression
-	{}, // no compression for this column
+	string_view{event_refs__comp},
 
 	// compactor
 	{},

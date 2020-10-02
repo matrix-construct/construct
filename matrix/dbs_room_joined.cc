@@ -11,6 +11,13 @@
 decltype(ircd::m::dbs::room_joined)
 ircd::m::dbs::room_joined;
 
+decltype(ircd::m::dbs::desc::room_joined__comp)
+ircd::m::dbs::desc::room_joined__comp
+{
+	{ "name",     "ircd.m.dbs._room_joined.comp" },
+	{ "default",  "default"                      },
+};
+
 decltype(ircd::m::dbs::desc::room_joined__block__size)
 ircd::m::dbs::desc::room_joined__block__size
 {
@@ -125,7 +132,7 @@ ircd::m::dbs::desc::room_joined
 	size_t(room_joined__meta_block__size),
 
 	// compression
-	"default"s,
+	string_view{room_joined__comp},
 
 	// compactor
 	{},

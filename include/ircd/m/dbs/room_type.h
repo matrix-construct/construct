@@ -44,6 +44,7 @@ namespace ircd::m::dbs
 namespace ircd::m::dbs::desc
 {
 	// room events sequence
+	extern conf::item<std::string> room_type__comp;
 	extern conf::item<size_t> room_type__block__size;
 	extern conf::item<size_t> room_type__meta_block__size;
 	extern conf::item<size_t> room_type__cache__size;

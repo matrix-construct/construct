@@ -30,6 +30,7 @@ namespace ircd::m::dbs
 
 namespace ircd::m::dbs::desc
 {
+	extern conf::item<std::string> room_joined__comp;
 	extern conf::item<size_t> room_joined__block__size;
 	extern conf::item<size_t> room_joined__meta_block__size;
 	extern conf::item<size_t> room_joined__cache__size;
