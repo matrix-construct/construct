@@ -754,8 +754,12 @@ IRCD_PROF_ALWAYS_OPTIMIZE
 ircd::prof::event::enable(const long &arg)
 {
 	const int &fd(this->fd);
-	__builtin_ia32_mfence();
-	__builtin_ia32_lfence();
+
+	#if defined(__x86_64__)
+		__builtin_ia32_mfence();
+		__builtin_ia32_lfence();
+	#endif
+
 	::ioctl(fd, PERF_EVENT_IOC_ENABLE, arg);
 }
 
