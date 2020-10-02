@@ -2158,7 +2158,12 @@ ircd::db::database::column::column(database &d,
 	#endif
 
 	// Compression
-	this->options.compression = find_supported_compression(this->descriptor->compression);
+	const auto &[_compression_algos, _compression_opts]
+	{
+		split(this->descriptor->compression, ' ')
+	};
+
+	this->options.compression = find_supported_compression(_compression_algos);
 	//this->options.compression = rocksdb::kNoCompression;
 
 	// Compression options
