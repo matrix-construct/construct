@@ -145,7 +145,7 @@ ircd::info::dump_cpu_info()
 	#if defined(__i386__) or defined(__x86_64__)
 	log::info
 	{
-		log::star, "%s %s sse3:%b ssse3:%b sse4a:%b sse4.1:%b sse4.2:%b avx:%b avx2:%b avx512f:%b constant_tsc:%b",
+		log::star, "amd64 %s %s sse3:%b ssse3:%b sse4a:%b sse4.1:%b sse4.2:%b avx:%b avx2:%b avx512f:%b constant_tsc:%b",
 		hardware::x86::vendor,
 		hardware::virtualized?
 			"virtual"_sv:
@@ -161,6 +161,35 @@ ircd::info::dump_cpu_info()
 		hardware::x86::tsc_constant,
 	};
 	#endif
+
+	#if defined(__aarch64__)
+	log::info
+	{
+		log::star, "aarch64 %s MIDR[%08lx] REVIDR[%08lx] PFR0[%016lx] ISAR0[%016lx] MMFR0[%016lx] CACHETYPE[%016lx]",
+		hardware::arm::vendor,
+		hardware::arm::midr,
+		hardware::arm::revidr,
+		hardware::arm::isar[0],
+		hardware::arm::mmfr[0],
+		hardware::arm::pfr[0],
+		hardware::arm::ctr,
+	};
+	#endif
+
+	log::logf
+	{
+		log::star, log::DEBUG,
+		"0..00 STD MANUFAC [%08x|%08x|%08x|%08x] "
+		"0..01 STD FEATURE [%08x|%08x|%08x|%08x]",
+		uint32_t(hardware::x86::manufact >> 0),
+		uint32_t(hardware::x86::manufact >> 32),
+		uint32_t(hardware::x86::manufact >> 64),
+		uint32_t(hardware::x86::manufact >> 96),
+		uint32_t(hardware::x86::features >> 0),
+		uint32_t(hardware::x86::features >> 32),
+		uint32_t(hardware::x86::features >> 64),
+		uint32_t(hardware::x86::features >> 96),
+	};
 
 	char pbuf[6][48];
 	log::info
@@ -510,6 +539,86 @@ noexcept
 		case 0xF:   return -1;
 	}
 }
+
+//
+// aarch64
+//
+#if defined(__aarch64__)
+
+decltype(ircd::info::hardware::arm::midr)
+ircd::info::hardware::arm::midr{[]
+{
+	uint64_t ret {0};
+	#if defined(__aarch64__)
+	asm volatile ("mrs %0, MIDR_EL1": "=r" (ret));
+	#endif
+	return ret;
+}()};
+
+decltype(ircd::info::hardware::arm::revidr)
+ircd::info::hardware::arm::revidr{[]
+{
+	uint64_t ret {0};
+	#if defined(__aarch64__)
+	asm volatile ("mrs %0, REVIDR_EL1": "=r" (ret));
+	#endif
+	return ret;
+}()};
+
+decltype(ircd::info::hardware::arm::isar)
+ircd::info::hardware::arm::isar{[]
+{
+	uint64_t ret {0};
+	#if defined(__aarch64__)
+	asm volatile ("mrs %0, ID_AA64ISAR0_EL1": "=r" (ret));
+	#endif
+	return ret;
+}()};
+
+decltype(ircd::info::hardware::arm::mmfr)
+ircd::info::hardware::arm::mmfr{[]
+{
+	uint64_t ret {0};
+	#if defined(__aarch64__)
+	asm volatile ("mrs %0, ID_AA64MMFR0_EL1": "=r" (ret));
+	#endif
+	return ret;
+}()};
+
+decltype(ircd::info::hardware::arm::pfr)
+ircd::info::hardware::arm::pfr{[]
+{
+	uint64_t ret {0};
+	#if defined(__aarch64__)
+	asm volatile ("mrs %0, ID_AA64PFR0_EL1": "=r" (ret));
+	#endif
+	return ret;
+}()};
+
+decltype(ircd::info::hardware::arm::ctr)
+ircd::info::hardware::arm::ctr{[]
+{
+	uint64_t ret {0};
+	#if defined(__aarch64__)
+	asm volatile ("mrs %0, CTR_EL0": "=r" (ret));
+	#endif
+	return ret;
+}()};
+
+static char
+ircd_info_hardware_arm_vendor[32]
+{
+	"<unknown vendor>"
+};
+
+decltype(ircd::info::hardware::arm::vendor)
+ircd::info::hardware::arm::vendor{[]
+() -> ircd::string_view
+{
+	return ircd_info_hardware_arm_vendor;
+}()};
+
+#endif // __aarch64__
 
 //
 // Generic / Standard

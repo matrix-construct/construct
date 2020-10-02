@@ -125,6 +125,18 @@ namespace ircd::info::hardware::x86
 	extern const bool tsc, tsc_constant;
 };
 
+namespace ircd::info::hardware::arm
+{
+	extern const uint64_t midr;
+	extern const uint64_t revidr;
+	extern const uint64_t isar[1];
+	extern const uint64_t mmfr[1];
+	extern const uint64_t pfr[1];
+	extern const uint64_t ctr;
+
+	extern const string_view vendor;
+};
+
 /// Instances of `versions` create a dynamic version registry identifying
 /// third-party dependencies throughout the project and its loaded modules.
 ///
