@@ -260,7 +260,11 @@ namespace ircd::utf16
 {
 	template u8x16 utf16::find_surrogate<u8x16>(const u8x16) noexcept;
 	template u8x32 utf16::find_surrogate<u8x32>(const u8x32) noexcept;
+
+	// Clang-10 is having trouble with this instantiation on aarch64
+	#if !defined(__clang__) || !defined(__aarch64__)
 	template u8x64 utf16::find_surrogate<u8x64>(const u8x64) noexcept;
+	#endif
 }
 
 template<class u8xN>
