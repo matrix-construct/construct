@@ -406,7 +406,7 @@ ircd::m::homeserver::key::key(const struct opts &opts)
 		{
 			{ public_key_id, json::member
 			{
-				"key", public_key_b64
+				"key", string_view{public_key_b64}
 			}}
 		}
 	};
