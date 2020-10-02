@@ -8,6 +8,14 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#if !defined(IRCD_USE_LLVM) \
+&& __has_include("<llvm/Config/llvm-config.h>") \
+&& __has_include("<llvm/Object/Wasm.h>")
+	#define IRCD_USE_LLVM
+#endif
+
+#if defined(IRCD_USE_LLVM) // -------------------------------------------------
+
 #include <llvm/Config/llvm-config.h>
 #include <llvm/Object/Wasm.h>
 
@@ -79,3 +87,5 @@ ircd::llvm::fini()
 {
 
 }
+
+#endif // IRCD_USE_LLVM  ------------------------------------------------------
