@@ -21,12 +21,12 @@ RUN \
         libgraphicsmagick1-dev \
         libicu-dev \
         libjemalloc-dev \
-        liblz4-dev \
         libmagic-dev \
         libnss-db \
         libsodium-dev \
         libssl-dev \
         libtool \
+        libzstd-dev \
         shtool \
         xz-utils && \
     apt-get purge -y software-properties-common && \
