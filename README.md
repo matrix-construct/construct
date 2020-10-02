@@ -10,44 +10,6 @@ Matrix is about giving you control over your communication; Construct is about
 giving you control over Matrix. Your privacy and security matters. We encourage
 you to contribute new ideas and are liberal in accepting experimental features.
 
-## Installation
-
-### Dependencies
-
-- **Boost** library 1.66+
-- **RocksDB** library 5.17.2+
-- **Sodium** library for curve ed25519.
-- **OpenSSL** library for HTTPS TLS / X.509.
-- **Magic** library for MIME type recognition.
-
-##### OPTIONAL
-
-- **lz4** or **snappy** database compressions.
-- **GraphicsMagick** for media thumbnails.
-- **jemalloc** for dynamic memory.
-- **ICU** for unicode tools.
-
-##### BUILD TOOLS
-
-- **GNU C++** compiler, ld.gold, automake, autoconf, autoconf2.13,
-autoconf-archive, libtool.
-
-- A platform capable of loading dynamic shared objects at runtime is required.
-
-<!--
-
-#### Platforms
-
-[![Construct](https://img.shields.io/SemVer/v0.0.0-dev.png)](https://github.com/jevolk/charybdis/tree/master)
-
-| <sub> Continuously Integrated Host </sub>   | <sub> Compiler </sub>    | <sub> Third party </sub> | <sub> Status </sub> |
-|:------------------------------------------- |:------------------------ |:------------------------ |:------------------- |
-| <sub> Linux Ubuntu 16.04 Xenial </sub>      | <sub> GCC 6       </sub> | <sub> Boost 1.66 </sub>  | [![POSIX Build Status](https://travis-ci.org/jevolk/charybdis.svg?branch=master)](https://travis-ci.org/jevolk/charybdis) |
-| <sub> Linux Ubuntu 16.04 Xenial </sub>      | <sub> GCC 8       </sub> | <sub> Boost 1.66 </sub>  | [![POSIX Build Status](https://travis-ci.org/jevolk/charybdis.svg?branch=master)](https://travis-ci.org/jevolk/charybdis) |
-| <sub> Linux Ubuntu 18.04 Xenial </sub>      | <sub> GCC 6       </sub> | <sub> Boost 1.66 </sub>  | [![POSIX Build Status](https://travis-ci.org/jevolk/charybdis.svg?branch=master)](https://travis-ci.org/jevolk/charybdis) |
-
--->
-
 ### Getting Started
 
 1. At this phase of development the best thing to do is pull the master branch
