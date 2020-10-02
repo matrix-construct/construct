@@ -504,6 +504,7 @@ do_restart(char *const *const &_argv,
 
 	argv.emplace_back(nullptr);
 	ircd::syscall(::execve, _argv[0], argv.data(), _envp);
+	__builtin_unreachable();
 }
 
 /// These operations are safe to call before ircd::init() and anytime after
