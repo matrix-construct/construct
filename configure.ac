@@ -721,15 +721,18 @@ AM_COND_IF([UNTUNED],
 		RB_VAR_PREPEND([CXXFLAGS], ["-mtune=generic"])
 	], [
 		machine_tuning="${host_cpu} native instruction set"
-		RB_VAR_PREPEND([CXXFLAGS], ["-mtune=native"])
-		RB_VAR_PREPEND([CXXFLAGS], ["-march=native"])
 
 		AS_CASE([$host_cpu],
 		[x86_64],
 		[
 			dnl AMD K10's SSE4a doesn't work with valgrind
 			RB_VAR_PREPEND([CXXFLAGS], ["-mno-sse4a"])
+
+			dnl Not accepted by clang on aarch64
+			RB_VAR_PREPEND([CXXFLAGS], ["-march=native"])
 		])
+
+		RB_VAR_PREPEND([CXXFLAGS], ["-mtune=native"])
 	])
 ])
 
