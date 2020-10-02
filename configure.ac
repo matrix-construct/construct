@@ -266,9 +266,16 @@ AC_ARG_ENABLE(lto, RB_HELP_STRING([--disable-lto], [Enable link-time optimizatio
 	[
 		AM_COND_IF(CLANG,
 		[
-			lto="yes"
-			AC_MSG_RESULT([yes])
-			AC_SUBST(LTO, 1)
+			AS_CASE([$host_cpu],
+			[aarch64],
+			[
+				lto="no"
+				AC_MSG_RESULT([no, doesn't work on aarch64])
+			], [
+				lto="yes"
+				AC_MSG_RESULT([yes])
+				AC_SUBST(LTO, 1)
+			])
 		], [
 			lto="no"
 			AC_MSG_RESULT([no, only available with clang])
