@@ -1141,6 +1141,39 @@ decltype(ircd::net::socket::instances)
 ircd::net::socket::instances
 {};
 
+decltype(ircd::net::socket::desc_connect)
+ircd::net::socket::desc_connect
+{
+	"ircd::net::socket connect"
+};
+
+decltype(ircd::net::socket::desc_handshake)
+ircd::net::socket::desc_handshake
+{
+	"ircd::net::socket handshake"
+};
+
+decltype(ircd::net::socket::desc_disconnect)
+ircd::net::socket::desc_disconnect
+{
+	"ircd::net::socket disconnect"
+};
+
+decltype(ircd::net::socket::desc_timeout)
+ircd::net::socket::desc_timeout
+{
+	"ircd::net::socket timeout"
+};
+
+decltype(ircd::net::socket::desc_wait)
+ircd::net::socket::desc_wait
+{
+	{ "ircd::net::socket::wait ready::ANY"   },
+	{ "ircd::net::socket::wait ready::READ"  },
+	{ "ircd::net::socket::wait ready::WRITE" },
+	{ "ircd::net::socket::wait ready::ERROR" },
+};
+
 decltype(ircd::net::socket::total_bytes_in)
 ircd::net::socket::total_bytes_in
 {
@@ -1243,18 +1276,13 @@ ircd::net::socket::connect(const endpoint &ep,
 		opts.connect_timeout.count()
 	};
 
-	static ios::descriptor desc
-	{
-		"ircd::net::socket connect"
-	};
-
 	auto connect_handler
 	{
 		std::bind(&socket::handle_connect, this, weak_from(*this), opts, std::move(callback), ph::_1)
 	};
 
 	set_timeout(opts.connect_timeout);
-	sd.async_connect(ep, ios::handle(desc, std::move(connect_handler)));
+	sd.async_connect(ep, ios::handle(desc_connect, std::move(connect_handler)));
 }
 
 void
@@ -1275,11 +1303,6 @@ ircd::net::socket::handshake(const open_opts &opts,
 		opts.handshake_timeout.count()
 	};
 
-	static ios::descriptor desc
-	{
-		"ircd::net::socket handshake"
-	};
-
 	auto handshake_handler
 	{
 		std::bind(&socket::handle_handshake, this, weak_from(*this), std::move(callback), ph::_1)
@@ -1297,7 +1320,7 @@ ircd::net::socket::handshake(const open_opts &opts,
 		openssl::server_name(*this, server_name(opts));
 
 	ssl.set_verify_callback(std::move(verify_handler));
-	ssl.async_handshake(handshake_type::client, ios::handle(desc, std::move(handshake_handler)));
+	ssl.async_handshake(handshake_type::client, ios::handle(desc_handshake, std::move(handshake_handler)));
 }
 
 void
@@ -1348,18 +1371,13 @@ try
 
 		case dc::SSL_NOTIFY:
 		{
-			static ios::descriptor desc
-			{
-				"ircd::net::socket shutdown"
-			};
-
 			auto disconnect_handler
 			{
 				std::bind(&socket::handle_disconnect, this, shared_from(*this), std::move(callback), ph::_1)
 			};
 
 			set_timeout(opts.timeout);
-			ssl.async_shutdown(ios::handle(desc, std::move(disconnect_handler)));
+			ssl.async_shutdown(ios::handle(desc_disconnect, std::move(disconnect_handler)));
 			return;
 		}
 	}
@@ -1499,14 +1517,6 @@ ircd::net::socket::wait(const wait_opts &opts,
                         wait_callback_ec callback)
 try
 {
-	static ios::descriptor desc[4]
-	{
-		{ "ircd::net::socket::wait ready::ANY"   },
-		{ "ircd::net::socket::wait ready::READ"  },
-		{ "ircd::net::socket::wait ready::WRITE" },
-		{ "ircd::net::socket::wait ready::ERROR" },
-	};
-
 	assert(!fini);
 	set_timeout(opts.timeout);
 	const unwind_exceptional unset{[this]
@@ -1533,7 +1543,7 @@ try
 			static const ilist<mutable_buffer> bufs{buf};
 			if(SSL_peek(ssl.native_handle(), buf, sizeof(buf)) > 0)
 			{
-				ircd::post(desc[1], [handle(std::move(handle))]
+				ircd::post(desc_wait[1], [handle(std::move(handle))]
 				{
 					handle(error_code{});
 				});
@@ -1545,8 +1555,8 @@ try
 			// socket error and when data is actually available. We then have to check
 			// using a non-blocking peek in the handler. By doing it this way here we
 			// just get the error in the handler's ec.
-			//sd.async_wait(bufs, sd.message_peek, ios::handle(desc[1], [handle(std::move(handle))]
-			sd.async_receive(bufs, sd.message_peek, ios::handle(desc[1], [handle(std::move(handle))]
+			//sd.async_wait(bufs, sd.message_peek, ios::handle(desc_wait[1], [handle(std::move(handle))]
+			sd.async_receive(bufs, sd.message_peek, ios::handle(desc_wait[1], [handle(std::move(handle))]
 			(const auto &ec, const size_t bytes)
 			{
 				handle
@@ -1564,13 +1574,13 @@ try
 
 		case ready::WRITE:
 		{
-			sd.async_wait(wait_type::wait_write, ios::handle(desc[2], std::move(handle)));
+			sd.async_wait(wait_type::wait_write, ios::handle(desc_wait[2], std::move(handle)));
 			return;
 		}
 
 		case ready::ERROR:
 		{
-			sd.async_wait(wait_type::wait_error, ios::handle(desc[3], std::move(handle)));
+			sd.async_wait(wait_type::wait_error, ios::handle(desc_wait[3], std::move(handle)));
 			return;
 		}
 
@@ -2493,11 +2503,6 @@ ircd::net::socket::set_timeout(const milliseconds &t,
 	if(t < milliseconds(0))
 		return;
 
-	static ios::descriptor descriptor
-	{
-		"ircd::net::socket timer"
-	};
-
 	auto handler
 	{
 		std::bind(&socket::handle_timeout, this, weak_from(*this), std::move(callback), ph::_1)
@@ -2517,7 +2522,7 @@ ircd::net::socket::set_timeout(const milliseconds &t,
 	};
 
 	timer.expires_from_now(pt);
-	timer.async_wait(ios::handle(descriptor, std::move(handler)));
+	timer.async_wait(ios::handle(desc_timeout, std::move(handler)));
 }
 
 boost::asio::ip::tcp::endpoint

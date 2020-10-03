@@ -52,6 +52,11 @@ struct ircd::net::socket
 	static stats::item<uint64_t> total_bytes_out;
 	static stats::item<uint64_t> total_calls_in;
 	static stats::item<uint64_t> total_calls_out;
+	static ios::descriptor desc_connect;
+	static ios::descriptor desc_handshake;
+	static ios::descriptor desc_disconnect;
+	static ios::descriptor desc_timeout;
+	static ios::descriptor desc_wait[4];
 
 	uint64_t id {++count};
 	ip::tcp::socket sd;
