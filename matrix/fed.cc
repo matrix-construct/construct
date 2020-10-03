@@ -314,7 +314,7 @@ ircd::m::fed::frontfill::frontfill(const room::id &room_id,
 		thread_local char ridbuf[768];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			buf, "/_matrix/federation/v1/get_missing_events/%s/",
+			buf, "/_matrix/federation/v1/get_missing_events/%s",
 			url::encode(ridbuf, room_id)
 		};
 
