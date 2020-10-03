@@ -1482,13 +1482,15 @@ ircd::m::fed::request::request(const mutable_buffer &buf_,
 		target
 	};
 
-	// Generate the request head including the X-Matrix into buffer.
-	opts.out.head = opts.request(buf,
+	// Note that we override the HTTP Host header with the well-known
+	// remote; otherwise default is the destination above which may differ.
+	const http::header addl_headers[]
 	{
-		// Note that we override the HTTP Host header with the well-known
-		// remote; otherwise default is the destination above which may differ.
-		{ "Host", service(remote)? host(remote) : target }
-	});
+		{ "Host", service(remote)? host(remote): target }
+	};
+
+	// Generate the request head including the X-Matrix into buffer.
+	opts.out.head = opts.request(buf, addl_headers);
 
 	// Setup some buffering features which can optimize the server::request
 	if(!size(opts.in))
