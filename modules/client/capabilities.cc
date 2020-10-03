@@ -66,7 +66,7 @@ ircd::m::client_capabilities::get(client &client,
 				{
 					{ "enabled", m_change_password__enabled },
 				}},
-				{ "m.room_version", json::members
+				{ "m.room_versions", json::members
 				{
 					{ "default", default_room_version },
 					{ "available", json::members
