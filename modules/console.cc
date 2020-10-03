@@ -14422,7 +14422,7 @@ console_cmd__fed__frontfill(opt &out, const string_view &line)
 		"room_id", "remote", "earliest", "latest", "[limit]", "[min_depth]"
 	}};
 
-	const auto &room_id
+	const auto room_id
 	{
 		m::room_id(param.at(0))
 	};
