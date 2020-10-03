@@ -14465,9 +14465,14 @@ console_cmd__fed__frontfill(opt &out, const string_view &line)
 		16_KiB
 	};
 
+	const m::fed::frontfill::span span
+	{
+		earliest, latest
+	};
+
 	m::fed::frontfill request
 	{
-		room_id, {earliest, latest}, buf, std::move(opts)
+		room_id, span, buf, std::move(opts)
 	};
 
 	request.wait(out.timeout);
