@@ -308,7 +308,7 @@ ircd::m::fed::frontfill::frontfill(const room::id &room_id,
 	if(likely(!defined(json::get<"method"_>(opts.request))))
 		json::get<"method"_>(opts.request) = "POST";
 
-	window_buffer buf{buf_};
+	mutable_buffer buf{buf_};
 	if(likely(!defined(json::get<"uri"_>(opts.request))))
 	{
 		thread_local char ridbuf[768];
@@ -323,15 +323,12 @@ ircd::m::fed::frontfill::frontfill(const room::id &room_id,
 
 	if(likely(!defined(json::get<"content"_>(opts.request))))
 	{
-		buf([&pair, &opts](const mutable_buffer &buf)
-		{
-			return make_content(buf, pair, opts);
-		});
-
 		json::get<"content"_>(opts.request) = json::object
 		{
-			buf.completed()
+			make_content(buf, pair, opts)
 		};
+
+		consume(buf, size(string_view(json::get<"content"_>(opts.request))));
 	}
 
 	return request
