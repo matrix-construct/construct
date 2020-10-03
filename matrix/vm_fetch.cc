@@ -450,6 +450,12 @@ try
 		opts.phase.set(m::vm::phase::FETCH_PREV, false);
 		opts.phase.set(m::vm::phase::FETCH_STATE, false);
 		opts.notify_servers = false;
+
+		// The result won't give us events with a content hash mismatch unless
+		// they were obtained from an authoritative source. For this we can
+		// unconditionally allow hash mismatch from here.
+		opts.redacted = 1;
+
 		vm::eval
 		{
 			pdus, opts
