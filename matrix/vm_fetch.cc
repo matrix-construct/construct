@@ -542,6 +542,15 @@ ircd::m::vm::fetch::state_fetch(const event &event,
 			opts.op = m::fetch::op::event;
 			opts.room_id = result.request->room_id;
 			opts.event_id = event_id;
+			opts.hint =
+			{
+				!my_host(eval.opts->node_id)?
+					eval.opts->node_id:
+				!my_host(result.origin)?
+					result.origin:
+					string_view{}
+			};
+
 			ret.emplace_front(m::fetch::start(opts));
 
 			assert(std::distance(begin(ret), end(ret)) <= ssize_t(req.size()));
