@@ -162,17 +162,24 @@ ircd::m::request::generate_content_max
 	{ "default",  long(4_MiB)                          },
 };
 
+namespace ircd::m
+{
+	static unique_mutable_buffer request_generate_content_buf;
+}
+
 ircd::string_view
 ircd::m::request::generate(const mutable_buffer &out,
                            const ed25519::sk &sk,
                            const string_view &pkid)
 const
 {
-	const ctx::critical_assertion ca;
-	thread_local unique_buffer<mutable_buffer> buf
-	{
-		size_t(generate_content_max)
-	};
+	const ctx::critical_assertion _ca;
+	auto &buf{request_generate_content_buf};
+	if(unlikely(buffer::size(buf) != size_t(generate_content_max)))
+		buf = unique_mutable_buffer
+		{
+			size_t(generate_content_max), info::page_size
+		};
 
 	const auto serial_size
 	{
