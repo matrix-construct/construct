@@ -106,6 +106,29 @@ struct ircd::m::fetch::opts
 	/// by the user here. The default of 0 will be replaced by some internal
 	/// configured limit like 8 or 16 etc.
 	size_t backfill_limit {0};
+
+	/// Whether to hash the result for event_id (ignored for v1/v2); this is
+	/// important to ignore poisonous results and continuing.
+	bool check_event_id {true};
+
+	/// Whether to run the conforms checks on the result; this is important
+	/// to screen out poisonous results while continuing to try other servers.
+	bool check_conforms {true};
+
+	/// Whether to check if the content hash matches. This might not match if
+	/// the event is redacted (or junk), so other servers will then be tried.
+	/// Note the case of authoriative redactions below; and if true that may
+	/// allow a condition for forcing check_hashes=false.
+	bool check_hashes {true};
+
+	/// Whether to allow content hash mismatch iff the result was received from
+	/// the event's origin. If the origin of the event wants to redact the
+	/// event we accept; otherwise we continue to look for an unredacted copy.
+	bool authoritative_redaction {true};
+
+	/// Whether to verify signature of result before accepting; this is
+	/// important to ignore poisonous results and continuing.
+	bool check_signature {true};
 };
 
 struct ircd::m::fetch::result

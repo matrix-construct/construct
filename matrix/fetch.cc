@@ -728,7 +728,8 @@ namespace ircd::m::fetch
 	extern conf::item<bool> check_event_id;
 	extern conf::item<bool> check_conforms;
 	extern conf::item<bool> check_signature;
-	extern conf::item<bool> check_redacted;
+	extern conf::item<bool> check_hashes;
+	extern conf::item<bool> check_authoritative_redaction;
 }
 
 decltype(ircd::m::fetch::check_event_id)
@@ -745,11 +746,18 @@ ircd::m::fetch::check_conforms
 	{ "default",  true                          },
 };
 
-decltype(ircd::m::fetch::check_redacted)
-ircd::m::fetch::check_redacted
+decltype(ircd::m::fetch::check_hashes)
+ircd::m::fetch::check_hashes
 {
-	{ "name",     "ircd.m.fetch.check.redacted" },
-	{ "default",  true                          },
+	{ "name",     "ircd.m.fetch.check.hashes" },
+	{ "default",  true                        },
+};
+
+decltype(ircd::m::fetch::check_authoritative_redaction)
+ircd::m::fetch::check_authoritative_redaction
+{
+	{ "name",     "ircd.m.fetch.check.authoritative_redaction" },
+	{ "default",  true                                         },
 };
 
 decltype(ircd::m::fetch::check_signature)
@@ -861,7 +869,7 @@ void
 ircd::m::fetch::_check_event(const request &request,
                              const m::event &event)
 {
-	if(check_event_id && !m::check_id(event))
+	if(request.opts.check_event_id && check_event_id && !m::check_id(event))
 	{
 		event::id::buf buf;
 		const m::event &claim
@@ -877,21 +885,29 @@ ircd::m::fetch::_check_event(const request &request,
 		};
 	}
 
-	if(check_conforms)
+	if(request.opts.check_conforms && check_conforms)
 	{
 		m::event::conforms conforms
 		{
 			event
 		};
 
-		const bool redacted
+		const bool mismatch_hashes
 		{
-			check_redacted && conforms.has(m::event::conforms::MISMATCH_HASHES)?
-				bool(m::redacted(request.opts.event_id)):
-				false
+			check_hashes
+			&& request.opts.check_hashes
+			&& conforms.has(m::event::conforms::MISMATCH_HASHES)
 		};
 
-		if(redacted || !check_redacted)
+		const bool authoritative_redaction
+		{
+			check_authoritative_redaction
+			&& request.opts.authoritative_redaction
+			&& mismatch_hashes
+			&& json::get<"origin"_>(event) == request.origin
+		};
+
+		if(authoritative_redaction)
 			conforms.del(m::event::conforms::MISMATCH_HASHES);
 
 		thread_local char buf[128];
@@ -910,7 +926,7 @@ ircd::m::fetch::_check_event(const request &request,
 	}
 
 	// only check signature for v1 events
-	if(check_signature && request.opts.event_id.version() == "1")
+	if(request.opts.check_signature && check_signature && request.opts.event_id.version() == "1")
 	{
 		const string_view &server
 		{
