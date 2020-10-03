@@ -351,20 +351,46 @@ ircd::m::fed::frontfill::make_content(const mutable_buffer &buf,
 	{
 		// note: This object must be in abc order
 		json::stack::object top{out};
+
+		// earliest
 		{
-			json::stack::member earliest{top, "earliest_events"};
-			json::stack::array array{earliest};
+			json::stack::array array
+			{
+				top, "earliest_events"
+			};
+
 			for(const auto &id : pair.first)
-				array.append(id);
+				if(likely(id))
+					array.append(id);
 		}
+
+		// latest
 		{
-			json::stack::member latest{top, "latest_events"};
-			json::stack::array array{latest};
+			json::stack::array array
+			{
+				top, "latest_events"
+			};
+
 			for(const auto &id : pair.second)
-				array.append(id);
+				if(likely(id))
+					array.append(id);
 		}
-		json::stack::member{top, "limit", json::value(int64_t(opts.limit))};
-		json::stack::member{top, "min_depth", json::value(int64_t(opts.min_depth))};
+
+		json::stack::member
+		{
+			top, "limit", json::value
+			{
+				int64_t(opts.limit)
+			}
+		};
+
+		json::stack::member
+		{
+			top, "min_depth", json::value
+			{
+				int64_t(opts.min_depth)
+			}
+		};
 	}
 
 	return out.completed();
