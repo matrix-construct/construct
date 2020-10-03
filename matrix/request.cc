@@ -174,11 +174,16 @@ const
 		size_t(generate_content_max)
 	};
 
-	if(unlikely(json::serialized(*this) > buffer::size(buf)))
+	const auto serial_size
+	{
+		json::serialized(*this)
+	};
+
+	if(unlikely(serial_size > buffer::size(buf)))
 		throw m::error
 		{
 			"M_REQUEST_TOO_LARGE", "This server generated a request of %zu bytes; limit is %zu",
-			json::serialized(*this),
+			serial_size,
 			buffer::size(buf)
 		};
 
