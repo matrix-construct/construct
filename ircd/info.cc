@@ -176,21 +176,6 @@ ircd::info::dump_cpu_info()
 	};
 	#endif
 
-	log::logf
-	{
-		log::star, log::DEBUG,
-		"0..00 STD MANUFAC [%08x|%08x|%08x|%08x] "
-		"0..01 STD FEATURE [%08x|%08x|%08x|%08x]",
-		uint32_t(hardware::x86::manufact >> 0),
-		uint32_t(hardware::x86::manufact >> 32),
-		uint32_t(hardware::x86::manufact >> 64),
-		uint32_t(hardware::x86::manufact >> 96),
-		uint32_t(hardware::x86::features >> 0),
-		uint32_t(hardware::x86::features >> 32),
-		uint32_t(hardware::x86::features >> 64),
-		uint32_t(hardware::x86::features >> 96),
-	};
-
 	char pbuf[6][48];
 	log::info
 	{
