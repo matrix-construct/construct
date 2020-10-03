@@ -116,8 +116,7 @@ ircd::string_view
 ircd::net::peer_cert_der_sha256_b64(const mutable_buffer &buf,
                                     const socket &socket)
 {
-	thread_local char shabuf[sha256::digest_size];
-
+	char shabuf alignas(32) [sha256::digest_size];
 	const auto hash
 	{
 		peer_cert_der_sha256(shabuf, socket)
@@ -362,7 +361,7 @@ size_t
 ircd::net::discard_all(socket &socket,
                        const size_t &len)
 {
-	thread_local char buffer[512];
+	static char buffer[512];
 
 	size_t remain{len}; while(remain)
 	{
@@ -386,7 +385,7 @@ size_t
 ircd::net::discard_any(socket &socket,
                        const size_t &len)
 {
-	thread_local char buffer[512];
+	static char buffer[512];
 
 	size_t remain{len}; while(remain)
 	{
@@ -1268,11 +1267,12 @@ ircd::net::socket::connect(const endpoint &ep,
                            const open_opts &opts,
                            eptr_handler callback)
 {
+	char epbuf[128];
 	log::debug
 	{
 		log, "socket:%lu attempting connect remote[%s] to:%ld$ms",
 		this->id,
-		string(ep),
+		string(epbuf, ep),
 		opts.connect_timeout.count()
 	};
 
@@ -1417,7 +1417,7 @@ noexcept
 	sd.cancel(ec);
 	if(unlikely(ec))
 	{
-		thread_local char ecbuf[64];
+		char ecbuf[64];
 		log::dwarning
 		{
 			log, "socket:%lu cancel :%s",
@@ -1936,7 +1936,7 @@ noexcept try
 		#endif
 	};
 
-	thread_local char ecbuf[64];
+	char ecbuf[64];
 	log::debug
 	{
 		log, "%s ready %s %s avail:%zu:%zu:%d:%d",
@@ -2082,7 +2082,7 @@ noexcept try
 	using std::errc;
 
 	const life_guard<socket> s{wp};
-	thread_local char ecbuf[64], epbuf[128];
+	char ecbuf[64], epbuf[128];
 	log::debug
 	{
 		log, "%s connect to %s :%s",
@@ -2156,7 +2156,7 @@ noexcept try
 	if(timedout && ec == errc::operation_canceled)
 		ec = make_error_code(errc::timed_out);
 
-	thread_local char ecbuf[64];
+	char ecbuf[64];
 	log::debug
 	{
 		log, "%s disconnect %s",
@@ -2220,7 +2220,7 @@ noexcept try
 			nullptr
 	};
 
-	thread_local char ecbuf[64];
+	char ecbuf[64];
 	log::debug
 	{
 		log, "%s handshake cipher:%s %s",
