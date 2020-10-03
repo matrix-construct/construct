@@ -15685,7 +15685,7 @@ console_cmd__fetch__event(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "event_id"
+		"room_id", "event_id", "hint"
 	}};
 
 	const auto room_id
@@ -15698,10 +15698,16 @@ console_cmd__fetch__event(opt &out, const string_view &line)
 		m::event::id{param.at("event_id")}
 	};
 
+	const string_view hint
+	{
+		param["hint"]
+	};
+
 	m::fetch::opts opts;
 	opts.op = m::fetch::op::event;
 	opts.room_id = room_id;
 	opts.event_id = event_id;
+	opts.hint = hint;
 	auto future
 	{
 		m::fetch::start(opts)
