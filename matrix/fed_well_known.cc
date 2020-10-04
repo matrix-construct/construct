@@ -10,10 +10,13 @@
 
 namespace ircd::m::fed::well_known
 {
+	static ircd::server::request
+	request(const mutable_buffer &buf,
+	        const net::hostport &target,
+	        const string_view &url);
+
 	static std::tuple<ircd::http::code, ircd::string_view, ircd::string_view>
-	fetch(const mutable_buffer &,
-	      const net::hostport &,
-	      const string_view &url);
+	result(server::request &);
 
 	extern log::log log;
 }
@@ -257,9 +260,35 @@ try
 	unique_mutable_buffer carry;
 	for(size_t i(0); i < fetch_redirects; ++i)
 	{
+		const net::hostport &uri_remote
+		{
+			uri.remote
+		};
+
+		// Hard target https service; do not inherit any matrix service from remote.
+		const net::hostport target
+		{
+			net::host(uri_remote), "https", net::port(uri_remote)
+		};
+
+		auto future
+		{
+			request(buf, target, uri.path)
+		};
+
 		const auto &[code, location, content]
 		{
-			fetch(buf, uri.remote, uri.path)
+			result(future)
+		};
+
+		char dom_buf[rfc3986::DOMAIN_BUFSIZE];
+		log::debug
+		{
+			log, "fetch from %s %s :%u %s",
+			net::string(dom_buf, target),
+			uri.path,
+			uint(code),
+			http::status(code)
 		};
 
 		// Successful error; bail
@@ -348,22 +377,44 @@ catch(const std::exception &e)
 }
 
 /// Return a tuple of the HTTP code, any Location header, and the response
+/// content. These items are the result of waiting on the server::request
+/// (ctx::future) passed as the argument. This call can block if the caller
+/// passes an incomplete future.
+std::tuple
+<
+	ircd::http::code, ircd::string_view, ircd::string_view
+>
+ircd::m::fed::well_known::result(server::request &request)
+{
+	const auto code
+	{
+		request.get(seconds(fetch_timeout))
+	};
+
+	const http::response::head head
+	{
+		request.in.gethead(request)
+	};
+
+	return
+	{
+		code,
+		head.location,
+		request.in.content,
+	};
+}
+
+/// Launch requestReturn a tuple of the HTTP code, any Location header, and the response
 /// content. These values are unconditional if this function doesn't throw,
 /// but if there's no Location header and/or content then those will be empty
 /// string_view's. This function is intended to be run in a loop by the caller
 /// to chase redirection. No HTTP codes will throw from here; server and
 /// network errors (and others) will.
-std::tuple<ircd::http::code, ircd::string_view, ircd::string_view>
-ircd::m::fed::well_known::fetch(const mutable_buffer &buf,
-	                            const net::hostport &remote,
-	                            const string_view &url)
+ircd::server::request
+ircd::m::fed::well_known::request(const mutable_buffer &buf,
+	                              const net::hostport &target,
+	                              const string_view &url)
 {
-	// Hard target https service; do not inherit any matrix service from remote.
-	const net::hostport target
-	{
-		host(remote), "https", port(remote)
-	};
-
 	window_buffer wb
 	{
 		buf
@@ -390,37 +441,11 @@ ircd::m::fed::well_known::fetch(const mutable_buffer &buf,
 	in.head = buf + size(out.head);
 	in.content = in.head;
 
-	server::request::opts opts;
+	static server::request::opts opts;
 	opts.http_exceptions = false; // 3xx/4xx/5xx response won't throw.
-	server::request request
+
+	return server::request
 	{
 		target, std::move(out), std::move(in), &opts
-	};
-
-	const auto code
-	{
-		request.get(seconds(fetch_timeout))
-	};
-
-	thread_local char rembuf[rfc3986::DOMAIN_BUFSIZE * 2];
-	log::debug
-	{
-		log, "fetch from %s %s :%u %s",
-		string(rembuf, target),
-		url,
-		uint(code),
-		http::status(code)
-	};
-
-	const http::response::head head
-	{
-		request.in.gethead(request)
-	};
-
-	return
-	{
-		code,
-		head.location,
-		request.in.content,
 	};
 }
