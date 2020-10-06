@@ -37,6 +37,9 @@ namespace ircd::rand
 
 	// Random string from dictionary, fills buffer
 	string_view string(const mutable_buffer &out, const std::string &dict);
+
+	// Random fill of buffer
+	const_buffer fill(const mutable_buffer &out);
 }
 
 /// Random character from dictionary

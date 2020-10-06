@@ -44,6 +44,29 @@ decltype(ircd::rand::dict::numeric) ircd::rand::dict::numeric
 	"0123456789"
 };
 
+ircd::const_buffer
+ircd::rand::fill(const mutable_buffer &out)
+{
+	uint64_t *const __restrict__ val
+	{
+		reinterpret_cast<uint64_t *>(data(out))
+	};
+
+	constexpr size_t word_size
+	{
+		sizeof(*val)
+	};
+
+	size_t i(0);
+	for(; i < size(out) / word_size; ++i)
+		val[i] = integer();
+
+	for(size_t j(i * word_size); j < size(out) % word_size; ++j)
+		out[j] = integer();
+
+	return out;
+}
+
 ircd::string_view
 ircd::rand::string(const mutable_buffer &out,
                    const std::string &dict)
