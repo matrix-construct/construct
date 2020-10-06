@@ -132,8 +132,11 @@ ircd::m::user::profile::fetch(const m::user &user,
 		user.user_id, key, buf, std::move(opts)
 	};
 
-	federation_request.wait(seconds(remote_request_timeout));
-	const http::code &code{federation_request.get()};
+	const http::code code
+	{
+		federation_request.get(seconds(remote_request_timeout))
+	};
+
 	const json::object response
 	{
 		federation_request
