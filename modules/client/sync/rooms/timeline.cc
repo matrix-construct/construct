@@ -296,7 +296,7 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 		++i;
 	}
 
-	limited = i < limit;
+	limited = i > limit;
 	if(i > 1 && !it)
 		it.seek(event_idx);
 
