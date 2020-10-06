@@ -1644,8 +1644,8 @@ console_cmd__ios(opt &out, const string_view &line)
 	    << " " << std::right << std::setw(10) << "CALLS"
 	    << " " << std::right << std::setw(10) << "ALLOCS"
 	    << " " << std::right << std::setw(10) << "FREES"
-	    << " " << std::right << std::setw(26) << "ALLOCATED"
-	    << " " << std::right << std::setw(26) << "FREED"
+	    << " " << std::right << std::setw(26) << "ALLOCATED NOW"
+	    << " " << std::right << std::setw(26) << "ALLOCATED TOTAL"
 	    << " " << std::right << std::setw(8) << "FAULTS"
 	    << std::endl
 	    ;
@@ -1677,8 +1677,8 @@ console_cmd__ios(opt &out, const string_view &line)
 		<< " " << std::right << std::setw(10) << s.calls
 		<< " " << std::right << std::setw(10) << s.allocs
 		<< " " << std::right << std::setw(10) << s.frees
+		<< " " << std::right << std::setw(26) << pretty(pbuf, iec(s.alloc_bytes - s.free_bytes))
 		<< " " << std::right << std::setw(26) << pretty(pbuf, iec(s.alloc_bytes))
-		<< " " << std::right << std::setw(26) << pretty(pbuf, iec(s.free_bytes))
 		<< " " << std::right << std::setw(8) << s.faults
 		;
 	}};
