@@ -118,6 +118,9 @@ ircd::ios::descriptor::descriptor(const string_view &name,
 ircd::ios::descriptor::~descriptor()
 noexcept
 {
+	assert(!stats || stats->queued == 0);
+	assert(!stats || stats->allocs == stats->frees);
+	assert(!stats || stats->alloc_bytes == stats->free_bytes);
 }
 
 [[gnu::hot]]
