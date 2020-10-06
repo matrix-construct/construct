@@ -163,18 +163,23 @@ resource::response
 non_get_root(client &client,
              const resource::request &request)
 {
-	const auto &path
+	const auto &request_head_path
 	{
 		!request.head.path?
 			"index.html":
 		request.head.path == "/"?
 			"index.html":
-		request.head.path
+			request.head.path
+	};
+
+	const auto &path
+	{
+		lstrip(request_head_path, '/')
 	};
 
 	const http::code code
 	{
-		files.count(lstrip(path, '/'))?
+		files.count(path)?
 			http::METHOD_NOT_ALLOWED:
 			http::NOT_FOUND
 	};
@@ -190,18 +195,23 @@ get_root(client &client,
          const resource::request &request)
 try
 {
-	const auto &path
+	const auto &request_head_path
 	{
 		!request.head.path?
 			"index.html":
 		request.head.path == "/"?
 			"index.html":
-		request.head.path
+			request.head.path
+	};
+
+	const auto &path
+	{
+		lstrip(request_head_path, '/')
 	};
 
 	auto it
 	{
-		files.find(lstrip(path, '/'))
+		files.find(path)
 	};
 
 	if(it == end(files))
@@ -242,8 +252,18 @@ try
 	// can disable the header at runtime with this conf item.
 	const string_view &addl_headers
 	{
+		// Don't add this header for index.html otherwise firefox makes really
+		// aggressive assumptions on page-load which are fantastic right until
+		// you upgrade Riot and then all hell breaks loose as your client
+		// straddles between two versions at the same time.
+		path == "index.html"?
+			string_view{}:
+
+		// Add header if conf item allows
 		root_cache_control_immutable?
 			cache_control_immutable:
+
+		// Else don't add header
 			string_view{}
 	};
 
