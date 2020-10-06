@@ -215,7 +215,10 @@ try
 	};
 
 	if(it == end(files))
-		throw http::error{http::NOT_FOUND};
+		return resource::response
+		{
+			client, http::NOT_FOUND
+		};
 
 	const auto &file_name
 	{
