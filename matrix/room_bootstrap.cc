@@ -153,7 +153,7 @@ try
 
 	static const auto stack_sz
 	{
-		128_KiB
+		256_KiB
 	};
 
 	const m::event::fetch event
