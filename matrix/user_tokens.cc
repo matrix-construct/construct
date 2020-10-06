@@ -249,8 +249,8 @@ ircd::m::user::tokens::generate(const mutable_buffer &buf)
 
 	const mutable_buffer out
 	{
-		data(buf), std::min(token_max, size(buf))
+		buf, token_max
 	};
 
-	return rand::string(token_dict, out);
+	return rand::string(out, token_dict);
 }

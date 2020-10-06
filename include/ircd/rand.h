@@ -24,36 +24,48 @@ namespace ircd::rand::dict
 /// Tools for randomization
 namespace ircd::rand
 {
+	// Interface state.
 	extern std::random_device device;
 	extern std::mt19937_64 mt;
 
+	// Random integer
 	uint64_t integer();
 	uint64_t integer(const uint64_t &min, const uint64_t &max); // inclusive
 
 	// Random character from dictionary
 	char character(const std::string &dict = dict::alnum);
 
-	// Random string from dictionary
-	string_view string(const std::string &dict, const mutable_buffer &out);
-	std::string string(const std::string &dict, const size_t &len);
+	// Random string from dictionary, fills buffer
+	string_view string(const mutable_buffer &out, const std::string &dict);
 }
 
-// Random character from dictionary
+/// Random character from dictionary
 inline char
 ircd::rand::character(const std::string &dict)
 {
 	assert(!dict.empty());
-	return dict.at(integer(0, dict.size() - 1));
+	const auto pos
+	{
+		integer(0, dict.size() - 1)
+	};
+
+	return dict.at(pos);
 }
 
+/// Random integer in range (inclusive)
 inline uint64_t
 ircd::rand::integer(const uint64_t &min,
                     const uint64_t &max)
 {
-	std::uniform_int_distribution<uint64_t> dist{min, max};
+	std::uniform_int_distribution<uint64_t> dist
+	{
+		min, max
+	};
+
 	return dist(mt);
 }
 
+/// Random 64-bits
 inline uint64_t
 ircd::rand::integer()
 {

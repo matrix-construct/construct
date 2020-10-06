@@ -44,20 +44,9 @@ decltype(ircd::rand::dict::numeric) ircd::rand::dict::numeric
 	"0123456789"
 };
 
-std::string
-ircd::rand::string(const std::string &dict,
-                   const size_t &len)
-{
-	return ircd::util::string(len, [&dict]
-	(const mutable_buffer &buf)
-	{
-		return string(dict, buf);
-	});
-}
-
 ircd::string_view
-ircd::rand::string(const std::string &dict,
-                   const mutable_buffer &out)
+ircd::rand::string(const mutable_buffer &out,
+                   const std::string &dict)
 {
 	std::uniform_int_distribution<size_t> dist
 	{
@@ -65,9 +54,8 @@ ircd::rand::string(const std::string &dict,
 	};
 
 	std::generate(data(out), data(out) + size(out), [&dict, &dist]
-	() -> char
 	{
-		return dict.at(dist(mt));
+		return char(dict.at(dist(mt)));
 	});
 
 	return out;

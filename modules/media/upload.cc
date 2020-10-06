@@ -52,7 +52,7 @@ post__upload(client &client,
 	char randbuf[32];
 	const auto randstr
 	{
-		rand::string(rand::dict::alpha, randbuf)
+		rand::string(randbuf, rand::dict::alpha)
 	};
 
 	const m::media::mxc mxc
