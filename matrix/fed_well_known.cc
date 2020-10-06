@@ -105,11 +105,6 @@ try
 		content.get<time_t>("ttl", time_t(86400))
 	};
 
-	const string_view cached
-	{
-		data(buf), move(buf, json::string(content["m.server"]))
-	};
-
 	const system_point expires
 	{
 		origin_server_ts + ttl
@@ -120,22 +115,14 @@ try
 		ircd::now<system_point>() > expires
 	};
 
+	const string_view cached
+	{
+		data(buf), move(buf, json::string(content["m.server"]))
+	};
+
 	const bool valid
 	{
 		!empty(cached)
-	};
-
-	// Crucial value that will provide us with a return string for this
-	// function in any case. This is obtained by either using the value
-	// found in cache or making a network query for a new value. expired=true
-	// when a network query needs to be made, otherwise we can return the
-	// cached value. If the network query fails, this value is still defaulted
-	// as the origin string to return and we'll also cache that too.
-	const string_view delegated
-	{
-		expired || !valid?
-			fetch(buf + size(cached), origin):
-			cached
 	};
 
 	// Branch on valid cache hit to return result.
@@ -151,8 +138,19 @@ try
 			timef(tmbuf, expires, localtime),
 		};
 
-		return delegated;
+		return cached;
 	}
+
+	// Crucial value that will provide us with a return string for this
+	// function in any case. This is obtained by either using the value
+	// found in cache or making a network query for a new value. expired=true
+	// when a network query needs to be made, otherwise we can return the
+	// cached value. If the network query fails, this value is still defaulted
+	// as the origin string to return and we'll also cache that too.
+	const string_view delegated
+	{
+		fetch(buf + size(cached), origin)
+	};
 
 	// Conditions for valid expired cache hit w/ failure to reacquire.
 	const bool fallback
