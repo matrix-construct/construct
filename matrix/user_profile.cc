@@ -30,10 +30,12 @@ const
 		user
 	};
 
-	return m::send(user_room, user, "ircd.profile", key,
+	const json::members content
 	{
 		{ "text", val }
-	});
+	};
+
+	return m::send(user_room, user, "ircd.profile", key, content);
 }
 
 ircd::string_view
