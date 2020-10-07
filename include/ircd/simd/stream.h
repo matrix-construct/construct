@@ -34,6 +34,11 @@ namespace ircd::simd
 	template<class block_t,
 	         class lambda>
 	typename stream_half_fixed_stride<block_t, lambda>::type
+	stream(const block_t *, const u64x2, lambda&&) noexcept;
+
+	template<class block_t,
+	         class lambda>
+	typename stream_half_fixed_stride<block_t, lambda>::type
 	stream(const char *, const u64x2, lambda&&) noexcept;
 }
 
@@ -481,6 +486,61 @@ noexcept
 	}
 
 	// return value is pure
+	assert(count[0] == max[0]);
+	assert(count[1] == max[1]);
+	return count;
+}
+
+/// Streaming consumer
+///
+/// This template performs the loop boiler-plate for the developer who can
+/// simply supply a conforming closure. Characteristics:
+///
+/// * block-aligned
+/// * fixed-stride
+////
+template<class block_t,
+         class lambda>
+inline typename ircd::simd::stream_half_fixed_stride<block_t, lambda>::type
+ircd::simd::stream(const block_t *const __restrict__ in,
+                   const u64x2 max,
+                   lambda&& closure)
+noexcept
+{
+	u64x2 count
+	{
+		max[0], // preserved for caller
+		0,      // input pos
+	};
+
+	// primary broadband loop
+	while(count[1] < max[1])
+	{
+		static const u64x2 consume
+		{
+			0, sizeof(block_t)
+		};
+
+		static const auto mask
+		{
+			~block_t{0}
+		};
+
+		const auto si
+		{
+			in + count[1] / sizeof(block_t)
+		};
+
+		const block_t block
+		(
+			*si
+		);
+
+		closure(block, mask);
+		count += consume;
+	}
+
+	assert(count[1] + sizeof(block_t) > max[1]);
 	assert(count[0] == max[0]);
 	assert(count[1] == max[1]);
 	return count;

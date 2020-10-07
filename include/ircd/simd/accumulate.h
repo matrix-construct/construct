@@ -23,16 +23,18 @@ namespace ircd::simd
 	using accumulate_prototype = void (block_t &, block_t, block_t mask);
 
 	template<class block_t,
+	         class input_t,
 	         class lambda>
-	block_t accumulate(const char *, const u64x2, block_t, lambda&&) noexcept;
+	block_t accumulate(const input_t *, const u64x2, block_t, lambda&&) noexcept;
 }
 
 /// Streaming accumulation
 ///
 template<class block_t,
+         class input_t,
          class lambda>
 inline block_t
-ircd::simd::accumulate(const char *const __restrict__ in,
+ircd::simd::accumulate(const input_t *const __restrict__ in,
                        const u64x2 max,
                        block_t val,
                        lambda&& closure)
