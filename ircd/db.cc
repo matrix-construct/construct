@@ -3792,6 +3792,7 @@ ircd::db::database::rate_limiter::RequestToken(size_t bytes,
                                                OpType type)
 noexcept
 {
+	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
 		log, "[%s] Rate Limiter request bytes:%zu alignment:%zu prio:%s type:%s",
@@ -3805,6 +3806,7 @@ noexcept
 			"READ"_sv:
 			"????"_sv,
 	};
+	#endif
 
 	assert(prio <= IOPriority::IO_TOTAL);
 	{
