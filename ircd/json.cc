@@ -498,10 +498,8 @@ const
 	// falls back to scalar instead, so we have to case 128bit systems on GCC.
 	#if defined(__AVX__) || defined(__clang__)
 		using block_t = u8x32;
-		using block_t_u = u256x1_u;
 	#else
 		using block_t = u8x16;
-		using block_t_u = u128x1_u;
 	#endif
 
 	assert(start <= stop);
@@ -531,7 +529,7 @@ const
 
 	const auto count
 	{
-		simd::stream<block_t_u, block_t>(start + 1, max, each_block)
+		simd::stream<block_t>(start + 1, max, each_block)
 	};
 
 	const bool ok
@@ -3450,7 +3448,6 @@ ircd::json::string::stringify(const mutable_buffer &buf,
 noexcept
 {
 	using block_t = u8x16;
-	using block_t_u = u128x1_u;
 
 	const u64x2 max
 	{
@@ -3459,7 +3456,7 @@ noexcept
 
 	const auto consumed
 	{
-		simd::stream<block_t_u, block_t>(ircd::data(buf), ircd::data(input), max, string_stringify)
+		simd::stream<block_t>(ircd::data(buf), ircd::data(input), max, string_stringify)
 	};
 
 	return consumed[0]; // output pos (bytes written)
@@ -3696,7 +3693,6 @@ ircd::json::string::serialized(const string_view &input)
 noexcept
 {
 	using block_t = u8x16;
-	using block_t_u = u128x1_u;
 
 	const u64x2 max
 	{
@@ -3705,7 +3701,7 @@ noexcept
 
 	const auto count
 	{
-		simd::stream<block_t_u, block_t>(ircd::data(input), max, string_serialized)
+		simd::stream<block_t>(ircd::data(input), max, string_serialized)
 	};
 
 	return count[0];

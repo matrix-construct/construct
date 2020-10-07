@@ -22,13 +22,11 @@ namespace ircd::simd
 	template<class block_t>
 	using transform_prototype = u64x2 (block_t &, block_t mask);
 
-	template<class block_t_u,
-	         class block_t,
+	template<class block_t,
 	         class lambda>
 	u64x2 stream(const char *, const u64x2, lambda&&) noexcept;
 
-	template<class block_t_u,
-	         class block_t,
+	template<class block_t,
 	         class lambda>
 	u64x2 stream(char *, const char *, const u64x2, lambda&&) noexcept;
 }
@@ -55,8 +53,7 @@ namespace ircd::simd
 /// gives the buffer size in that format. The return value is the consumed
 /// bytes (final counter value) in that format.
 ///
-template<class block_t_u,
-         class block_t,
+template<class block_t,
          class lambda>
 inline ircd::u64x2
 ircd::simd::stream(char *const __restrict__ out,
@@ -65,6 +62,8 @@ ircd::simd::stream(char *const __restrict__ out,
                    lambda&& closure)
 noexcept
 {
+	using block_t_u = unaligned<block_t>;
+
 	u64x2 count
 	{
 		0, // output pos
@@ -156,8 +155,7 @@ noexcept
 /// iteration; a zero value is available for loop control: the loop will
 /// break without another iteration.
 ///
-template<class block_t_u,
-         class block_t,
+template<class block_t,
          class lambda>
 inline ircd::u64x2
 ircd::simd::stream(const char *const __restrict__ in,
@@ -165,6 +163,8 @@ ircd::simd::stream(const char *const __restrict__ in,
                    lambda&& closure)
 noexcept
 {
+	using block_t_u = unaligned<block_t>;
+
 	u64x2 count
 	{
 		max[0], // preserved for caller
