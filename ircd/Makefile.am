@@ -74,6 +74,7 @@ libircd_la_LDFLAGS = \
 	@JS_LDFLAGS@ \
 	@ICU_LDFLAGS@ \
 	@BOOST_LDFLAGS@ \
+	@OPENCL_LDFLAGS@ \
 	@SSL_LDFLAGS@ \
 	@PBC_LDFLAGS@ \
 	@CRYPTO_LDFLAGS@ \
@@ -92,6 +93,7 @@ libircd_la_LIBADD = \
 	@JS_LIBS@ \
 	@ICU_LIBS@ \
 	@BOOST_LIBS@ \
+	@OPENCL_LIBS@ \
 	@PBC_LIBS@ \
 	@SSL_LIBS@ \
 	@CRYPTO_LIBS@ \

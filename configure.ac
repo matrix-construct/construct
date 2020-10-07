@@ -2089,6 +2089,83 @@ AM_CONDITIONAL([LLVM], [test "x$have_libllvm" = "xyes" ])
 
 dnl
 dnl
+dnl OpenCL
+dnl
+dnl
+
+AC_SUBST(OPENCL_CPPFLAGS, [])
+AC_SUBST(OPENCL_LDFLAGS, [])
+AC_SUBST(OPENCL_LIBS, [])
+
+AC_ARG_WITH(opencl-includes,
+RB_HELP_STRING([--with-opencl-includes=[[[DIR]]]], [Path to OpenCL include directory]),
+[
+	opencl_incdir="$withval"
+	OPENCL_CPPFLAGS="-isystem $withval"
+], [])
+
+AC_ARG_WITH(opencl-libs,
+RB_HELP_STRING([--with-opencl-libs=[[[DIR]]]], [Path to OpenCL library directory]),
+[
+	opencl_libdir="$withval"
+	OPENCL_LDFLAGS="-L$withval"
+], [])
+
+RB_CHK_SYSHEADER(CL/cl.h, [CL_CL_H])
+RB_CHK_SYSHEADER(CL/opencl.h, [CL_OPENCL_H])
+PKG_CHECK_MODULES(OpenCL, [OpenCL],
+[
+	have_opencl="yes"
+], [
+	AC_CHECK_LIB(OpenCL, clGetPlatformInfo,
+	[
+		have_opencl="yes"
+	], 	[
+		have_opencl="no"
+	])
+])
+
+PKG_CHECK_MODULES(MesaOpenCL, [MesaOpenCL],
+[
+	have_mesa_opencl="yes"
+], [
+	AC_CHECK_LIB(MesaOpenCL, clGetPlatformInfo,
+	[
+		have_mesa_opencl="yes"
+	], 	[
+		have_mesa_opencl="no"
+	])
+])
+
+AC_MSG_CHECKING(whether to enable use of any found OpenCL)
+AC_ARG_ENABLE(opencl, RB_HELP_STRING([--enable-opencl], [Enable OpenCL support]),
+[
+	AC_MSG_RESULT([yes])
+	enable_opencl="yes"
+	opencl_enable="enabled"
+], [
+	AC_MSG_RESULT([no])
+	enable_opencl="no"
+	opencl_enable="disabled"
+])
+
+AM_CONDITIONAL([OPENCL], [test "x$have_opencl" = "xyes" && test "x$enable_opencl" = "xyes" ])
+AM_CONDITIONAL([MESA_OPENCL], [test "x$have_mesa_opencl" = "xyes"])
+
+AM_COND_IF([OPENCL],
+[
+	IRCD_DEFINE(USE_OPENCL, [1], [OpenCL support is available and enabled])
+	OPENCL_LIBS+="-lOpenCL"
+
+	AM_COND_IF([MESA_OPENCL],
+	[
+		IRCD_DEFINE(USE_MESA_OPENCL, [1], [MesaOpenCL support is available and enabled])
+		OPENCL_LIBS+=" -lMesaOpenCL"
+	])
+])
+
+dnl
+dnl
 dnl boost support
 dnl
 dnl
@@ -2533,6 +2610,8 @@ echo "Sodium support .................... $have_sodium"
 echo "GNU MP support .................... $have_gmp"
 echo "PBC support ....................... $have_pbc"
 echo "LLVM library support .............. $have_libllvm"
+echo "OpenCL support .................... $have_opencl ($opencl_enable)"
+echo "MesaOpenCL support ................ $have_mesa_opencl"
 echo "Linux AIO support ................. $aio"
 echo "Linux io_uring support ............ $io_uring"
 echo "Memory allocator .................. $alloc_lib"
