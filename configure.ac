@@ -1979,6 +1979,116 @@ AM_COND_IF([IMAGEMAGICK],
 
 dnl
 dnl
+dnl jemalloc
+dnl
+dnl
+
+RB_CHK_SYSHEADER(jemalloc/jemalloc.h, [JEMALLOC_H])
+PKG_CHECK_MODULES(jemalloc, [jemalloc],
+[
+	have_jemalloc="yes"
+], [
+	AC_CHECK_LIB(jemalloc, malloc,
+	[
+		have_jemalloc="yes"
+	], 	[
+		have_jemalloc="no"
+	])
+])
+
+AC_MSG_CHECKING(whether to disable use of any found jemalloc)
+AC_ARG_ENABLE(jemalloc, RB_HELP_STRING([--disable-jemalloc], [Disable jemalloc as third-party dynamic memory manager]),
+[
+	AC_MSG_RESULT([yes])
+	enable_jemalloc="no"
+], [
+	AC_MSG_RESULT([no])
+	enable_jemalloc="yes"
+])
+
+AM_CONDITIONAL([JEMALLOC], [test "x$have_jemalloc" = "xyes" && test "x$enable_jemalloc" = "xyes" ])
+
+dnl
+dnl
+dnl Select a third-party allocator
+dnl
+dnl
+
+AC_SUBST(MALLOC_CPPFLAGS)
+AC_SUBST(MALLOC_CXXFLAGS)
+AC_SUBST(MALLOC_LDFLAGS)
+AC_SUBST(MALLOC_LIBS)
+alloc_lib="standard"
+
+dnl ALLOC_LIBS true unless --disable-alloc-libs configured
+AM_COND_IF([MALLOC_LIBS],
+[
+	AM_COND_IF([JEMALLOC],
+	[
+		alloc_lib="jemalloc"
+		MALLOC_LIBS+=" -ljemalloc"
+		AC_DEFINE(IRCD_ALLOCATOR_USE_JEMALLOC, 1, [Use jemalloc as the allocator])
+	], [
+		AC_DEFINE(IRCD_ALLOCATOR_USE_DEFAULT, 1, [Use the default allocator])
+	])
+], [
+	AC_DEFINE(IRCD_ALLOCATOR_USE_DEFAULT, 1, [Use the default allocator])
+])
+
+dnl
+dnl
+dnl libLLVM
+dnl
+dnl
+
+AC_SUBST(LLVM_CPPFLAGS, [])
+AC_SUBST(LLVM_LDFLAGS, [])
+AC_SUBST(LLVM_LIBS, [])
+
+AC_ARG_WITH(llvm-includes,
+RB_HELP_STRING([--with-llvm-includes=[[[DIR]]]], [Path to libllvm include directory]),
+[
+	LLVM_CPPFLAGS="-isystem $withval"
+], [
+	LLVM_CPPFLAGS="-isystem /usr/lib/llvm-9/include"
+])
+
+AC_ARG_WITH(llvm-libs,
+RB_HELP_STRING([--with-llvm-libs=[[[DIR]]]], [Path to libllvm library directory]),
+[
+	LLVM_LDFLAGS="-L$withval"
+], [
+	LLVM_LDFLAGS="-L/usr/lib/llvm-9/lib"
+])
+
+PKG_CHECK_MODULES(LLVM, [LLVM],
+[
+	have_libllvm="yes"
+	LLVM_LIBS="-lLLVM"
+], [
+	AC_CHECK_LIB([LLVM], [LLVMBuildAnd],
+	[
+		have_libllvm="yes"
+		LLVM_LIBS="-lLLVM"
+	], [
+		have_libllvm="no"
+		AC_MSG_WARN([Unable to find LLVM compiler infrastructure library on this system.])
+	])
+])
+
+AC_MSG_CHECKING(whether to enable experimental libllvm module)
+AC_ARG_ENABLE(devllvm, RB_HELP_STRING([--enable-devllvm], [Enable experimental LLVM module development])
+[
+	AC_MSG_RESULT([yes])
+], [
+	AC_MSG_RESULT([no])
+	have_libllvm="no"
+])
+
+AM_CONDITIONAL([LLVM], [test "x$have_libllvm" = "xyes" ])
+
+dnl
+dnl
 dnl boost support
 dnl
 dnl
@@ -2234,116 +2344,6 @@ RB_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonk
 
 dnl TODO use an $enable_js var
 AM_CONDITIONAL([JS], [[[[ $with_included_js = yes ]]]])
-
-dnl
-dnl
-dnl jemalloc
-dnl
-dnl
-
-RB_CHK_SYSHEADER(jemalloc/jemalloc.h, [JEMALLOC_H])
-PKG_CHECK_MODULES(jemalloc, [jemalloc],
-[
-	have_jemalloc="yes"
-], [
-	AC_CHECK_LIB(jemalloc, malloc,
-	[
-		have_jemalloc="yes"
-	], 	[
-		have_jemalloc="no"
-	])
-])
-
-AC_MSG_CHECKING(whether to disable use of any found jemalloc)
-AC_ARG_ENABLE(jemalloc, RB_HELP_STRING([--disable-jemalloc], [Disable jemalloc as third-party dynamic memory manager]),
-[
-	AC_MSG_RESULT([yes])
-	enable_jemalloc="no"
-], [
-	AC_MSG_RESULT([no])
-	enable_jemalloc="yes"
-])
-
-AM_CONDITIONAL([JEMALLOC], [test "x$have_jemalloc" = "xyes" && test "x$enable_jemalloc" = "xyes" ])
-
-dnl
-dnl
-dnl Select a third-party allocator
-dnl
-dnl
-
-AC_SUBST(MALLOC_CPPFLAGS)
-AC_SUBST(MALLOC_CXXFLAGS)
-AC_SUBST(MALLOC_LDFLAGS)
-AC_SUBST(MALLOC_LIBS)
-alloc_lib="standard"
-
-dnl ALLOC_LIBS true unless --disable-alloc-libs configured
-AM_COND_IF([MALLOC_LIBS],
-[
-	AM_COND_IF([JEMALLOC],
-	[
-		alloc_lib="jemalloc"
-		MALLOC_LIBS+=" -ljemalloc"
-		AC_DEFINE(IRCD_ALLOCATOR_USE_JEMALLOC, 1, [Use jemalloc as the allocator])
-	], [
-		AC_DEFINE(IRCD_ALLOCATOR_USE_DEFAULT, 1, [Use the default allocator])
-	])
-], [
-	AC_DEFINE(IRCD_ALLOCATOR_USE_DEFAULT, 1, [Use the default allocator])
-])
-
-dnl
-dnl
-dnl libLLVM
-dnl
-dnl
-
-AC_SUBST(LLVM_CPPFLAGS, [])
-AC_SUBST(LLVM_LDFLAGS, [])
-AC_SUBST(LLVM_LIBS, [])
-
-AC_ARG_WITH(llvm-includes,
-RB_HELP_STRING([--with-llvm-includes=[[[DIR]]]], [Path to libllvm include directory]),
-[
-	LLVM_CPPFLAGS="-isystem $withval"
-], [
-	LLVM_CPPFLAGS="-isystem /usr/lib/llvm-9/include"
-])
-
-AC_ARG_WITH(llvm-libs,
-RB_HELP_STRING([--with-llvm-libs=[[[DIR]]]], [Path to libllvm library directory]),
-[
-	LLVM_LDFLAGS="-L$withval"
-], [
-	LLVM_LDFLAGS="-L/usr/lib/llvm-9/lib"
-])
-
-PKG_CHECK_MODULES(LLVM, [LLVM],
-[
-	have_libllvm="yes"
-	LLVM_LIBS="-lLLVM"
-], [
-	AC_CHECK_LIB([LLVM], [LLVMBuildAnd],
-	[
-		have_libllvm="yes"
-		LLVM_LIBS="-lLLVM"
-	], [
-		have_libllvm="no"
-		AC_MSG_WARN([Unable to find LLVM compiler infrastructure library on this system.])
-	])
-])
-
-AC_MSG_CHECKING(whether to enable experimental libllvm module)
-AC_ARG_ENABLE(devllvm, RB_HELP_STRING([--enable-devllvm], [Enable experimental LLVM module development])
-[
-	AC_MSG_RESULT([yes])
-], [
-	AC_MSG_RESULT([no])
-	have_libllvm="no"
-])
-
-AM_CONDITIONAL([LLVM], [test "x$have_libllvm" = "xyes" ])
 
 
 dnl ***************************************************************************
