@@ -275,45 +275,25 @@ ircd::m::events::for_each(const range &range,
 	return true;
 }
 
-///TODO: This impl is temp. Need better dispatching based on filter before
-///TODO: fetching event.
-bool
-ircd::m::events::for_each(const range &range,
-                          const event_filter &filter,
-                          const event::closure_idx_bool &closure)
+//
+// events::source
+//
+
+namespace ircd::m::events::source
 {
-	auto limit
-	{
-		json::get<"limit"_>(filter)?: 32L
-	};
-
-	return for_each(range, event::closure_idx_bool{[&filter, &closure, &limit, &range]
-	(const event::idx &event_idx)
-	-> bool
-	{
-		const m::event::fetch event
-		{
-			std::nothrow, event_idx, range.fopts? *range.fopts : event::fetch::default_opts
-		};
-
-		if(!event.valid)
-			return true;
-
-		if(!match(filter, event))
-			return true;
-
-		if(!closure(event_idx))
-			return false;
-
-		return --limit > 0L;
-	}});
-
-	return true;
+	extern conf::item<size_t> readahead;
 }
 
+decltype(ircd::m::events::source::readahead)
+ircd::m::events::source::readahead
+{
+	{ "name",     "ircd.m.events.source.readahead" },
+	{ "default",  long(4_MiB)                      },
+};
+
 bool
-ircd::m::events::for_each(const range &range,
-                          const event::closure_idx_bool &closure)
+ircd::m::events::source::for_each(const range &range,
+                                  const closure &closure)
 {
 	const bool ascending
 	{
@@ -334,14 +314,16 @@ ircd::m::events::for_each(const range &range,
 			range.second
 	};
 
-	auto &column
+	db::gopts gopts
 	{
-		dbs::event_json
+		db::get::NO_CACHE,
+		db::get::NO_CHECKSUM
 	};
+	gopts.readahead = size_t(readahead);
 
 	auto it
 	{
-		column.lower_bound(byte_view<string_view>(start))
+		dbs::event_json.lower_bound(byte_view<string_view>(start), gopts)
 	};
 
 	for(; bool(it); ascending? ++it : --it)
@@ -357,7 +339,12 @@ ircd::m::events::for_each(const range &range,
 		if(!ascending && event_idx <= stop)
 			break;
 
-		if(!closure(event_idx))
+		const json::object &event
+		{
+			it->second
+		};
+
+		if(!closure(event_idx, event))
 			return false;
 	}
 
@@ -365,7 +352,7 @@ ircd::m::events::for_each(const range &range,
 }
 
 //
-// events::state
+// events::content
 //
 
 namespace ircd::m::events::content

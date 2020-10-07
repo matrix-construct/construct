@@ -16,13 +16,12 @@ namespace ircd::m::events
 	struct range;
 	using closure = std::function<bool (const event::idx &, const event &)>;
 
-	// Iterate viable event indexes in a range
-	bool for_each(const range &, const event::closure_idx_bool &);
-	bool for_each(const range &, const event_filter &, const event::closure_idx_bool &);
-
-	// Iterate events in an index range
+	// Iterate events in range
 	bool for_each(const range &, const closure &);
+
+	// Iterate events in range w/ filter
 	bool for_each(const range &, const event_filter &, const closure &);
+	bool for_each(const range &, const event_filter &, const event::closure_idx_bool &);
 
 	// util
 	void dump__file(const string_view &filename);
@@ -90,6 +89,15 @@ namespace ircd::m::events::content
 	using closure = std::function<bool (const event::idx &, const json::object &)>;
 
 	bool for_each(const closure &);
+}
+
+/// Interface to scan the JSON source of events
+namespace ircd::m::events::source
+{
+	using closure = std::function<bool (const event::idx &, const json::object &)>;
+
+	// Iterate events in range
+	bool for_each(const range &, const closure &);
 }
 
 /// Range to start (inclusive) and stop (exclusive). If start is greater than
