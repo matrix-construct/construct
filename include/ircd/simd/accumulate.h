@@ -38,18 +38,12 @@ ircd::simd::accumulate(const char *const __restrict__ in,
                        lambda&& closure)
 noexcept
 {
-	static const u64x2 block_stride
-	{
-		max[0], sizeof(block_t)
-	};
-
 	const u64x2 res
 	{
 		stream<block_t>(in, max, [&val, &closure]
 		(const auto block, const auto mask)
 		{
 			closure(val, block, mask);
-			return block_stride;
 		})
 	};
 
