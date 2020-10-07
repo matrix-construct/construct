@@ -83,3 +83,37 @@ ircd::rand::string(const mutable_buffer &out,
 
 	return out;
 }
+
+template<>
+ircd::u512x1
+ircd::rand::vector()
+{
+	return u64x8
+	{
+		integer(), integer(),
+		integer(), integer(),
+		integer(), integer(),
+		integer(), integer(),
+	};
+}
+
+template<>
+ircd::u256x1
+ircd::rand::vector()
+{
+	return u64x4
+	{
+		integer(), integer(),
+		integer(), integer(),
+	};
+}
+
+template<>
+ircd::u128x1
+ircd::rand::vector()
+{
+	return u64x2
+	{
+		integer(), integer()
+	};
+}

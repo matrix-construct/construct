@@ -32,6 +32,12 @@ namespace ircd::rand
 	uint64_t integer();
 	uint64_t integer(const uint64_t &min, const uint64_t &max); // inclusive
 
+	// Random vector
+	template<class T> T vector() = delete;
+	template<> u128x1 vector();
+	template<> u256x1 vector();
+	template<> u512x1 vector();
+
 	// Random character from dictionary
 	char character(const std::string &dict = dict::alnum);
 
