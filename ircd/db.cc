@@ -2086,6 +2086,13 @@ ircd::db::database::column::column(database &d,
 		this->options.max_write_buffer_size_to_maintain = 0; //this->options.write_buffer_size * 4;
 	#endif
 
+	this->options.arena_block_size = std::clamp
+	(
+		this->options.write_buffer_size / 2L,
+		ulong(512_KiB),
+		ulong(4_MiB)
+	);
+
 	// Conf item can be set to disable automatic compactions. For developers
 	// and debugging; good for valgrind.
 	this->options.disable_auto_compactions = !bool(db::auto_compact);
