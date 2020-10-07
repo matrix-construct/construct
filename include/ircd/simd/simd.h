@@ -33,6 +33,7 @@
 #include "any.h"
 #include "all.h"
 #include "stream.h"
+#include "accumulate.h"
 #include "print.h"
 
 namespace ircd
