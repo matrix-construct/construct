@@ -12,7 +12,7 @@
 #define HAVE_IRCD_SIMD_H
 
 #include "type.h"
-#include "type.unaligned.h"
+#include "unaligned.h"
 #include "traits.h"
 #include "lane_cast.h"
 #include "broad_cast.h"
