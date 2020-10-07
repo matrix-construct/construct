@@ -82,9 +82,10 @@ noexcept
 
 	*thread = id(ircd::ctx::posix::ctxs.back());
 
-	ircd::log::debug
+	ircd::log::logf
 	{
-		ircd::ctx::posix::log, "pthread_create id:%lu attr:%p func:%p arg:%p",
+		ircd::ctx::posix::log, ircd::log::level::DEBUG,
+		"pthread_create id:%lu attr:%p func:%p arg:%p",
 		*thread,
 		attr,
 		start_routine,
