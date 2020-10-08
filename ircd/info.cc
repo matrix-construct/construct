@@ -19,6 +19,8 @@ namespace ircd::info
 	static void dump_exe_info();
 	static void dump_lib_info();
 	static void dump_sys_info();
+	static void dump_cpu_info_x86();
+	static void dump_cpu_info_arm();
 	static void dump_cpu_info();
 }
 
@@ -141,40 +143,8 @@ noexcept
 void
 ircd::info::dump_cpu_info()
 {
-	// This message flashes hardware standard information about this platform
-	#if defined(__i386__) or defined(__x86_64__)
-	log::info
-	{
-		log::star, "amd64 %s %s sse3:%b ssse3:%b sse4a:%b sse4.1:%b sse4.2:%b avx:%b avx2:%b avx512f:%b constant_tsc:%b",
-		hardware::x86::vendor,
-		hardware::virtualized?
-			"virtual"_sv:
-			"physical"_sv,
-		hardware::x86::sse3,
-		hardware::x86::ssse3,
-		hardware::x86::sse4a,
-		hardware::x86::sse4_1,
-		hardware::x86::sse4_2,
-		hardware::x86::avx,
-		hardware::x86::avx2,
-		hardware::x86::avx512f,
-		hardware::x86::tsc_constant,
-	};
-	#endif
-
-	#if defined(__aarch64__)
-	log::info
-	{
-		log::star, "aarch64 %s MIDR[%08lx] REVIDR[%08lx] PFR0[%016lx] ISAR0[%016lx] MMFR0[%016lx] CACHETYPE[%016lx]",
-		hardware::arm::vendor,
-		hardware::arm::midr,
-		hardware::arm::revidr,
-		hardware::arm::isar[0],
-		hardware::arm::mmfr[0],
-		hardware::arm::pfr[0],
-		hardware::arm::ctr,
-	};
-	#endif
+	dump_cpu_info_x86();
+	dump_cpu_info_arm();
 
 	char pbuf[6][48];
 	log::info
@@ -255,6 +225,114 @@ ircd::info::dump_cpu_info()
 		hardware::uni_blksz,
 		hardware::page_size,
 	};
+}
+
+void
+ircd::info::dump_cpu_info_arm()
+#if defined(__aarch64__)
+{
+	log::info
+	{
+		log::star, "aarch64 %s MIDR[%08lx] REVIDR[%08lx] PFR0[%016lx] ISAR0[%016lx] MMFR0[%016lx] CACHETYPE[%016lx]",
+		hardware::arm::vendor,
+		hardware::arm::midr,
+		hardware::arm::revidr,
+		hardware::arm::isar[0],
+		hardware::arm::mmfr[0],
+		hardware::arm::pfr[0],
+		hardware::arm::ctr,
+	};
+}
+#else
+{
+}
+#endif
+
+void
+ircd::info::dump_cpu_info_x86()
+#if defined(__x86_64__)
+{
+	char support[128] {0};
+	const auto append{[&support]
+	(const string_view &name, const bool &avail, const int &enable)
+	{
+		strlcat(support, fmt::bsprintf<64>
+		{
+			" %s[%c%c]",
+			name,
+			avail == true? 'Y': 'N',
+			enable == true? 'Y': enable == false? 'N': '-',
+		});
+	}};
+
+	#if defined(__SSE2__)
+		append("sse2", hardware::x86::sse2, true);
+	#else
+		append("sse2", hardware::x86::sse2, false);
+	#endif
+
+	#if defined(__SSE3__)
+		append("sse3", hardware::x86::sse3, true);
+	#else
+		append("sse3", hardware::x86::sse3, false);
+	#endif
+
+	#if defined(__SSSE3__)
+		append("ssse3", hardware::x86::ssse3, true);
+	#else
+		append("ssse3", hardware::x86::ssse3, false);
+	#endif
+
+	#if defined(__SSE4A__)
+		append("sse4a", hardware::x86::sse4a, true);
+	#else
+		append("sse4a", hardware::x86::sse4a, false);
+	#endif
+
+	#if defined(__SSE4_1__)
+		append("sse4.1", hardware::x86::sse4_1, true);
+	#else
+		append("sse4.1", hardware::x86::sse4_1, false);
+	#endif
+
+	#if defined(__SSE4_2__)
+		append("sse4.2", hardware::x86::sse4_2, true);
+	#else
+		append("sse4.2", hardware::x86::sse4_2, false);
+	#endif
+
+	#if defined(__AVX__)
+		append("avx", hardware::x86::avx, true);
+	#else
+		append("avx", hardware::x86::avx, false);
+	#endif
+
+	#if defined(__AVX2__)
+		append("avx2", hardware::x86::avx2, true);
+	#else
+		append("avx2", hardware::x86::avx2, false);
+	#endif
+
+	#if defined(__AVX512F__)
+		append("avx512f", hardware::x86::avx512f, true);
+	#else
+		append("avx512f", hardware::x86::avx512f, false);
+	#endif
+
+	append("constant_tsc", hardware::x86::tsc_constant, -1);
+
+	log::info
+	{
+		log::star, "x86_64 %s %s%s%s",
+		hardware::x86::vendor,
+		hardware::virtualized?
+			"virtual"_sv:
+			"physical"_sv,
+		vg::active()?
+			" valgrind "_sv:
+			""_sv,
+		support,
+	};
 
 	log::logf
 	{
@@ -316,6 +394,10 @@ ircd::info::dump_cpu_info()
 		uint32_t(hardware::x86::_lwp >> 96),
 	};
 }
+#else
+{
+}
+#endif
 
 //
 // x86::x86
