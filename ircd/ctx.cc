@@ -426,7 +426,7 @@ const uint64_t &
 ircd::ctx::epoch()
 noexcept
 {
-	return prof::get(prof::event::YIELD);
+	return ctx::ios_handler.epoch;
 }
 
 bool
