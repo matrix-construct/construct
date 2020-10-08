@@ -169,7 +169,7 @@ struct ircd::fmt::bsprintf
 :snprintf
 ,string_view
 {
-	std::array<char, MAX> buf;
+	char buf[MAX];
 
 	template<class... args>
 	bsprintf(const string_view &fmt,
@@ -180,7 +180,7 @@ struct ircd::fmt::bsprintf
 	}
 	,string_view
 	{
-		buf.data(), size_t(static_cast<snprintf &>(*this))
+		buf, size_t(static_cast<snprintf &>(*this))
 	}{}
 };
 
