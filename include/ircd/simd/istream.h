@@ -232,9 +232,7 @@ noexcept
 		};
 	}
 
-	// return value is pure
 	assert(count[0] == max[0]);
-	assert(count[1] == max[1]);
 	return count;
 }
 
@@ -289,6 +287,5 @@ noexcept
 
 	assert(count[1] + sizeof(block_t) > max[1]);
 	assert(count[0] == max[0]);
-	assert(count[1] == max[1]);
 	return count;
 }
