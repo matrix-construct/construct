@@ -150,10 +150,8 @@ noexcept try
 	this->yc = &yc;
 	notes = 1;
 	stack.base = uintptr_t(__builtin_frame_address(0));
-	mark(prof::event::ENTER);
 	const unwind atexit{[this]
 	{
-		mark(prof::event::LEAVE);
 		adjoindre.notify_all();
 		stack.at = 0;
 		notes = 0;
@@ -165,6 +163,17 @@ noexcept try
 
 	// Check for a precocious interrupt
 	interruption_point();
+
+	// Mark the point of context entry only after the interrupt check. If the
+	// context was interrupted without ever entering (which makes the above
+	// check throw) we never record any execution slice or increment the epoch
+	// counter for it. This can allow a parent context to assume application
+	// state remains unmodified by the aborted context.
+	mark(prof::event::ENTER);
+	const unwind leaver{[this]
+	{
+		mark(prof::event::LEAVE);
+	}};
 
 	// Call the user's function.
 	func();
