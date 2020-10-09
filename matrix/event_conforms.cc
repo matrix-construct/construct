@@ -144,6 +144,10 @@ ircd::m::vm::conform_report
 			opts.require_content?
 				false:
 
+			// assume unredacted for internal rooms
+			eval.room_internal?
+				false:
+
 			// assume redacted when hash mismatch already allowed
 			(opts.non_conform.has(event::conforms::MISMATCH_HASHES))?
 				true:
