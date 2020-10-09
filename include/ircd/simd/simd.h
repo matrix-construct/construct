@@ -34,6 +34,7 @@
 #include "all.h"
 #include "istream.h"
 #include "iostream.h"
+#include "ostream.h"
 #include "accumulate.h"
 #include "print.h"
 
