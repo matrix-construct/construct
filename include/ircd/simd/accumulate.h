@@ -16,9 +16,7 @@ namespace ircd::simd
 	/// Transform block_t by pseudo-reference. The closure has an opportunity
 	/// to modify the block while it is being streamed from the source to the
 	/// destination. The mask indicates which elements of the block are valid
-	/// if the input is smaller than the block size. This function returns
-	/// a pair of integers which advance the output and input positions of the
-	/// streams for the next iteration.
+	/// if the input is smaller than the block size.
 	template<class block_t>
 	using accumulate_prototype = void (block_t &, block_t, block_t mask);
 

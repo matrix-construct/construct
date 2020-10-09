@@ -32,7 +32,8 @@
 #include "lateral.h"
 #include "any.h"
 #include "all.h"
-#include "stream.h"
+#include "istream.h"
+#include "iostream.h"
 #include "accumulate.h"
 #include "print.h"
 
