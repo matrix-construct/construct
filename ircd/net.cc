@@ -2910,28 +2910,35 @@ ircd::string_view
 ircd::net::canonize(const mutable_buffer &buf,
                     const hostport &hostport)
 {
-	thread_local char tlbuf[2][rfc3986::DOMAIN_BUFSIZE * 2];
-
+	thread_local char svc[32], tlbuf[2][rfc3986::DOMAIN_BUFSIZE * 2];
 	assert(service(hostport) || port(hostport));
-	if(unlikely(!service(hostport) && !port(hostport)))
+
+	const string_view &service_name
+	{
+		!service(hostport)?
+			net::dns::service_name(std::nothrow, svc, port(hostport), "tcp"):
+			service(hostport)
+	};
+
+	if(likely(service_name))
+		return fmt::sprintf
+		{
+			buf, "%s:%s",
+			tolower(tlbuf[0], host(hostport)),
+			tolower(tlbuf[1], service_name),
+		};
+
+	if(unlikely(!port(hostport)))
 		throw error
 		{
 			"Missing service suffix in hostname:service string.",
 		};
 
-	if(port(hostport))
-		return fmt::sprintf
-		{
-			buf, "%s:%u",
-			tolower(tlbuf[0], host(hostport)),
-			port(hostport),
-		};
-
 	return fmt::sprintf
 	{
-		buf, "%s:%s",
+		buf, "%s:%u",
 		tolower(tlbuf[0], host(hostport)),
-		tolower(tlbuf[1], service(hostport)),
+		port(hostport),
 	};
 }
 

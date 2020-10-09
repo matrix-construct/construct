@@ -677,7 +677,7 @@ ircd::server::peer::peer(const net::hostport &hostport,
 	open_opts
 }
 {
-	const net::hostport &canon
+	const net::hostport canon
 	{
 		this->hostcanon
 	};
