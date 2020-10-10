@@ -123,7 +123,6 @@ ircd::write_avoid
 			return;
 
 		maintenance.set("true");
-		db::auto_compact.set("false");
 	}
 };
 
