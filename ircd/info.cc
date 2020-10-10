@@ -265,60 +265,15 @@ ircd::info::dump_cpu_info_x86()
 		});
 	}};
 
-	#if defined(__SSE2__)
-		append("sse2", hardware::x86::sse2, true);
-	#else
-		append("sse2", hardware::x86::sse2, false);
-	#endif
-
-	#if defined(__SSE3__)
-		append("sse3", hardware::x86::sse3, true);
-	#else
-		append("sse3", hardware::x86::sse3, false);
-	#endif
-
-	#if defined(__SSSE3__)
-		append("ssse3", hardware::x86::ssse3, true);
-	#else
-		append("ssse3", hardware::x86::ssse3, false);
-	#endif
-
-	#if defined(__SSE4A__)
-		append("sse4a", hardware::x86::sse4a, true);
-	#else
-		append("sse4a", hardware::x86::sse4a, false);
-	#endif
-
-	#if defined(__SSE4_1__)
-		append("sse4.1", hardware::x86::sse4_1, true);
-	#else
-		append("sse4.1", hardware::x86::sse4_1, false);
-	#endif
-
-	#if defined(__SSE4_2__)
-		append("sse4.2", hardware::x86::sse4_2, true);
-	#else
-		append("sse4.2", hardware::x86::sse4_2, false);
-	#endif
-
-	#if defined(__AVX__)
-		append("avx", hardware::x86::avx, true);
-	#else
-		append("avx", hardware::x86::avx, false);
-	#endif
-
-	#if defined(__AVX2__)
-		append("avx2", hardware::x86::avx2, true);
-	#else
-		append("avx2", hardware::x86::avx2, false);
-	#endif
-
-	#if defined(__AVX512F__)
-		append("avx512f", hardware::x86::avx512f, true);
-	#else
-		append("avx512f", hardware::x86::avx512f, false);
-	#endif
-
+	append("sse2", hardware::x86::sse2, simd::support::sse2);
+	append("sse3", hardware::x86::sse3, simd::support::sse3);
+	append("ssse3", hardware::x86::ssse3, simd::support::ssse3);
+	append("sse4a", hardware::x86::sse4a, simd::support::sse4a);
+	append("sse4.1", hardware::x86::sse4_1, simd::support::sse4_1);
+	append("sse4.2", hardware::x86::sse4_2, simd::support::sse4_2);
+	append("avx", hardware::x86::avx, simd::support::avx);
+	append("avx2", hardware::x86::avx2, simd::support::avx2);
+	append("avx512f", hardware::x86::avx512f, simd::support::avx512f);
 	append("constant_tsc", hardware::x86::tsc_constant, -1);
 
 	log::info
