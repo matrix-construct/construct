@@ -258,10 +258,10 @@ ircd::info::dump_cpu_info_x86()
 	{
 		strlcat(support, fmt::bsprintf<64>
 		{
-			" %s[%c%c]",
+			" %s:%c%s",
 			name,
-			avail == true? 'Y': 'N',
-			enable == true? 'Y': enable == false? 'N': '-',
+			avail == true? 'y': 'n',
+			enable == true? "y": enable == false? "n": "",
 		});
 	}};
 

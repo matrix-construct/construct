@@ -244,19 +244,34 @@ ircd::fs::support::dump_info()
 		const bool support_async {false};
 	#endif
 
+	char support[128] {0};
+	const auto _append{[&support]
+	(const string_view &name, const bool &avail, const int &enable)
+	{
+		strlcat(support, fmt::bsprintf<64>
+		{
+			"%s:%c%s ",
+			name,
+			avail == true? 'y': 'n',
+			enable == true? "y": enable == false? "n": "",
+		});
+	}};
+
+	_append("async", support_async, -1);
+	_append("preadv2", preadv2, -1);
+	_append("pwritev2", pwritev2, -1);
+	_append("SYNC", sync, -1);
+	_append("DSYNC", dsync, -1);
+	_append("HIPRI", hipri, -1);
+	_append("NOWAIT", nowait, -1);
+	_append("APPEND", append, -1);
+	_append("RWH", rwh_write_life, -1);
+	_append("RWF", rwf_write_life, -1);
+
 	log::info
 	{
-		log, "Support: async:%b preadv2:%b pwritev2:%b SYNC:%b DSYNC:%b HIPRI:%b NOWAIT:%b APPEND:%b RWH:%b WLH:%b",
-		support_async,
-		preadv2,
-		pwritev2,
-		sync,
-		dsync,
-		hipri,
-		nowait,
-		append,
-		rwh_write_life,
-		rwf_write_life,
+		log, "VFS %s",
+		support
 	};
 
 	#ifdef RB_DEBUG
