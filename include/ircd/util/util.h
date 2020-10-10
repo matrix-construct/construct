@@ -32,7 +32,6 @@ namespace ircd
 
 #include "typography.h"
 #include "identity.h"
-#include "pair.h"
 #include "unit_literal.h"
 #include "construction.h"
 #include "unwind.h"

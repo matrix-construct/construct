@@ -214,6 +214,12 @@ namespace ircd
 	template<class... T> using ilist = std::initializer_list<T...>;
 
 	using std::error_code;
+
+	/// Simple gimmick to allow shorter declarations when both elements
+	/// of a pair are the same.
+	template<class A,
+	         class B = A>
+	using pair = std::pair<A, B>;
 }
 
 #pragma GCC visibility pop // default
