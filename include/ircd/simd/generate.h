@@ -9,58 +9,58 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_SIMD_OSTREAM_H
+#define HAVE_IRCD_SIMD_GENERATE_H
 
 namespace ircd::simd
 {
 	template<class block_t>
-	using ostream_fixed_proto = void (block_t &, block_t &mask);
+	using generate_fixed_proto = void (block_t &);
 
 	template<class block_t>
-	using ostream_variable_proto = u64x2 (block_t &, block_t &mask);
+	using generate_variable_proto = u64x2 (block_t &);
 
 	template<class block_t,
 	         class lambda>
-	using ostream_is_fixed_stride = std::is_same
+	using generate_is_fixed_stride = std::is_same
 	<
-		std::invoke_result_t<lambda, block_t &, block_t &>, void
+		std::invoke_result_t<lambda, block_t &>, void
 	>;
 
 	template<class block_t,
 	         class lambda>
-	using ostream_is_variable_stride = std::is_same
+	using generate_is_variable_stride = std::is_same
 	<
-		std::invoke_result_t<lambda, block_t &, block_t &>, u64x2
+		std::invoke_result_t<lambda, block_t &>, u64x2
 	>;
 
 	template<class block_t,
 	         class lambda>
-	using ostream_fixed_stride = std::enable_if
+	using generate_fixed_stride = std::enable_if
 	<
-		ostream_is_fixed_stride<block_t, lambda>::value, u64x2
+		generate_is_fixed_stride<block_t, lambda>::value, u64x2
 	>;
 
 	template<class block_t,
 	         class lambda>
-	using ostream_variable_stride = std::enable_if
+	using generate_variable_stride = std::enable_if
 	<
-		ostream_is_variable_stride<block_t, lambda>::value, u64x2
+		generate_is_variable_stride<block_t, lambda>::value, u64x2
 	>;
 
 	template<class block_t,
 	         class lambda>
-	typename ostream_fixed_stride<block_t, lambda>::type
-	stream(block_t *, const u64x2, lambda&&) noexcept;
+	typename generate_fixed_stride<block_t, lambda>::type
+	generate(block_t *, const u64x2, lambda&&) noexcept;
 
 	template<class block_t,
 	         class lambda>
-	typename ostream_fixed_stride<block_t, lambda>::type
-	stream(char *, const u64x2, lambda&&) noexcept;
+	typename generate_fixed_stride<block_t, lambda>::type
+	generate(char *, const u64x2, lambda&&) noexcept;
 
 	template<class block_t,
 	         class lambda>
-	typename ostream_variable_stride<block_t, lambda>::type
-	stream(char *, const u64x2, lambda&&) noexcept;
+	typename generate_variable_stride<block_t, lambda>::type
+	generate(char *, const u64x2, lambda&&) noexcept;
 }
 
 /// Streaming generator
@@ -73,9 +73,7 @@ namespace ircd::simd
 ///
 /// * variable-stride: progress for each iteration of the loop across the
 /// output and buffer is not fixed; the transform function may advance the
-/// pointer one to sizeof(block_t) bytes each iteration. Due to these
-/// characteristics, unaligned bytes may be redundantly loaded and non-temporal
-/// features are not used to optimize the operation.
+/// pointer one to sizeof(block_t) bytes each iteration.
 ///
 /// u64x2 counter lanes = { output_length, available_to_user }; The argument
 /// `max` gives the buffer size in that format. The return value is the
@@ -90,10 +88,10 @@ namespace ircd::simd
 ///
 template<class block_t,
          class lambda>
-inline typename ircd::simd::ostream_variable_stride<block_t, lambda>::type
-ircd::simd::stream(char *const __restrict__ out,
-                   const u64x2 max,
-                   lambda&& closure)
+inline typename ircd::simd::generate_variable_stride<block_t, lambda>::type
+ircd::simd::generate(char *const __restrict__ out,
+                     const u64x2 max,
+                     lambda&& closure)
 noexcept
 {
 	using block_t_u = unaligned<block_t>;
@@ -113,11 +111,6 @@ noexcept
 	// primary broadband loop
 	while(produce[0] && count[0] + sizeof(block_t) <= max[0])
 	{
-		auto mask
-		{
-			~block_t{0}
-		};
-
 		const auto di
 		{
 			reinterpret_cast<block_t_u *>(out + count[0])
@@ -128,16 +121,16 @@ noexcept
 			*di
 		);
 
-		produce = closure(block, mask);
+		produce = closure(block);
 		count += produce;
 	}
 
 	// trailing narrowband loop
 	while(produce[0] && count[0] < max[0])
 	{
-		block_t block {0}, mask {0};
-		produce = closure(block, mask);
-		for(size_t i(0); count[0] + i < max[0] && i < sizeof(block_t) && mask[i]; ++i)
+		block_t block {0};
+		produce = closure(block);
+		for(size_t i(0); count[0] + i < max[0] && i < sizeof(block_t); ++i)
 			out[count[0] + i] = block[i];
 
 		count += produce;
@@ -169,10 +162,10 @@ noexcept
 ///
 template<class block_t,
          class lambda>
-inline typename ircd::simd::ostream_fixed_stride<block_t, lambda>::type
-ircd::simd::stream(char *const __restrict__ out,
-                   const u64x2 max,
-                   lambda&& closure)
+inline typename ircd::simd::generate_fixed_stride<block_t, lambda>::type
+ircd::simd::generate(char *const __restrict__ out,
+                     const u64x2 max,
+                     lambda&& closure)
 noexcept
 {
 	using block_t_u = unaligned<block_t>;
@@ -201,12 +194,7 @@ noexcept
 			*di
 		);
 
-		auto mask
-		{
-			~block_t{0}
-		};
-
-		closure(block, mask);
+		closure(block);
 		count += produce;
 	}
 
@@ -214,11 +202,11 @@ noexcept
 	assert(count[0] + sizeof(block_t) > max[0]);
 	if(likely(count[0] < max[0]))
 	{
-		block_t block {0}, mask {0};
-		closure(block, mask);
+		block_t block;
+		closure(block);
 
 		size_t i(0);
-		for(; count[0] + i < max[0] && mask[i]; ++i)
+		for(; count[0] + i < max[0]; ++i)
 			out[count[0] + i] = block[i];
 
 		count += u64x2
@@ -241,10 +229,10 @@ noexcept
 ////
 template<class block_t,
          class lambda>
-inline typename ircd::simd::ostream_fixed_stride<block_t, lambda>::type
-ircd::simd::stream(block_t *const __restrict__ out,
-                   const u64x2 max,
-                   lambda&& closure)
+inline typename ircd::simd::generate_fixed_stride<block_t, lambda>::type
+ircd::simd::generate(block_t *const __restrict__ out,
+                     const u64x2 max,
+                     lambda&& closure)
 noexcept
 {
 	u64x2 count
@@ -271,12 +259,7 @@ noexcept
 			*di
 		);
 
-		auto mask
-		{
-			~block_t{0}
-		};
-
-		closure(block, mask);
+		closure(block);
 		count += produce;
 	}
 

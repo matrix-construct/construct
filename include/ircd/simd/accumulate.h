@@ -40,7 +40,7 @@ noexcept
 {
 	const u64x2 res
 	{
-		stream<block_t>(in, max, [&val, &closure]
+		for_each<block_t>(in, max, [&val, &closure]
 		(const auto block, const auto mask)
 		{
 			closure(val, block, mask);

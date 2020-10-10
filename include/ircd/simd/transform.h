@@ -9,53 +9,53 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_SIMD_IOSTREAM_H
+#define HAVE_IRCD_SIMD_TRANSFORM_H
 
 namespace ircd::simd
 {
 	template<class block_t>
-	using iostream_fixed_proto = void (block_t &, block_t mask);
+	using transform_fixed_proto = void (block_t &, block_t mask);
 
 	template<class block_t>
-	using iostream_variable_proto = u64x2 (block_t &, block_t mask);
+	using transform_variable_proto = u64x2 (block_t &, block_t mask);
 
 	template<class block_t,
 	         class lambda>
-	using iostream_is_fixed_stride = std::is_same
+	using transform_is_fixed_stride = std::is_same
 	<
 		std::invoke_result_t<lambda, block_t &, block_t>, void
 	>;
 
 	template<class block_t,
 	         class lambda>
-	using iostream_is_variable_stride = std::is_same
+	using transform_is_variable_stride = std::is_same
 	<
 		std::invoke_result_t<lambda, block_t &, block_t>, u64x2
 	>;
 
 	template<class block_t,
 	         class lambda>
-	using iostream_fixed_stride = std::enable_if
+	using transform_fixed_stride = std::enable_if
 	<
-		iostream_is_fixed_stride<block_t, lambda>::value, u64x2
+		transform_is_fixed_stride<block_t, lambda>::value, u64x2
 	>;
 
 	template<class block_t,
 	         class lambda>
-	using iostream_variable_stride = std::enable_if
+	using transform_variable_stride = std::enable_if
 	<
-		iostream_is_variable_stride<block_t, lambda>::value, u64x2
+		transform_is_variable_stride<block_t, lambda>::value, u64x2
 	>;
 
 	template<class block_t,
 	         class lambda>
-	typename iostream_fixed_stride<block_t, lambda>::type
-	stream(char *, const char *, const u64x2, lambda&&) noexcept;
+	typename transform_fixed_stride<block_t, lambda>::type
+	transform(char *, const char *, const u64x2, lambda&&) noexcept;
 
 	template<class block_t,
 	         class lambda>
-	typename iostream_variable_stride<block_t, lambda>::type
-	stream(char *, const char *, const u64x2, lambda&&) noexcept;
+	typename transform_variable_stride<block_t, lambda>::type
+	transform(char *, const char *, const u64x2, lambda&&) noexcept;
 }
 
 /// Streaming transform
@@ -82,11 +82,11 @@ namespace ircd::simd
 ///
 template<class block_t,
          class lambda>
-inline typename ircd::simd::iostream_variable_stride<block_t, lambda>::type
-ircd::simd::stream(char *const __restrict__ out,
-                   const char *const __restrict__ in,
-                   const u64x2 max,
-                   lambda&& closure)
+inline typename ircd::simd::transform_variable_stride<block_t, lambda>::type
+ircd::simd::transform(char *const __restrict__ out,
+                      const char *const __restrict__ in,
+                      const u64x2 max,
+                      lambda&& closure)
 noexcept
 {
 	using block_t_u = unaligned<block_t>;
@@ -178,11 +178,11 @@ noexcept
 ///
 template<class block_t,
          class lambda>
-inline typename ircd::simd::iostream_fixed_stride<block_t, lambda>::type
-ircd::simd::stream(char *const __restrict__ out,
-                   const char *const __restrict__ in,
-                   const u64x2 max,
-                   lambda&& closure)
+inline typename ircd::simd::transform_fixed_stride<block_t, lambda>::type
+ircd::simd::transform(char *const __restrict__ out,
+                      const char *const __restrict__ in,
+                      const u64x2 max,
+                      lambda&& closure)
 noexcept
 {
 	using block_t_u = unaligned<block_t>;

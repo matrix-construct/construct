@@ -529,7 +529,7 @@ const
 
 	const auto count
 	{
-		simd::stream<block_t>(start + 1, max, each_block)
+		simd::for_each<block_t>(start + 1, max, each_block)
 	};
 
 	const bool ok
@@ -3456,7 +3456,7 @@ noexcept
 
 	const auto consumed
 	{
-		simd::stream<block_t>(ircd::data(buf), ircd::data(input), max, string_stringify)
+		simd::transform<block_t>(ircd::data(buf), ircd::data(input), max, string_stringify)
 	};
 
 	return consumed[0]; // output pos (bytes written)
@@ -3701,7 +3701,7 @@ noexcept
 
 	const auto count
 	{
-		simd::stream<block_t>(ircd::data(input), max, string_serialized)
+		simd::for_each<block_t>(ircd::data(input), max, string_serialized)
 	};
 
 	return count[0];

@@ -32,9 +32,9 @@
 #include "lateral.h"
 #include "any.h"
 #include "all.h"
-#include "istream.h"
-#include "iostream.h"
-#include "ostream.h"
+#include "for_each.h"
+#include "transform.h"
+#include "generate.h"
 #include "accumulate.h"
 #include "print.h"
 

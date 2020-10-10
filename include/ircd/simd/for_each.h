@@ -9,58 +9,58 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_SIMD_ISTREAM_H
+#define HAVE_IRCD_SIMD_FOR_EACH_H
 
 namespace ircd::simd
 {
 	template<class block_t>
-	using istream_fixed_proto = void (block_t, block_t mask);
+	using for_each_fixed_proto = void (block_t, block_t mask);
 
 	template<class block_t>
-	using istream_variable_proto = u64x2 (block_t, block_t mask);
+	using for_each_variable_proto = u64x2 (block_t, block_t mask);
 
 	template<class block_t,
 	         class lambda>
-	using istream_is_fixed_stride = std::is_same
+	using for_each_is_fixed_stride = std::is_same
 	<
 		std::invoke_result_t<lambda, block_t, block_t>, void
 	>;
 
 	template<class block_t,
 	         class lambda>
-	using istream_is_variable_stride = std::is_same
+	using for_each_is_variable_stride = std::is_same
 	<
 		std::invoke_result_t<lambda, block_t, block_t>, u64x2
 	>;
 
 	template<class block_t,
 	         class lambda>
-	using istream_fixed_stride = std::enable_if
+	using for_each_fixed_stride = std::enable_if
 	<
-		istream_is_fixed_stride<block_t, lambda>::value, u64x2
+		for_each_is_fixed_stride<block_t, lambda>::value, u64x2
 	>;
 
 	template<class block_t,
 	         class lambda>
-	using istream_variable_stride = std::enable_if
+	using for_each_variable_stride = std::enable_if
 	<
-		istream_is_variable_stride<block_t, lambda>::value, u64x2
+		for_each_is_variable_stride<block_t, lambda>::value, u64x2
 	>;
 
 	template<class block_t,
 	         class lambda>
-	typename istream_fixed_stride<block_t, lambda>::type
-	stream(const block_t *, const u64x2, lambda&&) noexcept;
+	typename for_each_fixed_stride<block_t, lambda>::type
+	for_each(const block_t *, const u64x2, lambda&&) noexcept;
 
 	template<class block_t,
 	         class lambda>
-	typename istream_fixed_stride<block_t, lambda>::type
-	stream(const char *, const u64x2, lambda&&) noexcept;
+	typename for_each_fixed_stride<block_t, lambda>::type
+	for_each(const char *, const u64x2, lambda&&) noexcept;
 
 	template<class block_t,
 	         class lambda>
-	typename istream_variable_stride<block_t, lambda>::type
-	stream(const char *, const u64x2, lambda&&) noexcept;
+	typename for_each_variable_stride<block_t, lambda>::type
+	for_each(const char *, const u64x2, lambda&&) noexcept;
 }
 
 /// Streaming consumer
@@ -90,10 +90,10 @@ namespace ircd::simd
 ///
 template<class block_t,
          class lambda>
-inline typename ircd::simd::istream_variable_stride<block_t, lambda>::type
-ircd::simd::stream(const char *const __restrict__ in,
-                   const u64x2 max,
-                   lambda&& closure)
+inline typename ircd::simd::for_each_variable_stride<block_t, lambda>::type
+ircd::simd::for_each(const char *const __restrict__ in,
+                     const u64x2 max,
+                     lambda&& closure)
 noexcept
 {
 	using block_t_u = unaligned<block_t>;
@@ -172,10 +172,10 @@ noexcept
 ///
 template<class block_t,
          class lambda>
-inline typename ircd::simd::istream_fixed_stride<block_t, lambda>::type
-ircd::simd::stream(const char *const __restrict__ in,
-                   const u64x2 max,
-                   lambda&& closure)
+inline typename ircd::simd::for_each_fixed_stride<block_t, lambda>::type
+ircd::simd::for_each(const char *const __restrict__ in,
+                     const u64x2 max,
+                     lambda&& closure)
 noexcept
 {
 	using block_t_u = unaligned<block_t>;
@@ -246,10 +246,10 @@ noexcept
 ////
 template<class block_t,
          class lambda>
-inline typename ircd::simd::istream_fixed_stride<block_t, lambda>::type
-ircd::simd::stream(const block_t *const __restrict__ in,
-                   const u64x2 max,
-                   lambda&& closure)
+inline typename ircd::simd::for_each_fixed_stride<block_t, lambda>::type
+ircd::simd::for_each(const block_t *const __restrict__ in,
+                     const u64x2 max,
+                     lambda&& closure)
 noexcept
 {
 	u64x2 count
