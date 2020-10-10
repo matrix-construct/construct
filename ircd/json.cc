@@ -3674,7 +3674,7 @@ ircd::json::string_stringify_utf16(u8x16 &block,
 
 	const auto surrogates
 	{
-		simd::popcnt(u64x2(simd::popmask(u8x16(is_surrogate))))
+		simd::popcnt(u64x2(popmask(u8x16(is_surrogate))))
 	};
 
 	assert(di == length[0] + length[1]);
@@ -3874,7 +3874,7 @@ ircd::json::string_serialized_utf16(const u8x16 block,
 
 	const auto surrogates
 	{
-		simd::popcnt(u64x2(simd::popmask(u8x16(is_surrogate))))
+		popcnt(u64x2(popmask(u8x16(is_surrogate))))
 	};
 
 	return u64x2

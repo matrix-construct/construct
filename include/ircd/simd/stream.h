@@ -9,9 +9,9 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_BUFFER_STREAM_H
+#define HAVE_IRCD_SIMD_STREAM_H
 
-namespace ircd::buffer
+namespace ircd::simd
 {
 	size_t stream_aligned(const mutable_buffer &dst, const const_buffer &src);
 }
@@ -28,8 +28,8 @@ namespace ircd::buffer
 /// buffer must be padded out to alignment.
 ///
 inline size_t
-ircd::buffer::stream_aligned(const mutable_buffer &dst,
-                             const const_buffer &src)
+ircd::simd::stream_aligned(const mutable_buffer &dst,
+                           const const_buffer &src)
 {
 	// Platforms that have non-temporal store support; this is all of x86_64
 	constexpr bool has_store

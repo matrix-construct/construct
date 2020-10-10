@@ -119,7 +119,6 @@ namespace ircd::buffer::buffers
 #include "const_buffer.h"
 #include "copy.h"
 #include "move.h"
-#include "stream.h"
 #include "fixed_buffer.h"
 #include "window_buffer.h"
 #include "parse_buffer.h"

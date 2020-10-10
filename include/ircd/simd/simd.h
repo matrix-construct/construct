@@ -20,7 +20,6 @@
 #include "split.h"
 #include "lower.h"
 #include "upper.h"
-#include "mask.h"
 #include "gather.h"
 #include "scatter.h"
 #include "shl.h"
@@ -42,19 +41,12 @@
 namespace ircd
 {
 	using simd::lane_cast;
-
 	using simd::shl;
 	using simd::shr;
-
 	using simd::rol;
 	using simd::ror;
-
 	using simd::lzcnt;
 	using simd::tzcnt;
-
 	using simd::popcnt;
-	using simd::popmask;
-	using simd::boolmask;
-
 	using simd::lateral;
 }
