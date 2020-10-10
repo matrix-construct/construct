@@ -61,6 +61,40 @@ namespace ircd::simd
 	         class lambda>
 	typename generate_variable_stride<block_t, lambda>::type
 	generate(char *, const u64x2, lambda&&) noexcept;
+
+	template<class block_t,
+	         class lambda>
+	mutable_buffer
+	generate(const mutable_buffer &, lambda&&) noexcept;
+}
+
+/// Streaming generator
+///
+/// Convenience wrapper using mutable_buffer. This will forward to the
+/// appropriate overload. The return buffer is a view on the input buffer
+/// from the beginning up to the resulting counter value.
+///
+template<class block_t,
+         class lambda>
+inline ircd::mutable_buffer
+ircd::simd::generate(const mutable_buffer &buf,
+                     lambda&& closure)
+noexcept
+{
+	const u64x2 max
+	{
+		size(buf), 0
+	};
+
+	const auto res
+	{
+		generate(data(buf), max, std::forward<lambda>(closure))
+	};
+
+	return mutable_buffer
+	{
+		data(buf), res[0]
+	};
 }
 
 /// Streaming generator

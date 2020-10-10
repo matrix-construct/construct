@@ -56,6 +56,48 @@ namespace ircd::simd
 	         class lambda>
 	typename transform_variable_stride<block_t, lambda>::type
 	transform(char *, const char *, const u64x2, lambda&&) noexcept;
+
+	template<class block_t,
+	         class lambda>
+	pair<mutable_buffer, const_buffer>
+	transform(const pair<mutable_buffer, const_buffer> &, lambda&&) noexcept;
+}
+
+/// Streaming transform
+///
+/// Convenience wrapper using ircd::buffer. This will forward to the
+/// appropriate overload. The return buffers are views on the output and input
+/// buffers with a size of the respective resulting counter values. Unless
+/// the closure broke the loop early the result buffers will be the same as
+/// the input (contents having transformed of course).
+///
+template<class block_t,
+         class lambda>
+inline std::pair<ircd::mutable_buffer, ircd::const_buffer>
+ircd::simd::transform(const std::pair<mutable_buffer, const_buffer> &buf,
+                      lambda&& closure)
+noexcept
+{
+	const auto &[output, input]
+	{
+		buf
+	};
+
+	const u64x2 max
+	{
+		size(output), size(input),
+	};
+
+	const auto res
+	{
+		transform(data(output), data(input), max, std::forward<lambda>(closure))
+	};
+
+	return std::pair<mutable_buffer, const_buffer>
+	{
+		{ data(output), res[0] },
+		{ data(input),  res[1] },
+	};
 }
 
 /// Streaming transform

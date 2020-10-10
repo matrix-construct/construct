@@ -61,6 +61,40 @@ namespace ircd::simd
 	         class lambda>
 	typename for_each_variable_stride<block_t, lambda>::type
 	for_each(const char *, const u64x2, lambda&&) noexcept;
+
+	template<class block_t,
+	         class lambda>
+	const_buffer
+	for_each(const const_buffer &, lambda&&) noexcept;
+}
+
+/// Streaming consumer
+///
+/// Convenience wrapper using const_buffer. This will forward to the
+/// appropriate overload. The return buffer is a view on the input buffer
+/// from the beginning up to the resulting counter value.
+///
+template<class block_t,
+         class lambda>
+inline ircd::const_buffer
+ircd::simd::for_each(const const_buffer &buf,
+                     lambda&& closure)
+noexcept
+{
+	const u64x2 max
+	{
+		0, size(buf)
+	};
+
+	const auto res
+	{
+		for_each(data(buf), max, std::forward<lambda>(closure))
+	};
+
+	return const_buffer
+	{
+		data(buf), res[1]
+	};
 }
 
 /// Streaming consumer

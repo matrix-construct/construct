@@ -24,6 +24,28 @@ namespace ircd::simd
 	         class input_t,
 	         class lambda>
 	block_t accumulate(const input_t *, const u64x2, block_t, lambda&&) noexcept;
+
+	template<class block_t,
+	         class lambda>
+	block_t accumulate(const const_buffer &, block_t, lambda&&) noexcept;
+}
+
+/// Streaming accumulation
+///
+template<class block_t,
+         class lambda>
+inline block_t
+ircd::simd::accumulate(const const_buffer &buf,
+                       block_t val,
+                       lambda&& closure)
+noexcept
+{
+	const u64x2 max
+	{
+		0, size(buf),
+	};
+
+	return accumulate(data(buf), max, val, std::forward<lambda>(closure));
 }
 
 /// Streaming accumulation
