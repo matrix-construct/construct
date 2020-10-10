@@ -32,6 +32,7 @@
 #include "lateral.h"
 #include "any.h"
 #include "all.h"
+#include "stream.h"
 #include "for_each.h"
 #include "transform.h"
 #include "generate.h"
