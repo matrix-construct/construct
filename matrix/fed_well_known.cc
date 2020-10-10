@@ -10,21 +10,48 @@
 
 namespace ircd::m::fed::well_known
 {
-	static ircd::server::request
-	request(const mutable_buffer &buf,
-	        const net::hostport &target,
-	        const string_view &url);
+	struct request;
 
-	static std::tuple<ircd::http::code, ircd::string_view, ircd::string_view>
-	result(server::request &);
+	static void submit(request &);
+	static void receive(request &);
+	static int handle(request &);
 
 	extern log::log log;
 }
+
+struct ircd::m::fed::well_known::request
+{
+	static const string_view path;
+	static const server::request::opts sopts;
+
+	unique_mutable_buffer buf;
+	unique_mutable_buffer carry;
+	rfc3986::uri uri;
+	server::request req;
+	http::code code {0};
+	http::response::head head;
+	string_view location;
+	size_t redirects {0};
+	json::object response;
+	json::string m_server;
+};
 
 decltype(ircd::m::fed::well_known::log)
 ircd::m::fed::well_known::log
 {
 	"m.well-known"
+};
+
+decltype(ircd::m::fed::well_known::request::path)
+ircd::m::fed::well_known::request::path
+{
+	"/.well-known/matrix/server"
+};
+
+decltype(ircd::m::fed::well_known::request::sopts)
+ircd::m::fed::well_known::request::sopts
+{
+	false // http_exceptions
 };
 
 decltype(ircd::m::fed::well_known::cache_default)
@@ -231,128 +258,40 @@ catch(const std::exception &e)
 
 ircd::string_view
 ircd::m::fed::well_known::fetch(const mutable_buffer &user_buf,
-                                const string_view &origin)
+                                const string_view &target)
 try
 {
-	static const string_view path
+	request req;
+	req.uri.path = request::path;
+	req.uri.remote = target;
+	req.buf = unique_mutable_buffer
 	{
-		"/.well-known/matrix/server"
+		8_KiB
 	};
 
-	// If the supplied buffer isn't large enough to make the full
-	// HTTP request, allocate one that is.
-	const unique_mutable_buffer req_buf
+	for(; req.redirects < fetch_redirects; ++req.redirects)
 	{
-		size(user_buf) < 8_KiB? 8_KiB: 0UL
-	};
-
-	const mutable_buffer buf
-	{
-		req_buf? req_buf: user_buf
-	};
-
-	rfc3986::uri uri;
-	uri.remote = origin;
-	uri.path = path;
-	json::object response;
-	unique_mutable_buffer carry;
-	for(size_t i(0); i < fetch_redirects; ++i)
-	{
-		const net::hostport &uri_remote
+		submit(req);
+		receive(req);
+		switch(handle(req))
 		{
-			uri.remote
-		};
+			case -1:
+				continue;
 
-		// Hard target https service; do not inherit any matrix service from remote.
-		const net::hostport target
-		{
-			net::host(uri_remote), "https", net::port(uri_remote)
-		};
+			case false:
+				break;
 
-		auto future
-		{
-			request(buf, target, uri.path)
-		};
-
-		const auto &[code, location, content]
-		{
-			result(future)
-		};
-
-		char dom_buf[rfc3986::DOMAIN_BUFSIZE];
-		log::debug
-		{
-			log, "fetch from %s %s :%u %s",
-			net::string(dom_buf, target),
-			uri.path,
-			uint(code),
-			http::status(code)
-		};
-
-		// Successful error; bail
-		if(code >= 400)
-			return string_view
-			{
-				data(user_buf), move(user_buf, origin)
-			};
-
-		// Successful result; response content handled after loop.
-		if(code < 300)
-		{
-			response = content;
-			break;
+			case true:
+				return string_view
+				{
+					data(user_buf), move(user_buf, req.m_server)
+				};
 		}
-
-		// Indirection code, but no location response header
-		if(!location)
-			return string_view
-			{
-				data(user_buf), move(user_buf, origin)
-			};
-
-		// Redirection; carry over the new target by copying it because it's
-		// in the buffer which we'll be overwriting for the new request.
-		carry = unique_mutable_buffer{location};
-		uri = string_view{carry};
-
-		// Indirection code, bad location header.
-		if(!uri.path || !uri.remote)
-			return string_view
-			{
-				data(user_buf), move(user_buf, origin)
-			};
 	}
 
-	const json::string &m_server
-	{
-		response["m.server"]
-	};
-
-	if(!m_server)
-		return string_view
-		{
-			data(user_buf), move(user_buf, origin)
-		};
-
-	// This construction validates we didn't get a junk string
-	volatile const net::hostport ret
-	{
-		m_server
-	};
-
-	log::debug
-	{
-		log, "%s query to %s found delegation to %s",
-		origin,
-		uri.remote,
-		m_server,
-	};
-
-	// Move the returned string to the front of the buffer; this overwrites
-	// any other incoming content to focus on just the unquoted string.
 	return string_view
 	{
-		data(user_buf), move(user_buf, m_server)
+		data(user_buf), move(user_buf, target)
 	};
 }
 catch(const ctx::interrupted &)
@@ -364,41 +303,86 @@ catch(const std::exception &e)
 	log::derror
 	{
 		log, "%s in network query :%s",
-		origin,
+		target,
 		e.what(),
 	};
 
 	return string_view
 	{
-		data(user_buf), move(user_buf, origin)
+		data(user_buf), move(user_buf, target)
 	};
 }
 
-/// Return a tuple of the HTTP code, any Location header, and the response
-/// content. These items are the result of waiting on the server::request
-/// (ctx::future) passed as the argument. This call can block if the caller
-/// passes an incomplete future.
-std::tuple
-<
-	ircd::http::code, ircd::string_view, ircd::string_view
->
-ircd::m::fed::well_known::result(server::request &request)
+int
+ircd::m::fed::well_known::handle(request &req)
 {
-	const auto code
+	// Successful result
+	if(likely(req.code < 300))
 	{
-		request.get(seconds(fetch_timeout))
+		req.m_server = req.response["m.server"];
+
+		// This construction validates we didn't get a junk string
+		volatile const net::hostport ret
+		{
+			req.m_server
+		};
+
+		log::debug
+		{
+			log, "query to %s found delegation to %s",
+			req.uri.remote,
+			req.m_server,
+		};
+
+		assert(bool(req.m_server));
+		return true;
+	}
+
+	// Successful error; bail
+	if(req.code >= 400)
+		return false;
+
+	// Indirection code, but no location response header
+	if(!req.location)
+		return false;
+
+	// Redirection; carry over the new target by copying it because it's
+	// in the buffer which we'll be overwriting for the new request.
+	req.carry = unique_mutable_buffer{req.location};
+	req.uri = string_view{req.carry};
+
+	// Indirection code, bad location header.
+	if(!req.uri.path || !req.uri.remote)
+		return false;
+
+	// Redirect
+	return -1;
+}
+
+void
+ircd::m::fed::well_known::receive(request &req)
+{
+	const seconds timeout
+	{
+		fetch_timeout
 	};
 
-	const http::response::head head
+	req.code = req.req.get(timeout);
+	req.head = req.req.in.gethead(req.req);
+	req.location = req.head.location;
+	req.response = json::object
 	{
-		request.in.gethead(request)
+		req.req.in.content
 	};
 
-	return
+	char dom_buf[rfc3986::DOMAIN_BUFSIZE];
+	log::debug
 	{
-		code,
-		head.location,
-		request.in.content,
+		log, "fetch from %s %s :%u %s",
+		req.uri.remote,
+		req.uri.path,
+		uint(req.code),
+		http::status(req.code),
 	};
 }
 
@@ -408,14 +392,18 @@ ircd::m::fed::well_known::result(server::request &request)
 /// string_view's. This function is intended to be run in a loop by the caller
 /// to chase redirection. No HTTP codes will throw from here; server and
 /// network errors (and others) will.
-ircd::server::request
-ircd::m::fed::well_known::request(const mutable_buffer &buf,
-	                              const net::hostport &target,
-	                              const string_view &url)
+void
+ircd::m::fed::well_known::submit(request &req)
 {
-	window_buffer wb
+	const net::hostport &remote
 	{
-		buf
+		req.uri.remote
+	};
+
+	// Hard target https service; do not inherit any matrix service from remote.
+	const net::hostport target
+	{
+		net::host(remote), "https", net::port(remote)
 	};
 
 	const http::header headers[]
@@ -423,9 +411,14 @@ ircd::m::fed::well_known::request(const mutable_buffer &buf,
 		{ "User-Agent", info::user_agent },
 	};
 
+	window_buffer wb
+	{
+		req.buf
+	};
+
 	http::request
 	{
-		wb, host(target), "GET", url, 0, {}, headers
+		wb, host(target), "GET", req.uri.path, 0, {}, headers
 	};
 
 	server::out out;
@@ -436,14 +429,11 @@ ircd::m::fed::well_known::request(const mutable_buffer &buf,
 	// recognized by ircd::server to place received content directly after
 	// head in this buffer without any additional dynamic allocation.
 	server::in in;
-	in.head = buf + size(out.head);
+	in.head = req.buf + size(out.head);
 	in.content = in.head;
 
-	static server::request::opts opts;
-	opts.http_exceptions = false; // 3xx/4xx/5xx response won't throw.
-
-	return server::request
+	req.req = server::request
 	{
-		target, std::move(out), std::move(in), &opts
+		target, std::move(out), std::move(in), &req.sopts
 	};
 }
