@@ -137,7 +137,7 @@ struct ircd::db::options::map
 };
 
 template<class T>
-ircd::db::opts<T> &
+inline ircd::db::opts<T> &
 ircd::db::operator&=(opts<T> &a,
                      const T &value)
 {
@@ -148,7 +148,7 @@ ircd::db::operator&=(opts<T> &a,
 }
 
 template<class T>
-ircd::db::opts<T> &
+inline ircd::db::opts<T> &
 ircd::db::operator&=(opts<T> &a,
                      const opts<T> &b)
 {
@@ -157,7 +157,7 @@ ircd::db::operator&=(opts<T> &a,
 }
 
 template<class T>
-ircd::db::opts<T> &
+inline ircd::db::opts<T> &
 ircd::db::operator|=(opts<T> &a,
                      const T &value)
 {
@@ -168,7 +168,7 @@ ircd::db::operator|=(opts<T> &a,
 }
 
 template<class T>
-ircd::db::opts<T> &
+inline ircd::db::opts<T> &
 ircd::db::operator|=(opts<T> &a,
                      const opts<T> &b)
 {
@@ -177,7 +177,7 @@ ircd::db::operator|=(opts<T> &a,
 }
 
 template<class T>
-bool
+inline bool
 ircd::db::test(const opts<T> &a,
                const T &value)
 {
@@ -187,9 +187,11 @@ ircd::db::test(const opts<T> &a,
 }
 
 template<class T>
-bool
+inline bool
 ircd::db::test(const opts<T> &a,
                const typename std::underlying_type<T>::type &value)
 {
-	return (a.value & value) == value;
+	using flag_t = typename opts<T>::flag_t;
+
+	return a.value & flag_t(value);
 }
