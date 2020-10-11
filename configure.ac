@@ -2276,6 +2276,37 @@ else
 	])
 fi
 
+dnl Units which require boost::asio use these flags. This includes the
+dnl ircd/asio.h PCH, which includes ircd.h upstream in the precompile.
+AC_SUBST(ASIO_UNIT_CPPFLAGS)
+ASIO_UNIT_CPPFLAGS+=" $BOOST_CPPFLAGS"
+ASIO_UNIT_CPPFLAGS+=" $SSL_CPPFLAGS"
+ASIO_UNIT_CPPFLAGS+=" $CRYPTO_CPPFLAGS"
+ASIO_UNIT_CPPFLAGS+=" -include ircd/asio.h"
+
+dnl Units defining spirit grammars may benefit from special compiler flags due
+dnl to their various complexities. The ./configure may have generated flags
+dnl in $GRAMMAR_UNIT_CXXFLAGS to improve compile time and reduce debug symbol.
+AC_SUBST(SPIRIT_UNIT_CPPFLAGS)
+SPIRIT_UNIT_CPPFLAGS+=" $ICU_CPPFLAGS"
+SPIRIT_UNIT_CPPFLAGS+=" $BOOST_CPPFLAGS"
+SPIRIT_UNIT_CPPFLAGS+=" -include ircd/spirit.h"
+
+AC_SUBST(SPIRIT_UNIT_CXXFLAGS)
+
+AM_COND_IF([GCC],
+[
+	SPIRIT_UNIT_CXXFLAGS+=" -fno-var-tracking"
+	SPIRIT_UNIT_CXXFLAGS+=" -fno-var-tracking-assignments"
+	SPIRIT_UNIT_CXXFLAGS+=" -femit-struct-debug-baseonly"
+
+	AM_COND_IF([LOWMEM_COMPILE],
+	[
+		SPIRIT_UNIT_CXXFLAGS+=" --param ggc-min-expand=1"
+		SPIRIT_UNIT_CXXFLAGS+=" -fno-ipa-pta"
+	])
+])
+
 dnl
 dnl
 dnl RocksDB support
@@ -2340,6 +2371,14 @@ RB_HELP_STRING([--with-included-rocksdb[[[=version]]]], [Use the RocksDB sources
 		])
 	])
 ])
+
+dnl Units which include rocksdb headers use these flags.
+AC_SUBST(ROCKSDB_UNIT_CPPFLAGS)
+ROCKSDB_UNIT_CPPFLAGS+=" $ROCKSDB_CPPFLAGS"
+ROCKSDB_UNIT_CPPFLAGS+=" $ZSTD_CPPFLAGS"
+ROCKSDB_UNIT_CPPFLAGS+=" $SNAPPY_CPPFLAGS"
+ROCKSDB_UNIT_CPPFLAGS+=" $LZ4_CPPFLAGS"
+ROCKSDB_UNIT_CPPFLAGS+=" $Z_CPPFLAGS"
 
 dnl
 dnl
@@ -2421,53 +2460,6 @@ RB_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonk
 
 dnl TODO use an $enable_js var
 AM_CONDITIONAL([JS], [[[[ $with_included_js = yes ]]]])
-
-
-dnl ***************************************************************************
-dnl
-dnl Unit configuration macros
-dnl
-dnl These are used in various Makefiles on certain units which require them.
-dnl They are defined here to deduplicate between Makefile.
-
-dnl Units which require boost::asio use these flags. This includes the
-dnl ircd/asio.h PCH, which includes ircd.h upstream in the precompile.
-AC_SUBST(ASIO_UNIT_CPPFLAGS)
-ASIO_UNIT_CPPFLAGS+=" $BOOST_CPPFLAGS"
-ASIO_UNIT_CPPFLAGS+=" $SSL_CPPFLAGS"
-ASIO_UNIT_CPPFLAGS+=" $CRYPTO_CPPFLAGS"
-ASIO_UNIT_CPPFLAGS+=" -include ircd/asio.h"
-
-dnl Units which include rocksdb headers use these flags.
-AC_SUBST(ROCKSDB_UNIT_CPPFLAGS)
-ROCKSDB_UNIT_CPPFLAGS+=" $ROCKSDB_CPPFLAGS"
-ROCKSDB_UNIT_CPPFLAGS+=" $ZSTD_CPPFLAGS"
-ROCKSDB_UNIT_CPPFLAGS+=" $SNAPPY_CPPFLAGS"
-ROCKSDB_UNIT_CPPFLAGS+=" $LZ4_CPPFLAGS"
-ROCKSDB_UNIT_CPPFLAGS+=" $Z_CPPFLAGS"
-
-dnl Units defining spirit grammars may benefit from special compiler flags due
-dnl to their various complexities. The ./configure may have generated flags
-dnl in $GRAMMAR_UNIT_CXXFLAGS to improve compile time and reduce debug symbol.
-AC_SUBST(SPIRIT_UNIT_CPPFLAGS)
-SPIRIT_UNIT_CPPFLAGS+=" $ICU_CPPFLAGS"
-SPIRIT_UNIT_CPPFLAGS+=" $BOOST_CPPFLAGS"
-SPIRIT_UNIT_CPPFLAGS+=" -include ircd/spirit.h"
-
-AC_SUBST(SPIRIT_UNIT_CXXFLAGS)
-
-AM_COND_IF([GCC],
-[
-	SPIRIT_UNIT_CXXFLAGS+=" -fno-var-tracking"
-	SPIRIT_UNIT_CXXFLAGS+=" -fno-var-tracking-assignments"
-	SPIRIT_UNIT_CXXFLAGS+=" -femit-struct-debug-baseonly"
-
-	AM_COND_IF([LOWMEM_COMPILE],
-	[
-		SPIRIT_UNIT_CXXFLAGS+=" --param ggc-min-expand=1"
-		SPIRIT_UNIT_CXXFLAGS+=" -fno-ipa-pta"
-	])
-])
 
 
 dnl ***************************************************************************
