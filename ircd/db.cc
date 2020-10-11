@@ -5213,8 +5213,8 @@ ircd::db::make_opts(const gopts &opts)
 	return ret;
 }
 
-ircd::conf::item<bool>
-read_checksum
+decltype(ircd::db::read_checksum)
+ircd::db::read_checksum
 {
 	{ "name",     "ircd.db.read.checksum" },
 	{ "default",  false                   }
