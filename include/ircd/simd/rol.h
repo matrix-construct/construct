@@ -15,22 +15,22 @@
 namespace ircd::simd
 {
 	template<int b,
-             class V,
-             class T>
+	         class V,
+	         class T>
 	T _rol(const T) noexcept;
 
 	template<int b,
-             class T>
+	         class T>
 	typename std::enable_if<sizeof(T) == 16, T>::type
 	rol(const T a) noexcept;
 
 	template<int b,
-             class T>
+	         class T>
 	typename std::enable_if<sizeof(T) == 32, T>::type
 	rol(const T a) noexcept;
 
 	template<int b,
-             class T>
+	         class T>
 	typename std::enable_if<sizeof(T) == 64, T>::type
 	rol(const T a) noexcept;
 }
