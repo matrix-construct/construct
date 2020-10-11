@@ -9,7 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_SIMD_LATERAL_H
+#define HAVE_IRCD_SIMD_REDUCE_H
 
 namespace ircd::simd
 {
@@ -30,37 +30,39 @@ namespace ircd::simd
 	template<template<class>
 	         class op,
 	         class T>
-	T lateral(T) noexcept = delete;
+	T reduce(T) noexcept = delete;
 
-	template<template<class> class op> u8x16 lateral(u8x16) noexcept;
-	template<template<class> class op> u8x32 lateral(u8x32) noexcept;
-	template<template<class> class op> u8x64 lateral(u8x64) noexcept;
+	template<template<class> class op> u8x16 reduce(u8x16) noexcept;
+	template<template<class> class op> u8x32 reduce(u8x32) noexcept;
+	template<template<class> class op> u8x64 reduce(u8x64) noexcept;
 
-	template<template<class> class op> u16x8 lateral(u16x8) noexcept;
-	template<template<class> class op> u16x16 lateral(u16x16) noexcept;
-	template<template<class> class op> u16x32 lateral(u16x32) noexcept;
+	template<template<class> class op> u16x8 reduce(u16x8) noexcept;
+	template<template<class> class op> u16x16 reduce(u16x16) noexcept;
+	template<template<class> class op> u16x32 reduce(u16x32) noexcept;
 
-	template<template<class> class op> u32x4 lateral(u32x4) noexcept;
-	template<template<class> class op> u32x8 lateral(u32x8) noexcept;
-	template<template<class> class op> u32x16 lateral(u32x16) noexcept;
+	template<template<class> class op> u32x4 reduce(u32x4) noexcept;
+	template<template<class> class op> u32x8 reduce(u32x8) noexcept;
+	template<template<class> class op> u32x16 reduce(u32x16) noexcept;
 
-	template<template<class> class op> u64x2 lateral(u64x2) noexcept;
-	template<template<class> class op> u64x4 lateral(u64x4) noexcept;
-	template<template<class> class op> u64x8 lateral(u64x8) noexcept;
+	template<template<class> class op> u64x2 reduce(u64x2) noexcept;
+	template<template<class> class op> u64x4 reduce(u64x4) noexcept;
+	template<template<class> class op> u64x8 reduce(u64x8) noexcept;
 }
 
 template<template<class>
          class op>
 inline ircd::u64x8
-ircd::simd::lateral(u64x8 a)
+ircd::simd::reduce(u64x8 a)
 noexcept
 {
+	static const op oper;
+
 	u64x4 b, c;
 	for(size_t i(0); i < 4; ++i)
 		b[i] = a[i], c[i] = a[i + 4];
 
-	b = op{}(b, c);
-	b = lateral<op>(b);
+	b = oper(b, c);
+	b = reduce<op>(b);
 	a[0] = b[0];
 	return a;
 }
@@ -68,15 +70,17 @@ noexcept
 template<template<class>
          class op>
 inline ircd::u64x4
-ircd::simd::lateral(u64x4 a)
+ircd::simd::reduce(u64x4 a)
 noexcept
 {
+	static const op oper;
+
 	u64x2 b, c;
 	for(size_t i(0); i < 2; ++i)
 		b[i] = a[i], c[i] = a[i + 2];
 
-	b = op{}(b, c);
-	b = lateral<op>(b);
+	b = oper(b, c);
+	b = reduce<op>(b);
 	a[0] = b[0];
 	return a;
 }
@@ -84,30 +88,34 @@ noexcept
 template<template<class>
          class op>
 inline ircd::u64x2
-ircd::simd::lateral(u64x2 a)
+ircd::simd::reduce(u64x2 a)
 noexcept
 {
+	static const op oper;
+
 	const u64x2 b
 	{
 		a[1], a[0]
 	};
 
-	a = op{}(a, b);
+	a = oper(a, b);
 	return a;
 }
 
 template<template<class>
          class op>
 inline ircd::u32x16
-ircd::simd::lateral(u32x16 a)
+ircd::simd::reduce(u32x16 a)
 noexcept
 {
+	static const op oper;
+
 	u32x8 b, c;
 	for(size_t i(0); i < 8; ++i)
 		b[i] = a[i], c[i] = a[i + 8];
 
-	b = op{}(b, c);
-	b = lateral<op>(b);
+	b = oper(b, c);
+	b = reduce<op>(b);
 	a[0] = b[0];
 	return a;
 }
@@ -115,15 +123,17 @@ noexcept
 template<template<class>
          class op>
 inline ircd::u32x8
-ircd::simd::lateral(u32x8 a)
+ircd::simd::reduce(u32x8 a)
 noexcept
 {
+	static const op oper;
+
 	u32x4 b, c;
 	for(size_t i(0); i < 4; ++i)
 		b[i] = a[i], c[i] = a[i + 4];
 
-	b = op{}(b, c);
-	b = lateral<op>(b);
+	b = oper(b, c);
+	b = reduce<op>(b);
 	a[0] = b[0];
 	return a;
 }
@@ -131,32 +141,36 @@ noexcept
 template<template<class>
          class op>
 inline ircd::u32x4
-ircd::simd::lateral(u32x4 a)
+ircd::simd::reduce(u32x4 a)
 noexcept
 {
+	static const op oper;
+
 	u32x4 b
 	{
 		a[2], a[3], 0, 0,
 	};
 
-	a = op{}(a, b);
+	a = oper(a, b);
 	b[0] = a[1];
-	a = op{}(a, b);
+	a = oper(a, b);
 	return a;
 }
 
 template<template<class>
          class op>
 inline ircd::u16x32
-ircd::simd::lateral(u16x32 a)
+ircd::simd::reduce(u16x32 a)
 noexcept
 {
+	static const op oper;
+
 	u16x16 b, c;
 	for(size_t i(0); i < 16; ++i)
 		b[i] = a[i], c[i] = a[i + 16];
 
-	b = op{}(b, c);
-	b = lateral<op>(b);
+	b = oper(b, c);
+	b = reduce<op>(b);
 	a[0] = b[0];
 	return a;
 }
@@ -164,15 +178,17 @@ noexcept
 template<template<class>
          class op>
 inline ircd::u16x16
-ircd::simd::lateral(u16x16 a)
+ircd::simd::reduce(u16x16 a)
 noexcept
 {
+	static const op oper;
+
 	u16x8 b, c;
 	for(size_t i(0); i < 8; ++i)
 		b[i] = a[i], c[i] = a[i + 8];
 
-	b = op{}(b, c);
-	b = lateral<op>(b);
+	b = oper(b, c);
+	b = reduce<op>(b);
 	a[0] = b[0];
 	return a;
 }
@@ -180,35 +196,39 @@ noexcept
 template<template<class>
          class op>
 inline ircd::u16x8
-ircd::simd::lateral(u16x8 a)
+ircd::simd::reduce(u16x8 a)
 noexcept
 {
+	static const op oper;
+
 	u16x8 b
 	{
 		a[4], a[5], a[6], a[7]
 	};
 
-	a = op{}(a, b);
+	a = oper(a, b);
 	b[0] = a[2];
 	b[1] = a[3];
-	a = op{}(a, b);
+	a = oper(a, b);
 	b[0] = a[1];
-	a = op{}(a, b);
+	a = oper(a, b);
 	return a;
 }
 
 template<template<class>
          class op>
 inline ircd::u8x64
-ircd::simd::lateral(u8x64 a)
+ircd::simd::reduce(u8x64 a)
 noexcept
 {
+	static const op oper;
+
 	u8x32 b, c;
 	for(size_t i(0); i < 32; ++i)
 		b[i] = a[i], c[i] = a[i + 32];
 
-	b = op{}(b, c);
-	b = lateral<op>(b);
+	b = oper(b, c);
+	b = reduce<op>(b);
 	a[0] = b[0];
 	return a;
 }
@@ -216,15 +236,17 @@ noexcept
 template<template<class>
          class op>
 inline ircd::u8x32
-ircd::simd::lateral(u8x32 a)
+ircd::simd::reduce(u8x32 a)
 noexcept
 {
+	static const op oper;
+
 	u8x16 b, c;
 	for(size_t i(0); i < 16; ++i)
 		b[i] = a[i], c[i] = a[i + 16];
 
-	b = op{}(b, c);
-	b = lateral<op>(b);
+	b = oper(b, c);
+	b = reduce<op>(b);
 	a[0] = b[0];
 	return a;
 }
@@ -232,25 +254,27 @@ noexcept
 template<template<class>
          class op>
 inline ircd::u8x16
-ircd::simd::lateral(u8x16 a)
+ircd::simd::reduce(u8x16 a)
 noexcept
 {
+	static const op oper;
+
 	u8x16 b
 	{
 		a[0x8], a[0x9], a[0xa], a[0xb], a[0xc], a[0xd], a[0xe], a[0xf],
 	};
 
-	a = op{}(a, b);
+	a = oper(a, b);
 	b = u8x16
 	{
 		a[0x4], a[0x5], a[0x6], a[0x7],
 	};
 
-	a = op{}(a, b);
+	a = oper(a, b);
 	b[0x0] = a[0x2];
 	b[0x1] = a[0x3];
-	a = op{}(a, b);
+	a = oper(a, b);
 	b[0x0] = a[0x1];
-	a = op{}(a, b);
+	a = oper(a, b);
 	return a;
 }

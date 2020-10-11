@@ -30,7 +30,7 @@
 #include "popcnt.h"
 #include "lzcnt.h"
 #include "tzcnt.h"
-#include "lateral.h"
+#include "reduce.h"
 #include "any.h"
 #include "all.h"
 #include "stream.h"
@@ -50,5 +50,4 @@ namespace ircd
 	using simd::lzcnt;
 	using simd::tzcnt;
 	using simd::popcnt;
-	using simd::lateral;
 }

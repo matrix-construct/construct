@@ -13,7 +13,7 @@
 
 namespace ircd::simd
 {
-	/// Convenience wrapper around lateral<std::bit_and>()[0] with the most
+	/// Convenience wrapper around reduce<std::bit_and>()[0] with the most
 	/// efficient lane type conversions made.
 	template<class T>
 	bool all(const T) noexcept = delete;
@@ -24,7 +24,7 @@ inline bool
 ircd::simd::all(const u64x8 a)
 noexcept
 {
-	return lateral<std::bit_and>(a)[0] == -1UL;
+	return reduce<std::bit_and>(a)[0] == -1UL;
 }
 
 template<>
@@ -32,7 +32,7 @@ inline bool
 ircd::simd::all(const u64x4 a)
 noexcept
 {
-	return lateral<std::bit_and>(a)[0] == -1UL;
+	return reduce<std::bit_and>(a)[0] == -1UL;
 }
 
 template<>
@@ -40,7 +40,7 @@ inline bool
 ircd::simd::all(const u64x2 a)
 noexcept
 {
-	return lateral<std::bit_and>(a)[0] == -1UL;
+	return reduce<std::bit_and>(a)[0] == -1UL;
 }
 
 template<>
