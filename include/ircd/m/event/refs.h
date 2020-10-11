@@ -29,10 +29,10 @@ struct ircd::m::event::refs
 	event::idx idx;
 
   public:
-	using closure_bool = std::function<bool (const event::idx &, const dbs::ref &)>;
+	using closure = std::function<bool (const event::idx &, const dbs::ref &)>;
 
-	bool for_each(const dbs::ref &type, const closure_bool &) const;
-	bool for_each(const closure_bool &) const;
+	bool for_each(const dbs::ref &type, const closure &) const;
+	bool for_each(const closure &) const;
 
 	bool has(const dbs::ref &type, const event::idx &) const;
 	bool has(const dbs::ref &type) const;

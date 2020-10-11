@@ -174,7 +174,7 @@ const
 }
 
 bool
-ircd::m::event::refs::for_each(const closure_bool &closure)
+ircd::m::event::refs::for_each(const closure &closure)
 const
 {
 	return for_each(dbs::ref(-1), closure);
@@ -182,7 +182,7 @@ const
 
 bool
 ircd::m::event::refs::for_each(const dbs::ref &type,
-                               const closure_bool &closure)
+                               const closure &closure)
 const
 {
 	if(!idx)
