@@ -84,6 +84,8 @@ namespace ircd
 /// Database subsystem initialization and destruction
 struct ircd::db::init
 {
+	static const std::string direct_io_test_file_path;
+
 	static void request_pool();
 	static void compressions();
 	static void directory();
