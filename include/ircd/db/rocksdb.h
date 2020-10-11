@@ -61,6 +61,13 @@ namespace ircd::db
 
 	// Iterator suite.
 	bool valid(const rocksdb::Iterator &);
+	bool operator!(const rocksdb::Iterator &);
 	string_view key(const rocksdb::Iterator &);
 	string_view val(const rocksdb::Iterator &);
+}
+
+inline bool
+ircd::db::operator!(const rocksdb::Iterator &it)
+{
+	return !valid(it);
 }

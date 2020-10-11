@@ -5009,13 +5009,7 @@ bool
 ircd::db::valid(const rocksdb::Iterator &it,
                 const valid_proffer &proffer)
 {
-	return valid(it)? proffer(it) : false;
-}
-
-bool
-ircd::db::operator!(const rocksdb::Iterator &it)
-{
-	return !valid(it);
+	return valid(it) && proffer(it);
 }
 
 bool
@@ -5197,6 +5191,7 @@ ircd::db::optstr_find_and_remove(std::string &optstr,
 }
 
 /// Convert our options structure into RocksDB's options structure.
+[[gnu::hot]]
 rocksdb::ReadOptions
 ircd::db::make_opts(const gopts &opts)
 {
@@ -5229,14 +5224,14 @@ ircd::db::operator+=(rocksdb::ReadOptions &ret,
                      const gopts &opts)
 {
 	ret.pin_data = test(opts, get::PIN);
-	ret.fill_cache |= test(opts, get::CACHE);
-	ret.fill_cache &= !test(opts, get::NO_CACHE);
 	ret.tailing = test(opts, get::NO_SNAPSHOT);
 	ret.prefix_same_as_start = test(opts, get::PREFIX);
 	ret.total_order_seek = test(opts, get::ORDERED);
 	ret.verify_checksums = bool(read_checksum);
 	ret.verify_checksums |= test(opts, get::CHECKSUM);
 	ret.verify_checksums &= !test(opts, get::NO_CHECKSUM);
+	ret.fill_cache |= test(opts, get::CACHE);
+	ret.fill_cache &= !test(opts, get::NO_CACHE);
 
 	ret.readahead_size = opts.readahead;
 	ret.iter_start_seqnum = opts.seqnum;

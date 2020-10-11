@@ -93,18 +93,14 @@ namespace ircd::db
 	const std::string &reflect(const rocksdb::Tickers &);
 	const std::string &reflect(const rocksdb::Histograms &);
 
-	// string_view <-> slice
-	rocksdb::Slice slice(const string_view &);
-	string_view slice(const rocksdb::Slice &);
-
 	// Frequently used get options and set options are separate from the string/map system
-	rocksdb::WriteOptions &operator+=(rocksdb::WriteOptions &, const sopts &);
-	rocksdb::ReadOptions &operator+=(rocksdb::ReadOptions &, const gopts &);
-	rocksdb::WriteOptions make_opts(const sopts &);
-	rocksdb::ReadOptions make_opts(const gopts &);
+	static rocksdb::WriteOptions &operator+=(rocksdb::WriteOptions &, const sopts &);
+	static rocksdb::ReadOptions &operator+=(rocksdb::ReadOptions &, const gopts &);
+	static rocksdb::WriteOptions make_opts(const sopts &);
+	static rocksdb::ReadOptions make_opts(const gopts &);
 
 	// Database options creator
-	bool optstr_find_and_remove(std::string &optstr, const std::string &what);
+	static bool optstr_find_and_remove(std::string &optstr, const std::string &what);
 	rocksdb::DBOptions make_dbopts(std::string optstr, std::string *const &out = nullptr, bool *read_only = nullptr, bool *fsck = nullptr);
 	rocksdb::CompressionType find_supported_compression(const std::string &);
 
@@ -113,29 +109,27 @@ namespace ircd::db
 	std::vector<std::string> column_names(const std::string &path, const std::string &options);
 
 	// Validation functors
-	bool valid(const rocksdb::Status &);
-	bool valid(const rocksdb::Iterator &);
-	bool operator!(const rocksdb::Iterator &);
+	static bool valid(const rocksdb::Status &);
 	using valid_proffer = std::function<bool (const rocksdb::Iterator &)>;
-	bool valid(const rocksdb::Iterator &, const valid_proffer &);
-	bool valid_eq(const rocksdb::Iterator &, const string_view &);
-	bool valid_lte(const rocksdb::Iterator &, const string_view &);
-	bool valid_gt(const rocksdb::Iterator &, const string_view &);
-	void valid_or_throw(const rocksdb::Iterator &);
-	void valid_eq_or_throw(const rocksdb::Iterator &, const string_view &);
+	static bool valid(const rocksdb::Iterator &, const valid_proffer &);
+	static bool valid_eq(const rocksdb::Iterator &, const string_view &);
+	static bool valid_lte(const rocksdb::Iterator &, const string_view &);
+	static bool valid_gt(const rocksdb::Iterator &, const string_view &);
+	static void valid_or_throw(const rocksdb::Iterator &);
+	static void valid_eq_or_throw(const rocksdb::Iterator &, const string_view &);
 
 	// [GET] iterator seek suite
-	template<class pos> bool seek(database::column &, const pos &, const rocksdb::ReadOptions &, std::unique_ptr<rocksdb::Iterator> &it);
-	std::unique_ptr<rocksdb::Iterator> seek(column &, const gopts &);
-	std::unique_ptr<rocksdb::Iterator> seek(column &, const string_view &key, const gopts &);
-	std::vector<row::value_type> seek(database &, const gopts &);
-	std::pair<string_view, string_view> operator*(const rocksdb::Iterator &);
+	template<class pos> static bool seek(database::column &, const pos &, const rocksdb::ReadOptions &, std::unique_ptr<rocksdb::Iterator> &it);
+	static std::unique_ptr<rocksdb::Iterator> seek(column &, const gopts &);
+	static std::unique_ptr<rocksdb::Iterator> seek(column &, const string_view &key, const gopts &);
+	static std::vector<row::value_type> seek(database &, const gopts &);
+	static std::pair<string_view, string_view> operator*(const rocksdb::Iterator &);
 
 	// [GET] read suite
 	using _read_op = std::tuple<column, string_view>;
 	using _read_closure = std::function<bool (column &, const column::delta &, const rocksdb::Status &)>;
-	bool _read(const vector_view<_read_op> &, const rocksdb::ReadOptions &, const _read_closure & = {});
-	rocksdb::Status _read(column &, const string_view &key, const rocksdb::ReadOptions &, const column::view_closure & = {});
+	static bool _read(const vector_view<_read_op> &, const rocksdb::ReadOptions &, const _read_closure & = {});
+	static rocksdb::Status _read(column &, const string_view &key, const rocksdb::ReadOptions &, const column::view_closure & = {});
 
 	// [SET] writebatch suite
 	string_view debug(const mutable_buffer &, const rocksdb::WriteBatch &);
