@@ -320,6 +320,7 @@ ircd::m::events::source::for_each(const range &range,
 		db::get::NO_CHECKSUM
 	};
 	gopts.readahead = size_t(readahead);
+	gopts.readahead &= boolmask<size_t>(ascending);
 
 	auto it
 	{
@@ -385,8 +386,8 @@ ircd::m::events::content::for_each(const closure &closure)
 		db::get::NO_CACHE,
 		db::get::NO_CHECKSUM
 	};
-
 	gopts.readahead = size_t(readahead);
+
 	auto it(column.begin(gopts));
 	for(; it; ++it)
 	{
