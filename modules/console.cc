@@ -7786,6 +7786,75 @@ console_cmd__events__state(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__events__refs(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"start", "stop", "type", "limit"
+	}};
+
+	const m::event::idx start
+	{
+		param.at("start", m::vm::sequence::retired - 128)
+	};
+
+	const m::event::idx stop
+	{
+		param.at("stop", m::vm::sequence::retired + 1)
+	};
+
+	const string_view &typestr
+	{
+		param.at("type", "*"_sv)
+	};
+
+	size_t limit
+	{
+		param.at("limit", 2048UL)
+	};
+
+	m::dbs::ref type
+	{
+		typestr == "*"?
+			m::dbs::ref(-1):
+			m::dbs::ref(0)
+	};
+
+	if(type != m::dbs::ref(-1))
+		for(; uint8_t(type) < sizeof(m::dbs::ref) * 256; type = m::dbs::ref(uint8_t(type) + 1))
+			if(reflect(type) == typestr)
+				break;
+
+	m::events::refs::for_each({start, stop}, [&out, &limit]
+	(const auto &src, const auto &type, const auto &tgt)
+	-> bool
+	{
+		const auto src_id
+		{
+			m::event_id(std::nothrow, src)
+		};
+
+		const auto tgt_id
+		{
+			m::event_id(std::nothrow, tgt)
+		};
+
+		out
+		<< " " << std::right << std::setw(10) << src
+		<< " " << std::left << std::setw(45) << trunc(src_id? string_view{src_id}: "<index error>"_sv, 45)
+		<< " " << std::right << std::setw(12) << trunc(reflect(type), 12)
+		<< " -> " << std::right << std::setw(10) << tgt
+		<< " " << std::left << std::setw(45) << trunc(tgt_id? string_view{tgt_id}: "<index error>"_sv, 45)
+		<< std::endl
+		;
+
+		return --limit;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__events__dump(opt &out, const string_view &line)
 {
 	const params param{line, " ",

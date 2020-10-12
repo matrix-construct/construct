@@ -83,6 +83,16 @@ namespace ircd::m::events::state
 	bool for_each(const closure &);
 }
 
+/// Interface to scan the refs of events
+namespace ircd::m::events::refs
+{
+	// (source, type, target)
+	using closure = std::function<bool (const event::idx &, const dbs::ref &, const event::idx &)>;
+
+	// Iterate events in range
+	bool for_each(const range &, const closure &);
+}
+
 /// Interface to scan the content of events
 namespace ircd::m::events::content
 {

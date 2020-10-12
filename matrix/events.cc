@@ -409,6 +409,81 @@ ircd::m::events::content::for_each(const closure &closure)
 }
 
 //
+// events::refs
+//
+
+namespace ircd::m::events::refs
+{
+	extern conf::item<size_t> readahead;
+}
+
+decltype(ircd::m::events::refs::readahead)
+ircd::m::events::refs::readahead
+{
+	{ "name",     "ircd.m.events.refs.readahead" },
+	{ "default",  long(4_MiB)                    },
+};
+
+bool
+ircd::m::events::refs::for_each(const range &range,
+                                const closure &closure)
+{
+	db::column &event_refs
+	{
+		dbs::event_refs
+	};
+
+    db::gopts gopts
+    {
+        db::get::NO_CACHE,
+        db::get::NO_CHECKSUM
+    };
+	gopts.readahead = size_t(readahead);
+
+	const auto start
+	{
+		std::min(range.first, range.second)
+	};
+
+	const auto stop
+	{
+		std::max(range.first, range.second)
+	};
+
+	auto it
+	{
+		event_refs.lower_bound(byte_view<string_view>(start), gopts)
+	};
+
+	for(; it; ++it)
+	{
+		const auto &key
+		{
+			it->first
+		};
+
+		const event::idx src
+		{
+			byte_view<event::idx, false>(key)
+		};
+
+		if(src >= stop)
+			break;
+
+		const auto &[type, tgt]
+		{
+			dbs::event_refs_key(key.substr(sizeof(event::idx)))
+		};
+
+		assert(tgt != src);
+		if(!closure(src, type, tgt))
+			return false;
+	}
+
+	return true;
+}
+
+//
 // events::state
 //
 
