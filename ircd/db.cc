@@ -5190,24 +5190,6 @@ ircd::db::optstr_find_and_remove(std::string &optstr,
 	return true;
 }
 
-/// Convert our options structure into RocksDB's options structure.
-[[gnu::hot]]
-rocksdb::ReadOptions
-ircd::db::make_opts(const gopts &opts)
-{
-	rocksdb::ReadOptions ret;
-	assert(ret.fill_cache);
-	assert(ret.read_tier == BLOCKING);
-
-	// slice* for exclusive upper bound. when prefixes are used this value must
-	// have the same prefix because ordering is not guaranteed between prefixes
-	ret.iterate_lower_bound = opts.lower_bound;
-	ret.iterate_upper_bound = opts.upper_bound;
-
-	ret += opts;
-	return ret;
-}
-
 decltype(ircd::db::read_checksum)
 ircd::db::read_checksum
 {
@@ -5215,43 +5197,62 @@ ircd::db::read_checksum
 	{ "default",  false                   }
 };
 
-/// Update a RocksDB options structure with our options structure. We use
-/// operator+= for fun here; we can avoid reconstructing and returning a new
-/// options structure in some cases by breaking out this function from
-/// make_opts().
-rocksdb::ReadOptions &
-ircd::db::operator+=(rocksdb::ReadOptions &ret,
-                     const gopts &opts)
+namespace ircd::db
 {
-	ret.pin_data = test(opts, get::PIN);
-	ret.tailing = test(opts, get::NO_SNAPSHOT);
-	ret.prefix_same_as_start = test(opts, get::PREFIX);
-	ret.total_order_seek = test(opts, get::ORDERED);
-	ret.verify_checksums = bool(read_checksum);
-	ret.verify_checksums |= test(opts, get::CHECKSUM);
-	ret.verify_checksums &= !test(opts, get::NO_CHECKSUM);
-	ret.fill_cache |= test(opts, get::CACHE);
-	ret.fill_cache &= !test(opts, get::NO_CACHE);
-
-	ret.readahead_size = opts.readahead;
-	ret.iter_start_seqnum = opts.seqnum;
-
-	ret.read_tier = test(opts, get::NO_BLOCKING)?
-		rocksdb::ReadTier::kBlockCacheTier:
-		rocksdb::ReadTier::kReadAllTier;
-
-	if(opts.snapshot && !test(opts, get::NO_SNAPSHOT))
-		ret.snapshot = opts.snapshot;
-
-	return ret;
+	static const rocksdb::ReadOptions default_read_options;
 }
 
-rocksdb::WriteOptions
-ircd::db::make_opts(const sopts &opts)
+/// Convert our options structure into RocksDB's options structure.
+rocksdb::ReadOptions
+ircd::db::make_opts(const gopts &opts)
 {
-	rocksdb::WriteOptions ret;
-	//ret.no_slowdown = true;    // read_tier = NON_BLOCKING for writes
-	ret += opts;
+	rocksdb::ReadOptions ret;
+	assume(ret.iterate_lower_bound == nullptr);
+	assume(ret.iterate_upper_bound == nullptr);
+	assume(ret.iter_start_seqnum == 0);
+	assume(ret.pin_data == false);
+	assume(ret.fill_cache == true);
+	assume(ret.total_order_seek == false);
+	assume(ret.verify_checksums == true);
+	assume(ret.tailing == false);
+	assume(ret.read_tier == rocksdb::ReadTier::kReadAllTier);
+	assume(ret.readahead_size == 0);
+	assume(ret.prefix_same_as_start == false);
+
+	ret.snapshot = opts.snapshot;
+	ret.readahead_size = opts.readahead;
+
+	// slice* for exclusive upper bound. when prefixes are used this value must
+	// have the same prefix because ordering is not guaranteed between prefixes
+	ret.iterate_lower_bound = opts.lower_bound;
+	ret.iterate_upper_bound = opts.upper_bound;
+	ret.iter_start_seqnum = opts.seqnum;
+
+	ret.verify_checksums = bool(read_checksum);
+	if(test(opts, get::CHECKSUM) & !test(opts, get::NO_CHECKSUM))
+		ret.verify_checksums = true;
+
+	if(test(opts, get::NO_SNAPSHOT))
+		ret.tailing = true;
+
+	if(test(opts, get::ORDERED))
+		ret.total_order_seek = true;
+
+	if(test(opts, get::PIN))
+		ret.pin_data = true;
+
+	if(test(opts, get::CACHE))
+		ret.fill_cache = true;
+
+	if(likely(test(opts, get::NO_CACHE)))
+		ret.fill_cache = false;
+
+	if(likely(test(opts, get::PREFIX)))
+		ret.prefix_same_as_start = true;
+
+	if(likely(test(opts, get::NO_BLOCKING)))
+		ret.read_tier = rocksdb::ReadTier::kBlockCacheTier;
+
 	return ret;
 }
 
@@ -5263,10 +5264,12 @@ ircd::db::enable_wal
 	{ "persist",   false                },
 };
 
-rocksdb::WriteOptions &
-ircd::db::operator+=(rocksdb::WriteOptions &ret,
-                     const sopts &opts)
+rocksdb::WriteOptions
+ircd::db::make_opts(const sopts &opts)
 {
+	rocksdb::WriteOptions ret;
+	//ret.no_slowdown = true;    // read_tier = NON_BLOCKING for writes
+
 	ret.sync = test(opts, set::FSYNC);
 	ret.disableWAL = !enable_wal || test(opts, set::NO_JOURNAL);
 	ret.ignore_missing_column_families = test(opts, set::NO_COLUMN_ERR);

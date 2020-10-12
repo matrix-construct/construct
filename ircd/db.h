@@ -94,10 +94,8 @@ namespace ircd::db
 	const std::string &reflect(const rocksdb::Histograms &);
 
 	// Frequently used get options and set options are separate from the string/map system
-	static rocksdb::WriteOptions &operator+=(rocksdb::WriteOptions &, const sopts &);
-	static rocksdb::ReadOptions &operator+=(rocksdb::ReadOptions &, const gopts &);
-	static rocksdb::WriteOptions make_opts(const sopts &);
-	static rocksdb::ReadOptions make_opts(const gopts &);
+	rocksdb::WriteOptions make_opts(const sopts &);
+	rocksdb::ReadOptions make_opts(const gopts &);
 
 	// Database options creator
 	static bool optstr_find_and_remove(std::string &optstr, const std::string &what);
