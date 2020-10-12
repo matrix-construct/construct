@@ -31,6 +31,8 @@ noexcept
 		return x86::rdtsc();
 	#elif defined(__aarch64__)
 		return arm::read_virtual_counter();
+	#elif __has_builtin(__builtin_readcyclecounter)
+		return __builtin_readcyclecounter();
 	#else
 		static_assert(false, "Select reference cycle counter for platform.");
 		return 0;
