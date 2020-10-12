@@ -40,6 +40,7 @@
 // Project library interfaces
 //
 
+#include "util/assume.h"
 #include "util/mask.h"
 #include "string_view.h"
 #include "vector_view.h"
