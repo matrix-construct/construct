@@ -8411,7 +8411,6 @@ console_cmd__event__refs(opt &out, const string_view &line)
 		empty(typestr)?
 			m::dbs::ref(-1):
 			m::dbs::ref(0)
-
 	};
 
 	if(!empty(typestr))
@@ -8419,21 +8418,22 @@ console_cmd__event__refs(opt &out, const string_view &line)
 			if(reflect(type) == typestr)
 				break;
 
-	refs.for_each(type, [&out]
-	(const auto &idx, const auto &type)
+	refs.for_each(type, [&out, &event_id, &refs]
+	(const auto &tgt, const auto &type)
 	{
-		const m::event::fetch event
+		const auto tgt_id
 		{
-			std::nothrow, idx
+			m::event_id(std::nothrow, tgt)
 		};
 
-		if(!event.valid)
-			return true;
-
-		out << idx
-		    << " " << m::event_id(idx)
-		    << " " << reflect(type)
-		    << std::endl;
+		out
+		<< " " << std::right << std::setw(10) << refs.idx
+		<< " " << std::left << std::setw(45) << trunc(event_id, 45)
+		<< " " << std::right << std::setw(12) << trunc(reflect(type), 12)
+		<< " -> " << std::right << std::setw(10) << tgt
+		<< " " << std::left << std::setw(45) << trunc(tgt_id? string_view{tgt_id}: "<index error>"_sv, 45)
+		<< std::endl
+		;
 
 		return true;
 	});
