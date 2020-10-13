@@ -19,6 +19,7 @@ struct ircd::resource::request
 	http::request::head head;
 	string_view content;
 	http::query::string query;
+	string_view params;
 	vector_view<string_view> parv;
 	string_view param[8];
 
@@ -41,6 +42,7 @@ struct ircd::resource::request::object
 	const http::request::head &head;
 	const string_view &content;
 	const http::query::string &query;
+	const string_view &params;
 	const vector_view<string_view> &parv;
 	const json::object &body;
 
@@ -50,6 +52,7 @@ struct ircd::resource::request::object
 	,head{r.head}
 	,content{r.content}
 	,query{r.query}
+	,params{r.params}
 	,parv{r.parv}
 	,body{r}
 	{}

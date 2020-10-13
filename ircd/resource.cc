@@ -536,14 +536,12 @@ try
 		}
 	};
 
-	const auto pathparm
-	{
-		lstrip(head.path, resource->path)
-	};
-
+	client.request.params = lstrip(head.path, resource->path);
+	client.request.params = rstrip(client.request.params, '/');
 	client.request.parv =
 	{
-		client.request.param, tokens(pathparm, '/', client.request.param)
+		client.request.param,
+		tokens(client.request.params, '/', client.request.param)
 	};
 
 	const unwind_nominal completions{[this]
