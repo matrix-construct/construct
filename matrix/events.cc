@@ -421,7 +421,7 @@ decltype(ircd::m::events::refs::readahead)
 ircd::m::events::refs::readahead
 {
 	{ "name",     "ircd.m.events.refs.readahead" },
-	{ "default",  long(4_MiB)                    },
+	{ "default",  long(512_KiB)                  },
 };
 
 bool
