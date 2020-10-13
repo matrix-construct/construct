@@ -5015,6 +5015,9 @@ ircd::db::valid(const rocksdb::Iterator &it,
 bool
 ircd::db::valid(const rocksdb::Iterator &it)
 {
+	if(likely(it.Valid()))
+		return true;
+
 	switch(it.status().code())
 	{
 		using rocksdb::Status;
