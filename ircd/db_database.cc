@@ -1689,22 +1689,20 @@ ircd::db::database::column::column(database &d,
 	// Set filter reductions for this column. This means we expect a key to exist.
 	this->options.optimize_filters_for_hits = this->descriptor->expect_queries_hit;
 
-	//TODO: descriptor / conf
-	static const auto write_buffer_blocks {4096L};
-	static const long write_buffer_size_minmax[]
+	static const long write_buffer_size_limit[]
 	{
-		256_KiB, 8_MiB
+		256_KiB, 16_MiB
 	};
 
 	// Derive the write buffer size from the block size
 	this->options.write_buffer_size = std::clamp
 	(
-		write_buffer_blocks * long(this->descriptor->block_size),
-		write_buffer_size_minmax[0],
-		write_buffer_size_minmax[1]
+		long(this->descriptor->write_buffer_blocks * this->descriptor->block_size),
+		write_buffer_size_limit[0],
+		write_buffer_size_limit[1]
 	);
 
-	this->options.max_write_buffer_number = 32;
+	this->options.max_write_buffer_number = 12;
 	this->options.min_write_buffer_number_to_merge = 2;
 	this->options.max_write_buffer_number_to_maintain = 0;
 	#if ROCKSDB_MAJOR > 6 \
@@ -1748,7 +1746,9 @@ ircd::db::database::column::column(database &d,
 	this->options.level0_stop_writes_trigger = 64;
 	this->options.level0_slowdown_writes_trigger = 48;
 	this->options.level0_file_num_compaction_trigger =
-		this->options.compaction_style == rocksdb::kCompactionStyleUniversal? 12: 4;
+		this->options.compaction_style == rocksdb::kCompactionStyleUniversal?
+			(this->options.max_write_buffer_number * 2):
+			4;
 
 	// Universal compaction mode options
 	auto &universal(this->options.compaction_options_universal);
@@ -1759,7 +1759,7 @@ ircd::db::database::column::column(database &d,
 	universal.max_size_amplification_percent = 6667;
 	universal.size_ratio = 36;
 	universal.min_merge_width = 8;
-	universal.max_merge_width = 32;
+	universal.max_merge_width = 4 * universal.min_merge_width;
 
 	// Level compaction mode options
 	this->options.num_levels = 7;

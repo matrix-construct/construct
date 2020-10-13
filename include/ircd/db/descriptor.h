@@ -125,4 +125,10 @@ struct ircd::db::descriptor
 	{
 		60s * 60 * 24 * 21 // 21 day period
 	};
+
+	/// The size of a write buffer is `block_size * write_buffer_blocks`
+	size_t write_buffer_blocks
+	{
+		8192
+	};
 };
