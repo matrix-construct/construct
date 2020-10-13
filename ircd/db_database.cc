@@ -3723,6 +3723,7 @@ ircd::db::database::sst::info::operator=(rocksdb::LiveFileMetaData &&md)
 ircd::db::database::sst::info &
 ircd::db::database::sst::info::operator=(rocksdb::SstFileMetaData &&md)
 {
+	id = std::move(md.file_number);
 	name = std::move(md.name);
 	path = std::move(md.db_path);
 	size = std::move(md.size);
