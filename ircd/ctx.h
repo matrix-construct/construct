@@ -33,6 +33,7 @@ struct ircd::ctx::ctx
 	static uint64_t id_ctr;                      // monotonic
 	static ios::descriptor ios_desc;
 	static ios::handler ios_handler;
+	static ctx *spawning;
 
 	uint64_t id {++id_ctr};                      // Unique runtime ID
 	string_view name;                            // User given name (optional)
@@ -61,11 +62,11 @@ struct ircd::ctx::ctx
 	bool wait();                                 // yield context to ios queue (returns on this resume)
 	void jump();                                 // jump to context directly (returns on your resume)
 
-	void operator()(boost::asio::yield_context, const mutable_buffer &, const std::function<void ()>) noexcept;
+	void operator()(boost::asio::yield_context, const std::function<void ()>) noexcept;
 	void spawn(context::function func);
 
 	ctx(const string_view &name     = "<noname>"_sv,
-	    const size_t &stack_max     = DEFAULT_STACK_SIZE,
+	    const ircd::ctx::stack &    = mutable_buffer{nullptr, DEFAULT_STACK_SIZE},
 	    const context::flags &      = (context::flags)0U);
 
 	ctx(ctx &&) = delete;

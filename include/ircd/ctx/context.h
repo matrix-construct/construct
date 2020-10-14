@@ -65,6 +65,11 @@ struct ircd::ctx::context
 
 	// Note: Constructing with DETACH flag makes any further use of this object undefined.
 	context(const string_view &name,
+	        const mutable_buffer &stack,
+	        const flags &,
+	        function);
+
+	context(const string_view &name,
 	        const size_t &stack_size,
 	        const flags &,
 	        function);

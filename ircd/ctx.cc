@@ -63,9 +63,14 @@ ircd::ctx::ctx::ios_handler
 	&ios_desc
 };
 
+/// Points to the next context to spawn (internal use)
+[[gnu::visibility("internal")]]
+decltype(ircd::ctx::ctx::spawning)
+ircd::ctx::ctx::spawning;
+
 /// Internal context struct ctor
 ircd::ctx::ctx::ctx(const string_view &name,
-                    const size_t &stack_max,
+                    const ircd::ctx::stack &stack,
                     const context::flags &flags)
 :name
 {
@@ -81,7 +86,7 @@ ircd::ctx::ctx::ctx(const string_view &name,
 }
 ,stack
 {
-	stack_max
+	stack
 }
 {
 }
@@ -106,9 +111,14 @@ ircd::ctx::ctx::spawn(context::function func)
 		boost::coroutines::no_stack_unwind,
 	};
 
+	const scope_restore spawning
+	{
+		ircd::ctx::ctx::spawning, this
+	};
+
 	auto bound
 	{
-		std::bind(&ctx::operator(), this, ph::_1, ph::_2, std::move(func))
+		std::bind(&ctx::operator(), this, ph::_1, std::move(func))
 	};
 
 	auto *const parent_context
@@ -142,7 +152,6 @@ ircd::ctx::ctx::spawn(context::function func)
 void
 IRCD_CTX_STACK_PROTECT
 ircd::ctx::ctx::operator()(boost::asio::yield_context yc,
-                           const mutable_buffer &stack_buf,
                            const std::function<void ()> func)
 noexcept try
 {
@@ -150,7 +159,6 @@ noexcept try
 	ircd::ctx::current = this;
 	this->yc = &yc;
 	notes = 1;
-	stack.buf = stack_buf;
 	stack.base = uintptr_t(__builtin_frame_address(0));
 	const unwind atexit{[this]
 	{
@@ -956,36 +964,6 @@ noexcept
 }
 #endif
 
-//////////////////////////////////////////////////////////////////////////////
-//
-// ctx/stack.h
-//
-
-[[gnu::hot]]
-ircd::ctx::stack &
-ircd::ctx::stack::get(ctx &ctx)
-noexcept
-{
-	return ctx.stack;
-}
-
-[[gnu::hot]]
-const ircd::ctx::stack &
-ircd::ctx::stack::get(const ctx &ctx)
-noexcept
-{
-	return ctx.stack;
-}
-
-//
-// stack::stack
-//
-
-ircd::ctx::stack::stack(const size_t &max)
-:max{max}
-{
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ctx/continuation.h
@@ -1174,12 +1152,23 @@ ircd::ctx::context::context(const string_view &name,
                             const size_t &stack_sz,
                             const flags &flags,
                             function func)
+:context
+{
+	name, {nullptr, DEFAULT_STACK_SIZE}, flags, std::move(func)
+}
+{
+}
+
+ircd::ctx::context::context(const string_view &name,
+                            const mutable_buffer &stack,
+                            const flags &flags,
+                            function func)
 :c
 {
 	std::make_unique<ctx>
 	(
 		name,
-		stack_sz,
+		stack,
 		!current? flags | POST : flags
 	)
 }
@@ -3087,42 +3076,77 @@ noexcept
 	return c.node;
 }
 
-///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 //
-// (internal) stack_allocator
+// ctx/stack.h
 //
 
-namespace ircd::ctx
+[[gnu::hot]]
+ircd::ctx::stack &
+ircd::ctx::stack::get(ctx &ctx)
+noexcept
 {
-	struct stack_allocator;
+	return ctx.stack;
 }
 
+[[gnu::hot]]
+const ircd::ctx::stack &
+ircd::ctx::stack::get(const ctx &ctx)
+noexcept
+{
+	return ctx.stack;
+}
+
+//
+// stack::stack
+//
+
+ircd::ctx::stack::stack(const mutable_buffer &buf)
+noexcept
+:buf
+{
+	buf
+}
+,max
+{
+	ircd::size(buf)
+}
+{
+}
+
+//
+// stack::allocator
+//
+
 struct [[gnu::visibility("hidden")]]
-ircd::ctx::stack_allocator
+ircd::ctx::stack::allocator
 {
 	using stack_context = boost::coroutines::stack_context;
 
 	mutable_buffer &buf;
+	bool owner {false};
 
 	void allocate(stack_context &, size_t size);
 	void deallocate(stack_context &);
 };
 
 void
-ircd::ctx::stack_allocator::allocate(stack_context &c,
-                                     size_t size)
+ircd::ctx::stack::allocator::allocate(stack_context &c,
+                                      size_t size)
 {
-	assert(size >= traits_type::minimum_size());
-	assert(traits_type::is_unbounded() || (traits_type::maximum_size() >= size));
-
 	static const auto &alignment
 	{
 		info::page_size
 	};
 
-	unique_mutable_buffer buf
+	unique_mutable_buffer umb
 	{
-		size, alignment
+		null(this->buf)? size: 0, alignment
+	};
+
+	const mutable_buffer &buf
+	{
+		umb? umb: this->buf
 	};
 
 	c.size = ircd::size(buf);
@@ -3132,26 +3156,26 @@ ircd::ctx::stack_allocator::allocate(stack_context &c,
 	c.valgrind_stack_id = VALGRIND_STACK_REGISTER(c.sp, ircd::data(buf));
 	#endif
 
-	this->buf = buf.release();
+	this->owner = bool(umb);
+	this->buf = umb? umb.release(): this->buf;
 }
 
 void
-ircd::ctx::stack_allocator::deallocate(stack_context &c)
+ircd::ctx::stack::allocator::deallocate(stack_context &c)
 {
 	assert(c.sp);
-	assert(traits_type::minimum_size() <= c.size);
-	assert(traits_type::is_unbounded() || (traits_type::maximum_size() >= c.size));
 
 	#if defined(BOOST_USE_VALGRIND)
 	VALGRIND_STACK_DEREGISTER(c.valgrind_stack_id)
 	#endif
 
-	void *const base
+	const auto base
 	{
-		static_cast<uint8_t *>(c.sp) - c.size
+		(reinterpret_cast<uintptr_t>(c.sp) - c.size)
+		& boolmask<uintptr_t>(owner)
 	};
 
-	std::free(base);
+	std::free(reinterpret_cast<void *>(base));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -3174,52 +3198,18 @@ boost::asio::detail::spawn_data
 	weak_ptr<callee_type> coro_;
 	Function function_;
 	Handler handler_;
-	ircd::mutable_buffer stack_;
+	ircd::ctx::ctx *ctrl;
 
 	template<class H,
 	         class F>
 	spawn_data(H&& handler, bool call_handler, F&& function)
 	:function_(std::move(function))
 	,handler_(std::move(handler))
+	,ctrl{ircd::ctx::ctx::spawning}
 	{
 		assert(call_handler);
+		assert(ctrl);
 	}
-};
-
-template<class Function>
-struct [[gnu::visibility("hidden")]]
-boost::asio::detail::spawn_helper
-<
-	boost::asio::executor_binder<void (*)(), boost::asio::strand<boost::asio::executor>>,
-	Function
->
-{
-	using Handler = boost::asio::executor_binder<void (*)(), boost::asio::strand<boost::asio::executor>>;
-	using callee_type = typename basic_yield_context<Handler>::callee_type;
-
-	void operator()() // push
-	{
-		ircd::ctx::stack_allocator allocator
-		{
-			data_->stack_
-		};
-
-		const auto coro
-		{
-			std::make_shared<callee_type>
-			(
-				coro_entry_point<Handler, Function>{data_},
-				attributes_,
-				allocator
-			)
-		};
-
-		data_->coro_ = coro;
-		(*coro)();
-	}
-
-	shared_ptr<spawn_data<Handler, Function>> data_;
-	boost::coroutines::attributes attributes_;
 };
 
 template<class Function>
@@ -3237,7 +3227,7 @@ boost::asio::detail::coro_entry_point
 	{
 		const auto data
 		{
-			data_
+			this->data
 		};
 
 		basic_yield_context<Handler> yc
@@ -3245,11 +3235,44 @@ boost::asio::detail::coro_entry_point
 			data->coro_, ca, data->handler_
 		};
 
-		(data->function_)(yc, data->stack_);
+		(data->function_)(yc);
 		(data->handler_)();
 	}
 
+	shared_ptr<spawn_data<Handler, Function>> data;
+};
+
+// Hooks the first push phase of coroutine spawn to supply our own stack
+// allocator.
+template<class Function>
+struct [[gnu::visibility("hidden")]]
+boost::asio::detail::spawn_helper
+<
+	boost::asio::executor_binder<void (*)(), boost::asio::strand<boost::asio::executor>>,
+	Function
+>
+{
+	using Handler = boost::asio::executor_binder<void (*)(), boost::asio::strand<boost::asio::executor>>;
+	using callee_type = typename basic_yield_context<Handler>::callee_type;
+
+	void operator()() // push
+	{
+		const auto coro
+		{
+			std::make_shared<callee_type>
+			(
+				coro_entry_point<Handler, Function>{data_},
+				attributes_,
+				ircd::ctx::stack::allocator{data_->ctrl->stack.buf}
+			)
+		};
+
+		data_->coro_ = coro;
+		(*coro)();
+	}
+
 	shared_ptr<spawn_data<Handler, Function>> data_;
+	boost::coroutines::attributes attributes_;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
