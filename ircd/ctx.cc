@@ -3095,6 +3095,93 @@ using coroutine_allocator = boost::coroutines::basic_standard_stack_allocator
 	boost::coroutines::stack_traits
 >;
 
+template<class Function>
+struct [[gnu::visibility("hidden")]]
+boost::asio::detail::spawn_helper
+<
+	boost::asio::executor_binder<void (*)(), boost::asio::strand<boost::asio::executor>>,
+	Function
+>
+{
+	using Handler = boost::asio::executor_binder<void (*)(), boost::asio::strand<boost::asio::executor>>;
+	using callee_type = typename basic_yield_context<Handler>::callee_type;
+
+	void operator()() // push
+	{
+		const auto coro
+		{
+			std::make_shared<callee_type>
+			(
+				coro_entry_point<Handler, Function>{data_},
+				attributes_,
+				coroutine_allocator{}
+			)
+		};
+
+		data_->coro_ = coro;
+		(*coro)();
+	}
+
+	shared_ptr<spawn_data<Handler, Function>> data_;
+	boost::coroutines::attributes attributes_;
+};
+
+template<class Function>
+struct [[gnu::visibility("hidden")]]
+boost::asio::detail::coro_entry_point
+<
+	boost::asio::executor_binder<void (*)(), boost::asio::strand<boost::asio::executor>>,
+	Function
+>
+{
+	using Handler = boost::asio::executor_binder<void (*)(), boost::asio::strand<boost::asio::executor>>;
+	using caller_type = typename basic_yield_context<Handler>::caller_type;
+
+	void operator()(caller_type &ca) // pull
+	{
+		const auto data
+		{
+			data_
+		};
+
+		const basic_yield_context<Handler> yc
+		{
+			data->coro_, ca, data->handler_
+		};
+
+		(data->function_)(yc);
+		(data->handler_)();
+	}
+
+	shared_ptr<spawn_data<Handler, Function>> data_;
+};
+
+template<class Function>
+struct [[gnu::visibility("hidden")]]
+boost::asio::detail::spawn_data
+<
+	boost::asio::executor_binder<void (*)(), boost::asio::strand<boost::asio::executor>>,
+	Function
+>
+{
+	using Handler = boost::asio::executor_binder<void (*)(), boost::asio::strand<boost::asio::executor>>;
+	using caller_type = typename basic_yield_context<Handler>::caller_type;
+	using callee_type = typename basic_yield_context<Handler>::callee_type;
+
+	weak_ptr<callee_type> coro_;
+	Function function_;
+	Handler handler_;
+
+	template<class H,
+	         class F>
+	spawn_data(H&& handler, bool call_handler, F&& function)
+	:function_(std::move(function))
+	,handler_(std::move(handler))
+	{
+		assert(call_handler);
+	}
+};
+
 template<>
 [[gnu::visibility("hidden")]]
 void
