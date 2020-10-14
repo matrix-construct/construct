@@ -3786,15 +3786,15 @@ ircd::db::database::sst::info::operator=(rocksdb::TableProperties &&tp)
 		size - data_size:
 		0UL;
 
-	compression_pct = size?
+	compression_pct = file_size > size?
 		100 - 100.0L * (size / (long double)file_size):
 		0.0;
 
-	index_compression_pct = index_size?
-		100 - 100.0L * (meta_size / (long double)index_size):
+	index_compression_pct = head_size > meta_size?
+		100 - 100.0L * (meta_size / (long double)head_size):
 		0.0;
 
-	blocks_compression_pct = data_size?
+	blocks_compression_pct = blocks_size > data_size?
 		100 - 100.0L * (data_size / (long double)blocks_size):
 		0.0;
 
