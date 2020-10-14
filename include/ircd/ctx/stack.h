@@ -15,6 +15,7 @@ namespace ircd::ctx
 
 struct ircd::ctx::stack
 {
+	mutable_buffer buf;                    // complete allocation
 	uintptr_t base {0};                    // assigned when spawned
 	size_t max {0};                        // User given stack size
 	size_t at {0};                         // Updated for profiling at sleep

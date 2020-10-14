@@ -61,7 +61,7 @@ struct ircd::ctx::ctx
 	bool wait();                                 // yield context to ios queue (returns on this resume)
 	void jump();                                 // jump to context directly (returns on your resume)
 
-	void operator()(boost::asio::yield_context, const std::function<void ()>) noexcept;
+	void operator()(boost::asio::yield_context, const mutable_buffer &, const std::function<void ()>) noexcept;
 	void spawn(context::function func);
 
 	ctx(const string_view &name     = "<noname>"_sv,

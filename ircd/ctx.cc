@@ -108,7 +108,7 @@ ircd::ctx::ctx::spawn(context::function func)
 
 	auto bound
 	{
-		std::bind(&ctx::operator(), this, ph::_1, std::move(func))
+		std::bind(&ctx::operator(), this, ph::_1, ph::_2, std::move(func))
 	};
 
 	auto *const parent_context
@@ -142,6 +142,7 @@ ircd::ctx::ctx::spawn(context::function func)
 void
 IRCD_CTX_STACK_PROTECT
 ircd::ctx::ctx::operator()(boost::asio::yield_context yc,
+                           const mutable_buffer &stack_buf,
                            const std::function<void ()> func)
 noexcept try
 {
@@ -149,6 +150,7 @@ noexcept try
 	ircd::ctx::current = this;
 	this->yc = &yc;
 	notes = 1;
+	stack.buf = stack_buf;
 	stack.base = uintptr_t(__builtin_frame_address(0));
 	const unwind atexit{[this]
 	{
@@ -3087,13 +3089,102 @@ noexcept
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// (internal) stack_allocator
+//
+
+namespace ircd::ctx
+{
+	struct stack_allocator;
+}
+
+struct [[gnu::visibility("hidden")]]
+ircd::ctx::stack_allocator
+{
+	using stack_context = boost::coroutines::stack_context;
+
+	mutable_buffer &buf;
+
+	void allocate(stack_context &, size_t size);
+	void deallocate(stack_context &);
+};
+
+void
+ircd::ctx::stack_allocator::allocate(stack_context &c,
+                                     size_t size)
+{
+	assert(size >= traits_type::minimum_size());
+	assert(traits_type::is_unbounded() || (traits_type::maximum_size() >= size));
+
+	static const auto &alignment
+	{
+		info::page_size
+	};
+
+	unique_mutable_buffer buf
+	{
+		size, alignment
+	};
+
+	c.size = ircd::size(buf);
+	c.sp = ircd::data(buf) + c.size;
+
+	#if defined(BOOST_USE_VALGRIND)
+	c.valgrind_stack_id = VALGRIND_STACK_REGISTER(c.sp, ircd::data(buf));
+	#endif
+
+	this->buf = buf.release();
+}
+
+void
+ircd::ctx::stack_allocator::deallocate(stack_context &c)
+{
+	assert(c.sp);
+	assert(traits_type::minimum_size() <= c.size);
+	assert(traits_type::is_unbounded() || (traits_type::maximum_size() >= c.size));
+
+	#if defined(BOOST_USE_VALGRIND)
+	VALGRIND_STACK_DEREGISTER(c.valgrind_stack_id)
+	#endif
+
+	void *const base
+	{
+		static_cast<uint8_t *>(c.sp) - c.size
+	};
+
+	std::free(base);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // (internal) boost::asio
 //
 
-using coroutine_allocator = boost::coroutines::basic_standard_stack_allocator
+template<class Function>
+struct [[gnu::visibility("hidden")]]
+boost::asio::detail::spawn_data
 <
-	boost::coroutines::stack_traits
->;
+	boost::asio::executor_binder<void (*)(), boost::asio::strand<boost::asio::executor>>,
+	Function
+>
+{
+	using Handler = boost::asio::executor_binder<void (*)(), boost::asio::strand<boost::asio::executor>>;
+	using caller_type = typename basic_yield_context<Handler>::caller_type;
+	using callee_type = typename basic_yield_context<Handler>::callee_type;
+
+	weak_ptr<callee_type> coro_;
+	Function function_;
+	Handler handler_;
+	ircd::mutable_buffer stack_;
+
+	template<class H,
+	         class F>
+	spawn_data(H&& handler, bool call_handler, F&& function)
+	:function_(std::move(function))
+	,handler_(std::move(handler))
+	{
+		assert(call_handler);
+	}
+};
 
 template<class Function>
 struct [[gnu::visibility("hidden")]]
@@ -3108,13 +3199,18 @@ boost::asio::detail::spawn_helper
 
 	void operator()() // push
 	{
+		ircd::ctx::stack_allocator allocator
+		{
+			data_->stack_
+		};
+
 		const auto coro
 		{
 			std::make_shared<callee_type>
 			(
 				coro_entry_point<Handler, Function>{data_},
 				attributes_,
-				coroutine_allocator{}
+				allocator
 			)
 		};
 
@@ -3144,93 +3240,22 @@ boost::asio::detail::coro_entry_point
 			data_
 		};
 
-		const basic_yield_context<Handler> yc
+		basic_yield_context<Handler> yc
 		{
 			data->coro_, ca, data->handler_
 		};
 
-		(data->function_)(yc);
+		(data->function_)(yc, data->stack_);
 		(data->handler_)();
 	}
 
 	shared_ptr<spawn_data<Handler, Function>> data_;
 };
 
-template<class Function>
-struct [[gnu::visibility("hidden")]]
-boost::asio::detail::spawn_data
-<
-	boost::asio::executor_binder<void (*)(), boost::asio::strand<boost::asio::executor>>,
-	Function
->
-{
-	using Handler = boost::asio::executor_binder<void (*)(), boost::asio::strand<boost::asio::executor>>;
-	using caller_type = typename basic_yield_context<Handler>::caller_type;
-	using callee_type = typename basic_yield_context<Handler>::callee_type;
-
-	weak_ptr<callee_type> coro_;
-	Function function_;
-	Handler handler_;
-
-	template<class H,
-	         class F>
-	spawn_data(H&& handler, bool call_handler, F&& function)
-	:function_(std::move(function))
-	,handler_(std::move(handler))
-	{
-		assert(call_handler);
-	}
-};
-
-template<>
-[[gnu::visibility("hidden")]]
-void
-coroutine_allocator::allocate(stack_context &ctx,
-                              std::size_t size)
-{
-	assert(size >= traits_type::minimum_size());
-	assert(traits_type::is_unbounded() || (traits_type::maximum_size() >= size));
-
-	static const auto &alignment
-	{
-		ircd::info::page_size
-	};
-
-	ircd::unique_mutable_buffer buf
-	{
-		size, alignment
-	};
-
-	ctx.size = ircd::size(buf);
-	ctx.sp = ircd::data(buf) + ctx.size;
-
-	#if defined(BOOST_USE_VALGRIND)
-	ctx.valgrind_stack_id = VALGRIND_STACK_REGISTER(ctx.sp, ircd::data(buf));
-	#endif
-
-	buf.release();
-}
-
-template<>
-[[gnu::visibility("hidden")]]
-void
-coroutine_allocator::deallocate(stack_context &ctx)
-{
-	assert(ctx.sp);
-	assert(traits_type::minimum_size() <= ctx.size);
-	assert(traits_type::is_unbounded() || (traits_type::maximum_size() >= ctx.size));
-
-	#if defined(BOOST_USE_VALGRIND)
-	VALGRIND_STACK_DEREGISTER(ctx.valgrind_stack_id)
-	#endif
-
-	void *const base
-	{
-		static_cast<uint8_t *>(ctx.sp) - ctx.size
-	};
-
-	std::free(base);
-}
+///////////////////////////////////////////////////////////////////////////////
+//
+// (internal) boost::asio
+//
 
 //
 // Optimize ctx::wake() by reimplementing the timer cancel's op scheduler to
