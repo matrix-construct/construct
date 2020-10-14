@@ -1491,7 +1491,7 @@ ircd::m::fed::request::request(const mutable_buffer &buf_,
 	// well-known this fails silently by just returning the input (likely).
 	const string_view &target
 	{
-		fed::server(buf_, opts.remote)
+		fed::server(buf_, opts.remote, opts.wkopts)
 	};
 
 	// Devote the remaining buffer for HTTP as otherwise intended.
@@ -1615,7 +1615,8 @@ ircd::m::fed::errant(const string_view &origin)
 
 ircd::string_view
 ircd::m::fed::server(const mutable_buffer &buf,
-                     const string_view &origin)
+                     const string_view &origin,
+                     const well_known::opts &opts)
 {
 	net::hostport remote
 	{
@@ -1625,7 +1626,7 @@ ircd::m::fed::server(const mutable_buffer &buf,
 	string_view target
 	{
 		!port(remote)?
-			well_known::get(buf, host(remote)):
+			well_known::get(buf, host(remote), opts):
 			origin
 	};
 

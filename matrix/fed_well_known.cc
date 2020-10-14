@@ -15,6 +15,7 @@ namespace ircd::m::fed::well_known
 	static void submit(request &);
 	static void receive(request &);
 	static int handle(request &);
+	static string_view fetch(const mutable_buffer &, const string_view &);
 
 	extern log::log log;
 }
@@ -92,7 +93,8 @@ ircd::m::fed::well_known::fetch_redirects
 
 ircd::string_view
 ircd::m::fed::well_known::get(const mutable_buffer &buf,
-                              const string_view &origin)
+                              const string_view &origin,
+                              const opts &opts)
 try
 {
 	static const string_view type
@@ -112,7 +114,9 @@ try
 
 	const m::event::idx event_idx
 	{
-		room.get(std::nothrow, type, origin)
+		likely(opts.cache_check)?
+			room.get(std::nothrow, type, origin):
+			0UL
 	};
 
 	const milliseconds origin_server_ts
@@ -153,7 +157,7 @@ try
 	};
 
 	// Branch on valid cache hit to return result.
-	if(valid && !expired)
+	if(valid && (!expired || opts.expired))
 	{
 		char tmbuf[48];
 		log::debug
@@ -168,15 +172,16 @@ try
 		return cached;
 	}
 
-	// Crucial value that will provide us with a return string for this
-	// function in any case. This is obtained by either using the value
-	// found in cache or making a network query for a new value. expired=true
-	// when a network query needs to be made, otherwise we can return the
-	// cached value. If the network query fails, this value is still defaulted
-	// as the origin string to return and we'll also cache that too.
+	const string_view fetched
+	{
+		opts.request?
+			fetch(buf + size(cached), origin):
+			string_view{}
+	};
+
 	const string_view delegated
 	{
-		fetch(buf + size(cached), origin)
+		data(buf), move(buf, fetched?: origin)
 	};
 
 	// Conditions for valid expired cache hit w/ failure to reacquire.
@@ -201,39 +206,43 @@ try
 			timef(tmbuf, expires, localtime),
 		};
 
+		assert(opts.cache_check);
 		return cached;
 	}
 
-	// Any time the well-known result is the same as the origin (that
-	// includes legitimate errors where fetch_well_known() returns the
-	// origin to default) we consider that an error and use the error
-	// TTL value. Sorry, no exponential backoff implemented yet.
-	const auto cache_ttl
+	if(likely(opts.request && opts.cache_result))
 	{
-		origin == delegated?
-			seconds(cache_error).count():
-			seconds(cache_default).count()
-	};
-
-	// Write our record to the cache room; note that this doesn't really
-	// match the format of other DNS records in this room since it's a bit
-	// simpler, but we don't share the ircd.dns.rr type prefix anyway.
-	const auto cache_id
-	{
-		m::send(room, m::me(), type, origin, json::members
+		// Any time the well-known result is the same as the origin (that
+		// includes legitimate errors where fetch_well_known() returns the
+		// origin to default) we consider that an error and use the error
+		// TTL value. Sorry, no exponential backoff implemented yet.
+		const auto cache_ttl
 		{
-			{ "ttl",       cache_ttl  },
-			{ "m.server",  delegated  },
-		})
-	};
+			origin == delegated?
+				seconds(cache_error).count():
+				seconds(cache_default).count()
+		};
 
-	log::debug
-	{
-		log, "%s caching delegation to %s to cache in %s",
-		origin,
-		delegated,
-		string_view{cache_id},
-	};
+		// Write our record to the cache room; note that this doesn't really
+		// match the format of other DNS records in this room since it's a bit
+		// simpler, but we don't share the ircd.dns.rr type prefix anyway.
+		const auto cache_id
+		{
+			m::send(room, m::me(), type, origin, json::members
+			{
+				{ "ttl",       cache_ttl  },
+				{ "m.server",  delegated  },
+			})
+		};
+
+		log::debug
+		{
+			log, "%s caching delegation to %s to cache in %s",
+			origin,
+			delegated,
+			string_view{cache_id},
+		};
+	}
 
 	return delegated;
 }
@@ -289,10 +298,7 @@ try
 		}
 	}
 
-	return string_view
-	{
-		data(user_buf), move(user_buf, target)
-	};
+	return {};
 }
 catch(const ctx::interrupted &)
 {
@@ -307,10 +313,7 @@ catch(const std::exception &e)
 		e.what(),
 	};
 
-	return string_view
-	{
-		data(user_buf), move(user_buf, target)
-	};
+	return {};
 }
 
 int
@@ -386,12 +389,6 @@ ircd::m::fed::well_known::receive(request &req)
 	};
 }
 
-/// Launch requestReturn a tuple of the HTTP code, any Location header, and the response
-/// content. These values are unconditional if this function doesn't throw,
-/// but if there's no Location header and/or content then those will be empty
-/// string_view's. This function is intended to be run in a loop by the caller
-/// to chase redirection. No HTTP codes will throw from here; server and
-/// network errors (and others) will.
 void
 ircd::m::fed::well_known::submit(request &req)
 {

@@ -52,6 +52,10 @@ struct ircd::m::fed::request::opts
 	/// this request.
 	const struct server::request::opts *sopts {nullptr};
 
+	/// Custom options to pass when resolving a server name with the well-known
+	/// system.
+	well_known::opts wkopts;
+
 	/// Whether dynamic content buffering for incoming data will be used.
 	/// if false, the user supplied buffer handles all data sent from the
 	/// remote server; this is faster, but if it runs out the request is

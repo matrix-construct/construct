@@ -11,23 +11,6 @@
 #pragma once
 #define HAVE_IRCD_M_FED_H
 
-/// Federation Interface
-namespace ircd::m::fed
-{
-	id::event::buf fetch_head(const id::room &room_id, const string_view &remote, const id::user &);
-	id::event::buf fetch_head(const id::room &room_id, const string_view &remote);
-
-	net::hostport matrix_service(net::hostport remote) noexcept;
-	string_view server(const mutable_buffer &out, const string_view &origin);
-
-	bool errant(const string_view &origin);
-	bool linked(const string_view &origin);
-	bool exists(const string_view &origin);
-	bool avail(const string_view &origin);
-
-	bool clear_error(const string_view &origin);
-}
-
 #include "well_known.h"
 #include "request.h"
 #include "version.h"
@@ -49,6 +32,26 @@ namespace ircd::m::fed
 #include "rooms.h"
 #include "send.h"
 #include "groups.h"
+
+/// Federation Interface
+namespace ircd::m::fed
+{
+	// Utils
+	net::hostport matrix_service(net::hostport remote) noexcept;
+	string_view server(const mutable_buffer &out, const string_view &name, const well_known::opts & = {});
+
+	id::event::buf fetch_head(const id::room &room_id, const string_view &remote, const id::user &);
+	id::event::buf fetch_head(const id::room &room_id, const string_view &remote);
+
+	// Observers
+	bool errant(const string_view &server_name);
+	bool linked(const string_view &server_name);
+	bool exists(const string_view &server_name);
+	bool avail(const string_view &server_name);
+
+	// Control panel
+	bool clear_error(const string_view &server_name);
+}
 
 inline ircd::net::hostport
 ircd::m::fed::matrix_service(net::hostport remote)

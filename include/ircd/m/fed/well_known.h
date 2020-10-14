@@ -13,8 +13,9 @@
 
 namespace ircd::m::fed::well_known
 {
-	string_view fetch(const mutable_buffer &out, const string_view &origin);
-	string_view get(const mutable_buffer &out, const string_view &origin);
+	struct opts;
+
+	string_view get(const mutable_buffer &, const string_view &, const opts &);
 
 	extern conf::item<size_t> fetch_redirects;
 	extern conf::item<seconds> fetch_timeout;
@@ -22,3 +23,18 @@ namespace ircd::m::fed::well_known
 	extern conf::item<seconds> cache_error;
 	extern conf::item<seconds> cache_default;
 }
+
+struct ircd::m::fed::well_known::opts
+{
+	/// Whether to check the cache before making any request.
+	bool cache_check {true};
+
+	/// Allow expired cache results to be returned without making any refresh.
+	bool expired {false};
+
+	/// Allow a query to be made to a remote.
+	bool request {true};
+
+	/// Whether to cache the result of any request.
+	bool cache_result {true};
+};
