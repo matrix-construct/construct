@@ -3090,6 +3090,61 @@ noexcept
 // (internal) boost::asio
 //
 
+using coroutine_allocator = boost::coroutines::basic_standard_stack_allocator
+<
+	boost::coroutines::stack_traits
+>;
+
+template<>
+[[gnu::visibility("hidden")]]
+void
+coroutine_allocator::allocate(stack_context &ctx,
+                              std::size_t size)
+{
+	assert(size >= traits_type::minimum_size());
+	assert(traits_type::is_unbounded() || (traits_type::maximum_size() >= size));
+
+	static const auto &alignment
+	{
+		ircd::info::page_size
+	};
+
+	ircd::unique_mutable_buffer buf
+	{
+		size, alignment
+	};
+
+	ctx.size = ircd::size(buf);
+	ctx.sp = ircd::data(buf) + ctx.size;
+
+	#if defined(BOOST_USE_VALGRIND)
+	ctx.valgrind_stack_id = VALGRIND_STACK_REGISTER(ctx.sp, ircd::data(buf));
+	#endif
+
+	buf.release();
+}
+
+template<>
+[[gnu::visibility("hidden")]]
+void
+coroutine_allocator::deallocate(stack_context &ctx)
+{
+	assert(ctx.sp);
+	assert(traits_type::minimum_size() <= ctx.size);
+	assert(traits_type::is_unbounded() || (traits_type::maximum_size() >= ctx.size));
+
+	#if defined(BOOST_USE_VALGRIND)
+	VALGRIND_STACK_DEREGISTER(ctx.valgrind_stack_id)
+	#endif
+
+	void *const base
+	{
+		static_cast<uint8_t *>(ctx.sp) - ctx.size
+	};
+
+	std::free(base);
+}
+
 //
 // Optimize ctx::wake() by reimplementing the timer cancel's op scheduler to
 // enqueue as a defer (private/priority queue) rather than to the post queue.
