@@ -1546,88 +1546,117 @@ namespace ircd::m::fed
 	template<class closure>
 	static decltype(auto)
 	with_server(const string_view &,
+	            const well_known::opts &,
 	            closure &&);
 }
 
 template<class closure>
 decltype(auto)
-ircd::m::fed::with_server(const string_view &origin,
+ircd::m::fed::with_server(const string_view &name,
+                          const well_known::opts &opts,
                           closure&& c)
 {
 	char buf[rfc3986::DOMAIN_BUFSIZE];
 	const auto remote
 	{
-		server(buf, origin)
+		server(buf, name, opts)
 	};
 
 	return c(remote);
 }
 
+/// Manually force the clearing of cached errors for remote server to
+/// allow another attempt. Note that not all possible cached errors may
+/// be cleared by this.
 bool
-ircd::m::fed::clear_error(const string_view &origin)
+ircd::m::fed::clear_error(const string_view &name)
 {
-	return with_server(origin, []
+	well_known::opts opts;
+	opts.request = false;
+	opts.expired = true;
+	return with_server(name, opts, []
 	(const auto &remote)
 	{
 		return server::errclear(remote);
 	});
 }
 
+/// avail() reports that a remote server is resolved and ready to take
+/// requests; a network connection is just not established.
 bool
-ircd::m::fed::avail(const string_view &origin)
+ircd::m::fed::avail(const string_view &name)
 {
-	return with_server(origin, []
+	well_known::opts opts;
+	opts.request = false;
+	opts.expired = true;
+	return with_server(name, opts, []
 	(const auto &remote)
 	{
 		return server::avail(remote);
 	});
 }
 
+/// linked() reports that we are actively and currently engaged with the remote
+/// server over the network; requests are likely to succeed.
 bool
-ircd::m::fed::exists(const string_view &origin)
+ircd::m::fed::linked(const string_view &name)
 {
-	return with_server(origin, []
-	(const auto &remote)
-	{
-		return server::exists(remote);
-	});
-}
-
-bool
-ircd::m::fed::linked(const string_view &origin)
-{
-	return with_server(origin, []
+	well_known::opts opts;
+	opts.request = false;
+	opts.expired = true;
+	return with_server(name, opts, []
 	(const auto &remote)
 	{
 		return server::linked(remote);
 	});
 }
 
+/// errant() reports that contacting the remote server is known to not work.
+/// False during nominal operation, including before any contact has been
+/// attempted or after all cached errors have expired.
 bool
-ircd::m::fed::errant(const string_view &origin)
+ircd::m::fed::errant(const string_view &name)
 {
-	return with_server(origin, []
+	well_known::opts opts;
+	opts.request = false;
+	opts.expired = true;
+	return with_server(name, opts, []
 	(const auto &remote)
 	{
 		return server::errant(remote);
 	});
 }
 
+/// exists() reports that contact has been made with the remote server. This
+/// does not indicate success or failure for prior or active engagements.
+bool
+ircd::m::fed::exists(const string_view &name)
+{
+	well_known::opts opts;
+	opts.request = false;
+	opts.expired = true;
+	return with_server(name, opts, []
+	(const auto &remote)
+	{
+		return server::exists(remote);
+	});
+}
+
 ircd::string_view
 ircd::m::fed::server(const mutable_buffer &buf,
-                     const string_view &origin,
+                     const string_view &name,
                      const well_known::opts &opts)
 {
 	net::hostport remote
 	{
-		origin
+		name
 	};
 
 	string_view target
 	{
 		!port(remote)?
 			well_known::get(buf, host(remote), opts):
-			origin
+			name
 	};
 
 	remote = target;
