@@ -101,6 +101,7 @@ struct ircd::ctx::shared_state
 
 	T val;
 
+	template<class U> shared_state(already_t, U&&);
 	using shared_state_base::shared_state_base;
 	using shared_state_base::operator=;
 };
@@ -116,3 +117,18 @@ struct ircd::ctx::shared_state<void>
 	using shared_state_base::shared_state_base;
 	using shared_state_base::operator=;
 };
+
+template<class T>
+template<class U>
+inline
+ircd::ctx::shared_state<T>::shared_state(already_t,
+                                         U&& val)
+:shared_state_base
+{
+	already
+}
+,val
+{
+	std::forward<U>(val)
+}
+{}
