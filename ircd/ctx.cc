@@ -1154,7 +1154,7 @@ ircd::ctx::context::context(const string_view &name,
                             function func)
 :context
 {
-	name, {nullptr, DEFAULT_STACK_SIZE}, flags, std::move(func)
+	name, mutable_buffer{nullptr, stack_sz}, flags, std::move(func)
 }
 {
 }
@@ -3109,7 +3109,9 @@ noexcept
 }
 ,max
 {
-	ircd::size(buf)
+	//note: ircd::size() asserts because begin(buf) is nullptr, but that's ok
+	//ircd::size(buf)
+	size_t(std::distance(begin(buf), end(buf)))
 }
 {
 }
