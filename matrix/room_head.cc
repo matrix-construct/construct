@@ -8,6 +8,84 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+decltype(ircd::m::room::head::fetch_timeout)
+ircd::m::room::head::fetch_timeout
+{
+	{ "name",     "ircd.m.room.head.fetch.timeout" },
+	{ "default",  30 * 1000L                       },
+};
+
+ircd::m::event::id::buf
+ircd::m::room::head::fetch(const id &room_id,
+                           const string_view &remote)
+{
+	const m::room room
+	{
+		room_id
+	};
+
+	// When no user_id is supplied and the room exists locally we attempt
+	// to find the user_id of one of our users with membership in the room.
+	// This satisfies synapse's requirements for whether we have access
+	// to the response. If user_id remains blank then make_join will later
+	// generate a random one from our host as well.
+	m::user::id::buf user_id
+	{
+		any_user(room, my_host(), "join")
+	};
+
+	// Make another attempt to find an invited user because that carries some
+	// value (this query is not as fast as querying join memberships).
+	if(!user_id)
+		user_id = any_user(room, my_host(), "invite");
+
+	return fetch(room_id, remote, user_id);
+}
+
+ircd::m::event::id::buf
+ircd::m::room::head::fetch(const id &room_id,
+                           const string_view &remote,
+                           const user::id &user_id)
+{
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB
+	};
+
+	fed::make_join::opts opts;
+	opts.remote = remote;
+	opts.dynamic = false;
+	fed::make_join request
+	{
+		room_id, user_id, buf, std::move(opts)
+	};
+
+	request.wait(milliseconds(fetch_timeout));
+	request.get();
+
+	const json::object proto
+	{
+		request.in.content
+	};
+
+	const json::object event
+	{
+		proto.at("event")
+	};
+
+	const m::event::prev prev
+	{
+		event
+	};
+
+	const auto &prev_event_id
+	{
+		prev.prev_event(0)
+	};
+
+	return prev_event_id;
+}
+
 namespace ircd::m
 {
 	static void append_v1(json::stack::array &, const event::id &);

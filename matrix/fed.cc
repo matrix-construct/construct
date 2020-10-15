@@ -406,7 +406,7 @@ ircd::m::fed::backfill::backfill(const room::id &room_id,
 	m::event::id::buf event_id_buf;
 	if(!opts.event_id)
 	{
-		event_id_buf = fetch_head(room_id, opts.remote);
+		event_id_buf = m::room::head::fetch(room_id, opts.remote);
 		opts.event_id = event_id_buf;
 	}
 
@@ -1638,86 +1638,4 @@ ircd::m::fed::server(const mutable_buffer &buf,
 	}
 
 	return target;
-}
-
-//
-// fetch_head util
-//
-
-ircd::conf::item<ircd::milliseconds>
-fetch_head_timeout
-{
-	{ "name",     "ircd.m.v1.fetch_head.timeout" },
-	{ "default",  30 * 1000L                     },
-};
-
-ircd::m::event::id::buf
-ircd::m::fed::fetch_head(const id::room &room_id,
-                         const string_view &remote)
-{
-	const m::room room
-	{
-		room_id
-	};
-
-	// When no user_id is supplied and the room exists locally we attempt
-	// to find the user_id of one of our users with membership in the room.
-	// This satisfies synapse's requirements for whether we have access
-	// to the response. If user_id remains blank then make_join will later
-	// generate a random one from our host as well.
-	m::user::id::buf user_id
-	{
-		any_user(room, my_host(), "join")
-	};
-
-	// Make another attempt to find an invited user because that carries some
-	// value (this query is not as fast as querying join memberships).
-	if(!user_id)
-		user_id = any_user(room, my_host(), "invite");
-
-	return fetch_head(room_id, remote, user_id);
-}
-
-ircd::m::event::id::buf
-ircd::m::fed::fetch_head(const id::room &room_id,
-                         const string_view &remote,
-                         const id::user &user_id)
-{
-	const unique_buffer<mutable_buffer> buf
-	{
-		32_KiB
-	};
-
-	make_join::opts opts;
-	opts.remote = remote;
-	opts.dynamic = false;
-	make_join request
-	{
-		room_id, user_id, buf, std::move(opts)
-	};
-
-	request.wait(milliseconds(fetch_head_timeout));
-	request.get();
-
-	const json::object proto
-	{
-		request.in.content
-	};
-
-	const json::object event
-	{
-		proto.at("event")
-	};
-
-	const m::event::prev prev
-	{
-		event
-	};
-
-	const auto &prev_event_id
-	{
-		prev.prev_event(0)
-	};
-
-	return prev_event_id;
 }

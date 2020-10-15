@@ -40,9 +40,6 @@ namespace ircd::m::fed
 	net::hostport matrix_service(net::hostport remote) noexcept;
 	string_view server(const mutable_buffer &out, const string_view &name, const well_known::opts & = {});
 
-	id::event::buf fetch_head(const id::room &room_id, const string_view &remote, const id::user &);
-	id::event::buf fetch_head(const id::room &room_id, const string_view &remote);
-
 	// Observers
 	bool errant(const string_view &server_name);
 	bool linked(const string_view &server_name);
