@@ -15999,8 +15999,7 @@ console_cmd__well_known__matrix__server(opt &out, const string_view &line)
 	m::fed::well_known::opts opts;
 	opts.cache_check = false;
 	opts.cache_result = false;
-
-	const net::hostport result
+	const string_view result
 	{
 		m::fed::well_known::get(buf, remote, opts)
 	};

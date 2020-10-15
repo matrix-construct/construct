@@ -23,6 +23,7 @@ namespace ircd::m::fed::well_known
 struct ircd::m::fed::well_known::request
 {
 	static const string_view path;
+	static const string_view type;
 	static const server::request::opts sopts;
 
 	unique_mutable_buffer buf;
@@ -47,6 +48,12 @@ decltype(ircd::m::fed::well_known::request::path)
 ircd::m::fed::well_known::request::path
 {
 	"/.well-known/matrix/server"
+};
+
+decltype(ircd::m::fed::well_known::request::type)
+ircd::m::fed::well_known::request::type
+{
+	"well-known.matrix.server"
 };
 
 decltype(ircd::m::fed::well_known::request::sopts)
@@ -91,17 +98,12 @@ ircd::m::fed::well_known::fetch_redirects
 	{ "default",  2L                                      },
 };
 
-ircd::string_view
+ircd::ctx::future<ircd::string_view>
 ircd::m::fed::well_known::get(const mutable_buffer &buf,
                               const string_view &origin,
                               const opts &opts)
 try
 {
-	static const string_view type
-	{
-		"well-known.matrix.server"
-	};
-
 	const m::room::id::buf room_id
 	{
 		"dns", m::my_host()
@@ -115,7 +117,7 @@ try
 	const m::event::idx event_idx
 	{
 		likely(opts.cache_check)?
-			room.get(std::nothrow, type, origin):
+			room.get(std::nothrow, request::type, origin):
 			0UL
 	};
 
@@ -169,7 +171,10 @@ try
 			timef(tmbuf, expires, localtime),
 		};
 
-		return cached;
+		return ctx::future<string_view>
+		{
+			ctx::already, cached
+		};
 	}
 
 	const string_view fetched
@@ -207,7 +212,10 @@ try
 		};
 
 		assert(opts.cache_check);
-		return cached;
+		return ctx::future<string_view>
+		{
+			ctx::already, cached
+		};
 	}
 
 	if(likely(opts.request && opts.cache_result))
@@ -228,7 +236,7 @@ try
 		// simpler, but we don't share the ircd.dns.rr type prefix anyway.
 		const auto cache_id
 		{
-			m::send(room, m::me(), type, origin, json::members
+			m::send(room, m::me(), request::type, origin, json::members
 			{
 				{ "ttl",       cache_ttl  },
 				{ "m.server",  delegated  },
@@ -244,7 +252,10 @@ try
 		};
 	}
 
-	return delegated;
+	return ctx::future<string_view>
+	{
+		ctx::already, delegated
+	};
 }
 catch(const ctx::interrupted &)
 {
@@ -259,9 +270,12 @@ catch(const std::exception &e)
 		e.what(),
 	};
 
-	return string_view
+	return ctx::future<string_view>
 	{
-		data(buf), move(buf, origin)
+		ctx::already, string_view
+		{
+			data(buf), move(buf, origin)
+		}
 	};
 }
 

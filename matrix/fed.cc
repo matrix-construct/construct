@@ -1654,10 +1654,14 @@ ircd::m::fed::server(const mutable_buffer &buf,
 
 	string_view target
 	{
-		!port(remote)?
-			well_known::get(buf, host(remote), opts):
-			name
+		name
 	};
+
+	if(!port(remote))
+		target = string_view
+		{
+			well_known::get(buf, host(remote), opts)
+		};
 
 	remote = target;
 	if(!port(remote) && !service(remote))

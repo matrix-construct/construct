@@ -15,7 +15,8 @@ namespace ircd::m::fed::well_known
 {
 	struct opts;
 
-	string_view get(const mutable_buffer &, const string_view &, const opts &);
+	ctx::future<string_view>
+	get(const mutable_buffer &out, const string_view &name, const opts &);
 
 	extern conf::item<size_t> fetch_redirects;
 	extern conf::item<seconds> fetch_timeout;
