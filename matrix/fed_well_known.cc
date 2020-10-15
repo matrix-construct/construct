@@ -10,56 +10,36 @@
 
 namespace ircd::m::fed::well_known
 {
-	struct request;
-
+	static net::hostport make_remote(const string_view &);
 	static void submit(request &);
 	static void receive(request &);
-	static int handle(request &);
-	static string_view fetch(const mutable_buffer &, const string_view &);
+	static void finish(request &);
+	static bool handle(request &);
+	static void worker();
 
+	static server::request request_skip;
+	extern ctx::dock worker_dock;
+	extern ctx::context worker_context;
+	extern run::changed handle_quit;
 	extern log::log log;
 }
 
-struct ircd::m::fed::well_known::request
-{
-	static const string_view path;
-	static const string_view type;
-	static const server::request::opts sopts;
+template<>
+decltype(ircd::util::instance_list<ircd::m::fed::well_known::request>::allocator)
+ircd::util::instance_list<ircd::m::fed::well_known::request>::allocator
+{};
 
-	unique_mutable_buffer buf;
-	unique_mutable_buffer carry;
-	rfc3986::uri uri;
-	server::request req;
-	http::code code {0};
-	http::response::head head;
-	string_view location;
-	size_t redirects {0};
-	json::object response;
-	json::string m_server;
+template<>
+decltype(ircd::util::instance_list<ircd::m::fed::well_known::request>::list)
+ircd::util::instance_list<ircd::m::fed::well_known::request>::list
+{
+    allocator
 };
 
 decltype(ircd::m::fed::well_known::log)
 ircd::m::fed::well_known::log
 {
 	"m.well-known"
-};
-
-decltype(ircd::m::fed::well_known::request::path)
-ircd::m::fed::well_known::request::path
-{
-	"/.well-known/matrix/server"
-};
-
-decltype(ircd::m::fed::well_known::request::type)
-ircd::m::fed::well_known::request::type
-{
-	"well-known.matrix.server"
-};
-
-decltype(ircd::m::fed::well_known::request::sopts)
-ircd::m::fed::well_known::request::sopts
-{
-	false // http_exceptions
 };
 
 decltype(ircd::m::fed::well_known::cache_default)
@@ -84,40 +64,85 @@ ircd::m::fed::well_known::cache_max
 	{ "default",  48 * 60 * 60L                     },
 };
 
-decltype(ircd::m::fed::well_known::fetch_timeout)
-ircd::m::fed::well_known::fetch_timeout
+decltype(ircd::m::fed::well_known::request::path)
+ircd::m::fed::well_known::request::path
 {
-	{ "name",     "ircd.m.fed.well-known.fetch.timeout" },
-	{ "default",  15L                                   },
+	"/.well-known/matrix/server"
 };
 
-decltype(ircd::m::fed::well_known::fetch_redirects)
-ircd::m::fed::well_known::fetch_redirects
+decltype(ircd::m::fed::well_known::request::type)
+ircd::m::fed::well_known::request::type
 {
-	{ "name",     "ircd.m.fed.well-known.fetch.redirects" },
-	{ "default",  2L                                      },
+	"well-known.matrix.server"
+};
+
+decltype(ircd::m::fed::well_known::request::sopts)
+ircd::m::fed::well_known::request::sopts
+{
+	false // http_exceptions
+};
+
+decltype(ircd::m::fed::well_known::request::timeout)
+ircd::m::fed::well_known::request::timeout
+{
+	{ "name",     "ircd.m.fed.well-known.request.timeout" },
+	{ "default",  15L                                     },
+};
+
+decltype(ircd::m::fed::well_known::request::redirects_max)
+ircd::m::fed::well_known::request::redirects_max
+{
+	{ "name",     "ircd.m.fed.well-known.request.redirects.max" },
+	{ "default",  2L                                            },
+};
+
+decltype(ircd::m::fed::well_known::request::id_ctr)
+ircd::m::fed::well_known::request::id_ctr;
+
+decltype(ircd::m::fed::well_known::request::mutex)
+ircd::m::fed::well_known::request::mutex;
+
+decltype(ircd::m::fed::well_known::worker_dock)
+ircd::m::fed::well_known::worker_dock;
+
+decltype(ircd::m::fed::well_known::worker_context)
+ircd::m::fed::well_known::worker_context
+{
+	"m.fed.well_known",
+	512_KiB,
+	&worker,
+	context::POST
+};
+
+decltype(ircd::m::fed::well_known::handle_quit)
+ircd::m::fed::well_known::handle_quit
+{
+	run::level::QUIT, []
+	{
+		worker_dock.notify_all();
+	}
 };
 
 ircd::ctx::future<ircd::string_view>
 ircd::m::fed::well_known::get(const mutable_buffer &buf,
-                              const string_view &origin,
+                              const string_view &target,
                               const opts &opts)
 try
 {
-	const m::room::id::buf room_id
+	const m::room::id::buf cache_room_id
 	{
 		"dns", m::my_host()
 	};
 
-	const m::room room
+	const m::room cache_room
 	{
-		room_id
+		cache_room_id
 	};
 
 	const m::event::idx event_idx
 	{
 		likely(opts.cache_check)?
-			room.get(std::nothrow, request::type, origin):
+			cache_room.get(std::nothrow, request::type, target):
 			0UL
 	};
 
@@ -148,114 +173,115 @@ try
 		ircd::now<system_point>() > expires
 	};
 
-	const string_view cached
+	const json::string cached
 	{
-		data(buf), move(buf, json::string(content["m.server"]))
+		content["m.server"]
 	};
 
 	const bool valid
 	{
+		// entry must not be blank
 		!empty(cached)
+
+		// entry must not be expired unless options allow expired hits
+		&& (!expired || opts.expired)
 	};
 
-	// Branch on valid cache hit to return result.
-	if(valid && (!expired || opts.expired))
-	{
-		char tmbuf[48];
-		log::debug
-		{
-			log, "%s found in cache delegated to %s event_idx:%u expires %s",
-			origin,
-			cached,
-			event_idx,
-			timef(tmbuf, expires, localtime),
-		};
-
+	// Branch to return cache hit
+	if(likely(valid))
 		return ctx::future<string_view>
 		{
-			ctx::already, cached
-		};
-	}
-
-	const string_view fetched
-	{
-		opts.request?
-			fetch(buf + size(cached), origin):
-			string_view{}
-	};
-
-	const string_view delegated
-	{
-		data(buf), move(buf, fetched?: origin)
-	};
-
-	// Conditions for valid expired cache hit w/ failure to reacquire.
-	const bool fallback
-	{
-		valid
-		&& expired
-		&& cached != delegated
-		&& origin == delegated
-		&& now<system_point>() < expires + seconds(cache_max)
-	};
-
-	if(fallback)
-	{
-		char tmbuf[48];
-		log::debug
-		{
-			log, "%s found in cache delegated to %s event_idx:%u expired %s",
-			origin,
-			cached,
-			event_idx,
-			timef(tmbuf, expires, localtime),
-		};
-
-		assert(opts.cache_check);
-		return ctx::future<string_view>
-		{
-			ctx::already, cached
-		};
-	}
-
-	if(likely(opts.request && opts.cache_result))
-	{
-		// Any time the well-known result is the same as the origin (that
-		// includes legitimate errors where fetch_well_known() returns the
-		// origin to default) we consider that an error and use the error
-		// TTL value. Sorry, no exponential backoff implemented yet.
-		const auto cache_ttl
-		{
-			origin == delegated?
-				seconds(cache_error).count():
-				seconds(cache_default).count()
-		};
-
-		// Write our record to the cache room; note that this doesn't really
-		// match the format of other DNS records in this room since it's a bit
-		// simpler, but we don't share the ircd.dns.rr type prefix anyway.
-		const auto cache_id
-		{
-			m::send(room, m::me(), request::type, origin, json::members
+			ctx::already, string_view
 			{
-				{ "ttl",       cache_ttl  },
-				{ "m.server",  delegated  },
-			})
+				data(buf), move(buf, cached)
+			}
 		};
 
-		log::debug
+	const net::hostport remote
+	{
+		make_remote(target)
+	};
+
+	const bool fetch
+	{
+		// options must allow network request
+		opts.request
+
+		// check if the peer already has a cached error in server::
+		&& !server::errant(remote)
+	};
+
+	// Branch if won't fetch; return target itself as result
+	if(!fetch)
+		return ctx::future<string_view>
 		{
-			log, "%s caching delegation to %s to cache in %s",
-			origin,
-			delegated,
-			string_view{cache_id},
+			ctx::already, string_view
+			{
+				data(buf), move(buf, target)
+			}
+		};
+
+	if(opts.cache_check)
+	{
+		char tmbuf[48];
+		log::dwarning
+		{
+			log, "%s cache invalid %s event_idx:%u expires %s",
+			target,
+			cached?: json::string{"<not found>"},
+			event_idx,
+			cached? timef(tmbuf, expires, localtime): "<never>"_sv,
 		};
 	}
 
-	return ctx::future<string_view>
+	// Synchronize modification of the request::list
+	const std::lock_guard request_lock
 	{
-		ctx::already, delegated
+		request::mutex
 	};
+
+	// Start request
+	auto req
+	{
+		std::make_unique<request>()
+	};
+
+	// req->target is a copy in the request struct so the caller can disappear.
+	req->target = string_view
+	{
+		req->tgtbuf, copy(req->tgtbuf, target)
+	};
+
+	// but req->out is not safe once the caller destroys their future, which
+	// is indicated by req->promise's invalidation. Do not write to this
+	// unless the promise is valid.
+	req->out = buf;
+
+	// all other properties are independent of the caller
+	req->opts = opts;
+	req->m_server = cached;
+	req->expires = expires;
+	req->uri.path = request::path;
+	req->uri.remote = req->target;
+	ctx::future<string_view> ret{req->promise}; try
+	{
+		submit(*req);
+		req.release();
+	}
+	catch(const std::exception &e)
+	{
+		log::derror
+		{
+			log, "request submit for %s :%s",
+			target,
+			e.what(),
+		};
+
+		const ctx::exception_handler eh;
+		finish(*req);
+	}
+
+	return ret;
 }
 catch(const ctx::interrupted &)
 {
@@ -265,8 +291,8 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "%s :%s",
-		origin,
+		log, "get %s :%s",
+		target,
 		e.what(),
 	};
 
@@ -274,94 +300,93 @@ catch(const std::exception &e)
 	{
 		ctx::already, string_view
 		{
-			data(buf), move(buf, origin)
+			data(buf), move(buf, target)
 		}
 	};
 }
 
-ircd::string_view
-ircd::m::fed::well_known::fetch(const mutable_buffer &user_buf,
-                                const string_view &target)
+void
+ircd::m::fed::well_known::worker()
 try
 {
-	request req;
-	req.uri.path = request::path;
-	req.uri.remote = target;
-	req.buf = unique_mutable_buffer
+	// Wait for runlevel RUN before proceeding...
+	run::barrier<ctx::interrupted>{};
+	while(!request::list.empty() || run::level == run::level::RUN)
 	{
-		8_KiB
-	};
-
-	for(; req.redirects < fetch_redirects; ++req.redirects)
-	{
-		submit(req);
-		receive(req);
-		switch(handle(req))
+		worker_dock.wait([]
 		{
-			case -1:
-				continue;
+			return !request::list.empty() || run::level != run::level::RUN;
+		});
 
-			case false:
-				break;
+		if(request::list.empty())
+			break;
 
-			case true:
-				return string_view
-				{
-					data(user_buf), move(user_buf, req.m_server)
-				};
-		}
+		auto next
+		{
+			ctx::when_any(std::begin(request::list), std::end(request::list), []
+			(auto &it) -> server::request &
+			{
+				return !(*it)->req? request_skip: (*it)->req;
+			})
+		};
+
+		const ctx::uninterruptible::nothrow ui;
+		if(!next.wait(milliseconds(250), std::nothrow))
+			continue;
+
+		const auto it
+		{
+			next.get()
+		};
+
+		assert(it != std::end(request::list));
+		if(unlikely(it == std::end(request::list)))
+			continue;
+
+		const std::lock_guard request_lock
+		{
+			request::mutex
+		};
+
+		std::unique_ptr<request> req
+		{
+			*it
+		};
+
+		if(!handle(*req)) // redirect
+			req.release();
+		else
+			finish(*req);
 	}
 
-	return {};
-}
-catch(const ctx::interrupted &)
-{
-	throw;
+	assert(request::list.empty());
 }
 catch(const std::exception &e)
 {
-	log::derror
+	log::critical
 	{
-		log, "%s in network query :%s",
-		target,
+		log, "Worker unhandled :%s",
 		e.what(),
 	};
-
-	return {};
 }
 
-int
+bool
 ircd::m::fed::well_known::handle(request &req)
+try
 {
+	receive(req);
+
 	// Successful result
 	if(likely(req.code < 300))
-	{
-		req.m_server = req.response["m.server"];
-
-		// This construction validates we didn't get a junk string
-		volatile const net::hostport ret
-		{
-			req.m_server
-		};
-
-		log::debug
-		{
-			log, "query to %s found delegation to %s",
-			req.uri.remote,
-			req.m_server,
-		};
-
-		assert(bool(req.m_server));
 		return true;
-	}
 
 	// Successful error; bail
 	if(req.code >= 400)
-		return false;
+		return true;
 
 	// Indirection code, but no location response header
 	if(!req.location)
-		return false;
+		return true;
 
 	// Redirection; carry over the new target by copying it because it's
 	// in the buffer which we'll be overwriting for the new request.
@@ -370,21 +395,133 @@ ircd::m::fed::well_known::handle(request &req)
 
 	// Indirection code, bad location header.
 	if(!req.uri.path || !req.uri.remote)
-		return false;
+		return true;
+
+	if(req.redirects++ >= request::redirects_max)
+		return true;
 
 	// Redirect
-	return -1;
+	submit(req);
+	return false;
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		log, "%s handling :%s",
+		req.target,
+		e.what(),
+	};
+
+	return true;
+}
+
+void
+ircd::m::fed::well_known::finish(request &req)
+try
+{
+	json::string result;
+	const unwind resolve{[&req, &result]
+	{
+		if(req.promise.valid())
+			req.promise.set_value(string_view
+			{
+				data(req.out), move(req.out, result?: req.target)
+			});
+	}};
+
+	if(json::valid(req.response, std::nothrow))
+		result = req.response["m.server"];
+
+	if(!result)
+		result = req.m_server;
+
+	if(!result)
+		result = req.target;
+
+	// This construction validates we didn't get a junk string
+	volatile const net::hostport ret
+	{
+		result
+	};
+
+	if(result != req.target)
+		log::debug
+		{
+			log, "query to %s for %s found delegation to %s",
+			req.uri.remote,
+			req.target,
+			result,
+		};
+
+	const bool cache_expired
+	{
+		req.expires + seconds(cache_max) < now<system_point>()
+	};
+
+	const bool cache_result
+	{
+		result
+		&& req.opts.cache_result
+		&& req.opts.request
+		&& (cache_expired || result != req.m_server)
+	};
+
+	req.m_server = result;
+	if(!cache_result)
+		return;
+
+	// Any time the well-known result is the same as the req.target (that
+	// includes legitimate errors where fetch_well_known() returns the
+	// req.target to default) we consider that an error and use the error
+	// TTL value. Sorry, no exponential backoff implemented yet.
+	const auto cache_ttl
+	{
+		req.target == req.m_server?
+			seconds(cache_error).count():
+			seconds(cache_default).count()
+	};
+
+	const m::room::id::buf cache_room_id
+	{
+		"dns", m::my_host()
+	};
+
+	// Write our record to the cache room; note that this doesn't really
+	// match the format of other DNS records in this room since it's a bit
+	// simpler, but we don't share the ircd.dns.rr type prefix anyway.
+	const auto cache_id
+	{
+		m::send(cache_room_id, m::me(), request::type, req.target, json::members
+		{
+			{ "ttl",       cache_ttl    },
+			{ "m.server",  req.m_server },
+		})
+	};
+
+	log::debug
+	{
+		log, "%s cached delegation to %s with %s ttl:%ld",
+		req.target,
+		req.m_server,
+		string_view{cache_id},
+		cache_ttl,
+	};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "%s completion :%s",
+		req.target,
+		e.what(),
+	};
 }
 
 void
 ircd::m::fed::well_known::receive(request &req)
 {
-	const seconds timeout
-	{
-		fetch_timeout
-	};
-
-	req.code = req.req.get(timeout);
+	req.code = req.req.get(seconds(request::timeout));
 	req.head = req.req.in.gethead(req.req);
 	req.location = req.head.location;
 	req.response = json::object
@@ -395,7 +532,7 @@ ircd::m::fed::well_known::receive(request &req)
 	char dom_buf[rfc3986::DOMAIN_BUFSIZE];
 	log::debug
 	{
-		log, "fetch from %s %s :%u %s",
+		log, "fetch to %s %s :%u %s",
 		req.uri.remote,
 		req.uri.path,
 		uint(req.code),
@@ -406,15 +543,9 @@ ircd::m::fed::well_known::receive(request &req)
 void
 ircd::m::fed::well_known::submit(request &req)
 {
-	const net::hostport &remote
-	{
-		req.uri.remote
-	};
-
-	// Hard target https service; do not inherit any matrix service from remote.
 	const net::hostport target
 	{
-		net::host(remote), "https", net::port(remote)
+		make_remote(req.uri.remote)
 	};
 
 	const http::header headers[]
@@ -440,11 +571,34 @@ ircd::m::fed::well_known::submit(request &req)
 	// recognized by ircd::server to place received content directly after
 	// head in this buffer without any additional dynamic allocation.
 	server::in in;
-	in.head = req.buf + size(out.head);
+	in.head = mutable_buffer{req.buf} + size(out.head);
 	in.content = in.head;
 
+	req.code = http::code(0);
+	req.head = {};
+	req.response = {};
+	req.location = {};
 	req.req = server::request
 	{
 		target, std::move(out), std::move(in), &req.sopts
 	};
+
+	worker_dock.notify();
+}
+
+ircd::net::hostport
+ircd::m::fed::well_known::make_remote(const string_view &target)
+{
+	const net::hostport remote
+	{
+		target
+	};
+
+	// Hard target https service; do not inherit any matrix service from remote.
+	const net::hostport ret
+	{
+		net::host(remote), "https", net::port(remote)
+	};
+
+	return ret;
 }
