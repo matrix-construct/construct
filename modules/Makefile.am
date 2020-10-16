@@ -529,11 +529,13 @@ widget_moduledir = @moduledir@
 widget_widget_widget_la_SOURCES = widget/widget.cc
 widget_widget_register_la_SOURCES = widget/register.cc
 widget_widget_account_la_SOURCES = widget/account.cc
+widget_widget_ui_la_SOURCES = widget/ui.cc
 
 widget_module_LTLIBRARIES = \
 	widget/widget_widget.la \
 	widget/widget_register.la \
 	widget/widget_account.la \
+	widget/widget_ui.la \
 	###
 
 ###############################################################################

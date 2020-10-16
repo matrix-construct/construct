@@ -174,6 +174,7 @@ ircd::m::matrix::module_names
 	"widget_widget",
 	"widget_register",
 	"widget_account",
+	"widget_ui",
 
 	"admin_users",
 	"admin_deactivate",
