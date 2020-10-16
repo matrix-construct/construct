@@ -314,7 +314,8 @@ try
 	if(server_name == my_host())
 		throw m::NOT_FOUND
 		{
-			"keys for '%s' (that's myself) not found",
+			"key %s for '%s' (that's myself) not found",
+			key_id?: "<all>"_sv,
 			server_name
 		};
 
