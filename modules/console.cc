@@ -15979,6 +15979,41 @@ console_cmd__redact(opt &out, const string_view &line)
 //
 
 bool
+console_cmd__well_known(opt &out, const string_view &line)
+{
+	const ctx::critical_assertion ca;
+
+	out
+	<< std::left << std::setw(8) << "ID"
+	<< " "
+	<< std::right << std::setw(8) << "REDIRS"
+	<< " "
+	<< std::right << std::setw(6) << "CODE"
+	<< " "
+	<< std::left << std::setw(40) << "TARGET"
+	<< " "
+	<< std::left << std::setw(40) << "CACHED"
+	<< std::endl;
+
+	for(const auto *const request : m::fed::well_known::request::list)
+	{
+		out
+		<< std::left << std::setw(8) << request->id
+		<< " "
+		<< std::right << std::setw(8) << request->redirects
+		<< " "
+		<< std::right << std::setw(6) << uint(request->code)
+		<< " "
+		<< std::left << std::setw(40) << trunc(request->target, 40)
+		<< " "
+		<< std::left << std::setw(40) << trunc(request->m_server, 40)
+		<< std::endl;
+	}
+
+	return true;
+}
+
+bool
 console_cmd__well_known__matrix__server(opt &out, const string_view &line)
 {
 	const params param{line, " ",
