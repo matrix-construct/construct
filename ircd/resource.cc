@@ -537,7 +537,7 @@ try
 	};
 
 	client.request.params = lstrip(head.path, resource->path);
-	client.request.params = rstrip(client.request.params, '/');
+	client.request.params = strip(client.request.params, '/');
 	client.request.parv =
 	{
 		client.request.param,
