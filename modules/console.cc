@@ -5607,10 +5607,10 @@ try
 	{
 		out
 		<< std::setw(4) << std::left << "ID" << ' '
-		<< std::setw(40) << std::right << "NAME" << ' '
-		<< std::setw(40) << std::left << "ADDRESS" << ' '
-		<< std::setw(23) << std::right << "READ-TOTAL" << ' '
-		<< std::setw(23) << std::right << "WRITE-TOTAL" << ' '
+		<< std::setw(40) << std::right << "ADDRESS" << ' '
+		<< std::setw(50) << std::left << "NAME" << ' '
+		<< std::setw(23) << std::left << "READ-TOTAL" << ' '
+		<< std::setw(23) << std::left << "WRITE-TOTAL" << ' '
 		<< std::setw(8) << std::right << "TOTAL" << ' '
 		<< std::setw(5) << std::right << "DONE" << ' '
 		<< std::setw(4) << std::right << "TAGS" << ' '
@@ -5640,10 +5640,10 @@ try
 		char pbuf[32];
 		out
 		<< std::setw(4) << std::left << peer.id << ' '
-		<< std::setw(40) << std::right << host << ' '
-		<< std::setw(40) << std::left << net::ipport{peer.remote} << ' '
-		<< std::setw(23) << std::right << pretty(pbuf, iec(peer.read_total())) << ' '
-		<< std::setw(23) << std::right << pretty(pbuf, iec(peer.write_total())) << ' '
+		<< std::setw(40) << std::right << net::ipport{peer.remote} << ' '
+		<< std::setw(50) << std::left << trunc(host, 50) << ' '
+		<< std::setw(23) << std::left << pretty(pbuf, iec(peer.read_total())) << ' '
+		<< std::setw(23) << std::left << pretty(pbuf, iec(peer.write_total())) << ' '
 		<< std::setw(8) << std::right << peer.tag_done << ' '
 		<< std::setw(5) << std::right << peer.link_tag_done() << ' '
 		<< std::setw(4) << std::right << peer.tag_count() << ' '
