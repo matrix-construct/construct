@@ -57,24 +57,6 @@ namespace ircd::allocator::je
 	extern const bool available;
 }
 
-/// Valgrind memcheck hypercall suite
-/// note: definitions located in ircd/vg.cc
-namespace ircd::allocator::vg
-{
-	bool defined(const const_buffer &);
-	void set_defined(const const_buffer &);
-	void set_undefined(const const_buffer &);
-	void set_noaccess(const const_buffer &);
-}
-
-/// Valgrind hypercall suite
-/// note: definitions located in ircd/vg.cc
-namespace ircd::vg
-{
-	size_t errors();
-	bool active();
-}
-
 namespace ircd
 {
 	using allocator::aligned_alloc;

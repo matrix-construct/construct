@@ -12,23 +12,47 @@
 #include <RB_INC_VALGRIND_MEMCHECK_H
 #include <RB_INC_VALGRIND_CALLGRIND_H
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// ircd/allocator.h
-//
+void
+ircd::vg::set_noaccess(const const_buffer &buf)
+noexcept
+{
+	#ifdef HAVE_VALGRIND_MEMCHECK_H
+	VALGRIND_MAKE_MEM_NOACCESS(data(buf), size(buf));
+	#endif
+}
+
+void
+ircd::vg::set_undefined(const const_buffer &buf)
+noexcept
+{
+	#ifdef HAVE_VALGRIND_MEMCHECK_H
+	VALGRIND_MAKE_MEM_UNDEFINED(data(buf), size(buf));
+	#endif
+}
+
+void
+ircd::vg::set_defined(const const_buffer &buf)
+noexcept
+{
+	#ifdef HAVE_VALGRIND_MEMCHECK_H
+	VALGRIND_MAKE_MEM_DEFINED(data(buf), size(buf));
+	#endif
+}
 
 bool
-ircd::vg::active()
+ircd::vg::defined(const const_buffer &buf)
+noexcept
 {
-	#ifdef HAVE_VALGRIND_VALGRIND_H
-	return RUNNING_ON_VALGRIND;
+	#ifdef HAVE_VALGRIND_MEMCHECK_H
+	return VALGRIND_CHECK_MEM_IS_DEFINED(data(buf), size(buf)) == 0;
 	#else
-	return false;
+	return true;
 	#endif
 }
 
 size_t
 ircd::vg::errors()
+noexcept
 {
 	#ifdef HAVE_VALGRIND_VALGRIND_H
 	return VALGRIND_COUNT_ERRORS;
@@ -37,41 +61,14 @@ ircd::vg::errors()
 	#endif
 }
 
-//
-// valgrind memcheck
-//
-
-void
-ircd::allocator::vg::set_noaccess(const const_buffer &buf)
-{
-	#ifdef HAVE_VALGRIND_MEMCHECK_H
-	VALGRIND_MAKE_MEM_NOACCESS(data(buf), size(buf));
-	#endif
-}
-
-void
-ircd::allocator::vg::set_undefined(const const_buffer &buf)
-{
-	#ifdef HAVE_VALGRIND_MEMCHECK_H
-	VALGRIND_MAKE_MEM_UNDEFINED(data(buf), size(buf));
-	#endif
-}
-
-void
-ircd::allocator::vg::set_defined(const const_buffer &buf)
-{
-	#ifdef HAVE_VALGRIND_MEMCHECK_H
-	VALGRIND_MAKE_MEM_DEFINED(data(buf), size(buf));
-	#endif
-}
-
 bool
-ircd::allocator::vg::defined(const const_buffer &buf)
+ircd::vg::active()
+noexcept
 {
-	#ifdef HAVE_VALGRIND_MEMCHECK_H
-	return VALGRIND_CHECK_MEM_IS_DEFINED(data(buf), size(buf)) == 0;
+	#ifdef HAVE_VALGRIND_VALGRIND_H
+	return RUNNING_ON_VALGRIND;
 	#else
-	return true;
+	return false;
 	#endif
 }
 

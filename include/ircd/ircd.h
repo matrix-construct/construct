@@ -48,6 +48,7 @@
 #include "buffer/buffer.h"
 #include "simd/simd.h"
 #include "leb128.h"
+#include "vg.h"
 #include "allocator.h"
 #include "util/util.h"
 #include "exception.h"
