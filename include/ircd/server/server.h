@@ -56,8 +56,9 @@ namespace ircd::server
 	peer &find(const net::hostport &);
 
 	// mutable utils
-	bool errclear(const net::hostport &);
-	peer &get(const net::hostport &);     // creates the peer if not found.
+	peer &get(const net::hostport &);      // creates the peer if not found.
+	bool prelink(const net::hostport &);   // creates and links if not errant.
+	bool errclear(const net::hostport &);  // clear cached error.
 }
 
 /// Subsystem initialization / destruction from ircd::main

@@ -124,6 +124,35 @@ ircd::server::init::interrupt()
 // ircd::server
 //
 
+bool
+ircd::server::prelink(const net::hostport &hostport)
+try
+{
+	auto &peer
+	{
+		get(hostport)
+	};
+
+	if(peer.err_has())
+		return false;
+
+	if(peer.links.empty())
+		peer.link_add(1);
+
+	return true;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Prelink to '%s' :%s",
+		server::canonize(hostport),
+		e.what(),
+	};
+
+	return false;
+}
+
 ircd::server::peer &
 ircd::server::get(const net::hostport &hostport)
 {
