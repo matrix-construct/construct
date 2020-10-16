@@ -15983,28 +15983,42 @@ console_cmd__well_known__matrix__server(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"remote"
+		"remote" // ...
 	}};
 
-	const string_view &remote
+	std::forward_list
+	<
+		std::tuple
+		<
+			unique_mutable_buffer,
+			string_view,
+			ctx::future<string_view>
+		>
+	>
+	reqs;
+	tokens(line, ' ', [&reqs]
+	(const string_view &remote)
 	{
-		param.at("remote")
-	};
+		m::fed::well_known::opts opts;
+		opts.cache_check = false;
+		opts.cache_result = false;
+		unique_mutable_buffer buf{1_KiB};
+		const mutable_buffer _buf{buf};
+		reqs.emplace_front(std::make_tuple
+		(
+			std::move(buf),
+			remote,
+			m::fed::well_known::get(_buf, remote, opts)
+		));
+	});
 
-	const unique_buffer<mutable_buffer> buf
-	{
-		1_KiB
-	};
+	for(auto &[buf, tgt, req] : reqs)
+		out
+		<< std::right << std::setw(40) << trunc(tgt, 40)
+		<< " => "
+		<< std::left << string_view{req}
+		<< std::endl;
 
-	m::fed::well_known::opts opts;
-	opts.cache_check = false;
-	opts.cache_result = false;
-	const string_view result
-	{
-		m::fed::well_known::get(buf, remote, opts)
-	};
-
-	out << result << std::endl;
 	return true;
 }
 
