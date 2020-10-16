@@ -3151,7 +3151,8 @@ ircd::ctx::stack::allocator::allocate(stack_context &c,
 	c.sp = ircd::data(buf) + c.size;
 
 	#if defined(BOOST_USE_VALGRIND)
-	c.valgrind_stack_id = VALGRIND_STACK_REGISTER(c.sp, ircd::data(buf));
+	if(vg::active)
+		c.valgrind_stack_id = vg::stack::add(buf);
 	#endif
 
 	this->owner = bool(umb);
@@ -3164,7 +3165,8 @@ ircd::ctx::stack::allocator::deallocate(stack_context &c)
 	assert(c.sp);
 
 	#if defined(BOOST_USE_VALGRIND)
-	VALGRIND_STACK_DEREGISTER(c.valgrind_stack_id)
+	if(vg::active)
+		vg::stack::del(c.valgrind_stack_id);
 	#endif
 
 	const auto base

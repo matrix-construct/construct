@@ -38,9 +38,7 @@ instruction boundaries rather than at cooperative boundaries.
 
 ### Foundation
 
-This library is based in `boost::coroutine / boost::context` which wraps
-the register save/restores in a cross-platform way in addition to providing
-properly `mmap(NOEXEC)'ed` etc memory appropriate for stacks on each platform.
+This library is embedded around `boost::coroutine / boost::context`.
 
 `boost::asio` has then added its own comprehensive integration with the above
 libraries eliminating the need for us to worry about a lot of boilerplate to
