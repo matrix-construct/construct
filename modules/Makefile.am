@@ -521,6 +521,21 @@ client_module_LTLIBRARIES += \
 
 ###############################################################################
 #
+# /_matrix/widget
+#
+
+widget_moduledir = @moduledir@
+
+widget_widget_widget_la_SOURCES = widget/widget.cc
+widget_widget_register_la_SOURCES = widget/register.cc
+
+widget_module_LTLIBRARIES = \
+	widget/widget_widget.la \
+	widget/widget_register.la \
+	###
+
+###############################################################################
+#
 # /_synapse/admin/
 #
 

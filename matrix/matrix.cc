@@ -171,6 +171,9 @@ ircd::m::matrix::module_names
 	"client_versions",
 	"client_capabilities",
 
+	"widget_widget",
+	"widget_register",
+
 	"admin_users",
 	"admin_deactivate",
 };
