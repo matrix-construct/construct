@@ -51,8 +51,35 @@ post__openid__request_token(client &client,
                             const m::resource::request &request,
                             const m::user::id &user_id)
 {
+	const string_view &matrix_server_name
+	{
+		my_host()
+	};
+
+	const string_view &token_type
+	{
+		"Bearer"
+	};
+
+	const long &expires_in
+	{
+		3600L
+	};
+
+	const auto access_token
+	{
+		request.access_token
+	};
+
+	assert(access_token);
 	return m::resource::response
 	{
-		client, http::TOO_MANY_REQUESTS
+		client, http::OK, json::members
+		{
+			{ "matrix_server_name",  matrix_server_name  },
+			{ "token_type",          token_type          },
+			{ "expires_in",          expires_in          },
+			{ "access_token",        access_token        },
+		}
 	};
 }
