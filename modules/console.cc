@@ -6835,7 +6835,7 @@ console_cmd__key(opt &out, const string_view &line)
 
 	const auto &server_name
 	{
-		param["server_name"]
+		param.at("server_name")
 	};
 
 	// keys cached for server by param.
