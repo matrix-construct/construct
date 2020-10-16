@@ -456,7 +456,7 @@ try
 
 	const bool cache_expired
 	{
-		req.expires + seconds(cache_max) < now<system_point>()
+		req.expires < now<system_point>()
 	};
 
 	const bool cache_result
