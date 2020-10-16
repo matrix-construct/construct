@@ -4656,7 +4656,7 @@ namespace ircd::json
 decltype(ircd::json::validation)
 ircd::json::validation
 {
-	parser.value(0) >> eoi
+	parser.value(0) >> parser.ws >> eoi
 };
 
 decltype(ircd::json::validation_expect)
