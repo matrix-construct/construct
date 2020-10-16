@@ -682,6 +682,12 @@ noexcept
 // ctx/this_ctx.h
 //
 
+decltype(ircd::ctx::this_ctx::courtesy_yield_desc)
+ircd::ctx::this_ctx::courtesy_yield_desc
+{
+	"ircd::ctx courtesy yield"
+};
+
 // set by the continuation object and the base frame.
 thread_local
 ircd::ctx::ctx *
@@ -763,27 +769,6 @@ ircd::ctx::this_ctx::wait()
 	auto &c(cur());
 	c.alarm.expires_at(boost::posix_time::pos_infin);
 	c.wait(); // now you're yielding with portals
-}
-
-/// Post the currently running context to the event queue and then suspend to
-/// allow other contexts in the queue to run.
-///
-/// Until we have our own queue the ios queue makes no guarantees if the queue
-/// is FIFO or LIFO etc :-/ It is generally bad practice to use this function,
-/// as one should make the effort to devise a specific cooperative strategy for
-/// how context switching occurs rather than this coarse/brute technique.
-void
-ircd::ctx::this_ctx::yield()
-{
-	static ios::descriptor descriptor
-	{
-		"ircd::ctx courtesy yield"
-	};
-
-	ircd::post
-	{
-		descriptor, ios::synchronous
-	};
 }
 
 size_t
@@ -1097,11 +1082,29 @@ const noexcept
 // ctx/context.h
 //
 
+namespace ircd::ctx
+{
+	[[gnu::visibility("hidden")]]
+	extern ios::descriptor spawn_desc[3];
+}
+
+decltype(ircd::ctx::spawn_desc)
+ircd::ctx::spawn_desc
+{
+	{ "ircd::ctx::spawn post"      },
+	{ "ircd::ctx::spawn defer"     },
+	{ "ircd::ctx::spawn dispatch"  },
+};
+
 decltype(ircd::ctx::DEFAULT_STACK_SIZE)
 ircd::ctx::DEFAULT_STACK_SIZE
 {
 	128_KiB
 };
+
+//
+// context::context
+//
 
 // Linkage here for default construction because ctx is internal.
 ircd::ctx::context::context()
@@ -1173,13 +1176,6 @@ ircd::ctx::context::context(const string_view &name,
 	)
 }
 {
-	static ios::descriptor desc[3]
-	{
-		{ "ircd::ctx::spawn post"      },
-		{ "ircd::ctx::spawn defer"     },
-		{ "ircd::ctx::spawn dispatch"  },
-	};
-
 	auto spawn
 	{
 		std::bind(&ctx::spawn, c.get(), std::move(func))
@@ -1209,11 +1205,11 @@ ircd::ctx::context::context(const string_view &name,
 	// parent is not itself a context as yielding is not possible anyway.
 	assert(c->flags & POST || ircd::ctx::current);
 	if(c->flags & POST)
-		ios::post(desc[0], std::move(spawn));
+		ios::post(spawn_desc[0], std::move(spawn));
 
 	// (experimental) Branch to spawn via defer mechanism.
 	else if(c->flags & DEFER)
-		ios::defer(desc[1], ios::synchronous, std::move(spawn));
+		ios::defer(spawn_desc[1], ios::synchronous, std::move(spawn));
 
 	// Branch to spawn via dispatch mechanism. This context will yield while
 	// the spawning takes place on this stack. This is the closest to a direct
@@ -1222,7 +1218,7 @@ ircd::ctx::context::context(const string_view &name,
 	// switch. Note: This is also the default method when no flags are given
 	// and this parent is another context.
 	else if(c->flags & DISPATCH || (true))
-		ios::dispatch(desc[2], ios::synchronous, std::move(spawn));
+		ios::dispatch(spawn_desc[2], ios::synchronous, std::move(spawn));
 }
 
 ircd::ctx::context::context(context &&other)

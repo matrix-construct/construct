@@ -14,6 +14,9 @@
 /// Interface to the currently running context
 namespace ircd::ctx { inline namespace this_ctx
 {
+	/// ios descriptor used by yield().
+	extern ios::descriptor courtesy_yield_desc;
+
 	struct ctx &cur() noexcept;                  ///< Assumptional reference to *current
 	const uint64_t &id() noexcept;               // Unique ID for cur ctx
 	string_view name() noexcept;                 // Optional label for cur ctx
@@ -40,13 +43,20 @@ namespace ircd
 	namespace this_ctx = ctx::this_ctx;
 }
 
-/// View the name of the currently running context, or "*" if no context is
-/// currently running.
-inline ircd::string_view
-ircd::ctx::this_ctx::name()
-noexcept
+/// Post the currently running context to the event queue and then suspend to
+/// allow other contexts in the queue to run.
+///
+/// Until we have our own queue the ios queue makes no guarantees if the queue
+/// is FIFO or LIFO etc :-/ It is generally bad practice to use this function,
+/// as one should make the effort to devise a specific cooperative strategy for
+/// how context switching occurs rather than this coarse/brute technique.
+inline void
+ircd::ctx::this_ctx::yield()
 {
-	return current? name(cur()) : "*"_sv;
+	ircd::post
+	{
+		courtesy_yield_desc, ios::synchronous
+	};
 }
 
 inline void
@@ -106,6 +116,15 @@ noexcept
 	const auto slice(prof::cur_slice_cycles());
 	const auto accumulated(cycles(cur()));
 	return accumulated + slice;
+}
+
+/// View the name of the currently running context, or "*" if no context is
+/// currently running.
+inline ircd::string_view
+ircd::ctx::this_ctx::name()
+noexcept
+{
+	return current? name(cur()) : "*"_sv;
 }
 
 /// Reference to the currently running context. Call if you expect to be in a
