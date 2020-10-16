@@ -25,6 +25,8 @@ namespace ircd::rfc3986
 	constexpr size_t HOSTNAME_BUFSIZE  { HOSTNAME_MAX + 1    };
 	constexpr size_t DOMAIN_MAX        { rfc1035::NAME_MAX   };
 	constexpr size_t DOMAIN_BUFSIZE    { DOMAIN_MAX + 1      };
+	constexpr size_t REMOTE_MAX        { DOMAIN_MAX + 6      };
+	constexpr size_t REMOTE_BUFSIZE    { REMOTE_MAX + 1      };
 
 	// Percent-encode arbitrary string; binary/non-printable characters OK
 	string_view encode(const mutable_buffer &, const string_view &url);
