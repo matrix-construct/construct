@@ -283,8 +283,8 @@ ircd::info::dump_cpu_info_x86()
 		hardware::virtualized?
 			"virtual"_sv:
 			"physical"_sv,
-		vg::active()?
-			" valgrind "_sv:
+		vg::active?
+			" valgrind"_sv:
 			""_sv,
 		support,
 	};

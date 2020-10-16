@@ -14,11 +14,17 @@
 /// Valgrind memcheck hypercall suite
 namespace ircd::vg
 {
-	bool active() noexcept;
+	extern const bool active;
 	size_t errors() noexcept;
 
 	bool defined(const const_buffer &) noexcept;
 	void set_defined(const const_buffer &) noexcept;
 	void set_undefined(const const_buffer &) noexcept;
 	void set_noaccess(const const_buffer &) noexcept;
+}
+
+namespace ircd::vg::stack
+{
+	uint add(const mutable_buffer &) noexcept;
+	void del(const uint &id) noexcept;
 }

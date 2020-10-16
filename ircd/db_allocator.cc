@@ -70,7 +70,7 @@ ircd::db::database::allocator::mlock_enabled
 	mlock_limit == -1UL
 
 	// mlock2() not supported by valgrind
-	&& !vg::active()
+	&& !vg::active
 };
 
 decltype(ircd::db::database::allocator::mlock_current)

@@ -61,14 +61,37 @@ noexcept
 	#endif
 }
 
-bool
-ircd::vg::active()
-noexcept
+decltype(ircd::vg::active)
+ircd::vg::active{[]() -> bool
 {
 	#ifdef HAVE_VALGRIND_VALGRIND_H
 	return RUNNING_ON_VALGRIND;
 	#else
 	return false;
+	#endif
+}()};
+
+//
+// vg::stack
+//
+
+void
+ircd::vg::stack::del(const uint &id)
+noexcept
+{
+	#ifdef HAVE_VALGRIND_MEMCHECK_H
+	VALGRIND_STACK_DEREGISTER(id);
+	#endif
+}
+
+uint
+ircd::vg::stack::add(const mutable_buffer &buf)
+noexcept
+{
+	#ifdef HAVE_VALGRIND_MEMCHECK_H
+	return VALGRIND_STACK_REGISTER(ircd::data(buf) + ircd::size(buf), ircd::data(buf));
+	#else
+	return 0;
 	#endif
 }
 

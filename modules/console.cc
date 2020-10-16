@@ -1339,7 +1339,7 @@ console_cmd__mem__get(opt &out, const string_view &line)
 bool
 console_cmd__vg(opt &out, const string_view &line)
 {
-	if(vg::active())
+	if(vg::active)
 		out << "running on valgrind" << std::endl;
 	else
 		out << "bare metal" << std::endl;
