@@ -719,7 +719,7 @@ ircd::m::events::origin::for_each(const string_view &prefix,
 		};
 
 	string_view last;
-	char buf[rfc3986::DOMAIN_BUFSIZE];
+	char buf[event::ORIGIN_MAX_SIZE];
 	for(auto it(column.lower_bound(prefix)); bool(it); ++it)
 	{
 		if(!m::dbs::is_event_sender_origin_key(it->first))
