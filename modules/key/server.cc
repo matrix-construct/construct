@@ -33,7 +33,7 @@ handle_get(client &client,
 	char key_id_buf[256];
 	const auto key_id
 	{
-		request.params
+		url::decode(key_id_buf, request.params)
 	};
 
 	m::keys::get(my_host(), key_id, [&client]
