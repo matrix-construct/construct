@@ -441,6 +441,18 @@ ircd::m::feds::for_each_in_room(const opts &opts,
 		opts.room_id
 	};
 
+	// Prelink loop
+	if(opts.prelink)
+		origins.for_each([&opts]
+		(const string_view &origin)
+		{
+			if(opts.exclude_myself && my_host(origin))
+				return;
+
+			fed::prelink(origin);
+		});
+
+	// Request loop
 	origins.for_each([&opts, &ret, &closure, &create_closure]
 	(const string_view &origin)
 	{

@@ -143,6 +143,11 @@ struct ircd::m::feds::opts
 	/// typical use case.
 	bool exclude_myself {false};
 
+	/// Whether to iterate the query targets first to perform prelinks. This is
+	/// an asynchronous operation which may perform server name resolution and
+	/// link estab. The main request loop will then have fewer hazards.
+	bool prelink {true};
+
 	// Default construction is inline by member; this is defined to impose
 	// noexcept over `milliseconds timeout` which we guarantee won't throw.
 	opts() noexcept {}
