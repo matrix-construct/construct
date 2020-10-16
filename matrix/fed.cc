@@ -1565,6 +1565,58 @@ ircd::m::fed::with_server(const string_view &name,
 	return c(remote);
 }
 
+/// Perform operations to prepare for a request to remote server. This may
+/// initiate the resolution of server names and establish links. This call
+/// returns quickly, but we make no guarantee for all cases; this will yield
+/// the ircd::ctx for local cache queries, etc.
+bool
+ircd::m::fed::prelink(const string_view &name)
+try
+{
+	well_known::opts opts;
+	string_view target{name};
+	net::hostport remote{target};
+	char buf[rfc3986::DOMAIN_BUFSIZE];
+	ctx::future<string_view> server_name
+	{
+		!port(remote)?
+			well_known::get(buf, host(remote), opts):
+			ctx::future<string_view>{ctx::already, name}
+	};
+
+	// well-known resolution has now been dispatched asynchronously.
+	// If we get an immediate result from cache we can proceed past
+	// here, otherwise we don't wait. When the future goes out of
+	// scope the well-known worker still completes the request and
+	// caches the result (i.e prefetch behavior).
+	if(!server_name.wait(seconds(0), std::nothrow))
+		return false;
+
+	//TODO: split and reuse fed::server()
+	target = string_view{server_name};
+	remote = target;
+	if(!port(remote) && !service(remote))
+	{
+		service(remote) = m::canon_service;
+		target = net::canonize(buf, remote);
+	}
+
+	// Resolves DNS and establishes TCP asynchronously once we have a
+	// peer name. This returns false if the peer has a cached error.
+	if(!server::prelink(target))
+		return false;
+
+	return true;
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	return false;
+}
+
 /// Manually force the clearing of cached errors for remote server to
 /// allow another attempt. Note that not all possible cached errors may
 /// be cleared by this.

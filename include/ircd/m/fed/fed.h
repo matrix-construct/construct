@@ -47,6 +47,7 @@ namespace ircd::m::fed
 	bool avail(const string_view &server_name);
 
 	// Control panel
+	bool prelink(const string_view &server_name);
 	bool clear_error(const string_view &server_name);
 }
 
