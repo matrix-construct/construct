@@ -20,18 +20,18 @@ ircd::m::pretty_oneline(std::ostream &s,
 	  << " (" << json::get<"valid_until_ts"_>(keys) << ")"
 	  << ' ';
 
-	for(const auto &[domain, signature_] : json::get<"signatures"_>(keys))
-	{
-		s << "sig[ " << domain << ' ';
-		for(const auto &[key_id, signature] : json::object(signature_))
-			s << key_id << ' ';
-		s << "] ";
-	}
-
 	for(const auto &[domain, verify_key_] : json::get<"verify_keys"_>(keys))
 	{
 		s << "key[ " << domain << ' ';
 		for(const auto &[key_id, verify_key] : json::object(verify_key_))
+			s << key_id << ' ';
+		s << "] ";
+	}
+
+	for(const auto &[domain, signature_] : json::get<"signatures"_>(keys))
+	{
+		s << "sig[ " << domain << ' ';
+		for(const auto &[key_id, signature] : json::object(signature_))
 			s << key_id << ' ';
 		s << "] ";
 	}
@@ -53,19 +53,19 @@ ircd::m::pretty(std::ostream &s,
 	  << " (" << json::get<"valid_until_ts"_>(keys) << ")"
 	  << '\n';
 
-	for(const auto &[domain, signature_] : json::get<"signatures"_>(keys))
-		for(const auto &[key_id, signature] : json::object(signature_))
-			s << std::setw(16) << std::right << "[signature]  "
-			  << domain << ' '
-			  << key_id << ' '
-			  << unquote(signature) << '\n';
-
 	for(const auto &[domain, verify_key_] : json::get<"verify_keys"_>(keys))
 		for(const auto &[key_id, verify_key] : json::object(verify_key_))
 			s << std::setw(16) << std::right << "[verify_key]  "
 			  << domain << ' '
 			  << key_id << ' '
 			  << unquote(verify_key) << '\n';
+
+	for(const auto &[domain, signature_] : json::get<"signatures"_>(keys))
+		for(const auto &[key_id, signature] : json::object(signature_))
+			s << std::setw(16) << std::right << "[signature]  "
+			  << domain << ' '
+			  << key_id << ' '
+			  << unquote(signature) << '\n';
 
 	for(const auto &[domain, old_verify_key_] : json::get<"old_verify_keys"_>(keys))
 		for(const auto &[key_id, old_verify_key] : json::object(old_verify_key_))
