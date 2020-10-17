@@ -264,8 +264,8 @@ noexcept
 			return true;
 		}
 
-		case run::level::LOAD:
 		case run::level::START:
+		case run::level::LOAD:
 		{
 			ctx::terminate(*main_context);
 			main_context = nullptr;
@@ -349,8 +349,10 @@ noexcept try
 
 	// When this function is entered IRCd will transition to START indicating
 	// that subsystems are initializing.
-	run::set(run::level::START);
-	ctx::interruption_point();
+	{
+		const ctx::uninterruptible ui;
+		run::set(run::level::START);
+	}
 
 	// These objects are the init()'s and fini()'s for each subsystem.
 	// Appearing here ties their life to the main context. Initialization can
@@ -371,19 +373,23 @@ noexcept try
 	// Transition to the QUIT and UNLOAD states on unwind.
 	const unwind quit{[]
 	{
+		const ctx::uninterruptible::nothrow ui;
 		ircd::run::set(run::level::QUIT);
 		ircd::run::set(run::level::UNLOAD);
 	}};
-	ctx::interruption_point();
 
 	// IRCd will now transition to the LOAD state allowing library user's to
 	// load their applications using the run::changed callback.
-	run::set(run::level::LOAD);
-	ctx::interruption_point();
+	{
+		const ctx::uninterruptible ui;
+		run::set(run::level::LOAD);
+	}
 
 	// IRCd will now transition to the RUN state indicating full functionality.
-	run::set(run::level::RUN);
-	ctx::interruption_point();
+	{
+		const ctx::uninterruptible ui;
+		run::set(run::level::RUN);
+	}
 
 	// This call blocks until the main context is notified or interrupted etc.
 	// Waiting here will hold open this stack with all of the above objects
