@@ -354,10 +354,9 @@ noexcept try
 
 	ircd::log::debug
 	{
-		"epoch construct:%zu ircd::ios:%zu ircd::ctx:%zu",
+		"epoch construct:%zu ircd:%zu",
 		handled,
 		ircd::ios::epoch(),
-		ircd::ctx::epoch(),
 	};
 
 	// 13
