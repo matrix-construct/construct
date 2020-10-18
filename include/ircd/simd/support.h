@@ -20,81 +20,99 @@ namespace ircd::simd::support
 {
 	constexpr bool sse2
 	{
-    	#if defined(__SSE2__)
+		#if defined(__SSE2__)
 			true
-	    #else
+		#else
 			false
 		#endif
 	};
 
 	constexpr bool sse3
 	{
-    	#if defined(__SSE3__)
+		#if defined(__SSE3__)
 			true
-	    #else
+		#else
 			false
 		#endif
 	};
 
 	constexpr bool ssse3
 	{
-    	#if defined(__SSSE3__)
+		#if defined(__SSSE3__)
 			true
-	    #else
+		#else
 			false
 		#endif
 	};
 
 	constexpr bool sse4a
 	{
-    	#if defined(__SSE4A__)
+		#if defined(__SSE4A__)
 			true
-	    #else
+		#else
 			false
 		#endif
 	};
 
 	constexpr bool sse4_1
 	{
-    	#if defined(__SSE4_1__)
+		#if defined(__SSE4_1__)
 			true
-	    #else
+		#else
 			false
 		#endif
 	};
 
 	constexpr bool sse4_2
 	{
-    	#if defined(__SSE4_2__)
+		#if defined(__SSE4_2__)
 			true
-	    #else
+		#else
 			false
 		#endif
 	};
 
 	constexpr bool avx
 	{
-    	#if defined(__AVX__)
+		#if defined(__AVX__)
 			true
-	    #else
+		#else
 			false
 		#endif
 	};
 
 	constexpr bool avx2
 	{
-    	#if defined(__AVX2__)
+		#if defined(__AVX2__)
 			true
-	    #else
+		#else
 			false
 		#endif
 	};
 
 	constexpr bool avx512f
 	{
-    	#if defined(__AVX512__)
+		#if defined(__AVX512F__)
 			true
-	    #else
+		#else
+			false
+		#endif
+	};
+
+	constexpr bool avx512vbmi
+	{
+		#if defined(__AVX512VBMI__)
+			true
+		#else
+			false
+		#endif
+	};
+
+	constexpr bool avx512vbmi2
+	{
+		#if defined(__AVX512VBMI2__)
+			true
+		#else
 			false
 		#endif
 	};
