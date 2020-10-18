@@ -227,7 +227,7 @@ ircd::m::sync::room_timeline_polylog(data &data)
 
 	// events
 	assert(data.room);
-	bool limited{false}, ret{false};
+	bool limited{true}, ret{false};
 	m::event::id::buf prev
 	{
 		_room_timeline_polylog_events(data, *data.room, limited, ret)
@@ -288,15 +288,15 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 			continue;
 
 		if(event_idx < data.range.first)
+		{
+			limited = false;
 			break;
+		}
 
-		if(limit > 1)
-			prefetched += m::prefetch(event_idx);
-
+		prefetched += limit > 1 && m::prefetch(event_idx);
 		++i;
 	}
 
-	limited = i > limit;
 	if(i > 1 && !it)
 		it.seek(event_idx);
 
