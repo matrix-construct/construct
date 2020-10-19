@@ -127,7 +127,7 @@ try
 			if(errors.count(event_id))
 				return true;
 
-			if(!m::exists(event::id(event_id)))
+			if(!m::exists(event_id))
 			{
 				++fetching;
 				m::acquire::opts _opts(opts);
@@ -135,7 +135,7 @@ try
 				_opts.hint_only = true;
 				if(!handle_event(room, event_id, _opts))
 				{
-					// If we fail the process the event we cache that and cease here.
+					// If we fail to process the event we cache that and cease here.
 					errors.emplace(event_id);
 					return true;
 				}
