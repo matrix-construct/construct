@@ -534,7 +534,6 @@ ircd::m::fed::well_known::receive(request &req)
 		req.req.in.content
 	};
 
-	char dom_buf[rfc3986::DOMAIN_BUFSIZE];
 	log::debug
 	{
 		log, "fetch to %s %s :%u %s",
