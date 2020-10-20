@@ -16216,3 +16216,57 @@ console_id__group(opt &out,
 {
 	return console_cmd__group(out, line);
 }
+
+//
+// exec
+//
+
+bool
+console_cmd__exec__list(opt &out, const string_view &line)
+{
+	for(const auto *const &exec : ircd::exec::list)
+		out
+		<< " " << exec->id
+		<< " " << exec->pid
+		<< " " << exec->code
+		<< std::endl;
+
+	return true;
+}
+
+bool
+console_cmd__exec(opt &out, const string_view &line)
+{
+	if(empty(line))
+		return console_cmd__exec__list(out, line);
+
+	if(ctx::name(ctx::cur()) != "console")
+		throw ircd::error
+		{
+			"Command access denied to non-terminal administrators."
+		};
+
+	string_view argv[16];
+	const auto argc
+	{
+		tokens(line, ' ', argv)
+	};
+
+	exec p
+	{
+		{ argv, argc }
+	};
+
+	unique_mutable_buffer buf
+	{
+		4_KiB, 4_KiB
+	};
+
+	const string_view in
+	{
+		read(p, buf)
+	};
+
+	out << in << std::endl;
+	return true;
+}
