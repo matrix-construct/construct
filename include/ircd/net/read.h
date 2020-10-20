@@ -13,24 +13,26 @@
 
 namespace ircd::net
 {
+	using mutable_buffers = vector_view<const mutable_buffer>;
+
 	// Non-blocking; read into buffers in a single syscall
-	size_t read_one(socket &, const vector_view<const mutable_buffer> &);
+	size_t read_one(socket &, const mutable_buffers &);
 	size_t read_one(socket &, const mutable_buffer &);
 
 	// Non-blocking; read as much as possible into buffers
-	size_t read_any(socket &, const vector_view<const mutable_buffer> &);
+	size_t read_any(socket &, const mutable_buffers &);
 	size_t read_any(socket &, const mutable_buffer &);
 
 	// Yields until something is read into buffers.
-	size_t read_few(socket &, const vector_view<const mutable_buffer> &);
+	size_t read_few(socket &, const mutable_buffers &);
 	size_t read_few(socket &, const mutable_buffer &);
 
 	// Yields until buffers are entirely full.
-	size_t read_all(socket &, const vector_view<const mutable_buffer> &);
+	size_t read_all(socket &, const mutable_buffers &);
 	size_t read_all(socket &, const mutable_buffer &);
 
 	// Alias to read_few();
-	size_t read(socket &, const vector_view<const mutable_buffer> &);
+	size_t read(socket &, const mutable_buffers &);
 	size_t read(socket &, const mutable_buffer &);
 
 	// Non-blocking; discard up to len, but less may be discarded.
@@ -51,7 +53,7 @@ ircd::net::read(socket &socket,
 /// Alias to read_few();
 inline size_t
 ircd::net::read(socket &socket,
-                const vector_view<const mutable_buffer> &buffers)
+                const mutable_buffers &buffers)
 {
 	return read_few(socket, buffers);
 }

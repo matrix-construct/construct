@@ -13,28 +13,30 @@
 
 namespace ircd::net
 {
+	using const_buffers = vector_view<const const_buffer>;
+
 	// Non-blocking; writes at most one system-determined amount of
 	// bytes or less with at most a single syscall.
-	size_t write_one(socket &, const vector_view<const const_buffer> &);
+	size_t write_one(socket &, const const_buffers &);
 	size_t write_one(socket &, const const_buffer &);
 
 	// Non-blocking; writes as much as possible until the socket buffer
 	// is full. This composes multiple write_one()'s.
-	size_t write_any(socket &, const vector_view<const const_buffer> &);
+	size_t write_any(socket &, const const_buffers &);
 	size_t write_any(socket &, const const_buffer &);
 
 	// Yields your ircd::ctx until at least some bytes have been written;
 	// advise one uses a timeout when calling.
-	size_t write_few(socket &, const vector_view<const const_buffer> &);
+	size_t write_few(socket &, const const_buffers &);
 	size_t write_few(socket &, const const_buffer &);
 
 	// Yields your ircd::ctx until all bytes have been written;
 	// advise one uses a timeout in conjunction to prevent DoS.
-	size_t write_all(socket &, const vector_view<const const_buffer> &);
+	size_t write_all(socket &, const const_buffers &);
 	size_t write_all(socket &, const const_buffer &);
 
 	// Alias to write_all();
-	size_t write(socket &, const vector_view<const const_buffer> &);
+	size_t write(socket &, const const_buffers &);
 	size_t write(socket &, const const_buffer &);
 
 	// Toggles nodelay to force a transmission.
@@ -52,7 +54,7 @@ ircd::net::write(socket &socket,
 /// Alias to write_all();
 inline size_t
 ircd::net::write(socket &socket,
-                 const vector_view<const const_buffer> &buffers)
+                 const const_buffers &buffers)
 {
 	return write_all(socket, buffers);
 }
