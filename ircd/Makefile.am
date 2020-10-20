@@ -176,6 +176,7 @@ libircd_la_SOURCES += mods.cc
 if LINUX
 libircd_la_SOURCES += mods_ldso.cc
 endif
+libircd_la_SOURCES += exec.cc
 if MAGIC
 libircd_la_SOURCES += magic.cc
 endif
@@ -234,6 +235,7 @@ db_fixes.lo:          AM_CPPFLAGS += -isystem $(top_srcdir)/deps/rocksdb/include
 db_fixes.lo:          AM_CPPFLAGS += -isystem $(top_srcdir)/deps/rocksdb
 db_port.lo:           AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 exception.lo:         AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+exec.lo:              AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 fmt.lo:               AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 fmt.lo:               AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
 fs.lo:                AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}

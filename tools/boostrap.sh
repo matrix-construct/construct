@@ -168,6 +168,7 @@ run git submodule update --init --recursive --checkout libs/coroutine
 ## of libs/context...
 run git submodule update --init --recursive --checkout libs/context
 run git submodule update --init --recursive --checkout libs/thread
+run git submodule update --init --recursive --checkout libs/process
 run git submodule update --init --recursive --checkout libs/chrono
 run git submodule update --init --recursive --checkout libs/atomic
 run git submodule update --init --recursive --checkout libs/ratio

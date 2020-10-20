@@ -95,6 +95,7 @@
 #include "fs/fs.h"
 #include "ios.h"
 #include "ctx/ctx.h"
+#include "exec.h"
 #include "db/db.h"
 #include "js.h"
 #include "mods/mods.h"
