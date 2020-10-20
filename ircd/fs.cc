@@ -515,6 +515,17 @@ catch(const filesystem::filesystem_error &e)
 }
 
 bool
+ircd::fs::is_exec(const string_view &path)
+try
+{
+	return filesystem::status(_path(path)).permissions() & filesystem::owner_exe;
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
+
+bool
 ircd::fs::is_reg(const string_view &path)
 try
 {

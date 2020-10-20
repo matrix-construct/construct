@@ -64,6 +64,7 @@ namespace ircd::fs
 	bool exists(const string_view &path);
 	bool is_dir(const string_view &path);
 	bool is_reg(const string_view &path);
+	bool is_exec(const string_view &path);
 	size_t size(const string_view &path);
 	std::vector<std::string> ls(const string_view &path);
 	std::vector<std::string> ls_r(const string_view &path);
