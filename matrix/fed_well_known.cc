@@ -249,7 +249,13 @@ try
 	// req->target is a copy in the request struct so the caller can disappear.
 	req->target = string_view
 	{
-		req->tgtbuf, copy(req->tgtbuf, target)
+		req->tgtbuf[0], copy(req->tgtbuf[0], target)
+	};
+
+	// req->m_server is a copy in the request struct so the caller can disappear.
+	req->m_server = string_view
+	{
+		req->tgtbuf[1], copy(req->tgtbuf[1], cached)
 	};
 
 	// but req->out is not safe once the caller destroys their future, which
@@ -259,7 +265,6 @@ try
 
 	// all other properties are independent of the caller
 	req->opts = opts;
-	req->m_server = cached;
 	req->expires = expires;
 	req->uri.path = request::path;
 	req->uri.remote = req->target;
@@ -430,7 +435,7 @@ try
 			});
 	}};
 
-	if(json::valid(req.response, std::nothrow))
+	if(req.code == 200 && json::valid(req.response, std::nothrow))
 		result = req.response["m.server"];
 
 	if(!result)
@@ -439,20 +444,20 @@ try
 	if(!result)
 		result = req.target;
 
+	if(result != req.target)
+		log::debug
+		{
+			log, "query to %s for %s resolved delegation to %s",
+			req.uri.remote,
+			req.target,
+			result,
+		};
+
 	// This construction validates we didn't get a junk string
 	volatile const net::hostport ret
 	{
 		result
 	};
-
-	if(result != req.target)
-		log::debug
-		{
-			log, "query to %s for %s found delegation to %s",
-			req.uri.remote,
-			req.target,
-			result,
-		};
 
 	const bool cache_expired
 	{

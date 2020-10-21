@@ -78,6 +78,6 @@ struct ircd::m::fed::well_known::request
 	size_t redirects {0};
 	json::object response;
 	json::string m_server;
-	char tgtbuf[rfc3986::REMOTE_BUFSIZE];
+	char tgtbuf[2][rfc3986::REMOTE_BUFSIZE];
 	char buf[15_KiB];
 };
