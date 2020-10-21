@@ -34,6 +34,7 @@ namespace boost::process
 struct ircd::exec
 :instance_list<ircd::exec>
 {
+	struct opts;
 	using args = vector_view<const string_view>;
 	using const_buffers = vector_view<const const_buffer>;
 	using mutable_buffers = vector_view<const mutable_buffer>;
@@ -42,6 +43,7 @@ struct ircd::exec
 	static uint64_t id_ctr;
 
 	uint64_t id {0};
+	std::unique_ptr<opts> opt;
 	std::string path;
 	std::vector<std::string> argv;
 	std::unique_ptr<pair<boost::process::async_pipe>> pipe;
@@ -55,6 +57,7 @@ struct ircd::exec
 	bool signal(const int &sig);
 	long join(const int &sig = 0);
 
+	exec(const args &, const opts &);
 	exec(const args &);
 	exec(exec &&) = delete;
 	exec(const exec &) = delete;
@@ -62,6 +65,29 @@ struct ircd::exec
 	exec &operator=(const exec &) = delete;
 	~exec() noexcept;
 };
+
+/// Exec options
+///
+struct ircd::exec::opts
+{
+	/// When false (default) the child is terminated by the dtor of
+	/// ircd::exec. Note setting this to true does not detach the boost
+	/// handles until destruction time; it also does not affect calling
+	/// the interface join() manually.
+	bool detach {false};
+
+	/// Child executions will be logged at this level (use DEBUG to quiet)
+	ircd::log::level exec_log_level = ircd::log::level::NOTICE;
+
+	/// Child exits will be logged at this level (use DEBUG to quiet); note
+	/// non-zero exits are still logged with level::ERROR.
+	ircd::log::level exit_log_level = ircd::log::level::INFO;
+};
+
+inline
+ircd::exec::exec(const args &args)
+:exec{args, opts{}}
+{}
 
 inline ircd::const_buffer
 ircd::write(exec &p,

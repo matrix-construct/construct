@@ -30,10 +30,15 @@ ircd::util::instance_list<ircd::exec>::list
 	allocator
 };
 
-ircd::exec::exec(const args &args)
+ircd::exec::exec(const args &args,
+                 const opts &opt)
 :id
 {
 	++id_ctr
+}
+,opt
+{
+	std::make_unique<opts>(opt)
 }
 ,path
 (
@@ -66,9 +71,10 @@ ircd::exec::exec(const args &args)
 	child->id()
 }
 {
-	log::notice
+	log::logf
 	{
-		log, "id:%lu pid:%ld `%s' exec argc:%zu",
+		log, this->opt->exec_log_level,
+		"id:%lu pid:%ld `%s' exec argc:%zu",
 		id,
 		pid,
 		path,
@@ -79,6 +85,10 @@ ircd::exec::exec(const args &args)
 ircd::exec::~exec()
 noexcept try
 {
+	assert(opt);
+	if(opt->detach)
+		return;
+
 	join(SIGKILL);
 }
 catch(const std::exception &e)
@@ -126,10 +136,11 @@ try
 	assert(!child->running());
 	code = child->exit_code();
 
+	assert(opt);
 	const auto &level
 	{
 		code == 0?
-			log::level::INFO:
+			opt->exit_log_level:
 			log::level::ERROR
 	};
 
