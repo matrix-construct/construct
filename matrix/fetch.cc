@@ -584,8 +584,22 @@ ircd::m::fetch::select_random_origin(request &request)
 		return true;
 	}};
 
+	// Select a random server in the room
 	request.origin = {};
 	origins.random(closure, proffer);
+
+	// If nothing found attempt hosts from mxids
+	if(!request.origin)
+	{
+		const auto room_id_host
+		{
+			request.opts.room_id.host()
+		};
+
+		if(room_id_host && proffer(room_id_host))
+			select_origin(request, room_id_host);
+	}
+
 	return request.origin;
 }
 
