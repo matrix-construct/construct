@@ -89,6 +89,7 @@ namespace ircd
 #include "visible.h"
 #include "redacted.h"
 #include "feds.h"
+#include "app.h"
 #include "bridge.h"
 #include "sync/sync.h"
 #include "fetch.h"

@@ -136,6 +136,7 @@ libircd_matrix_la_SOURCES += user_room_tags.cc
 libircd_matrix_la_SOURCES += user_rooms.cc
 libircd_matrix_la_SOURCES += user_tokens.cc
 libircd_matrix_la_SOURCES += acquire.cc
+libircd_matrix_la_SOURCES += app.cc
 libircd_matrix_la_SOURCES += bridge.cc
 libircd_matrix_la_SOURCES += breadcrumbs.cc
 libircd_matrix_la_SOURCES += burst.cc

@@ -280,6 +280,9 @@ try
 			m::keys::cache::set(key->verify_keys);
 
 	if(!ircd::maintenance)
+		m::app::init();
+
+	if(!ircd::maintenance)
 		signon(*this);
 
 	if(!ircd::maintenance && opts->backfill)
@@ -317,6 +320,7 @@ noexcept try
 	mods::imports.erase("net_dns_cache"s);
 	_fetch.reset(nullptr);
 	_vm.reset(nullptr);
+	m::app::fini();
 }
 catch(const std::exception &e)
 {

@@ -16270,3 +16270,93 @@ console_cmd__exec(opt &out, const string_view &line)
 	out << in << std::endl;
 	return true;
 }
+
+//
+// app
+//
+
+bool
+console_cmd__app(opt &out, const string_view &line)
+{
+	for(const auto *const &app : ircd::m::app::list)
+		out
+		<< " " << std::right << std::setw(5) << app->child.id
+		<< " " << std::right << std::setw(5) << app->child.code
+		<< " " << std::right << std::setw(10) << app->child.pid
+		<< " " << std::left << std::setw(40) << string_view{m::room_id(app->event_idx)}
+		<< " " << std::left << std::setw(40) << string_view{m::event_id(app->event_idx)}
+		<< " :" << app->argv.at(0)
+		<< std::endl;
+
+	return true;
+}
+
+bool
+console_cmd__app__start(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "name"
+	}};
+
+	const auto room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const auto name
+	{
+		param.at("name")
+	};
+
+	const auto event_idx
+	{
+		m::room(room_id).get("ircd.app", name)
+	};
+
+	std::unique_ptr<m::app> app
+	{
+		std::make_unique<m::app>(event_idx)
+	};
+
+	out << "Started PID " << app->child.pid << "..." << std::endl;
+	app.release();
+	return true;
+}
+
+bool
+console_cmd__app__stop(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "name"
+	}};
+
+	const auto room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const auto name
+	{
+		param["name"]
+	};
+
+	const auto event_idx
+	{
+		m::valid(m::id::EVENT, param.at("room_id"))?
+			m::index(param.at("room_id")):
+			m::room(room_id).get("ircd.app", name)
+	};
+
+	for(auto *const &app : m::app::list)
+		if(app->event_idx == event_idx)
+		{
+			out << "Stopped PID " << app->child.pid << "..." << std::endl;
+			delete app;
+			return true;
+		}
+
+	out << "not found." << std::endl;
+	return true;
+}
