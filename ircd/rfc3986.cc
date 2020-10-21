@@ -448,9 +448,9 @@ ircd::rfc3986::decoder
 		// unreserved characters and !$+*'(),
 		//char_("A-Za-z0-9._~!$+*'(),-")
 
-		//NOTE: allow any printable character here. No reason for trouble with
+		//NOTE: allow any non-control character here. No reason for trouble with
 		//NOTE: already-decoded inputs unless some other grammar expects it.
-		ascii::print - '%'
+		(~ascii::cntrl) - '%'
 		,"url unreserved characters"
 	};
 
