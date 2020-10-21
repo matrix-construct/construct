@@ -439,7 +439,7 @@ ircd::rfc3986::decoder
 
 	const rule<char()> decode_char
 	{
-		lit('%') > qi::uint_parser<char, 16, 2, 2>{}
+		lit('%') > qi::uint_parser<unsigned char, 16, 2, 2>{}
 		,"url decodable character"
 	};
 
@@ -470,7 +470,7 @@ ircd::rfc3986::decoder
 	:decoder::base_type{decode_safe}
 	{
 		//TODO: XXX this never reports failure to throw; it just stops parsing
-		decode_safe %= *(unreserved_char | decode_char[_pass = (local::_1 > 0x1F)]);
+		decode_safe %= *(unreserved_char | decode_char[_pass = ((local::_1 > 0x1F) | (local::_1 < 0x00))]);
 	}
 }
 const ircd::rfc3986::decoder;
