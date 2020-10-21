@@ -1175,7 +1175,7 @@ const
 	{
 		karma::rule<char *, string_view> string
 		{
-			*(karma::print)
+			*(~ascii::cntrl)
 			,"string"
 		};
 
