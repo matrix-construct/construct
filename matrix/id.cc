@@ -57,9 +57,16 @@ struct __attribute__((visibility("hidden"))) ircd::m::id::input
 	};
 
 	// character of a non-historical user_id localpart
-	const rule<> user_id_char
+	const rule<> non_historical_user_id_char
 	{
 		char_('\x21', '\x39') | char_('\x3B', '\x7E')
+		,"user_id character"
+	};
+
+	// character of a non-historical'ish user_id localpart
+	const rule<> user_id_char
+	{
+		char_('\x21', '\x39') | char_('\x3B', '\x7E') | char_('\x80', '\xFF')
 		,"user_id character"
 	};
 
