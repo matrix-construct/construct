@@ -89,7 +89,7 @@ noexcept try
 	if(opt->detach)
 		return;
 
-	join(SIGKILL);
+	join(SIGTERM);
 }
 catch(const std::exception &e)
 {
@@ -172,6 +172,7 @@ catch(const std::exception &e)
 
 bool
 ircd::exec::signal(const int &sig)
+try
 {
 	if(!child)
 		return false;
@@ -192,9 +193,30 @@ ircd::exec::signal(const int &sig)
 	};
 
 	if(kill)
+	{
 		child->terminate();
+		return true;
+	}
 
-	return true;
+	#if defined(HAVE_SIGNAL_H)
+		syscall(::kill, pid, sig);
+		return true;
+	#else
+		return false;
+	#endif
+}
+catch(const std::system_error &e)
+{
+	log::error
+	{
+		log, "id:%lu pid:%ld `%s' signal :%s",
+		id,
+		pid,
+		path,
+		e.what(),
+	};
+
+	return false;
 }
 
 size_t
