@@ -104,34 +104,19 @@ long
 ircd::exec::join(const int &sig)
 try
 {
-	if(!child)
+	if(!signal(sig))
 		return code;
 
-	if(!child->valid())
-		return code;
-
-	if(!child->running())
-		return code;
-
-	// when milliseconds=0 this branch appears to be taken too much
-	if(!child->wait_for(milliseconds(10)))
+	log::dwarning
 	{
-		const bool signaled
-		{
-			signal(sig)
-		};
+		log, "id:%lu pid:%ld `%s' signal:%d waiting for exit...",
+		id,
+		pid,
+		path,
+		sig,
+	};
 
-		log::dwarning
-		{
-			log, "id:%lu pid:%ld `%s' signal:%d waiting for exit...",
-			id,
-			pid,
-			path,
-			sig,
-		};
-
-		child->wait();
-	}
+	child->wait();
 
 	assert(!child->running());
 	code = child->exit_code();
@@ -172,7 +157,6 @@ catch(const std::exception &e)
 
 bool
 ircd::exec::signal(const int &sig)
-try
 {
 	if(!child)
 		return false;
@@ -199,24 +183,11 @@ try
 	}
 
 	#if defined(HAVE_SIGNAL_H)
+	if(sig)
 		syscall(::kill, pid, sig);
-		return true;
-	#else
-		return false;
 	#endif
-}
-catch(const std::system_error &e)
-{
-	log::error
-	{
-		log, "id:%lu pid:%ld `%s' signal :%s",
-		id,
-		pid,
-		path,
-		e.what(),
-	};
 
-	return false;
+	return true;
 }
 
 size_t
