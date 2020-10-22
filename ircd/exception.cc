@@ -104,7 +104,7 @@ ircd::string(const mutable_buffer &buf,
 {
 	return fmt::sprintf
 	{
-		buf, "%s: %s", ec.category().name(), ec.message()
+		buf, "%s :%s", ec.category().name(), ec.message()
 	};
 }
 
