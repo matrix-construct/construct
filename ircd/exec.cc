@@ -338,6 +338,16 @@ const noexcept
 		e->path,
 	};
 	#endif
+
+	// Ignore SIGINT/SIGQUIT that way the administrator striking ctrl-c or
+	// ctrl-\ at the console doesn't terminate the child.
+	#if defined(HAVE_SIGNAL_H)
+	sigset_t ours;
+	sys::call(sigemptyset, &ours);
+	sys::call(sigaddset, &ours, SIGINT);
+	sys::call(sigaddset, &ours, SIGQUIT);
+	sys::call(sigprocmask, SIG_BLOCK, &ours, nullptr);
+	#endif
 }
 
 template<class executor>
