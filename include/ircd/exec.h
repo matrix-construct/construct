@@ -35,6 +35,7 @@ struct ircd::exec
 :instance_list<ircd::exec>
 {
 	struct opts;
+	struct handler;
 	using args = vector_view<const string_view>;
 	using const_buffers = vector_view<const const_buffer>;
 	using mutable_buffers = vector_view<const mutable_buffer>;
@@ -48,14 +49,17 @@ struct ircd::exec
 	std::vector<std::string> argv;
 	std::unique_ptr<pair<boost::process::async_pipe>> pipe;
 	std::unique_ptr<boost::process::child> child;
-	long pid {0};  // set on spawn
-	long code {0}; // set on exit
+	std::exception_ptr eptr;
+	ctx::dock dock;
+	long pid {-1L};            // > 0 when running; <= 0 during exec/halt
+	long code {0};             // set on exit
 
   public:
 	size_t read(const mutable_buffers &);
 	size_t write(const const_buffers &);
 	bool signal(const int &sig);
-	long join(const int &sig = 0);
+	long join(const int &sig = 0);  // returns exit code
+	long run();                     // returns pid or throws
 
 	exec(const args &, const opts &);
 	exec(const args &);
@@ -70,12 +74,6 @@ struct ircd::exec
 ///
 struct ircd::exec::opts
 {
-	/// When false (default) the child is terminated by the dtor of
-	/// ircd::exec. Note setting this to true does not detach the boost
-	/// handles until destruction time; it also does not affect calling
-	/// the interface join() manually.
-	bool detach {false};
-
 	/// Child executions will be logged at this level (use DEBUG to quiet)
 	ircd::log::level exec_log_level = ircd::log::level::NOTICE;
 

@@ -16257,6 +16257,11 @@ console_cmd__exec(opt &out, const string_view &line)
 		{ argv, argc }
 	};
 
+	const auto pid
+	{
+		p.run()
+	};
+
 	unique_mutable_buffer buf
 	{
 		4_KiB, 4_KiB

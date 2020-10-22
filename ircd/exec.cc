@@ -9,6 +9,30 @@
 // full license for this software is available in the LICENSE file.
 
 #include <boost/process.hpp>
+#include <boost/process/extend.hpp>
+
+struct ircd::exec::handler
+:boost::process::extend::async_handler
+{
+	exec *e {nullptr};
+
+	template<class executor> void on_fork_error(executor &, const std::error_code &) const noexcept;
+	template<class executor> void on_exec_error(executor &, const std::error_code &) const noexcept;
+	template<class executor> void on_error(executor&, const std::error_code &) noexcept;
+
+	static void handle_exit(exec &, int, const std::error_code &) noexcept;
+
+	template<class executor> void on_success(executor &) const noexcept;
+	template<class executor> void on_exec_setup(executor &) const noexcept;
+	template<class executor> void on_setup(executor &) noexcept;
+
+	template<class executor>
+	std::function<void (int, const std::error_code &)>
+	on_exit_handler(executor &) const noexcept;
+
+	handler(exec *const &);
+	~handler() noexcept;
+};
 
 decltype(ircd::exec::log)
 ircd::exec::log
@@ -32,11 +56,7 @@ ircd::util::instance_list<ircd::exec>::list
 
 ircd::exec::exec(const args &args,
                  const opts &opt)
-:id
-{
-	++id_ctr
-}
-,opt
+:opt
 {
 	std::make_unique<opts>(opt)
 }
@@ -56,40 +76,17 @@ ircd::exec::exec(const args &args,
 		static_cast<asio::io_context &>(ios::main.context())
 	)
 }
-,child
 {
-	std::make_unique<boost::process::child>
-	(
-		fs::_path(path),
-		argv,
-		(boost::process::std_in) = pipe->first,
-		(boost::process::std_out & boost::process::std_err) = pipe->second
-	)
-}
-,pid
-{
-	child->id()
-}
-{
-	log::logf
-	{
-		log, this->opt->exec_log_level,
-		"id:%lu pid:%ld `%s' exec argc:%zu",
-		id,
-		pid,
-		path,
-		argv.size(),
-	};
 }
 
 ircd::exec::~exec()
 noexcept try
 {
-	assert(opt);
-	if(opt->detach)
-		return;
-
-	join(SIGTERM);
+	join(SIGKILL);
+	dock.wait([this]
+	{
+		return this->pid <= 0;
+	});
 }
 catch(const std::exception &e)
 {
@@ -98,6 +95,41 @@ catch(const std::exception &e)
 		log, "unhandled :%s",
 		e.what(),
 	};
+}
+
+long
+ircd::exec::run()
+try
+{
+	assert(pid <= 0);
+	assert(!child);
+
+	eptr = {};
+	child = std::make_unique<boost::process::child>
+	(
+		fs::_path(path),
+		argv,
+		(boost::process::std_in) = pipe->first,
+		(boost::process::std_out & boost::process::std_err) = pipe->second,
+		handler{this},
+		static_cast<asio::io_context &>(ios::main.context())
+	);
+
+	return pid;
+}
+catch(const std::system_error &e)
+{
+	eptr = std::current_exception();
+	log::error
+	{
+		log, "id:%lu pid:%ld `%s' :%s",
+		id,
+		pid,
+		path,
+		e.what(),
+	};
+
+	throw;
 }
 
 long
@@ -117,28 +149,7 @@ try
 	};
 
 	child->wait();
-
 	assert(!child->running());
-	code = child->exit_code();
-
-	assert(opt);
-	const auto &level
-	{
-		code == 0?
-			opt->exit_log_level:
-			log::level::ERROR
-	};
-
-	log::logf
-	{
-		log, level,
-		"id:%lu pid:%ld `%s' exit (%ld)",
-		id,
-		pid,
-		path,
-		code,
-	};
-
 	return code;
 }
 catch(const std::exception &e)
@@ -158,6 +169,9 @@ catch(const std::exception &e)
 bool
 ircd::exec::signal(const int &sig)
 {
+	if(pid <= 0)
+		return false;
+
 	if(!child)
 		return false;
 
@@ -194,7 +208,6 @@ size_t
 ircd::exec::write(const const_buffers &bufs)
 {
 	assert(pipe);
-	assert(child);
 	auto &pipe
 	{
 		this->pipe->first
@@ -225,7 +238,6 @@ size_t
 ircd::exec::read(const mutable_buffers &bufs)
 {
 	assert(pipe);
-	assert(child);
 	auto &pipe
 	{
 		this->pipe->second
@@ -262,4 +274,205 @@ ircd::exec::read(const mutable_buffers &bufs)
 
 	assert(ret);
 	return ret;
+}
+
+//
+// exec::handler
+//
+
+ircd::exec::handler::handler(exec *const &e)
+:e{e}
+{
+}
+
+ircd::exec::handler::~handler()
+noexcept
+{
+}
+
+template<class executor>
+std::function<void (int, const std::error_code &)>
+ircd::exec::handler::on_exit_handler(executor &ex)
+const noexcept
+{
+	return std::bind(&handler::handle_exit, std::ref(*this->e), ph::_1, ph::_2);
+}
+
+template<class executor>
+void
+ircd::exec::handler::on_setup(executor &ex)
+noexcept
+{
+	assert(e);
+
+	size_t argc(0), envc(0);
+	for(auto p(ex.env); p && *p; ++p, ++envc);
+	for(auto p(ex.cmd_line); p && *p; ++p, ++argc);
+
+	log::logf
+	{
+		log, log::level::DEBUG,
+		"id:%lu pid:%ld `%s' start; argc:%zu envc:%zu",
+		e->id,
+		ex.pid,
+		ex.exe,
+		argc,
+		envc,
+	};
+}
+
+template<class executor>
+void
+ircd::exec::handler::on_exec_setup(executor &ex)
+const noexcept
+{
+	#if 0 // outputs from child; don't want
+	assert(e);
+
+	log::logf
+	{
+		log, log::level::DEBUG,
+		"id:%lu pid:%ld `%s' executing...",
+		e->id,
+		e->pid,
+		e->path,
+	};
+	#endif
+}
+
+template<class executor>
+void
+ircd::exec::handler::on_success(executor &ex)
+const noexcept
+{
+	assert(e);
+
+	e->pid = ex.pid;
+	e->dock.notify_all();
+	if(ex.pid < 0)
+		return;
+
+	const auto &level
+	{
+		e->opt->exec_log_level
+	};
+
+	log::logf
+	{
+		log, level,
+		"id:%lu pid:%ld `%s' spawned...",
+		e->id,
+		e->pid,
+		e->path,
+	};
+}
+
+void
+ircd::exec::handler::handle_exit(exec &e,
+                                 int code,
+                                 const std::error_code &ec)
+noexcept
+{
+	const unwind _{[&]
+	{
+		e.pid = 0;
+		e.code = code;
+		e.dock.notify_all();
+	}};
+
+	if(unlikely(ec))
+	{
+		char ecbuf[64];
+		log::error
+		{
+			log, "id:%lu pid:%ld `%s' exit #%ld :%s",
+			e.id,
+			e.pid,
+			e.path,
+			ec.value(),
+			string(ecbuf, ec),
+		};
+
+		return;
+	}
+
+	const auto &level
+	{
+		code == 0?
+			e.opt->exit_log_level:
+			log::level::ERROR
+	};
+
+	log::logf
+	{
+		log, level,
+		"id:%lu pid:%ld `%s' exit (%ld)",
+		e.id,
+		e.pid,
+		e.path,
+		code,
+	};
+}
+
+template<class executor>
+void
+ircd::exec::handler::on_error(executor &ex,
+                              const std::error_code &ec)
+noexcept
+{
+	assert(e);
+
+	char ecbuf[64];
+	log::critical
+	{
+		log, "id:%lu pid:%ld `%s' fail #%ld :%s",
+		e->id,
+		e->pid,
+		e->path,
+		e->code,
+		ec.value(),
+		string(ecbuf, ec),
+	};
+}
+
+template<class executor>
+void
+ircd::exec::handler::on_exec_error(executor &ex,
+                                   const std::error_code &ec)
+const noexcept
+{
+	#if 0 // outputs from child; don't want
+	assert(e);
+
+	char ecbuf[64];
+	log::error
+	{
+		log, "id:%lu pid:%ld `%s' exec() #%ld :%s",
+		e->id,
+		e->pid,
+		e->path,
+		ec.value(),
+		string(ecbuf, ec),
+	};
+	#endif
+}
+
+template<class executor>
+void
+ircd::exec::handler::on_fork_error(executor &ex,
+                                   const std::error_code &ec)
+const noexcept
+{
+	assert(e);
+
+	char ecbuf[64];
+	log::critical
+	{
+		log, "id:%lu pid:%ld `%s' fork() #%ld :%s",
+		e->id,
+		e->pid,
+		e->path,
+		ec.value(),
+		string(ecbuf, ec),
+	};
 }
