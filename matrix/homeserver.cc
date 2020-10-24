@@ -934,7 +934,7 @@ noexcept
 
 	// Since my host is on the canonical port, if other host has some
 	// different port number, there is no possible match.
-	if(port(b) != m::canon_port)
+	if(port(b) && port(b) != m::canon_port)
 		return false;
 
 	// Both myself and input are using 8448; now the name has to match.

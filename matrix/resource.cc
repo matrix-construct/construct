@@ -340,7 +340,7 @@ try
 			"Required X-Matrix Authorization was not supplied"
 		};
 
-	if(x_matrix_verify_destination && !m::my_host(request.head.host))
+	if(x_matrix_verify_destination && !m::self::host(request.head.host))
 		throw m::error
 		{
 			http::UNAUTHORIZED, "M_NOT_MY_HOST",
@@ -351,7 +351,7 @@ try
 	const m::request object
 	{
 		request.x_matrix.origin,
-		request.head.host,
+		rstrip(request.head.host, ":8448"),
 		method.name,
 		request.head.uri,
 		request.content
