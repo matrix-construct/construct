@@ -586,7 +586,7 @@ command__ping(const mutable_buffer &buf,
 
 	const auto time
 	{
-		timer.at<nanoseconds>()
+		timer.at<milliseconds>()
 	};
 
 	static const string_view
@@ -676,6 +676,7 @@ command__ping__room(const mutable_buffer &buf,
 		bg{result.eptr? offline_bg : online_bg},
 		status{result.eptr? "FAILED " : "ONLINE"};
 
+		assert(result.origin);
 		out
 		    << " <font color=\"" << fg << "\" data-mx-bg-color=\"" << bg << "\">"
 		    << " <b>"
@@ -689,7 +690,7 @@ command__ping__room(const mutable_buffer &buf,
 
 		if(!result.eptr)
 			out << " <b>"
-			    << pretty(tmbuf, timer.at<nanoseconds>())
+			    << pretty(tmbuf, timer.at<milliseconds>())
 			    << " </b>"
 			    << " application layer round-trip time."
 			    << "<br />";
@@ -712,7 +713,7 @@ command__ping__room(const mutable_buffer &buf,
 	{
 		buf + size(rich), "%zu responses in %s",
 		responses,
-		pretty(tmbuf, timer.at<nanoseconds>())
+		pretty(tmbuf, timer.at<milliseconds>())
 	}};
 
 	return { view(out, buf), alt };
