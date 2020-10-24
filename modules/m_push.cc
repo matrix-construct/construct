@@ -222,25 +222,29 @@ try
 	if(!notifying(rule))
 		return;
 
-	// We send highlight notifications through the user's room
-	if(highlighting(rule))
-	{
-		char type_buf[event::TYPE_MAX_SIZE];
-		user::notifications::opts opts;
-		opts.only = "highlight";
-		opts.room_id = eval.room_id;
-		const auto &type
-		{
-			user::notifications::make_type(type_buf, opts)
-		};
+	user::notifications::opts opts;
+	opts.room_id = eval.room_id;
+	opts.only =
+		highlighting(rule)?
+			"highlight"_sv:
+			string_view{};
 
-		const user::room user_room{user_id};
-		send(user_room, at<"sender"_>(event), type, json::members
-		{
-			{ "event_idx",  long(eval.sequence)  },
-			{ "rule_idx",   long(rule_idx)       },
-		});
-	}
+	char type_buf[event::TYPE_MAX_SIZE];
+	const auto &type
+	{
+		user::notifications::make_type(type_buf, opts)
+	};
+
+	const user::room user_room
+	{
+		user_id
+	};
+
+	send(user_room, at<"sender"_>(event), type, json::members
+	{
+		{ "event_idx",  long(eval.sequence)  },
+		{ "rule_idx",   long(rule_idx)       },
+	});
 }
 catch(const ctx::interrupted &)
 {
