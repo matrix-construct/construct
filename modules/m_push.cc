@@ -244,6 +244,7 @@ try
 	{
 		{ "event_idx",  long(eval.sequence)  },
 		{ "rule_idx",   long(rule_idx)       },
+		{ "user_id",    user_id              },
 	});
 }
 catch(const ctx::interrupted &)

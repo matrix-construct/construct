@@ -70,6 +70,7 @@ ircd::m::matrix::module_names
 	"m_presence",
 	"m_profile",
 	"m_push",
+	"m_pusher",
 	"m_receipt",
 	"m_relation",
 	"m_room_aliases",

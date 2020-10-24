@@ -89,6 +89,7 @@ m_noop_la_SOURCES = m_noop.cc
 m_presence_la_SOURCES = m_presence.cc
 m_profile_la_SOURCES = m_profile.cc
 m_push_la_SOURCES = m_push.cc
+m_pusher_la_SOURCES = m_pusher.cc
 m_receipt_la_SOURCES = m_receipt.cc
 m_relation_la_SOURCES = m_relation.cc
 m_room_aliases_la_SOURCES = m_room_aliases.cc
@@ -119,6 +120,7 @@ m_module_LTLIBRARIES = \
 	m_presence.la \
 	m_profile.la \
 	m_push.la \
+	m_pusher.la \
 	m_receipt.la \
 	m_relation.la \
 	m_room_aliases.la \
