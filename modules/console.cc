@@ -16284,17 +16284,28 @@ console_cmd__exec(opt &out, const string_view &line)
 bool
 console_cmd__app(opt &out, const string_view &line)
 {
+	out
+	<< " " << std::right << std::setw(5) << "ID"
+	<< " " << std::right << std::setw(10) << "EVENTID"
+	<< " " << std::right << std::setw(8) << "PID"
+	<< " " << std::right << std::setw(6) << "EXIT"
+	<< " " << std::left << std::setw(40) << "ROOM"
+	<< " " << "PATH"
+	<< std::endl;
+
 	for(const auto *const &app : ircd::m::app::list)
 	{
-		const auto room_id(m::room_id(app->event_idx));
-		const auto event_id(m::event_id(app->event_idx));
+		const auto room_id
+		{
+			m::room_id(app->event_idx)
+		};
 
 		out
 		<< " " << std::right << std::setw(5) << app->child.id
-		<< " " << std::right << std::setw(5) << app->child.code
-		<< " " << std::right << std::setw(10) << app->child.pid
+		<< " " << std::right << std::setw(10) << app->event_idx
+		<< " " << std::right << std::setw(8) << app->child.pid
+		<< " " << std::right << std::setw(6) << app->child.code
 		<< " " << std::left << std::setw(40) << room_id
-		<< " " << std::left << std::setw(40) << event_id
 		<< " `" << app->argv.at(0) << "'"
 		;
 
