@@ -49,8 +49,15 @@ method_post
 conf::item<ssize_t>
 max_limit
 {
-	{ "name",     "ircd.federation.missing_events.max_limit" },
-	{ "default",  128L                                       }
+	{ "name",     "ircd.federation.missing_events.limit.max" },
+	{ "default",  256L                                       },
+};
+
+conf::item<ssize_t>
+min_limit
+{
+	{ "name",     "ircd.federation.missing_events.limit.min" },
+	{ "default",  1L                                         },
 };
 
 conf::item<size_t>
@@ -83,9 +90,12 @@ get__missing_events(client &client,
 
 	ssize_t limit
 	{
-		request["limit"]?
-			std::min(lex_cast<ssize_t>(request["limit"]), ssize_t(max_limit)):
-			ssize_t(10) // default limit (protocol spec)
+		std::clamp
+		(
+			request.get("limit", 10L),  // protocol spec default
+			ssize_t(min_limit),
+			ssize_t(max_limit)
+		)
 	};
 
 	const auto min_depth
