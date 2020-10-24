@@ -115,12 +115,13 @@ get__missing_events(client &client,
 		request["latest_events"]
 	};
 
-	const auto in_earliest{[&earliest](const auto &event_id)
+	static const auto in_array{[]
+	(const json::array &array, const auto &event_id)
 	{
-		return end(earliest) != std::find_if(begin(earliest), end(earliest), [&event_id]
-		(const auto &event_id_)
+		return end(array) != std::find_if(begin(array), end(array), [&event_id]
+		(const json::string &_event_id)
 		{
-			return event_id == unquote(event_id_);
+			return event_id == _event_id;
 		});
 	}};
 
@@ -141,10 +142,10 @@ get__missing_events(client &client,
 	};
 
 	std::deque<std::string> queue;
-	const auto add_queue{[&limit, &queue, &in_earliest]
+	const auto add_queue{[&limit, &queue, &earliest]
 	(const m::event::id &event_id) -> bool
 	{
-		if(in_earliest(event_id))
+		if(in_array(earliest, event_id))
 			return true;
 
 		if(end(queue) != std::find(begin(queue), end(queue), event_id))
@@ -157,13 +158,17 @@ get__missing_events(client &client,
 		return true;
 	}};
 
-	for(const auto &event_id : latest)
-		add_queue(unquote(event_id));
+	for(const json::string &event_id : latest)
+		add_queue(event_id);
 
 	m::event::fetch event;
 	while(!queue.empty())
 	{
-		const auto &event_id{queue.front()};
+		const auto &event_id
+		{
+			queue.front()
+		};
+
 		const unwind pop{[&queue]
 		{
 			queue.pop_front();
