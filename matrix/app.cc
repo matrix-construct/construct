@@ -71,7 +71,10 @@ ircd::m::app::fini()
 	};
 
 	for(auto *const &app : apps)
+	{
+		app->child.join(15);
 		delete app;
+	}
 }
 
 //
@@ -95,10 +98,47 @@ ircd::m::app::app(const m::event::idx &event_idx)
 {
 	config.at("arg")
 }
-,argv
+,binpath{[&]
 {
-	std::begin(arg), std::end(arg)
-}
+	if(!path)
+		throw m::FORBIDDEN
+		{
+			"Configure the 'ircd.m.app.path' to permit."
+		};
+
+	const json::string file
+	{
+		arg.at(0)
+	};
+
+	string_view part[2];
+	part[0] = path;
+	part[1] = file;
+	const auto ret
+	{
+		fs::path_string(part)
+	};
+
+	if(!bin.count(ret))
+		throw m::NOT_FOUND
+		{
+			"Executable '%s' not found in bin directory at `%s'",
+			file,
+			string_view{path},
+		};
+
+	return ret;
+}()}
+,argv{[&]
+{
+	std::vector<json::string> ret
+	{
+		std::begin(arg), std::end(arg)
+	};
+
+	ret.at(0) = binpath;
+	return ret;
+}()}
 ,child
 {
 	argv
@@ -137,6 +177,11 @@ try
 		m::get(event_idx, "sender")
 	};
 
+	child.dock.wait([this]
+	{
+		return child.pid >= 0;
+	});
+
 	log::info
 	{
 		log, "app:%lu starting %s in %s for %s @ `%s' id:%lu pid:%ld",
@@ -150,22 +195,53 @@ try
 	};
 
 	char buf alignas(4096) [16_KiB];
-	for(run::barrier<ctx::interrupted>{};; )
+	for(run::barrier<ctx::interrupted>{};;)
 	{
+		window_buffer wb(buf);
+		wb([](const mutable_buffer &buf)
+		{
+			return copy(buf, "<pre>"_sv);
+		});
+
+		bool eof {false};
+		wb([this, &eof](const mutable_buffer &buf)
+		{
+			const auto ret(read(this->child, buf));
+			eof = empty(ret);
+			return ret;
+		});
+
+		wb([](const mutable_buffer &buf)
+		{
+			return copy(buf, "</pre>"_sv);
+		});
+
 		const string_view &output
 		{
-			read(child, buf)
+			wb.completed()
 		};
 
-		if(empty(output))
+		if(eof)
 		{
-			child.join();
+			log::debug
+			{
+				log, "app:%lu :end of file",
+				event_idx,
+			};
+
 			return;
 		}
 
+		const string_view alt
+		{
+			"no alt text"
+		};
+
 		const auto message_id
 		{
-			m::notice(room_id, user_id, output)
+			!ircd::write_avoid?
+				m::msghtml(room_id, user_id, output, alt, "m.notice"):
+				m::event::id::buf{}
 		};
 
 		log::debug
@@ -176,7 +252,7 @@ try
 			string_view{message_id},
 			string_view{room_id},
 			trunc(output, 64),
-			size(output) > 64? "..."_sv: ""_sv,
+			size(output) > 64? "...": "",
 		};
 	}
 }

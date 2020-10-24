@@ -279,8 +279,7 @@ try
 		if(key && !key->verify_keys.empty())
 			m::keys::cache::set(key->verify_keys);
 
-	if(!ircd::maintenance)
-		m::app::init();
+	m::app::init();
 
 	if(!ircd::maintenance)
 		signon(*this);

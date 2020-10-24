@@ -24,6 +24,7 @@ struct ircd::m::app
 	std::string feature;
 	json::object config;
 	json::array arg;
+	std::string binpath;
 	std::vector<json::string> argv;
 	exec child;
 	context worker_context;

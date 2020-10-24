@@ -16229,6 +16229,7 @@ console_cmd__exec__list(opt &out, const string_view &line)
 		<< " " << exec->id
 		<< " " << exec->pid
 		<< " " << exec->code
+		<< " " << exec->path
 		<< std::endl;
 
 	return true;
@@ -16284,20 +16285,30 @@ bool
 console_cmd__app(opt &out, const string_view &line)
 {
 	for(const auto *const &app : ircd::m::app::list)
+	{
+		const auto room_id(m::room_id(app->event_idx));
+		const auto event_id(m::event_id(app->event_idx));
+
 		out
 		<< " " << std::right << std::setw(5) << app->child.id
 		<< " " << std::right << std::setw(5) << app->child.code
 		<< " " << std::right << std::setw(10) << app->child.pid
-		<< " " << std::left << std::setw(40) << string_view{m::room_id(app->event_idx)}
-		<< " " << std::left << std::setw(40) << string_view{m::event_id(app->event_idx)}
-		<< " :" << app->argv.at(0)
-		<< std::endl;
+		<< " " << std::left << std::setw(40) << room_id
+		<< " " << std::left << std::setw(40) << event_id
+		<< " `" << app->argv.at(0) << "'"
+		;
+
+		if(app->child.eptr)
+			out << " :" << what(app->child.eptr);
+
+		out << std::endl;
+	}
 
 	return true;
 }
 
 bool
-console_cmd__app__start(opt &out, const string_view &line)
+console_cmd__app__load(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -16319,18 +16330,22 @@ console_cmd__app__start(opt &out, const string_view &line)
 		m::room(room_id).get("ircd.app", name)
 	};
 
-	std::unique_ptr<m::app> app
+	auto *const app
 	{
-		std::make_unique<m::app>(event_idx)
+		std::make_unique<m::app>(event_idx).release()
 	};
 
-	out << "Started PID " << app->child.pid << "..." << std::endl;
-	app.release();
+	const auto pid
+	{
+		app->child.run()
+	};
+
+	out << "Started PID " << pid << "..." << std::endl;
 	return true;
 }
 
 bool
-console_cmd__app__stop(opt &out, const string_view &line)
+console_cmd__app__unload(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -16358,6 +16373,7 @@ console_cmd__app__stop(opt &out, const string_view &line)
 		if(app->event_idx == event_idx)
 		{
 			out << "Stopped PID " << app->child.pid << "..." << std::endl;
+			app->child.join(15);
 			delete app;
 			return true;
 		}
