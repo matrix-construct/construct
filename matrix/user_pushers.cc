@@ -121,6 +121,49 @@ const
 }
 
 bool
+ircd::m::user::pushers::has(const string_view &key)
+const
+{
+	return !for_each([&key] // for_each() returns true if no match
+	(const event::idx &pusher_idx, const string_view &pushkey, const push::pusher &pusher)
+	{
+		return key != pushkey;
+	});
+}
+
+bool
+ircd::m::user::pushers::any(const string_view &kind)
+const
+{
+	return !for_each([&kind] // for_each() returns true if no match
+	(const event::idx &pusher_idx, const string_view &pushkey, const push::pusher &pusher)
+	{
+		if(!kind)
+			return false;
+
+		if(json::get<"kind"_>(pusher) == kind)
+			return false;
+
+		return true;
+	});
+}
+
+size_t
+ircd::m::user::pushers::count(const string_view &kind)
+const
+{
+	size_t ret{0};
+	for_each([&ret, &kind]
+	(const event::idx &pusher_idx, const string_view &pushkey, const push::pusher &pusher)
+	{
+		ret += !kind || json::get<"kind"_>(pusher) == kind;
+		return true;
+	});
+
+	return ret;
+}
+
+bool
 ircd::m::user::pushers::for_each(const closure_bool &closure)
 const
 {

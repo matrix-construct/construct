@@ -19,7 +19,13 @@ struct ircd::m::user::pushers
 	m::user user;
 
   public:
+
 	bool for_each(const closure_bool &) const;
+
+	size_t count(const string_view &kind = {}) const;
+	bool any(const string_view &kind = {}) const;
+	bool has(const string_view &key) const;
+
 	bool get(std::nothrow_t, const string_view &key, const closure &) const;
 	void get(const string_view &key, const closure &) const;
 	bool set(const json::object &value) const;
