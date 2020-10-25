@@ -27,6 +27,38 @@ ircd::m::push::rule::type_prefix
 };
 
 //
+// request
+//
+
+template<>
+decltype(ircd::util::instance_list<ircd::m::push::request>::allocator)
+ircd::util::instance_list<ircd::m::push::request>::allocator
+{};
+
+template<>
+decltype(ircd::util::instance_list<ircd::m::push::request>::list)
+ircd::util::instance_list<ircd::m::push::request>::list
+{
+	allocator
+};
+
+decltype(ircd::m::push::request::timeout)
+ircd::m::push::request::timeout
+{
+	{ "name",     "ircd.m.push.request.timeout" },
+	{ "default",  8L                            },
+};
+
+decltype(ircd::m::push::request::mutex)
+ircd::m::push::request::mutex;
+
+decltype(ircd::m::push::request::dock)
+ircd::m::push::request::dock;
+
+decltype(ircd::m::push::request::id_ctr)
+ircd::m::push::request::id_ctr;
+
+//
 // match
 //
 

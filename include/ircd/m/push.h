@@ -18,6 +18,7 @@ namespace ircd::m::push
 	struct rules;
 	struct pusher;
 	struct match;
+	struct request;
 
 	IRCD_M_EXCEPTION(m::error, error, http::INTERNAL_SERVER_ERROR)
 	IRCD_M_EXCEPTION(error, NOT_A_RULE, http::BAD_REQUEST)
@@ -33,6 +34,24 @@ namespace ircd::m::push
 
 	extern log::log log;
 }
+
+struct ircd::m::push::request
+:instance_list<ircd::m::push::request>
+{
+	static conf::item<seconds> timeout;
+	static ctx::mutex mutex;
+	static ctx::dock dock;
+	static uint64_t id_ctr;
+
+	uint64_t id {++id_ctr};
+	event::idx event_idx {0};
+	rfc3986::uri url;
+	json::object content;
+	server::request req;
+	http::code code {0};
+	json::object response;
+	char buf[15_KiB];
+};
 
 struct ircd::m::push::match
 :boolean
