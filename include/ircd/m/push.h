@@ -38,6 +38,7 @@ namespace ircd::m::push
 struct ircd::m::push::request
 :instance_list<ircd::m::push::request>
 {
+	static conf::item<bool> enable;
 	static conf::item<seconds> timeout;
 	static ctx::mutex mutex;
 	static ctx::dock dock;

@@ -42,6 +42,13 @@ ircd::util::instance_list<ircd::m::push::request>::list
 	allocator
 };
 
+decltype(ircd::m::push::request::enable)
+ircd::m::push::request::enable
+{
+	{ "name",     "ircd.m.push.request.enable" },
+	{ "default",  true                         },
+};
+
 decltype(ircd::m::push::request::timeout)
 ircd::m::push::request::timeout
 {

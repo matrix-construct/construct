@@ -185,6 +185,10 @@ ircd::m::push::handle_event(const m::event &event,
                             vm::eval &eval)
 try
 {
+	// Pushing disabled by configuration
+	if(!request::enable)
+		return;
+
 	// All pusher notifications are generated from internal rooms only
 	if(!eval.room_internal)
 		return;
