@@ -73,16 +73,33 @@ put__send(client &client,
 			transaction_id
 		};
 
+	const json::object content
+	{
+		request
+	};
+
+	static_assert(m::event::MAX_SIZE >= 1_KiB);
+	static const size_t content_max
+	{
+		m::event::MAX_SIZE - 1_KiB
+	};
+
+	// This is only a preliminary check that the content size is sane and
+	// will fit. There may still be a rejection at a deeper stage.
+	if(size(string_view(content)) > content_max)
+		throw m::error
+		{
+			http::PAYLOAD_TOO_LARGE, "M_TOO_LARGE",
+			"Message of %zu bytes exceeds maximum of %zu bytes.",
+			size(request.content),
+			content_max,
+		};
+
 	m::vm::copts copts;
 	copts.client_txnid = transaction_id;
 	const room room
 	{
 		room_id, &copts
-	};
-
-	const json::object &content
-	{
-		request
 	};
 
 	const bool cmd
