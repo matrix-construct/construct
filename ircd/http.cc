@@ -298,6 +298,16 @@ ircd::http::request::request(window_buffer &out,
 			};
 		});
 
+	// Note: pass your own user-agent with an empty value to mute this header.
+	if(!has(headers, "user-agent") && info::user_agent)
+		writeline(out, [](const mutable_buffer &out) -> size_t
+		{
+			return fmt::sprintf
+			{
+				out, "User-Agent: %s", info::user_agent
+			};
+		});
+
 	write(out, headers);
 
 	if(termination)
