@@ -3825,8 +3825,6 @@ try
 		    << std::setw(10) << "INSERT"
 		    << " "
 		    << std::setw(10) << "HIT:INS"
-		    << " "
-		    << std::setw(9) << "INSERT%"
 		    << "  "
 		    << std::setw(8) << "COUNT"
 		    << " "
@@ -3860,9 +3858,6 @@ try
 		    << " "
 		    << std::setw(8) << std::right << std::fixed << std::setprecision(0) << ins_hit_rat
 		    << ":1"
-		    << " "
-		    << std::setw(8) << std::right << std::fixed << std::setprecision(2) << (ins_miss_pct * 100)
-		    << "%"
 		    << "  "
 		    << std::setw(8) << std::right << count
 		    << " "
@@ -3900,8 +3895,6 @@ try
 	    << std::setw(10) << "INSERT"
 	    << " "
 	    << std::setw(10) << "HIT:INS"
-	    << " "
-	    << std::setw(9) << "INSERT%"
 	    << "  "
 	    << std::setw(8) << "COUNT"
 	    << " "
@@ -3962,9 +3955,6 @@ try
 		    << " "
 		    << std::setw(8) << std::right << std::fixed << std::setprecision(0) << ins_hit_rat
 		    << ":1"
-		    << " "
-		    << std::setw(8) << std::right << std::fixed << std::setprecision(2) << (ins_miss_pct * 100)
-		    << '%'
 		    << "  "
 		    << std::setw(8) << std::right << s.count
 		    << " "
