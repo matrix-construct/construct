@@ -8,7 +8,14 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd;
+namespace ircd::m::search
+{
+	static void handle_room_events(client &, const resource::request &, const json::object &, json::stack::object &);
+	static resource::response search_post_handle(client &, const resource::request &);
+	extern resource::method search_post;
+	extern resource search_resource;
+	extern log::log log;
+}
 
 ircd::mapi::header
 IRCD_MODULE
@@ -16,8 +23,14 @@ IRCD_MODULE
 	"Client 11.14 :Server Side Search"
 };
 
-ircd::resource
-search_resource
+decltype(ircd::m::search::log)
+ircd::m::search::log
+{
+	"m.search"
+};
+
+decltype(ircd::m::search::search_resource)
+ircd::m::search::search_resource
 {
 	"/_matrix/client/r0/search",
 	{
@@ -29,26 +42,18 @@ search_resource
 	}
 };
 
-static void
-handle_room_events(client &client,
-                   const resource::request &request,
-                   const json::object &,
-                   json::stack::object &);
-
-static resource::response
-post__search(client &client, const resource::request &request);
-
-resource::method
-post_method
+decltype(ircd::m::search::search_post)
+ircd::m::search::search_post
 {
-	search_resource, "POST", post__search,
+	search_resource, "POST", search_post_handle,
 	{
-		post_method.REQUIRES_AUTH
+		search_post.REQUIRES_AUTH
 	}
 };
 
-resource::response
-post__search(client &client, const resource::request &request)
+ircd::m::resource::response
+ircd::m::search::search_post_handle(client &client,
+                                    const resource::request &request)
 {
 	const auto &batch
 	{
@@ -80,33 +85,29 @@ post__search(client &client, const resource::request &request)
 		top, "search_categories"
 	};
 
-	handle_room_events(client, request, search_categories, result_categories);
+	if(search_categories.has("room_events"))
+	{
+		json::stack::object room_events_result
+		{
+			result_categories, "room_events"
+		};
+
+		handle_room_events(client, request, search_categories, room_events_result);
+	}
+
 	return std::move(response);
 }
 
 void
-handle_room_events(client &client,
-                   const resource::request &request,
-                   const json::object &search_categories,
-                   json::stack::object &result_categories)
+ircd::m::search::handle_room_events(client &client,
+                                    const resource::request &request,
+                                    const json::object &search_categories,
+                                    json::stack::object &room_events_result)
 try
 {
-	if(!search_categories.has("room_events"))
-		return;
-
 	const m::search::room_events room_events
 	{
 		search_categories["room_events"]
-	};
-
-	json::stack::object room_events_result
-	{
-		result_categories, "room_events"
-	};
-
-	json::stack::array results
-	{
-		room_events_result, "results"
 	};
 
 	const json::string &search_term
@@ -114,14 +115,29 @@ try
 		at<"search_term"_>(room_events)
 	};
 
+	const m::room_event_filter filter
+	{
+		json::get<"filter"_>(room_events)
+	};
+
+	const json::array rooms
+	{
+		json::get<"rooms"_>(filter)
+	};
+
 	log::debug
 	{
-		//TODO: search::log
-		m::log, "Search [%s] keys:%s order_by:%s inc_state:%b user:%s",
+		log, "Query '%s' by %s keys:%s order_by:%s inc_state:%b",
 		search_term,
+		string_view{request.user_id},
 		json::get<"keys"_>(room_events),
 		json::get<"order_by"_>(room_events),
 		json::get<"include_state"_>(room_events),
+	};
+
+	json::stack::array results
+	{
+		room_events_result, "results"
 	};
 
 	long count(0);
@@ -169,7 +185,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		//TODO: search::log
-		m::log, "Search error :%s", e.what()
+		log, "search :%s",
+		e.what()
 	};
 }
