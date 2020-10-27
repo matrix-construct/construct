@@ -3332,7 +3332,7 @@ noexcept
 
 	log::debug
 	{
-		log, "[%s] WAL recovery mapping update: log_number:%zu name_id:%zu",
+		log, "[%s] WAL recovery mapping update :log_number:%zu name_id:%zu",
 		db::name(*d),
 		log_number.size(),
 		name_id.size(),
@@ -3350,9 +3350,10 @@ noexcept
 	assert(d && replace && replaced);
 
 	if(debug)
-		log::debug
+		log::logf
 		{
-			log, "[%s] WAL recovery record log:%lu '%s' wb[count:%zu size:%zu]",
+			log, log::level::DEBUG,
+			"[%s] WAL recovery record log:%lu '%s' wb[count:%zu size:%zu]",
 			db::name(*d),
 			log_nr,
 			name,
