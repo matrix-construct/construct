@@ -8,6 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <RB_INC_SYS_PRCTL_H
 #include <boost/process.hpp>
 #include <boost/process/extend.hpp>
 
@@ -337,6 +338,11 @@ const noexcept
 		e->pid,
 		e->path,
 	};
+	#endif
+
+	// Set the parent death signal in case of a crash so we won't go zombie.
+	#if defined(HAVE_SYS_PRCTL_H)
+	sys::call(prctl, PR_SET_PDEATHSIG, SIGTERM);
 	#endif
 
 	// Ignore SIGINT/SIGQUIT that way the administrator striking ctrl-c or
