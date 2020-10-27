@@ -154,4 +154,7 @@ struct ircd::m::homeserver::opts
 
 	/// Whether to run initial backfill jobs after startup.
 	bool backfill {true};
+
+	/// Whether to permit automatic execution of managed apps.
+	bool autoapps {true};
 };

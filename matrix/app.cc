@@ -22,6 +22,12 @@ ircd::m::app::path
 	{ "persist",   false              },
 };
 
+decltype(ircd::m::app::autorun)
+ircd::m::app::autorun
+{
+	{ "name",      "ircd.m.app.autorun" },
+	{ "default",   true                 },
+};
 
 decltype(ircd::m::app::enable)
 ircd::m::app::enable
@@ -51,23 +57,92 @@ ircd::util::instance_list<ircd::m::app>::list
 void
 ircd::m::app::init()
 {
-	static const auto not_executable{[]
-	(const std::string &file)
-	{
-		return !fs::is_exec(file);
-	}};
+	if(!enable || !path || ircd::read_only)
+		return;
 
 	std::vector<std::string> files
 	{
-		bool(path)?
-			fs::ls(string_view(path)):
-			std::vector<std::string>{}
+		fs::ls(string_view(path))
 	};
 
 	bin = std::set<std::string>
 	{
-		begin(files), std::remove_if(begin(files), end(files), not_executable)
+		begin(files), std::remove_if(begin(files), end(files), []
+		(const std::string &file)
+		{
+			return !fs::is_exec(file);
+		})
 	};
+
+	log::debug
+	{
+		log, "Found %zu executable in `%s'",
+		bin.size(),
+		string_view{path},
+	};
+
+	if(!autorun)
+	{
+		log::warning
+		{
+			log, "Autorun is disabled by the configuration. Apps may still be executed manually.",
+		};
+
+		return;
+	}
+
+	events::type::for_each_in("ircd.app.run.auto", []
+	(const string_view &, const event::idx &run_event_idx)
+	{
+		const m::event::fetch run_event
+		{
+			std::nothrow, run_event_idx
+		};
+
+		if(!run_event.valid || !my(run_event))
+			return true;
+
+		const m::room room
+		{
+			at<"room_id"_>(run_event)
+		};
+
+		const m::event::idx app_event_idx
+		{
+			room.get(std::nothrow, "ircd.app", at<"state_key"_>(run_event))
+		};
+
+		if(!app_event_idx)
+			return true;
+
+		const m::event::fetch app_event
+		{
+			std::nothrow, app_event_idx
+		};
+
+		if(!app_event.valid || !my(app_event))
+			return true;
+
+		log::debug
+		{
+			log, "Attempting app:%lu run.auto:%lu",
+			app_event_idx,
+			run_event_idx,
+		};
+
+		auto app
+		{
+			std::make_unique<m::app>(app_event_idx)
+		};
+
+		const auto pid
+		{
+			app->child.run()
+		};
+
+		app.release();
+		return true;
+	});
 }
 
 void
