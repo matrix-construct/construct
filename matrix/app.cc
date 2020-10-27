@@ -22,6 +22,14 @@ ircd::m::app::path
 	{ "persist",   false              },
 };
 
+
+decltype(ircd::m::app::enable)
+ircd::m::app::enable
+{
+	{ "name",      "ircd.m.app.enable" },
+	{ "default",   true                },
+};
+
 decltype(ircd::m::app::bin)
 ircd::m::app::bin;
 
@@ -104,6 +112,12 @@ ircd::m::app::app(const m::event::idx &event_idx)
 		throw m::FORBIDDEN
 		{
 			"Configure the 'ircd.m.app.path' to permit."
+		};
+
+	if(!enable)
+		throw m::FORBIDDEN
+		{
+			"Configure 'ircd.m.app.enable' to permit."
 		};
 
 	const json::string file

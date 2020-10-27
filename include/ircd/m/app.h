@@ -17,6 +17,7 @@ struct ircd::m::app
 :instance_list<ircd::m::app>
 {
 	static log::log log;
+	static conf::item<bool> enable;
 	static conf::item<std::string> path;
 	static std::set<std::string> bin;
 
