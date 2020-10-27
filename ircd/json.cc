@@ -629,7 +629,7 @@ ircd::json::parser::throws_exceeded()
 //
 
 ircd::json::strung
-ircd::json::replace(const strung &s,
+ircd::json::replace(const object &s,
                     const json::members &r)
 {
 	static const auto in
@@ -667,7 +667,7 @@ ircd::json::replace(const strung &s,
 }
 
 ircd::json::strung
-ircd::json::replace(const strung &s,
+ircd::json::replace(const object &s,
                     const json::member &m_)
 {
 	if(!empty(s) && type(s) != type::OBJECT)
@@ -691,7 +691,7 @@ ircd::json::replace(const strung &s,
 }
 
 ircd::json::strung
-ircd::json::insert(const strung &s,
+ircd::json::insert(const object &s,
                    const json::member &m)
 {
 	if(!empty(s) && type(s) != type::OBJECT)
@@ -714,7 +714,7 @@ ircd::json::insert(const strung &s,
 }
 
 ircd::json::strung
-ircd::json::remove(const strung &s,
+ircd::json::remove(const object &s,
                    const string_view &key)
 {
 	if(empty(s))
@@ -741,7 +741,7 @@ ircd::json::remove(const strung &s,
 }
 
 ircd::json::strung
-ircd::json::remove(const strung &s,
+ircd::json::remove(const object &s,
                    const size_t &idx)
 {
 	if(empty(s))
