@@ -36,6 +36,24 @@ save_transaction_id_hookfn
 	}
 };
 
+conf::item<bool>
+new_content_workaround
+{
+	{ "name",     "ircd.client.rooms.send.new_content_workaround" },
+	{ "default",  true                                            },
+};
+
+static_assert
+(
+	m::event::MAX_SIZE >= 1_KiB
+);
+
+static const size_t
+content_max
+{
+	m::event::MAX_SIZE - 1_KiB
+};
+
 m::resource::response
 put__send(client &client,
           const m::resource::request &request,
@@ -73,16 +91,37 @@ put__send(client &client,
 			transaction_id
 		};
 
-	const json::object content
+	json::object content
 	{
 		request
 	};
 
-	static_assert(m::event::MAX_SIZE >= 1_KiB);
-	static const size_t content_max
+	// Workaround for the quadruplication of content by certain clients
+	// supporting message edits via `m.new_content`. The skinny is that
+	// there's effectively four copies of the user's message data which can
+	// be found within the content here. For this reason if the content size
+	// with all four copies will exceed the threshold, we truncate two of the
+	// four copies which won't be used by supporting clients.
+	const bool workaround_new_content
 	{
-		m::event::MAX_SIZE - 1_KiB
+		// This functionality is enabled by the configuration
+		new_content_workaround
+
+		// For good-faith compatibility this functionality is enabled iff the
+		// content size is excessive.
+		&& size(string_view(content)) > content_max
+
+		// This workaround is only effective for m.new_content edits.
+		&& content.has("m.new_content")
 	};
+
+	json::strung shorter_content;
+	if(workaround_new_content)
+		content = shorter_content = json::replace(content, json::members
+		{
+			{ "body",            " * "_sv  },
+			{ "formatted_body",  " * "_sv  },
+		});
 
 	// This is only a preliminary check that the content size is sane and
 	// will fit. There may still be a rejection at a deeper stage.
