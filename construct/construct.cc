@@ -29,7 +29,7 @@ bool noautomod;
 bool nocompact;
 bool checkdb;
 bool pitrecdb;
-bool recoverdb;
+const char *recoverdb;
 bool repairdb;
 bool nojs;
 bool nodirect;
@@ -65,8 +65,7 @@ lgetopt opts[]
 	{ "nocompact",  &nocompact,     lgetopt::BOOL,    "Disable automatic database compaction" },
 	{ "checkdb",    &checkdb,       lgetopt::BOOL,    "Perform complete checks of databases when opening" },
 	{ "pitrecdb",   &pitrecdb,      lgetopt::BOOL,    "Allow Point-In-Time-Recover if DB reports corruption after crash" },
-	{ "recoverdb",  &recoverdb,     lgetopt::BOOL,    "Allow earlier Point-In-Time when -pitrecdb does not work" },
-	{ "repairdb",   &repairdb,      lgetopt::BOOL,    "Perform full DB repair after deep block/file corruption" },
+	{ "recoverdb",  &recoverdb,     lgetopt::STRING,  "Specify a more aggressive recovery mode if -pitrecdb does not work" },
 	{ "nojs",       &nojs,          lgetopt::BOOL,    "Disable SpiderMonkey JS subsystem from initializing. (noop when not available)" },
 	{ "nodirect",   &nodirect,      lgetopt::BOOL,    "Disable direct IO (O_DIRECT) for unsupporting filesystems" },
 	{ "noaio",      &noaio,         lgetopt::BOOL,    "Disable the AIO interface in favor of traditional syscalls. " },
@@ -565,7 +564,7 @@ applyargs()
 		ircd::db::open_recover.set("absolute");
 
 	if(recoverdb)
-		ircd::db::open_recover.set("recover");
+		ircd::db::open_recover.set(recoverdb);
 
 	if(repairdb)
 	{
