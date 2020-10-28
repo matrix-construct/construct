@@ -4257,12 +4257,14 @@ console_cmd__db__stats(opt &out, const string_view &line)
 		"dbname", "column"
 	}};
 
-	return console_cmd__db__prop(out, fmt::snstringf
+	const fmt::snstringf new_line
 	{
 		1024, "%s %s rocksdb.stats",
 		param.at(0),
 		param.at(1)
-	});
+	};
+
+	return console_cmd__db__prop(out, new_line);
 }
 
 bool
@@ -12092,12 +12094,14 @@ console_cmd__user__read__receipt(opt &out, const string_view &line)
 		param.at(3, ircd::time<milliseconds>())
 	};
 
+	const json::strung content{json::members
+	{
+		{ "ts", ms },
+	}};
+
 	const auto eid
 	{
-		m::receipt::read(room_id, user_id, event_id, json::strung{json::members
-		{
-			{ "ts", ms },
-		}})
+		m::receipt::read(room_id, user_id, event_id, json::object(content))
 	};
 
 	out << eid << std::endl;

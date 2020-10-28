@@ -166,8 +166,12 @@ ircd::m::presence::set(const m::presence &content)
 		user, &copts
 	};
 
-	//TODO: ABA
-	return send(user_room, user.user_id, "ircd.presence", "", json::strung{content});
+	const json::strung _content
+	{
+		content
+	};
+
+	return send(user_room, user.user_id, "ircd.presence", "", json::object(_content));
 }
 
 bool

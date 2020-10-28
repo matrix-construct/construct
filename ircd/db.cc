@@ -4400,7 +4400,10 @@ ircd::db::error_to_status::error_to_status(const std::error_code &e)
 			return Status::MemoryLimit();
 
 		default:
-			return Status::Aborted(slice(string_view(e.message())));
+		{
+			const auto &message(e.message());
+			return Status::Aborted(slice(string_view(message)));
+		}
 	}
 }()}
 {

@@ -273,7 +273,7 @@ try
 	if(sequence(*dbs::events) == 0)
 		return;
 
-	mods::imports.emplace("net_dns_cache"s, "net_dns_cache"s);
+	mods::imports.emplace("net_dns_cache"s, "net_dns_cache");
 
 	if(!ircd::write_avoid)
 		if(key && !key->verify_keys.empty())

@@ -189,6 +189,7 @@ struct ircd::string_view
 	:std::string_view{start, _constexpr_strlen(start)}
 	{}
 
+	string_view(std::string &&) noexcept = delete;
 	string_view(const std::string &string) noexcept
 	:string_view{string.data(), string.size()}
 	{}
