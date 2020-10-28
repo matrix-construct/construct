@@ -28,9 +28,14 @@ struct ircd::m::app
 	json::array arg;
 	std::string binpath;
 	std::vector<json::string> argv;
+	unique_mutable_buffer outbuf;
 	exec child;
+	id::user::buf user_id;
+	id::room::buf room_id;
+	id::event::buf event_id;
 	context worker_context;
 
+	bool handle_stdout();
 	void worker();
 
 	app(const m::event::idx &);

@@ -228,9 +228,25 @@ ircd::m::app::app(const m::event::idx &event_idx)
 	ret.at(0) = binpath;
 	return ret;
 }()}
+,outbuf
+{
+	32_KiB
+}
 ,child
 {
 	argv
+}
+,user_id
+{
+	m::get(event_idx, "sender")
+}
+,room_id
+{
+	m::room_id(event_idx)
+}
+,event_id
+{
+	m::event_id(event_idx)
 }
 ,worker_context
 {
@@ -251,21 +267,6 @@ void
 ircd::m::app::worker()
 try
 {
-	const auto event_id
-	{
-		m::event_id(event_idx)
-	};
-
-	const auto room_id
-	{
-		m::room_id(event_idx)
-	};
-
-	const auto user_id
-	{
-		m::get(event_idx, "sender")
-	};
-
 	child.dock.wait([this]
 	{
 		return child.pid >= 0;
@@ -283,67 +284,12 @@ try
 		child.pid,
 	};
 
-	char buf alignas(4096) [16_KiB];
-	for(run::barrier<ctx::interrupted>{};;)
+	run::barrier<ctx::interrupted>{}; do
 	{
-		window_buffer wb(buf);
-		wb([](const mutable_buffer &buf)
-		{
-			return copy(buf, "<pre>"_sv);
-		});
-
-		bool eof {false};
-		wb([this, &eof](const mutable_buffer &buf)
-		{
-			const auto ret(read(this->child, buf));
-			eof = empty(ret);
-			return ret;
-		});
-
-		wb([](const mutable_buffer &buf)
-		{
-			return copy(buf, "</pre>"_sv);
-		});
-
-		const string_view &output
-		{
-			wb.completed()
-		};
-
-		if(eof)
-		{
-			log::debug
-			{
-				log, "app:%lu :end of file",
-				event_idx,
-			};
-
-			return;
-		}
-
-		const string_view alt
-		{
-			"no alt text"
-		};
-
-		const auto message_id
-		{
-			!ircd::write_avoid?
-				m::msghtml(room_id, user_id, output, alt, "m.notice"):
-				m::event::id::buf{}
-		};
-
-		log::debug
-		{
-			log, "app:%lu output %zu bytes in %s to %s :%s%s",
-			event_idx,
-			size(output),
-			string_view{message_id},
-			string_view{room_id},
-			trunc(output, 64),
-			size(output) > 64? "...": "",
-		};
+		if(!handle_stdout())
+			break;
 	}
+	while(1);
 }
 catch(const std::exception &e)
 {
@@ -358,4 +304,60 @@ catch(const std::exception &e)
 	const ctx::exception_handler eh;
 	child.join();
 	return;
+}
+
+bool
+ircd::m::app::handle_stdout()
+{
+	mutable_buffer buf(this->outbuf);
+	consume(buf, copy(buf, "<pre>"_sv));
+	const string_view output
+	{
+		read(this->child, buf)
+	};
+
+	consume(buf, size(output));
+	if(empty(output))
+	{
+		log::debug
+		{
+			log, "app:%lu :end of file",
+			this->event_idx,
+		};
+
+		return false;
+	}
+
+	consume(buf, copy(buf, "</pre>"_sv));
+	const string_view &content
+	{
+		data(this->outbuf), data(buf)
+	};
+
+	const fmt::bsprintf<96> alt
+	{
+		"app:%lu wrote %zu bytes to stdout.",
+		this->event_idx,
+		size(output),
+	};
+
+	const auto message_id
+	{
+		!ircd::write_avoid?
+			m::msghtml(room_id, user_id, content, string_view{alt}, "m.notice"):
+			m::event::id::buf{}
+	};
+
+	log::debug
+	{
+		log, "app:%lu output %zu bytes in %s to %s :%s%s",
+		event_idx,
+		size(content),
+		string_view{message_id},
+		string_view{room_id},
+		trunc(content, 64),
+		size(content) > 64? "...": "",
+	};
+
+	return true;
 }
