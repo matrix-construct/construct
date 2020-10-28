@@ -10996,6 +10996,12 @@ console_cmd__room__get(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__get(opt &out, const string_view &line)
+{
+	return console_cmd__room__get(out, line);
+}
+
+bool
 console_cmd__room__set(opt &out, const string_view &line)
 {
 	const params param{line, " ",
@@ -11045,6 +11051,12 @@ console_cmd__room__set(opt &out, const string_view &line)
 
 	out << event_id << std::endl;
 	return true;
+}
+
+bool
+console_cmd__set(opt &out, const string_view &line)
+{
+	return console_cmd__room__set(out, line);
 }
 
 bool
