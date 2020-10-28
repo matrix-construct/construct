@@ -114,9 +114,10 @@ try
 		{ "content",   message            },
 	});
 
-	log::info
+	log::logf
 	{
-		m::log, "%s sent '%s' to %s device '%s' (%zu bytes)",
+		m::log, log::level::DEBUG,
+		"%s sent '%s' to %s device '%s' (%zu bytes)",
 		at<"sender"_>(edu),
 		at<"type"_>(edu),
 		string_view{user_id},
