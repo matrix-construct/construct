@@ -97,7 +97,7 @@ struct ircd::db::descriptor
 	/// Compaction related parameters. see: rocksdb/advanced_options.h
 	struct
 	{
-		size_t base {128_MiB};
+		size_t base {64_MiB};
 		size_t multiplier {2};
 	}
 	target_file_size;
