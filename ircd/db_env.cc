@@ -42,14 +42,12 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "[%s] new sequential file '%s' options:%p [mm:%b direct:%b bufsz:%zu readahead:%zu]",
+		log, "[%s] new sequential file '%s' options:%p [mm:%b direct:%b]",
 		d.name,
 		name,
 		&options,
 		options.use_mmap_reads,
 		options.use_direct_reads,
-		options.random_access_max_buffer_size,
-		options.compaction_readahead_size,
 	};
 	#endif
 
