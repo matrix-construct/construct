@@ -149,7 +149,12 @@ try
 		sig,
 	};
 
-	child->wait();
+	//child->wait();
+	dock.wait([this]
+	{
+		return this->pid <= 0;
+	});
+
 	assert(!child->running());
 	return code;
 }
