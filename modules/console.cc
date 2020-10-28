@@ -16386,3 +16386,38 @@ console_cmd__app__unload(opt &out, const string_view &line)
 	out << "not found." << std::endl;
 	return true;
 }
+
+bool
+console_cmd__app__signal(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"signum", "event_id"
+	}};
+
+	const auto signum
+	{
+		param.at<uint>("signum")
+	};
+
+	const auto event_idx
+	{
+		lex_castable<m::event::idx>(param.at("event_id"))?
+			lex_cast<m::event::idx>(param.at("event_id")):
+			m::index(param.at("event_id"))
+	};
+
+	for(auto *const &app : m::app::list)
+		if(app->event_idx == event_idx)
+		{
+			out << "Signal " << signum;
+			if(!app->child.signal(signum))
+				out << " failed";
+
+			out << " to PID " << app->child.pid << std::endl;
+			return true;
+		}
+
+	out << "not found." << std::endl;
+	return true;
+}
