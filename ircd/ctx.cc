@@ -68,6 +68,11 @@ ircd::ctx::ctx::ios_handler
 decltype(ircd::ctx::ctx::spawning)
 ircd::ctx::ctx::spawning;
 
+/// Used to notify of context completion
+[[gnu::visibility("hidden")]]
+decltype(ircd::ctx::ctx::adjoindre)
+ircd::ctx::ctx::adjoindre;
+
 /// Internal context struct ctor
 ircd::ctx::ctx::ctx(const string_view &name,
                     const ircd::ctx::stack &stack,
@@ -1283,7 +1288,7 @@ ircd::ctx::context::join()
 
 	assert(bool(c));
 	mark(prof::event::JOIN);
-	c->adjoindre.wait([this]
+	ctx::adjoindre.wait([this]
 	{
 		return joined();
 	});

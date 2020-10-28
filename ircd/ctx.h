@@ -34,6 +34,7 @@ struct ircd::ctx::ctx
 	static ios::descriptor ios_desc;
 	static ios::handler ios_handler;
 	static ctx *spawning;
+	static dock adjoindre;                       // contexts waiting for join
 
 	uint64_t id {++id_ctr};                      // Unique runtime ID
 	string_view name;                            // User given name (optional)
@@ -47,7 +48,6 @@ struct ircd::ctx::ctx
 	list::node node;                             // node for ctx::list
 	ircd::ctx::stack stack;                      // stack related structure
 	prof::ticker profile;                        // prof related structure
-	dock adjoindre;                              // contexts waiting for this to join()
 
 	bool started() const noexcept;               // context was ever entered
 	bool finished() const noexcept;              // context will not be further entered.
