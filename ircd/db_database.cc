@@ -3350,16 +3350,18 @@ noexcept
 	assert(d && replace && replaced);
 
 	if(debug)
+	{
+		char buf[128];
 		log::logf
 		{
 			log, log::level::DEBUG,
-			"[%s] WAL recovery record log:%lu '%s' wb[count:%zu size:%zu]",
+			"[%s] WAL recovery record log:%lu:%lu '%s' %s",
 			db::name(*d),
+			d->checkpoint,
 			log_nr,
-			name,
-			wb.Count(),
-			wb.GetDataSize(),
+			db::debug(buf, *d, wb),
 		};
+	}
 
 	*replaced = false;
 	return WalProcessingOption::kContinueProcessing;
