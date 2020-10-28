@@ -33,8 +33,11 @@ struct ircd::m::app
 	id::user::buf user_id;
 	id::room::buf room_id;
 	id::event::buf event_id;
+	hookfn<vm::eval &> room_hook;
 	context worker_context;
 
+	void handle_stdin(const event &, const string_view &);
+	void handle_room_message(const event &, vm::eval &);
 	bool handle_stdout();
 	void worker();
 

@@ -248,6 +248,15 @@ ircd::m::app::app(const m::event::idx &event_idx)
 {
 	m::event_id(event_idx)
 }
+,room_hook
+{
+	std::bind(&app::handle_room_message, this, ph::_1, ph::_2),
+	{
+		{ "_site",    "vm.eval"        },
+		{ "type",     "m.room.message" },
+		{ "room_id",  this->room_id    },
+	}
+}
 ,worker_context
 {
 	"m.app",
@@ -360,4 +369,63 @@ ircd::m::app::handle_stdout()
 	};
 
 	return true;
+}
+
+void
+ircd::m::app::handle_room_message(const event &event,
+                                  vm::eval &)
+{
+	assert(at<"room_id"_>(event) == room_id);
+	assert(at<"type"_>(event) == "m.room.message");
+
+	if(at<"sender"_>(event) == user_id)
+		return;
+
+	const m::room::message msg
+	{
+		json::get<"content"_>(event)
+	};
+
+	if(json::get<"msgtype"_>(msg) != "m.text")
+		return;
+
+	if(!startswith(json::get<"body"_>(msg), user_id))
+		return;
+
+	string_view text
+	{
+		json::get<"body"_>(msg)
+	};
+
+	text = lstrip(text, user_id);
+	text = lstrip(text, ':');
+	text = lstrip(text, ' ');
+	handle_stdin(event, text);
+}
+
+void
+ircd::m::app::handle_stdin(const event &event,
+                           const string_view &text)
+{
+	const string_view wrote
+	{
+		write(this->child, text)
+	};
+
+	const string_view nl
+	{
+		write(this->child, "\n"_sv)
+	};
+
+	log::debug
+	{
+		log, "app:%lu input %zu of %zu bytes from %s in %s :%s%s",
+		event_idx,
+		size(wrote) + size(nl),
+		size(text) + 1,
+		string_view{at<"sender"_>(event)},
+		string_view{room_id},
+		trunc(text, 64),
+		size(text) > 64? "...": "",
+	};
 }
