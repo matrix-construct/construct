@@ -65,8 +65,9 @@ struct ircd::db::txn
 	void operator()(database &, const sopts & = {});
 	void operator()(const sopts & = {});
 
-	// clear
+	// reset
 	void clear();
+	auto release() noexcept;
 
 	txn() = default;
 	txn(database &);
@@ -137,4 +138,11 @@ const
 	}});
 
 	return ret;
+}
+
+inline auto
+ircd::db::txn::release()
+noexcept
+{
+	return wb.release();
 }
