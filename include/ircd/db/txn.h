@@ -25,7 +25,9 @@ namespace ircd::db
 	bool for_each(database &d, const uint64_t &seq, const seq_closure_bool &);
 	void for_each(database &d, const uint64_t &seq, const seq_closure &);
 	void get(database &d, const uint64_t &seq, const seq_closure &);
+
 	string_view debug(const mutable_buffer &out, const txn &, const ulong &fmt = 0);
+	string_view debug(const mutable_buffer &out, database &, const rocksdb::WriteBatch &, const ulong &fmt = 0);
 }
 
 struct ircd::db::txn

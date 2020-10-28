@@ -1029,6 +1029,30 @@ ircd::db::for_each(database &d,
 
 ircd::string_view
 ircd::db::debug(const mutable_buffer &buf,
+                database &d,
+                const rocksdb::WriteBatch &wb_,
+                const ulong &fmt)
+{
+	auto &wb
+	{
+		mutable_cast(wb_)
+	};
+
+	txn t
+	{
+		d, std::unique_ptr<rocksdb::WriteBatch>{&wb}
+	};
+
+	const unwind release
+	{
+		std::bind(&txn::release, &t)
+	};
+
+	return debug(buf, t, fmt);
+}
+
+ircd::string_view
+ircd::db::debug(const mutable_buffer &buf,
                 const txn &t,
                 const ulong &fmt)
 {
