@@ -72,13 +72,7 @@ ircd::buffer::copy(char *&dest,
 	assert(!overlap(const_buffer(dest, cpsz), src));
 	assert(cpsz <= size(src));
 	assert(cpsz <= remain);
-
-	#if __has_builtin(__builtin_memcpy_inline) && !defined(RB_GENERIC)
-		__builtin_memcpy_inline(dest, data(src), cpsz);
-	#else
-		__builtin_memcpy(dest, data(src), cpsz);
-	#endif
-
+	__builtin_memcpy(dest, data(src), cpsz);
 	dest += cpsz;
 	assert(dest <= stop);
 	return dest;

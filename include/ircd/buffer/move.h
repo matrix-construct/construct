@@ -57,13 +57,7 @@ ircd::buffer::move(char *&dest,
 	const size_t cpsz(std::min(size(src), remain));
 	assert(cpsz <= size(src));
 	assert(cpsz <= remain);
-
-	#if __has_builtin(__builtin_memmove_inline) && !defined(RB_GENERIC)
-		__builtin_memmove_inline(dest, data(src), cpsz);
-	#else
-		__builtin_memmove(dest, data(src), cpsz);
-	#endif
-
+	__builtin_memmove(dest, data(src), cpsz);
 	dest += cpsz;
 	assert(dest <= stop);
 	return dest;
