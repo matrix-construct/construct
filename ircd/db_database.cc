@@ -970,7 +970,7 @@ try
 	// When corrupted after crash, the DB is rolled back before the first
 	// corruption and erases everything after it, giving a consistent
 	// state up at that point, though losing some recent data.
-	if(string_view(open_recover) == "point" || string_view(open_recover) == "recover")
+	if(string_view(open_recover) == "point")
 		opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kPointInTimeRecovery;
 
 	// When corrupted after crash and PointInTimeRecovery does not work,
@@ -984,7 +984,7 @@ try
 
 	// Skipping corrupted records will create gaps in the DB timeline where the
 	// application (like a matrix timeline) cannot tolerate the unexpected gap.
-	if(string_view(open_recover) == "skip")
+	if(string_view(open_recover) == "skip" || string_view(open_recover) == "recover")
 		opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kSkipAnyCorruptedRecords;
 
 	// Tolerating corrupted records is very last-ditch for getting the database to
