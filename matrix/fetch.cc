@@ -829,9 +829,9 @@ ircd::m::fetch::check_response__auth(const request &request,
 		response.at("auth_chain")
 	};
 
-	for(const json::object &auth_event : auth_chain)
+	for(const json::object auth_event : auth_chain)
 	{
-		event::id::buf event_id;
+		m::event::id::buf event_id;
 		const m::event event
 		{
 			event_id, auth_event
@@ -867,9 +867,9 @@ ircd::m::fetch::check_response__backfill(const request &request,
 		response.at("pdus")
 	};
 
-	for(const json::object &event : pdus)
+	for(const json::object event : pdus)
 	{
-		event::id::buf event_id;
+		m::event::id::buf event_id;
 		const m::event _event
 		{
 			event_id, event
