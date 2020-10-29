@@ -385,13 +385,21 @@ ircd::m::fetch::start(request &request)
 try
 {
 	assert(!request.finished);
+
+	// Attempt the user's hint first
 	if(!request.started && !request.origin)
 		request.origin = request.opts.hint;
+
+	// When no user hint, use legacy event_id hostpart as hint.
+	if(!request.started && !request.origin)
+		if(proffer_remote(request, request.opts.event_id.host()))
+			if(select_remote(request, request.opts.event_id.host()))
+				return true;
 
 	if(!request.started)
 		request.started = ircd::now<system_point>();
 
-	if(!request.origin || !proffer_remote(request, request.origin))
+	if(!proffer_remote(request, request.origin))
 		select_random_remote(request);
 
 	for(; request.origin; select_random_remote(request))
@@ -577,14 +585,16 @@ ircd::m::fetch::select_random_remote(request &request)
 		return true;
 
 	// If nothing found attempt hosts from mxids
-	const auto room_id_host
+	const string_view mxid[2]
 	{
-		request.opts.room_id.host()
+		request.opts.event_id.host(),
+		request.opts.room_id.host(),
 	};
 
-	if(room_id_host && proffer_remote(request, room_id_host))
-		if(select_remote(request, room_id_host))
-			return true;
+	for(const auto &remote : mxid)
+		if(proffer_remote(request, remote))
+			if(select_remote(request, remote))
+				return true;
 
 	return false;
 }
@@ -614,6 +624,10 @@ bool
 ircd::m::fetch::proffer_remote(request &request,
                                const string_view &remote)
 {
+	// Case sentinel false.
+	if(!remote)
+		return false;
+
 	// Don't want to request from myself.
 	if(my_host(remote))
 		return false;
