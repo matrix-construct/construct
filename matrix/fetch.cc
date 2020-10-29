@@ -32,8 +32,9 @@ namespace ircd::m::fetch
 	static bool timedout(const request &, const system_point &now);
 	static void _check_event(const request &, const m::event &);
 	static void check_response(const request &, const json::object &);
-	static string_view select_origin(request &, const string_view &);
-	static string_view select_random_origin(request &);
+	static bool proffer_remote(request &, const string_view &);
+	static bool select_remote(request &, const string_view &);
+	static bool select_random_remote(request &);
 	static void finish(request &);
 	static void retry(request &);
 	static bool start(request &, const string_view &remote);
@@ -391,9 +392,9 @@ try
 		request.started = ircd::now<system_point>();
 
 	if(!request.origin)
-		select_random_origin(request);
+		select_random_remote(request);
 
-	for(; request.origin; select_random_origin(request))
+	for(; request.origin; select_random_remote(request))
 	{
 		if(start(request, request.origin))
 			return true;
@@ -550,70 +551,82 @@ catch(const std::exception &e)
 	return false;
 }
 
-ircd::string_view
-ircd::m::fetch::select_random_origin(request &request)
+bool
+ircd::m::fetch::select_random_remote(request &request)
 {
+	// Tests if remote is potentially viable
+	const auto proffer{[&request](const string_view &remote)
+	{
+		return proffer_remote(request, remote);
+	}};
+
+	// copies randomly selected remote into the attempted set.
+	const auto closure{[&request](const string_view &remote)
+	{
+		select_remote(request, remote);
+	}};
+
 	const m::room::origins origins
 	{
 		request.opts.room_id
 	};
 
-	// copies randomly selected origin into the attempted set.
-	const auto closure{[&request]
-	(const string_view &origin)
-	{
-		select_origin(request, origin);
-	}};
-
-	// Tests if origin is potentially viable
-	const auto proffer{[&request]
-	(const string_view &origin)
-	{
-		// Don't want to request from myself.
-		if(my_host(origin))
-			return false;
-
-		// Don't want to use a peer we already tried and failed with.
-		if(request.attempted.count(origin))
-			return false;
-
-		// Don't want to use a peer marked with an error by ircd::server
-		if(fed::errant(origin))
-			return false;
-
-		return true;
-	}};
-
 	// Select a random server in the room
 	request.origin = {};
-	origins.random(closure, proffer);
+	if(origins.random(closure, proffer))
+		return true;
 
 	// If nothing found attempt hosts from mxids
-	if(!request.origin)
+	const auto room_id_host
 	{
-		const auto room_id_host
-		{
-			request.opts.room_id.host()
-		};
-
-		if(room_id_host && proffer(room_id_host))
-			select_origin(request, room_id_host);
-	}
-
-	return request.origin;
-}
-
-ircd::string_view
-ircd::m::fetch::select_origin(request &request,
-                              const string_view &origin)
-{
-	const auto iit
-	{
-		request.attempted.emplace(std::string{origin})
+		request.opts.room_id.host()
 	};
 
-	request.origin = *iit.first;
-	return request.origin;
+	if(room_id_host && proffer_remote(request, room_id_host))
+		if(select_remote(request, room_id_host))
+			return true;
+
+	return false;
+}
+
+bool
+ircd::m::fetch::select_remote(request &request,
+                              const string_view &remote)
+{
+	const auto it
+	{
+		request.attempted.lower_bound(remote)
+	};
+
+	if(it != request.attempted.end() && *it == remote)
+		return false;
+
+	const auto iit
+	{
+		request.attempted.emplace_hint(it, remote)
+	};
+
+	request.origin = *iit;
+	return true;
+}
+
+bool
+ircd::m::fetch::proffer_remote(request &request,
+                               const string_view &remote)
+{
+	// Don't want to request from myself.
+	if(my_host(remote))
+		return false;
+
+	// Don't want to use a peer we already tried and failed with.
+	if(request.attempted.count(remote))
+		return false;
+
+	// Don't want to use a peer marked with an error by ircd::server
+	if(fed::errant(remote))
+		return false;
+
+	return true;
 }
 
 bool
