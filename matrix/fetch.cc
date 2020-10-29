@@ -391,7 +391,7 @@ try
 	if(!request.started)
 		request.started = ircd::now<system_point>();
 
-	if(!request.origin)
+	if(!request.origin || !proffer_remote(request, request.origin))
 		select_random_remote(request);
 
 	for(; request.origin; select_random_remote(request))
