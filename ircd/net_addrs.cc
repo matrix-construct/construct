@@ -52,8 +52,8 @@ ircd::net::addrs::has_usable_ipv6_interface()
 #endif
 
 #ifdef HAVE_IFADDRS_H
+[[GCC::optimize(0), clang::optnone]] //XXX: trouble
 bool
-__attribute__((optimize(0))) //XXX: trouble
 ircd::net::addrs::for_each(const closure &closure)
 {
 	return for_each(raw_closure{[&closure]
