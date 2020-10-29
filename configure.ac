@@ -1070,6 +1070,12 @@ dnl x86 platform
 RB_CHK_SYSHEADER(x86intrin.h, [X86INTRIN_H])
 RB_CHK_SYSHEADER(cpuid.h, [CPUID_H])
 
+dnl arm platform
+RB_CHK_SYSHEADER(arm_acle.h, [ARM_ACLE_H])
+RB_CHK_SYSHEADER(arm_cmse.h, [ARM_ACLE_H])
+RB_CHK_SYSHEADER(arm_neon.h, [ARM_NEON_H])
+RB_CHK_SYSHEADER(arm_sve.h, [ARM_SVE_H])
+
 dnl instrumentation
 RB_CHK_SYSHEADER(malloc.h, [MALLOC_H])
 RB_CHK_SYSHEADER(valgrind/valgrind.h, [VALGRIND_VALGRIND_H])
