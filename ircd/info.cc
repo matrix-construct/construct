@@ -412,24 +412,24 @@ ircd::info::hardware::x86::_lwp
 	cpuid(0x8000001CU, 0)
 };
 
-static char
-ircd_info_hardware_x86_vendor[16];
-
-decltype(ircd::info::hardware::x86::vendor)
-ircd::info::hardware::x86::vendor{[]
+static ircd::fixed_buffer<ircd::const_buffer, 16>
+ircd_info_hardware_x86_vendor{[](const auto &out)
 {
-	char *const out{ircd_info_hardware_x86_vendor};
-	const auto in{reinterpret_cast<const uint8_t *>(&manufact)};
+	const auto in
+	{
+		reinterpret_cast<const uint8_t *>(&ircd::info::hardware::x86::manufact)
+	};
 
 	out[0] = in[4];  out[1] = in[5];  out[2] = in[6];   out[3] = in[7];
 	out[4] = in[12]; out[5] = in[13]; out[6] = in[14];  out[7] = in[15];
 	out[8] = in[8];  out[9] = in[9];  out[10] = in[10]; out[11] = in[11];
+}};
 
-	return string_view
-	{
-		ircd_info_hardware_x86_vendor
-	};
-}()};
+decltype(ircd::info::hardware::x86::vendor)
+ircd::info::hardware::x86::vendor
+{
+	ircd_info_hardware_x86_vendor
+};
 
 decltype(ircd::info::hardware::x86::sse)
 ircd::info::hardware::x86::sse
@@ -627,18 +627,17 @@ ircd::info::hardware::arm::ctr{[]
 	return ret;
 }()};
 
-static char
-ircd_info_hardware_arm_vendor[32]
+static ircd::fixed_buffer<ircd::const_buffer, 32>
+ircd_info_hardware_arm_vendor{[](const auto &out)
 {
-	"<unknown vendor>"
-};
+	ircd::copy(out, "<unknown vendor>"_sv);
+}};
 
 decltype(ircd::info::hardware::arm::vendor)
-ircd::info::hardware::arm::vendor{[]
-() -> ircd::string_view
+ircd::info::hardware::arm::vendor
 {
-	return ircd_info_hardware_arm_vendor;
-}()};
+	ircd_info_hardware_arm_vendor
+};
 
 #endif // __aarch64__
 
