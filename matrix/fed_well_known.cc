@@ -526,6 +526,7 @@ catch(const std::exception &e)
 void
 ircd::m::fed::well_known::receive(request &req)
 {
+	assert(req.sopts.http_exceptions == false);
 	req.code = req.req.get(seconds(request::timeout));
 	req.head = req.req.in.gethead(req.req);
 	req.location = req.head.location;
