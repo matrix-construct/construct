@@ -123,7 +123,7 @@ noexcept
 	if(likely(!total))
 		return;
 
-	thread_local char buf[512];
+	char buf[256];
 	const string_view reason
 	{
 		fmt::vsprintf
@@ -132,7 +132,7 @@ noexcept
 		}
 	};
 
-	thread_local char tmbuf[64];
+	char tmbuf[64];
 	log::dwarning
 	{
 		log, "[%s] context id:%lu watchdog :system call took %s :%s",
