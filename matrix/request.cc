@@ -231,7 +231,7 @@ const
 {
 	const ed25519::sig sig
 	{
-		[&sig_](auto &buf)
+		[&sig_](auto&& buf)
 		{
 			b64::decode(buf, sig_);
 		}

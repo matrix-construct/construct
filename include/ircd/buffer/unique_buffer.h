@@ -20,14 +20,14 @@ namespace ircd::allocator
 
 /// Like unique_ptr, this template holds ownership of an allocated buffer
 ///
-template<class buffer>
+template<class buffer_type>
 struct ircd::buffer::unique_buffer
-:buffer
+:buffer_type
 {
-	bool operator!() const;
 	explicit operator bool() const;
+	bool operator!() const;
 
-	buffer release();
+	buffer_type release();
 
 	unique_buffer() = default;
 	unique_buffer(const size_t &size, const size_t &align = 0);
@@ -39,9 +39,10 @@ struct ircd::buffer::unique_buffer
 	~unique_buffer() noexcept;
 };
 
-template<class buffer>
-ircd::buffer::unique_buffer<buffer>::unique_buffer(const const_buffer &src)
-:buffer
+template<class buffer_type>
+inline
+ircd::buffer::unique_buffer<buffer_type>::unique_buffer(const const_buffer &src)
+:buffer_type
 {
 	allocator::aligned_alloc(0, ircd::buffer::size(src)).release(), ircd::buffer::size(src)
 }
@@ -58,19 +59,21 @@ ircd::buffer::unique_buffer<buffer>::unique_buffer(const const_buffer &src)
 	copy(dst, src);
 }
 
-template<class buffer>
-ircd::buffer::unique_buffer<buffer>::unique_buffer(const size_t &size,
-                                                   const size_t &align)
-:buffer
+template<class buffer_type>
+inline
+ircd::buffer::unique_buffer<buffer_type>::unique_buffer(const size_t &size,
+                                                        const size_t &align)
+:buffer_type
 {
 	allocator::aligned_alloc(align, size).release(), size
 }
 {}
 
-template<class buffer>
-ircd::buffer::unique_buffer<buffer>::unique_buffer(unique_buffer &&other)
+template<class buffer_type>
+inline
+ircd::buffer::unique_buffer<buffer_type>::unique_buffer(unique_buffer &&other)
 noexcept
-:buffer
+:buffer_type
 {
 	other.release()
 }
@@ -78,48 +81,49 @@ noexcept
 	assert(std::get<0>(other) == nullptr);
 }
 
-template<class buffer>
-ircd::buffer::unique_buffer<buffer> &
-ircd::buffer::unique_buffer<buffer>::operator=(unique_buffer &&other)
+template<class buffer_type>
+inline ircd::buffer::unique_buffer<buffer_type> &
+ircd::buffer::unique_buffer<buffer_type>::operator=(unique_buffer &&other)
 & noexcept
 {
 	this->~unique_buffer();
 
-	static_cast<buffer &>(*this) = other.release();
+	static_cast<buffer_type &>(*this) = other.release();
 	assert(std::get<0>(other) == nullptr);
 
 	return *this;
 }
 
-template<class buffer>
-ircd::buffer::unique_buffer<buffer>::~unique_buffer()
+template<class buffer_type>
+inline
+ircd::buffer::unique_buffer<buffer_type>::~unique_buffer()
 noexcept
 {
 	std::free(const_cast<char *>(this->begin()));
 }
 
-template<class buffer>
-buffer
-ircd::buffer::unique_buffer<buffer>::release()
+template<class buffer_type>
+inline buffer_type
+ircd::buffer::unique_buffer<buffer_type>::release()
 {
-	const buffer ret{*this};
+	const buffer_type ret{*this};
 	std::get<0>(*this) = nullptr;
 	std::get<1>(*this) = nullptr;
 	return ret;
 }
 
-template<class buffer>
-ircd::buffer::unique_buffer<buffer>::operator
+template<class buffer_type>
+inline bool
+ircd::buffer::unique_buffer<buffer_type>::operator!()
+const
+{
+	return this->buffer_type::empty();
+}
+
+template<class buffer_type>
+inline ircd::buffer::unique_buffer<buffer_type>::operator
 bool()
 const
 {
-	return !this->buffer::empty();
-}
-
-template<class buffer>
-bool
-ircd::buffer::unique_buffer<buffer>::operator!()
-const
-{
-	return this->buffer::empty();
+	return !this->buffer_type::empty();
 }

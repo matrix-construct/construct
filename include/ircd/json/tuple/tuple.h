@@ -13,16 +13,21 @@
 
 #include "property.h"
 
-namespace ircd {
-namespace json {
+namespace ircd::json
+{
+	struct tuple_base;
 
-//TODO: sort
-template<class tuple> struct keys;
+	template<class...>
+	struct tuple;
+
+	template<class>
+	struct keys;
+}
 
 /// All tuple templates inherit from this non-template type for tagging.
-struct tuple_base
+struct ircd::json::tuple_base
 {
-	// EBO tag
+	// EBO
 };
 
 /// A compile-time construct to describe a JSON object's members and types.
@@ -50,7 +55,7 @@ struct tuple_base
 /// and "null".
 ///
 template<class... T>
-struct tuple
+struct ircd::json::tuple
 :std::tuple<T...>
 ,tuple_base
 {
@@ -86,57 +91,60 @@ struct tuple
 	tuple() = default;
 };
 
-template<class tuple>
+namespace ircd {
+namespace json {
+
+template<class T>
 constexpr bool
 is_tuple()
 noexcept
 {
-	return std::is_base_of<tuple_base, tuple>::value;
+	return std::is_base_of<tuple_base, T>::value;
 }
 
-template<class tuple,
+template<class T,
          class R>
-using enable_if_tuple = typename std::enable_if<is_tuple<tuple>(), R>::type;
+using enable_if_tuple = typename std::enable_if<is_tuple<T>(), R>::type;
 
-template<class tuple,
+template<class T,
          class test,
          class R>
-using enable_if_tuple_and = typename std::enable_if<is_tuple<tuple>() && test(), R>::type;
+using enable_if_tuple_and = typename std::enable_if<is_tuple<T>() && test(), R>::type;
 
-template<class tuple>
-using tuple_type = typename tuple::tuple_type;
+template<class T>
+using tuple_type = typename T::tuple_type;
 
-template<class tuple>
-using tuple_size = std::tuple_size<tuple_type<tuple>>;
+template<class T>
+using tuple_size = std::tuple_size<tuple_type<T>>;
 
-template<class tuple,
+template<class T,
          size_t i>
-using tuple_element = typename std::tuple_element<i, tuple_type<tuple>>::type;
+using tuple_element = typename std::tuple_element<i, tuple_type<T>>::type;
 
-template<class tuple,
+template<class T,
          size_t i>
-using tuple_value_type = typename tuple_element<tuple, i>::value_type;
+using tuple_value_type = typename tuple_element<T, i>::value_type;
 
-template<class tuple>
+template<class T>
 inline auto &
-stdcast(const tuple &o)
+stdcast(const T &o)
 {
-	return static_cast<const typename tuple::tuple_type &>(o);
+	return static_cast<const typename T::tuple_type &>(o);
 }
 
-template<class tuple>
+template<class T>
 inline auto &
-stdcast(tuple &o)
+stdcast(T &o)
 {
-	return static_cast<typename tuple::tuple_type &>(o);
+	return static_cast<typename T::tuple_type &>(o);
 }
 
-template<class tuple>
-constexpr enable_if_tuple<tuple, size_t>
+template<class T>
+constexpr enable_if_tuple<T, size_t>
 size()
 noexcept
 {
-	return tuple_size<tuple>::value;
+	return tuple_size<T>::value;
 }
 
 } // namespace json
@@ -376,7 +384,7 @@ const
 
 	return crh::sha256::buf
 	{
-		[&preimage](auto &buf)
+		[&preimage](auto&& buf)
 		{
 			sha256{buf, const_buffer{preimage}};
 		}

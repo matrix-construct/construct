@@ -103,7 +103,7 @@ const
 	{
 		const ed25519::pk pk
 		{
-			[&keyb64](auto &buf)
+			[&keyb64](auto&& buf)
 			{
 				b64::decode(buf, keyb64);
 			}

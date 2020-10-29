@@ -43,7 +43,7 @@ struct ircd::ctx::upgrade_lock
 	template<class time_point> bool try_lock_until(time_point&&);
 	void unlock();
 
-	mutex *release() noexcept;
+	decltype(auto) release() noexcept;
 
 	template<class r, class p> upgrade_lock(mutex &, const std::chrono::time_point<r, p> &);
 	template<class r, class p> upgrade_lock(mutex &, const std::chrono::duration<r, p> &);
@@ -62,14 +62,16 @@ namespace ircd
 	using ctx::upgrade_lock;
 }
 
-template<class mutex>
-ircd::ctx::upgrade_lock<mutex>::upgrade_lock(mutex &m)
+template<class mutex_type>
+inline
+ircd::ctx::upgrade_lock<mutex_type>::upgrade_lock(mutex_type &m)
 :m{&m}
 {
 	lock();
 }
 
 template<class mutex>
+inline
 ircd::ctx::upgrade_lock<mutex>::upgrade_lock(mutex &m,
                                              std::defer_lock_t)
 :m{&m}
@@ -77,6 +79,7 @@ ircd::ctx::upgrade_lock<mutex>::upgrade_lock(mutex &m,
 }
 
 template<class mutex>
+inline
 ircd::ctx::upgrade_lock<mutex>::upgrade_lock(mutex &m,
                                              std::adopt_lock_t)
 :m{&m}
@@ -88,6 +91,7 @@ ircd::ctx::upgrade_lock<mutex>::upgrade_lock(mutex &m,
 template<class mutex>
 template<class rep,
          class period>
+inline
 ircd::ctx::upgrade_lock<mutex>::upgrade_lock(mutex &m,
                                              const std::chrono::duration<rep, period> &rel)
 :m{&m}
@@ -98,6 +102,7 @@ ircd::ctx::upgrade_lock<mutex>::upgrade_lock(mutex &m,
 template<class mutex>
 template<class rep,
          class period>
+inline
 ircd::ctx::upgrade_lock<mutex>::upgrade_lock(mutex &m,
                                              const std::chrono::time_point<rep, period> &abs)
 :m{&m}
@@ -106,6 +111,7 @@ ircd::ctx::upgrade_lock<mutex>::upgrade_lock(mutex &m,
 }
 
 template<class mutex>
+inline
 ircd::ctx::upgrade_lock<mutex>::upgrade_lock(upgrade_lock &&other)
 noexcept
 :m{other.release()}
@@ -113,6 +119,7 @@ noexcept
 }
 
 template<class mutex>
+inline
 ircd::ctx::upgrade_lock<mutex>::~upgrade_lock()
 noexcept
 {
@@ -121,18 +128,18 @@ noexcept
 }
 
 template<class mutex>
-mutex *
+inline decltype(auto)
 ircd::ctx::upgrade_lock<mutex>::release()
 noexcept
 {
-	mutex *const m{this->m};
+	auto *const m{this->m};
 	this->m = nullptr;
 	return m;
 }
 
 template<class mutex>
 template<class time_point>
-bool
+inline bool
 ircd::ctx::upgrade_lock<mutex>::try_lock_until(time_point&& tp)
 {
 	assert(m);
@@ -141,7 +148,7 @@ ircd::ctx::upgrade_lock<mutex>::try_lock_until(time_point&& tp)
 
 template<class mutex>
 template<class duration>
-bool
+inline bool
 ircd::ctx::upgrade_lock<mutex>::try_lock_for(duration&& d)
 {
 	assert(m);
@@ -149,7 +156,7 @@ ircd::ctx::upgrade_lock<mutex>::try_lock_for(duration&& d)
 }
 
 template<class mutex>
-bool
+inline bool
 ircd::ctx::upgrade_lock<mutex>::try_lock()
 {
 	assert(m);
@@ -157,7 +164,7 @@ ircd::ctx::upgrade_lock<mutex>::try_lock()
 }
 
 template<class mutex>
-void
+inline void
 ircd::ctx::upgrade_lock<mutex>::lock()
 {
 	assert(m);
@@ -165,7 +172,7 @@ ircd::ctx::upgrade_lock<mutex>::lock()
 }
 
 template<class mutex>
-bool
+inline bool
 ircd::ctx::upgrade_lock<mutex>::owns_lock()
 const
 {

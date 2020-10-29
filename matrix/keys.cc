@@ -121,7 +121,7 @@ ircd::m::verify(const m::keys &keys)
 
 	const ed25519::pk pk
 	{
-		[&key](auto &pk)
+		[&key](auto&& pk)
 		{
 			b64::decode(pk, unquote(key.at("key")));
 		}
@@ -144,7 +144,7 @@ ircd::m::verify(const m::keys &keys)
 
 	const ed25519::sig sig
 	{
-		[&server_signatures, &key_id](auto &sig)
+		[&server_signatures, &key_id](auto&& sig)
 		{
 			b64::decode(sig, unquote(server_signatures.at(key_id)));
 		}

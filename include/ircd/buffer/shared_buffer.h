@@ -13,13 +13,13 @@
 
 /// Like shared_ptr, this template shares ownership of an allocated buffer
 ///
-template<class buffer>
+template<class buffer_type>
 struct ircd::buffer::shared_buffer
-:buffer
+:buffer_type
 {
 	std::shared_ptr<char> sp;
 
-	shared_buffer(unique_buffer<buffer> &&) noexcept;
+	shared_buffer(unique_buffer<buffer_type> &&) noexcept;
 	explicit shared_buffer(const size_t &size, const size_t &align = 0);
 	explicit shared_buffer(const const_buffer &);
 	shared_buffer() = default;
@@ -27,37 +27,40 @@ struct ircd::buffer::shared_buffer
 	shared_buffer(const shared_buffer &) = default;
 	shared_buffer &operator=(shared_buffer &&) = default;
 	shared_buffer &operator=(const shared_buffer &) = default;
-	shared_buffer &operator=(unique_buffer<buffer> &&) noexcept;
+	shared_buffer &operator=(unique_buffer<buffer_type> &&) noexcept;
 	~shared_buffer() = default;
 };
 
-template<class buffer>
-ircd::buffer::shared_buffer<buffer>::shared_buffer(const const_buffer &src)
+template<class buffer_type>
+inline
+ircd::buffer::shared_buffer<buffer_type>::shared_buffer(const const_buffer &src)
 :shared_buffer
 {
-	unique_buffer<buffer>
+	unique_buffer<buffer_type>
 	{
 		src
 	}
 }
 {}
 
-template<class buffer>
-ircd::buffer::shared_buffer<buffer>::shared_buffer(const size_t &size,
-                                                   const size_t &align)
+template<class buffer_type>
+inline
+ircd::buffer::shared_buffer<buffer_type>::shared_buffer(const size_t &size,
+                                                        const size_t &align)
 :shared_buffer
 {
-	unique_buffer<buffer>
+	unique_buffer<buffer_type>
 	{
 		size, align
 	}
 }
 {}
 
-template<class buffer>
-ircd::buffer::shared_buffer<buffer>::shared_buffer(unique_buffer<buffer> &&buf)
+template<class buffer_type>
+inline
+ircd::buffer::shared_buffer<buffer_type>::shared_buffer(unique_buffer<buffer_type> &&buf)
 noexcept
-:buffer
+:buffer_type
 {
 	data(buf), size(buf)
 }
@@ -69,13 +72,13 @@ noexcept
 	buf.release();
 }
 
-template<class buffer>
-ircd::buffer::shared_buffer<buffer> &
-ircd::buffer::shared_buffer<buffer>::operator=(unique_buffer<buffer> &&buf)
+template<class buffer_type>
+inline ircd::buffer::shared_buffer<buffer_type> &
+ircd::buffer::shared_buffer<buffer_type>::operator=(unique_buffer<buffer_type> &&buf)
 noexcept
 {
 	sp.reset(data(buf), &std::free);
-	*static_cast<buffer *>(this) = buffer
+	*static_cast<buffer_type *>(this) = buffer_type
 	{
 		sp.get(), size(buf)
 	};

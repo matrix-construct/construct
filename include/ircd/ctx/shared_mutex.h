@@ -194,28 +194,28 @@ ircd::ctx::shared_mutex::unlock()
 }
 
 template<class duration>
-bool
+inline bool
 ircd::ctx::shared_mutex::try_unlock_upgrade_and_lock_for(duration&& d)
 {
 	return try_unlock_upgrade_and_lock_until(system_clock::now() + d);
 }
 
 template<class duration>
-bool
+inline bool
 ircd::ctx::shared_mutex::try_unlock_shared_and_lock_upgrade_for(duration&& d)
 {
 	return try_unlock_shared_and_lock_upgrade_until(system_clock::now() + d);
 }
 
 template<class duration>
-bool
+inline bool
 ircd::ctx::shared_mutex::try_unlock_shared_and_lock_for(duration&& d)
 {
 	return try_unlock_shared_and_lock_until(system_clock::now() + d);
 }
 
 template<class time_point>
-bool
+inline bool
 ircd::ctx::shared_mutex::try_unlock_upgrade_and_lock_until(time_point&& tp)
 {
 	assert(0);
@@ -223,7 +223,7 @@ ircd::ctx::shared_mutex::try_unlock_upgrade_and_lock_until(time_point&& tp)
 }
 
 template<class time_point>
-bool
+inline bool
 ircd::ctx::shared_mutex::try_unlock_shared_and_lock_upgrade_until(time_point&& tp)
 {
 	assert(0);
@@ -231,7 +231,7 @@ ircd::ctx::shared_mutex::try_unlock_shared_and_lock_upgrade_until(time_point&& t
 }
 
 template<class time_point>
-bool
+inline bool
 ircd::ctx::shared_mutex::try_unlock_shared_and_lock_until(time_point&& tp)
 {
 	assert(0);
@@ -307,28 +307,28 @@ ircd::ctx::shared_mutex::lock()
 }
 
 template<class duration>
-bool
+inline bool
 ircd::ctx::shared_mutex::try_lock_upgrade_for(duration&& d)
 {
 	return try_lock_upgrade_until(system_clock::now() + d);
 }
 
 template<class duration>
-bool
+inline bool
 ircd::ctx::shared_mutex::try_lock_shared_for(duration&& d)
 {
 	return try_lock_shared_until(system_clock::now() + d);
 }
 
 template<class duration>
-bool
+inline bool
 ircd::ctx::shared_mutex::try_lock_for(duration&& d)
 {
 	return try_lock_until(system_clock::now() + d);
 }
 
 template<class time_point>
-bool
+inline bool
 ircd::ctx::shared_mutex::try_lock_upgrade_until(time_point&& tp)
 {
 	assert(current);
@@ -347,7 +347,7 @@ ircd::ctx::shared_mutex::try_lock_upgrade_until(time_point&& tp)
 }
 
 template<class time_point>
-bool
+inline bool
 ircd::ctx::shared_mutex::try_lock_shared_until(time_point&& tp)
 {
 	assert(current);
@@ -366,7 +366,7 @@ ircd::ctx::shared_mutex::try_lock_shared_until(time_point&& tp)
 }
 
 template<class time_point>
-bool
+inline bool
 ircd::ctx::shared_mutex::try_lock_until(time_point&& tp)
 {
 	assert(current);

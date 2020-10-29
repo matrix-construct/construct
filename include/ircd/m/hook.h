@@ -140,11 +140,11 @@ final
 };
 
 /// Hook function with a template class as the payload
-template<class data>
+template<class data_type>
 struct ircd::m::hook::hook
 :base
 {
-	std::function<void (const m::event &, data)> function;
+	std::function<void (const m::event &, data_type)> function;
 
  public:
 	hook(const json::members &feature, decltype(function) function)
@@ -159,15 +159,15 @@ struct ircd::m::hook::hook
 };
 
 /// Hook site for functions with a template class as the payload
-template<class data>
+template<class data_type>
 struct ircd::m::hook::site
 :base::site
 {
-	void call(hook<data> &hfn, const event &event, data d);
+	void call(hook<data_type> &hfn, const event &event, data_type d);
 
   public:
-	void operator()(base **const &, const event &event, data d);
-	void operator()(const event &event, data d);
+	void operator()(base **const &, const event &event, data_type d);
+	void operator()(const event &event, data_type d);
 
 	site(const json::members &feature)
 	:base::site{feature}

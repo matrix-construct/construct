@@ -15,22 +15,28 @@
 /// the ircd::buffer suite. fixed_buffer should be punnable. Its only memory
 /// footprint is the array itself and
 ///
-template<class buffer,
+template<class buffer_type,
          size_t SIZE>
 struct ircd::buffer::fixed_buffer
-:std::array<typename std::remove_const<typename buffer::value_type>::type, SIZE>
+:std::array<typename std::remove_const<typename buffer_type::value_type>::type, SIZE>
 {
-	using mutable_type = typename std::remove_const<typename buffer::value_type>::type;
+	using mutable_type = typename std::remove_const<typename buffer_type::value_type>::type;
 	using const_type = typename std::add_const<mutable_type>::type;
 	using array_type = std::array<mutable_type, SIZE>;
+	using proto_type = void (const mutable_buffer &);
+	using args_type = const mutable_buffer &;
 
-	operator buffer() const;
-	operator buffer();
+	operator buffer_type() const;
+	operator buffer_type();
 
 	using array_type::array_type;
-	fixed_buffer(const nullptr_t &);
-	fixed_buffer(const std::function<void (const mutable_buffer &)> &closure);
-	fixed_buffer(buffer b);
+	fixed_buffer(buffer_type b);
+	explicit fixed_buffer(nullptr_t);
+
+	template<class F>
+	fixed_buffer(F&&,
+	             typename std::enable_if<std::is_invocable<F, args_type>::value, void>::type * = nullptr);
+
 	fixed_buffer() = default;
 };
 
@@ -41,38 +47,55 @@ static_assert
 	"ircd::buffer::fixed_buffer must be standard layout"
 );
 
-template<class buffer,
+template<class buffer_type,
          size_t SIZE>
-ircd::buffer::fixed_buffer<buffer, SIZE>::fixed_buffer(const nullptr_t &)
+template<class F>
+inline
+ircd::buffer::fixed_buffer<buffer_type, SIZE>::fixed_buffer(F&& closure,
+                                                            typename std::enable_if<std::is_invocable<F, args_type>::value, void>::type *)
+{
+	closure(mutable_buffer
+	{
+		reinterpret_cast<mutable_buffer::iterator>(this->data()),
+		this->size()
+	});
+}
+
+template<class buffer_type,
+         size_t SIZE>
+inline
+ircd::buffer::fixed_buffer<buffer_type, SIZE>::fixed_buffer(nullptr_t)
 :array_type{{0}}
 {}
 
-template<class buffer,
+template<class buffer_type,
          size_t SIZE>
-ircd::buffer::fixed_buffer<buffer, SIZE>::fixed_buffer(const std::function<void (const mutable_buffer &)> &closure)
-{
-	closure(mutable_buffer{reinterpret_cast<mutable_buffer::iterator>(this->data()), this->size()});
-}
-
-template<class buffer,
-         size_t SIZE>
-ircd::buffer::fixed_buffer<buffer, SIZE>::fixed_buffer(buffer b)
+inline
+ircd::buffer::fixed_buffer<buffer_type, SIZE>::fixed_buffer(buffer_type b)
 :array_type{std::begin(b), std::end(b)}
 {}
 
-template<class buffer,
+template<class buffer_type,
          size_t SIZE>
-ircd::buffer::fixed_buffer<buffer, SIZE>::operator
-buffer()
+inline
+ircd::buffer::fixed_buffer<buffer_type, SIZE>::operator
+buffer_type()
 {
-	return { std::begin(*this), std::end(*this) };
+	return buffer_type
+	{
+		std::begin(*this), std::end(*this)
+	};
 }
 
-template<class buffer,
+template<class buffer_type,
          size_t SIZE>
-ircd::buffer::fixed_buffer<buffer, SIZE>::operator
-buffer()
+inline
+ircd::buffer::fixed_buffer<buffer_type, SIZE>::operator
+buffer_type()
 const
 {
-	return { std::begin(*this), std::end(*this) };
+	return buffer_type
+	{
+		std::begin(*this), std::end(*this)
+	};
 }

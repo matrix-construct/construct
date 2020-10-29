@@ -602,7 +602,7 @@ ircd::m::verify(const event &event,
 
 	const ed25519::sig sig
 	{
-		[&origin_sigs, &keyid](auto &buf)
+		[&origin_sigs, &keyid](auto&& buf)
 		{
 			b64::decode(buf, json::string(origin_sigs.at(keyid)));
 		}

@@ -135,7 +135,7 @@ struct ircd::run::changed
 /// satisfied (or if already satisfied) the run::level is checked to be RUN
 /// otherwise an exception is thrown.
 ///
-template<class exception>
+template<class E>
 struct ircd::run::barrier
 {
 	template<class... args>
@@ -143,7 +143,7 @@ struct ircd::run::barrier
 	{
 		changed::wait({level::RUN, level::QUIT});
 		if(unlikely(level != level::RUN))
-			throw exception
+			throw E
 			{
 				std::forward<args>(a)...
 			};
