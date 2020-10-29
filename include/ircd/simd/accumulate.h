@@ -13,10 +13,10 @@
 
 namespace ircd::simd
 {
-	/// Transform block_t by pseudo-reference. The closure has an opportunity
-	/// to modify the block while it is being streamed from the source to the
-	/// destination. The mask indicates which elements of the block are valid
-	/// if the input is smaller than the block size.
+	/// Accumulate into block_t by synthetic-reference. The closure has an
+	/// opportunity to update the accumulator while data blocks are being
+	/// streamed from the input. The mask indicates which elements of the
+	/// input block are valid if the input is smaller or offset from the bs.
 	template<class block_t>
 	using accumulate_prototype = void (block_t &, block_t, block_t mask);
 

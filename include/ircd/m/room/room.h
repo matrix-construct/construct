@@ -141,7 +141,7 @@ struct ircd::m::room
 
 	operator const id &() const;
 
-	// Convenience passthru to room::messages (linear query; newest first)
+	// Convenience passthru to room::events (linear query; newest first)
 	bool for_each(const string_view &type, const event::closure_idx_bool &) const;
 	void for_each(const string_view &type, const event::closure_idx &) const;
 	bool for_each(const string_view &type, const event::id::closure_bool &) const;
