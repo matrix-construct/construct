@@ -184,12 +184,38 @@ ircd::m::dbs::_index_event_horizon_resolve(db::txn &txn,
 		}
 
 		for(size_t i(0); i < num; ++i)
-			m::prefetch(event_idx[i]);
-
-		for(size_t i(0); i < num; ++i)
 			_index_event_horizon_resolve_one(txn, event, opts, event_idx[i]);
 	}
 	while(it);
+}
+
+size_t
+ircd::m::dbs::_prefetch_event_horizon_resolve(db::txn &txn,
+                                              const event &event,
+                                              const write_opts &opts)
+{
+	assert(opts.appendix.test(appendix::EVENT_HORIZON_RESOLVE));
+	assert(opts.event_idx != 0);
+	assert(event.event_id);
+
+	char buf[EVENT_HORIZON_KEY_MAX_SIZE];
+	const string_view &key
+	{
+		event_horizon_key(buf, event.event_id)
+	};
+
+	size_t ret(0);
+	for(auto it(dbs::event_horizon.begin(key)); it; ++it)
+	{
+		const auto event_idx
+		{
+			std::get<0>(event_horizon_key(it->first))
+		};
+
+		ret += m::prefetch(event_idx);
+	}
+
+	return ret;
 }
 
 // NOTE: QUERY

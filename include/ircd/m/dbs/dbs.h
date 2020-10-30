@@ -28,7 +28,7 @@ namespace ircd::m::dbs
 	extern std::shared_ptr<db::database> events;
 
 	// [SET (txn)] Basic write suite
-	void write(db::txn &, const event &, const write_opts &);
+	size_t write(db::txn &, const event &, const write_opts &);
 }
 
 /// Database description
@@ -113,6 +113,17 @@ struct ircd::m::dbs::write_opts
 	/// and "blacklist" they must know that `event_id => 0` was *found* to be
 	/// zero.
 	bool blacklist {false};
+
+	/// Whether index operations should be performed. This effectively toggles
+	/// building of the transaction; if set to false, write() will not append
+	/// to the transaction.
+	bool index {true};
+
+	/// Perform a round of prefetches for data which may block queries made
+	/// during indexing. Note that when index=false, only prefetches are made
+	/// and write() should not have a reason to block; the return value becomes
+	/// the number of prefetches launched.
+	bool prefetch {true};
 };
 
 /// Values which represent some element(s) included in a transaction or
@@ -201,6 +212,9 @@ struct ircd::m::dbs::init
 // Internal utils (here for now)
 namespace ircd::m::dbs
 {
+	size_t prefetch_event_idx(const vector_view<const event::id> &in, const write_opts &);
+	bool prefetch_event_idx(const event::id &, const write_opts &);
+
 	size_t find_event_idx(const vector_view<event::idx> &out, const vector_view<const event::id> &in, const write_opts &);
 	event::idx find_event_idx(const event::id &, const write_opts &);
 }
@@ -214,4 +228,12 @@ ircd::m::dbs::find_event_idx(const event::id &event_id,
 	const vector_view<const event::id> in(&event_id, 1);
 	find_event_idx(out, in, wopts);
 	return ret;
+}
+
+inline bool
+ircd::m::dbs::prefetch_event_idx(const event::id &event_id,
+                                 const write_opts &wopts)
+{
+	const vector_view<const event::id> in(&event_id, 1);
+	return prefetch_event_idx(in, wopts);
 }

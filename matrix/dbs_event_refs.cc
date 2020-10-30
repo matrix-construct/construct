@@ -10,12 +10,19 @@
 
 namespace ircd::m::dbs
 {
+	static size_t _prefetch_event_refs_m_room_redaction(db::txn &, const event &, const write_opts &);
 	static void _index_event_refs_m_room_redaction(db::txn &, const event &, const write_opts &); //query
+	static size_t _prefetch_event_refs_m_receipt_m_read(db::txn &, const event &, const write_opts &);
 	static void _index_event_refs_m_receipt_m_read(db::txn &, const event &, const write_opts &); //query
+	static size_t _prefetch_event_refs_m_relates_m_reply(db::txn &, const event &, const write_opts &);
 	static void _index_event_refs_m_relates_m_reply(db::txn &, const event &, const write_opts &); //query
+	static size_t _prefetch_event_refs_m_relates(db::txn &, const event &, const write_opts &);
 	static void _index_event_refs_m_relates(db::txn &, const event &, const write_opts &); //query
+	static size_t _prefetch_event_refs_state(db::txn &, const event &, const write_opts &);
 	static void _index_event_refs_state(db::txn &, const event &, const write_opts &); // query
+	static size_t _prefetch_event_refs_auth(db::txn &, const event &, const write_opts &);
 	static void _index_event_refs_auth(db::txn &, const event &, const write_opts &); //query
+	static size_t _prefetch_event_refs_prev(db::txn &, const event &, const write_opts &);
 	static void _index_event_refs_prev(db::txn &, const event &, const write_opts &); //query
 	static bool event_refs__cmp_less(const string_view &a, const string_view &b);
 }
@@ -204,6 +211,39 @@ ircd::m::dbs::_index_event_refs(db::txn &txn,
 		_index_event_refs_m_room_redaction(txn, event, opts);
 }
 
+size_t
+ircd::m::dbs::_prefetch_event_refs(db::txn &txn,
+                                   const event &event,
+                                   const write_opts &opts)
+{
+	assert(opts.appendix.test(appendix::EVENT_REFS));
+
+	size_t ret(0);
+	if(opts.event_refs.test(uint(ref::NEXT)))
+		ret += _prefetch_event_refs_prev(txn, event, opts);
+
+	if(opts.event_refs.test(uint(ref::NEXT_AUTH)))
+		ret += _prefetch_event_refs_auth(txn, event, opts);
+
+	if(opts.event_refs.test(uint(ref::NEXT_STATE)) ||
+	   opts.event_refs.test(uint(ref::PREV_STATE)))
+		ret += _prefetch_event_refs_state(txn, event, opts);
+
+	if(opts.event_refs.test(uint(ref::M_RECEIPT__M_READ)))
+		ret += _prefetch_event_refs_m_receipt_m_read(txn, event, opts);
+
+	if(opts.event_refs.test(uint(ref::M_RELATES)))
+		ret += _prefetch_event_refs_m_relates(txn, event, opts);
+
+	if(opts.event_refs.test(uint(ref::M_RELATES)))
+		ret += _prefetch_event_refs_m_relates_m_reply(txn, event, opts);
+
+	if(opts.event_refs.test(uint(ref::M_ROOM_REDACTION)))
+		ret += _prefetch_event_refs_m_room_redaction(txn, event, opts);
+
+	return ret;
+}
+
 // NOTE: QUERY
 void
 ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
@@ -271,6 +311,31 @@ ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
 	}
 }
 
+size_t
+ircd::m::dbs::_prefetch_event_refs_prev(db::txn &txn,
+                                        const event &event,
+                                        const write_opts &opts)
+{
+	assert(opts.appendix.test(appendix::EVENT_REFS));
+	assert(opts.event_refs.test(uint(ref::NEXT)));
+
+	const event::prev prev
+	{
+		event
+	};
+
+	const size_t count
+	{
+		std::min(prev.prev_events_count(), event::prev::MAX)
+	};
+
+	event::id prev_id[count];
+	for(size_t i(0); i < count; ++i)
+		prev_id[i] = prev.prev_event(i);
+
+	return prefetch_event_idx({prev_id, count}, opts);
+}
+
 // NOTE: QUERY
 void
 ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
@@ -336,6 +401,34 @@ ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
 			}
 		};
 	}
+}
+
+size_t
+ircd::m::dbs::_prefetch_event_refs_auth(db::txn &txn,
+                                        const event &event,
+                                        const write_opts &opts)
+{
+	assert(opts.appendix.test(appendix::EVENT_REFS));
+	assert(opts.event_refs.test(uint(ref::NEXT_AUTH)));
+
+	if(!m::room::auth::is_power_event(event))
+		return false;
+
+	const event::prev prev
+	{
+		event
+	};
+
+	const size_t count
+	{
+		std::min(prev.auth_events_count(), event::prev::MAX)
+	};
+
+	event::id auth_id[count];
+	for(size_t i(0); i < count; ++i)
+		auth_id[i] = prev.auth_event(i);
+
+	return prefetch_event_idx({auth_id, count}, opts);
 }
 
 // NOTE: QUERY
@@ -418,6 +511,33 @@ ircd::m::dbs::_index_event_refs_state(db::txn &txn,
 	}
 }
 
+size_t
+ircd::m::dbs::_prefetch_event_refs_state(db::txn &txn,
+                                         const event &event,
+                                         const write_opts &opts)
+{
+	assert(opts.appendix.test(appendix::EVENT_REFS));
+	assert(opts.event_refs.test(uint(ref::NEXT_STATE)) ||
+	       opts.event_refs.test(uint(ref::PREV_STATE)));
+
+	assert(json::get<"type"_>(event));
+	assert(json::get<"room_id"_>(event));
+	if(!json::get<"state_key"_>(event))
+		return false;
+
+	const m::room room
+	{
+		json::get<"room_id"_>(event)
+	};
+
+	const m::room::state state
+	{
+		room
+	};
+
+	return state.prefetch(json::get<"type"_>(event), json::get<"state_key"_>(event));
+}
+
 // NOTE: QUERY
 void
 ircd::m::dbs::_index_event_refs_m_receipt_m_read(db::txn &txn,
@@ -439,6 +559,9 @@ ircd::m::dbs::_index_event_refs_m_receipt_m_read(db::txn &txn,
 	{
 		json::get<"content"_>(event).get("event_id")
 	};
+
+	if(!valid(m::id::EVENT, event_id))
+		return;
 
 	const event::idx &event_idx
 	{
@@ -477,6 +600,31 @@ ircd::m::dbs::_index_event_refs_m_receipt_m_read(db::txn &txn,
 			opts.op, key
 		}
 	};
+}
+
+size_t
+ircd::m::dbs::_prefetch_event_refs_m_receipt_m_read(db::txn &txn,
+                                                    const event &event,
+                                                    const write_opts &opts)
+{
+	assert(opts.appendix.test(appendix::EVENT_REFS));
+	assert(opts.event_refs.test(uint(ref::M_RECEIPT__M_READ)));
+
+	if(json::get<"type"_>(event) != "ircd.read")
+		return false;
+
+	if(!my_host(json::get<"origin"_>(event)))
+		return false;
+
+	const json::string &event_id
+	{
+		json::get<"content"_>(event).get("event_id")
+	};
+
+	if(!valid(m::id::EVENT, event_id))
+		return false;
+
+	return prefetch_event_idx(event_id, opts);
 }
 
 // NOTE: QUERY
@@ -558,6 +706,36 @@ ircd::m::dbs::_index_event_refs_m_relates(db::txn &txn,
 			opts.op, key
 		}
 	};
+}
+
+size_t
+ircd::m::dbs::_prefetch_event_refs_m_relates(db::txn &txn,
+                                             const event &event,
+                                             const write_opts &opts)
+{
+	assert(opts.appendix.test(appendix::EVENT_REFS));
+	assert(opts.event_refs.test(uint(ref::M_RELATES)));
+
+	if(!json::get<"content"_>(event).has("m.relates_to"))
+		return false;
+
+	if(!json::type(json::get<"content"_>(event).get("m.relates_to"), json::OBJECT))
+		return false;
+
+	const json::object &m_relates_to
+	{
+		json::get<"content"_>(event).get("m.relates_to")
+	};
+
+	const json::string &event_id
+	{
+		m_relates_to.get("event_id")
+	};
+
+	if(!valid(m::id::EVENT, event_id))
+		return false;
+
+	return prefetch_event_idx(event_id, opts);
 }
 
 // NOTE: QUERY
@@ -658,6 +836,50 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 	};
 }
 
+size_t
+ircd::m::dbs::_prefetch_event_refs_m_relates_m_reply(db::txn &txn,
+                                                     const event &event,
+                                                     const write_opts &opts)
+{
+	assert(opts.appendix.test(appendix::EVENT_REFS));
+	assert(opts.event_refs.test(uint(ref::M_RELATES)));
+
+	if(json::get<"type"_>(event) != "m.room.message")
+		return false;
+
+	if(!json::get<"content"_>(event).has("m.relates_to"))
+		return false;
+
+	if(!json::type(json::get<"content"_>(event).get("m.relates_to"), json::OBJECT))
+		return false;
+
+	const json::object &m_relates_to
+	{
+		json::get<"content"_>(event).get("m.relates_to")
+	};
+
+	if(!m_relates_to.has("m.in_reply_to"))
+		return false;
+
+	if(!json::type(m_relates_to.get("m.in_reply_to"), json::OBJECT))
+		return false;
+
+	const json::object &m_in_reply_to
+	{
+		m_relates_to.get("m.in_reply_to")
+	};
+
+	const json::string &event_id
+	{
+		m_in_reply_to.get("event_id")
+	};
+
+	if(!valid(m::id::EVENT, event_id))
+		return false;
+
+	return prefetch_event_idx(event_id, opts);
+}
+
 // NOTE: QUERY
 void
 ircd::m::dbs::_index_event_refs_m_room_redaction(db::txn &txn,
@@ -715,6 +937,28 @@ ircd::m::dbs::_index_event_refs_m_room_redaction(db::txn &txn,
 			opts.op, key
 		}
 	};
+}
+
+size_t
+ircd::m::dbs::_prefetch_event_refs_m_room_redaction(db::txn &txn,
+                                                    const event &event,
+                                                    const write_opts &opts)
+{
+	assert(opts.appendix.test(appendix::EVENT_REFS));
+	assert(opts.event_refs.test(uint(ref::M_ROOM_REDACTION)));
+
+	if(json::get<"type"_>(event) != "m.room.redaction")
+		return false;
+
+	const auto &event_id
+	{
+		json::get<"redacts"_>(event)
+	};
+
+	if(!valid(m::id::EVENT, event_id))
+		return false;
+
+	return prefetch_event_idx(event_id, opts);
 }
 
 //

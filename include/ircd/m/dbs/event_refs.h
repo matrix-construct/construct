@@ -40,6 +40,7 @@ namespace ircd::m::dbs
 	string_view
 	reflect(const ref &);
 
+	size_t _prefetch_event_refs(db::txn &, const event &, const write_opts &);
 	void _index_event_refs(db::txn &, const event &, const write_opts &);
 
 	// event_idx | ref_type, event_idx
