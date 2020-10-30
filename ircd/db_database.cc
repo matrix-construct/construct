@@ -2859,18 +2859,20 @@ noexcept
 		false
 	};
 
-	const log::level fac
+	const log::level lev
 	{
 		ignore?
 			log::level::DERROR:
 		status->severity() == rocksdb::Status::kFatalError?
+			log::level::CRITICAL:
+		status->severity() == rocksdb::Status::kUnrecoverableError?
 			log::level::CRITICAL:
 			log::level::ERROR
 	};
 
 	log::logf
 	{
-		log, fac, "[%s] %s", d->name, str
+		log, lev, "[%s] %s", d->name, str
 	};
 
 	if(ignore)
