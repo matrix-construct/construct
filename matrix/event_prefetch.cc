@@ -12,14 +12,29 @@ bool
 ircd::m::prefetch(const event::id &event_id,
                   const event::fetch::opts &opts)
 {
-	return prefetch(index(event_id), opts);
+	if(prefetch(event_id, "_event_idx"))
+		return true;
+
+	if(prefetch(index(std::nothrow, event_id), opts))
+		return true;
+
+	return false;
 }
 
 bool
 ircd::m::prefetch(const event::id &event_id,
                   const string_view &key)
 {
-	return prefetch(index(event_id), key);
+	if(db::prefetch(dbs::event_idx, event_id))
+		return true;
+
+	if(key == "_event_idx")
+		return false;
+
+	if(prefetch(index(std::nothrow, event_id), key))
+		return true;
+
+	return false;
 }
 
 bool
