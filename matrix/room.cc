@@ -953,13 +953,21 @@ ircd::m::internal(const id::room &room_id)
 	if(!my(room))
 		return false;
 
-	if(!exists(room))
-		return false;
+	const room::state state
+	{
+		room
+	};
 
-	if(!creator(room, me()))
-		return false;
+	const auto create_idx
+	{
+		state.get(std::nothrow, "m.room.create", "")
+	};
 
-	return true;
+	return m::query(std::nothrow, create_idx, "sender", []
+	(const string_view &sender)
+	{
+		return sender == me();
+	});
 }
 
 bool
