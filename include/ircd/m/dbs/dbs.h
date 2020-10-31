@@ -21,6 +21,7 @@ namespace ircd::m::dbs
 	// General confs
 	extern conf::item<bool> cache_enable;
 	extern conf::item<bool> cache_comp_enable;
+	extern conf::item<bool> prefetch_enable;
 	extern conf::item<size_t> mem_write_buffer_size;
 	extern conf::item<size_t> sst_write_buffer_size;
 

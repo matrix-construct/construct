@@ -32,6 +32,17 @@ ircd::m::dbs::cache_comp_enable
 	{ "default",  false                          },
 };
 
+/// Coarse toggle for the prefetch phase before the transaction building
+/// handlers (indexers) are called. If this is false, prefetching will be
+/// disabled; otherwise the write_opts passed to write() control whether
+/// prefetching is enabled.
+decltype(ircd::m::dbs::prefetch_enable)
+ircd::m::dbs::prefetch_enable
+{
+	{ "name",     "ircd.m.dbs.prefetch.enable" },
+	{ "default",  true                         },
+};
+
 /// The size of the memory buffer for new writes to the DB (backed by the WAL
 /// on disk). When this buffer is full it is flushed to sorted SST files on
 /// disk. If this is 0, a per-column value can be used; otherwise this value
@@ -195,7 +206,7 @@ try
 		};
 
 	size_t ret(0);
-	if(likely(opts.prefetch))
+	if(prefetch_enable && opts.prefetch)
 		ret = _prefetch(txn, event, opts);
 
 	if(likely(opts.index))
