@@ -146,12 +146,12 @@ try
 	json::iov event, content;
 	const json::iov::push push[]
 	{
-		{ event,   { "type",        "m.direct_to_device"   } },
-		{ content, { "type",         type                  } },
-		{ content, { "sender",       sender                } },
-		{ content, { "target",       target                } },
-		{ content, { "message_id",   txnid                 } },
-		{ content, { "messages",     out.completed()       } },
+		{ event,   { "type",        "m.direct_to_device"     } },
+		{ content, { "type",        type                     } },
+		{ content, { "sender",      sender                   } },
+		{ content, { "target",      target                   } },
+		{ content, { "message_id",  { txnid, json::STRING }  } },
+		{ content, { "messages",    out.completed()          } },
 	};
 
 	m::vm::copts opts;
