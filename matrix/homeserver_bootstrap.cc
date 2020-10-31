@@ -395,9 +395,7 @@ catch(const std::exception &e)
 {
 	throw ircd::error
 	{
-		"bootstrap %s :%s",
-		server_name(homeserver),
-		e.what(),
+		ircd::error::hide_name, "%s", e.what(),
 	};
 }
 catch(const ctx::terminated &)
