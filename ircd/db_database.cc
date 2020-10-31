@@ -10,16 +10,6 @@
 
 #include "db.h"
 
-/// Conf item toggles if full database checksum verification should occur
-/// when any database is opened.
-decltype(ircd::db::open_check)
-ircd::db::open_check
-{
-	{ "name",     "ircd.db.open.check"  },
-	{ "default",  false                 },
-	{ "persist",  false                 },
-};
-
 /// Conf item determines the recovery mode to use when opening any database.
 ///
 /// "absolute" - The default and is the same for an empty value. This means
@@ -1247,7 +1237,7 @@ try
 			db::drop(*colptr);
 
 	// Database integrity check branch.
-	if(bool(open_check))
+	if(has(string_view(ircd::diagnostic), "checkdb"))
 	{
 		log::notice
 		{

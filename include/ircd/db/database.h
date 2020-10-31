@@ -16,7 +16,6 @@ namespace ircd::db
 	struct database;
 
 	// Broad conf items
-	extern conf::item<bool> open_check;
 	extern conf::item<std::string> open_recover;
 	extern conf::item<bool> open_repair;
 	extern conf::item<bool> open_slave;

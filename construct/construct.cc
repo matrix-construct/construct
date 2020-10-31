@@ -27,7 +27,6 @@ bool nobackfill;
 bool noautoapps;
 bool noautomod;
 bool nocompact;
-bool checkdb;
 const char *recoverdb;
 bool nojs;
 bool nodirect;
@@ -61,7 +60,6 @@ lgetopt opts[]
 	{ "noautoapps", &noautoapps,    lgetopt::BOOL,    "Disable automatic execution of managed child applications." },
 	{ "noautomod",  &noautomod,     lgetopt::BOOL,    "Normal execution but without autoloading modules" },
 	{ "nocompact",  &nocompact,     lgetopt::BOOL,    "Disable automatic database compaction" },
-	{ "checkdb",    &checkdb,       lgetopt::BOOL,    "Perform complete checks of databases when opening" },
 	{ "recoverdb",  &recoverdb,     lgetopt::STRING,  "Specify recovery mode if DB reports corruption (try: point)" },
 	{ "nojs",       &nojs,          lgetopt::BOOL,    "Disable SpiderMonkey JS subsystem from initializing. (noop when not available)" },
 	{ "nodirect",   &nodirect,      lgetopt::BOOL,    "Disable direct IO (O_DIRECT) for unsupporting filesystems" },
@@ -550,12 +548,7 @@ applyargs()
 	else
 		ircd::mods::autoload.set("true");
 
-	if(checkdb)
-		ircd::db::open_check.set("true");
-	else
-		ircd::db::open_check.set("false");
-
-	if(recoverdb == "repair")
+	if(ircd::string_view(recoverdb) == "repair")
 	{
 		ircd::db::open_repair.set("true");
 		nocompact = true;
