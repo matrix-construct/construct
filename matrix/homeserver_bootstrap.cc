@@ -293,7 +293,7 @@ try
 
 	util::timer stopwatch;
 	auto it(begin(events));
-	while(it != end(events))
+	while(it != end(events)) try
 	{
 		// page in the JSON
 		size_t i(0);
@@ -369,6 +369,20 @@ try
 		ctx::yield();
 		ctx::yield();
 		ctx::interruption_point();
+	}
+	catch(const json::parse_error &e)
+	{
+		log::critical
+		{
+			log, "Bootstrap retired:%zu count:%zu accept:%zu offset:%zu :%s",
+			vm::sequence::retired,
+			count,
+			accept,
+			std::distance(begin(events).start, it.start),
+			e.what(),
+		};
+
+		break;
 	}
 
 	// Manual flush of the memtables is required in case the user disabled the
