@@ -15,10 +15,11 @@ namespace ircd {
 namespace spirit
 __attribute__((visibility("default")))
 {
-	template<class parent_error> struct expectation_failure;
+	template<class parent_error>
+	struct expectation_failure;
 
 	// parse.cc
-	extern thread_local char rule_buffer[64];
+	extern thread_local char rule_buffer[128];
 }}
 
 template<class parent_error>
@@ -28,12 +29,7 @@ ircd::spirit::expectation_failure
 {
 	template<class it = const char *>
 	expectation_failure(const qi::expectation_failure<it> &e,
-	                    const ssize_t &show_max = 64);
-
-	template<class it = const char *>
-	expectation_failure(const qi::expectation_failure<it> &e,
-	                    const it &start,
-	                    const ssize_t &show_max = 64);
+	                    const ssize_t &show_max = 128);
 };
 
 template<class parent>
@@ -42,25 +38,9 @@ ircd::spirit::expectation_failure<parent>::expectation_failure(const qi::expecta
 		                                                       const ssize_t &show_max)
 :parent
 {
-	"Expected %s. You input %zd invalid characters :%s",
+	"expected %s with %zu characters remaining '%s'...",
 	ircd::string(rule_buffer, e.what_),
 	std::distance(e.first, e.last),
-	string_view{e.first, e.first + std::min(std::distance(e.first, e.last), show_max)}
-}
-{}
-
-template<class parent>
-template<class it>
-ircd::spirit::expectation_failure<parent>::expectation_failure(const qi::expectation_failure<it> &e,
-                                                               const it &start,
-		                                                       const ssize_t &show_max)
-:parent
-{
-	"Expected %s. You input %zd invalid characters somewhere between position %zd and %zd :%s",
-	ircd::string(rule_buffer, e.what_),
-	std::distance(e.first, e.last),
-	std::distance(start, e.first),
-	std::distance(start, e.last),
 	string_view{e.first, e.first + std::min(std::distance(e.first, e.last), show_max)}
 }
 {}

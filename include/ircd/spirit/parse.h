@@ -27,7 +27,7 @@ __attribute__((visibility("internal")))
 	bool parse(const char *&start, const char *const &stop, gen&&, attr&&...);
 
 	template<class parent_error,
-	         size_t error_show_max  = 48,
+	         size_t error_show_max  = 128,
 	         class gen,
 	         class... attr>
 	bool parse(const char *&start, const char *const &stop, gen&&, attr&&...);
@@ -159,7 +159,7 @@ catch(const qi::expectation_failure<const char *> &e)
 {
 	throw expectation_failure<parent_error>
 	{
-		e, start, error_show_max
+		e, error_show_max
 	};
 }
 
