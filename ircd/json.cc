@@ -2246,7 +2246,7 @@ ircd::json::iov::add::add(iov &iov,
 		if(iov.has(member.first))
 			throw exists
 			{
-				"failed to add member '%s': already exists",
+				"member '%s' already exists",
 				string_view{member.first}
 			};
 
@@ -2273,7 +2273,7 @@ ircd::json::iov::add::add(iov &iov,
 		if(iov.has(cp.first))
 			throw exists
 			{
-				"failed to add member '%s': already exists",
+				"member '%s' already exists",
 				string_view{cp.first}
 			};
 
