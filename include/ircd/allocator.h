@@ -33,9 +33,6 @@ namespace ircd::allocator
 	size_t rlimit_memlock();
 	size_t rlimit_memlock(const size_t &request);
 
-	std::unique_ptr<char, decltype(&std::free)>
-	aligned_alloc(const size_t &align, const size_t &size);
-
 	profile &operator+=(profile &, const profile &);
 	profile &operator-=(profile &, const profile &);
 	profile operator+(const profile &, const profile &);
@@ -48,6 +45,9 @@ namespace ircd::allocator
 	template<class T, class R> R &set(const string_view &var, T val, R &cur);
 	template<class T> T set(const string_view &var, T val);
 	bool trim(const size_t &pad = 0) noexcept; // malloc_trim(3)
+
+	std::unique_ptr<char, decltype(&std::free)>
+	aligned_alloc(const size_t &align, const size_t &size);
 }
 
 /// jemalloc specific suite; note that some of the primary ircd::allocator

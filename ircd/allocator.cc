@@ -18,6 +18,64 @@
 //
 // #define RB_PROF_ALLOC
 
+std::unique_ptr<char, decltype(&std::free)>
+ircd::allocator::aligned_alloc(const size_t &alignment_,
+                               const size_t &size_)
+{
+	constexpr auto align_default
+	{
+		sizeof(void *)
+	};
+
+	const auto alignment
+	{
+		alignment_?: align_default
+	};
+
+	const auto size
+	{
+		pad_to(size_, alignment)
+	};
+
+	assert(size % alignment == 0);
+	assert(size < size_ + alignment);
+	assert(alignment % sizeof(void *) == 0);
+
+	void *ret;
+	switch(int errc(::posix_memalign(&ret, alignment, size)); errc)
+	{
+		case 0:
+			break;
+
+		case int(std::errc::not_enough_memory):
+			throw std::bad_alloc{};
+
+		default:
+			throw std::system_error
+			{
+				errc, std::system_category()
+			};
+	}
+
+	assert(ret != nullptr);
+	assert(uintptr_t(ret) % alignment == 0);
+
+	#ifdef RB_PROF_ALLOC
+	auto &this_thread(ircd::allocator::profile::this_thread);
+	this_thread.alloc_bytes += size;
+	this_thread.alloc_count++;
+	#endif
+
+	return
+	{
+		reinterpret_cast<char *>(ret), &std::free
+	};
+}
+
+//
+// control panel
+//
+
 bool
 __attribute__((weak))
 ircd::allocator::trim(const size_t &pad)
@@ -237,64 +295,6 @@ ircd::allocator::operator+=(profile &a,
 	a.alloc_bytes += b.alloc_bytes;
 	a.free_bytes += b.free_bytes;
 	return a;
-}
-
-//
-// aligned_alloc
-//
-
-std::unique_ptr<char, decltype(&std::free)>
-ircd::allocator::aligned_alloc(const size_t &alignment_,
-                               const size_t &size_)
-{
-	static const size_t &align_default
-	{
-		16
-	};
-
-	const size_t &alignment
-	{
-		alignment_?: align_default
-	};
-
-	const size_t &size
-	{
-		size_ % alignment == 0? size_: size_ + (alignment - (size_ % alignment))
-	};
-
-	assert(size % alignment == 0);
-	assert(size < size_ + alignment);
-	assert(alignment % sizeof(void *) == 0);
-
-	void *ret;
-	switch(int errc(::posix_memalign(&ret, alignment, size)); errc)
-	{
-		case 0:
-			break;
-
-		case int(std::errc::not_enough_memory):
-			throw std::bad_alloc{};
-
-		default:
-			throw std::system_error
-			{
-				errc, std::system_category()
-			};
-	}
-
-	assert(ret != nullptr);
-	assert(uintptr_t(ret) % alignment == 0);
-
-	#ifdef RB_PROF_ALLOC
-	auto &this_thread(ircd::allocator::profile::this_thread);
-	this_thread.alloc_bytes += size;
-	this_thread.alloc_count++;
-	#endif
-
-	return
-	{
-		reinterpret_cast<char *>(ret), &std::free
-	};
 }
 
 //
