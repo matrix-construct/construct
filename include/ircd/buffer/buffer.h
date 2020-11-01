@@ -516,7 +516,7 @@ ircd::buffer::align_up(uintptr_t ptr,
                        size_t alignment)
 {
 	alignment = std::max(alignment, 1UL);
-	ptr += alignment - (ptr % alignment);
+	ptr += (alignment - (ptr % alignment)) % alignment;
 	return ptr;
 }
 
