@@ -90,6 +90,24 @@ template<size_t SIZE>
 struct _TEST_SIZEOF_;
 
 //
+// signed sizeof
+//
+
+template<class T>
+constexpr ssize_t
+ssizeof(T&&)
+{
+	return sizeof(T);
+}
+
+template<class T>
+constexpr ssize_t
+ssizeof()
+{
+	return sizeof(T);
+}
+
+//
 // Test if type is forward declared or complete
 //
 
