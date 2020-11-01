@@ -9,6 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #include <RB_INC_SYS_RESOURCE_H
+#include <RB_INC_SYS_MMAN_H
 
 // Uncomment or -D this #define to enable our own crude but simple ability to
 // profile dynamic memory usage. Global `new` and `delete` will be captured
@@ -70,6 +71,83 @@ ircd::allocator::aligned_alloc(const size_t &alignment_,
 	{
 		reinterpret_cast<char *>(ret), &std::free
 	};
+}
+
+size_t
+ircd::allocator::incore(const const_buffer &buf)
+{
+	const auto base
+	{
+		buffer::align(begin(buf), info::page_size)
+	};
+
+	const auto top
+	{
+		buffer::align_up(end(buf), info::page_size)
+	};
+
+	assert(base <= data(buf));
+	const auto below
+	{
+		std::distance(base, begin(buf))
+	};
+
+	assert(top >= data(buf) + size(buf));
+	const auto span
+	{
+		std::distance(base, top)
+	};
+
+	const auto above
+	{
+		std::distance(end(buf), top)
+	};
+
+	assert(span >= 0);
+	assert(above >= 0);
+	assert(below >= 0);
+	assert(above < ssize_t(info::page_size));
+	assert(below < ssize_t(info::page_size));
+	assert(below + ssize_t(size(buf)) + above == span);
+
+	auto remain(span), ret(0L);
+	thread_local uint8_t vec alignas(64) [4096];
+	for(auto i(0); i < span / ssizeof(vec) && remain > 0; ++i)
+	{
+		const auto len
+		{
+			std::min(ssizeof(vec) * ssize_t(info::page_size), remain)
+		};
+
+		assert(len > 0);
+		assert(len <= span);
+		const ssize_t vec_size
+		(
+			std::ceil(len / double(info::page_size))
+		);
+
+		assert(vec_size > 0);
+		assert(vec_size <= ssizeof(vec));
+		syscall(::mincore, mutable_cast(base), len, vec);
+		for(auto j(0); j < vec_size; ++j)
+			ret += (vec[j] & 0x01) * info::page_size;
+
+		remain -= len;
+		assert(remain >= 0);
+		if(!remain && (vec[vec_size - 1] & 0x01)) // last iteration
+			ret -= above;
+
+		assert(ret >= 0);
+		if(i == 0 && (vec[0] & 0x01)) // first iteration
+			ret -= below;
+
+		assert(ret >= 0);
+	}
+
+	assert(remain == 0);
+	assert(ret <= ssize_t(size(buf)));
+	assert(ret >= 0);
+	return ret;
 }
 
 //

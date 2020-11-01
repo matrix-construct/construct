@@ -46,6 +46,8 @@ namespace ircd::allocator
 	template<class T> T set(const string_view &var, T val);
 	bool trim(const size_t &pad = 0) noexcept; // malloc_trim(3)
 
+	size_t incore(const const_buffer &);
+
 	std::unique_ptr<char, decltype(&std::free)>
 	aligned_alloc(const size_t &align, const size_t &size);
 }
@@ -60,6 +62,7 @@ namespace ircd::allocator::je
 namespace ircd
 {
 	using allocator::aligned_alloc;
+	using allocator::incore;
 }
 
 /// Profiling counters. The purpose of this device is to gauge whether unwanted
