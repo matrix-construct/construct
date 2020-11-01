@@ -461,7 +461,10 @@ inline T *
 ircd::buffer::align(void *const &ptr,
                     const size_t &alignment)
 {
-	return align(uintptr_t(ptr), alignment);
+	return reinterpret_cast<T *>
+	(
+		align(uintptr_t(ptr), alignment)
+	);
 }
 
 template<class T>
@@ -470,7 +473,10 @@ inline const T *
 ircd::buffer::align(const void *const &ptr,
                     const size_t &alignment)
 {
-	return align(uintptr_t(ptr), alignment);
+	return reinterpret_cast<const T *>
+	(
+		align(uintptr_t(ptr), alignment)
+	);
 }
 
 template<class T>
@@ -479,7 +485,10 @@ inline T *
 ircd::buffer::align_up(void *const &ptr,
                        const size_t &alignment)
 {
-	return align_up(uintptr_t(ptr), alignment);
+	return reinterpret_cast<T *>
+	(
+		align_up(uintptr_t(ptr), alignment)
+	);
 }
 
 template<class T>
@@ -488,7 +497,10 @@ inline const T *
 ircd::buffer::align_up(const void *const &ptr,
                        const size_t &alignment)
 {
-	return align_up(uintptr_t(ptr), alignment);
+	return reinterpret_cast<const T *>
+	(
+		align_up(uintptr_t(ptr), alignment)
+	);
 }
 
 [[gnu::always_inline]]
