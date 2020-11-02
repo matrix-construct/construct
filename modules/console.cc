@@ -10748,17 +10748,11 @@ console_cmd__room__events__missing(opt &out, const string_view &line)
 	(const auto &event_id, const auto &ref_depth, const auto &ref_idx)
 	{
 		out
-		<< std::right
-		<< std::setw(10)
-		<< ref_idx
+		<< std::right << std::setw(10) << ref_idx
 		<< " "
-		<< std::right
-		<< std::setw(8)
-		<< ref_depth
+		<< std::right << std::setw(8) << ref_depth
 		<< " "
-		<< std::left
-		<< std::setw(52)
-		<< event_id
+		<< std::left << std::setw(52) << event_id
 		<< std::endl;
 		return --limit;
 	});
@@ -10767,11 +10761,53 @@ console_cmd__room__events__missing(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__events__missing__count(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "limit", "min_depth", "event_id"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	auto limit
+	{
+		param.at("limit", 16L)
+	};
+
+	const auto &min_depth
+	{
+		param.at("min_depth", 0L)
+	};
+
+	const auto &event_id
+	{
+		param["event_id"]
+	};
+
+	const m::room room
+	{
+		room_id, event_id
+	};
+
+	const m::room::events::missing missing
+	{
+		room
+	};
+
+	out << missing.count() << std::endl;
+	return true;
+}
+
+bool
 console_cmd__room__events__horizon(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id"
+		"room_id", "event_id", "limit"
 	}};
 
 	const auto &room_id
@@ -10781,7 +10817,12 @@ console_cmd__room__events__horizon(opt &out, const string_view &line)
 
 	const auto &event_id
 	{
-		param[2]
+		param.at("event_id", "*"_sv)
+	};
+
+	auto limit
+	{
+		param.at("limit", 32L)
 	};
 
 	const m::room room
@@ -10794,25 +10835,51 @@ console_cmd__room__events__horizon(opt &out, const string_view &line)
 		room
 	};
 
-	horizon.for_each([&out]
+	horizon.for_each([&out, &limit]
 	(const auto &event_id, const auto &ref_depth, const auto &ref_idx)
 	{
 		out
-		<< std::right
-		<< std::setw(10)
-		<< ref_idx
+		<< std::right << std::setw(10) << ref_idx
 		<< " "
-		<< std::right
-		<< std::setw(8)
-		<< ref_depth
+		<< std::right << std::setw(8) << ref_depth
 		<< " "
-		<< std::left
-		<< std::setw(52)
-		<< event_id
+		<< std::left << std::setw(52) << event_id
 		<< std::endl;
-		return true;
+		return --limit;
 	});
 
+	return true;
+}
+
+bool
+console_cmd__room__events__horizon__count(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "event_id"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const auto &event_id
+	{
+		param.at("event_id", "*"_sv)
+	};
+
+	const m::room room
+	{
+		room_id, event_id
+	};
+
+	const m::room::events::horizon horizon
+	{
+		room
+	};
+
+	out << horizon.count() << std::endl;
 	return true;
 }
 
