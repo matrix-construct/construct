@@ -17,13 +17,15 @@
 /// remote parties serially. It operates by querying servers in a room until
 /// one server can provide a satisfying response. The exact method for
 /// determining who to contact, when and how is encapsulated internally for
-/// further development, but it is primarily stochastic. This is liable to be
-/// optimized with further development of selection algorithms and hinting.
-/// All viable servers in a room are exhausted before an error is the result.
+/// further development, but it is primarily stochastic. All viable servers
+/// in a room are exhausted before an error is the result. A hint may be
+/// provided in the options by the caller. If supplied, it will be attempted
+/// first.
 ///
 /// This is an asynchronous promise/future based interface. The result package
-/// is delivered by a ctx::future. Note that while fetch::start() is not
-/// intended to yield the ircd::ctx, though it is possible in rare cases.
+/// is delivered by a ctx::future with a result managing allocations that
+/// originate internally. The caller of start() has no further responsibilities
+/// to this interface.
 ///
 /// Due to the composition of multiple operations performed internally,  result
 /// future has no real timeout control over the operation as a whole. While it
