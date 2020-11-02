@@ -36,6 +36,14 @@ ircd::server::log
 decltype(ircd::server::dock)
 ircd::server::dock;
 
+decltype(ircd::server::enable)
+ircd::server::enable
+{
+	{ "name",     "ircd.server.enable" },
+	{ "default",  true                 },
+	{ "persist",  false                },
+};
+
 decltype(ircd::server::close_all_timeout)
 ircd::server::close_all_timeout
 {
@@ -510,10 +518,16 @@ ircd::server::submit(const hostport &hostport,
                      request &request)
 {
 	assert(request.tag == nullptr);
+	if(unlikely(!server::enable))
+		throw unavailable
+		{
+			"Remote server requests are disabled by the configuration."
+		};
+
 	if(unlikely(ircd::run::level != ircd::run::level::RUN))
 		throw unavailable
 		{
-			"Unable to fulfill requests at this time."
+			"Unable to fulfill any further requests."
 		};
 
 	auto &peer
