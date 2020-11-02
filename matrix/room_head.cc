@@ -60,8 +60,10 @@ ircd::m::room::head::fetch(const id &room_id,
 		room_id, user_id, buf, std::move(opts)
 	};
 
-	request.wait(milliseconds(fetch_timeout));
-	request.get();
+	const auto code
+	{
+		request.get(milliseconds(fetch_timeout))
+	};
 
 	const json::object proto
 	{

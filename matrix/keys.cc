@@ -225,8 +225,11 @@ try
 		queries, buf, std::move(opts)
 	};
 
-	request.wait(milliseconds(keys_query_timeout));
-	const auto &code(request.get());
+	const auto &code
+	{
+		request.get(milliseconds(keys_query_timeout))
+	};
+
 	const json::array response
 	{
 		request
@@ -343,10 +346,9 @@ try
 		{query}, buf, std::move(opts)
 	};
 
-	request.wait(milliseconds(keys_get_timeout));
-	const auto &status
+	const auto status
 	{
-		request.get()
+		request.get(milliseconds(keys_get_timeout))
 	};
 
 	// note fed::key::query gives us "server_keys" array via cast operator.

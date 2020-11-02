@@ -360,10 +360,9 @@ try
 		alias, buf, std::move(opts)
     };
 
-	request.wait(seconds(alias_fetch_timeout));
 	const http::code &code
 	{
-		request.get()
+		request.get(seconds(alias_fetch_timeout))
 	};
 
 	const json::object response

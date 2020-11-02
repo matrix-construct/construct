@@ -453,11 +453,9 @@ try
 		room_id, buf, std::move(opts)
 	};
 
-	request.wait(seconds(backfill_timeout));
-
 	const auto code
 	{
-		request.get()
+		request.get(seconds(backfill_timeout))
 	};
 
 	const json::object &response
@@ -578,11 +576,9 @@ try
 		room_id, event_id, event, buf, std::move(opts)
 	};
 
-	send_join.wait(seconds(send_join_timeout));
-
 	const auto send_join_code
 	{
-		send_join.get()
+		send_join.get(seconds(send_join_timeout))
 	};
 
 	const json::array send_join_response
@@ -642,10 +638,9 @@ try
 		room_id, user_id, buf, std::move(opts)
 	};
 
-	request.wait(seconds(make_join_timeout));
 	const auto code
 	{
-		request.get()
+		request.get(seconds(make_join_timeout))
 	};
 
 	const json::object &response
