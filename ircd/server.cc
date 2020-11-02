@@ -8,10 +8,12 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#pragma GCC visibility push(hidden)
 namespace ircd::server
 {
-	// Internal state
-	ctx::dock dock;     // internal semaphore
+	extern log::log log;
+	extern ctx::dock dock;
+	extern conf::item<seconds> close_all_timeout;
 
 	// Internal util
 	template<class F> static size_t accumulate_peers(F&&);
@@ -23,6 +25,7 @@ namespace ircd::server
 	static decltype(ircd::server::peers)::iterator
 	create(const net::hostport &, decltype(peers)::iterator &);
 }
+#pragma GCC visibility pop
 
 decltype(ircd::server::log)
 ircd::server::log
@@ -30,8 +33,11 @@ ircd::server::log
 	"server", 'S'
 };
 
-ircd::conf::item<ircd::seconds>
-close_all_timeout
+decltype(ircd::server::dock)
+ircd::server::dock;
+
+decltype(ircd::server::close_all_timeout)
+ircd::server::close_all_timeout
 {
 	{ "name",     "ircd.server.close_all_timeout" },
 	{ "default",  2L                              },

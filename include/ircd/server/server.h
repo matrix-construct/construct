@@ -25,8 +25,6 @@ namespace ircd::server
 	IRCD_EXCEPTION(error, buffer_overrun);
 	IRCD_EXCEPTION(error, unavailable);
 	IRCD_EXCEPTION(error, canceled);
-
-	extern log::log log;
 }
 
 #include "tag.h"
