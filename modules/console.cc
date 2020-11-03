@@ -10698,7 +10698,7 @@ console_cmd__room__events(opt &out, const string_view &line)
 		room, uint64_t(depth >= 0? depth : -1)
 	};
 
-	for(; it && limit >= 0; order == 'b'? --it : ++it, --limit)
+	for(; it && limit > 0; order == 'b'? --it : ++it, --limit)
 		out << std::left << std::setw(10) << it.event_idx() << " "
 		    << pretty_oneline(*it)
 		    << std::endl;
