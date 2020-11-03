@@ -134,7 +134,7 @@ ircd::net::config(const acceptor &a)
 std::string
 ircd::net::cipher_list(const acceptor &a)
 {
-	auto &ssl(const_cast<acceptor &>(a).ssl);
+	auto &ssl(mutable_cast(a).ssl);
 	return openssl::cipher_list(*ssl.native_handle());
 }
 

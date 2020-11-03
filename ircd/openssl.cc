@@ -118,7 +118,7 @@ void
 ircd::openssl::set_curves(SSL &ssl,
                           std::string list)
 {
-	auto data(const_cast<char *>(list.data()));
+	auto data(mutable_cast(list.data()));
 	call(::SSL_ctrl, &ssl, SSL_CTRL_SET_CURVES_LIST, 0, data);
 }
 
@@ -126,7 +126,7 @@ void
 ircd::openssl::set_curves(SSL_CTX &ssl,
                           std::string list)
 {
-	auto data(const_cast<char *>(list.data()));
+	auto data(mutable_cast(list.data()));
 	call(::SSL_CTX_ctrl, &ssl, SSL_CTRL_SET_CURVES_LIST, 0, data);
 }
 
@@ -178,7 +178,7 @@ ircd::openssl::cipher_list(const SSL_CTX &ctx,
 {
 	const custom_ptr<SSL> ssl
 	{
-		SSL_new(const_cast<SSL_CTX *>(&ctx)), SSL_free
+		SSL_new(mutable_cast(&ctx)), SSL_free
 	};
 
 	std::stringstream ret;
@@ -254,7 +254,7 @@ ircd::openssl::current_cert(X509_STORE_CTX &cx)
 const X509 &
 ircd::openssl::current_cert(const X509_STORE_CTX &cx)
 {
-	auto &mcx{const_cast<X509_STORE_CTX &>(cx)};
+	auto &mcx{mutable_cast(cx)};
 	const auto *const ret
 	{
 		X509_STORE_CTX_get_current_cert(&mcx)
@@ -272,7 +272,7 @@ ircd::openssl::current_cert(const X509_STORE_CTX &cx)
 uint
 ircd::openssl::get_error_depth(const X509_STORE_CTX &cx)
 {
-	auto &mcx{const_cast<X509_STORE_CTX &>(cx)};
+	auto &mcx{mutable_cast(cx)};
 	const int ret
 	{
 		X509_STORE_CTX_get_error_depth(&mcx)
@@ -297,7 +297,7 @@ ircd::openssl::cert_error_string(const long &n)
 int
 ircd::openssl::get_error(const X509_STORE_CTX &cx)
 {
-	auto &mcx{const_cast<X509_STORE_CTX &>(cx)};
+	auto &mcx{mutable_cast(cx)};
 	return X509_STORE_CTX_get_error(&mcx);
 }
 
@@ -462,7 +462,7 @@ ircd::openssl::genX509(const mutable_buffer &out,
 std::string
 ircd::openssl::stringify(const X509 &cert_)
 {
-	auto &cert{const_cast<X509 &>(cert_)};
+	auto &cert{mutable_cast(cert_)};
 
 	// issuer
 	std::vector<json::member> issuer_json;
@@ -608,7 +608,7 @@ bool
 ircd::openssl::for_each(const X509_NAME &name_,
                         const x509_name_entry_closure &closure)
 {
-	const auto name(const_cast<X509_NAME *>(&name_));
+	const auto name(mutable_cast(&name_));
 	const auto cnt(X509_NAME_entry_count(name));
 	for(auto i(0); i < cnt; ++i)
 	{
@@ -637,7 +637,7 @@ ircd::openssl::for_each(const X509_NAME &name_,
 time_t
 ircd::openssl::not_before(const X509 &cert_)
 {
-	auto &cert{const_cast<X509 &>(cert_)};
+	auto &cert{mutable_cast(cert_)};
 	ASN1_TIME *const notBefore{X509_get_notBefore(&cert)};
 	return get_time(*notBefore);
 }
@@ -645,7 +645,7 @@ ircd::openssl::not_before(const X509 &cert_)
 time_t
 ircd::openssl::not_after(const X509 &cert_)
 {
-	auto &cert{const_cast<X509 &>(cert_)};
+	auto &cert{mutable_cast(cert_)};
 	ASN1_TIME *const notAfter{X509_get_notAfter(&cert)};
 	return get_time(*notAfter);
 }
@@ -656,7 +656,7 @@ ircd::openssl::subject_common_name(const mutable_buffer &out,
 {
 	X509_NAME *const subject
 	{
-		X509_get_subject_name(const_cast<X509 *>(&cert))
+		X509_get_subject_name(mutable_cast(&cert))
 	};
 
 	if(!subject)
@@ -701,13 +701,13 @@ ircd::openssl::print_subject(const mutable_buffer &buf,
 
 	const X509_NAME *const subject
 	{
-		X509_get_subject_name(const_cast<X509 *>(&cert))
+		X509_get_subject_name(mutable_cast(&cert))
 	};
 
 	return bio::write(buf, [&subject, &flags]
 	(BIO *const &bio)
 	{
-		X509_NAME_print_ex(bio, const_cast<X509_NAME *>(subject), 0, flags);
+		X509_NAME_print_ex(bio, mutable_cast(subject), 0, flags);
 	});
 }
 
@@ -737,7 +737,7 @@ ircd::openssl::print(const mutable_buffer &buf,
 	return bio::write(buf, [&cert, &flags]
 	(BIO *const &bio)
 	{
-		X509_print_ex(bio, const_cast<X509 *>(&cert), 0, flags);
+		X509_print_ex(bio, mutable_cast(&cert), 0, flags);
 	});
 }
 
@@ -780,7 +780,7 @@ ircd::openssl::write_pem(const mutable_buffer &out,
 	return bio::write(out, [&cert]
 	(BIO *const &bio)
 	{
-		call(::PEM_write_bio_X509, bio, const_cast<X509 *>(&cert));
+		call(::PEM_write_bio_X509, bio, mutable_cast(&cert));
 	});
 }
 
@@ -790,7 +790,7 @@ ircd::openssl::i2d(const mutable_buffer &buf,
 {
 	auto &cert
 	{
-		const_cast<X509 &>(_cert)
+		mutable_cast(_cert)
 	};
 
 	const int len
@@ -948,7 +948,7 @@ void
 ircd::openssl::ec_fini()
 noexcept
 {
-	EC_GROUP_free(const_cast<EC_GROUP *>(secp256k1));
+	EC_GROUP_free(mutable_cast(secp256k1));
 }
 
 void
@@ -1093,7 +1093,7 @@ ircd::openssl::print(const mutable_buffer &buf,
 	return bio::write(buf, [&rsa, &offset]
 	(BIO *const &bio)
 	{
-		RSA_print(bio, const_cast<RSA *>(&rsa), offset);
+		RSA_print(bio, mutable_cast(&rsa), offset);
 	});
 }
 
@@ -1110,7 +1110,7 @@ ircd::openssl::size(const RSA &key)
 void
 ircd::openssl::check(const RSA &key)
 {
-	if(call<error, -1>(::RSA_check_key, const_cast<RSA *>(&key)) == 0)
+	if(call<error, -1>(::RSA_check_key, mutable_cast(&key)) == 0)
 		throw error{"Invalid RSA"};
 }
 
@@ -1118,7 +1118,7 @@ bool
 ircd::openssl::check(const RSA &key,
                      const std::nothrow_t)
 {
-	return RSA_check_key(const_cast<RSA *>(&key)) == 1;
+	return RSA_check_key(mutable_cast(&key)) == 1;
 }
 
 //
@@ -1151,7 +1151,7 @@ ircd::openssl::write_pem_priv(const mutable_buffer &out,
 	pem_password_cb *const pwcb{nullptr};
 	void *const u{nullptr};
 
-	auto *const p{const_cast<EVP_PKEY *>(&evp)};
+	auto *const p{mutable_cast(&evp)};
 	return bio::write(out, [&evp, &p, &enc, &kstr, &klen, &pwcb, &u]
 	(BIO *const &bio)
 	{
@@ -1176,7 +1176,7 @@ ircd::string_view
 ircd::openssl::write_pem_pub(const mutable_buffer &out,
                              const EVP_PKEY &evp)
 {
-	auto *const p{const_cast<EVP_PKEY *>(&evp)};
+	auto *const p{mutable_cast(&evp)};
 	return bio::write(out, [&evp, &p]
 	(BIO *const &bio)
 	{

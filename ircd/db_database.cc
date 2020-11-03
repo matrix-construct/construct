@@ -556,7 +556,7 @@ ircd::db::wals(const database &cd)
 {
 	auto &d
 	{
-		const_cast<database &>(cd)
+		mutable_cast(cd)
 	};
 
 	std::vector<std::unique_ptr<rocksdb::LogFile>> vec;
@@ -595,7 +595,7 @@ ircd::db::files(const database &cd,
                 uint64_t &msz)
 {
 	std::vector<std::string> ret;
-	auto &d(const_cast<database &>(cd));
+	auto &d(mutable_cast(cd));
 	throw_on_error
 	{
 		d.d->GetLiveFiles(ret, &msz, false)
@@ -613,7 +613,7 @@ ircd::db::errors(const database &d)
 uint64_t
 ircd::db::sequence(const database &cd)
 {
-	database &d(const_cast<database &>(cd));
+	database &d(mutable_cast(cd));
 	return d.d->GetLatestSequenceNumber();
 }
 
@@ -635,7 +635,7 @@ ircd::db::property(const database &cd,
                    const string_view &name)
 {
 	uint64_t ret(0);
-	database &d(const_cast<database &>(cd));
+	database &d(mutable_cast(cd));
 	if(!d.d->GetAggregatedIntProperty(slice(name), &ret))
 		throw not_found
 		{
@@ -3632,7 +3632,7 @@ ircd::db::database::sst::info::vector::vector(const database &d)
 
 ircd::db::database::sst::info::vector::vector(const db::column &column)
 {
-	database::column &c(const_cast<db::column &>(column));
+	database::column &c(mutable_cast(column));
 	database &d(*c.d);
 
 	rocksdb::ColumnFamilyMetaData cfmd;
@@ -3677,7 +3677,7 @@ ircd::db::database::sst::info::vector::vector(const db::column &column)
 ircd::db::database::sst::info::info(const database &d_,
                                     const string_view &filename)
 {
-	auto &d(const_cast<database &>(d_));
+	auto &d(mutable_cast(d_));
 	const ctx::uninterruptible::nothrow ui;
 
 	std::vector<rocksdb::LiveFileMetaData> v;
@@ -3807,7 +3807,7 @@ ircd::db::database::sst::info::operator=(rocksdb::TableProperties &&tp)
 
 ircd::db::database::wal::info::vector::vector(const database &d_)
 {
-	auto &d{const_cast<database &>(d_)};
+	auto &d{mutable_cast(d_)};
 	std::vector<std::unique_ptr<rocksdb::LogFile>> vec;
 	throw_on_error
 	{
@@ -3826,7 +3826,7 @@ ircd::db::database::wal::info::vector::vector(const database &d_)
 ircd::db::database::wal::info::info(const database &d_,
                                     const string_view &filename)
 {
-	auto &d{const_cast<database &>(d_)};
+	auto &d{mutable_cast(d_)};
 	std::vector<std::unique_ptr<rocksdb::LogFile>> vec;
 	throw_on_error
 	{

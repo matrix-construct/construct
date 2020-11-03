@@ -3808,7 +3808,7 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 	// Setup the capstan and mark the end of the tape
 	parse::buffer pb
 	{
-		mutable_buffer(const_cast<char *>(data(chunk_head)), size(chunk_head))
+		mutable_buffer(mutable_cast(data(chunk_head)), size(chunk_head))
 	};
 	parse::capstan pc{pb};
 	pc.read += size(chunk_head);

@@ -34,7 +34,7 @@ pubsetbuf(stringstream &ss,
 {
 	auto *const &data
 	{
-		const_cast<char *>(s.data())
+		mutable_cast(s.data())
 	};
 
 	ss.rdbuf()->pubsetbuf(data, s.size());

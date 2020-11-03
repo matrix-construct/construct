@@ -421,7 +421,7 @@ try
 	}
 	else if(typing && was_typing)
 	{
-		auto &t(const_cast<typist &>(*it));
+		auto &t(mutable_cast(*it));
 		t.timesout = calc_timesout(timeout);
 	}
 	else if(!typing && was_typing)

@@ -1981,7 +1981,7 @@ ircd::ctx::promise_base::promise_base(const promise_base &o)
 :st{o.st}
 ,next{nullptr}
 {
-	append(*this, const_cast<promise_base &>(o));
+	append(*this, mutable_cast(o));
 }
 
 ircd::ctx::promise_base &

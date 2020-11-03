@@ -87,7 +87,7 @@ inline boost::asio::io_context &
 ircd::ios::get()
 noexcept
 {
-	auto &context(const_cast<asio::execution_context &>(main.context()));
+	auto &context(mutable_cast(main.context()));
 	return static_cast<asio::io_context &>(context);
 }
 #endif

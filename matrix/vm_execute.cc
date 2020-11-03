@@ -277,7 +277,7 @@ try
 	// We have to set the event_id in the event instance if it didn't come
 	// with the event JSON.
 	if(!opts.edu && !event.event_id)
-		const_cast<m::event &>(event).event_id = eval.room_version == "3"?
+		mutable_cast(event).event_id = eval.room_version == "3"?
 			event::id{event::id::v3{eval.event_id, event}}:
 			event::id{event::id::v4{eval.event_id, event}};
 
@@ -285,7 +285,7 @@ try
 	// it so other contexts don't see an invalid reference.
 	const unwind restore_event_id{[&event]
 	{
-		const_cast<m::event &>(event).event_id = json::get<"event_id"_>(event)?
+		mutable_cast(event).event_id = json::get<"event_id"_>(event)?
 			event.event_id:
 			m::event::id{};
 	}};

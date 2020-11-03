@@ -125,7 +125,7 @@ try
 	m::keys::cache::set(key->verify_keys);
 
 	create(me);
-	const_cast<m::user &>(me).activate();
+	mutable_cast(me).activate();
 
 	create(my_room, me);
 	create(conf_room, me);

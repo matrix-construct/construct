@@ -1948,7 +1948,7 @@ const
 	return std::all_of(std::begin(*this), std::end(*this), []
 	(const auto &cell)
 	{
-		db::column &column(const_cast<db::cell &>(cell));
+		db::column &column(mutable_cast(cell));
 		return cell.valid() && db::cached(column, cell.key());
 	});
 }
@@ -1960,7 +1960,7 @@ const
 	return std::all_of(std::begin(*this), std::end(*this), [&key]
 	(const auto &cell)
 	{
-		db::column &column(const_cast<db::cell &>(cell));
+		db::column &column(mutable_cast(cell));
 		return db::cached(column, key);
 	});
 }
@@ -3149,8 +3149,8 @@ ircd::db::property(const column &column,
                    const string_view &name)
 {
 	std::string ret;
-	database::column &c(const_cast<db::column &>(column));
-	database &d(const_cast<db::column &>(column));
+	database::column &c(mutable_cast(column));
+	database &d(mutable_cast(column));
 	if(!d.d->GetProperty(c, slice(name), &ret))
 		throw not_found
 		{
@@ -3169,8 +3169,8 @@ ircd::db::property(const column &column,
                    const string_view &name)
 {
 	uint64_t ret(0);
-	database::column &c(const_cast<db::column &>(column));
-	database &d(const_cast<db::column &>(column));
+	database::column &c(mutable_cast(column));
+	database &d(mutable_cast(column));
 	if(!d.d->GetIntProperty(c, slice(name), &ret))
 		throw not_found
 		{
@@ -3189,8 +3189,8 @@ ircd::db::property(const column &column,
                    const string_view &name)
 {
 	std::map<std::string, std::string> ret;
-	database::column &c(const_cast<db::column &>(column));
-	database &d(const_cast<db::column &>(column));
+	database::column &c(mutable_cast(column));
+	database &d(mutable_cast(column));
 	if(!d.d->GetMapProperty(c, slice(name), &ret))
 		ret.emplace(std::string{name}, property<std::string>(column, name));
 
@@ -3200,8 +3200,8 @@ ircd::db::property(const column &column,
 ircd::db::options
 ircd::db::getopt(const column &column)
 {
-	database &d(const_cast<db::column &>(column));
-	database::column &c(const_cast<db::column &>(column));
+	database &d(mutable_cast(column));
+	database::column &c(mutable_cast(column));
 	return options
 	{
 		static_cast<rocksdb::ColumnFamilyOptions>(d.d->GetOptions(c))
@@ -3212,8 +3212,8 @@ size_t
 ircd::db::bytes(const column &column)
 {
 	rocksdb::ColumnFamilyMetaData cfm;
-	database &d(const_cast<db::column &>(column));
-	database::column &c(const_cast<db::column &>(column));
+	database &d(mutable_cast(column));
+	database::column &c(mutable_cast(column));
 	assert(bool(c.handle));
 	d.d->GetColumnFamilyMetaData(c.handle.get(), &cfm);
 	return cfm.size;
@@ -3223,8 +3223,8 @@ size_t
 ircd::db::file_count(const column &column)
 {
 	rocksdb::ColumnFamilyMetaData cfm;
-	database &d(const_cast<db::column &>(column));
-	database::column &c(const_cast<db::column &>(column));
+	database &d(mutable_cast(column));
+	database::column &c(mutable_cast(column));
 	assert(bool(c.handle));
 	d.d->GetColumnFamilyMetaData(c.handle.get(), &cfm);
 	return cfm.file_count;
@@ -3233,7 +3233,7 @@ ircd::db::file_count(const column &column)
 std::vector<std::string>
 ircd::db::files(const column &column)
 {
-	database::column &c(const_cast<db::column &>(column));
+	database::column &c(mutable_cast(column));
 	database &d(*c.d);
 
 	rocksdb::ColumnFamilyMetaData cfmd;
@@ -3927,7 +3927,7 @@ ircd::db::insert(rocksdb::Cache &cache,
 	throw_on_error
 	{
 		cache.Insert(slice(key),
-		             const_cast<char *>(data(value.release())),
+		             mutable_cast(data(value.release())),
 		             value_size,
 		             deleter,
 		             nullptr)
@@ -3947,7 +3947,7 @@ ircd::db::for_each(const rocksdb::Cache &cache,
 	const std::lock_guard lock{mutex};
 
 	thread_local rocksdb::Cache *_cache;
-	_cache = const_cast<rocksdb::Cache *>(&cache);
+	_cache = mutable_cast(&cache);
 
 	thread_local const cache_closure *_closure;
 	_closure = &closure;
@@ -3975,7 +3975,7 @@ ircd::db::charge(const rocksdb::Cache &cache_,
 {
 	auto &cache
 	{
-		const_cast<rocksdb::Cache &>(cache_)
+		mutable_cast(cache_)
 	};
 
 	const custom_ptr<rocksdb::Cache::Handle> handle
@@ -4004,7 +4004,7 @@ ircd::db::exists(const rocksdb::Cache &cache_,
 {
 	auto &cache
 	{
-		const_cast<rocksdb::Cache &>(cache_)
+		mutable_cast(cache_)
 	};
 
 	const custom_ptr<rocksdb::Cache::Handle> handle
@@ -4747,7 +4747,7 @@ ircd::db::_seek(const vector_view<_read_op> &op,
 	std::transform(begin(op), end(op), cf, []
 	(auto &op_)
 	{
-		auto &op(const_cast<_read_op &>(op_));
+		auto &op(mutable_cast(op_));
 		database::column &c(std::get<column>(op));
 		return static_cast<rocksdb::ColumnFamilyHandle *>(c);
 	});

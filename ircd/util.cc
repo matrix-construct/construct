@@ -283,7 +283,7 @@ ircd::util::string(const size_t &size,
 	std::string ret(alloc_size, char{});
 	const mutable_buffer buf
 	{
-		const_cast<char *>(ret.data()), ret.size()
+		mutable_cast(ret.data()), ret.size()
 	};
 
 	const size_t consumed
