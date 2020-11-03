@@ -91,6 +91,11 @@ get__backfill(client &client,
 			m::head(room_id)
 	};
 
+	const bool ids_only
+	{
+		request.query.get<bool>("pdu_ids", false)
+	};
+
 	const size_t limit
 	{
 		calc_limit(request)
@@ -114,17 +119,25 @@ get__backfill(client &client,
 	json::stack::object top{out};
 	json::stack::array pdus
 	{
-		top, "pdus"
+		top, ids_only? "pdus": "pdu_ids"
 	};
 
 	size_t count{0};
 	for(; it && count < limit; ++count, --it)
 	{
-		const m::event &event(*it);
+		const m::event &event
+		{
+			*it
+		};
+
+		assert(event.event_id);
 		if(!visible(event, request.node_id))
 			continue;
 
-		pdus.append(event);
+		if(ids_only)
+			pdus.append(event.event_id);
+		else
+			pdus.append(event);
 	}
 
 	return std::move(response);

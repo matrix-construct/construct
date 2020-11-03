@@ -88,7 +88,6 @@ ircd::m::matrix::module_names
 
 	"media_media",
 
-	"federation_backfill_ids",
 	"federation_backfill",
 	"federation_event_auth",
 	"federation_event",
