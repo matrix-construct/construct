@@ -21,6 +21,7 @@ bool cmdline;
 std::vector<std::string> execute;
 bool quietmode;
 bool single;
+bool safemode;
 bool debugmode;
 bool nolisten;
 bool nobackfill;
@@ -53,6 +54,7 @@ lgetopt opts[]
 	{ "debug",      &debugmode,     lgetopt::BOOL,    "Enable options for debugging" },
 	{ "quiet",      &quietmode,     lgetopt::BOOL,    "Suppress log messages at the terminal" },
 	{ "single",     &single,        lgetopt::BOOL,    "Single user mode for maintenance and diagnostic" },
+	{ "safe",       &safemode,      lgetopt::BOOL,    "Safe mode; like -single but with even less functionality." },
 	{ "console",    &cmdline,       lgetopt::BOOL,    "Drop to a command line immediately after startup" },
 	{ "execute",    &execute,       lgetopt::STRINGS, "Execute command lines immediately after startup" },
 	{ "nolisten",   &nolisten,      lgetopt::BOOL,    "Normal execution but without listening sockets" },
@@ -505,6 +507,13 @@ applyargs()
 {
 	if(diagnostic)
 		ircd::diagnostic.set(diagnostic);
+
+	if(safemode)
+	{
+		single = true;
+		nocompact = true;
+		ircd::server::enable.set("false");
+	}
 
 	if(single && !bootstrap)
 	{
