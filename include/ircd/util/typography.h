@@ -145,19 +145,21 @@ struct is_specialization_of<T<args...>, T>
 //
 
 template<class T>
-extern inline T &
-__attribute__((always_inline, gnu_inline, artificial))
-mutable_cast(const T &t)
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline typename std::remove_const<T>::type &
+mutable_cast(T &t)
 {
-	return const_cast<T &>(t);
+	using type = typename std::remove_const<T>::type;
+	return const_cast<type &>(t);
 }
 
 template<class T>
-extern inline T *const &
-__attribute__((always_inline, gnu_inline, artificial))
-mutable_cast(const T *const &t)
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline typename std::remove_const<T>::type *
+mutable_cast(T *const t)
 {
-	return const_cast<T *const &>(t);
+	using type = typename std::remove_const<T>::type;
+	return const_cast<type *>(t);
 }
 
 //
