@@ -5600,6 +5600,7 @@ try
 		out
 		<< std::setw(4) << std::left << "ID" << ' '
 		<< std::setw(40) << std::right << "ADDRESS" << ' '
+		<< std::setw(7) << std::right << "TTL" << ' '
 		<< std::setw(50) << std::left << "NAME" << ' '
 		<< std::setw(23) << std::left << "READ-TOTAL" << ' '
 		<< std::setw(23) << std::left << "WRITE-TOTAL" << ' '
@@ -5633,6 +5634,7 @@ try
 		out
 		<< std::setw(4) << std::left << peer.id << ' '
 		<< std::setw(40) << std::right << net::ipport{peer.remote} << ' '
+		<< std::setw(7) << std::right << duration_cast<seconds>(peer.remote_expires - now<system_point>()).count() << ' '
 		<< std::setw(50) << std::left << trunc(host, 50) << ' '
 		<< std::setw(23) << std::left << pretty(pbuf, iec(peer.read_total())) << ' '
 		<< std::setw(23) << std::left << pretty(pbuf, iec(peer.write_total())) << ' '

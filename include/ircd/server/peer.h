@@ -27,11 +27,14 @@ struct ircd::server::peer
 	static conf::item<size_t> link_min_default;
 	static conf::item<size_t> link_max_default;
 	static conf::item<seconds> error_clear_default;
+	static conf::item<seconds> remote_ttl_min;
+	static conf::item<seconds> remote_ttl_max;
 	static uint64_t ids;
 
 	uint64_t id {++ids};
-	net::ipport remote;
 	std::string hostcanon;        // hostname:service[:port]
+	net::ipport remote;
+	system_point remote_expires;
 	net::open_opts open_opts;
 	std::list<link> links;
 	std::unique_ptr<err> e;
@@ -70,6 +73,7 @@ struct ircd::server::peer
   public:
 	// indicator lights
 	bool finished() const;
+	bool expired() const;
 
 	// config related
 	size_t link_min() const;

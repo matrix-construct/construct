@@ -708,6 +708,20 @@ ircd::server::peer::link_max_default
 	{ "default",  4L                          }
 };
 
+decltype(ircd::server::peer::remote_ttl_min)
+ircd::server::peer::remote_ttl_min
+{
+	{ "name",     "ircd.server.peer.remote.ttl.min" },
+	{ "default",  21600L                            },
+};
+
+decltype(ircd::server::peer::remote_ttl_max)
+ircd::server::peer::remote_ttl_max
+{
+	{ "name",     "ircd.server.peer.remote.ttl.max" },
+	{ "default",  259200L                           },
+};
+
 decltype(ircd::server::peer::ids)
 ircd::server::peer::ids;
 
@@ -1365,6 +1379,7 @@ try
 	if(rfc3986::valid(std::nothrow, rfc3986::parser::ip_address, host(hostport)))
 	{
 		this->remote = {host(hostport), port(hostport)};
+		this->remote_expires = system_point::max();
 		open_opts.ipport = this->remote;
 		open_links();
 		return;
@@ -1525,9 +1540,26 @@ try
 	};
 
 	assert(!net::dns::is_error(rr));
+	const json::string &ip
+	{
+		rr.at("ip")
+	};
+
+	// Save the results of the query to this object instance.
 	this->remote = net::ipport
 	{
-		unquote(rr.at("ip")), port(this->remote)?: port(target)
+		ip, port(this->remote)?: port(target)
+	};
+
+	// Mark the absolute time-point this remote will need to be refreshed
+	this->remote_expires =
+	{
+		now<system_point>() + std::clamp
+		(
+			seconds(rr.get("ttl", 43200L)),
+			seconds(remote_ttl_min),
+			seconds(remote_ttl_max)
+		)
 	};
 
 	open_opts.ipport = this->remote;
@@ -1588,10 +1620,26 @@ try
 		__builtin_unreachable();
 	}
 
+	const json::string &ip
+	{
+		rr.at("ip")
+	};
+
 	// Save the results of the query to this object instance.
 	this->remote = net::ipport
 	{
-		unquote(rr.at("ip")), port(this->remote)?: port(target)
+		ip, port(this->remote)?: port(target)
+	};
+
+	// Mark the absolute time-point this remote will need to be refreshed
+	this->remote_expires =
+	{
+		now<system_point>() + std::clamp
+		(
+			seconds(rr.get("ttl", 21600L)),
+			seconds(remote_ttl_min),
+			seconds(remote_ttl_max)
+		)
 	};
 
 	open_opts.ipport = this->remote;
@@ -1801,6 +1849,13 @@ ircd::server::peer::link_max()
 const
 {
 	return link_max_default;
+}
+
+bool
+ircd::server::peer::expired()
+const
+{
+	return remote_expires < ircd::now<system_point>();
 }
 
 bool
