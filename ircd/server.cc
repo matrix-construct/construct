@@ -699,22 +699,22 @@ ircd::server::peers
 decltype(ircd::server::peer::enable_ipv6)
 ircd::server::peer::enable_ipv6
 {
-	{ "name",     "ircd.server.peer.enable_ipv6" },
-	{ "default",  true                           }
+	{ "name",     "ircd.server.peer.ipv6.enable" },
+	{ "default",  true                           },
 };
 
 decltype(ircd::server::peer::link_min_default)
 ircd::server::peer::link_min_default
 {
-	{ "name",     "ircd.server.peer.link_min" },
-	{ "default",  1L                          }
+	{ "name",     "ircd.server.peer.link.min" },
+	{ "default",  1L                          },
 };
 
 decltype(ircd::server::peer::link_max_default)
 ircd::server::peer::link_max_default
 {
-	{ "name",     "ircd.server.peer.link_max" },
-	{ "default",  4L                          }
+	{ "name",     "ircd.server.peer.link.max" },
+	{ "default",  4L                          },
 };
 
 decltype(ircd::server::peer::remote_ttl_min)
