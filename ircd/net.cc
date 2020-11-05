@@ -1975,7 +1975,7 @@ catch(const std::exception &e)
 		e.what()
 	};
 
-	assert(0);
+	const ctx::exception_handler eh;
 	call_user(callback, ec);
 }
 
@@ -2030,7 +2030,7 @@ catch(const boost::system::system_error &e)
 {
 	using std::errc;
 
-	const auto &ec_(e.code());
+	const auto ec_(e.code());
 	if(system_category(ec_)) switch(ec_.value())
 	{
 		case int(errc::bad_file_descriptor):
@@ -2056,7 +2056,10 @@ catch(const boost::system::system_error &e)
 	}
 
 	if(callback)
+	{
+		const ctx::exception_handler eh;
 		call_user(callback, ec_);
+	}
 }
 catch(const std::exception &e)
 {
@@ -2067,9 +2070,11 @@ catch(const std::exception &e)
 		e.what()
 	};
 
-	assert(0);
 	if(callback)
+	{
+		const ctx::exception_handler eh;
 		call_user(callback, ec);
+	}
 }
 
 void
@@ -2137,7 +2142,7 @@ catch(const std::exception &e)
 		e.what()
 	};
 
-	assert(0);
+	const ctx::exception_handler eh;
 	call_user(callback, ec);
 }
 
@@ -2180,8 +2185,9 @@ catch(const boost::system::system_error &e)
 		e.what()
 	};
 
-	assert(0);
-	call_user(callback, e.code());
+	const auto code(e.code());
+	const ctx::exception_handler eh;
+	call_user(callback, code);
 }
 catch(const std::exception &e)
 {
@@ -2192,7 +2198,7 @@ catch(const std::exception &e)
 		e.what()
 	};
 
-	assert(0);
+	const ctx::exception_handler eh;
 	call_user(callback, ec);
 }
 
@@ -2249,6 +2255,8 @@ catch(const boost::system::system_error &e)
 		e.what()
 	};
 
+	const auto code(e.code());
+	const ctx::exception_handler eh;
 	call_user(callback, e.code());
 }
 catch(const std::bad_weak_ptr &e)
@@ -2271,7 +2279,7 @@ catch(const std::exception &e)
 		e.what()
 	};
 
-	assert(0);
+	const ctx::exception_handler eh;
 	call_user(callback, ec);
 }
 
