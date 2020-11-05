@@ -183,7 +183,18 @@ ircd::server::get(const net::hostport &hostport)
 	if(it == peers.end() || it->first != hostcanon)
 		it = create(hostport, it);
 
-	return *it->second;
+	auto &peer
+	{
+		*it->second
+	};
+
+	if(peer.expired() && !peer.op_resolve)
+	{
+		assert(peer.hostcanon.data() == it->first.data());
+		peer.resolve(peer.open_opts.hostport);
+	}
+
+	return peer;
 }
 
 decltype(ircd::server::peers)::iterator
@@ -206,9 +217,7 @@ ircd::server::create(const net::hostport &hostport,
 	assert(!empty(peer->hostcanon));
 	const string_view key{peer->hostcanon};
 	it = peers.emplace_hint(it, key, std::move(peer));
-
 	assert(it->second->hostcanon.data() == it->first.data());
-	it->second->resolve(it->second->open_opts.hostport);
 	return it;
 }
 
@@ -2102,6 +2111,9 @@ ircd::server::link::open(const net::open_opts &open_opts)
 	assert(ircd::run::level == ircd::run::level::RUN);
 
 	if(op_init)
+		return false;
+
+	if(opened())
 		return false;
 
 	auto handler
