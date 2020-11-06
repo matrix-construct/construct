@@ -10,8 +10,13 @@
 
 namespace ircd::m
 {
-    static void auth_room_redaction(const event &, room::auth::hookdata &);
-    extern hookfn<room::auth::hookdata &> auth_room_redaction_hookfn;
+	static void redaction_handle_fetch(const event &, vm::eval &);
+	extern conf::item<bool> redaction_fetch_enable;
+	extern conf::item<seconds> redaction_fetch_timeout;
+	extern hookfn<vm::eval &> redaction_fetch_hook;
+
+	static void auth_room_redaction(const event &, room::auth::hookdata &);
+	extern hookfn<room::auth::hookdata &> auth_room_redaction_hookfn;
 }
 
 ircd::mapi::header
@@ -114,5 +119,111 @@ ircd::m::auth_room_redaction(const m::event &event,
 	throw FAIL
 	{
 		"m.room.redaction fails authorization."
+	};
+}
+
+decltype(ircd::m::redaction_fetch_enable)
+ircd::m::redaction_fetch_enable
+{
+	{ "name",     "ircd.m.room.redaction.fetch.enable" },
+	{ "default",  true                                 },
+};
+
+decltype(ircd::m::redaction_fetch_timeout)
+ircd::m::redaction_fetch_timeout
+{
+	{ "name",     "ircd.m.room.redaction.fetch.timeout" },
+	{ "default",  5L                                    },
+};
+
+decltype(ircd::m::redaction_fetch_hook)
+ircd::m::redaction_fetch_hook
+{
+	redaction_handle_fetch,
+	{
+		{ "_site",  "vm.fetch.auth"    },
+		{ "type",   "m.room.redaction" },
+	}
+};
+
+void
+ircd::m::redaction_handle_fetch(const event &event,
+                                vm::eval &eval)
+try
+{
+	assert(eval.opts);
+	const auto &opts{*eval.opts};
+	if(!opts.fetch || !redaction_fetch_enable)
+		return;
+
+	assert(json::get<"room_id"_>(event));
+	assert(json::get<"type"_>(event) == "m.room.redaction");
+	if(my(event))
+		return;
+
+	const m::event::id &redacts
+	{
+		json::get<"redacts"_>(event)
+	};
+
+	if(likely(m::exists(redacts)))
+		return;
+
+	log::dwarning
+	{
+		log, "%s in %s by %s redacts missing %s; fetching...",
+		string_view(event.event_id),
+		string_view(at<"room_id"_>(event)),
+		string_view(at<"sender"_>(event)),
+		string_view(redacts),
+	};
+
+	m::fetch::opts fetch_opts;
+	fetch_opts.op = m::fetch::op::event;
+	fetch_opts.room_id = at<"room_id"_>(event);
+	fetch_opts.event_id = redacts;
+	auto request
+	{
+		m::fetch::start(fetch_opts)
+	};
+
+	const json::object response
+	{
+		request.get(seconds(redaction_fetch_timeout))
+	};
+
+	const json::array pdus
+	{
+		response["pdus"]
+	};
+
+	if(pdus.empty())
+		return;
+
+	const m::event result
+	{
+		json::object(pdus.at(0)), redacts
+	};
+
+	auto eval_opts(opts);
+	eval_opts.phase.set(vm::phase::FETCH_PREV, false);
+	eval_opts.phase.set(vm::phase::FETCH_STATE, false);
+	vm::eval
+	{
+		result, eval_opts
+	};
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		log, "Failed to fetch redaction target for %s in %s :%s",
+		string_view(event.event_id),
+		string_view(json::get<"room_id"_>(event)),
+		e.what(),
 	};
 }
