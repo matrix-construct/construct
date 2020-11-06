@@ -586,9 +586,15 @@ void
 ircd::http::assign(response::head &head,
                    const header &header)
 {
-	char buf[64];
+	char buf[96];
 	const auto &[key_, val] {header};
 	assert(size(key_) <= sizeof(buf));
+	if(unlikely(size(key_) > sizeof(buf)))
+		throw error
+		{
+			REQUEST_HEADER_FIELDS_TOO_LARGE
+		};
+
 	const auto &key
 	{
 		tolower(buf, key_)
