@@ -10770,9 +10770,17 @@ console_cmd__room__events__missing(opt &out, const string_view &line)
 		param["event_id"]
 	};
 
-	const m::room room
+	m::room room
 	{
-		room_id, event_id
+		room_id
+	};
+
+	if(m::valid(m::id::EVENT, event_id))
+		room.event_id = event_id;
+
+	const auto top
+	{
+		m::top(room)
 	};
 
 	const m::room::events::missing missing
@@ -10780,13 +10788,19 @@ console_cmd__room__events__missing(opt &out, const string_view &line)
 		room
 	};
 
-	missing.for_each(min_depth, [&out, &limit]
+	missing.for_each(min_depth, [&out, &limit, &top]
 	(const auto &event_id, const auto &ref_depth, const auto &ref_idx)
 	{
+		const auto &[top_event_id, top_depth, top_idx] {top};
+
 		out
-		<< std::right << std::setw(10) << ref_idx
+		<< std::right << std::setw(10) << int64_t(ref_idx - top_idx)
 		<< " "
-		<< std::right << std::setw(8) << ref_depth
+		<< std::left << std::setw(10) << ref_idx
+		<< " "
+		<< std::right << std::setw(10) << int64_t(ref_depth - top_depth)
+		<< " "
+		<< std::left << std::setw(10) << ref_depth
 		<< " "
 		<< std::left << std::setw(52) << event_id
 		<< std::endl;
@@ -10843,17 +10857,12 @@ console_cmd__room__events__horizon(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "event_id", "limit"
+		"room_id", "limit"
 	}};
 
 	const auto &room_id
 	{
 		m::room_id(param.at("room_id"))
-	};
-
-	const auto &event_id
-	{
-		param.at("event_id", "*"_sv)
 	};
 
 	auto limit
@@ -10863,7 +10872,7 @@ console_cmd__room__events__horizon(opt &out, const string_view &line)
 
 	const m::room room
 	{
-		room_id, event_id
+		room_id
 	};
 
 	const m::room::events::horizon horizon
