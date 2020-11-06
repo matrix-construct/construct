@@ -65,6 +65,12 @@ struct ircd::m::room::head::fetch::opts
 		m::id::event{}, 0L, 0UL
 	};
 
+	/// Limits total results
+	size_t max_results {-1UL};
+
+	/// Limits results per server (spec sez 20)
+	size_t max_results_per_server {32};
+
 	/// When true, results are stored in the head set and duplicate results
 	/// are not provided to the closure. When false, the head set is not used.
 	bool unique {true};

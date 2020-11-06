@@ -210,9 +210,16 @@ ircd::m::room::head::fetch::fetch(const opts &opts,
 			json::get<"depth"_>(result) = depth;
 		}
 
-		return m::for_each(prev, [this, &opts, &closure, &result]
+		size_t i(0);
+		return m::for_each(prev, [this, &opts, &closure, &result, &i]
 		(const event::id &event_id)
 		{
+			if(unlikely(i++ > opts.max_results_per_server))
+				return true;
+
+			if(unlikely(this->head.size() >= opts.max_results))
+				return false;
+
 			auto it
 			{
 				this->head.lower_bound(event_id)
