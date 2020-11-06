@@ -114,17 +114,22 @@ try
 		m::fetch::start(fetch_opts)
 	};
 
-	const auto response
+	const json::object response
 	{
 		request.get(seconds(fetch_timeout))
 	};
 
+	const json::array pdus
+	{
+		response["pdus"]
+	};
+
+	if(pdus.empty())
+		return;
+
 	const m::event result
 	{
-		json::object
-		{
-			response
-		}
+		json::object(pdus.at(0)), event_id
 	};
 
 	auto eval_opts(opts);
