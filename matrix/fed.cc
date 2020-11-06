@@ -406,7 +406,7 @@ ircd::m::fed::backfill::backfill(const room::id &room_id,
 	m::event::id::buf event_id_buf;
 	if(!opts.event_id)
 	{
-		event_id_buf = m::room::head::fetch(room_id, opts.remote);
+		event_id_buf = m::room::head::fetch::one(room_id, opts.remote);
 		opts.event_id = event_id_buf;
 	}
 

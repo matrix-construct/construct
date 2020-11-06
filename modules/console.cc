@@ -9196,6 +9196,40 @@ console_cmd__room__head__reset(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__head__fetch(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id"
+	}};
+
+	const auto room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	m::room::head::fetch::opts opts;
+	opts.room_id = room_id;
+	m::room::head::fetch
+	{
+		opts, [&out](const m::event &result)
+		{
+			out
+			<< pretty_oneline(result)
+			<< std::endl;
+			return true;
+		}
+	};
+
+	return true;
+}
+
+bool
 console_cmd__room__sounding(opt &out, const string_view &line)
 {
 	const params param{line, " ",

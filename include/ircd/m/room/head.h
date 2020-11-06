@@ -40,10 +40,9 @@ namespace ircd::m
 ///
 struct ircd::m::room::head
 {
+	struct fetch;
 	struct generate;
 	using closure = std::function<bool (const event::idx &, const event::id &)>;
-
-	static conf::item<milliseconds> fetch_timeout;
 
 	m::room room;
 
@@ -56,8 +55,6 @@ struct ircd::m::room::head
 	:room{room}
 	{}
 
-	static event::id::buf fetch(const id &, const string_view &remote, const id::user &);
-	static event::id::buf fetch(const id &, const string_view &remote);
 	static void modify(const event::id &, const db::op &, const bool &);
 	static size_t rebuild(const head &);
 	static size_t reset(const head &);

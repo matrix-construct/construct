@@ -198,6 +198,7 @@ struct ircd::m::room
 #include "content.h"
 #include "head.h"
 #include "head_generate.h"
+#include "head_fetch.h"
 #include "auth.h"
 #include "power.h"
 #include "aliases.h"
