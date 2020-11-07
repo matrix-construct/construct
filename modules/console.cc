@@ -10977,6 +10977,59 @@ console_cmd__room__events__horizon__rebuild(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__acquire(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "depth_start", "depth_stop", "viewport_size", "rounds"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const auto depth_start
+	{
+		param.at("depth_start", 0L)
+	};
+
+	const auto depth_stop
+	{
+		param.at("depth_stop", 0L)
+	};
+
+	const auto viewport_size
+	{
+		param.at("viewport_size", 0L)
+	};
+
+	const auto rounds
+	{
+		param.at("rounds", 1L)
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	m::acquire::opts opts;
+	opts.room = room_id;
+	opts.depth.first = depth_start;
+	opts.depth.second = depth_stop;
+	opts.viewport_size = viewport_size;
+	opts.rounds = rounds;
+	opts.head = depth_stop == 0;
+	m::acquire::execute
+	{
+		opts
+	};
+
+	return true;
+}
+
+bool
 console_cmd__room__messages(opt &out, const string_view &line)
 {
 	const params param{line, " ",

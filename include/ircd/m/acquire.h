@@ -14,25 +14,47 @@
 namespace ircd::m::acquire
 {
 	struct opts;
-	struct acquire;
+	struct execute;
 
 	extern log::log log;
 };
 
-struct ircd::m::acquire::acquire
+struct ircd::m::acquire::execute
 {
-	acquire(const room &, const opts &);
+	execute(const opts &);
 };
 
 struct ircd::m::acquire::opts
 {
+	/// Room apropos.
+	m::room room;
+
+	/// Optional remote host first considered as the target for operations in
+	/// case caller has better information for what will most likely succeed.
 	string_view hint;
 
+	/// For diagnostic and special use; forces remote operations through the
+	/// hint, and fails them if the hint is insufficient.
 	bool hint_only {false};
 
-	bool head {false};
+	/// Perform head acquisition prior to depthwise operations.
+	bool head {true};
 
-	bool head_reset {false};
+	/// Perform missing acquisition.
+	bool missing {true};
 
-	bool missing {false};
+	/// Depthwise window of acquisition; concentrate on specific depth window
+	pair<int64_t> depth {0, 0};
+
+	/// Provide a viewport size; conf item
+	size_t viewport_size {0};
+
+	/// The number of rounds the algorithm runs for.
+	size_t rounds {1};
+
+	/// Total event limit over all operations.
+	size_t fetch_max {-1UL};
+
+	/// Limit the number of requests in flight at any given time.
+	size_t fetch_width {128};
 };

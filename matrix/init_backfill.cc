@@ -22,6 +22,7 @@ namespace ircd::m::init::backfill
 	extern conf::item<seconds> gossip_timeout;
 	extern conf::item<bool> gossip_enable;
 	extern conf::item<bool> local_joined_only;
+	extern conf::item<size_t> viewports;
 	extern conf::item<size_t> pool_size;
 	extern conf::item<bool> enable;
 	extern log::log log;
@@ -73,6 +74,13 @@ ircd::m::init::backfill::delay
 {
 	{ "name",     "ircd.m.init.backfill.delay"  },
 	{ "default",  15L                           },
+};
+
+decltype(ircd::m::init::backfill::viewports)
+ircd::m::init::backfill::viewports
+{
+	{ "name",     "ircd.m.init.backfill.viewports"  },
+	{ "default",  4L                                },
 };
 
 decltype(ircd::m::init::backfill::count)
@@ -294,12 +302,18 @@ void
 ircd::m::init::backfill::handle_room(const room::id &room_id)
 {
 	m::acquire::opts opts;
-	opts.head = true;
-	opts.missing = true;
-	opts.head_reset = true;
-	m::acquire::acquire
+	opts.room = room_id;
+	opts.viewport_size = ssize_t(m::room::events::viewport_size);
+	opts.viewport_size *= size_t(viewports);
+	opts.rounds = opts.viewport_size / 2;
+	m::acquire::execute
 	{
-		room_id, opts
+		opts
+	};
+
+	const size_t num_reset
+	{
+		m::room::head::reset(opts.room)
 	};
 }
 
