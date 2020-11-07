@@ -8096,18 +8096,23 @@ console_cmd__event__horizon(opt &out, const string_view &line)
 	horizon.for_each([&out, &event_id]
 	(const auto &, const auto &event_idx)
 	{
-		const auto _event_id
+		const m::event::fetch event
 		{
-			m::event_id(std::nothrow, event_idx)
+			std::nothrow, event_idx
 		};
 
-		out << event_id
-		    << " -> "
-		    << event_idx
-		    << " "
-		    << _event_id
-		    << std::endl;
+		out
+		<< event.event_id
+		<< " -> "
+		<< event_idx
+		<< " ";
 
+		if(event.valid)
+			out << pretty_oneline(event);
+		else
+			out << "Not Found.";
+
+		out << std::endl;
 		return true;
 	});
 
