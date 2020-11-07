@@ -396,19 +396,23 @@ try
 		if(proffer_remote(request, request.opts.event_id.host()))
 			select_remote(request, request.opts.event_id.host());
 
+	if(!!request.started)
+		if(!request.opts.attempt_limit || request.attempted.size() < request.opts.attempt_limit)
+			select_random_remote(request);
+
 	if(!request.started)
 		request.started = ircd::now<system_point>();
 
-	if(!proffer_remote(request, request.origin))
-		select_random_remote(request);
-
-	for(; request.origin; select_random_remote(request))
+	while(request.origin)
 	{
 		if(start(request, request.origin))
 			return true;
 
-		if(request.attempted.size() > request.opts.attempt_limit - 1UL)
-			break;
+		if(request.opts.attempt_limit)
+			if(request.attempted.size() >= request.opts.attempt_limit)
+				break;
+
+		select_random_remote(request);
 	}
 
 	throw m::NOT_FOUND
