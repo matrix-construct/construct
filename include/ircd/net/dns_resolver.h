@@ -67,6 +67,7 @@ struct ircd::net::dns::resolver
 	void handle_reply(const header &, const const_buffer &body, tag &);
 	void handle_reply(const ipport &, const header &, const const_buffer &body);
 	void handle(const ipport &, const mutable_buffer &);
+	std::tuple<net::ipport, mutable_buffer> recv_recv(const mutable_buffer &);
 	void recv_worker();
 	ctx::context recv_context;
 

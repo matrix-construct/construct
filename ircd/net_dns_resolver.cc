@@ -494,34 +494,11 @@ try
 		64_KiB
 	};
 
-	const auto interruption{[this]
-	(ctx::ctx *const &)
-	{
-		if(this->ns.is_open())
-			this->ns.cancel();
-	}};
-
-	const asio::mutable_buffers_1 bufs{buf};
-	ip::udp::endpoint ep;
 	while(ns.is_open()) try
 	{
-		size_t recv; continuation
+		const auto &[from, reply]
 		{
-			continuation::asio_predicate, interruption, [this, &bufs, &recv, &ep]
-			(auto &yield)
-			{
-				recv = ns.async_receive_from(bufs, ep, yield);
-			}
-		};
-
-		const mutable_buffer &reply
-		{
-			data(buf), recv
-		};
-
-		const net::ipport &from
-		{
-			make_ipport(ep)
+			recv_recv(buf)
 		};
 
 		handle(from, reply);
@@ -543,6 +520,40 @@ catch(const std::exception &e)
 	log::critical
 	{
 		log, "%s", e.what()
+	};
+}
+
+std::tuple<ircd::net::ipport, ircd::mutable_buffer>
+ircd::net::dns::resolver::recv_recv(const mutable_buffer &buf)
+{
+	const asio::mutable_buffers_1 bufs
+	{
+		buf
+	};
+
+	const auto interruption{[this](ctx::ctx *const &)
+	{
+		if(this->ns.is_open())
+			this->ns.cancel();
+	}};
+
+	ip::udp::endpoint ep;
+	size_t recv; continuation
+	{
+		continuation::asio_predicate, interruption, [this, &bufs, &recv, &ep]
+		(auto &yield)
+		{
+			recv = ns.async_receive_from(bufs, ep, yield);
+		}
+	};
+
+	return
+	{
+		make_ipport(ep),
+		mutable_buffer
+		{
+			data(buf), recv
+		}
 	};
 }
 
