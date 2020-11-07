@@ -214,7 +214,7 @@ const
 		secret_key.sign(object)
 	};
 
-	thread_local char sigb64[1_KiB];
+	char sigb64[128];
 	return fmt::sprintf
 	{
 		out, "X-Matrix origin=%s,key=\"%s\",sig=\"%s\"",
