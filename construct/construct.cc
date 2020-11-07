@@ -512,6 +512,7 @@ applyargs()
 	{
 		single = true;
 		nocompact = true;
+		noautoapps = true;
 		ircd::server::enable.set("false");
 	}
 
