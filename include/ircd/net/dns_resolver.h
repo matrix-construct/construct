@@ -46,6 +46,7 @@ struct ircd::net::dns::resolver
 	steady_point send_last;                      // Time of last send
 	std::deque<uint16_t> sendq;                  // Queue of frames for rate-limiting
 	ip::udp::socket ns;                          // A pollable activity object
+	bool recv_idle {false};                      // Timeout worker won't run if false
 
 	// util
 	void add_server(const ipport &);
@@ -67,6 +68,7 @@ struct ircd::net::dns::resolver
 	void handle_reply(const header &, const const_buffer &body, tag &);
 	void handle_reply(const ipport &, const header &, const const_buffer &body);
 	void handle(const ipport &, const mutable_buffer &);
+	void handle_interrupt(ctx::ctx *const &) noexcept;
 	std::tuple<net::ipport, mutable_buffer> recv_recv(const mutable_buffer &);
 	void recv_worker();
 	ctx::context recv_context;

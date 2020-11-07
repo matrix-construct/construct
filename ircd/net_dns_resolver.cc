@@ -286,9 +286,12 @@ ircd::net::dns::resolver::timeout_worker()
 {
 	while(1)
 	{
+		// Dock here until somebody submits a request into the tag map. Also
+		// wait until recv_idle is asserted which indicates the UDP queue has
+		// been exhausted.
 		dock.wait([this]
 		{
-			return !tags.empty();
+			return !tags.empty() && recv_idle;
 		});
 
 		check_timeouts(milliseconds(timeout));
@@ -526,35 +529,67 @@ catch(const std::exception &e)
 std::tuple<ircd::net::ipport, ircd::mutable_buffer>
 ircd::net::dns::resolver::recv_recv(const mutable_buffer &buf)
 {
+	static const ip::udp::socket::message_flags flags
+	{
+		0
+	};
+
 	const asio::mutable_buffers_1 bufs
 	{
 		buf
 	};
 
-	const auto interruption{[this](ctx::ctx *const &)
-	{
-		if(this->ns.is_open())
-			this->ns.cancel();
-	}};
-
+	// First try a non-blocking receive to find and return anything in the
+	// queue. If this comes back as -EAGAIN we'll assert recv_idle and then
+	// conduct the normal blocking receive.
+	boost::system::error_code ec;
 	ip::udp::endpoint ep;
-	size_t recv; continuation
+	size_t recv
 	{
-		continuation::asio_predicate, interruption, [this, &bufs, &recv, &ep]
-		(auto &yield)
-		{
-			recv = ns.async_receive_from(bufs, ep, yield);
-		}
+		ns.receive_from(bufs, ep, flags, ec)
 	};
+
+	assert(!ec || recv == 0);
+	assert(!ec || ec == boost::system::errc::resource_unavailable_try_again);
+
+	// branch on any ec, not just -EAGAIN; this time it can throw...
+	if(likely(ec))
+	{
+		const scope_restore recv_idle
+		{
+			this->recv_idle, true
+		};
+
+		const auto interruption
+		{
+			std::bind(&resolver::handle_interrupt, this, ph::_1)
+		};
+
+		continuation
+		{
+			continuation::asio_predicate, interruption, [this, &bufs, &recv, &ep]
+			(auto &yield)
+			{
+				recv = ns.async_receive_from(bufs, ep, yield);
+			}
+		};
+	}
 
 	return
 	{
-		make_ipport(ep),
-		mutable_buffer
+		make_ipport(ep), mutable_buffer
 		{
 			data(buf), recv
 		}
 	};
+}
+
+void
+ircd::net::dns::resolver::handle_interrupt(ctx::ctx *const &interruptor)
+noexcept
+{
+	if(!ns.is_open())
+		ns.cancel();
 }
 
 void
