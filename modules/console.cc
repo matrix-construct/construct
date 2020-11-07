@@ -15893,7 +15893,7 @@ console_cmd__fetch__event(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "event_id", "hint"
+		"room_id", "event_id", "hint", "limit"
 	}};
 
 	const auto room_id
@@ -15911,11 +15911,17 @@ console_cmd__fetch__event(opt &out, const string_view &line)
 		param["hint"]
 	};
 
+	const size_t limit
+	{
+		param.at("limit", 0UL)
+	};
+
 	m::fetch::opts opts;
 	opts.op = m::fetch::op::event;
 	opts.room_id = room_id;
 	opts.event_id = event_id;
 	opts.hint = hint;
+	opts.attempt_limit = limit;
 	auto future
 	{
 		m::fetch::start(opts)
