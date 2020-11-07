@@ -630,7 +630,7 @@ ircd::info::hardware::arm::ctr{[]
 static ircd::fixed_buffer<ircd::const_buffer, 32>
 ircd_info_hardware_arm_vendor{[](const auto &out)
 {
-	ircd::copy(out, "<unknown vendor>"_sv);
+	ircd::copy(out, ircd::string_view("<unknown vendor>"));
 }};
 
 decltype(ircd::info::hardware::arm::vendor)
