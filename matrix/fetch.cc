@@ -393,8 +393,7 @@ try
 	// When no user hint, use legacy event_id hostpart as hint.
 	if(!request.started && !request.origin)
 		if(proffer_remote(request, request.opts.event_id.host()))
-			if(select_remote(request, request.opts.event_id.host()))
-				return true;
+			select_remote(request, request.opts.event_id.host());
 
 	if(!request.started)
 		request.started = ircd::now<system_point>();
