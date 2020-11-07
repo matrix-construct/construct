@@ -387,8 +387,9 @@ try
 	assert(!request.finished);
 
 	// Attempt the user's hint first
-	if(!request.started && !request.origin)
-		request.origin = request.opts.hint;
+	if(!request.started && !request.origin && request.opts.hint)
+		if(proffer_remote(request, request.opts.hint))
+			select_remote(request, request.opts.hint);
 
 	// When no user hint, use legacy event_id hostpart as hint.
 	if(!request.started && !request.origin)
