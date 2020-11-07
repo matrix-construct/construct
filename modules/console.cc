@@ -10793,6 +10793,20 @@ console_cmd__room__events__missing(opt &out, const string_view &line)
 		room
 	};
 
+	out
+	<< std::right << std::setw(10) << "DIFF"
+	<< " "
+	<< std::left << std::setw(10) << "SEQUENCE"
+	<< " "
+	<< std::right << std::setw(10) << "DIFF"
+	<< " "
+	<< std::left << std::setw(10) << "DEPTH"
+	<< " "
+	<< std::right << std::setw(6) << "HORIZO"
+	<< "  "
+	<< std::left << std::setw(52) << "EVENT ID"
+	<< std::endl;
+
 	missing.for_each(min_depth, [&out, &limit, &top]
 	(const auto &event_id, const auto &ref_depth, const auto &ref_idx)
 	{
@@ -10806,6 +10820,8 @@ console_cmd__room__events__missing(opt &out, const string_view &line)
 		<< std::right << std::setw(10) << int64_t(ref_depth - top_depth)
 		<< " "
 		<< std::left << std::setw(10) << ref_depth
+		<< " "
+		<< std::right << std::setw(6) << m::event::horizon(event_id).count()
 		<< " "
 		<< std::left << std::setw(52) << event_id
 		<< std::endl;
