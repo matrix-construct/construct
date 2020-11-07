@@ -15707,6 +15707,51 @@ console_cmd__vm(opt &out, const string_view &line)
 //
 
 bool
+console_cmd__mc__versions(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"remote"
+	}};
+
+	const net::hostport remote
+	{
+		param.at("remote")
+	};
+
+	const unique_mutable_buffer buf
+	{
+		16_KiB
+	};
+
+	window_buffer wb{buf};
+	http::request
+	{
+		wb, host(remote), "GET", "/_matrix/client/versions"
+	};
+
+	server::request request
+	{
+		remote,
+		server::out  { wb.completed()     },
+		server::in   { mutable_buffer{wb} },
+	};
+
+	const auto code
+	{
+		request.get(out.timeout)
+	};
+
+	const json::object response
+	{
+		request.in.content
+	};
+
+	out << string_view{response} << std::endl;
+	return true;
+}
+
+bool
 console_cmd__mc__register(opt &out, const string_view &line)
 {
 	const params param{line, " ",
