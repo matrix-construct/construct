@@ -22,14 +22,14 @@ decltype(ircd::net::dns::resolver::send_rate)
 ircd::net::dns::resolver::send_rate
 {
 	{ "name",     "ircd.net.dns.resolver.send_rate" },
-	{ "default",   250L                             },
+	{ "default",   200L                             },
 };
 
 decltype(ircd::net::dns::resolver::send_burst)
 ircd::net::dns::resolver::send_burst
 {
 	{ "name",     "ircd.net.dns.resolver.send_burst" },
-	{ "default",   2L                                },
+	{ "default",   4L                                },
 };
 
 decltype(ircd::net::dns::resolver::retry_max)
