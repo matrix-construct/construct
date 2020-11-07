@@ -2999,7 +2999,7 @@ noexcept
 		const const_buffer src
 		{
 			data(request.in.head) + tag.state.head_read,
-			tag.state.chunk_read
+			std::min(tag.state.chunk_read, tag.state.head_rem),
 		};
 
 		const mutable_buffer dst
