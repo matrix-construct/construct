@@ -470,23 +470,59 @@ bool
 ircd::m::room::events::missing::for_each(const closure &closure)
 const
 {
-	return for_each(0L, closure);
+	return for_each({0L, 0L}, closure);
 }
 
 bool
-ircd::m::room::events::missing::for_each(const int64_t &min_depth,
+ircd::m::room::events::missing::for_each(const pair<int64_t> &depth,
                                          const closure &closure)
 const
 {
-	bool ret{true};
 	room::events it
 	{
-		room
+		room, depth.first
 	};
 
+	bool ret{true};
+	for(; it && ret; ++it)
+	{
+		if(depth.second && int64_t(it.depth()) > depth.second)
+			break;
+
+		const m::event &event{*it};
+		const m::event::prev prev{event};
+		ret = m::for_each(prev, [&](const m::event::id &event_id)
+		{
+			if(m::exists(event_id))
+				return true;
+
+			if(!closure(event_id, it.depth(), it.event_idx()))
+				return false;
+
+			return true;
+		});
+	}
+
+	return ret;
+}
+
+bool
+ircd::m::room::events::missing::rfor_each(const pair<int64_t> &depth,
+                                          const closure &closure)
+const
+{
+	room::events it
+	{
+		room, depth.second?: -1UL
+	};
+
+	bool ret{true};
 	for(; it && ret; --it)
 	{
-		if(int64_t(it.depth()) < min_depth)
+		if(depth.second && int64_t(it.depth()) > depth.second)
+			continue;
+
+		if(int64_t(it.depth()) < depth.first)
 			break;
 
 		const m::event &event{*it};

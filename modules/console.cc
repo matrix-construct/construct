@@ -10752,7 +10752,7 @@ console_cmd__room__events__missing(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "limit", "min_depth", "event_id"
+		"room_id", "limit", "min_depth", "max_depth", "event_id"
 	}};
 
 	const auto &room_id
@@ -10768,6 +10768,11 @@ console_cmd__room__events__missing(opt &out, const string_view &line)
 	const auto &min_depth
 	{
 		param.at("min_depth", 0L)
+	};
+
+	const auto &max_depth
+	{
+		param.at("max_depth", 0L)
 	};
 
 	const auto &event_id
@@ -10807,7 +10812,7 @@ console_cmd__room__events__missing(opt &out, const string_view &line)
 	<< std::left << std::setw(52) << "EVENT ID"
 	<< std::endl;
 
-	missing.for_each(min_depth, [&out, &limit, &top]
+	missing.for_each({min_depth, max_depth}, [&out, &limit, &top]
 	(const auto &event_id, const auto &ref_depth, const auto &ref_idx)
 	{
 		const auto &[top_event_id, top_depth, top_idx] {top};

@@ -76,20 +76,12 @@ ircd::m::acquire::fetch_missing(const opts &opts,
 	};
 
 	bool ret(false);
-	missing.for_each([&opts, &fetching, &top, &ret]
+	missing.for_each(opts.depth, [&opts, &fetching, &top, &ret]
 	(const event::id &event_id, const int64_t &ref_depth, const event::idx &ref_idx)
 	{
 		// Bail if interrupted
 		if(ctx::interruption_requested())
 			return false;
-
-		// Bail if the depth is below the window
-		if(ref_depth < opts.depth.first)
-			return false;
-
-		// Skip if the depth is above the window.
-		if(opts.depth.second && ref_depth > opts.depth.second)
-			return true;
 
 		// Branch if we have to measure the viewportion
 		if(opts.viewport_size)
