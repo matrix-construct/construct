@@ -153,6 +153,18 @@ noexcept
 	fs::base::db.set(their_dbpath);
 }
 
+/// Cancels all background work by the events database. This will make the
+/// database shutdown more fluid, without waiting for large compactions.
+static const ircd::run::changed
+ircd_m_dbs_handle_quit
+{
+	ircd::run::level::QUIT, []
+	{
+		if(ircd::m::dbs::events)
+			ircd::db::bgcancel(*ircd::m::dbs::events, false); // non-blocking
+	}
+};
+
 //
 // write_opts
 //
