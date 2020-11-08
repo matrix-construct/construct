@@ -400,6 +400,9 @@ try
 		if(!request.opts.attempt_limit || request.attempted.size() < request.opts.attempt_limit)
 			select_random_remote(request);
 
+	if(!request.started && !request.origin)
+		select_random_remote(request);
+
 	if(!request.started)
 		request.started = ircd::now<system_point>();
 
