@@ -18,12 +18,6 @@ IRCD_MODULE
 	"Server Command"
 };
 
-static std::pair<string_view, string_view>
-execute_command(const mutable_buffer &buf,
-                const m::user &user,
-                const m::room &room,
-                const string_view &cmd);
-
 static void
 handle_command(const m::event &event,
                m::vm::eval &eval);
@@ -38,6 +32,19 @@ command_hook
 		{ "origin",   my_host()         },
 	}
 };
+
+struct command_result
+{
+	string_view html;
+	string_view alt {"no alt text"};
+	string_view msgtype {"m.notice"};
+};
+
+static command_result
+execute_command(const mutable_buffer &buf,
+                const m::user &user,
+                const m::room &room,
+                const string_view &cmd);
 
 void
 handle_command(const m::event &event,
@@ -100,10 +107,10 @@ try
 
 	const unique_buffer<mutable_buffer> buf
 	{
-		32_KiB
+		56_KiB
 	};
 
-	const auto &[html, alt]
+	const auto &[html, alt, msgtype]
 	{
 		execute_command(buf, user, room_id, cmd)
 	};
@@ -126,14 +133,34 @@ try
 		public_response? "m.room.message" : "ircd.cmd.result"
 	};
 
+	const json::value html_val
+	{
+		html, json::STRING
+	};
+
+	const json::value content_body
+	{
+		alt, json::STRING
+	};
+
+	static const json::value undef_val
+	{
+		string_view{nullptr}, json::STRING
+	};
+
+	static const json::value html_format
+	{
+		"org.matrix.custom.html", json::STRING
+	};
+
 	m::send(response_room, response_sender, response_type,
 	{
-		{ "msgtype",         "m.notice"                },
-		{ "format",          "org.matrix.custom.html"  },
-		{ "body",            { alt,  json::STRING }    },
-		{ "formatted_body",  { html, json::STRING }    },
-		{ "room_id",         room_id                   },
-		{ "input",           input                     },
+		{ "msgtype",         msgtype?: "m.notice"              },
+		{ "format",          html? html_format: undef_val      },
+		{ "body",            content_body                      },
+		{ "formatted_body",  html? html_val: undef_val         },
+		{ "room_id",         room_id                           },
+		{ "input",           input                             },
     });
 }
 catch(const std::exception &e)
@@ -141,31 +168,31 @@ catch(const std::exception &e)
 	throw;
 }
 
-static std::pair<string_view, string_view>
+static command_result
 command__ping(const mutable_buffer &buf,
               const m::user &user,
               const m::room &room,
               const string_view &cmd);
 
-static std::pair<string_view, string_view>
+static command_result
 command__dash(const mutable_buffer &buf,
               const m::user &user,
               const m::room &room,
               const string_view &cmd);
 
-static std::pair<string_view, string_view>
+static command_result
 command__read(const mutable_buffer &buf,
               const m::user &user,
               const m::room &room,
               const string_view &cmd);
 
-static std::pair<string_view, string_view>
+static command_result
 command__version(const mutable_buffer &buf,
                  const m::user &user,
                  const m::room &room,
                  const string_view &cmd);
 
-std::pair<string_view, string_view>
+command_result
 execute_command(const mutable_buffer &buf,
                 const m::user &user,
                 const m::room &room,
@@ -308,7 +335,7 @@ catch(const std::exception &e)
 	};
 }
 
-std::pair<string_view, string_view>
+command_result
 command__version(const mutable_buffer &buf,
                  const m::user &user,
                  const m::room &room,
@@ -335,7 +362,7 @@ command__version(const mutable_buffer &buf,
 	return { view(out, buf), alt };
 }
 
-std::pair<string_view, string_view>
+command_result
 command__read(const mutable_buffer &buf,
               const m::user &user,
               const m::room &room,
@@ -528,13 +555,13 @@ command__read(const mutable_buffer &buf,
 	};
 }
 
-static std::pair<string_view, string_view>
+static command_result
 command__ping__room(const mutable_buffer &buf,
                     const m::user &user,
                     const m::room &room,
                     const string_view &cmd);
 
-std::pair<string_view, string_view>
+command_result
 command__ping(const mutable_buffer &buf,
               const m::user &user,
               const m::room &room,
@@ -638,7 +665,7 @@ command__ping(const mutable_buffer &buf,
 	return { view(out, buf), alt };
 }
 
-std::pair<string_view, string_view>
+command_result
 command__ping__room(const mutable_buffer &buf,
                     const m::user &user,
                     const m::room &room,
@@ -722,7 +749,7 @@ command__ping__room(const mutable_buffer &buf,
 	return { view(out, buf), alt };
 }
 
-std::pair<string_view, string_view>
+command_result
 command__dash(const mutable_buffer &buf,
               const m::user &user,
               const m::room &room,
