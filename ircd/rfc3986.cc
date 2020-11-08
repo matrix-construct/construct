@@ -557,7 +557,7 @@ ircd::rfc3986::encoder
 
 	const rule<const string_view> encode
 	{
-		*(unreserved | (lit('%') << karma::right_align(2, '0')[karma::hex]))
+		*(unreserved | (lit('%') << karma::right_align(2, '0')[karma::upper[karma::hex]]))
 		,"url encode"
 	};
 
