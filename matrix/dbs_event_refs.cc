@@ -621,7 +621,7 @@ ircd::m::dbs::_prefetch_event_refs_m_receipt_m_read(db::txn &txn,
 		json::get<"content"_>(event).get("event_id")
 	};
 
-	if(!valid(m::id::EVENT, event_id))
+	if(unlikely(!valid(m::id::EVENT, event_id)))
 		return false;
 
 	return prefetch_event_idx(event_id, opts);
@@ -636,26 +636,31 @@ ircd::m::dbs::_index_event_refs_m_relates(db::txn &txn,
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::M_RELATES)));
 
-	if(!json::get<"content"_>(event).has("m.relates_to"))
+	const auto &content
+	{
+		json::get<"content"_>(event)
+	};
+
+	if(!content.has("m.relates_to"))
 		return;
 
-	if(!json::type(json::get<"content"_>(event).get("m.relates_to"), json::OBJECT))
+	if(unlikely(!json::type(content["m.relates_to"], json::OBJECT)))
 		return;
 
 	const json::object &m_relates_to
 	{
-		json::get<"content"_>(event).get("m.relates_to")
+		content["m.relates_to"]
 	};
 
 	const json::string &event_id
 	{
-		m_relates_to.get("event_id")
+		m_relates_to["event_id"]
 	};
 
 	if(!event_id)
 		return;
 
-	if(!valid(m::id::EVENT, event_id))
+	if(unlikely(!valid(m::id::EVENT, event_id)))
 	{
 		log::derror
 		{
@@ -716,23 +721,28 @@ ircd::m::dbs::_prefetch_event_refs_m_relates(db::txn &txn,
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::M_RELATES)));
 
-	if(!json::get<"content"_>(event).has("m.relates_to"))
+	const auto &content
+	{
+		json::get<"content"_>(event)
+	};
+
+	if(!content.has("m.relates_to"))
 		return false;
 
-	if(!json::type(json::get<"content"_>(event).get("m.relates_to"), json::OBJECT))
+	if(unlikely(!json::type(content["m.relates_to"], json::OBJECT)))
 		return false;
 
 	const json::object &m_relates_to
 	{
-		json::get<"content"_>(event).get("m.relates_to")
+		content["m.relates_to"]
 	};
 
 	const json::string &event_id
 	{
-		m_relates_to.get("event_id")
+		m_relates_to["event_id"]
 	};
 
-	if(!valid(m::id::EVENT, event_id))
+	if(unlikely(!valid(m::id::EVENT, event_id)))
 		return false;
 
 	return prefetch_event_idx(event_id, opts);
@@ -750,21 +760,26 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 	if(json::get<"type"_>(event) != "m.room.message")
 		return;
 
-	if(!json::get<"content"_>(event).has("m.relates_to"))
+	const auto &content
+	{
+		json::get<"content"_>(event)
+	};
+
+	if(!content.has("m.relates_to"))
 		return;
 
-	if(!json::type(json::get<"content"_>(event).get("m.relates_to"), json::OBJECT))
+	if(unlikely(!json::type(content["m.relates_to"], json::OBJECT)))
 		return;
 
 	const json::object &m_relates_to
 	{
-		json::get<"content"_>(event).get("m.relates_to")
+		content["m.relates_to"]
 	};
 
 	if(!m_relates_to.has("m.in_reply_to"))
 		return;
 
-	if(!json::type(m_relates_to.get("m.in_reply_to"), json::OBJECT))
+	if(unlikely(!json::type(m_relates_to.get("m.in_reply_to"), json::OBJECT)))
 	{
 		log::derror
 		{
@@ -777,15 +792,15 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 
 	const json::object &m_in_reply_to
 	{
-		m_relates_to.get("m.in_reply_to")
+		m_relates_to["m.in_reply_to"]
 	};
 
 	const json::string &event_id
 	{
-		m_in_reply_to.get("event_id")
+		m_in_reply_to["event_id"]
 	};
 
-	if(!valid(m::id::EVENT, event_id))
+	if(unlikely(!valid(m::id::EVENT, event_id)))
 	{
 		log::derror
 		{
@@ -847,34 +862,39 @@ ircd::m::dbs::_prefetch_event_refs_m_relates_m_reply(db::txn &txn,
 	if(json::get<"type"_>(event) != "m.room.message")
 		return false;
 
-	if(!json::get<"content"_>(event).has("m.relates_to"))
+	const auto &content
+	{
+		json::get<"content"_>(event)
+	};
+
+	if(!content.has("m.relates_to"))
 		return false;
 
-	if(!json::type(json::get<"content"_>(event).get("m.relates_to"), json::OBJECT))
+	if(unlikely(!json::type(content["m.relates_to"], json::OBJECT)))
 		return false;
 
 	const json::object &m_relates_to
 	{
-		json::get<"content"_>(event).get("m.relates_to")
+		content["m.relates_to"]
 	};
 
 	if(!m_relates_to.has("m.in_reply_to"))
 		return false;
 
-	if(!json::type(m_relates_to.get("m.in_reply_to"), json::OBJECT))
+	if(unlikely(!json::type(m_relates_to.get("m.in_reply_to"), json::OBJECT)))
 		return false;
 
 	const json::object &m_in_reply_to
 	{
-		m_relates_to.get("m.in_reply_to")
+		m_relates_to["m.in_reply_to"]
 	};
 
 	const json::string &event_id
 	{
-		m_in_reply_to.get("event_id")
+		m_in_reply_to["event_id"]
 	};
 
-	if(!valid(m::id::EVENT, event_id))
+	if(unlikely(!valid(m::id::EVENT, event_id)))
 		return false;
 
 	return prefetch_event_idx(event_id, opts);
