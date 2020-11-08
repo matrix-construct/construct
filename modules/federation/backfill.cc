@@ -119,7 +119,7 @@ get__backfill(client &client,
 	json::stack::object top{out};
 	json::stack::array pdus
 	{
-		top, ids_only? "pdus": "pdu_ids"
+		top, ids_only? "pdu_ids": "pdus"
 	};
 
 	size_t count{0};
