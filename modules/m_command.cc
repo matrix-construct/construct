@@ -197,6 +197,12 @@ catch(const std::exception &e)
 }
 
 static command_result
+command__caption(const mutable_buffer &buf,
+                 const m::user &user,
+                 const m::room &room,
+                 const string_view &cmd);
+
+static command_result
 command__ping(const mutable_buffer &buf,
               const m::user &user,
               const m::room &room,
@@ -240,6 +246,9 @@ try
 
 		case "ping"_:
 			return command__ping(buf, user, room, cmd);
+
+		case "caption"_:
+			return command__caption(buf, user, room, cmd);
 
 		default:
 			break;
@@ -813,4 +822,44 @@ command__dash(const mutable_buffer &buf,
 	};
 
 	return { view(out, buf), alt };
+}
+
+command_result
+command__caption(const mutable_buffer &buf,
+                 const m::user &user,
+                 const m::room &room,
+                 const string_view &cmd)
+{
+	const params param{tokens_after(cmd, ' ', 0), " ",
+	{
+		"url",
+	}};
+
+	const string_view caption
+	{
+		tokens_after(cmd, ' ', 1)
+	};
+
+	std::ostringstream out;
+	pubsetbuf(out, buf);
+	out
+	<< "<img"
+	<< " src=\"" << param.at("url") << "\""
+	<< " height=\"100%\""
+	<< " width=\"100%\""
+	<< " />"
+	<< "<caption>"
+	<< caption
+	<< "</caption>"
+	;
+
+	const string_view html
+	{
+		view(out, buf)
+	};
+
+	return
+	{
+		html, caption
+	};
 }
