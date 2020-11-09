@@ -641,10 +641,7 @@ ircd::m::dbs::_index_event_refs_m_relates(db::txn &txn,
 		json::get<"content"_>(event)
 	};
 
-	if(!content.has("m.relates_to"))
-		return;
-
-	if(unlikely(!json::type(content["m.relates_to"], json::OBJECT)))
+	if(!content.has("m.relates_to", json::OBJECT))
 		return;
 
 	const json::object &m_relates_to
@@ -726,10 +723,7 @@ ircd::m::dbs::_prefetch_event_refs_m_relates(db::txn &txn,
 		json::get<"content"_>(event)
 	};
 
-	if(!content.has("m.relates_to"))
-		return false;
-
-	if(unlikely(!json::type(content["m.relates_to"], json::OBJECT)))
+	if(!content.has("m.relates_to", json::OBJECT))
 		return false;
 
 	const json::object &m_relates_to
@@ -765,10 +759,7 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 		json::get<"content"_>(event)
 	};
 
-	if(!content.has("m.relates_to"))
-		return;
-
-	if(unlikely(!json::type(content["m.relates_to"], json::OBJECT)))
+	if(!content.has("m.relates_to", json::OBJECT))
 		return;
 
 	const json::object &m_relates_to
@@ -776,19 +767,8 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 		content["m.relates_to"]
 	};
 
-	if(!m_relates_to.has("m.in_reply_to"))
+	if(!m_relates_to.has("m.in_reply_to", json::OBJECT))
 		return;
-
-	if(unlikely(!json::type(m_relates_to.get("m.in_reply_to"), json::OBJECT)))
-	{
-		log::derror
-		{
-			log, "Cannot index m.in_reply_to in %s; not an OBJECT.",
-			string_view{event.event_id}
-		};
-
-		return;
-	}
 
 	const json::object &m_in_reply_to
 	{
@@ -867,10 +847,7 @@ ircd::m::dbs::_prefetch_event_refs_m_relates_m_reply(db::txn &txn,
 		json::get<"content"_>(event)
 	};
 
-	if(!content.has("m.relates_to"))
-		return false;
-
-	if(unlikely(!json::type(content["m.relates_to"], json::OBJECT)))
+	if(!content.has("m.relates_to", json::OBJECT))
 		return false;
 
 	const json::object &m_relates_to
@@ -878,10 +855,7 @@ ircd::m::dbs::_prefetch_event_refs_m_relates_m_reply(db::txn &txn,
 		content["m.relates_to"]
 	};
 
-	if(!m_relates_to.has("m.in_reply_to"))
-		return false;
-
-	if(unlikely(!json::type(m_relates_to.get("m.in_reply_to"), json::OBJECT)))
+	if(!m_relates_to.has("m.in_reply_to", json::OBJECT))
 		return false;
 
 	const json::object &m_in_reply_to
