@@ -114,7 +114,6 @@ extern "C"
 
 // Other standard suites
 #include <RB_INC_UTILITY
-#include <RB_INC_EXECUTION
 #include <RB_INC_FUNCTIONAL
 #include <RB_INC_ALGORITHM
 #include <RB_INC_FILESYSTEM
