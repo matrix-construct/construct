@@ -1615,6 +1615,7 @@ noexcept try
 	fs::write_opts wopts;
 	wopts.priority = ionice;
 	wopts.nodelay = nodelay;
+	wopts.interruptible = false;
 	fs::truncate(fd, size, wopts);
 	return Status::OK();
 }
@@ -1725,6 +1726,7 @@ noexcept try
 	fs::write_opts wopts;
 	wopts.priority = ionice;
 	wopts.nodelay = nodelay;
+	wopts.interruptible = false;
 	const const_buffer buf
 	{
 		data(s), size(s)
@@ -1790,6 +1792,7 @@ noexcept try
 	wopts.priority = ionice;
 	wopts.nodelay = nodelay;
 	wopts.offset = offset;
+	wopts.interruptible = false;
 	const const_buffer buf
 	{
 		data(s), size(s)
@@ -2247,6 +2250,7 @@ noexcept try
 		fs::write_opts wopts;
 		wopts.priority = this->ionice;
 		wopts.nodelay = true;
+		wopts.interruptible = false;
 		fs::truncate(fd, logical_offset, wopts);
 	}
 
@@ -2299,6 +2303,7 @@ noexcept try
 	fs::write_opts wopts;
 	wopts.priority = this->ionice;
 	wopts.nodelay = true;
+	wopts.interruptible = false;
 	fs::truncate(fd, size, wopts);
 	logical_offset = size;
 	return Status::OK();
@@ -2734,6 +2739,7 @@ ircd::db::database::env::writable_file_direct::_write__aligned(const const_buffe
 	wopts.priority = ionice;
 	wopts.nodelay = nodelay;
 	wopts.offset = offset;
+	wopts.interruptible = false;
 	fs::write(fd, buf, wopts);
 	return {};
 }
