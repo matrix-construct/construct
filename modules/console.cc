@@ -8980,7 +8980,28 @@ console_cmd__room(opt &out, const string_view &line)
 	};
 
 	ssize_t missing_count(3);
-	missing.for_each([&out, &missing_count, &top]
+	missing.rfor_each({0, 0}, [&out, &missing_count, &top]
+	(const auto &event_id, const auto &ref_depth, const auto &ref_idx)
+	{
+		out
+		<< std::right << std::setw(8) << (int64_t(ref_depth) - std::get<int64_t>(top))
+		<< " "
+		<< std::right << std::setw(8) << ref_depth
+		<< " "
+		<< std::right << std::setw(10) << ref_idx
+		<< " "
+		<< std::left << std::setw(64) << m::event_id(ref_idx)
+		<< " missing: "
+		<< std::left << event_id
+		<< std::endl;
+		return missing_count--;
+	});
+
+	out << std::endl;
+	out << "oldest missing: " << std::endl;
+
+	missing_count = 3;
+	missing.for_each({0, 0}, [&out, &missing_count, &top]
 	(const auto &event_id, const auto &ref_depth, const auto &ref_idx)
 	{
 		out
