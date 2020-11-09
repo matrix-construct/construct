@@ -30,6 +30,9 @@
 
 #pragma GCC visibility push (internal)
 
+// Spirit uses `boost::function` by default, but since it's in boost:: it
+// simply declares as `function`. We can do a lot better by dropping in
+// `std::function` instead.
 namespace boost::spirit
 {
 	using std::function;
