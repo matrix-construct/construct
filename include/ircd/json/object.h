@@ -89,12 +89,14 @@ struct ircd::json::object
 	size_t count() const;
 	size_t size() const; // warns if used; use count()
 	bool has(const string_view &key) const;
+	bool has(const string_view &key, const enum json::type &) const; // false if not type
 
 	// returns value or default
 	template<class T> T get(const string_view &key, const T &def = T{}) const;
 	string_view get(const string_view &key, const string_view &def = {}) const;
 
 	// returns value or throws not_found
+	template<class T = string_view> T at(const string_view &key, const enum json::type &) const;
 	template<class T = string_view> T at(const string_view &key) const;
 
 	// returns value or empty
@@ -154,6 +156,44 @@ const try
 		throw not_found
 		{
 			"'%s'", key
+		};
+
+	return lex_cast<T>(it->second);
+}
+catch(const bad_lex_cast &e)
+{
+	throw type_error
+	{
+		"'%s' must cast to type %s",
+		key,
+		typeid(T).name()
+	};
+}
+
+template<class T>
+inline T
+ircd::json::object::at(const string_view &key,
+                       const enum json::type &type)
+const try
+{
+	const auto it
+	{
+		find(key)
+	};
+
+	if(unlikely(it == end()))
+		throw not_found
+		{
+			"'%s'", key
+		};
+
+	if(unlikely(!json::type(it->second, type, strict)))
+		throw type_error
+		{
+			"'%s' expected %s; got %s instead",
+			key,
+			reflect(type),
+			reflect(json::type(it->second, std::nothrow)),
 		};
 
 	return lex_cast<T>(it->second);

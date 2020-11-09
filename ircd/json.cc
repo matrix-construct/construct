@@ -2707,8 +2707,14 @@ ircd::string_view
 ircd::json::object::operator[](const string_view &key)
 const
 {
-	const auto it(find(key));
-	return it != end()? it->second : string_view{};
+	const auto it
+	{
+		find(key)
+	};
+
+	return it != end()?
+		it->second:
+		string_view{};
 }
 
 ircd::string_view
@@ -2723,6 +2729,21 @@ ircd::json::object::operator std::string()
 const
 {
 	return json::strung(*this);
+}
+
+bool
+ircd::json::object::has(const string_view &key,
+                        const enum json::type &type)
+const
+{
+	const auto &it
+	{
+		find(key)
+	};
+
+	return it != end()?
+		json::type(it->second, type, strict):
+		false;
 }
 
 bool
