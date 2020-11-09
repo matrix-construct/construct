@@ -16,6 +16,10 @@ IRCD_MODULE
 	"federation state"
 };
 
+static m::resource::response
+get__state(client &client,
+           const m::resource::request &request);
+
 m::resource
 state_resource
 {
@@ -23,6 +27,34 @@ state_resource
 	{
 		"federation state",
 		resource::DIRECTORY,
+	}
+};
+
+m::resource::method
+state_method_get
+{
+	state_resource, "GET", get__state,
+	{
+		state_method_get.VERIFY_ORIGIN
+	}
+};
+
+m::resource
+state_ids_resource
+{
+	"/_matrix/federation/v1/state_ids/",
+	{
+		"federation state_ids",
+		resource::DIRECTORY,
+	}
+};
+
+m::resource::method
+state_ids_method_get
+{
+	state_ids_resource, "GET", get__state,
+	{
+		state_ids_method_get.VERIFY_ORIGIN
 	}
 };
 
@@ -69,6 +101,12 @@ get__state(client &client,
 			"You are not permitted to view the room at this event"
 		};
 
+	// To integrate both /state/ and /state_ids/ endpoints; indicates which
+	const bool ids_only
+	{
+		has(request.head.path, "state_ids")
+	};
+
 	const m::room::state state
 	{
 		room
@@ -91,7 +129,10 @@ get__state(client &client,
 		response.buf, response.flusher(), size_t(state_flush_hiwat)
 	};
 
-	json::stack::object top{out};
+	json::stack::object top
+	{
+		out
+	};
 
 	// MSC2314 added room_version
 	char version_buf[32];
@@ -100,8 +141,9 @@ get__state(client &client,
 		top, "room_version", m::version(version_buf, room)
 	};
 
-	// pdus
-	if(request.query.get<bool>("pdus", true))
+	// pdus sent in response by default when /state/ is the path or
+	// toggled by ?pdus=true from either
+	if(request.query.get<bool>("pdus", !ids_only))
 	{
 		json::stack::array pdus
 		{
@@ -115,8 +157,9 @@ get__state(client &client,
 		});
 	}
 
-	// auth_chain
-	if(request.query.get<bool>("auth_chain", true))
+	// auth_chain sent in response by default when /state/ is the path or
+	// toggled by ?auth_chain=true from either
+	if(request.query.get<bool>("auth_chain", !ids_only))
 	{
 		json::stack::array auth_chain
 		{
@@ -134,14 +177,44 @@ get__state(client &client,
 		});
 	}
 
+	// auth_chain_ids sent in response by default when /state_ids/ is given or
+	// toggled by ?auth_chain_ids=true from either endpoint
+	if(request.query.get<bool>("auth_chain_ids", ids_only))
+	{
+		json::stack::array auth_chain_ids
+		{
+			top, "auth_chain_ids"
+		};
+
+		ac.for_each([&auth_chain_ids]
+		(const m::event::idx &event_idx)
+		{
+			m::event_id(std::nothrow, event_idx, [&auth_chain_ids]
+			(const auto &event_id)
+			{
+				auth_chain_ids.append(event_id);
+			});
+
+			return true;
+		});
+	}
+
+	// pdu_ids sent in response by default when /state_ids/ is given or toggled
+	// by ?pdu_ids=true from either endpoint
+	if(request.query.get<bool>("pdu_ids", ids_only))
+	{
+		json::stack::array pdu_ids
+		{
+			top, "pdu_ids"
+		};
+
+		state.for_each(m::event::id::closure{[&pdu_ids]
+		(const m::event::id &event_id)
+		{
+			pdu_ids.append(event_id);
+			return true;
+		}});
+	}
+
 	return std::move(response);
 }
-
-m::resource::method
-method_get
-{
-	state_resource, "GET", get__state,
-	{
-		method_get.VERIFY_ORIGIN
-	}
-};

@@ -105,7 +105,6 @@ ircd::m::matrix::module_names
 	"federation_send_join",
 	"federation_send_leave",
 	"federation_send",
-	"federation_state_ids",
 	"federation_state",
 	"federation_user_devices",
 	"federation_user_keys_claim",
