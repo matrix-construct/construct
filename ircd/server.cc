@@ -191,7 +191,7 @@ ircd::server::get(const net::hostport &hostport)
 	if(peer.expired() && !peer.op_resolve)
 	{
 		assert(peer.hostcanon.data() == it->first.data());
-		peer.resolve(peer.open_opts.hostport);
+		peer.resolve();
 	}
 
 	return peer;
@@ -1346,14 +1346,27 @@ ircd::server::peer::del(link &link)
 }
 
 void
-ircd::server::peer::resolve(const hostport &hostport)
+ircd::server::peer::resolve()
 {
-	net::dns::opts opts;
+	const net::hostport canon
+	{
+		this->hostcanon
+	};
 
-	// Figure out the initial query type. Most of the time it's SRV.
-	opts.qtype = net::service(hostport) && !net::port(hostport)?
+	auto &hostport
+	{
+		this->open_opts.hostport
+	};
+
+	hostport.host = host(canon);
+	hostport.service = service(canon);
+	hostport.port = port(hostport);
+
+	net::dns::opts opts;
+	opts.qtype =
+		net::service(hostport) && !net::port(hostport)?
 			33:  // SRV
-	peer::enable_ipv6 && net::enable_ipv6?
+		peer::enable_ipv6 && net::enable_ipv6?
 			28:  // AAAA
 			 1;  // A
 
@@ -1368,7 +1381,7 @@ ircd::server::peer::resolve(const hostport &hostport)
 }
 
 void
-ircd::server::peer::resolve(const hostport &hostport,
+ircd::server::peer::resolve(const net::hostport &hostport,
                             const net::dns::opts &opts)
 try
 {
