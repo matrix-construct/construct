@@ -222,38 +222,31 @@ ircd::m::room::aliases::cache::get(std::nothrow_t,
 		getidx(alias)
 	};
 
-	if(!event_idx)
+	const bool expired
+	{
+		!my_host(alias.host()) && (!event_idx || cache::expired(event_idx))
+	};
+
+	if(!event_idx || expired)
 	{
 		if(my_host(alias.host()))
 			return false;
 
+		if(expired)
+			log::dwarning
+			{
+				log, "Cached alias %s expired age:%ld ttl:%ld",
+				string_view{alias},
+				cache::age(event_idx).count(),
+				milliseconds(seconds(alias_cache_ttl)).count(),
+			};
+
 		if(!fetch(std::nothrow, alias, alias.host()))
 			return false;
 
-		event_idx = getidx(alias);
+		if(!(event_idx = getidx(alias)))
+			return false;
 	}
-
-	const bool expired
-	{
-		!my_host(alias.host()) && cache::expired(event_idx)
-	};
-
-	if(expired)
-	{
-		log::dwarning
-		{
-			log, "Cached alias %s expired age:%ld ttl:%ld",
-			string_view{alias},
-			cache::age(event_idx).count(),
-			milliseconds(seconds(alias_cache_ttl)).count(),
-		};
-
-		fetch(std::nothrow, alias, alias.host());
-		event_idx = getidx(alias);
-	}
-
-	if(!event_idx)
-		return false;
 
 	bool ret{false};
 	m::get(std::nothrow, event_idx, "content", [&closure, &ret]
