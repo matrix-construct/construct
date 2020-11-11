@@ -1360,7 +1360,7 @@ ircd::server::peer::resolve()
 
 	hostport.host = host(canon);
 	hostport.service = service(canon);
-	hostport.port = port(hostport);
+	hostport.port = port(canon)?: 0;
 
 	net::dns::opts opts;
 	opts.qtype =
