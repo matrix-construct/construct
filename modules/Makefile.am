@@ -104,6 +104,7 @@ m_room_power_levels_la_SOURCES = m_room_power_levels.cc
 m_room_redaction_la_SOURCES = m_room_redaction.cc
 m_room_server_acl_la_SOURCES = m_room_server_acl.cc
 m_room_third_party_invite_la_SOURCES = m_room_third_party_invite.cc
+m_room_tombstone_la_SOURCES = m_room_tombstone.cc
 
 m_module_LTLIBRARIES = \
 	m_breadcrumbs.la \
@@ -135,6 +136,7 @@ m_module_LTLIBRARIES = \
 	m_room_redaction.la \
 	m_room_server_acl.la \
 	m_room_third_party_invite.la \
+	m_room_tombstone.la \
 	###
 
 ###############################################################################
