@@ -165,7 +165,30 @@ try
 }
 catch(const std::exception &e)
 {
-	throw;
+	const json::object &content
+	{
+		json::get<"content"_>(event)
+	};
+
+	const json::string &room_id
+	{
+		content["room_id"]
+	};
+
+	const json::string &input
+	{
+		content["body"]
+	};
+
+	log::error
+	{
+		m::log, "Command in %s in %s by %s '%s' :%s",
+		string_view{event.event_id},
+		room_id,
+		at<"sender"_>(event),
+		input,
+		e.what(),
+	};
 }
 
 static command_result
