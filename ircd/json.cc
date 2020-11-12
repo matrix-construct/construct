@@ -3946,7 +3946,7 @@ ircd::json::lookup_ctrl_tab_len(const u8x16 in)
 		ctrl_tab_len
 	};
 
-	size_t k(0);
+	size_t i, j, k(0);
 	i32x4 idx[4]
 	{
 		{ in[k++], in[k++], in[k++], in[k++] },
@@ -3955,16 +3955,11 @@ ircd::json::lookup_ctrl_tab_len(const u8x16 in)
 		{ in[k++], in[k++], in[k++], in[k++] },
 	};
 
-	size_t i, j;
-	i32x8 res[2];
-	for(i = 0; i < 2; ++i)
-		for(j = 0; j < 8; ++j)
-			res[i][j] = tab[idx[i][j]];
-
-	i8x16 ret;
-	k = 0;
-	for(i = 0; i < 2; ++i)
-		for(j = 0; j < 8; ++j)
+	u8x16 ret;
+	i32x4 res[4];
+	for(k = 0, i = 0; i < 4; ++i)
+		for(j = 0; j < 4; ++j)
+			res[i][j] = tab[idx[i][j]],
 			ret[k++] = res[i][j];
 
 	return ret;
