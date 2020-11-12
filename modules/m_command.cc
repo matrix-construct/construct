@@ -36,7 +36,7 @@ command_hook
 struct command_result
 {
 	string_view html;
-	string_view alt {"no alt text"};
+	string_view alt;
 	string_view msgtype {"m.notice"};
 };
 
@@ -140,7 +140,7 @@ try
 
 	const json::value content_body
 	{
-		alt, json::STRING
+		alt?: "no alt text"_sv, json::STRING
 	};
 
 	static const json::value undef_val
