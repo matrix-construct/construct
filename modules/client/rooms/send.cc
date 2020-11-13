@@ -141,15 +141,22 @@ put__send(client &client,
 		room_id, &copts
 	};
 
-	const bool cmd
+	if(type == "m.room.message")
 	{
-		type == "m.room.message" &&
-		unquote(content.get("msgtype")) == "m.text" &&
-		startswith(unquote(content.get("body")), "\\\\")
-	};
+		const m::room::message message
+		{
+			content
+		};
 
-	if(cmd)
-		return handle_command(client, request, room);
+		const bool cmd
+		{
+			json::get<"msgtype"_>(message) == "m.text" &&
+			startswith(json::get<"body"_>(message), "\\\\")
+		};
+
+		if(cmd)
+			return handle_command(client, request, room);
+	}
 
 	const auto event_id
 	{
