@@ -3390,6 +3390,8 @@ namespace ircd::json
 
 	static u64x2 string_stringify_utf16(u8x16 &block, const u8x16 mask);
 	static u64x2 string_stringify(u8x16 &block, const u8x16 mask);
+
+	static u64x2 string_unescape(u8x16 &block, const u8x16 mask);
 }
 
 /// Escaped control character LUT.
@@ -3438,11 +3440,118 @@ alignas(32)
 	6, 6, 6,
 };
 
+/// Streaming transform of serialized (valid, escaped) JSON string content to
+/// preimage content. The result may contain integrals and control codes
+/// (including null characters) if the input contains their escaped rep.
+///
+/// Use this function with extreme care. Note that it is almost entirely
+/// unnecessary to use this operation during the normal course of network
+/// server operation with JSON in -> JSON out as the rest of this ircd::json
+/// API (i.e stringify()) can rewrite/correct all inputs without performing
+/// any unescape conversion at any point.
+///
 ircd::const_buffer
-ircd::json::unescape(const mutable_buffer &buf,
-                     const string &in)
+ircd::json::unescape(const mutable_buffer &dst,
+                     const string &src)
 {
-	throw ircd::not_implemented{};
+	using block_t = u8x16;
+
+	const u64x2 max
+	{
+		size(dst), size(src),
+	};
+
+	const u64x2 res // consumed [dst, src]
+	{
+		simd::transform<block_t>(data(dst), data(src), max, string_unescape)
+	};
+
+	return const_buffer
+	{
+		data(dst), res[0] // output pos (bytes written)
+	};
+}
+
+ircd::u64x2
+ircd::json::string_unescape(u8x16 &block,
+                            const u8x16 block_mask)
+{
+	const u8x16 is_esc
+	(
+		block == '\\'
+	);
+
+	// Fastest-path; backward branch to count and consume all of the input.
+	if(likely(!simd::any(is_esc | ~block_mask)))
+		return u64x2
+		{
+			sizeof(block), sizeof(block)
+		};
+
+	const u64 regular_prefix_count
+	{
+		simd::lzcnt(is_esc | ~block_mask) / 8
+	};
+
+	// Fast-path; backward branch to count and consume uninteresting characters
+	// from the front of the input.
+	if(likely(regular_prefix_count))
+		return u64x2
+		{
+			regular_prefix_count, regular_prefix_count,
+		};
+
+	// Escape sequence case
+	assert(block[0] == '\\');
+	const u8x16 subject
+	{
+		simd::broad_cast(block, block[1]) &
+		simd::broad_cast(block_mask, block_mask[1])
+	};
+
+	// Legitimately escaped sequence bank
+	const u8x16 cases
+	{
+		'b', 't', 'n', 'f', 'r', '"', '\\',
+		'u',
+	};
+
+	// Unescaped replacements
+	const u8x16 integral
+	{
+		'\b', '\t', '\n', '\f', '\r', '"', '\\',  // replacement integrals
+		'u',                                      // not selected b/c utf16 branch taken
+		block[1], block[1], block[1], block[1],   // filler for unnecessary escapes
+		block[1], block[1], block[1], block[1],   // filler for unnecessary escapes
+	};
+
+	const u8x16 match
+	(
+		subject == cases
+	);
+
+	const u64 match_depth
+	{
+		simd::lzcnt(match) / 8
+	};
+
+	// Possible utf-16 surrogate(s)
+	if(match_depth == 7)
+	{
+		assert(block[1] == 'u');
+		return string_stringify_utf16(block, block_mask);
+	}
+
+	// Perform replacement of the escaped character.
+	assert(match_depth < sizeof(integral));
+	block[0] = integral[match_depth];
+
+	// Increment output by 1 and input by 2 because we lost the escaping
+	// solidus and left a replacement character
+	return u64x2
+	{
+		1UL, 2UL,
+	};
 }
 
 ircd::json::string
