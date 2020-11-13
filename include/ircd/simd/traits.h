@@ -38,6 +38,14 @@ namespace ircd::simd
 	extern const u128x1  u128x1_lane_id;
 	extern const u256x1  u256x1_lane_id;
 	extern const u512x1  u512x1_lane_id;
+
+	constexpr auto alignment
+	{
+		support::avx512f?  64:
+		support::avx?      32:
+		support::sse?      16:
+		                    8
+	};
 }
 
 /// Get number of lanes for vector type (the number after the x in the

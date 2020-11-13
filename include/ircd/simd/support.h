@@ -18,6 +18,15 @@
 
 namespace ircd::simd::support
 {
+	constexpr bool sse
+	{
+		#if defined(__SSE__)
+			true
+		#else
+			false
+		#endif
+	};
+
 	constexpr bool sse2
 	{
 		#if defined(__SSE2__)
