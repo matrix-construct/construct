@@ -37,7 +37,7 @@ struct ircd::ctx::ctx
 	static dock adjoindre;                       // contexts waiting for join
 
 	uint64_t id {++id_ctr};                      // Unique runtime ID
-	string_view name;                            // User given name (optional)
+	char name[16] {0};                           // User given name
 	flags_type flags;                            // User given flags
 	int8_t nice {0};                             // Scheduling priority nice-value
 	int8_t ionice {0};                           // IO priority nice-value (defaults for fs::opts)

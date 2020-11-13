@@ -77,11 +77,7 @@ ircd::ctx::ctx::adjoindre;
 ircd::ctx::ctx::ctx(const string_view &name,
                     const ircd::ctx::stack &stack,
                     const context::flags &flags)
-:name
-{
-	name
-}
-,flags
+:flags
 {
 	flags
 }
@@ -94,6 +90,7 @@ ircd::ctx::ctx::ctx(const string_view &name,
 	stack
 }
 {
+	strlcpy(this->name, name);
 }
 
 ircd::ctx::ctx::~ctx()
@@ -554,6 +551,14 @@ ircd::ctx::interrupt(ctx &ctx)
 	ctx.flags |= context::INTERRUPTED;
 	if(likely(&ctx != current && ctx.cont != nullptr))
 		(*ctx.cont->intr)(current);
+}
+
+void
+ircd::ctx::name(ctx &ctx,
+                const string_view &name)
+noexcept
+{
+	strlcpy(ctx.name, name);
 }
 
 int8_t

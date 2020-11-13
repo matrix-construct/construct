@@ -65,6 +65,7 @@ namespace ircd::ctx
 	uint32_t &flags(ctx &) noexcept;                   // Direct flags access
 	int8_t ionice(ctx &, const int8_t &) noexcept;     // IO priority nice-value
 	int8_t nice(ctx &, const int8_t &) noexcept;       // Scheduling priority nice-value
+	void name(ctx &, const string_view &) noexcept;    // Change the name (truncates to 15 chars)
 	void interruptible(ctx &, const bool &) noexcept;  // False for interrupt suppression.
 	void interrupt(ctx &);                             // Interrupt the context.
 	void terminate(ctx &);                             // Interrupt for termination.

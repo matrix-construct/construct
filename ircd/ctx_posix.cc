@@ -350,7 +350,17 @@ ircd_pthread_setname_np(pthread_t __target_thread,
                         const char *__name)
 noexcept
 {
-	//TODO: settable names in ircd::ctx
+	auto it(begin(ircd::ctx::posix::ctxs));
+	while(it != end(ircd::ctx::posix::ctxs))
+	{
+		if(id(*it) == __target_thread)
+		{
+			name(*it, __name);
+			break;
+		}
+		else ++it;
+	}
+
 	return 0;
 }
 
