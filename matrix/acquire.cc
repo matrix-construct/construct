@@ -97,9 +97,35 @@ ircd::m::acquire::fetch_missing(const opts &opts,
 				return false;
 		}
 
+		const auto ref_id
+		{
+			m::event_id(ref_idx)
+		};
+
+		const m::room ref_room
+		{
+			opts.room.room_id, ref_id
+		};
+
+		const auto &[sound_depth, sound_idx]
+		{
+			m::sounding(ref_room)
+		};
+
+		const auto &[twain_depth, _twain_idx]
+		{
+			sound_idx == ref_idx?
+				m::twain(ref_room):
+				std::make_pair(0L, 0UL)
+		};
+
 		auto _opts(opts);
 		_opts.room.event_id = event_id;
 		_opts.hint = opts.hint;
+		_opts.viewport_size = twain_depth?
+			std::clamp(sound_depth - twain_depth, 1L, 48L):
+			1UL;
+
 		submit(_opts, fetching);
 		ret = true;
 		return true;
@@ -127,6 +153,7 @@ ircd::m::acquire::fetch_head(const opts &opts,
 		_opts.room.event_id = result.event_id;
 		_opts.hint = json::get<"origin"_>(result);
 		_opts.hint_only = true;
+		_opts.viewport_size = 1; //XXX
 		submit(_opts, fetching);
 		return true;
 	}};
@@ -162,10 +189,10 @@ ircd::m::acquire::start(const opts &opts,
                         list &fetching)
 {
 	fetch::opts fopts;
-	fopts.op = fetch::op::event;
+	fopts.op = fetch::op::backfill;
 	fopts.room_id = opts.room.room_id;
 	fopts.event_id = opts.room.event_id;
-	fopts.backfill_limit = 1;
+	fopts.backfill_limit = opts.viewport_size;
 	fopts.hint = opts.hint;
 	fopts.attempt_limit = opts.hint_only;
 	fetching.emplace_back(fetch::start(fopts), opts.room.event_id);
@@ -231,20 +258,16 @@ try
 		response["pdus"]
 	};
 
-	const m::event event
-	{
-		pdus.at(0), opts.room.event_id
-	};
-
 	m::vm::opts vmopts;
 	vmopts.infolog_accept = true;
-	vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
-	vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
 	vmopts.warnlog &= ~vm::fault::EXISTS;
 	vmopts.notify_servers = false;
+	vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
+	vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
+	vmopts.wopts.appendix.set(dbs::appendix::ROOM_HEAD, false);
 	m::vm::eval
 	{
-		event, vmopts
+		pdus, vmopts
 	};
 
 	return true;
