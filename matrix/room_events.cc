@@ -548,9 +548,16 @@ bool
 ircd::m::room::events::sounding::rfor_each(const closure &closure)
 const
 {
+	const int64_t depth
+	{
+		room.event_id?
+			m::get(std::nothrow, m::index(std::nothrow, room.event_id), "depth", -1L):
+			-1L
+	};
+
 	room::events it
 	{
-		room
+		room, uint64_t(depth)
 	};
 
 	if(!it)
@@ -586,12 +593,19 @@ bool
 ircd::m::room::events::sounding::for_each(const closure &closure)
 const
 {
-	room::events it
+	const int64_t depth
 	{
-		room, int64_t(0L)
+		room.event_id?
+			m::get(std::nothrow, m::index(std::nothrow, room.event_id), "depth", 0L):
+			0L
 	};
 
-	for(sounding::range range{0L, 0L}; it; ++it)
+	room::events it
+	{
+		room, uint64_t(depth)
+	};
+
+	for(sounding::range range{depth, 0L}; it; ++it)
 	{
 		range.second = it.depth();
 		if(range.first == range.second)
