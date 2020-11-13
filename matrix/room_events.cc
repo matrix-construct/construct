@@ -59,7 +59,6 @@ ircd::m::twain(const room &room)
 	(const auto &range, const auto &event_idx)
 	{
 		ret.first = range.first - 1;
-		ret.second = event_idx;
 		return false;
 	});
 
@@ -107,7 +106,6 @@ ircd::m::hazard(const room &room)
 	(const auto &range, const auto &event_idx)
 	{
 		ret.first = range.first;
-		ret.second = event_idx;
 		return false;
 	});
 

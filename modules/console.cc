@@ -9309,15 +9309,14 @@ console_cmd__room__sounding(opt &out, const string_view &line)
 	    << "   " << m::event_id(head) << " (" << head << ")"
 	    << std::endl;
 
+	out << "hazard:    " << std::setw(8) << hazard.first
+	    << std::endl;
+
 	out << "sounding:  " << std::setw(8) << sounding.first
 	    << "   " << m::event_id(sounding.second) << " (" << sounding.second << ")"
 	    << std::endl;
 
 	out << "twain:     " << std::setw(8) << twain.first
-	    << std::endl;
-
-	out << "hazard:    " << std::setw(8) << hazard.first
-	    << "   " << m::event_id(hazard.second) << " (" << hazard.second << ")"
 	    << std::endl;
 
 	out << "create:    " << std::setw(8) << m::get<uint64_t>(create, "depth")
