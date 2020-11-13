@@ -9260,17 +9260,24 @@ console_cmd__room__sounding(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id",
+		"room_id", "event_id"
 	}};
 
 	const auto &room_id
 	{
-		m::room_id(param.at(0))
+		m::room_id(param.at("room_id"))
+	};
+
+	const m::event::id event_id
+	{
+		param["event_id"]?
+			m::event::id{param["event_id"]}:
+			m::event::id{}
 	};
 
 	const m::room room
 	{
-		room_id
+		room_id, event_id
 	};
 
 	const auto hazard
