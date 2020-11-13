@@ -157,3 +157,60 @@ ircd::replace(const string_view &s,
 		return std::distance(begin(buf), p);
 	});
 }
+
+ircd::string_view
+ircd::replace(const mutable_buffer &out,
+              const string_view &in,
+              const char &before,
+              const char &after)
+noexcept
+{
+	const size_t cpsz
+	{
+		std::min(size(in), size(out))
+	};
+
+	// Branch for in-place copy if in and out are the same. Note that
+	// if this branch is not taken they cannot overlap in any way.
+	if(data(in) == data(out))
+		return replace(mutable_buffer(data(out), cpsz), before, after);
+
+	assert(!overlap(out, in));
+	char *const __restrict__ outp
+	{
+		begin(out)
+	};
+
+	const char *const __restrict__ inp
+	{
+		begin(in)
+	};
+
+	for(size_t i(0); i < cpsz; ++i)
+		outp[i] = inp[i] != before? inp[i]: after;
+
+	return string_view
+	{
+		begin(out), cpsz
+	};
+}
+
+ircd::string_view
+ircd::replace(const mutable_buffer &s,
+              const char &before,
+              const char &after)
+noexcept
+{
+	char *const __restrict__ p
+	{
+		begin(s)
+	};
+
+	for(size_t i(0); i < size(s); ++i)
+		p[i] = p[i] != before? p[i]: after;
+
+	return string_view
+	{
+		data(s), size(s)
+	};
+}
