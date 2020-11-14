@@ -288,6 +288,29 @@ ircd::fs::pathconf(const string_view &path,
 }
 
 ircd::string_view
+ircd::fs::canonical(const mutable_buffer &buf,
+                    const string_view &p)
+{
+	return path(buf, canonical(_path(p)));
+}
+
+ircd::string_view
+ircd::fs::canonical(const mutable_buffer &buf,
+                    const string_view &root,
+                    const string_view &p)
+{
+	return path(buf, canonical(_path(p), _path(root)));
+}
+
+ircd::string_view
+ircd::fs::relative(const mutable_buffer &buf,
+                   const string_view &root,
+                   const string_view &p)
+{
+	return path(buf, relative(_path(p), _path(root)));
+}
+
+ircd::string_view
 ircd::fs::filename(const mutable_buffer &buf,
                    const string_view &p)
 {
@@ -307,14 +330,6 @@ ircd::fs::extension(const mutable_buffer &buf,
                     const string_view &replace)
 {
 	return path(buf, _path(p).replace_extension(_path(replace)));
-}
-
-ircd::string_view
-ircd::fs::relative(const mutable_buffer &buf,
-                   const string_view &root,
-                   const string_view &p)
-{
-	return path(buf, relative(_path(p), _path(root)));
 }
 
 bool

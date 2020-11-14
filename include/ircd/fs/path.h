@@ -46,8 +46,10 @@ namespace ircd::fs
 
 	string_view extension(const mutable_buffer &, const string_view &path, const string_view &replace);
 	string_view extension(const mutable_buffer &, const string_view &path);
-	string_view relative(const mutable_buffer &, const string_view &root, const string_view &path);
 	string_view filename(const mutable_buffer &, const string_view &path);
+	string_view relative(const mutable_buffer &, const string_view &root, const string_view &path);
+	string_view canonical(const mutable_buffer &, const string_view &path);
+	string_view canonical(const mutable_buffer &, const string_view &root, const string_view &path);
 	string_view parent(const mutable_buffer &, const string_view &path);
 
 	long pathconf(const string_view &path, const int &arg);
