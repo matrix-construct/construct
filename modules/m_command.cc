@@ -285,7 +285,7 @@ catch(const m::error &e)
 	    << "<h5>"
 	    << "<font color=\"" << fg[0] << "\" data-mx-bg-color=\"" << bg[0] << "\">"
 	    << "<b>"
-	    << sp << sp << e.what() << sp << sp
+	    //<< sp << sp << e.what() << sp << sp
 	    << "</b>"
 	    << "</font> "
 	    << "<font color=\"" << fg[1] << "\" data-mx-bg-color=\"" << bg[1] << "\">"
