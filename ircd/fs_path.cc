@@ -311,6 +311,14 @@ ircd::fs::relative(const mutable_buffer &buf,
 }
 
 ircd::string_view
+ircd::fs::absolute(const mutable_buffer &buf,
+                   const string_view &root,
+                   const string_view &p)
+{
+	return path(buf, absolute(_path(p), _path(root)));
+}
+
+ircd::string_view
 ircd::fs::filename(const mutable_buffer &buf,
                    const string_view &p)
 {
