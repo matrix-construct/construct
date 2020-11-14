@@ -93,12 +93,14 @@ namespace ircd
 	string_view unquote(const string_view &str);
 	std::string unquote(std::string &&);
 
-	std::string replace(std::string, const char &before, const char &after);
-	std::string replace(std::string, const string_view &before, const string_view &after);
-	std::string replace(const string_view &, const char &before, const string_view &after);
+	string_view replace(const mutable_buffer &, const char before, const char after) noexcept;
+	string_view replace(const mutable_buffer &, const string_view &, const char before, const char after) noexcept;
+	string_view replace(const mutable_buffer &, const string_view &, const char before, const string_view &after);
+	string_view replace(const mutable_buffer &, const string_view &, const string_view &before, const string_view &after);
 	std::string replace(const string_view &, const string_view &before, const string_view &after);
-	string_view replace(const mutable_buffer &, const char &before, const char &after) noexcept;
-	string_view replace(const mutable_buffer &out, const string_view &in, const char &before, const char &after) noexcept;
+	std::string replace(const string_view &, const char before, const string_view &after);
+	std::string replace(std::string, const string_view &before, const string_view &after);
+	std::string replace(std::string, const char before, const char after);
 
 	// Change a single character's case
 	using std::tolower;
@@ -141,8 +143,8 @@ ircd::replace(std::string s,
 
 inline std::string
 ircd::replace(std::string s,
-              const char &before,
-              const char &after)
+              const char before,
+              const char after)
 {
 	const auto &res
 	{

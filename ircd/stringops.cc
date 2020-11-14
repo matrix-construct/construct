@@ -125,7 +125,7 @@ noexcept
 
 std::string
 ircd::replace(const string_view &s,
-              const char &before,
+              const char before,
               const string_view &after)
 {
 	const uint32_t occurs
@@ -142,40 +142,99 @@ ircd::replace(const string_view &s,
 	return string(size, [&s, &before, &after]
 	(const mutable_buffer &buf)
 	{
-		char *p{begin(buf)};
-		std::for_each(begin(s), end(s), [&before, &after, &p]
-		(const char &c)
-		{
-			if(c == before)
-			{
-				memcpy(p, after.data(), after.size());
-				p += after.size();
-			}
-			else *p++ = c;
-		});
-
-		return std::distance(begin(buf), p);
+		return replace(buf, s, before, after);
 	});
+}
+
+ircd::string_view
+ircd::replace(const mutable_buffer &out_,
+              const string_view &in_,
+              const string_view &before,
+              const string_view &after)
+{
+	string_view in(in_);
+	mutable_buffer out(out_);
+	size_t produced(0), consumed(0);
+	size_t p(in.find(before)); do
+	{
+		const string_view prologue
+		{
+			in.substr(0, p)
+		};
+
+		consumed += consume(out, copy(out, prologue));
+		produced += size(prologue);
+		if(p != in.npos)
+		{
+			consumed += consume(out, copy(out, after));
+			produced += size(after);
+			in = in.substr(p + size(after));
+			p = in.find(before);
+		}
+		else break;
+	}
+	while(1);
+
+	if(unlikely(produced > consumed))
+		throw std::out_of_range
+		{
+			"Insufficient buffer to replace string with string"
+		};
+
+    return string_view
+    {
+		data(out_), data(out),
+    };
+}
+
+ircd::string_view
+ircd::replace(const mutable_buffer &out_,
+              const string_view &in_,
+              const char before,
+              const string_view &after)
+{
+	string_view in(in_);
+	mutable_buffer out(out_);
+	size_t produced(0), consumed(0);
+	size_t p(in.find(before)); do
+	{
+		const string_view prologue
+		{
+			in.substr(0, p)
+		};
+
+		consumed += consume(out, copy(out, prologue));
+		produced += size(prologue);
+		if(p != in.npos)
+		{
+			consumed += consume(out, copy(out, after));
+			produced += size(after);
+			in = in.substr(p + 1);
+			p = in.find(before);
+		}
+		else break;
+	}
+	while(1);
+
+	if(unlikely(produced > consumed))
+		throw std::out_of_range
+		{
+			"Insufficient buffer to replace character with string"
+		};
+
+    return string_view
+    {
+		data(out_), data(out),
+    };
 }
 
 ircd::string_view
 ircd::replace(const mutable_buffer &out,
               const string_view &in,
-              const char &before,
-              const char &after)
+              const char before,
+              const char after)
 noexcept
 {
-	const size_t cpsz
-	{
-		std::min(size(in), size(out))
-	};
-
-	// Branch for in-place copy if in and out are the same. Note that
-	// if this branch is not taken they cannot overlap in any way.
-	if(data(in) == data(out))
-		return replace(mutable_buffer(data(out), cpsz), before, after);
-
-	assert(!overlap(out, in));
 	char *const __restrict__ outp
 	{
 		begin(out)
@@ -186,8 +245,19 @@ noexcept
 		begin(in)
 	};
 
-	for(size_t i(0); i < cpsz; ++i)
-		outp[i] = inp[i] != before? inp[i]: after;
+	const size_t cpsz
+	{
+		std::min(size(out), size(in))
+	};
+
+	std::transform(inp, inp + cpsz, outp, [&before, &after]
+	(const char p) -> char
+	{
+		return 0
+		| ((p == before) & after)
+		| ((p != before) & p)
+		;
+	});
 
 	return string_view
 	{
@@ -197,8 +267,8 @@ noexcept
 
 ircd::string_view
 ircd::replace(const mutable_buffer &s,
-              const char &before,
-              const char &after)
+              const char before,
+              const char after)
 noexcept
 {
 	char *const __restrict__ p
@@ -206,8 +276,14 @@ noexcept
 		begin(s)
 	};
 
-	for(size_t i(0); i < size(s); ++i)
-		p[i] = p[i] != before? p[i]: after;
+	std::transform(p, p + size(s), p, [&before, &after]
+	(const char p) -> char
+	{
+		return 0
+		| ((p == before) & after)
+		| ((p != before) & p)
+		;
+	});
 
 	return string_view
 	{
