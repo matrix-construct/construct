@@ -128,6 +128,19 @@ ircd::m::acquire::fetch_missing(const opts &opts,
 
 		submit(_opts, fetching);
 		ret = true;
+		log::debug
+		{
+			log, "Fetch %s miss prev of %s @%lu in %s @%lu sound:%lu twain:%ld fetching:%zu",
+			string_view{event_id},
+			string_view{ref_id},
+			ref_depth,
+			string_view{ref_room.room_id},
+			std::get<int64_t>(top),
+			sound_depth,
+			twain_depth,
+			fetching.size(),
+		};
+
 		return true;
 	});
 
@@ -176,12 +189,10 @@ void
 ircd::m::acquire::submit(const opts &opts,
                          list &fetching)
 {
-	start(opts, fetching); do
-	{
+	start(opts, fetching);
+	while(!fetching.empty())
 		if(!handle(opts, fetching))
 			break;
-	}
-	while(fetching.size() > opts.fetch_width);
 }
 
 void
@@ -202,40 +213,38 @@ bool
 ircd::m::acquire::handle(const opts &opts,
                          list &fetching)
 {
-	while(!fetching.empty() && !ctx::interruption_requested())
+	const bool full
 	{
-		auto next
+		fetching.size() >= opts.fetch_width
+	};
+
+	auto next
+	{
+		ctx::when_any(std::begin(fetching), std::end(fetching), []
+		(auto &it) -> ctx::future<m::fetch::result> &
 		{
-			ctx::when_any(std::begin(fetching), std::end(fetching), []
-			(auto &it) -> ctx::future<m::fetch::result> &
-			{
-				return it->future;
-			})
-		};
+			return it->future;
+		})
+	};
 
-		if(!next.wait(milliseconds(50), std::nothrow))
-			return true;
+	const milliseconds timeout
+	{
+		full? 5000: 50
+	};
 
-		const auto it
-		{
-			next.get()
-		};
+	if(!next.wait(timeout, std::nothrow))
+		return full;
 
-		assert(it != std::end(fetching));
-		if(unlikely(it == std::end(fetching)))
-			continue;
+	const unique_iterator it
+	{
+		fetching, next.get()
+	};
 
-		const unique_iterator erase
-		{
-			fetching, it
-		};
+	assert(it.it != std::end(fetching));
 
-		auto _opts(opts);
-		_opts.room.event_id = it->event_id;
-		handle(_opts, it->future);
-	}
-
-	return false;
+	auto _opts(opts);
+	_opts.room.event_id = it.it->event_id;
+	return handle(_opts, it.it->future);
 }
 
 bool
@@ -258,13 +267,22 @@ try
 		response["pdus"]
 	};
 
+	log::debug
+	{
+		log, "Eval %zu for %s in %s",
+		pdus.size(),
+		string_view{opts.room.event_id},
+		string_view{opts.room.room_id},
+	};
+
 	m::vm::opts vmopts;
 	vmopts.infolog_accept = true;
 	vmopts.warnlog &= ~vm::fault::EXISTS;
-	vmopts.notify_servers = false;
+	//vmopts.phase.set(m::vm::phase::NOTIFY, false);
 	vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
 	vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
 	vmopts.wopts.appendix.set(dbs::appendix::ROOM_HEAD, false);
+	ctx::interruption_point();
 	m::vm::eval
 	{
 		pdus, vmopts
@@ -280,11 +298,11 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "Acquire %s in %s :%s",
+		log, "Eval %s in %s :%s",
 		string_view{opts.room.event_id},
 		string_view{opts.room.room_id},
 		e.what(),
 	};
 
-	return false;
+	return true;
 }
