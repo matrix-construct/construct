@@ -77,23 +77,28 @@ try
 		unquote(content.at("room_id"))
 	};
 
-	const json::string &input
+	const json::string &input_
 	{
 		content.at("body")
 	};
 
-	if(!startswith(input, "\\\\"))
+	if(!startswith(input_, "\\\\"))
 		return;
 
 	// View of the command string without prefix
-	string_view cmd{input};
-	cmd = lstrip(cmd, "\\\\");
+	string_view input{input_};
+	input = lstrip(input, "\\\\");
 
 	// Determine if there's a bang after the prefix; if so the response's
 	// sender will be the user, and will be broadcast publicly to the room.
 	// Otherwise the response comes from the server and is only visible in
 	// the user's timeline.
-	const bool public_response(startswith(cmd, '!'));
+	const bool public_response
+	{
+		startswith(input, '!')
+	};
+
+	string_view cmd{input};
 	cmd = lstrip(cmd, '!');
 
 	log::debug
