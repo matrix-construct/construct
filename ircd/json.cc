@@ -3391,6 +3391,7 @@ namespace ircd::json
 	static u64x2 string_stringify_utf16(u8x16 &block, const u8x16 mask);
 	static u64x2 string_stringify(u8x16 &block, const u8x16 mask);
 
+	static u64x2 string_unescape_utf16(u8x16 &block, const u8x16 mask);
 	static u64x2 string_unescape(u8x16 &block, const u8x16 mask);
 }
 
@@ -3539,7 +3540,7 @@ ircd::json::string_unescape(u8x16 &block,
 	if(match_depth == 7)
 	{
 		assert(block[1] == 'u');
-		return string_stringify_utf16(block, block_mask);
+		return string_unescape_utf16(block, block_mask);
 	}
 
 	// Perform replacement of the escaped character.
@@ -3551,6 +3552,45 @@ ircd::json::string_unescape(u8x16 &block,
 	return u64x2
 	{
 		1UL, 2UL,
+	};
+}
+
+/// Unrestricted UTF-16 surrogate to UTF-8 integral conversion functor; this
+/// will output any character including control codes, such as \u0000.
+ircd::u64x2
+ircd::json::string_unescape_utf16(u8x16 &block,
+                                  const u8x16 block_mask)
+{
+	const u32x4 unicode
+	{
+		utf16::decode_surrogate_aligned_next(block & block_mask)
+	};
+
+	const u32x4 length
+	{
+		utf8::length(unicode)
+	};
+
+	const u32x4 encoded_sparse
+	{
+		utf8::encode(unicode)
+	};
+
+	const u8x16 encoded
+	(
+		encoded_sparse
+	);
+
+	size_t di(0), i(0);
+	for(; i < 2 && length[i] > 0; ++i)
+		for(size_t j(0); j < length[i]; ++j)
+			block[di++] = encoded[i * 4 + j];
+
+	assert(di == length[0] + length[1]);
+	assert(i >= 1 && i <= 2);
+	return u64x2
+	{
+		di, 6U * i
 	};
 }
 
