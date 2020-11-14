@@ -203,6 +203,12 @@ command__caption(const mutable_buffer &buf,
                  const string_view &cmd);
 
 static command_result
+command__edit(const mutable_buffer &buf,
+              const m::user &user,
+              const m::room &room,
+              const string_view &cmd);
+
+static command_result
 command__ping(const mutable_buffer &buf,
               const m::user &user,
               const m::room &room,
@@ -246,6 +252,9 @@ try
 
 		case "ping"_:
 			return command__ping(buf, user, room, cmd);
+
+		case "edit"_:
+			return command__edit(buf, user, room, cmd);
 
 		case "caption"_:
 			return command__caption(buf, user, room, cmd);
@@ -822,6 +831,239 @@ command__dash(const mutable_buffer &buf,
 	};
 
 	return { view(out, buf), alt };
+}
+
+static void
+handle_edit(const m::event &event,
+            m::vm::eval &eval);
+
+m::hookfn<m::vm::eval &>
+edit_hook
+{
+	handle_edit,
+	{
+		{ "_site",    "vm.eval"         },
+		{ "type",     "m.room.message"  },
+		{ "content",
+		{
+			{ "msgtype", "m.text" }
+		}}
+	}
+};
+
+conf::item<std::string>
+edit_path
+{
+	{ "name",     "ircd.m.cmd.edit.path" },
+	{ "default",  string_view{}          },
+};
+
+command_result
+command__edit(const mutable_buffer &buf_,
+              const m::user &user,
+              const m::room &room,
+              const string_view &cmd)
+{
+	const params param
+	{
+		tokens_after(cmd, ' ', 0), " ",
+		{
+			"path"
+		}
+	};
+
+	if(!edit_path)
+		throw m::UNAVAILABLE
+		{
+			"Configure the 'ircd.m.cmd.edit.path' to use this feature.",
+		};
+
+	const string_view path
+	{
+		fs::canonical(buf_, edit_path, param["path"])
+	};
+
+	const string_view root
+	{
+		fs::canonical(fs::path_scratch, edit_path)
+	};
+
+	if(!startswith(path, root))
+		throw m::NOT_FOUND
+		{
+			"File `%s' was not found under `%s'",
+			path,
+			root,
+		};
+
+	const fs::fd fd
+	{
+		path
+	};
+
+	const std::string content
+	{
+		fs::read(fd)
+	};
+
+	mutable_buffer buf(buf_);
+	consume(buf, copy(buf, "<pre><code>"_sv));
+	consume(buf, size(replace(buf, content, '<', "&lt;"_sv)));
+	consume(buf, copy(buf, "</code></pre>"_sv));
+	if(empty(buf))
+		return
+		{
+			{}, "File too large.", "m.notice",
+		};
+
+	const string_view html
+	{
+		data(buf_), data(buf)
+	};
+
+	return
+	{
+		html, {}, "m.text"
+	};
+}
+
+static void
+handle_edit(const m::event &event,
+            m::vm::eval &eval)
+try
+{
+	if(!edit_path)
+		return;
+
+	const json::object &content
+	{
+		json::get<"content"_>(event)
+	};
+
+	const m::relates_to relates_to
+	{
+		content["m.relates_to"]
+	};
+
+	if(json::get<"rel_type"_>(relates_to) != "m.replace")
+		return;
+
+	if(!m::valid(m::id::EVENT, json::get<"event_id"_>(relates_to)))
+		return;
+
+	const m::event::fetch relates_event
+	{
+		std::nothrow, json::get<"event_id"_>(relates_to)
+	};
+
+	if(!relates_event.valid)
+		return;
+
+	if(json::get<"sender"_>(relates_event) != json::get<"sender"_>(event))
+		return;
+
+	if(json::get<"room_id"_>(relates_event) != json::get<"room_id"_>(event))
+		return;
+
+	const json::object &relates_content
+	{
+		json::get<"content"_>(relates_event)
+	};
+
+	const json::string &input
+	{
+		relates_content["input"]
+	};
+
+	const string_view cmd_input
+	{
+		lstrip(input, '!')
+	};
+
+	if(!startswith(cmd_input, "edit"))
+		return;
+
+	const auto &[cmd, args]
+	{
+		split(cmd_input, ' ')
+	};
+
+	const bool pub_cmd
+	{
+		startswith(input, '!')
+	};
+
+	const json::object &new_content
+	{
+		content["m.new_content"]
+	};
+
+	const json::string new_body
+	{
+		new_content["body"]
+	};
+
+	const unique_mutable_buffer body_buf
+	{
+		size(new_body), simd::alignment
+	};
+
+	string_view body(new_body);
+	body = strip(body, "```");
+	body = lstrip(body, "\\n"_sv);
+	body = json::unescape(body_buf, body);
+	if(!body)
+		return;
+
+	const std::string path
+	{
+		fs::canonical(fs::path_scratch, edit_path, args)
+	};
+
+	const string_view root
+	{
+		fs::canonical(fs::path_scratch, edit_path)
+	};
+
+	if(!startswith(path, root))
+		throw m::ACCESS_DENIED
+		{
+			"File `%s' is not under accessible directory `%s'",
+			path,
+			root,
+		};
+
+	fs::write_opts wopts;
+	const const_buffer written
+	{
+		fs::overwrite(path, body, wopts)
+	};
+
+	log::info
+	{
+		m::log, "Edit %s in %s by %s to `%s' wrote %zu/%zu bytes",
+		string_view{event.event_id},
+		json::get<"room_id"_>(event),
+		json::get<"sender"_>(event),
+		path,
+		size(written),
+		size(body),
+	};
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		m::log, "Edit %s in %s by %s failed :%s",
+		string_view{event.event_id},
+		json::get<"room_id"_>(event),
+		json::get<"sender"_>(event),
+		e.what(),
+	};
 }
 
 command_result
