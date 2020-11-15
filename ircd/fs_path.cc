@@ -42,22 +42,22 @@ ircd::fs::PATH_MAX_LEN
 // Convenience scratch buffers for path making.
 namespace ircd::fs
 {
-	thread_local char _name_scratch[NAME_MAX_LEN];
-	thread_local char _path_scratch[PATH_MAX_LEN];
+	thread_local char _name_scratch[2][NAME_MAX_LEN];
+	thread_local char _path_scratch[2][PATH_MAX_LEN];
 }
 
 // External mutable_buffer to the scratch
 decltype(ircd::fs::path_scratch)
 ircd::fs::path_scratch
 {
-	_path_scratch
+	_path_scratch[0]
 };
 
 // External mutable_buffer to the scratch
 decltype(ircd::fs::name_scratch)
 ircd::fs::name_scratch
 {
-	_name_scratch
+	_name_scratch[0]
 };
 
 /// e.g. / default=RB_PREFIX
@@ -212,6 +212,86 @@ ircd::fs::base::db
 	},
 };
 
+//
+// tools
+//
+
+ircd::string_view
+ircd::fs::canonical(const mutable_buffer &buf,
+                    const string_view &p)
+{
+	return path(buf, canonical(_path(p)));
+}
+
+ircd::string_view
+ircd::fs::canonical(const mutable_buffer &buf,
+                    const string_view &root,
+                    const string_view &p)
+{
+	return path(buf, canonical(_path(p), _path(root)));
+}
+
+ircd::string_view
+ircd::fs::relative(const mutable_buffer &buf,
+                   const string_view &root,
+                   const string_view &p)
+{
+	return path(buf, relative(_path(p), _path(root)));
+}
+
+ircd::string_view
+ircd::fs::absolute(const mutable_buffer &buf,
+                   const string_view &root,
+                   const string_view &p)
+{
+	return path(buf, absolute(_path(p), _path(root)));
+}
+
+ircd::string_view
+ircd::fs::parent(const mutable_buffer &buf,
+                 const string_view &p)
+{
+	return path(buf, _path(p).parent_path());
+}
+
+ircd::string_view
+ircd::fs::filename(const mutable_buffer &buf,
+                   const string_view &p)
+{
+	return path(buf, _path(p).filename());
+}
+
+ircd::string_view
+ircd::fs::extension(const mutable_buffer &buf,
+                    const string_view &p)
+{
+	return path(buf, _path(p).extension());
+}
+
+ircd::string_view
+ircd::fs::extension(const mutable_buffer &buf,
+                    const string_view &p,
+                    const string_view &replace)
+{
+	return path(buf, _path(p).replace_extension(_path(replace)));
+}
+
+bool
+ircd::fs::is_relative(const string_view &p)
+{
+	return _path(p).is_relative();
+}
+
+bool
+ircd::fs::is_absolute(const string_view &p)
+{
+	return _path(p).is_absolute();
+}
+
+//
+// utils
+//
+
 std::string
 ircd::fs::cwd()
 try
@@ -287,71 +367,6 @@ ircd::fs::pathconf(const string_view &path,
 	return syscall(::pathconf, path_cstr(path), arg);
 }
 
-ircd::string_view
-ircd::fs::canonical(const mutable_buffer &buf,
-                    const string_view &p)
-{
-	return path(buf, canonical(_path(p)));
-}
-
-ircd::string_view
-ircd::fs::canonical(const mutable_buffer &buf,
-                    const string_view &root,
-                    const string_view &p)
-{
-	return path(buf, canonical(_path(p), _path(root)));
-}
-
-ircd::string_view
-ircd::fs::relative(const mutable_buffer &buf,
-                   const string_view &root,
-                   const string_view &p)
-{
-	return path(buf, relative(_path(p), _path(root)));
-}
-
-ircd::string_view
-ircd::fs::absolute(const mutable_buffer &buf,
-                   const string_view &root,
-                   const string_view &p)
-{
-	return path(buf, absolute(_path(p), _path(root)));
-}
-
-ircd::string_view
-ircd::fs::filename(const mutable_buffer &buf,
-                   const string_view &p)
-{
-	return path(buf, _path(p).filename());
-}
-
-ircd::string_view
-ircd::fs::extension(const mutable_buffer &buf,
-                    const string_view &p)
-{
-	return path(buf, _path(p).extension());
-}
-
-ircd::string_view
-ircd::fs::extension(const mutable_buffer &buf,
-                    const string_view &p,
-                    const string_view &replace)
-{
-	return path(buf, _path(p).replace_extension(_path(replace)));
-}
-
-bool
-ircd::fs::is_relative(const string_view &p)
-{
-	return _path(p).is_relative();
-}
-
-bool
-ircd::fs::is_absolute(const string_view &p)
-{
-	return _path(p).is_absolute();
-}
-
 //
 // fs::path_cstr()
 //
@@ -378,6 +393,54 @@ ircd::fs::path_cstr(const string_view &s)
 //
 // fs::path()
 //
+
+ircd::string_view
+ircd::fs::path(const mutable_buffer &buf,
+               const string_view &base,
+               const path_views &list)
+{
+	// If no base is supplied the result is just as unsafe as using the
+	// other path() overloads. As a precaution we assume an empty base
+	// argument is the result of an attack on the input somehow.
+	if(unlikely(!base))
+		throw std::system_error
+		{
+			make_error_code(std::errc::invalid_argument)
+		};
+
+	const string_view supplied_path
+	{
+		path(_path_scratch[1], list)
+	};
+
+	// Generate a canonical result into the caller's buffer prefixed by the
+	// base path. N.B. if the caller used '../' this result *will* have escaped
+	// the base path, and is now an absolute path to somewhere else.
+	const string_view ret
+	{
+		canonical(buf, base, supplied_path)
+	};
+
+	const string_view canonical_base
+	{
+		canonical(_path_scratch[1], base)
+	};
+
+	// Given two absolute and fully resolved paths (canonical), if the result
+	// is not prefixed by the base it is incontrovertibly not under the base.
+	//
+	// Alternatively, we could make an effort to force-smash the supplied path
+	// onto the base and let other code determine it doesn't exist; however now
+	// this should only throw for truly malformed and malicious paths; best to
+	// just throw here.
+	if(!startswith(ret, canonical_base))
+		throw std::system_error
+		{
+			make_error_code(std::errc::no_such_file_or_directory)
+		};
+
+	return ret;
+}
 
 ircd::string_view
 ircd::fs::path(const mutable_buffer &buf,

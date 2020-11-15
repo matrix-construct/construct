@@ -17,6 +17,7 @@ namespace boost::filesystem
 	struct path;
 }
 
+// Filesystem path utility interface
 namespace ircd::fs
 {
 	using path_views = vector_view<const string_view>;
@@ -29,36 +30,49 @@ namespace ircd::fs
 	extern const mutable_buffer path_scratch;
 	extern const mutable_buffer name_scratch;
 
+	// must include boost in unit to call these; use path() instead
 	filesystem::path _path(std::string);
 	filesystem::path _path(const string_view &);
 	filesystem::path _path(const path_views &);
 	filesystem::path _path(const path_strings &);
 
+	// append path strings together to create a viable result amalgam.
 	string_view path(const mutable_buffer &, const path_views &);
 	string_view path(const mutable_buffer &, const path_strings &);
 	string_view path(const mutable_buffer &, const filesystem::path &);
 
+	// guarantees result is contained within the base, mitigating `../` etc.
+	string_view path(const mutable_buffer &, const string_view &base, const path_views &);
+
+	// wrappers for path()
 	template<class... A> std::string path_string(A&&...);
 	const char *path_cstr(const string_view &path); // rotating internal TLS buffer
 
+	// pathconf(3) interface
+	long pathconf(const string_view &path, const int &arg);
+	size_t name_max_len(const string_view &path);
+	size_t path_max_len(const string_view &path);
+
+	// get current working directory of the process.
+	string_view cwd(const mutable_buffer &buf);
+	std::string cwd();
+}
+
+// Filesystem path tool and conveniences interface.
+namespace ircd::fs
+{
 	bool is_relative(const string_view &path);
 	bool is_absolute(const string_view &path);
 
 	string_view extension(const mutable_buffer &, const string_view &path, const string_view &replace);
 	string_view extension(const mutable_buffer &, const string_view &path);
 	string_view filename(const mutable_buffer &, const string_view &path);
-	string_view relative(const mutable_buffer &, const string_view &root, const string_view &path);
-	string_view absolute(const mutable_buffer &, const string_view &root, const string_view &path);
-	string_view canonical(const mutable_buffer &, const string_view &path);
-	string_view canonical(const mutable_buffer &, const string_view &root, const string_view &path);
 	string_view parent(const mutable_buffer &, const string_view &path);
 
-	long pathconf(const string_view &path, const int &arg);
-	size_t name_max_len(const string_view &path);
-	size_t path_max_len(const string_view &path);
-
-	string_view cwd(const mutable_buffer &buf);
-	std::string cwd();
+	string_view canonical(const mutable_buffer &, const string_view &path);
+	string_view canonical(const mutable_buffer &, const string_view &root, const string_view &path);
+	string_view relative(const mutable_buffer &, const string_view &root, const string_view &path);
+	string_view absolute(const mutable_buffer &, const string_view &root, const string_view &path);
 }
 
 /// Configuration items storing the base paths used at runtime for program
