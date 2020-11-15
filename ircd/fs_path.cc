@@ -219,61 +219,109 @@ ircd::fs::base::db
 ircd::string_view
 ircd::fs::canonical(const mutable_buffer &buf,
                     const string_view &p)
+try
 {
 	return path(buf, canonical(_path(p)));
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error
+	{
+		e, "%s",
+		rsplit(e.what(), ':').second,
+	};
 }
 
 ircd::string_view
 ircd::fs::canonical(const mutable_buffer &buf,
                     const string_view &root,
                     const string_view &p)
+try
 {
 	return path(buf, canonical(_path(p), _path(root)));
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error
+	{
+		e, "%s",
+		rsplit(e.what(), ':').second,
+	};
 }
 
 ircd::string_view
 ircd::fs::relative(const mutable_buffer &buf,
                    const string_view &root,
                    const string_view &p)
+try
 {
 	return path(buf, relative(_path(p), _path(root)));
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
 }
 
 ircd::string_view
 ircd::fs::absolute(const mutable_buffer &buf,
                    const string_view &root,
                    const string_view &p)
+try
 {
 	return path(buf, absolute(_path(p), _path(root)));
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
 }
 
 ircd::string_view
 ircd::fs::parent(const mutable_buffer &buf,
                  const string_view &p)
+try
 {
 	return path(buf, _path(p).parent_path());
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
 }
 
 ircd::string_view
 ircd::fs::filename(const mutable_buffer &buf,
                    const string_view &p)
+try
 {
 	return path(buf, _path(p).filename());
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
 }
 
 ircd::string_view
 ircd::fs::extension(const mutable_buffer &buf,
                     const string_view &p)
+try
 {
 	return path(buf, _path(p).extension());
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
 }
 
 ircd::string_view
 ircd::fs::extension(const mutable_buffer &buf,
                     const string_view &p,
                     const string_view &replace)
+try
 {
 	return path(buf, _path(p).replace_extension(_path(replace)));
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
 }
 
 bool
