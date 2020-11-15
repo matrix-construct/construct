@@ -137,9 +137,14 @@ post__keys_query(client &client,
 		std::clamp(request.get("timeout", timeout_default), timeout_min, timeout_max)
 	};
 
-	const auto &token
+	const json::string token
 	{
 		request["token"]
+	};
+
+	const m::event::idx since
+	{
+		m::sync::sequence(m::sync::make_since(token))
 	};
 
 	const json::object &request_keys

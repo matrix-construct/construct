@@ -15,8 +15,19 @@ namespace ircd::m::sync
 {
 	using since = std::tuple<event::idx, event::idx, string_view>;
 
+	event::idx sequence(const since &);
+	since make_since(const string_view &);
 	string_view make_since(const mutable_buffer &, const m::events::range &, const string_view &flags = {});
 	string_view make_since(const mutable_buffer &, const int64_t &, const string_view &flags = {});
+}
 
-	since make_since(const string_view &);
+inline ircd::m::event::idx
+ircd::m::sync::sequence(const since &since)
+{
+	const auto &[token, snapshot, flags]
+	{
+		since
+	};
+
+	return snapshot?: token?: -1UL;
 }
