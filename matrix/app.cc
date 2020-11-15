@@ -200,12 +200,14 @@ ircd::m::app::app(const m::event::idx &event_idx)
 		arg.at(0)
 	};
 
-	string_view part[2];
-	part[0] = path;
-	part[1] = file;
+	const string_view part[2]
+	{
+		path, file
+	};
+
 	const auto ret
 	{
-		fs::path_string(part)
+		fs::path_string(path, part)
 	};
 
 	if(!bin.count(ret))

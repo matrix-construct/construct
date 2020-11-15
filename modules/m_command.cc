@@ -878,23 +878,15 @@ command__edit(const mutable_buffer &buf_,
 			"Configure the 'ircd.m.cmd.edit.path' to use this feature.",
 		};
 
+	const string_view parts[2]
+	{
+		edit_path, param["path"]
+	};
+
 	const string_view path
 	{
-		fs::canonical(buf_, edit_path, param["path"])
+		fs::path(buf_, edit_path, parts)
 	};
-
-	const string_view root
-	{
-		fs::canonical(fs::path_scratch, edit_path)
-	};
-
-	if(!startswith(path, root))
-		throw m::NOT_FOUND
-		{
-			"File `%s' was not found under `%s'",
-			path,
-			root,
-		};
 
 	const fs::fd fd
 	{
@@ -1015,23 +1007,15 @@ try
 	if(!body)
 		return;
 
+	const string_view path_parts[2]
+	{
+		edit_path, args
+	};
+
 	const std::string path
 	{
-		fs::canonical(fs::path_scratch, edit_path, args)
+		fs::path(fs::path_scratch, edit_path, path_parts)
 	};
-
-	const string_view root
-	{
-		fs::canonical(fs::path_scratch, edit_path)
-	};
-
-	if(!startswith(path, root))
-		throw m::ACCESS_DENIED
-		{
-			"File `%s' is not under accessible directory `%s'",
-			path,
-			root,
-		};
 
 	fs::write_opts wopts;
 	const const_buffer written
