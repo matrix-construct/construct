@@ -36,9 +36,11 @@ const
 
 	// 3.3.1 The local part of the desired Matrix ID. If omitted, the homeserver MUST
 	// generate a Matrix ID local part.
-	const auto &username
+	const string_view username
 	{
-		json::get<"username"_>(*this)
+		valid(m::id::USER, json::get<"username"_>(*this))?
+			m::id::user(json::get<"username"_>(*this)).localname():
+			string_view(json::get<"username"_>(*this))
 	};
 
 	// Generate canonical mxid. The home_server is appended if one is not
