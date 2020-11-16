@@ -110,7 +110,7 @@ namespace ircd
 /// string in a static ring buffer. There are LEX_CAST_BUFS number of buffers
 /// so you should not hold on to the returned view for very long.
 template<class T>
-ircd::string_view
+inline ircd::string_view
 ircd::lex_cast(const T &t)
 {
 	return lex_cast<T>(t, null_buffer);
@@ -128,7 +128,7 @@ ircd::lex_cast<std::string>(const string_view &s)
 
 /// Template basis for a string_view input
 template<class T>
-T
+inline T
 ircd::lex_cast(const string_view &s)
 {
 	return s;
@@ -156,7 +156,7 @@ ircd::lex_cast<std::string>(const std::string &s)
 
 /// Template basis for a const std::string input
 template<class T>
-T
+inline T
 ircd::lex_cast(const std::string &s)
 {
 	return lex_cast<T>(string_view{s});
@@ -166,7 +166,7 @@ ircd::lex_cast(const std::string &s)
 /// than the const std::string alternative some trivial conversions are
 /// easier to make in the specializations.
 template<class T>
-T
+inline T
 ircd::lex_cast(std::string &s)
 {
 	return lex_cast<T>(string_view{s});
@@ -223,7 +223,7 @@ ircd::lex_cast(const std::string &s,
 /// Template basis; if no specialization is matched there is no fallback here
 template<class T>
 IRCD_LEX_CAST_UNNECESSARY
-ircd::string_view
+inline ircd::string_view
 ircd::lex_cast(T t,
                const mutable_buffer &buf)
 {
