@@ -11937,12 +11937,12 @@ console_cmd__user__register(opt &out, const string_view &line)
 
 	const string_view &username
 	{
-		param.at(0)
+		param.at("username")
 	};
 
 	const string_view &password
 	{
-		param.at(1)
+		param.at("password")
 	};
 
 	const m::user::registar request
@@ -11970,22 +11970,19 @@ console_cmd__user__register(opt &out, const string_view &line)
 bool
 console_cmd__user__password(opt &out, const string_view &line)
 {
-	const params param
+	const params param{line, " ",
 	{
-		line, " ",
-		{
-			"user_id", "password"
-		}
-	};
+		"user_id", "password"
+	}};
 
 	m::user user
 	{
-		param.at(0)
+		param.at("user_id")
 	};
 
 	const string_view &password
 	{
-		param.at(1)
+		param.at("password")
 	};
 
 	const auto eid
@@ -12000,17 +11997,14 @@ console_cmd__user__password(opt &out, const string_view &line)
 bool
 console_cmd__user__active(opt &out, const string_view &line)
 {
-	const params param
+	const params param{line, " ",
 	{
-		line, " ",
-		{
-			"user_id"
-		}
-	};
+		"user_id"
+	}};
 
 	const m::user user
 	{
-		param.at(0)
+		param.at("user_id")
 	};
 
 	out << user.user_id << " is "
@@ -12023,17 +12017,14 @@ console_cmd__user__active(opt &out, const string_view &line)
 bool
 console_cmd__user__activate(opt &out, const string_view &line)
 {
-	const params param
+	const params param{line, " ",
 	{
-		line, " ",
-		{
-			"user_id"
-		}
-	};
+		"user_id"
+	}};
 
 	m::user user
 	{
-		param.at(0)
+		param.at("user_id")
 	};
 
 	if(active(user))
@@ -12054,17 +12045,14 @@ console_cmd__user__activate(opt &out, const string_view &line)
 bool
 console_cmd__user__deactivate(opt &out, const string_view &line)
 {
-	const params param
+	const params param{line, " ",
 	{
-		line, " ",
-		{
-			"user_id"
-		}
-	};
+		"user_id"
+	}};
 
 	m::user user
 	{
-		param.at(0)
+		param.at("user_id")
 	};
 
 	if(!active(user))
@@ -12092,12 +12080,12 @@ console_cmd__user__presence(opt &out, const string_view &line)
 
 	const m::user user
 	{
-		param.at(0)
+		param.at("user_id")
 	};
 
 	auto limit
 	{
-		param.at(1, size_t(16))
+		param.at("limit", size_t(16))
 	};
 
 	const m::user::room user_room{user};
