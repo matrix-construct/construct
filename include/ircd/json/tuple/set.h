@@ -24,7 +24,7 @@ void>::type
 _assign(dst &d,
         src&& s)
 {
-	d = unquote(string_view{std::forward<src>(s)});
+	d = json::string(string_view(std::forward<src>(s)));
 }
 
 template<class dst,

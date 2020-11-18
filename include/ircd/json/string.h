@@ -41,29 +41,31 @@ struct ircd::json::string
 	string() = default;
 	string(json::string &&) = default;
 	string(const json::string &) = default;
-	string(const string_view &s);
+	string(const string_view &s) noexcept;
 
 	string &operator=(json::string &&) = default;
 	string &operator=(const json::string &) = default;
-	string &operator=(const string_view &s);
+	string &operator=(const string_view &s) noexcept;
 };
 
 inline
 ircd::json::string::string(const string_view &s)
+noexcept
 :string_view
 {
 	surrounds(s, '"')?
-		unquote(s):
-		s
+		s.substr(1, s.size() - 2):
+		std::string_view(s)
 }
 {}
 
 inline ircd::json::string &
 ircd::json::string::operator=(const string_view &s)
+noexcept
 {
 	*static_cast<string_view *>(this) = surrounds(s, '"')?
-		unquote(s):
-		s;
+		s.substr(1, s.size() - 2):
+		std::string_view(s);
 
 	return *this;
 }
