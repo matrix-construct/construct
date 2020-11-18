@@ -97,9 +97,9 @@ at(tuple &t,
    function&& f)
 {
 	if(indexof<tuple>(name) == i)
-		f(val<i>(t));
-	else
-		at<tuple, function, i + 1>(t, name, std::forward<function>(f));
+		return f(val<i>(t));
+
+	at<tuple, function, i + 1>(t, name, std::forward<function>(f));
 }
 
 template<class tuple,
@@ -121,9 +121,9 @@ at(const tuple &t,
    function&& f)
 {
 	if(indexof<tuple>(name) == i)
-		f(val<i>(t));
-	else
-		at<tuple, function, i + 1>(t, name, std::forward<function>(f));
+		return f(val<i>(t));
+
+	at<tuple, function, i + 1>(t, name, std::forward<function>(f));
 }
 
 template<class R,
@@ -133,28 +133,16 @@ at(const tuple &t,
    const string_view &name)
 {
 	const R *ret;
-	const auto closure
+	at(t, name, [&ret]
+	(auto&& val)
+	noexcept
 	{
-		[&name, &ret](const auto &key, const auto &val) noexcept
-		{
-			if constexpr(std::is_assignable<R, decltype(val)>())
-			{
-				if(key == name)
-				{
-					ret = std::addressof(val);
-					return false;
-				}
-				else return true;
-			}
-			else return true;
-		}
-	};
-
-	if(unlikely(until(t, closure)))
-		throw not_found
-		{
-			"%s", name
-		};
+		//XXX is_pointer_interconvertible_base_of? (C++20)
+		if constexpr(std::is_assignable<R, decltype(val)>())
+			ret = std::addressof(val);
+		else
+			assert(false);
+	});
 
 	return *ret;
 }
@@ -166,28 +154,16 @@ at(tuple &t,
    const string_view &name)
 {
 	R *ret;
-	const auto closure
+	at(t, name, [&ret]
+	(auto &val)
+	noexcept
 	{
-		[&name, &ret](const auto &key, auto &val) noexcept
-		{
-			if constexpr(std::is_assignable<R, decltype(val)>())
-			{
-				if(key == name)
-				{
-					ret = std::addressof(val);
-					return false;
-				}
-				else return true;
-			}
-			else return true;
-		}
-	};
-
-	if(unlikely(until(t, closure)))
-		throw not_found
-		{
-			"%s", name
-		};
+		//XXX is_pointer_interconvertible_base_of? (C++20)
+		if constexpr(std::is_assignable<R, decltype(val)>())
+			ret = std::addressof(val);
+		else
+			assert(false);
+	});
 
 	return *ret;
 }
