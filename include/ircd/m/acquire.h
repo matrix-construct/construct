@@ -50,11 +50,23 @@ struct ircd::m::acquire::opts
 	size_t viewport_size {0};
 
 	/// The number of rounds the algorithm runs for.
-	size_t rounds {1};
+	size_t rounds {-1UL};
 
 	/// Total event limit over all operations.
 	size_t fetch_max {-1UL};
 
 	/// Limit the number of requests in flight at any given time.
 	size_t fetch_width {128};
+
+	/// Avoids filling gaps with a depth sounding lte this value
+	size_t gap_min {0};
+
+	/// Avoids filling gaps with a depth sounding greater than this value
+	size_t gap_max {-1UL};
+
+	/// Won't fetch missing unless ref gt (newer) than this idx.
+	event::idx ref_min {0};
+
+	/// Won't fetch missing unless ref lt (older) than this idx.
+	event::idx ref_max {-1UL};
 };

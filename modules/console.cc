@@ -11013,7 +11013,7 @@ console_cmd__room__acquire(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "depth_start", "depth_stop", "viewport_size", "rounds"
+		"room_id", "depth_start", "depth_stop", "viewport_size", "gap_min", "rounds"
 	}};
 
 	const auto &room_id
@@ -11036,9 +11036,14 @@ console_cmd__room__acquire(opt &out, const string_view &line)
 		param.at("viewport_size", 0L)
 	};
 
+	const auto gap_min
+	{
+		param.at("gap_min", 0UL)
+	};
+
 	const auto rounds
 	{
-		param.at("rounds", 1L)
+		param.at("rounds", -1UL)
 	};
 
 	const m::room room
@@ -11053,6 +11058,7 @@ console_cmd__room__acquire(opt &out, const string_view &line)
 	opts.viewport_size = viewport_size;
 	opts.rounds = rounds;
 	opts.head = depth_stop == 0;
+	opts.gap_min = gap_min;
 	m::acquire::execute
 	{
 		opts
