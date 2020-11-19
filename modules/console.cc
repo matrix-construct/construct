@@ -11051,15 +11051,15 @@ console_cmd__room__acquire(opt &out, const string_view &line)
 		room_id
 	};
 
-	m::acquire::opts opts;
+	struct m::acquire::opts opts;
 	opts.room = room_id;
 	opts.depth.first = depth_start;
 	opts.depth.second = depth_stop;
 	opts.viewport_size = viewport_size;
 	opts.rounds = rounds;
 	opts.head = depth_stop == 0;
-	opts.gap_min = gap_min;
-	m::acquire::execute
+	opts.gap.first = gap_min;
+	m::acquire
 	{
 		opts
 	};

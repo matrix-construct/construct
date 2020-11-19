@@ -303,11 +303,11 @@ catch(const std::exception &e)
 void
 ircd::m::init::backfill::handle_room(const room::id &room_id)
 {
-	m::acquire::opts opts;
+	struct m::acquire::opts opts;
 	opts.room = room_id;
 	opts.viewport_size = ssize_t(m::room::events::viewport_size);
 	opts.viewport_size *= size_t(viewports);
-	m::acquire::execute
+	m::acquire
 	{
 		opts
 	};
