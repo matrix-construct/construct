@@ -16,7 +16,7 @@ namespace ircd::m::init::backfill
 
 	extern size_t count, complete;
 	extern ircd::run::changed handle_quit;
-	extern std::unique_ptr<context> worker_context;
+	extern ctx::ctx *worker_context;
 	extern ctx::pool *worker_pool;
 	extern conf::item<seconds> delay;
 	extern conf::item<seconds> gossip_timeout;
@@ -100,11 +100,7 @@ ircd::m::init::backfill::handle_quit
 {
 	run::level::QUIT, []
 	{
-		if(worker_context)
-			worker_context->terminate();
-
-		if(worker_pool)
-			worker_pool->terminate();
+		fini();
 	}
 };
 
@@ -122,32 +118,38 @@ ircd::m::init::backfill::init()
 		return;
 	}
 
-	assert(!worker_context);
-	worker_context.reset(new context
+	ctx::context context
 	{
 		"m.init.backfill",
 		512_KiB,
 		&worker,
 		context::POST
-	});
+	};
+
+	// Detach into the worker_context ptr. When the worker finishes it
+	// will free itself.
+	assert(!worker_context);
+	worker_context = context.detach();
 }
 
 void
 ircd::m::init::backfill::fini()
 noexcept
 {
-	if(!worker_context)
-		return;
-
-	log::debug
-	{
-		log, "Terminating worker context..."
-	};
+	if(worker_context)
+		log::debug
+		{
+			log, "Terminating worker context..."
+		};
 
 	if(worker_pool)
 		worker_pool->terminate();
 
-	worker_context.reset(nullptr);
+	if(worker_context)
+	{
+		ctx::terminate(*worker_context);
+		worker_context = nullptr;
+	}
 }
 
 void
