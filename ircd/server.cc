@@ -1210,6 +1210,48 @@ noexcept try
 		};
 	}
 
+	// Peer-level actions for any specific HTTP codes
+	switch(tag.state.status)
+	{
+		// When these are received we assume no other requests to the peer
+		// will bear fruit. If it's possible that some routes produce these
+		// codes while others don't, then this is an erroneous assumption and
+		// the peer probably shouldn't be closed here...
+		case http::code::BAD_GATEWAY:
+		case http::code::GATEWAY_TIMEOUT:
+		{
+			// Set the error indicator so the peer is disabled for one TTL.
+			err_set(make_exception_ptr<http::error>(tag.state.status));
+			break;
+		}
+
+		// Trouble for a server behind cloudflare which will cause all
+		// requests to fail for the near future; or worse, they can hang for
+		// a while as cloudflare tries to contact the customer.
+		case http::code::CLOUDFLARE_REFUSED:
+		case http::code::CLOUDFLARE_TIMEDOUT:
+		case http::code::CLOUDFLARE_UNREACHABLE:
+		{
+			// Set the error indicator so the peer is disabled for one TTL.
+			err_set(make_exception_ptr<http::error>(tag.state.status));
+			break;
+		}
+
+		default:
+			break;
+	}
+
+	if(err_has())
+	{
+		// The peer can't be closed quite yet b/c the tag hasn't finished.
+		defer{[this]
+		{
+			close();
+		}};
+
+		return;
+	}
+
 	if(link.tag_committed() >= link.tag_commit_max())
 		link.wait_writable();
 }
