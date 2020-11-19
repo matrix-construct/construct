@@ -13,7 +13,7 @@ namespace ircd::m::acquire
 	struct result;
 	using list = std::list<result>;
 
-	static void start(const opts &, list &);
+	static bool start(const opts &, list &);
 	static bool handle(const opts &, ctx::future<m::fetch::result> &);
 	static bool handle(const opts &, list &);
 	static void fetch_head(const opts &, list &);
@@ -229,14 +229,24 @@ void
 ircd::m::acquire::submit(const opts &opts,
                          list &fetching)
 {
-	start(opts, fetching);
-	while(handle(opts, fetching));
+	if(start(opts, fetching))
+		while(handle(opts, fetching));
 }
 
-void
+bool
 ircd::m::acquire::start(const opts &opts,
                         list &fetching)
 {
+	const auto match{[&opts]
+	(const auto &result)
+	{
+		return opts.room.event_id == result.event_id;
+	}};
+
+	// Check for duplicate.
+	if(std::find_if(begin(fetching), end(fetching), match) != end(fetching))
+		return false;
+
 	fetch::opts fopts;
 	fopts.op = fetch::op::backfill;
 	fopts.room_id = opts.room.room_id;
@@ -245,6 +255,7 @@ ircd::m::acquire::start(const opts &opts,
 	fopts.hint = opts.hint;
 	fopts.attempt_limit = opts.hint_only;
 	fetching.emplace_back(fetch::start(fopts), opts.room.event_id);
+	return true;
 }
 
 bool
