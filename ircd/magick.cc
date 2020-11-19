@@ -332,7 +332,26 @@ ircd::magick::thumbnail::thumbnail(const const_buffer &in,
 	{
 		in, out, [&dim](const auto &image)
 		{
-			return callex<Image *>(ThumbnailImage, std::get<const Image *>(image), dim.first, dim.second);
+			const auto &img_p
+			{
+				std::get<const Image *>(image)
+			};
+
+			const auto &img_x(img_p->columns);
+			const auto &img_y(img_p->rows);
+			const auto &[req_x, req_y] {dim};
+			const bool aspect
+			{
+				req_x * img_y < req_y * img_x
+			};
+
+			const dimensions scaled
+			{
+				aspect? req_y * img_x / img_y : req_x,
+				aspect? req_y : req_x * img_y / img_x,
+			};
+
+			return callex<Image *>(ThumbnailImage, img_p, scaled.first, scaled.second);
 		}
 	};
 }
