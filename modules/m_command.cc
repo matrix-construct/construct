@@ -858,6 +858,26 @@ edit_path
 	{ "default",  string_view{}          },
 };
 
+conf::item<std::string>
+edit_whitelist
+{
+	{ "name",     "ircd.m.cmd.edit.whitelist" },
+	{ "default",  string_view{}               },
+};
+
+static bool
+edit_whitelisted(const m::user::id &user_id)
+{
+	bool ret(false);
+	ircd::tokens(edit_whitelist, ' ', [&user_id, &ret]
+	(const string_view &whitelisted_user_id)
+	{
+		ret |= whitelisted_user_id == user_id;
+	});
+
+	return ret;
+}
+
 command_result
 command__edit(const mutable_buffer &buf_,
               const m::user &user,
@@ -876,6 +896,13 @@ command__edit(const mutable_buffer &buf_,
 		throw m::UNAVAILABLE
 		{
 			"Configure the 'ircd.m.cmd.edit.path' to use this feature.",
+		};
+
+	if(!edit_whitelisted(user))
+		throw m::ACCESS_DENIED
+		{
+			"'%s' is not listed in the 'ircd.m.cmd.edit.whitelist'.",
+			string_view{user.user_id},
 		};
 
 	const string_view parts[2]
@@ -925,6 +952,9 @@ handle_edit(const m::event &event,
 try
 {
 	if(!edit_path)
+		return;
+
+	if(!edit_whitelisted(json::get<"sender"_>(event)))
 		return;
 
 	const json::object &content
