@@ -284,7 +284,9 @@ ircd::magick::thumbcrop::thumbcrop(const const_buffer &in,
 
 		const auto &img_x(img_p->columns);
 		const auto &img_y(img_p->rows);
-		const auto &[req_x, req_y] {req};
+		const auto &[req_x_, req_y_] {req};
+		const auto &req_x{std::min(req_x_, img_x)};
+		const auto &req_y{std::min(req_y_, img_y)};
 		const bool aspect
 		{
 			req_x * img_y < req_y * img_x
@@ -325,12 +327,12 @@ ircd::magick::thumbcrop::thumbcrop(const const_buffer &in,
 //
 
 ircd::magick::thumbnail::thumbnail(const const_buffer &in,
-                                   const dimensions &dim,
+                                   const dimensions &req,
                                    const result_closure &out)
 {
 	transform
 	{
-		in, out, [&dim](const auto &image)
+		in, out, [&req](const auto &image)
 		{
 			const auto &img_p
 			{
@@ -339,7 +341,9 @@ ircd::magick::thumbnail::thumbnail(const const_buffer &in,
 
 			const auto &img_x(img_p->columns);
 			const auto &img_y(img_p->rows);
-			const auto &[req_x, req_y] {dim};
+			const auto &[req_x_, req_y_] {req};
+			const auto &req_x{std::min(req_x_, img_x)};
+			const auto &req_y{std::min(req_y_, img_y)};
 			const bool aspect
 			{
 				req_x * img_y < req_y * img_x
