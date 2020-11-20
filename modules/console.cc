@@ -11090,6 +11090,7 @@ console_cmd__room__acquire(opt &out, const string_view &line)
 	};
 
 	struct m::acquire::opts opts;
+	opts.vmopts.infolog_accept = true;
 	opts.room = room_id;
 	opts.depth.first = depth_start;
 	opts.depth.second = depth_stop;

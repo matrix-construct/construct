@@ -307,6 +307,8 @@ ircd::m::init::backfill::handle_room(const room::id &room_id)
 	opts.room = room_id;
 	opts.viewport_size = ssize_t(m::room::events::viewport_size);
 	opts.viewport_size *= size_t(viewports);
+	opts.vmopts.infolog_accept = true;
+	opts.vmopts.warnlog &= ~vm::fault::EXISTS;
 	m::acquire
 	{
 		opts

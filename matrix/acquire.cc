@@ -32,14 +32,32 @@ ircd::util::instance_list<ircd::m::acquire>::list
 
 ircd::m::acquire::acquire::acquire(const struct opts &opts)
 :opts{opts}
+,head_vmopts{opts.vmopts}
+,history_vmopts{opts.vmopts}
 {
+	if(opts.head)
+	{
+		head_vmopts.notify_servers = false;
+		head_vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
+		head_vmopts.phase.set(m::vm::phase::FETCH_STATE, opts.state);
+	}
+
+	if(opts.history)
+	{
+		history_vmopts.notify_servers = false;
+		history_vmopts.phase.set(m::vm::phase::NOTIFY, false);
+		history_vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
+		history_vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
+		history_vmopts.wopts.appendix.set(dbs::appendix::ROOM_HEAD, false);
+	}
+
 	// Branch to acquire head
 	if(opts.head)
 		acquire_head();
 
-	// Branch to acquire missing
-	if(opts.missing)
-		acquire_missing();
+	// Branch to acquire history
+	if(opts.history)
+		acquire_history();
 
 	// Complete all work before returning, otherwise everything
 	// will be cancelled on unwind.
@@ -53,7 +71,7 @@ noexcept
 }
 
 void
-ircd::m::acquire::acquire_missing()
+ircd::m::acquire::acquire_history()
 {
 	event::idx ref_min
 	{
@@ -62,7 +80,7 @@ ircd::m::acquire::acquire_missing()
 
 	for(size_t i(0); i < opts.rounds; ++i)
 	{
-		if(!fetch_missing(ref_min))
+		if(!fetch_history(ref_min))
 			break;
 
 		if(ref_min > opts.ref.second)
@@ -71,7 +89,7 @@ ircd::m::acquire::acquire_missing()
 }
 
 bool
-ircd::m::acquire::fetch_missing(event::idx &ref_min)
+ircd::m::acquire::fetch_history(event::idx &ref_min)
 {
 	const auto top
 	{
@@ -185,7 +203,7 @@ ircd::m::acquire::fetch_missing(event::idx &ref_min)
 
 		const bool submitted
 		{
-			submit(event_id, opts.hint, false, limit)
+			submit(event_id, opts.hint, false, limit, &history_vmopts)
 		};
 
 		if(submitted)
@@ -261,7 +279,7 @@ ircd::m::acquire::fetch_head(const m::event &result,
 
 	const bool submitted
 	{
-		submit(result.event_id, hint, true, limit)
+		submit(result.event_id, hint, true, limit, &head_vmopts)
 	};
 
 	if(submitted)
@@ -282,12 +300,13 @@ bool
 ircd::m::acquire::submit(const m::event::id &event_id,
                          const string_view &hint,
                          const bool &hint_only,
-                         const size_t &limit)
+                         const size_t &limit,
+                         const vm::opts *const &vmopts)
 {
 	const bool ret
 	{
 		!started(event_id)?
-			start(event_id, hint, hint_only, limit):
+			start(event_id, hint, hint_only, limit, vmopts):
 			false
 	};
 
@@ -301,7 +320,8 @@ bool
 ircd::m::acquire::start(const m::event::id &event_id,
                         const string_view &hint,
                         const bool &hint_only,
-                        const size_t &limit)
+                        const size_t &limit,
+                        const vm::opts *const &vmopts)
 try
 {
 	fetch::opts fopts;
@@ -313,7 +333,7 @@ try
 	fopts.attempt_limit = hint_only;
 	fetching.emplace_back(result
 	{
-		fetch::start(fopts), event_id
+		vmopts, fetch::start(fopts), event_id
 	});
 
 	return true;
@@ -372,6 +392,7 @@ ircd::m::acquire::handle()
 		full()? 5000: 50
 	};
 
+	ctx::interruption_point();
 	if(!next.wait(timeout, std::nothrow))
 		return full();
 
@@ -411,18 +432,17 @@ try
 		string_view{opts.room.room_id},
 	};
 
-	m::vm::opts vmopts;
-	vmopts.infolog_accept = true;
-	vmopts.warnlog &= ~vm::fault::EXISTS;
-	vmopts.notify_servers = false;
-	vmopts.phase.set(m::vm::phase::NOTIFY, false);
-	vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
-	vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
-	vmopts.wopts.appendix.set(dbs::appendix::ROOM_HEAD, false);
-	ctx::interruption_point();
+	assert(result.vmopts);
+	assert
+	(
+		false
+		|| result.vmopts == &this->head_vmopts
+		|| result.vmopts == &this->history_vmopts
+	);
+
 	m::vm::eval
 	{
-		pdus, vmopts
+		pdus, *result.vmopts
 	};
 
 	return true;

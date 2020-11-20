@@ -25,6 +25,8 @@ struct ircd::m::acquire
 	static log::log log;
 
 	const struct opts &opts;
+	vm::opts head_vmopts;
+	vm::opts history_vmopts;
 	std::list<result> fetching;
 
   private:
@@ -33,14 +35,14 @@ struct ircd::m::acquire
 	bool handle();
 
 	bool started(const event::id &) const;
-	bool start(const event::id &, const string_view &, const bool &, const size_t &);
-	bool submit(const event::id &, const string_view &, const bool &, const size_t &);
-
-	bool fetch_missing(event::idx &);
-	void acquire_missing();
+	bool start(const event::id &, const string_view &, const bool &, const size_t &, const vm::opts *const &);
+	bool submit(const event::id &, const string_view &, const bool &, const size_t &, const vm::opts *const &);
 
 	bool fetch_head(const m::event &, const int64_t &);
 	void acquire_head();
+
+	bool fetch_history(event::idx &);
+	void acquire_history();
 
   public:
 	acquire(const struct opts &);
@@ -51,7 +53,8 @@ struct ircd::m::acquire
 
 struct ircd::m::acquire::opts
 {
-	/// Room apropos.
+	/// Room apropos; note that the event_id in this structure may have some
+	/// effect on the result after deducing other options instead of defaults.
 	m::room room;
 
 	/// Optional remote host first considered as the target for operations in
@@ -62,11 +65,19 @@ struct ircd::m::acquire::opts
 	/// hint, and fails them if the hint is insufficient.
 	bool hint_only {false};
 
-	/// Perform head acquisition prior to depthwise operations.
+	/// Perform head acquisition. Setting to false will disable the ability
+	/// to reconnoiter the latest events from remote servers. Note that setting
+	/// a depth ceiling effectively makes this false.
 	bool head {true};
 
-	/// Perform missing acquisition.
-	bool missing {true};
+	/// Perform history acquisition. Setting this to false disables operations
+	/// which fill in gaps in the timeline below the head.
+	bool history {true};
+
+	/// Perform state acquisition. Setting this to false may result in an
+	/// acquisition that is missing state events and subject to inconsistency
+	/// from the ABA problem etc.
+	bool state {true};
 
 	/// Provide a viewport size; generally obtained from the eponymous conf
 	/// item and used for initial backfill
@@ -89,10 +100,16 @@ struct ircd::m::acquire::opts
 
 	/// Limit the number of requests in flight at any given time.
 	size_t fetch_width {128};
+
+	/// Default vm::opts to be used during eval; some options are
+	/// unconditionally overriden to perform some evals. Use caution, setting
+	/// options may cause results not expected from this interface.
+	vm::opts vmopts;
 };
 
 struct ircd::m::acquire::result
 {
+	const m::vm::opts *vmopts {nullptr};
 	ctx::future<fetch::result> future;
 	event::id::buf event_id;
 };
