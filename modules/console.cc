@@ -11009,12 +11009,50 @@ console_cmd__room__events__horizon__rebuild(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__acquire__list(opt &out, const string_view &line)
+{
+	size_t i(0);
+	for(const auto *const &a : m::acquire::list)
+	{
+		size_t j(0);
+		for(const auto &result : a->fetching)
+			out
+			<< std::left << std::setw(4) << i
+			<< " "
+			<< std::left << std::setw(4) << j++
+			<< " "
+			<< std::left << std::setw(50) << trunc(a->opts.room.room_id, 40)
+			<< " "
+			<< std::right << std::setw(4) << a->opts.viewport_size
+			<< " ["
+			<< std::right << std::setw(7) << a->opts.depth.first
+			<< " "
+			<< std::right << std::setw(7) << a->opts.depth.second
+			<< " | "
+			<< std::right << std::setw(8) << a->opts.ref.first
+			<< " "
+			<< std::right << std::setw(8) << long(a->opts.ref.second)
+			<< "] "
+			<< std::left << std::setw(50) << trunc(result.event_id, 60)
+			<< " "
+			<< std::endl;
+
+		i++;
+	}
+
+	return true;
+}
+
+bool
 console_cmd__room__acquire(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
 		"room_id", "depth_start", "depth_stop", "viewport_size", "gap_min", "rounds"
 	}};
+
+	if(!param["room_id"])
+		return console_cmd__room__acquire__list(out, line);
 
 	const auto &room_id
 	{
