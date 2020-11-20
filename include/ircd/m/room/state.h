@@ -25,6 +25,7 @@ struct ircd::m::room::state
 	struct space;
 	struct history;
 	struct rebuild;
+	struct fetch;
 
 	using closure = std::function<void (const string_view &, const string_view &, const event::idx &)>;
 	using closure_bool = std::function<bool (const string_view &, const string_view &, const event::idx &)>;

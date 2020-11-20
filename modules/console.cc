@@ -10676,6 +10676,60 @@ console_cmd__room__state__cache(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__state__fetch(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "event_id", "opt"
+	}};
+
+	const auto room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const auto event_id
+	{
+		param["event_id"]?
+			m::event::id::buf{param["event_id"]}:
+			m::head(room_id)
+	};
+
+	m::room::state::fetch::opts opts;
+	opts.room.room_id = room_id;
+	opts.room.event_id = event_id;
+	opts.existing = has(param["opt"], "existing");
+	opts.unique = true;
+
+	size_t i(0);
+	m::room::state::fetch fetch
+	{
+		opts, [&out, &i](const m::event::id &event_id, const string_view &remote)
+		{
+			out
+			<< std::setw(4) << std::left << i++
+			<< " "
+			<< std::setw(60) << std::left << event_id
+			<< " "
+			<< remote
+			<< std::endl;
+			return true;
+		}
+	};
+
+	out
+	<< std::endl
+	<< "servers:    " << fetch.respond << std::endl
+	<< "unique:     " << fetch.result.size() << std::endl
+	<< "concur:     " << fetch.concur << std::endl
+	<< "exists:     " << fetch.exists << std::endl
+	<< "results:    " << fetch.responses << std::endl
+	;
+
+	return true;
+}
+
+bool
 console_cmd__room__count(opt &out, const string_view &line)
 {
 	const params param{line, " ",

@@ -108,6 +108,7 @@ libircd_matrix_la_SOURCES += room_create.cc
 libircd_matrix_la_SOURCES += room_events.cc
 libircd_matrix_la_SOURCES += room_head.cc
 libircd_matrix_la_SOURCES += room_head_fetch.cc
+libircd_matrix_la_SOURCES += room_state_fetch.cc
 libircd_matrix_la_SOURCES += room_join.cc
 libircd_matrix_la_SOURCES += room_leave.cc
 libircd_matrix_la_SOURCES += room_visible.cc

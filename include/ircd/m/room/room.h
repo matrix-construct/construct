@@ -192,6 +192,7 @@ struct ircd::m::room
 #include "state.h"
 #include "state_space.h"
 #include "state_history.h"
+#include "state_fetch.h"
 #include "members.h"
 #include "origins.h"
 #include "type.h"
