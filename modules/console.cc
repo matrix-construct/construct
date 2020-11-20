@@ -9241,7 +9241,7 @@ console_cmd__room__head__fetch(opt &out, const string_view &line)
 
 	m::room::head::fetch::opts opts;
 	opts.room_id = room_id;
-	m::room::head::fetch
+	m::room::head::fetch fetch
 	{
 		opts, [&out](const m::event &result)
 		{
@@ -9251,6 +9251,21 @@ console_cmd__room__head__fetch(opt &out, const string_view &line)
 			return true;
 		}
 	};
+
+	out
+	<< std::endl
+	<< "results:        " << fetch.heads << std::endl
+	<< "exists:         " << fetch.exists << std::endl
+	<< "concur:         " << fetch.concur << std::endl
+	<< "unique:         " << fetch.head.size() << std::endl
+	<< "servers:        " << fetch.respond << std::endl
+	<< "depth ahead:    " << fetch.depth[2] << std::endl
+	<< "depth equal:    " << fetch.depth[1] << std::endl
+	<< "depth behind:   " << fetch.depth[0] << std::endl
+	<< "ots ahead:      " << fetch.ots[2] << std::endl
+	<< "ots equal:      " << fetch.ots[1] << std::endl
+	<< "ots behind:     " << fetch.ots[0] << std::endl
+	;
 
 	return true;
 }
