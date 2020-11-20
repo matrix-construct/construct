@@ -11929,6 +11929,60 @@ console_cmd__room__power__revoke(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__redactfill(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "count", "sender", "reason"
+	}};
+
+	const auto room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	size_t count
+	{
+		param.at("count", 0UL)
+	};
+
+	const auto sender
+	{
+		param["sender"]?
+			m::user::id{param["sender"]}:
+			m::me()
+	};
+
+	const auto reason
+	{
+		param.at("reason", "redactfill"_sv)
+	};
+
+	m::room::events it
+	{
+		room_id, -1UL
+	};
+
+	while(it && count > 0)
+	{
+		const auto event_id
+		{
+			m::event_id(it.event_idx())
+		};
+
+		const auto redact_id
+		{
+			m::redact(room_id, sender, event_id, reason)
+		};
+
+		--count;
+		--it;
+	}
+
+	return true;
+}
+
+bool
 console_id__room(opt &out,
                  const m::room::id &id,
                  const string_view &line)
