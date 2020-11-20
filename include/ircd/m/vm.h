@@ -302,6 +302,18 @@ struct ircd::m::vm::opts
 	/// are missing. -1 is auto / conf.
 	size_t fetch_prev_limit = -1;
 
+	/// Considers any missing prev_event as an indication of possible missing
+	/// state from a history we don't have; allowing a state acquisition. This
+	/// is not practical to apply by default as internal decisions are better.
+	bool fetch_state_any {false};
+
+	/// This option affects the behavior for a case where we are missing the
+	/// (depth - 1) prev_events reference, thus other resolved references
+	/// are not adjacent. Yet at the claimed depth there is no apparent gap
+	/// in the timeline. If true, we assume possible missing state in this
+	/// case, but by default that is far too unrealistic in practice.
+	bool fetch_state_shallow {false};
+
 	/// Evaluators can set this value to optimize the creation of the database
 	/// transaction where the event will be stored. This value should be set
 	/// to the amount of space the event consumes; the JSON-serialized size is

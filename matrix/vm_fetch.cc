@@ -381,17 +381,35 @@ ircd::m::vm::fetch::state(const event &event,
                           const room &room)
 try
 {
-	const event::prev prev{event};
-	if(prev.prev_exist())
-		return;
-
-	const auto &[sounding_depth, sounding_idx]
+	const auto &opts{*eval.opts};
+	const event::prev prev
 	{
-		m::sounding(room.room_id)
+		event
 	};
 
-	if(at<"depth"_>(event) > sounding_depth)
-		return;
+	const bool prev_exist
+	{
+		prev.prev_exist()
+	};
+
+	if(opts.fetch_state_any)
+		if(prev_exist && prev.prev_events_count() == prev.prev_events_exist())
+			return;
+
+	if(likely(!opts.fetch_state_any))
+		if(prev_exist)
+			return;
+
+	if(likely(!opts.fetch_state_shallow))
+	{
+		const auto &[sounding_depth, sounding_idx]
+		{
+			m::sounding(room.room_id)
+		};
+
+		if(at<"depth"_>(event) > sounding_depth)
+			return;
+	}
 
 	log::dwarning
 	{
