@@ -23,6 +23,7 @@ namespace ircd::m::init::backfill
 	extern conf::item<bool> gossip_enable;
 	extern conf::item<bool> local_joined_only;
 	extern conf::item<size_t> viewports;
+	extern conf::item<size_t> attempt_max;
 	extern conf::item<size_t> pool_size;
 	extern conf::item<bool> enable;
 	extern log::log log;
@@ -81,6 +82,13 @@ ircd::m::init::backfill::viewports
 {
 	{ "name",     "ircd.m.init.backfill.viewports"  },
 	{ "default",  4L                                },
+};
+
+decltype(ircd::m::init::backfill::attempt_max)
+ircd::m::init::backfill::attempt_max
+{
+	{ "name",     "ircd.m.init.backfill.attempt_max"  },
+	{ "default",  8L                                  },
 };
 
 decltype(ircd::m::init::backfill::count)
@@ -309,6 +317,7 @@ ircd::m::init::backfill::handle_room(const room::id &room_id)
 	opts.viewport_size *= size_t(viewports);
 	opts.vmopts.infolog_accept = true;
 	opts.vmopts.warnlog &= ~vm::fault::EXISTS;
+	opts.attempt_max = size_t(attempt_max);
 	m::acquire
 	{
 		opts
