@@ -232,6 +232,12 @@ command__version(const mutable_buffer &buf,
                  const m::room &room,
                  const string_view &cmd);
 
+static command_result
+command__control(const mutable_buffer &buf,
+                 const m::user &user,
+                 const m::room &room,
+                 const string_view &cmd);
+
 command_result
 execute_command(const mutable_buffer &buf,
                 const m::user &user,
@@ -239,6 +245,9 @@ execute_command(const mutable_buffer &buf,
                 const string_view &cmd)
 try
 {
+	if(startswith(cmd, '#'))
+		return command__control(buf, user, room, lstrip(cmd, '#'));
+
 	switch(hash(token(cmd, ' ', 0)))
 	{
 		case "version"_:
@@ -258,6 +267,16 @@ try
 
 		case "caption"_:
 			return command__caption(buf, user, room, cmd);
+
+		case "control"_:
+		{
+			const auto subcmd
+			{
+				tokens_after(cmd, ' ', 0)
+			};
+
+			return command__control(buf, user, room, subcmd);
+		}
 
 		default:
 			break;
@@ -1117,5 +1136,57 @@ command__caption(const mutable_buffer &buf,
 	return
 	{
 		html, caption
+	};
+}
+
+command_result
+command__control(const mutable_buffer &buf,
+                 const m::user &user,
+                 const m::room &room,
+                 const string_view &cmd)
+{
+	if(!is_oper(user))
+		throw m::ACCESS_DENIED
+		{
+			"You do not have access to the !control room."
+		};
+
+	const ircd::module console_module
+	{
+		"console"
+	};
+
+	using prototype = int (std::ostream &, const string_view &, const string_view &);
+	mods::import<prototype> command
+	{
+		console_module, "console_command"s
+	};
+
+	std::ostringstream out;
+	out.exceptions(out.badbit | out.failbit | out.eofbit);
+	pubsetbuf(out, buf);
+
+	static const string_view opts
+	{
+		"html"
+	};
+
+	out << "<pre>";
+	command(out, cmd, opts);
+    out << "</pre>";
+
+	const string_view html
+	{
+		view(out, buf)
+	};
+
+    const string_view alt //TODO: X
+    {
+        "no alt text"
+    };
+
+	return
+	{
+		html, alt
 	};
 }
