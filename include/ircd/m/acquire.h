@@ -27,6 +27,7 @@ struct ircd::m::acquire
 	const struct opts &opts;
 	vm::opts head_vmopts;
 	vm::opts history_vmopts;
+	vm::opts state_vmopts;
 	std::list<result> fetching;
 
   private:
@@ -43,6 +44,9 @@ struct ircd::m::acquire
 
 	bool fetch_history(event::idx &);
 	void acquire_history();
+
+	bool fetch_state(const m::event::id &, const string_view &);
+	void acquire_state();
 
   public:
 	acquire(const struct opts &);
