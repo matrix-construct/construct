@@ -270,9 +270,17 @@ try
 	{
 		!my_host(eval.opts->node_id)?
 			eval.opts->node_id:
+
+		event.event_id.host() && !my_host(event.event_id.host())?
+			event.event_id.host():
+
 		!my_host(json::get<"origin"_>(event))?
 			string_view(json::get<"origin"_>(event)):
-			string_view{}
+
+		room.room_id.host() && !my_host(room.room_id.host())?
+			room.room_id.host():
+
+		string_view{}
 	};
 
 	log::debug
