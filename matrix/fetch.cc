@@ -955,7 +955,7 @@ ircd::m::fetch::_check_event(const request &request,
 			&& json::get<"origin"_>(event) == request.origin
 		};
 
-		if(authoritative_redaction)
+		if(authoritative_redaction || !mismatch_hashes)
 			conforms.del(m::event::conforms::MISMATCH_HASHES);
 
 		thread_local char buf[128];

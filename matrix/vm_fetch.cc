@@ -259,6 +259,7 @@ try
 	opts.op = m::fetch::op::auth;
 	opts.room_id = room.room_id;
 	opts.event_id = room.event_id;
+	opts.check_hashes = false;
 
 	// Figure out a remote hint as the primary target to request the missing
 	// auth events from; if provided, m::fetch will ask this remote first. We
@@ -346,11 +347,6 @@ try
 	opts.infolog_accept = true;
 	opts.warnlog &= ~vm::fault::EXISTS;
 	opts.notify_servers = false;
-
-	// The auth_chain fetch made by the caller won't give us events with
-	// a content hash mismatch unless they were obtained from an authoritative
-	// source. For this we can unconditionally allow hash mismatch from here.
-	opts.redacted = 1;
 
 	log::debug
 	{
