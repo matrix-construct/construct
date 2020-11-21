@@ -415,7 +415,7 @@ try
 	fopts.event_id = event_id;
 	fopts.backfill_limit = limit;
 	fopts.hint = hint;
-	fopts.attempt_limit = hint_only;
+	fopts.attempt_limit = hint_only? 1: opts.attempt_max;
 	fetching.emplace_back(result
 	{
 		vmopts, fetch::start(fopts), event_id

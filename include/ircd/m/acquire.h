@@ -105,6 +105,10 @@ struct ircd::m::acquire::opts
 	/// Limit the number of requests in flight at any given time.
 	size_t fetch_width {128};
 
+	/// Fetch attempt cap passed to m::fetch, because the default there is
+	/// unlimited and that's usually a waste of time in practice.
+	size_t attempt_max {16};
+
 	/// Default vm::opts to be used during eval; some options are
 	/// unconditionally overriden to perform some evals. Use caution, setting
 	/// options may cause results not expected from this interface.
