@@ -15228,6 +15228,7 @@ console_cmd__fed__auth(opt &out, const string_view &line)
 		vmopts.wopts.appendix[m::dbs::appendix::ROOM_HEAD] = false;
 		vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
 		vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
+		vmopts.phase.set(m::vm::phase::FETCH_AUTH, false);
 		vmopts.notify_servers = false;
 		vmopts.auth = !has(param["oparg"], "noauth");
 		vmopts.replays = has(param["oparg"], "replay");
