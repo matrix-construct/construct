@@ -35,19 +35,22 @@ put__redact(client &client,
 			"txnid parameter missing"
 		};
 
+	char txnid_buf[64];
 	const string_view &txnid
 	{
-		request.parv[3]
+		url::decode(txnid_buf, request.parv[3])
 	};
 
+	const json::string &reason
+	{
+		request["reason"]
+	};
+
+	m::vm::copts vmopts;
+	vmopts.client_txnid = txnid;
 	const room room
 	{
-		room_id
-	};
-
-	const auto &reason
-	{
-		unquote(request["reason"])
+		room_id, &vmopts
 	};
 
 	const auto event_id
