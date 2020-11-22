@@ -410,12 +410,21 @@ try
 	assert(vmopts);
 
 	fetch::opts fopts;
-	fopts.op = fetch::op::backfill;
 	fopts.room_id = opts.room.room_id;
 	fopts.event_id = event_id;
+
 	fopts.backfill_limit = limit;
+	fopts.op =
+		limit > 1?
+		fetch::op::backfill:
+		fetch::op::event;
+
 	fopts.hint = hint;
-	fopts.attempt_limit = hint_only? 1: opts.attempt_max;
+	fopts.attempt_limit =
+		!hint_only?
+			opts.attempt_max:
+			1U;
+
 	fetching.emplace_back(result
 	{
 		vmopts, fetch::start(fopts), event_id
