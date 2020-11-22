@@ -187,14 +187,14 @@ try
 		m::fetch::start(fetch_opts)
 	};
 
-	const json::object response
+	const auto response
 	{
 		request.get(seconds(redaction_fetch_timeout))
 	};
 
-	const json::array pdus
+	const json::object pdus
 	{
-		response["pdus"]
+		json::object(response).get("pdus")
 	};
 
 	if(pdus.empty())
