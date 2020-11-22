@@ -928,8 +928,8 @@ const
 		(const mutable_buffer &buf)
 		{
 			assert(ret < max);
-			const auto &[_, server_name] {query};
-			out[ret] = url::decode(buf, server_name);
+			const auto &[_, val] {query};
+			out[ret] = url::decode(buf, val);
 			return out[ret];
 		});
 
