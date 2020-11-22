@@ -135,6 +135,7 @@ try
 	auto eval_opts(opts);
 	eval_opts.phase.set(vm::phase::FETCH_PREV, false);
 	eval_opts.phase.set(vm::phase::FETCH_STATE, false);
+	eval_opts.node_id = response.origin;
 	vm::eval
 	{
 		result, eval_opts

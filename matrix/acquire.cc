@@ -41,7 +41,6 @@ ircd::m::acquire::acquire::acquire(const struct opts &opts)
 		head_vmopts.phase.set(m::vm::phase::NOTIFY, false);
 		head_vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
 		head_vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
-		head_vmopts.non_conform.set(event::conforms::MISMATCH_HASHES);
 	}
 
 	if(opts.state)
@@ -49,7 +48,6 @@ ircd::m::acquire::acquire::acquire(const struct opts &opts)
 		state_vmopts.notify_servers = false;
 		state_vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
 		state_vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
-		state_vmopts.non_conform.set(event::conforms::MISMATCH_HASHES);
 		state_vmopts.wopts.appendix.set(dbs::appendix::ROOM_HEAD, false);
 	}
 
@@ -59,7 +57,6 @@ ircd::m::acquire::acquire::acquire(const struct opts &opts)
 		history_vmopts.phase.set(m::vm::phase::NOTIFY, false);
 		history_vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
 		history_vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
-		history_vmopts.non_conform.set(event::conforms::MISMATCH_HASHES);
 		history_vmopts.wopts.appendix.set(dbs::appendix::ROOM_HEAD, false);
 	}
 
@@ -520,8 +517,9 @@ try
 
 	log::debug
 	{
-		log, "Eval %zu for %s in %s",
+		log, "Eval %zu from '%s' for %s in %s",
 		pdus.size(),
+		string_view{response.origin},
 		string_view{result.event_id},
 		string_view{opts.room.room_id},
 	};
@@ -535,9 +533,12 @@ try
 		|| result.vmopts == &this->state_vmopts
 	);
 
+	auto vmopts(*result.vmopts);
+	vmopts.node_id = response.origin;
+
 	m::vm::eval
 	{
-		pdus, *result.vmopts
+		pdus, vmopts
 	};
 
 	return true;

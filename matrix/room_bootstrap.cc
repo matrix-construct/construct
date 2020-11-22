@@ -253,6 +253,7 @@ try
 	};
 
 	m::vm::opts vmopts;
+	vmopts.node_id = host;
 	vmopts.infolog_accept = false;
 	vmopts.warnlog &= ~vm::fault::EXISTS;
 	vmopts.nothrows = -1;

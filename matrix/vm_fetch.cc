@@ -16,7 +16,7 @@ namespace ircd::m::vm::fetch
 	static void prev(const event &, vm::eval &, const room &);
 	static std::forward_list<ctx::future<m::fetch::result>> state_fetch(const event &, vm::eval &, const room &);
 	static void state(const event &, vm::eval &, const room &);
-	static void auth_chain_eval(const event &, vm::eval &, const room &, const json::array &);
+	static void auth_chain_eval(const event &, vm::eval &, const room &, const json::array &, const string_view &);
 	static void auth_chain(const event &, vm::eval &, const room &);
 	static void auth(const event &, vm::eval &, const room &);
 	static void handle(const event &, vm::eval &);
@@ -315,7 +315,7 @@ try
 		response["auth_chain"]
 	};
 
-	auth_chain_eval(event, eval, room, auth_chain);
+	auth_chain_eval(event, eval, room, auth_chain, result.origin);
 }
 catch(const vm::error &e)
 {
@@ -338,7 +338,8 @@ void
 ircd::m::vm::fetch::auth_chain_eval(const event &event,
                                     vm::eval &eval,
                                     const room &room,
-                                    const json::array &auth_chain)
+                                    const json::array &auth_chain,
+                                    const string_view &origin)
 try
 {
 	assert(eval.opts);
@@ -347,6 +348,7 @@ try
 	opts.infolog_accept = true;
 	opts.warnlog &= ~vm::fault::EXISTS;
 	opts.notify_servers = false;
+	opts.node_id = origin;
 
 	log::debug
 	{
@@ -471,6 +473,7 @@ try
 		auto opts(*eval.opts);
 		opts.phase.set(m::vm::phase::FETCH_PREV, false);
 		opts.phase.set(m::vm::phase::FETCH_STATE, false);
+		opts.node_id = result.origin;
 		opts.notify_servers = false;
 
 		// The result won't give us events with a content hash mismatch unless
@@ -736,6 +739,7 @@ ircd::m::vm::fetch::prev(const event &event,
 		opts.phase.set(m::vm::phase::FETCH_PREV, false);
 		opts.phase.set(m::vm::phase::FETCH_STATE, false);
 		opts.notify_servers = false;
+		opts.node_id = result.origin;
 		log::debug
 		{
 			log, "%s fetched %zu pdus; evaluating...",
