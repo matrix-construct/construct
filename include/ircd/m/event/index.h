@@ -16,6 +16,9 @@ namespace ircd::m
 	// Parallel query; returns number of successful results (positions are fixed)
 	size_t index(const vector_view<event::idx> &out, const vector_view<const event::id> &in);
 
+	// Parallel query; returns number of successful results (positions are fixed)
+	size_t index(const vector_view<event::idx> &out, const m::event::prev &);
+
 	// Responds with idx in closure; returns false if no action.
 	bool index(std::nothrow_t, const event::id &, const event::closure_idx &);
 

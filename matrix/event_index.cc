@@ -99,6 +99,29 @@ ircd::m::index(std::nothrow_t,
 }
 
 size_t
+ircd::m::index(const vector_view<event::idx> &out,
+               const event::prev &prev)
+{
+	const auto num
+	{
+		std::min(prev.prev_events_count(), event::prev::MAX)
+	};
+
+	size_t i(0);
+	event::id event_id[num];
+	m::for_each(prev, [&num, &i, &event_id]
+	(const auto &prev_id)
+	{
+		assert(i < num);
+		event_id[i++] = prev_id;
+		return i < num;
+	});
+
+	assert(i == num);
+	return index(out, vector_view<const event::id>(event_id, i));
+}
+
+size_t
 ircd::m::index(const vector_view<event::idx> &out_,
                const vector_view<const event::id> &in_)
 {
