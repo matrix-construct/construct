@@ -144,6 +144,9 @@ struct ircd::m::fetch::result
 	/// than this reference.
 	string_view content;
 
+	/// The name of the remote which supplied us with the result.
+	char origin[rfc3986::DOMAIN_BUFSIZE];
+
 	/// JSON result conversion. Note that developers should not let the result
 	/// instance go out of scope by making this conversion.
 	explicit operator json::object() const;

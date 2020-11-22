@@ -764,6 +764,7 @@ ircd::m::fetch::finish(request &request)
 	result res;
 	res.buf = std::move(request.future->in.dynamic);
 	res.content = res.buf;
+	strlcpy(res.origin, request.origin);
 	request.promise.set_value(std::move(res));
 }
 
