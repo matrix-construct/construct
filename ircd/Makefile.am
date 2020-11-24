@@ -61,6 +61,18 @@ AM_LDFLAGS += -Wl,--enable-runtime-pseudo-reloc
 AM_LDFLAGS += -export-symbols-regex '*'
 endif
 
+if PROFILE
+if CLANG
+AM_CXXFLAGS += -fprofile-generate
+AM_LDFLAGS += -Wl,-fprofile-generate
+#TODO: XXX
+#AM_CXXFLAGS += -fprofile-instr-generate
+#AM_CXXFLAGS += -fcoverage-mapping
+#AM_LDFLAGS += -Wl,-fprofile-instr-generate
+#AM_LDFLAGS += -Wl,-fcoverage-mapping
+endif
+endif
+
 #
 # libircd
 #
@@ -107,6 +119,13 @@ libircd_la_LIBADD = \
 	@MALLOC_LIBS@ \
 	$(EXTRA_LIBS) \
 	###
+
+if PROFILE
+if CLANG11
+#TODO: XXX
+libircd_la_LIBADD += /usr/lib/llvm-11/lib/clang/11.0.0/lib/linux/libclang_rt.profile-x86_64.a
+endif
+endif
 
 #
 # Unit list
@@ -220,6 +239,14 @@ libircd_la_SOURCES += ircd.cc
 #
 # Specific unit configurations
 #
+
+if CLANG
+if !PROFILE
+if !DEBUG
+SPIRIT_UNIT_CXXFLAGS += -fprofile-use
+endif
+endif
+endif
 
 client.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 ctx_x86_64.lo:        AM_CPPFLAGS := -I$(top_srcdir)/include

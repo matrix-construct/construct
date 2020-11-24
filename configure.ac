@@ -381,29 +381,53 @@ dnl
 dnl Profiling mode
 dnl
 
-AC_MSG_CHECKING(whether to do a profile build)
-AC_ARG_ENABLE(profile, RB_HELP_STRING([--enable-profile], [Enable profiling]),
+AC_MSG_CHECKING(whether to instrument build for runtime profile generation)
+AC_ARG_ENABLE(profile, RB_HELP_STRING([--enable-profile], [Generate profile at runtime]),
 [
 	profiling="yes"
+	AC_DEFINE(CHARYBDIS_PROFILE, 1, [Define this if you are profiling.])
+
 	AM_COND_IF(GCC,
 	[
 		AC_MSG_RESULT([yes, adding -pg])
 		RB_VAR_PREPEND([CXXFLAGS], ["-pg"])
-		AC_DEFINE(CHARYBDIS_PROFILE, 1, [Define this if you are profiling.])
 	])
 
 	AM_COND_IF(CLANG,
 	[
 		AC_MSG_RESULT([yes, adding profiling flags])
-		RB_VAR_PREPEND([CXXFLAGS], ["-fprofile-instr-generate"])
-		RB_VAR_PREPEND([CXXFLAGS], ["-fcoverage-mapping"])
-		RB_VAR_PREPEND([LDFLAGS], ["-fprofile-instr-generate"])
-		AC_DEFINE(CHARYBDIS_PROFILE, 1, [Define this if you are profiling.])
+
+		#RB_VAR_PREPEND([CXXFLAGS], ["-fprofile-generate"])
+		#RB_VAR_PREPEND([LDFLAGS], ["-Wl,-fprofile-generate"])
+
+		dnl TODO: $enableval=instr?
+		dnl RB_VAR_PREPEND([CXXFLAGS], ["-fprofile-instr-generate"])
+		dnl RB_VAR_PREPEND([CXXFLAGS], ["-fcoverage-mapping"])
+		dnl RB_VAR_PREPEND([LDFLAGS], ["-Wl,-fprofile-instr-generate"])
 	])
+
 ], [
 	AC_MSG_RESULT([no])
 	profiling="no"
 ])
+
+AC_MSG_CHECKING(whether to use a specific runtime profile)
+AC_ARG_WITH(profile, RB_HELP_STRING([--with-profile[[[=$PWD]]]], [Path to profdata]),
+[
+	profiling_use=$withval
+	AC_MSG_RESULT([yes, "$profiling_use"])
+	AC_SUBST(PROFILE_USE, $profiling_use)
+
+dnl	AM_COND_IF(CLANG,
+dnl	[
+dnl		RB_VAR_PREPEND([CXXFLAGS], [-fprofile-use="$profiling_use"])
+dnl	])
+
+], [
+	AC_MSG_RESULT([no])
+])
+
+AM_CONDITIONAL([PROFILE], [[[[ "$profiling" = "yes" ]]]])
 
 dnl
 dnl Precompiled headers
@@ -2593,6 +2617,7 @@ echo "Developer profiling ............... $profiling"
 echo "Precompiled headers ............... $build_pch"
 echo "Optimized compile ................. $optimize"
 echo "Optimized linking ................. $lto"
+echo "Optimized runtime ................. $profiling_used"
 echo "Optimization level ................ $optimize_level"
 echo "Machine tuned ..................... $machine_tuning"
 echo
