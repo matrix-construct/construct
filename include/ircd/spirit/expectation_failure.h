@@ -34,6 +34,7 @@ ircd::spirit::expectation_failure
 
 template<class parent>
 template<class it>
+[[gnu::noinline]]
 ircd::spirit::expectation_failure<parent>::expectation_failure(const qi::expectation_failure<it> &e,
 		                                                       const ssize_t &show_max)
 :parent
