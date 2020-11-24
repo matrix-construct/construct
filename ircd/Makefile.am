@@ -40,7 +40,7 @@ AM_CXXFLAGS += -fno-c++-static-destructors
 endif
 
 if LTO
-AM_CXXFLAGS += -flto
+AM_CXXFLAGS += -flto=thin
 endif
 
 if LTO

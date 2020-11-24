@@ -39,7 +39,7 @@ AM_CXXFLAGS += -ftls-model=local-dynamic
 endif
 
 if LTO
-AM_CXXFLAGS += -flto
+AM_CXXFLAGS += -flto=thin
 endif
 
 if LTO
