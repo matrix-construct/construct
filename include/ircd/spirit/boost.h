@@ -41,7 +41,8 @@
 #include <boost/spirit/include/phoenix.hpp>
 #include <boost/spirit/repository/include/qi_seek.hpp>
 #include <boost/spirit/repository/include/qi_subrule.hpp>
-
+#include "char.h"
 #pragma GCC visibility pop
+
 #pragma clang attribute pop
 #pragma clang attribute pop
