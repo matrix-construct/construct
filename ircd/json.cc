@@ -191,7 +191,7 @@ ircd::json::parser
 
 	rule<unused_type(uint)> member
 	{
-		name >> -ws >> name_sep >> -ws >> value(depth)
+		name >> ws >> name_sep >> ws >> value(depth)
 		,"member"
 	};
 
@@ -199,7 +199,7 @@ ircd::json::parser
 	{
 		(eps(depth < json::object::max_recursion_depth) | eps[throws_exceeded]) >>
 
-		object_begin >> -((-ws >> member(depth)) % (-ws >> value_sep)) >> -ws >> object_end
+		object_begin >> -((ws >> member(depth)) % (ws >> value_sep)) >> ws >> object_end
 		,"object"
 	};
 
@@ -207,7 +207,7 @@ ircd::json::parser
 	{
 		(eps(depth < json::array::max_recursion_depth) | eps[throws_exceeded]) >>
 
-		array_begin >> -((-ws >> value(depth)) % (-ws >> value_sep)) >> -ws >> array_end
+		array_begin >> -((ws >> value(depth)) % (ws >> value_sep)) >> ws >> array_end
 		,"array"
 	};
 
@@ -2418,14 +2418,14 @@ ircd::json::vector_object
 decltype(ircd::json::vector_next_parse)
 ircd::json::vector_next_parse
 {
-	expect[eoi | (vector_object >> -parser.ws)]
+	expect[eoi | (vector_object >> parser.ws)]
 	,"next object vector element or end"
 };
 
 decltype(ircd::json::vector_begin_parse)
 ircd::json::vector_begin_parse
 {
-	expect[-parser.ws >> (eoi | (vector_object >> -parser.ws))]
+	expect[parser.ws >> (eoi | (vector_object >> parser.ws))]
 	,"object vector element"
 };
 
@@ -2581,36 +2581,36 @@ namespace ircd::json
 decltype(ircd::json::object_member)
 ircd::json::object_member
 {
-	parser.name >> -parser.ws >> parser.name_sep >> -parser.ws >> raw[parser.value(0)]
+	parser.name >> parser.ws >> parser.name_sep >> parser.ws >> raw[parser.value(0)]
 	,"object member"
 };
 
 decltype(ircd::json::object_next)
 ircd::json::object_next
 {
-	(parser.value_sep >> -parser.ws >> object_member) |
-	(parser.object_end >> -parser.ws >> eoi)
+	(parser.value_sep >> parser.ws >> object_member) |
+	(parser.object_end >> parser.ws >> eoi)
 	,"object member"
 };
 
 decltype(ircd::json::object_begin)
 ircd::json::object_begin
 {
-	parser.object_begin >> -parser.ws >> (parser.object_end | object_member)
+	parser.object_begin >> parser.ws >> (parser.object_end | object_member)
 	,"object"
 };
 
 decltype(ircd::json::object_next_parse)
 ircd::json::object_next_parse
 {
-	expect[object_next >> -parser.ws]
+	expect[object_next >> parser.ws]
 	,"object increment"
 };
 
 decltype(ircd::json::object_begin_parse)
 ircd::json::object_begin_parse
 {
-	expect[-parser.ws >> (eoi | (object_begin >> -parser.ws))]
+	expect[parser.ws >> (eoi | (object_begin >> parser.ws))]
 	,"object begin"
 };
 
@@ -2984,28 +2984,28 @@ ircd::json::array_value
 decltype(ircd::json::array_next)
 ircd::json::array_next
 {
-	parser.array_end | (parser.value_sep >> -parser.ws >> array_value)
+	parser.array_end | (parser.value_sep >> parser.ws >> array_value)
 	,"next array element"
 };
 
 decltype(ircd::json::array_begin)
 ircd::json::array_begin
 {
-	parser.array_begin >> -parser.ws >> (parser.array_end | array_value)
+	parser.array_begin >> parser.ws >> (parser.array_end | array_value)
 	,"array begin element"
 };
 
 decltype(ircd::json::array_next_parse)
 ircd::json::array_next_parse
 {
-	expect[array_next >> -parser.ws]
+	expect[array_next >> parser.ws]
 	,"array next"
 };
 
 decltype(ircd::json::array_begin_parse)
 ircd::json::array_begin_parse
 {
-	expect[-parser.ws >> (eoi | (array_begin >> -parser.ws))]
+	expect[parser.ws >> (eoi | (array_begin >> parser.ws))]
 	,"array begin"
 };
 
@@ -4971,22 +4971,22 @@ namespace ircd::json
 decltype(ircd::json::type_parse_is)
 ircd::json::type_parse_is
 {
-	{ -parser.ws >> parser.quote                              },
-	{ -parser.ws >> parser.object_begin                       },
-	{ -parser.ws >> parser.array_begin                        },
-	{ -parser.ws >> parser.number_begin                       },
-	{ -parser.ws >> parser.literal >> -parser.ws >> eoi       },
+	{ parser.ws >> parser.quote                              },
+	{ parser.ws >> parser.object_begin                       },
+	{ parser.ws >> parser.array_begin                        },
+	{ parser.ws >> parser.number_begin                       },
+	{ parser.ws >> parser.literal >> parser.ws >> eoi        },
 };
 
 //TODO: XXX array designated initializers
 decltype(ircd::json::type_parse_is_strict)
 ircd::json::type_parse_is_strict
 {
-	{ -parser.ws >> &parser.quote >> parser.string >> -parser.ws >> eoi            },
-	{ -parser.ws >> &parser.object_begin >> parser.object(0) >> -parser.ws >> eoi  },
-	{ -parser.ws >> &parser.array_begin >> parser.array(0) >> -parser.ws >> eoi    },
-	{ -parser.ws >> &parser.number_begin >> parser.number >> -parser.ws >> eoi     },
-	{ -parser.ws >> parser.literal >> -parser.ws >> eoi                            },
+	{ parser.ws >> &parser.quote >> parser.string >> parser.ws >> eoi            },
+	{ parser.ws >> &parser.object_begin >> parser.object(0) >> parser.ws >> eoi  },
+	{ parser.ws >> &parser.array_begin >> parser.array(0) >> parser.ws >> eoi    },
+	{ parser.ws >> &parser.number_begin >> parser.number >> parser.ws >> eoi     },
+	{ parser.ws >> parser.literal >> parser.ws >> eoi                            },
 };
 
 decltype(ircd::json::type_parse)
