@@ -27,17 +27,9 @@
 
 #include <boost/config.hpp>
 #include <boost/function.hpp>
+#include "function.h"
 
 #pragma GCC visibility push (internal)
-
-// Spirit uses `boost::function` by default, but since it's in boost:: it
-// simply declares as `function`. We can do a lot better by dropping in
-// `std::function` instead.
-namespace boost::spirit
-{
-	using std::function;
-}
-
 #include <boost/fusion/sequence.hpp>
 #include <boost/fusion/iterator.hpp>
 #include <boost/fusion/adapted.hpp>
