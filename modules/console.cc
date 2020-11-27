@@ -15109,6 +15109,7 @@ console_cmd__fed__event(opt &out, const string_view &line)
 		vmopts.phase.set(m::vm::phase::AUTH_RELA, !has(oparg, "noauth"));
 		vmopts.phase.set(m::vm::phase::AUTH_PRES, !has(oparg, "noauth"));
 		vmopts.phase.set(m::vm::phase::WRITE, !has(oparg, "nowrite"));
+		vmopts.replays = has(oparg, "replay");
 		vmopts.notify_servers = false;
 		m::vm::eval eval
 		{
