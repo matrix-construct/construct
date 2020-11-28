@@ -1,5 +1,8 @@
 AUTOMAKE_OPTIONS = foreign
 
+BUILT_SOURCES =#
+CLEANFILES =#
+
 DEFS += \
 	-DIRCD_UNIT \
 	###
@@ -50,9 +53,12 @@ AM_CXXFLAGS += -fwhole-program-vtables
 endif
 endif
 
-if MINGW
-AM_LDFLAGS += -Wl,--enable-runtime-pseudo-reloc
-AM_LDFLAGS += -export-symbols-regex '*'
+if !PROFILE
+if CLANG
+AM_CXXFLAGS += -fprofile-use
+BUILT_SOURCES += default.profdata
+CLEANFILES += default.profdata
+endif
 endif
 
 if PROFILE
@@ -67,9 +73,10 @@ AM_LDFLAGS += -Wl,-fprofile-generate
 endif
 endif
 
-#
-# libircd
-#
+if MINGW
+AM_LDFLAGS += -Wl,--enable-runtime-pseudo-reloc
+AM_LDFLAGS += -export-symbols-regex '*'
+endif
 
 libircddir = @libdir@
 libircd_LTLIBRARIES = libircd.la
@@ -132,6 +139,7 @@ endif
 #
 
 libircd_la_SOURCES =#
+libircd_la_SOURCES += default.profdata
 libircd_la_SOURCES += assert.cc
 libircd_la_SOURCES += info.cc
 libircd_la_SOURCES += vg.cc
@@ -234,14 +242,6 @@ libircd_la_SOURCES += ircd.cc
 # Specific unit configurations
 #
 
-if CLANG
-if !PROFILE
-if !DEBUG
-SPIRIT_UNIT_CXXFLAGS += -fprofile-use
-endif
-endif
-endif
-
 client.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 ctx_x86_64.lo:        AM_CPPFLAGS := -I$(top_srcdir)/include
 ctx.lo:               AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
@@ -305,3 +305,11 @@ server.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 if SODIUM
 sodium.lo:            AM_CPPFLAGS := @SODIUM_CPPFLAGS@ ${AM_CPPFLAGS}
 endif
+
+#
+# Other recipes
+#
+
+# LLVM PGO text to binary for -fprofile-use
+default.profdata:
+	-$(LLVM_PROFDATA) merge -output=default.profdata default.proftext

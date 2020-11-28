@@ -11,6 +11,7 @@ Makefile
 *.gch
 *.cache
 *.tmp
+*.profdata
 .deps
 .dirstamp
 .libs

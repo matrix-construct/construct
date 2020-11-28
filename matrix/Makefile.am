@@ -1,5 +1,8 @@
 AUTOMAKE_OPTIONS = foreign
 
+BUILT_SOURCES =#
+CLEANFILES =#
+
 DEFS += \
 	-DIRCD_UNIT \
 	-DIRCD_MATRIX_UNIT \
@@ -49,10 +52,16 @@ AM_CXXFLAGS += -fwhole-program-vtables
 endif
 endif
 
+if !PROFILE
+if CLANG
+AM_CXXFLAGS += -fprofile-use
+BUILT_SOURCES += default.profdata
+CLEANFILES += default.profdata
+endif
+endif
+
 if MINGW
-AM_LDFLAGS += \
-	-Wl,--enable-runtime-pseudo-reloc \
-	###
+AM_LDFLAGS += -Wl,--enable-runtime-pseudo-reloc
 endif
 
 libircd_matrixdir = @libdir@
@@ -65,6 +74,7 @@ libircd_matrix_LTLIBRARIES = \
 #
 
 libircd_matrix_la_SOURCES =#
+libircd_matrix_la_SOURCES += default.profdata
 libircd_matrix_la_SOURCES += name.cc
 libircd_matrix_la_SOURCES += id.cc
 libircd_matrix_la_SOURCES += dbs.cc
@@ -181,3 +191,11 @@ libircd_matrix_la_SOURCES += matrix.cc
 
 id.lo: AM_CPPFLAGS   := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 id.lo: CXXFLAGS      += ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
+
+#
+# Other recipes
+#
+
+# LLVM PGO text to binary for -fprofile-use
+default.profdata:
+	-$(LLVM_PROFDATA) merge -output=default.profdata default.proftext

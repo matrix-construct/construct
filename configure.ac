@@ -429,6 +429,12 @@ dnl	])
 
 AM_CONDITIONAL([PROFILE], [[[[ "$profiling" = "yes" ]]]])
 
+dnl Provide the correct target to the Makefiles
+AM_COND_IF(CLANG9,  [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-9)  ])
+AM_COND_IF(CLANG10, [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-10) ])
+AM_COND_IF(CLANG11, [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-11) ])
+AM_COND_IF(CLANG12, [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-12) ])
+
 dnl
 dnl Precompiled headers
 dnl
@@ -872,6 +878,7 @@ AM_COND_IF([DEBUG],
 	AM_COND_IF([CLANG],
 	[
 		CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-unknown-attributes], charybdis_cv_c_gcc_w_unknown_attributes)
+		CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-profile-instr-unprofiled], charybdis_cv_c_gcc_w_profile_instr_unprofiled)
 	])
 
 	AM_COND_IF([GCC],
