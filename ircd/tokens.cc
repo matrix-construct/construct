@@ -347,16 +347,16 @@ ircd::tokens(const string_view &str,
 	char *ptr(data(buf));
 	char *const stop(data(buf) + size(buf));
 	tokens(str, sep, [&closure, &ptr, &stop]
-	(const string_view &token)
+	(const string_view &token) -> bool
 	{
 		const size_t terminated_size(token.size() + 1);
 		const size_t remaining(std::distance(ptr, stop));
 		if(remaining < terminated_size)
-			return;
+			return false;
 
 		char *const dest(ptr);
 		ptr += strlcpy(dest, token.data(), terminated_size);
-		closure(string_view(dest, token.size()));
+		return closure(string_view(dest, token.size()));
 	});
 
 	return std::distance(data(buf), ptr);
@@ -386,7 +386,8 @@ ircd::tokens(const string_view &str,
 
 	size_t i(0);
 	for(auto it(begin(view)); i < limit && it != end(view); ++it, i++)
-		closure(*it);
+		if(!closure(*it))
+			break;
 
 	return i;
 }
@@ -409,7 +410,8 @@ ircd::tokens(const string_view &str,
 
 	size_t i(0);
 	for(auto it(begin(view)); i < limit && it != end(view); ++it, i++)
-		closure(*it);
+		if(!closure(*it))
+			break;
 
 	return i;
 }
@@ -417,7 +419,7 @@ ircd::tokens(const string_view &str,
 bool
 ircd::tokens(const string_view &str,
              const char &sep,
-             const token_view_bool &closure)
+             const token_view &closure)
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
@@ -445,7 +447,7 @@ ircd::tokens(const string_view &str,
 bool
 ircd::tokens(const string_view &str,
              const string_view &sep,
-             const token_view_bool &closure)
+             const token_view &closure)
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
@@ -462,48 +464,6 @@ ircd::tokens(const string_view &str,
 			return false;
 
 	return true;
-}
-
-void
-ircd::tokens(const string_view &str,
-             const char &sep,
-             const token_view &closure)
-{
-	using type = string_view;
-	using iter = typename type::const_iterator;
-	using delim = boost::char_separator<char>;
-
-	assert(sep != '\0');
-	const char _sep[2]
-	{
-		sep, '\0'
-	};
-
-	const delim d{_sep};
-	const boost::tokenizer<delim, iter, type> view
-	{
-		str, d
-	};
-
-	std::for_each(begin(view), end(view), closure);
-}
-
-void
-ircd::tokens(const string_view &str,
-             const string_view &sep,
-             const token_view &closure)
-{
-	using type = string_view;
-	using iter = typename type::const_iterator;
-	using delim = string_separator;
-
-	const delim d{sep};
-	const boost::tokenizer<delim, iter, type> view
-	{
-		str, d
-	};
-
-	std::for_each(begin(view), end(view), closure);
 }
 
 //

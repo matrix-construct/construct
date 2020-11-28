@@ -38,8 +38,8 @@ struct ircd::util::params
 	const char *sep {" "};
 	std::array<string_view, MAX> names;
 
-	bool for_each_pararg(const token_view_bool &) const;
-	bool for_each_posarg(const token_view_bool &) const;
+	bool for_each_pararg(const token_view &) const;
+	bool for_each_posarg(const token_view &) const;
 	string_view name(const size_t &i) const;
 	size_t name(const string_view &) const;
 
@@ -299,27 +299,27 @@ const
 }
 
 inline bool
-ircd::util::params::for_each_posarg(const token_view_bool &closure)
+ircd::util::params::for_each_posarg(const token_view &closure)
 const
 {
-	return tokens(in, sep, token_view_bool{[this, &closure]
+	return tokens(in, sep, [this, &closure]
 	(const string_view &token)
 	{
 		return !prefix || !startswith(token, prefix)?
 			closure(token):
 			true;
-	}});
+	});
 }
 
 inline bool
-ircd::util::params::for_each_pararg(const token_view_bool &closure)
+ircd::util::params::for_each_pararg(const token_view &closure)
 const
 {
-	return tokens(in, sep, token_view_bool{[this, &closure]
+	return tokens(in, sep, [this, &closure]
 	(const string_view &token)
 	{
 		return prefix && startswith(token, prefix)?
 			closure(token):
 			true;
-	}});
+	});
 }

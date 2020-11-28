@@ -182,7 +182,7 @@ try
 		json::get(event, top, json::object{})
 	};
 
-	tokens(path, ".", token_view_bool{[&value]
+	tokens(path, ".", [&value]
 	(const string_view &key)
 	{
 		if(!json::type(value, json::OBJECT))
@@ -194,7 +194,7 @@ try
 
 		value = json::string(value);
 		return false;
-	}});
+	});
 
 	 //TODO: XXX spec leading/trailing; not imatch
 	const globular_imatch pattern
