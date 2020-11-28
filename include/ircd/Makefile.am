@@ -26,18 +26,6 @@ if CLANG11
 AM_CXXFLAGS += -fpch-instantiate-templates
 endif
 
-if DEBUG
-if GCC
-AM_CXXFLAGS += -fmax-errors=2
-endif
-endif
-
-if DEBUG
-if CLANG
-AM_CXXFLAGS += -ferror-limit=2
-endif
-endif
-
 if GCC
 if LOWMEM_COMPILE
 LOWMEM_FLAGS= --param ggc-min-expand=1

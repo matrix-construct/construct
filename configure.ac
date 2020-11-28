@@ -640,6 +640,19 @@ dnl
 
 AM_COND_IF([DEBUG],
 [
+	AM_COND_IF([GCC],
+	[
+		RB_VAR_PREPEND([CXXFLAGS], ["-fmax-errors=2"])
+	])
+
+	AM_COND_IF([CLANG],
+	[
+		RB_VAR_PREPEND([CXXFLAGS], ["-ferror-limit=2"])
+	])
+])
+
+AM_COND_IF([DEBUG],
+[
 	RB_VAR_PREPEND([CXXFLAGS], ["-g"])
 	RB_VAR_PREPEND([CXXFLAGS], ["-ggdb"])
 	AM_COND_IF([GCC],

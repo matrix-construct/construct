@@ -49,12 +49,6 @@ AM_CXXFLAGS += -fwhole-program-vtables
 endif
 endif
 
-if DEBUG
-if GCC
-AM_CXXFLAGS += -fmax-errors=3
-endif
-endif
-
 if MINGW
 AM_LDFLAGS += \
 	-Wl,--enable-runtime-pseudo-reloc \
