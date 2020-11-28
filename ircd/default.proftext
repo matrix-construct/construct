@@ -1,0 +1,22 @@
+:ir
+_ZN4ircd4json6object14const_iteratorppEv
+# Func Hash:
+281553456398603
+# Num Counters:
+7
+# Counter Values:
+16008480
+0
+0
+0
+0
+0
+0
+# Num Value Kinds:
+1
+# ValueKind = IPVK_IndirectCallTarget:
+0
+# NumValueSites:
+1
+1
+json.cc:_ZZN5boost6spirit8functionIFbRPKcRKS3_RNS0_7contextINS_6fusion4consIRN4ircd4json6object6memberENS8_4nil_EEENS8_6vectorIJEEEEERKNS0_11unused_typeEEEaSINS0_2qi6detail13parser_binderINSR_16expect_directiveINSR_8sequenceINS9_INSR_9referenceIKNSR_4ruleIS3_SD_SL_SL_SL_EEEENS9_INSW_IKNSX_IS3_SL_SL_SL_SL_EEEESF_EEEEEEEEN4mpl_5bool_ILb0EEEEEEERSP_T_ENUlRKPKvS4_S6_SK_SN_E_8__invokeES1H_S4_S6_SK_SN_:16008480
