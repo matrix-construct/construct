@@ -38,7 +38,7 @@ boost::spirit::qi::char_parser
 	         class Skipper,
 	         class Attribute>
 	[[gnu::hot]]
-	bool parse(Iterator &__restrict__ start, const Iterator &__restrict__ stop, Context &c, const Skipper &s, Attribute &a) const noexcept
+	bool parse(Iterator &__restrict__ start, const Iterator &__restrict__ stop, Context &c, const Skipper &s, Attribute &a) const
 	{
 		qi::skip_over(start, stop, s);
 		if(likely(start != stop))
