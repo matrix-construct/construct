@@ -861,6 +861,14 @@ AM_COND_IF([DEBUG],
 	])
 ])
 
+AM_COND_IF([UNTUNED],
+[
+
+], [
+	dnl When tuning for a specific target ignore the ABI compat warnings
+	CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-psabi], charybdis_cv_c_gcc_w_psabi)
+])
+
 dnl
 dnl List of compiler-specific / incompatible warning options
 dnl
