@@ -855,9 +855,15 @@ AM_COND_IF([DEBUG],
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wmissing-noreturn], charybdis_cv_c_gcc_w_missing_noreturn)
 ], [
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-unknown-pragmas], charybdis_cv_c_gcc_w_unknown_pragmas)
+
 	AM_COND_IF([CLANG],
 	[
 		CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-unknown-attributes], charybdis_cv_c_gcc_w_unknown_attributes)
+	])
+
+	AM_COND_IF([GCC],
+	[
+		CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-ignored-attributes], charybdis_cv_c_gcc_w_ignored_attributes)
 	])
 ])
 
