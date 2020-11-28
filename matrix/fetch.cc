@@ -345,7 +345,10 @@ try
 	for(auto it(begin(requests)); it != end(requests); ++it)
 	{
 		auto &request(mutable_cast(*it));
-		if(!request.started)
+		if(!!request.finished)
+			continue;
+
+		else if(!request.started)
 			start(request);
 
 		else if(!request.finished && timedout(request, now))
