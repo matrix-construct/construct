@@ -923,7 +923,7 @@ ircd::log::confs
 		// file enable
 		{
 			{ "name",     "ircd.log.error.file.enable" },
-			{ "default",  true                         },
+			{ "default",  false                        },
 		},
 
 		// file flush
@@ -956,7 +956,7 @@ ircd::log::confs
 		// file enable
 		{
 			{ "name",     "ircd.log.warning.file.enable" },
-			{ "default",  true                           },
+			{ "default",  false                          },
 		},
 
 		// file flush
