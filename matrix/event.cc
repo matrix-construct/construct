@@ -23,6 +23,10 @@ ircd::m::event::max_size
 	{ "default",   65507L            },
 };
 
+decltype(ircd::m::event::buf)
+thread_local
+ircd::m::event::buf;
+
 bool
 ircd::m::check_id(const event &event)
 noexcept
@@ -185,10 +189,9 @@ ircd::m::make_hashes(const mutable_buffer &out,
 ircd::sha256::buf
 ircd::m::event::hash(const json::object &event_)
 {
-	thread_local char buf[event::MAX_SIZE];
 	const json::object preimage
 	{
-		event::preimage(buf, event_)
+		event::preimage(buf[3], event_)
 	};
 
 	return sha256
@@ -218,11 +221,9 @@ ircd::m::hash(const event &event)
 	m::event event_{event};
 	json::get<"signatures"_>(event_) = {};
 	json::get<"hashes"_>(event_) = {};
-
-	thread_local char buf[event::MAX_SIZE];
 	const string_view preimage
 	{
-		stringify(buf, event_)
+		stringify(event::buf[3], event_)
 	};
 
 	return sha256{preimage};
@@ -325,16 +326,14 @@ ircd::m::signatures(const mutable_buffer &out_,
                     const m::event &event_,
                     const string_view &origin)
 {
-	thread_local char content[event::MAX_SIZE];
 	m::event event
 	{
-		essential(event_, content)
+		essential(event_, event::buf[3])
 	};
 
-	thread_local char buf[event::MAX_SIZE];
 	const string_view &preimage
 	{
-		stringify(buf, event)
+		stringify(event::buf[2], event)
 	};
 
 	const auto &secret_key
@@ -440,10 +439,9 @@ ircd::ed25519::sig
 ircd::m::sign(const event &event,
               const ed25519::sk &sk)
 {
-	thread_local char buf[event::MAX_SIZE];
 	const string_view preimage
 	{
-		stringify(buf, event)
+		stringify(event::buf[3], event)
 	};
 
 	return event::sign(preimage, sk);
@@ -470,10 +468,9 @@ ircd::m::event::sign(const json::object &event,
                      const ed25519::sk &sk)
 {
 	//TODO: skip rewrite
-	thread_local char buf[event::MAX_SIZE];
 	const string_view preimage
 	{
-		stringify(buf, event)
+		stringify(buf[3], event)
 	};
 
 	return sign(preimage, sk);
@@ -616,15 +613,14 @@ ircd::m::verify(const event &event_,
                 const ed25519::pk &pk,
                 const ed25519::sig &sig)
 {
-	thread_local char buf[2][event::MAX_SIZE];
 	m::event event
 	{
-		essential(event_, buf[0])
+		essential(event_, event::buf[3])
 	};
 
 	const json::object &preimage
 	{
-		stringify(buf[1], event)
+		stringify(event::buf[2], event)
 	};
 
 	return pk.verify(preimage, sig);
@@ -635,10 +631,9 @@ ircd::m::event::verify(const json::object &event,
                        const ed25519::pk &pk,
                        const ed25519::sig &sig)
 {
-	thread_local char buf[event::MAX_SIZE];
 	const string_view preimage
 	{
-		stringify(buf, event)
+		stringify(buf[3], event)
 	};
 
 	return pk.verify(preimage, sig);

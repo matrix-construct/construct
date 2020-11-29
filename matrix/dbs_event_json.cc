@@ -139,7 +139,6 @@ ircd::m::dbs::_index_event_json(db::txn &txn,
                                 const write_opts &opts)
 {
 	const ctx::critical_assertion ca;
-	thread_local char buf[m::event::MAX_SIZE];
 	assert(opts.appendix.test(appendix::EVENT_JSON));
 	assert(opts.event_idx);
 
@@ -161,11 +160,11 @@ ircd::m::dbs::_index_event_json(db::txn &txn,
 		// re-stringify it into a temporary buffer. This is the common case
 		// because the original source might be crap JSON w/ spaces etc.
 		opts.op == db::op::SET && event.source?
-			json::stringify(mutable_buffer{buf}, event.source):
+			json::stringify(mutable_buffer{event::buf[0]}, event.source):
 
 		// If no source was given with the event we can generate it.
 		opts.op == db::op::SET?
-			json::stringify(mutable_buffer{buf}, event):
+			json::stringify(mutable_buffer{event::buf[0]}, event):
 
 		// Empty value; generally for a non-SET db::op
 		string_view{}

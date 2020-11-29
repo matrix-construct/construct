@@ -118,6 +118,7 @@ struct ircd::m::event
 	static constexpr const size_t &ORIGIN_MAX_SIZE {256};
 	static constexpr const size_t &STATE_KEY_MAX_SIZE {512};
 	static conf::item<size_t> max_size;
+	static thread_local char buf[4][MAX_SIZE]; // general-use scratch
 
 	static bool my(const idx &);
 	static json::object preimage(const mutable_buffer &, const json::object &);
