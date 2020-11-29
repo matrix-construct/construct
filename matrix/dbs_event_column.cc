@@ -944,6 +944,20 @@ ircd::m::dbs::_index_event_cols(db::txn &txn,
 		if(value_required(opts.op) && !defined(json::value(val)))
 			return;
 
+		// If an already-strung json::object is carried by the event we
+		// re-stringify it into a temporary buffer. This is the common case
+		// because the original source might be crap JSON w/ spaces etc.
+		constexpr bool canonizable
+		{
+			std::is_same<decltype(val), json::object>() ||
+			std::is_same<decltype(val), json::array>() ||
+			std::is_same<decltype(val), json::string>()
+		};
+
+		if constexpr(canonizable)
+			if(opts.op == db::op::SET && !opts.json_source)
+				val = json::stringify(mutable_buffer{event::buf[0]}, val);
+
 		db::txn::append
 		{
 			txn, column, db::column::delta
