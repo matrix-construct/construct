@@ -1536,11 +1536,12 @@ try
 
 	log::debug
 	{
-		log, "peer(%p) resolved %s SRV rrs:%zu resolving %s %s",
+		log, "peer(%p) '%s' resolved '%s' SRV to '%s' rrs:%zu; now resolving %s...",
 		this,
-		hostcanon,
-		rrs.size(),
+		this->hostcanon,
+		host(hp),
 		host(target),
+		rrs.size(),
 		rfc1035::rqtype.at(opts.qtype)
 	};
 
@@ -1550,9 +1551,10 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		log, "peer(%p) '%s' resolve SRV :%s",
+		log, "peer(%p) '%s' resolve '%s' SRV :%s",
 		this,
 		this->hostcanon,
+		host(hp),
 		e.what()
 	};
 
@@ -1633,9 +1635,10 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		log, "peer(%p) resolve '%s' AAAA: %s",
+		log, "peer(%p) '%s' resolve '%s' AAAA: %s",
 		this,
 		this->hostcanon,
+		host(target),
 		e.what()
 	};
 
@@ -1713,9 +1716,10 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		log, "peer(%p) '%s' resolve A :%s",
+		log, "peer(%p) '%s' resolve '%s' A :%s",
 		this,
 		this->hostcanon,
+		host(target),
 		e.what()
 	};
 
