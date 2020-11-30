@@ -85,6 +85,7 @@ struct ircd::m::id
 	id(const enum sigil &, const mutable_buffer &, const string_view &local, const string_view &host);
 	id(const enum sigil &, const mutable_buffer &, const string_view &id);
 	id(const enum sigil &, const string_view &id);
+	explicit id(const enum sigil &, const id &);
 	id(const string_view &id);
 	id() = default;
 };
@@ -379,7 +380,14 @@ ircd::m::id::id(const string_view &str)
 {
 	m::sigil(str), str
 }
+{}
+
+inline
+ircd::m::id::id(const id::sigil &sigil,
+                const id &id)
+:string_view{id}
 {
+	assert(this->empty() || this->front() == sigil);
 }
 
 inline
