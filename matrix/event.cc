@@ -780,7 +780,7 @@ try
 {
 	const auto &type
 	{
-		json::at<"type"_>(event)
+		json::get<"type"_>(event)
 	};
 
 	json::object &content

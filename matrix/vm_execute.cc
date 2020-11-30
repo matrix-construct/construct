@@ -218,31 +218,6 @@ try
 		*eval.opts
 	};
 
-	const scope_restore eval_report
-	{
-		eval.report, event::conforms{}
-	};
-
-	const scope_restore eval_redacted
-	{
-		eval.redacted, false
-	};
-
-	const scope_restore eval_room_id
-	{
-		eval.room_id,
-
-		// Retain any predetermined room_id.
-		eval.room_id?
-			eval.room_id:
-
-		// Use the room_id in the event
-		likely(json::get<"room_id"_>(event))?
-			string_view(json::get<"room_id"_>(event)):
-
-		eval.room_id,
-	};
-
 	// Determine if this is an internal room creation event
 	const bool is_internal_room_create
 	{
@@ -265,11 +240,21 @@ try
 			true:
 
 		// Query to find out if internal room.
-		eval.room_id && my(room::id(eval.room_id))?
-			m::internal(eval.room_id):
+		json::get<"room_id"_>(event) && my(room::id(json::get<"room_id"_>(event)))?
+			m::internal(json::get<"room_id"_>(event)):
 
 		// Default to false
 		false
+	};
+
+	const scope_restore eval_report
+	{
+		eval.report, event::conforms{}
+	};
+
+	const scope_restore eval_redacted
+	{
+		eval.redacted, false
 	};
 
 	// These checks only require the event data itself.
@@ -297,10 +282,8 @@ try
 			event::MAX_SIZE, 64
 		};
 
-	const scope_restore event_source
+	const json::object event_source
 	{
-		mutable_cast(event).source,
-
 		// Canonize and redact from some other serialized source.
 		!opts.edu && !opts.json_source && event.source && redacted?
 			json::stringify(mutable_buffer{eval.buf}, m::essential(event.source, event::buf[0])):
@@ -322,13 +305,23 @@ try
 		string_view{event.source}
 	};
 
-	const scope_restore eval_room_id_reref
+	m::event _event_
+	{
+		event_source
+	};
+
+	const auto &_event
+	{
+		event_source? _event_: event
+	};
+
+	const scope_restore eval_room_id
 	{
 		eval.room_id,
 
-		// Re-assigns reference after any prior rewrites
-		likely(json::get<"room_id"_>(event))?
-			string_view(json::get<"room_id"_>(event)):
+		// Reassigns reference after any prior rewrites
+		likely(json::get<"room_id"_>(_event))?
+			string_view(json::get<"room_id"_>(_event)):
 
 		// No action
 		eval.room_id,
@@ -360,31 +353,16 @@ try
 	// Copy the event_id into the eval buffer
 	eval.event_id =
 	{
-		!opts.edu && !event.event_id && eval.room_version == "3"?
-			event::id::buf{event::id::v3{eval.event_id, event}}:
+		!opts.edu && !_event.event_id && eval.room_version == "3"?
+			event::id::buf{event::id::v3{eval.event_id, _event}}:
 
-		!opts.edu && !event.event_id?
-			event::id::buf{event::id::v4{eval.event_id, event}}:
+		!opts.edu && !_event.event_id?
+			event::id::buf{event::id::v4{eval.event_id, _event}}:
 
 		!opts.edu?
-			event::id::buf{event.event_id}:
+			event::id::buf{_event.event_id}:
 
 		event::id::buf{}
-	};
-
-	// We have to set the event_id in the event instance if it didn't come
-	// with the event JSON.
-	const scope_restore event_event_id
-	{
-		mutable_cast(event).event_id,
-
-		!opts.edu && eval.event_id?
-			event::id{eval.event_id}:
-
-		!opts.edu?
-			event.event_id:
-
-		event::id{}
 	};
 
 	// Set a member pointer to the event currently being evaluated. This
@@ -393,34 +371,36 @@ try
 	assert(!eval.event_);
 	const scope_restore eval_event
 	{
-		eval.event_, &event
+		eval.event_, &_event
 	};
+
+	mutable_cast(eval.event_)->event_id = eval.event_id;
 
 	// If the event is already being evaluated, wait here until the other
 	// evaluation is finished. If the other was successful, the exists()
 	// check will skip this, otherwise we have to try again here because
 	// this evaluator might be using different options/credentials.
-	if(likely(opts.phase[phase::DUPCHK] && opts.unique) && event.event_id)
+	if(likely(opts.phase[phase::DUPCHK] && opts.unique) && _event.event_id)
 	{
 		const scope_restore eval_phase
 		{
 			eval.phase, phase::DUPCHK
 		};
 
-		sequence::dock.wait([&event]
+		sequence::dock.wait([&_event]
 		{
-			return eval::count(event.event_id) <= 1;
+			return eval::count(_event.event_id) <= 1;
 		});
 	}
 
 	// We can elide a lot of grief here by not proceeding further and simply
 	// returning fault::EXISTS after an existence check. If we had to wait for
 	// a duplicate eval this check will indicate its success.
-	if(likely(!opts.replays && opts.nothrows & fault::EXISTS) && event.event_id)
-		if(!eval.copts && m::exists(event.event_id))
+	if(likely(!opts.replays && opts.nothrows & fault::EXISTS) && _event.event_id)
+		if(!eval.copts && m::exists(_event.event_id))
 			return fault::EXISTS;
 
-	return execute_du(eval, event);
+	return execute_du(eval, _event);
 }
 catch(const vm::error &e)
 {
