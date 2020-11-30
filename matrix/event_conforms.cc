@@ -115,7 +115,7 @@ ircd::m::vm::conform_report
 	[](const m::event &event, eval &eval)
 	{
 		assert(eval.opts);
-		auto &opts(*eval.opts);
+		const auto &opts(*eval.opts);
 
 		// When opts.conformed is set the report is already generated
 		if(opts.conformed)
@@ -124,17 +124,30 @@ ircd::m::vm::conform_report
 			return;
 		}
 
+		// Mask of checks to be bypassed
+		auto non_conform
+		{
+			opts.non_conform
+		};
+
+		// This hook is called prior to event_id determination; must be skipped
+		non_conform.set(event::conforms::INVALID_OR_MISSING_EVENT_ID);
+
+		// For internal rooms for now.
+		if(eval.room_internal)
+			non_conform.set(event::conforms::MISMATCH_ORIGIN_SENDER);
+
 		// Generate the report here.
 		eval.report = event::conforms
 		{
-			event, opts.non_conform.report
+			event, non_conform.report
 		};
 
 		// When opts.conforming is false a bad report is not an error.
 		if(!opts.conforming)
 			return;
 
-		const bool redacted
+		eval.redacted =
 		{
 			// redacted hint given in options
 			opts.redacted != -1?
@@ -149,24 +162,33 @@ ircd::m::vm::conform_report
 				false:
 
 			// assume redacted when hash mismatch already allowed
-			(opts.non_conform.has(event::conforms::MISMATCH_HASHES))?
+			non_conform.has(event::conforms::MISMATCH_HASHES)?
 				true:
 
 			// assume no redaction for hash match
-			(!eval.report.has(event::conforms::MISMATCH_HASHES))?
+			!eval.report.has(event::conforms::MISMATCH_HASHES)?
 				false:
 
+			// case for authoritative redaction
+			eval.report.has(event::conforms::MISMATCH_HASHES)
+			&& opts.node_id == json::get<"origin"_>(event)?
+				true:
+
 			// make query
-				bool(m::redacted(event.event_id))
+			event.event_id?
+				bool(m::redacted(event.event_id)):
+
+			// otherwise deny redacted
+			false
 		};
 
 		auto report
 		{
 			eval.report
-		};;
+		};
 
 		// Allow content hash to fail on redacted events.
-		if(redacted)
+		if(eval.redacted)
 			report.del(event::conforms::MISMATCH_HASHES);
 
 		// Otherwise this will kill the eval

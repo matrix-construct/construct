@@ -218,32 +218,16 @@ try
 		*eval.opts
 	};
 
-	assert(!eval.buf || size(eval.buf) >= event::MAX_SIZE);
-	if(!opts.json_source && !eval.buf)
-		eval.buf = unique_mutable_buffer
-		{
-			event::MAX_SIZE, 64
-		};
-
-	const scope_restore event_source
+	const scope_restore eval_report
 	{
-		mutable_cast(event).source,
-
-		// Canonize from some other serialized source.
-		!opts.json_source && event.source?
-			json::object(json::stringify(mutable_buffer{eval.buf}, event.source)):
-
-		// Canonize from no source; usually taken when my(event).
-		// XXX elision conditions go here
-		!opts.json_source?
-			json::object(json::stringify(mutable_buffer{eval.buf}, event)):
-
-		// Use the input directly.
-		event.source
+		eval.report, event::conforms{}
 	};
 
-	// Set a member to the room_id for convenient access, without stepping on
-	// any room_id reference that exists there for whatever reason.
+	const scope_restore eval_redacted
+	{
+		eval.redacted, false
+	};
+
 	const scope_restore eval_room_id
 	{
 		eval.room_id,
@@ -253,7 +237,7 @@ try
 			eval.room_id:
 
 		// Use the room_id in the event
-		likely(valid(id::ROOM, json::get<"room_id"_>(event)))?
+		likely(json::get<"room_id"_>(event))?
 			string_view(json::get<"room_id"_>(event)):
 
 		eval.room_id,
@@ -286,6 +270,68 @@ try
 
 		// Default to false
 		false
+	};
+
+	// These checks only require the event data itself.
+	if(likely(opts.phase[phase::CONFORM]) && !opts.edu)
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::CONFORM
+		};
+
+		const ctx::critical_assertion ca;
+		call_hook(conform_hook, eval, event, eval);
+	}
+
+	assert(!eval.buf || size(eval.buf) >= event::MAX_SIZE);
+	const bool redacted
+	{
+		eval.redacted
+		|| eval.report.has(event::conforms::MISMATCH_HASHES)
+	};
+
+	if(!opts.edu && !eval.buf && (!opts.json_source || redacted))
+		eval.buf = unique_mutable_buffer
+		{
+			event::MAX_SIZE, 64
+		};
+
+	const scope_restore event_source
+	{
+		mutable_cast(event).source,
+
+		// Canonize and redact from some other serialized source.
+		!opts.edu && !opts.json_source && event.source && redacted?
+			json::stringify(mutable_buffer{eval.buf}, m::essential(event.source, event::buf[0])):
+
+		// Canonize and redact from no source.
+		!opts.edu && !opts.json_source && redacted?
+			json::stringify(mutable_buffer{eval.buf}, m::essential(event, event::buf[0])):
+
+		// Canonize from some other serialized source.
+		likely(!opts.edu && !opts.json_source && event.source)?
+			json::stringify(mutable_buffer{eval.buf}, event.source):
+
+		// Canonize from no source; usually taken when my(event).
+		// XXX elision conditions go here
+		likely(!opts.edu && !opts.json_source)?
+			json::stringify(mutable_buffer{eval.buf}, event):
+
+		// Use the input directly.
+		string_view{event.source}
+	};
+
+	const scope_restore eval_room_id_reref
+	{
+		eval.room_id,
+
+		// Re-assigns reference after any prior rewrites
+		likely(json::get<"room_id"_>(event))?
+			string_view(json::get<"room_id"_>(event)):
+
+		// No action
+		eval.room_id,
 	};
 
 	// Procure the room version.
@@ -647,19 +693,6 @@ ircd::m::vm::execute_pdu(eval &eval,
 		{
 			fault::GENERAL, "Internal room event denied from external source."
 		};
-
-	// The conform hook runs static checks on an event's formatting and
-	// composure; these checks only require the event data itself.
-	if(likely(opts.phase[phase::CONFORM]))
-	{
-		const scope_restore eval_phase
-		{
-			eval.phase, phase::CONFORM
-		};
-
-		const ctx::critical_assertion ca;
-		call_hook(conform_hook, eval, event, eval);
-	}
 
 	// Wait for any pending duplicate evals before proceeding.
 	assert(eval::count(event_id));

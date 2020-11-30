@@ -328,7 +328,7 @@ ircd::m::commit(const room &room,
 	// Some functionality on this server may create an event on behalf
 	// of remote users. It's safe for us to mask this here, but eval'ing
 	// this event in any replay later will require special casing.
-	opts.non_conform |= event::conforms::MISMATCH_ORIGIN_SENDER;
+	opts.non_conform.set(event::conforms::MISMATCH_ORIGIN_SENDER);
 
 	// Don't need this here
 	opts.phase.reset(vm::phase::VERIFY);

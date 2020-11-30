@@ -95,6 +95,7 @@ struct ircd::m::vm::eval
 	hook::base *hook {nullptr};
 	vm::phase phase {vm::phase(0)};
 	bool room_internal {false};
+	bool redacted {false};
 
 	void mfetch_keys() const;
 
