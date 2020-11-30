@@ -298,21 +298,44 @@ try
 		m::version(room_version_buf, room{eval.room_id}, std::nothrow)
 	};
 
+	// Copy the event_id into the eval buffer
+	eval.event_id =
+	{
+		!opts.edu && !event.event_id && eval.room_version == "3"?
+			event::id::buf{event::id::v3{eval.event_id, event}}:
+
+		!opts.edu && !event.event_id?
+			event::id::buf{event::id::v4{eval.event_id, event}}:
+
+		!opts.edu?
+			event::id::buf{event.event_id}:
+
+		event::id::buf{}
+	};
+
 	// We have to set the event_id in the event instance if it didn't come
 	// with the event JSON.
-	if(!opts.edu && !event.event_id)
-		mutable_cast(event).event_id = eval.room_version == "3"?
-			event::id{event::id::v3{eval.event_id, event}}:
-			event::id{event::id::v4{eval.event_id, event}};
-
-	// If we set the event_id in the event instance we have to unset
-	// it so other contexts don't see an invalid reference.
-	const unwind restore_event_id{[&event]
+	const scope_restore event_event_id
 	{
-		mutable_cast(event).event_id = json::get<"event_id"_>(event)?
+		mutable_cast(event).event_id,
+
+		!opts.edu && eval.event_id?
+			event::id{eval.event_id}:
+
+		!opts.edu?
 			event.event_id:
-			m::event::id{};
-	}};
+
+		event::id{}
+	};
+
+	// Set a member pointer to the event currently being evaluated. This
+	// allows other parallel evals to have deep access to this eval. It also
+	// will be used to count this event as currently being evaluated.
+	assert(!eval.event_);
+	const scope_restore eval_event
+	{
+		eval.event_, &event
+	};
 
 	// If the event is already being evaluated, wait here until the other
 	// evaluation is finished. If the other was successful, the exists()
@@ -337,26 +360,6 @@ try
 	if(likely(!opts.replays && opts.nothrows & fault::EXISTS) && event.event_id)
 		if(!eval.copts && m::exists(event.event_id))
 			return fault::EXISTS;
-
-	// Set a member pointer to the event currently being evaluated. This
-	// allows other parallel evals to have deep access to this eval. It also
-	// will be used to count this event as currently being evaluated.
-	assert(!eval.event_);
-	const scope_restore eval_event
-	{
-		eval.event_, &event
-	};
-
-	// Ensure the member pointer/buffer to the eval's event_id is set in case
-	// anything needs this to be in sync with event.event_id. This may be also
-	// be used to onsider this event as currently being evaluated.
-	const scope_restore<event::id> eval_event_id
-	{
-		eval.event_id,
-		event.event_id?
-			event.event_id:
-			eval.event_id
-	};
 
 	return execute_du(eval, event);
 }
