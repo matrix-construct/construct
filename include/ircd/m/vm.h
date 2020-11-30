@@ -83,6 +83,7 @@ struct ircd::m::vm::eval
 	uint64_t id {++id_ctr};
 	uint64_t sequence {0};
 	std::shared_ptr<db::txn> txn;
+	unique_mutable_buffer buf;
 
 	vector_view<const m::event> pdus;
 	const json::iov *issue {nullptr};

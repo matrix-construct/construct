@@ -218,6 +218,30 @@ try
 		*eval.opts
 	};
 
+	assert(!eval.buf || size(eval.buf) >= event::MAX_SIZE);
+	if(!opts.json_source && !eval.buf)
+		eval.buf = unique_mutable_buffer
+		{
+			event::MAX_SIZE, 64
+		};
+
+	const scope_restore event_source
+	{
+		mutable_cast(event).source,
+
+		// Canonize from some other serialized source.
+		!opts.json_source && event.source?
+			json::object(json::stringify(mutable_buffer{eval.buf}, event.source)):
+
+		// Canonize from no source; usually taken when my(event).
+		// XXX elision conditions go here
+		!opts.json_source?
+			json::object(json::stringify(mutable_buffer{eval.buf}, event)):
+
+		// Use the input directly.
+		event.source
+	};
+
 	// Set a member to the room_id for convenient access, without stepping on
 	// any room_id reference that exists there for whatever reason.
 	const scope_restore eval_room_id
@@ -961,7 +985,7 @@ ircd::m::vm::write_append(eval &eval,
 	m::dbs::write_opts wopts(opts.wopts);
 	wopts.interpose = eval.txn.get();
 	wopts.event_idx = eval.sequence;
-	wopts.json_source = opts.json_source;
+	wopts.json_source = true;
 
 	// Don't update or resolve the room head with this shit.
 	const bool dummy_event
