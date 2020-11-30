@@ -84,7 +84,7 @@ boost::spirit::function<R (args...)>::function(const function &o)
 ,o
 {
 	this->s?
-		ircd::aligned_alloc(8, this->s):
+		ircd::aligned_alloc(64, this->s):
 		std::unique_ptr<char, decltype(&std::free)>
 		{
 			nullptr, std::free
@@ -102,8 +102,13 @@ boost::spirit::function<R (args...)> &
 boost::spirit::function<R (args...)>::operator=(binder o)
 noexcept
 {
+	constexpr auto alignment
+	{
+		std::max(std::alignment_of<binder>::value, 64UL)
+	};
+
 	this->s = sizeof(binder);
-	this->o = ircd::aligned_alloc(8, this->s);
+	this->o = ircd::aligned_alloc(alignment, this->s);
 	this->f = [](const void *const &o, args&&... a)
 	{
 		const auto &object
