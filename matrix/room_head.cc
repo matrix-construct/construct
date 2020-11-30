@@ -65,12 +65,9 @@ try
 	};
 
 	// When the top_head option is given we query for that here
-	const auto top_head
-	{
-		opts.need_top_head?
-			m::top(std::nothrow, head.room.room_id):
-			std::tuple<m::id::event::buf, int64_t, m::event::idx>{}
-	};
+	std::tuple<m::id::event::buf, int64_t, m::event::idx> top_head;
+	if(opts.need_top_head)
+		top_head = m::top(std::nothrow, head.room.room_id);
 
 	// Iterate the room head; starts with oldest events
 	bool need_top_head{opts.need_top_head};
@@ -132,14 +129,14 @@ try
 
 	// If the iteration did not provide us with the top_head and the opts
 	// require it, we add that here.
-	if(need_top_head)
+	if(need_top_head && std::get<0>(top_head))
 	{
 		assert(limit > 0);
 		append(out, std::get<0>(top_head));
 		this->depth[1] = std::get<1>(top_head);
 		need_top_head = false;
 		--limit;
-		if(need_my_head && event::my(std::get<event::idx>(top_head)))
+		if(need_my_head && event::my(std::get<2>(top_head)))
 			need_my_head = false;
 	}
 
@@ -199,6 +196,7 @@ ircd::m::append_v1(json::stack::array &out,
 	};
 
 	// [0]
+	assert(event_id);
 	prev.append(event_id);
 
 	// [1]
@@ -217,6 +215,7 @@ void
 ircd::m::append_v3(json::stack::array &out,
                    const event::id &event_id)
 {
+	assert(event_id);
 	out.append(event_id);
 }
 
