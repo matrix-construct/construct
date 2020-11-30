@@ -247,11 +247,16 @@ try
 	const scope_restore eval_room_id
 	{
 		eval.room_id,
+
+		// Retain any predetermined room_id.
 		eval.room_id?
 			eval.room_id:
-		valid(id::ROOM, json::get<"room_id"_>(event))?
+
+		// Use the room_id in the event
+		likely(valid(id::ROOM, json::get<"room_id"_>(event)))?
 			string_view(json::get<"room_id"_>(event)):
-			eval.room_id,
+
+		eval.room_id,
 	};
 
 	// Determine if this is an internal room creation event
@@ -266,13 +271,21 @@ try
 	const scope_restore room_internal
 	{
 		eval.room_internal,
+
+		// Retain any existing true value from predetermination.
 		eval.room_internal?
 			eval.room_internal:
+
+		// Case for creating an internal room (as a query will fail)
 		is_internal_room_create?
 			true:
+
+		// Query to find out if internal room.
 		eval.room_id && my(room::id(eval.room_id))?
 			m::internal(eval.room_id):
-			false
+
+		// Default to false
+		false
 	};
 
 	// Procure the room version.
@@ -629,6 +642,12 @@ ircd::m::vm::execute_pdu(eval &eval,
 		opts.auth && !eval.room_internal
 	};
 
+	if(unlikely(eval.room_internal && !my(event)))
+		throw error
+		{
+			fault::GENERAL, "Internal room event denied from external source."
+		};
+
 	// The conform hook runs static checks on an event's formatting and
 	// composure; these checks only require the event data itself.
 	if(likely(opts.phase[phase::CONFORM]))
@@ -641,12 +660,6 @@ ircd::m::vm::execute_pdu(eval &eval,
 		const ctx::critical_assertion ca;
 		call_hook(conform_hook, eval, event, eval);
 	}
-
-	if(eval.room_internal && !my(event))
-		throw error
-		{
-			fault::GENERAL, "Internal room event denied from external source."
-		};
 
 	// Wait for any pending duplicate evals before proceeding.
 	assert(eval::count(event_id));
