@@ -77,7 +77,7 @@ try
 
 	const json::object &m_in_reply_to
 	{
-		content["m.in_reply_to"]
+		m_relates_to["m.in_reply_to"]
 	};
 
 	const m::event::id &event_id
