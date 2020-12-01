@@ -322,11 +322,6 @@ try
 		eval.report, event::conforms{}
 	};
 
-	const scope_restore eval_redacted
-	{
-		eval.redacted, false
-	};
-
 	// These checks only require the event data itself.
 	if(likely(opts.phase[phase::CONFORM]) && !opts.edu)
 	{
@@ -335,17 +330,15 @@ try
 			eval.phase, phase::CONFORM
 		};
 
-		const ctx::critical_assertion ca;
 		call_hook(conform_hook, eval, event, eval);
 	}
 
-	assert(!eval.buf || size(eval.buf) >= event::MAX_SIZE);
 	const bool redacted
 	{
-		eval.redacted
-		|| eval.report.has(event::conforms::MISMATCH_HASHES)
+		eval.report.has(event::conforms::MISMATCH_HASHES)
 	};
 
+	assert(!eval.buf || size(eval.buf) >= event::MAX_SIZE);
 	if(!opts.edu && !eval.buf && (!opts.json_source || redacted))
 		eval.buf = unique_mutable_buffer
 		{
@@ -354,22 +347,22 @@ try
 
 	const json::object event_source
 	{
-		// Canonize and redact from some other serialized source.
-		!opts.edu && !opts.json_source && event.source && redacted?
-			json::stringify(mutable_buffer{eval.buf}, m::essential(event.source, event::buf[0])):
-
-		// Canonize and redact from no source.
-		!opts.edu && !opts.json_source && redacted?
-			json::stringify(mutable_buffer{eval.buf}, m::essential(event, event::buf[0])):
-
 		// Canonize from some other serialized source.
-		likely(!opts.edu && !opts.json_source && event.source)?
+		likely(!opts.edu && !opts.json_source && event.source && !redacted)?
 			json::stringify(mutable_buffer{eval.buf}, event.source):
 
 		// Canonize from no source; usually taken when my(event).
 		// XXX elision conditions go here
-		likely(!opts.edu && !opts.json_source)?
+		likely(!opts.edu && !opts.json_source && !redacted)?
 			json::stringify(mutable_buffer{eval.buf}, event):
+
+		// Canonize and redact from some other serialized source.
+		!opts.edu && !opts.json_source && event.source?
+			json::stringify(mutable_buffer{eval.buf}, m::essential(event.source, event::buf[0])):
+
+		// Canonize and redact from no source.
+		!opts.edu && !opts.json_source?
+			json::stringify(mutable_buffer{eval.buf}, m::essential(event, event::buf[0])):
 
 		// Use the input directly.
 		string_view{event.source}

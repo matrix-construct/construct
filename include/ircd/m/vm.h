@@ -98,7 +98,6 @@ struct ircd::m::vm::eval
 	hook::base *hook {nullptr};
 	vm::phase phase {vm::phase(0)};
 	bool room_internal {false};
-	bool redacted {false};
 
 	void mfetch_keys() const;
 
@@ -235,17 +234,13 @@ struct ircd::m::vm::opts
 	/// done before eval.
 	event::conforms report;
 
-	/// True hints that the event is known to be redacted. False hints that
-	/// the event is not redacted. -1 is automatic, which may make a query.
-	int8_t redacted {-1};
-
-	/// When true, the event is expected to have its content; hash mismatch
-	/// is not permitted. When false, hash mismatch is permitted when the
-	/// event is known to be redacted (see above).
-	bool require_content {false};
-
 	/// Supply the room version; overrides/avoids any internal query.
 	string_view room_version;
+
+	/// When true, the event is expected to have its content; hash mismatch
+	/// is not permitted. When false, hash mismatch is permitted. When -1,
+	/// by default the origin server is allowed to redact the content.
+	int8_t require_content {-1};
 
 	/// Toggles whether event may be considered a "present event" and may
 	/// update the optimized present state table of the room if it is proper.

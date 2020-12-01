@@ -147,38 +147,27 @@ ircd::m::vm::conform_report
 		if(!opts.conforming)
 			return;
 
-		eval.redacted =
+		const bool allow_redaction
 		{
-			// redacted hint given in options
-			opts.redacted != -1?
-				bool(opts.redacted):
-
-			// assume unredacted when user requires content
-			opts.require_content?
-				false:
-
-			// assume unredacted for internal rooms
-			eval.room_internal?
-				false:
-
-			// assume redacted when hash mismatch already allowed
-			non_conform.has(event::conforms::MISMATCH_HASHES)?
-				true:
-
-			// assume no redaction for hash match
-			!eval.report.has(event::conforms::MISMATCH_HASHES)?
-				false:
-
-			// case for authoritative redaction
+			// allowed by origin server
 			eval.report.has(event::conforms::MISMATCH_HASHES)
+			&& opts.require_content <= 0
 			&& opts.node_id == json::get<"origin"_>(event)?
 				true:
 
-			// make query
+			// allowed by my server
+			eval.room_internal?
+				true:
+
+			// allowed by options
+			non_conform.has(event::conforms::MISMATCH_HASHES)?
+				true:
+
+			// allowed by room auth
 			event.event_id?
 				bool(m::redacted(event.event_id)):
 
-			// otherwise deny redacted
+			// otherwise deny
 			false
 		};
 
@@ -187,11 +176,11 @@ ircd::m::vm::conform_report
 			eval.report
 		};
 
-		// Allow content hash to fail on redacted events.
-		if(eval.redacted)
+		// When allowed, this hook won't throw, but the eval.report will
+		// still indicate MISMATCH_HASHES.
+		if(allow_redaction)
 			report.del(event::conforms::MISMATCH_HASHES);
 
-		// Otherwise this will kill the eval
 		if(!report.clean())
 			throw error
 			{
