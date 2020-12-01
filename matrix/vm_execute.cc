@@ -565,7 +565,7 @@ try
 	// Branch on whether the event is an EDU or a PDU
 	const fault ret
 	{
-		event.event_id?
+		event.event_id && !opts.edu?
 			execute_pdu(eval, event):
 			execute_edu(eval, event)
 	};
