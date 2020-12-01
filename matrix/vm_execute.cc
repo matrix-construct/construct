@@ -198,7 +198,8 @@ ircd::m::vm::execute(eval &eval,
 	};
 
 	if(likely(opts.phase[phase::VERIFY] && opts.mfetch_keys))
-		eval.mfetch_keys();
+		if(events.size() > 1)
+			eval.mfetch_keys();
 
 	size_t accepted(0), existed(0), i, j, k;
 	for(i = 0; i < events.size(); i += j)
