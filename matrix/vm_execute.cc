@@ -416,6 +416,14 @@ try
 		!eval.room_id?
 			string_view{}:
 
+		// Special case for create event
+		json::get<"type"_>(event) == "m.room.create"?
+			json::string(json::get<"content"_>(_event).get("room_version", "1"_sv)):
+
+		// Special case for v1 distinguishable event_id's
+		_event.event_id && _event.event_id.version() == "1"_sv?
+			"1"_sv:
+
 		// Make a query for the room version into the stack buffer.
 		m::version(room_version_buf, room{eval.room_id}, std::nothrow)
 	};
