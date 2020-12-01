@@ -36,8 +36,8 @@ namespace ircd::m::vm
 	string_view loghead(const mutable_buffer &, const eval &);
 	string_view loghead(const eval &);    // single tls buffer
 
-	fault execute(eval &, const event &);
-	size_t execute(eval &, const vector_view<const event> &);
+	fault execute(eval &, const vector_view<const event> &);
+	fault execute(eval &, const json::array &);
 	fault inject(eval &, json::iov &, const json::iov &);
 }
 
@@ -84,6 +84,9 @@ struct ircd::m::vm::eval
 	uint64_t sequence {0};
 	std::shared_ptr<db::txn> txn;
 	unique_mutable_buffer buf;
+	size_t evaluated {0};
+	size_t accepted {0};
+	size_t faulted {0};
 
 	vector_view<const m::event> pdus;
 	const json::iov *issue {nullptr};
@@ -108,8 +111,8 @@ struct ircd::m::vm::eval
 	eval(const vm::opts &);
 	eval(const vm::copts &);
 	eval(const event &, const vm::opts & = default_opts);
-	eval(const vector_view<m::event> &, const vm::opts & = default_opts);
-	eval(const json::array &event, const vm::opts & = default_opts);
+	eval(const vector_view<const m::event> &, const vm::opts & = default_opts);
+	eval(const json::array &, const vm::opts & = default_opts);
 	eval(json::iov &event, const json::iov &content, const vm::copts & = default_copts);
 	eval() = default;
 	eval(eval &&) = delete;

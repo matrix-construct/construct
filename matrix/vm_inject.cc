@@ -428,7 +428,12 @@ ircd::m::vm::inject1(eval &eval,
 			log, "Issuing: %s", pretty_oneline(event_tuple)
 		};
 
-	return execute(eval, event_tuple);
+	const vector_view events
+	{
+		&event_tuple, 1
+	};
+
+	return execute(eval, events);
 }
 
 /// New event branch
@@ -518,5 +523,10 @@ ircd::m::vm::inject3(eval &eval,
 			log, "Issuing: %s", pretty_oneline(event_tuple)
 		};
 
-	return execute(eval, event_tuple);
+	const vector_view events
+	{
+		&event_tuple, 1
+	};
+
+	return execute(eval, events);
 }

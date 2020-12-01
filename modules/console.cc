@@ -7282,40 +7282,23 @@ console_cmd__stage__eval(opt &out, const string_view &line)
 		opts
 	};
 
-	if(id == -1)
-		for(size_t i(0); i < stage.size(); ++i)
-			execute(eval, m::event{stage.at(i)});
-	else
-		execute(eval, m::event{stage.at(id)});
-
-	return true;
-}
-
-bool
-console_cmd__stage__commit(opt &out, const string_view &line)
-{
-	const params param{line, " ",
+	if(id >= 0)
 	{
-		"[id]",
-	}};
+		const std::vector<m::event> events
+		{
+			json::object(stage.at(id))
+		};
 
-	const int &id
+		execute(eval, events);
+		return true;
+	}
+
+	const std::vector<m::event> events
 	{
-		param.at<int>(0, -1)
+		std::begin(stage), std::end(stage)
 	};
 
-	m::vm::copts copts;
-	m::vm::eval eval
-	{
-		copts
-	};
-
-	if(id == -1)
-		for(size_t i(0); i < stage.size(); ++i)
-			execute(eval, m::event{stage.at(i)});
-	else
-		execute(eval, m::event{stage.at(id)});
-
+	execute(eval, events);
 	return true;
 }
 
@@ -14611,13 +14594,10 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 	vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
 	vmopts.notify_servers = false;
 	vmopts.node_id = remote;
-	m::vm::eval eval
+	m::vm::eval
 	{
-		vmopts
+		events, vmopts
 	};
-
-	for(const auto &event : events)
-		execute(eval, event);
 
 	return true;
 }
@@ -15926,8 +15906,10 @@ console_cmd__vm(opt &out, const string_view &line)
 	<< std::right << std::setw(4) << "CTX" << " "
 	<< std::left << std::setw(8) << " " << " "
 	<< std::left << std::setw(24) << "USER" << " "
-	<< std::right << std::setw(5) << "PDUS" << " "
-	<< std::right << std::setw(5) << "DONE" << " "
+	<< std::right << std::setw(4) << "PDUS" << " "
+	<< std::right << std::setw(4) << "EVAL" << " "
+	<< std::right << std::setw(4) << "EXEC" << " "
+	<< std::right << std::setw(4) << "ERRS" << " "
 	<< std::right << std::setw(8) << "PARENT" << " "
 	<< std::right << std::setw(9) << "SEQUENCE" << " "
 	<< std::left << std::setw(4) << "HOOK" << " "
@@ -15948,20 +15930,15 @@ console_cmd__vm(opt &out, const string_view &line)
 		assert(eval);
 		assert(eval->ctx);
 
-		const auto done
-		{
-			!eval->pdus.empty() && eval->event_?
-				std::distance(begin(eval->pdus), eval->event_):
-				0L
-		};
-
 		out
 		<< std::right << std::setw(8) << eval->id << " "
 		<< std::right << std::setw(4) << (eval->ctx? ctx::id(*eval->ctx) : 0UL) << " "
 		<< std::left << std::setw(8) << (eval->ctx? trunc(ctx::name(*eval->ctx), 8) : string_view{}) << " "
 		<< std::left << std::setw(24) << trunc(eval->opts->node_id?: eval->opts->user_id, 24) << " "
-		<< std::right << std::setw(5) << eval->pdus.size() << " "
-		<< std::right << std::setw(5) << done << " "
+		<< std::right << std::setw(4) << eval->pdus.size() << " "
+		<< std::right << std::setw(4) << eval->evaluated << " "
+		<< std::right << std::setw(4) << eval->accepted << " "
+		<< std::right << std::setw(4) << eval->faulted << " "
 		<< std::right << std::setw(8) << (eval->parent? eval->parent->id : 0UL) << " "
 		<< std::right << std::setw(9) << eval->sequence << " "
 		<< std::right << std::setw(4) << (eval->hook? eval->hook->id(): 0U)  << " "

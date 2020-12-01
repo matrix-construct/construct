@@ -316,15 +316,9 @@ try
 		};
 
 		// process the event batch; make the batch size 0 for validate
-		const size_t accepted
-		{
-			validate_json_only?
-				0UL:
-				execute(eval, batch)
-		};
+		if(likely(!validate_json_only))
+			execute(eval, batch);
 
-		assert(i >= accepted);
-		accept += accepted;
 		count += i;
 
 		auto opts(map_opts);
@@ -355,10 +349,10 @@ try
 
 		log::info
 		{
-			log, "Bootstrap retired:%zu count:%zu accept:%zu %s in %s | %zu event/s; input %s/s; output %s/s",
+			log, "Bootstrap sequence:%zu accepts:%zu faults:%zu %s in %s | %zu event/s; input %s/s; output %s/s",
 			vm::sequence::retired,
-			count,
-			accept,
+			eval.accepted,
+			eval.faulted,
 			pretty(pbuf[0], iec(ebytes[1])),
 			stopwatch.pretty(pbuf[1]),
 			(count / std::max(elapsed, 1L)),

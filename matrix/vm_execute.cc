@@ -18,6 +18,7 @@ namespace ircd::m::vm
 	static fault execute_edu(eval &, const event &);
 	static fault execute_pdu(eval &, const event &);
 	static fault execute_du(eval &, const event &);
+	static fault execute(eval &, const event &);
 	static fault inject3(eval &, json::iov &, const json::iov &);
 	static fault inject1(eval &, json::iov &, const json::iov &);
 	static void fini();
@@ -128,7 +129,60 @@ ircd::m::vm::effect_hook
 // execute
 //
 
-size_t
+ircd::m::vm::fault
+ircd::m::vm::execute(eval &eval,
+                     const json::array &pdus)
+{
+	assert(eval.opts);
+	const auto &opts
+	{
+		*eval.opts
+	};
+
+	auto it(begin(pdus));
+	const bool empty
+	{
+		it == end(pdus)
+	};
+
+	if(unlikely(empty))
+		return fault::ACCEPT;
+
+	// Determine iff pdus.size()==1 without iterating the whole array
+	const bool single
+	{
+		std::next(begin(pdus)) == end(pdus)
+	};
+
+	if(likely(single))
+	{
+		const m::event event
+		{
+			json::object(*it)
+		};
+
+		return execute(eval, vector_view(&event, 1));
+	}
+
+	fault ret{fault::ACCEPT};
+	std::vector<m::event> eventv(64); do
+	{
+		size_t i(0);
+		for(; i < eventv.size() && it != end(pdus); ++i, ++it)
+			eventv[i] = json::object(*it);
+
+		if(likely(!opts.ordered))
+			std::sort(begin(eventv), begin(eventv) + i);
+
+		assert(i <= eventv.size());
+		execute(eval, vector_view(eventv.data(), i)); //XXX
+	}
+	while(it != end(pdus) && eval.evaluated < opts.limit);
+
+	return ret;
+}
+
+ircd::m::vm::fault
 ircd::m::vm::execute(eval &eval,
                      const vector_view<const event> &events)
 {
@@ -147,10 +201,10 @@ ircd::m::vm::execute(eval &eval,
 		eval.mfetch_keys();
 
 	size_t accepted(0), existed(0), i, j, k;
-	for(i = 0; i < events.size() && i < opts.limit; i += j)
+	for(i = 0; i < events.size(); i += j)
 	{
 		id::event ids[64];
-		for(j = 0; j < 64 && i + j < events.size() && i + j < opts.limit; ++j)
+		for(j = 0; j < 64 && i + j < events.size() && eval.evaluated + j < opts.limit; ++j)
 			ids[j] = events[i + j].event_id;
 
 		// Bitset indicating which events already exist.
@@ -161,8 +215,14 @@ ircd::m::vm::execute(eval &eval,
 				0UL
 		};
 
-		existed += __builtin_popcountl(exists);
-		for(k = 0; k < j; ++k) try
+		const auto num_exists
+		{
+			__builtin_popcountl(exists)
+		};
+
+		existed += num_exists;
+		eval.faulted + num_exists;
+		for(k = 0; k < j; ++k, ++eval.evaluated) try
 		{
 			if(exists & (1 << k))
 				continue;
@@ -173,18 +233,27 @@ ircd::m::vm::execute(eval &eval,
 			};
 
 			accepted += status == fault::ACCEPT;
+			eval.accepted += status == fault::ACCEPT;
+			eval.faulted += status != fault::ACCEPT;
 		}
 		catch(const ctx::interrupted &)
 		{
+			++eval.faulted;
 			throw;
 		}
 		catch(const std::exception &)
 		{
+			++eval.faulted;
 			continue;
+		}
+		catch(...)
+		{
+			++eval.faulted;
+			throw;
 		}
 	}
 
-	return accepted;
+	return fault::ACCEPT;
 }
 
 ircd::m::vm::fault

@@ -360,28 +360,22 @@ ircd::m::vm::eval::eval(json::iov &event,
 
 ircd::m::vm::eval::eval(const event &event,
                         const vm::opts &opts)
-:eval{opts}
+:eval
 {
-	execute(*this, event);
+	vector_view<const m::event>(&event, 1),
+	opts
+}
+{
 }
 
 ircd::m::vm::eval::eval(const json::array &pdus,
                         const vm::opts &opts)
 :eval{opts}
 {
-	std::vector<m::event> events(begin(pdus), end(pdus));
-	if(events.size() > opts.limit)
-		events.resize(opts.limit);
-
-	// Sort the events first to avoid complicating the evals; the events might
-	// be from different rooms but it doesn't matter.
-	if(likely(!opts.ordered))
-		std::sort(begin(events), end(events));
-
-	execute(*this, events);
+	execute(*this, pdus);
 }
 
-ircd::m::vm::eval::eval(const vector_view<m::event> &events,
+ircd::m::vm::eval::eval(const vector_view<const m::event> &events,
                         const vm::opts &opts)
 :eval{opts}
 {
