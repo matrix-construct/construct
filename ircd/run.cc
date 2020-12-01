@@ -126,7 +126,8 @@ try
 
 	log::notice
 	{
-		"IRCd %s", reflect(level)
+		log::star, "IRCd %s",
+		reflect(level)
 	};
 
 	log::flush();
@@ -160,8 +161,9 @@ try
 	if(level == level::HALT)
 		return true;
 
-	log::debug
+	log::logf
 	{
+		log::general, log::level::DEBUG,
 		"IRCd level transition from '%s' to '%s' (dock:%zu callbacks:%zu)",
 		reflect(chadburn),
 		reflect(level),
@@ -181,7 +183,7 @@ catch(const std::exception &e)
 
 	log::critical
 	{
-		"IRCd level change to '%s' :%s",
+		log::star, "IRCd level change to '%s' :%s",
 		reflect(new_level),
 		e.what()
 	};

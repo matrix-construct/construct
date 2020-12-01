@@ -246,8 +246,9 @@ bool
 ircd::quit()
 noexcept
 {
-	log::debug
+	log::logf
 	{
+		log::star, log::level::DEBUG,
 		"IRCd quit requested from runlevel:%s ctx:%p main_context:%p",
 		reflect(run::level),
 		(const void *)ctx::current,
@@ -297,8 +298,9 @@ void
 ircd::cont()
 noexcept
 {
-	log::debug
+	log::logf
 	{
+		log::star, log::level::DEBUG,
 		"IRCd cont requested from runlevel:%s ctx:%p main_context:%p",
 		reflect(run::level),
 		(const void *)ctx::current,
@@ -317,7 +319,7 @@ noexcept
 
 	log::notice
 	{
-		"IRCd resuming service in runlevel %s.",
+		log::star, "IRCd resuming service in runlevel %s.",
 		reflect(run::level),
 	};
 }
