@@ -269,7 +269,7 @@ try
 	// most likely to provide a satisfying response.
 	opts.hint =
 	{
-		!my_host(eval.opts->node_id)?
+		eval.opts->node_id && !my_host(eval.opts->node_id)?
 			eval.opts->node_id:
 
 		event.event_id.host() && !my_host(event.event_id.host())?
@@ -554,21 +554,28 @@ ircd::m::vm::fetch::state_fetch(const event &event,
 			if(it != end(req) && *it == event_id)
 				return;
 
-			req.emplace_hint(it, event_id);
-
 			m::fetch::opts opts;
 			opts.op = m::fetch::op::event;
 			opts.room_id = result.request->room_id;
 			opts.event_id = event_id;
 			opts.hint =
 			{
-				!my_host(eval.opts->node_id)?
-					eval.opts->node_id:
+				event_id.host() && !my_host(event_id.host())?
+					event_id.host():
+
 				!my_host(result.origin)?
 					result.origin:
-					string_view{}
+
+				eval.opts->node_id && !my_host(eval.opts->node_id)?
+					eval.opts->node_id:
+
+				opts.room_id.host() && !my_host(opts.room_id.host())?
+					opts.room_id.host():
+
+				string_view{}
 			};
 
+			req.emplace_hint(it, event_id);
 			ret.emplace_front(m::fetch::start(opts));
 
 			assert(std::distance(begin(ret), end(ret)) <= ssize_t(req.size()));
@@ -809,6 +816,23 @@ ircd::m::vm::fetch::prev_fetch(const event &event,
 		opts.backfill_limit = size_t(depth_gap);
 		opts.backfill_limit = std::min(opts.backfill_limit, eval.opts->fetch_prev_limit);
 		opts.backfill_limit = std::min(opts.backfill_limit, size_t(prev_backfill_limit));
+		opts.hint =
+		{
+			eval.opts->node_id && !my_host(eval.opts->node_id)?
+				eval.opts->node_id:
+
+			prev_id.host() && !my_host(prev_id.host())?
+				prev_id.host():
+
+			!my_host(json::get<"origin"_>(event))?
+				string_view(json::get<"origin"_>(event)):
+
+			room.room_id.host() && !my_host(room.room_id.host())?
+				room.room_id.host():
+
+			string_view{}
+		};
+
 		log::debug
 		{
 			log, "%s requesting backfill off %s; depth:%ld viewport:%ld room:%ld gap:%ld limit:%zu",
