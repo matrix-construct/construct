@@ -128,6 +128,10 @@ try
 	}
 	while(1);
 }
+catch(const ctx::interrupted &)
+{
+	throw;
+}
 catch(const std::exception &e)
 {
 	log::critical
