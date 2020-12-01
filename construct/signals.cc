@@ -60,7 +60,6 @@ construct::signals::on_runlevel(const enum ircd::run::level &level)
 	switch(level)
 	{
 		case ircd::run::level::HALT:
-		case ircd::run::level::QUIT:
 			signal_set.reset(nullptr);
 			break;
 
