@@ -694,12 +694,27 @@ ircd::string_view
 ircd::m::version(const mutable_buffer &buf,
                  const room &room)
 {
-	const auto ret
+	const auto event_idx
 	{
-		version(buf, room, std::nothrow)
+		room.get("m.room.create", "")
 	};
 
-	if(!ret)
+	string_view ret;
+	m::get(event_idx, "content", [&buf, &ret]
+	(const json::object &content)
+	{
+		const json::string &version
+		{
+			content.get("room_version", "1"_sv)
+		};
+
+		ret = strlcpy
+		{
+			buf, version
+		};
+	});
+
+	if(unlikely(!ret))
 		throw m::NOT_FOUND
 		{
 			"Failed to find room %s to query its version",
