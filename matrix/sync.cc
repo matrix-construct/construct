@@ -360,7 +360,40 @@ try
 	if(!enable)
 		return false;
 
-	return _linear(data);
+	#ifdef RB_DEBUG
+	sync::stats stats
+	{
+		data.stats && (stats::info || stats_debug)?
+			*data.stats:
+			sync::stats{}
+	};
+
+	if(data.stats && (stats::info || stats_debug))
+		stats.timer = {};
+	#endif
+
+	const bool ret
+	{
+		_linear(data)
+	};
+
+	#ifdef RB_DEBUG
+	if(data.stats && (stats::info || stats_debug))
+	{
+		//data.out.flush();
+		char tmbuf[32];
+		log::debug
+		{
+			log, "linear %s commit:%b '%s' %s",
+			loghead(data),
+			ret,
+			name(),
+			ircd::pretty(tmbuf, stats.timer.at<microseconds>(), true)
+		};
+	}
+	#endif
+
+	return ret;
 }
 catch(const ctx::interrupted &)
 {
