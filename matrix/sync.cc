@@ -292,7 +292,7 @@ try
 	if(data.stats && (stats::info || stats_debug))
 	{
 		//data.out.flush();
-		thread_local char tmbuf[32];
+		char tmbuf[32];
 		log::debug
 		{
 			log, "polylog %s commit:%b '%s' %s",
@@ -372,7 +372,7 @@ catch(const std::system_error &)
 }
 catch(const std::bad_function_call &e)
 {
-	thread_local char rembuf[128];
+	char rembuf[128];
 	log::dwarning
 	{
 		log, "linear %s '%s' missing handler :%s",
