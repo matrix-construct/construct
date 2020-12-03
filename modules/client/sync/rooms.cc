@@ -77,6 +77,8 @@ ircd::m::sync::rooms_linear(data &data)
 			0UL
 	};
 
+	//assert(room_head <= m::vm::sequence::retired);
+	assert(data.event_idx <= m::vm::sequence::retired);
 	const scope_restore their_head
 	{
 		data.room_head, room_head

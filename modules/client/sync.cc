@@ -524,7 +524,8 @@ try
 			if(data.range.first >= data.range.second || data.range.second >= vm::sequence::retired)
 				return false;
 
-		++data.range.second;
+		data.range.second = std::min(data.range.second + 1, vm::sequence::retired + 1);
+		assert(data.range.second <= vm::sequence::retired + 1);
 		assert(data.range.first <= data.range.second);
 	}
 
@@ -615,9 +616,16 @@ bool
 ircd::m::sync::longpoll::polled(data &data,
                                 const args &args)
 {
+	// Increment one past-the-end.
+	const scope_restore range
+	{
+		data.range.second, data.range.second + 1
+	};
+
+	assert(data.range.second - 1 <= m::vm::sequence::retired);
 	const m::event::fetch event
 	{
-		std::nothrow, data.range.second
+		std::nothrow, data.range.second - 1
 	};
 
 	if(!event.valid)
@@ -628,6 +636,7 @@ ircd::m::sync::longpoll::polled(data &data,
 		data.event, &event
 	};
 
+	assert(event.event_idx <= m::vm::sequence::retired);
 	const scope_restore their_event_idx
 	{
 		data.event_idx, event.event_idx
@@ -656,9 +665,11 @@ ircd::m::sync::longpoll::polled(data &data,
 	{
 		data.event_idx && data.reflow_full_state?
 			std::min(data.event_idx, vm::sequence::retired + 1):
+
 		data.event_idx?
 			std::min(data.event_idx + 1, vm::sequence::retired + 1):
-			std::min(data.range.second + 1, vm::sequence::retired + 1)
+
+		std::min(data.range.second, vm::sequence::retired + 1)
 	};
 
 	const auto &flags
@@ -732,6 +743,7 @@ bool
 ircd::m::sync::linear_handle(data &data)
 try
 {
+	assert(data.event_idx <= m::vm::sequence::retired);
 	json::stack::checkpoint checkpoint
 	{
 		*data.out
@@ -761,13 +773,16 @@ try
 
 	const auto next
 	{
-		last && completed?
-			data.range.second:
 		last && data.reflow_full_state?
 			std::min(last, data.range.second):
+
+		last && completed?
+			data.range.second:
+
 		last?
 			std::min(last + 1, data.range.second):
-			0UL
+
+		0UL
 	};
 
 	assert(!data.reflow_full_state || (last && !completed));
@@ -830,6 +845,7 @@ ircd::m::sync::linear_proffer(data &data,
 	const auto closure{[&data, &wb, &ret]
 	(const m::event::idx &event_idx, const m::event &event)
 	{
+		assert(event_idx <= m::vm::sequence::retired);
 		const scope_restore their_event
 		{
 			data.event, &event
