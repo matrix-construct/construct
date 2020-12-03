@@ -436,6 +436,30 @@ try
 		event::id::buf{}
 	};
 
+	if(likely(opts.phase[phase::DUPCHK]) && eval.event_id)
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::DUPCHK
+		};
+
+		// Prevent more than one event with the same event_id from
+		// being evaluated at the same time.
+		if(likely(opts.unique))
+			vm::dock.wait([&eval]
+			{
+				assert(eval::count(eval.event_id) <= 1);
+				return eval::count(eval.event_id) == 0;
+			});
+	}
+
+	// Point to the new event_id.
+	const scope_restore event_event_id
+	{
+		mutable_cast(_event).event_id,
+		event::id{eval.event_id}
+	};
+
 	// Set a member pointer to the event currently being evaluated. This
 	// allows other parallel evals to have deep access to this eval. It also
 	// will be used to count this event as currently being evaluated.
@@ -445,31 +469,25 @@ try
 		eval.event_, &_event
 	};
 
-	mutable_cast(eval.event_)->event_id = eval.event_id;
-
-	// If the event is already being evaluated, wait here until the other
-	// evaluation is finished. If the other was successful, the exists()
-	// check will skip this, otherwise we have to try again here because
-	// this evaluator might be using different options/credentials.
-	if(likely(opts.phase[phase::DUPCHK] && opts.unique) && _event.event_id)
+	if(likely(opts.phase[phase::DUPCHK]) && _event.event_id)
 	{
 		const scope_restore eval_phase
 		{
 			eval.phase, phase::DUPCHK
 		};
 
-		sequence::dock.wait([&_event]
+		// Prevent the same event from being accepted twice.
+		if(likely(!opts.replays) && m::exists(_event.event_id))
 		{
-			return eval::count(_event.event_id) <= 1;
-		});
-	}
+			if(unlikely(~opts.nothrows & fault::EXISTS))
+				throw error
+				{
+					fault::EXISTS, "Event has already been evaluated."
+				};
 
-	// We can elide a lot of grief here by not proceeding further and simply
-	// returning fault::EXISTS after an existence check. If we had to wait for
-	// a duplicate eval this check will indicate its success.
-	if(likely(!opts.replays && opts.nothrows & fault::EXISTS) && _event.event_id)
-		if(!eval.copts && m::exists(_event.event_id))
 			return fault::EXISTS;
+		}
+	}
 
 	return execute_du(eval, _event);
 }
@@ -745,33 +763,8 @@ ircd::m::vm::execute_pdu(eval &eval,
 			fault::GENERAL, "Internal room event denied from external source."
 		};
 
-	// Wait for any pending duplicate evals before proceeding.
-	assert(eval::count(event_id));
-	if(likely(opts.phase[phase::DUPCHK] && opts.unique))
-	{
-		const scope_restore eval_phase
-		{
-			eval.phase, phase::DUPCHK
-		};
-
-		sequence::dock.wait([&event_id]
-		{
-			return eval::count(event_id) <= 1;
-		});
-	}
-
-	if(unlikely(opts.unique && eval::count(event_id) > 1))
-		throw error
-		{
-			fault::EXISTS, "Event is already being evaluated."
-		};
-
-	if(!opts.replays && !eval.copts && m::exists(event_id))
-		throw error
-		{
-			fault::EXISTS, "Event has already been evaluated."
-		};
-
+	assert(!opts.unique || eval::count(event_id) == 1);
+	assert(opts.replays || !m::exists(event_id));
 	if(likely(opts.phase[phase::ACCESS]))
 	{
 		const scope_restore eval_phase

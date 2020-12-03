@@ -152,18 +152,8 @@ ircd::m::vm::eval::find(const event::id &event_id)
 	for_each([&event_id, &ret](eval &e)
 	{
 		if(e.event_)
-		{
 			if(e.event_->event_id == event_id)
 				ret = &e;
-		}
-		else if(e.issue)
-		{
-			if(e.issue->has("event_id"))
-				if(string_view{e.issue->at("event_id")} == event_id)
-					ret = &e;
-		}
-		else if(e.event_id == event_id)
-			ret = &e;
 
 		return ret == nullptr;
 	});
@@ -178,18 +168,8 @@ ircd::m::vm::eval::count(const event::id &event_id)
 	for_each([&event_id, &ret](eval &e)
 	{
 		if(e.event_)
-		{
 			if(e.event_->event_id == event_id)
 				++ret;
-		}
-		else if(e.issue)
-		{
-			if(e.issue->has("event_id"))
-				if(string_view{e.issue->at("event_id")} == event_id)
-					++ret;
-		}
-		else if(e.event_id == event_id)
-			++ret;
 
 		return true;
 	});
