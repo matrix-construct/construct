@@ -57,7 +57,7 @@ ircd::m::sync::rooms_linear(data &data)
 	char membuf[room::MEMBERSHIP_MAX_SIZE];
 	const string_view &membership
 	{
-		data.room?
+		json::get<"room_id"_>(*data.event)?
 			m::membership(membuf, room, data.user):
 			string_view{}
 	};
