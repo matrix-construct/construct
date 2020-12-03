@@ -267,7 +267,7 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 	// event_idx on the way down in case of renewing the iterator for the
 	// way back. This is not a big deal but rocksdb should fix their shit.
 	m::event::id::buf event_id;
-	m::event::idx event_idx {0};
+	m::event::idx event_idx {data.room_head};
 	m::room::events it
 	{
 		room
