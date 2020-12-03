@@ -81,11 +81,11 @@ struct ircd::m::id
 
 	IRCD_USING_OVERLOAD(generate, m::generate);
 
+	explicit id(const enum sigil &, const id &) noexcept;
 	id(const enum sigil &, const mutable_buffer &, const generate_t &, const string_view &host);
 	id(const enum sigil &, const mutable_buffer &, const string_view &local, const string_view &host);
 	id(const enum sigil &, const mutable_buffer &, const string_view &id);
 	id(const enum sigil &, const string_view &id);
-	explicit id(const enum sigil &, const id &);
 	id(const string_view &id);
 	id() = default;
 };
@@ -375,25 +375,10 @@ struct ircd::m::id::buf
 };
 
 inline
-ircd::m::id::id(const string_view &str)
-:id
-{
-	m::sigil(str), str
-}
-{}
-
-inline
 ircd::m::id::id(const id::sigil &sigil,
                 const id &id)
+noexcept
 :string_view{id}
 {
 	assert(this->empty() || this->front() == sigil);
-}
-
-inline
-ircd::m::id::id(const id::sigil &sigil,
-                const string_view &id)
-:string_view{id}
-{
-	valid(sigil, id);
 }
