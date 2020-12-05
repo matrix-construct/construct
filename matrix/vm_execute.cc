@@ -869,6 +869,22 @@ ircd::m::vm::execute_pdu(eval &eval,
 		&& eval.parent->event_->event_id
 	};
 
+	// Allocate transaction; prefetch dependencies.
+	if(likely(opts.phase[phase::PREINDEX]))
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::PREINDEX
+		};
+
+		dbs::write_opts wopts(opts.wopts);
+		wopts.event_idx = eval.sequence;
+		const size_t prefetched
+		{
+			dbs::prefetch(event, wopts)
+		};
+	}
+
 	const scope_restore eval_phase_precommit
 	{
 		eval.phase, phase::PRECOMMIT
@@ -1151,6 +1167,7 @@ ircd::m::vm::write_append(eval &eval,
 		}
 	}
 
+	assert(eval.txn);
 	const size_t wrote
 	{
 		dbs::write(*eval.txn, event, wopts)

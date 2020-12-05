@@ -176,6 +176,7 @@ enum ircd::m::vm::phase
 	FETCH_PREV,            ///< Previous events fetch phase.
 	FETCH_STATE,           ///< State events fetch phase.
 	PRECOMMIT,             ///< Precommit sequence.
+	PREINDEX,              ///< Prefetch indexing & transaction dependencies.
 	AUTH_RELA,             ///< Relative authentication phase.
 	COMMIT,                ///< Commit sequence.
 	AUTH_PRES,             ///< Authentication phase.
