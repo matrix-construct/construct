@@ -1151,12 +1151,16 @@ ircd::m::vm::write_append(eval &eval,
 		}
 	}
 
-	dbs::write(*eval.txn, event, wopts);
+	const size_t wrote
+	{
+		dbs::write(*eval.txn, event, wopts)
+	};
 
 	log::debug
 	{
-		log, "%s composed transaction",
+		log, "%s composed transaction wrote:%zu",
 		loghead(eval),
+		wrote,
 	};
 }
 
