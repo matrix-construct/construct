@@ -3100,19 +3100,20 @@ ircd::db::cached(column &column,
                  const string_view &key,
                  const gopts &gopts)
 {
-	database &d(column);
-	database::column &c(column);
+	using rocksdb::Status;
 
 	auto opts(make_opts(gopts));
 	opts.read_tier = NON_BLOCKING;
 	opts.fill_cache = false;
+	const auto status
+	{
+		_read(column, key, opts)
+	};
 
-	std::unique_ptr<rocksdb::Iterator> it;
-	if(!seek(c, key, opts, it))
-		return false;
-
-	assert(bool(it));
-	return valid_eq(*it, key);
+	return false
+	|| status.code() == Status::kOk
+	|| status.code() == Status::kNotFound
+	;
 }
 
 rocksdb::Cache *
