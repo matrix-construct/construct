@@ -682,7 +682,7 @@ ircd::net::dns::resolver::handle_reply(const ipport &from,
 
 	// Handle ServFail as a special case here. We can try again without
 	// handling this tag or propagating this error any further yet.
-	if(header.rcode == 2 && tag.tries < size_t(retry_max))
+	if(header.rcode == 2 && tag.tries < size_t(server.size()))
 	{
 		log::error
 		{
