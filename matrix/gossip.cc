@@ -8,58 +8,132 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+template<>
+decltype(ircd::util::instance_list<ircd::m::gossip>::allocator)
+ircd::util::instance_list<ircd::m::gossip>::allocator
+{};
+
+template<>
+decltype(ircd::util::instance_list<ircd::m::gossip>::list)
+ircd::util::instance_list<ircd::m::gossip>::list
+{
+	allocator
+};
+
 decltype(ircd::m::gossip::log)
 ircd::m::gossip::log
 {
 	"m.gossip"
 };
 
-/// Initial gossip protocol works by sending the remote server some events which
-/// reference an event contained in the remote's head which we just obtained.
-/// This is part of a family of active measures taken to reduce forward
-/// extremities on other servers but without polluting the chain with
-/// permanent data for this purpose such as with org.matrix.dummy_event.
-ircd::m::gossip::gossip::gossip(const room::id &room_id,
-                                const opts &opts)
+ircd::m::gossip::gossip::gossip(const struct opts &opts)
+:opts{opts}
 {
-	assert(opts.event_id);
-	const auto &event_id
+	gossip_head();
+}
+
+ircd::m::gossip::~gossip()
+noexcept
+{
+}
+
+void
+ircd::m::gossip::gossip_head()
+{
+	m::room::head::fetch::opts hfopts;
+	hfopts.room_id = opts.room.room_id;
+	hfopts.top = m::top(opts.room.room_id);
+	m::room::head::fetch
 	{
-		opts.event_id
+		hfopts, [this](const m::event &result)
+		{
+			// Bail if interrupted
+			if(ctx::interruption_requested())
+				return false;
+
+			return handle_head(result);
+		}
+	};
+}
+
+bool
+ircd::m::gossip::handle_head(const m::event &result)
+{
+	const auto &remote
+	{
+		json::get<"origin"_>(result)
+	};
+
+	const bool submitted
+	{
+		submit(result.event_id, remote)
+	};
+
+	log::debug
+	{
+		log, "Gossip %s in %s to '%s' submit:%b requests:%zu",
+		string_view{result.event_id},
+		string_view{opts.room.room_id},
+		remote,
+		submitted,
+		requests.size(),
+	};
+
+	return true;
+}
+
+bool
+ircd::m::gossip::submit(const m::event::id &event_id,
+                        const string_view &remote)
+{
+	const bool ret
+	{
+		!started(event_id, remote)?
+			start(event_id, remote):
+			false
+	};
+
+	if(ret || full())
+		while(handle());
+
+	return ret;
+}
+
+bool
+ircd::m::gossip::start(const m::event::id &event_id_,
+                       const string_view &remote_)
+try
+{
+	static const size_t max
+	{
+		48
 	};
 
 	const m::event::refs refs
 	{
-		m::index(std::nothrow, event_id)
+		m::index(std::nothrow, event_id_)
 	};
 
-	static const size_t max{48};
-	const size_t count
-	{
-		std::min(refs.count(dbs::ref::NEXT), max)
-	};
-
-	if(!count)
-		return;
-
-	const unique_mutable_buffer buf[]
-	{
-		{ event::MAX_SIZE * (count + 1)  },
-		{ 16_KiB                         },
-	};
-
-	size_t i{0};
+	size_t num{0};
 	std::array<event::idx, max> next_idx;
-	refs.for_each(dbs::ref::NEXT, [&next_idx, &i]
+	refs.for_each(dbs::ref::NEXT, [&next_idx, &num]
 	(const event::idx &event_idx, const auto &ref_type)
 	{
 		assert(ref_type == dbs::ref::NEXT);
-		next_idx.at(i) = event_idx;
-		return ++i < next_idx.size();
+		next_idx.at(num) = event_idx;
+		return ++num < next_idx.size();
 	});
 
-	size_t ret{0};
-	json::stack out{buf[0]};
+	if(!num)
+		return false;
+
+	unique_mutable_buffer _buf
+	{
+		(event::MAX_SIZE * num) + 16_KiB
+	};
+
+	mutable_buffer buf{_buf};
+	json::stack out{buf};
 	{
 		json::stack::object top
 		{
@@ -75,7 +149,7 @@ ircd::m::gossip::gossip::gossip(const room::id &room_id,
 		{
 			top, "origin_server_ts", json::value
 			{
-				long(ircd::time<milliseconds>())
+				ircd::time<milliseconds>()
 			}
 		};
 
@@ -85,8 +159,8 @@ ircd::m::gossip::gossip::gossip(const room::id &room_id,
 		};
 
 		m::event::fetch event;
-		for(assert(ret == 0); ret < i; ++ret)
-			if(seek(std::nothrow, event, next_idx.at(ret)))
+		for(size_t i(0); i < num; ++i)
+			if(seek(std::nothrow, event, next_idx.at(i)))
 				pdus.append(event.source);
 	}
 
@@ -95,45 +169,173 @@ ircd::m::gossip::gossip::gossip(const room::id &room_id,
 		out.completed()
 	};
 
-	char idbuf[64];
+	consume(buf, size(txn));
 	const string_view txnid
 	{
-		m::txn::create_id(idbuf, txn)
+		m::txn::create_id(buf, txn)
 	};
+
+	consume(buf, size(txnid));
+	const string_view remote
+	{
+		strlcpy{buf, remote_}
+	};
+
+	consume(buf, size(remote));
+	const string_view event_id
+	{
+		strlcpy{buf, event_id_}
+	};
+
+	consume(buf, size(event_id));
+	assert(!empty(buf));
 
 	m::fed::send::opts fedopts;
-	fedopts.remote = opts.remote;
-	m::fed::send request
+	fedopts.remote = remote;
+	requests.emplace_back(result
 	{
-		txnid, txn, buf[1], std::move(fedopts)
+		std::move(_buf),
+		txn,
+		txnid,
+		remote,
+		event_id,
+		m::fed::send
+		{
+			txnid,
+			txn,
+			buf,
+			std::move(fedopts)
+		}
+	});
+
+	return true;
+}
+catch(const ctx::interrupted &e)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Gossip %s in %s from '%s' :%s",
+		string_view{event_id_},
+		string_view{opts.room.room_id},
+		remote_,
+		e.what(),
 	};
 
-	http::code code{0};
-	std::exception_ptr eptr;
-	if(request.wait(opts.timeout, std::nothrow)) try
-	{
-		code = request.get();
-		ret += code == http::OK;
-	}
-	catch(...)
-	{
-		eptr = std::current_exception();
-	}
+	return false;
+}
 
+bool
+ircd::m::gossip::handle()
+{
+	if(requests.empty())
+		return false;
+
+	auto next
+	{
+		ctx::when_any(std::begin(requests), std::end(requests), []
+		(auto &it) -> ctx::future<http::code> &
+		{
+			return it->request;
+		})
+	};
+
+	const milliseconds timeout
+	{
+		full()? 5000: 50
+	};
+
+	ctx::interruption_point();
+	if(!next.wait(timeout, std::nothrow))
+		return full();
+
+	const unique_iterator it
+	{
+		requests, next.get()
+	};
+
+	assert(it.it != std::end(requests));
+	return handle(*it.it);
+}
+
+bool
+ircd::m::gossip::handle(result &result)
+try
+{
+	auto response
+	{
+		result.request.get()
+	};
+
+	const json::object body
+	{
+		result.request
+	};
+
+	fed::send::response{body}.for_each_pdu([&]
+	(const event::id &event_id, const json::object &errors)
+	{
+		const bool ok
+		{
+			empty(errors)
+		};
+
+		log::logf
+		{
+			log, ok? log::level::DEBUG: log::level::DERROR,
+			"Gossip %s in %s to '%s'%s%s",
+			string_view{event_id},
+			string_view{opts.room.room_id},
+			string_view{result.remote},
+			!ok? " :"_sv: ""_sv,
+			string_view{errors},
+		};
+	});
+
+	return true;
+}
+catch(const ctx::interrupted &e)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
 	log::logf
 	{
-		log, code == http::OK? log::DEBUG : log::DERROR,
-		"gossip %zu:%zu to %s reference to %s in %s :%s %s",
-		ret,
-		count,
-		opts.remote,
-		string_view{event_id},
-		string_view{room_id},
-		code?
-			status(code):
-			"failed",
-		eptr?
-			what(eptr):
-			string_view{},
+		log, log::level::DERROR,
+		"Gossip %s in %s to '%s' :%s",
+		string_view{result.event_id},
+		string_view{opts.room.room_id},
+		string_view{result.remote},
+		e.what(),
 	};
+
+	return true;
+}
+
+bool
+ircd::m::gossip::started(const event::id &event_id,
+                         const string_view &remote)
+const
+{
+	const auto it
+	{
+		std::find_if(std::begin(requests), std::end(requests), [&]
+		(const auto &result)
+		{
+			return result.event_id == event_id && result.remote == remote;
+		})
+	};
+
+	return it != std::end(requests);
+}
+
+bool
+ircd::m::gossip::full()
+const noexcept
+{
+	return requests.size() >= opts.width;
 }

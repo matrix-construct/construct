@@ -10,7 +10,6 @@
 
 namespace ircd::m::init::backfill
 {
-	void gossip(const room::id &, const event::id &, const string_view &remote);
 	void handle_room(const room::id &);
 	void worker();
 
@@ -311,35 +310,32 @@ catch(const std::exception &e)
 void
 ircd::m::init::backfill::handle_room(const room::id &room_id)
 {
-	struct m::acquire::opts opts;
-	opts.room = room_id;
-	opts.viewport_size = ssize_t(m::room::events::viewport_size);
-	opts.viewport_size *= size_t(viewports);
-	opts.vmopts.infolog_accept = true;
-	opts.vmopts.warnlog &= ~vm::fault::EXISTS;
-	opts.attempt_max = size_t(attempt_max);
-	m::acquire
 	{
-		opts
-	};
+		struct m::acquire::opts opts;
+		opts.room = room_id;
+		opts.viewport_size = ssize_t(m::room::events::viewport_size);
+		opts.viewport_size *= size_t(viewports);
+		opts.vmopts.infolog_accept = true;
+		opts.vmopts.warnlog &= ~vm::fault::EXISTS;
+		opts.attempt_max = size_t(attempt_max);
+		m::acquire
+		{
+			opts
+		};
 
-	const size_t num_reset
-	{
-		m::room::head::reset(opts.room)
-	};
-}
+		const size_t num_reset
+		{
+			m::room::head::reset(opts.room)
+		};
+	}
 
-void
-ircd::m::init::backfill::gossip(const room::id &room_id,
-                                const event::id &event_id,
-                                const string_view &remote)
-{
-	m::gossip::opts opts;
-	opts.timeout = seconds(gossip_timeout);
-	opts.remote = remote;
-	opts.event_id = event_id;
-	gossip::gossip
+	if((false))
 	{
-		room_id, opts
-	};
+		struct m::gossip::opts opts;
+		opts.room = room_id;
+		m::gossip
+		{
+			opts
+		};
+	}
 }
