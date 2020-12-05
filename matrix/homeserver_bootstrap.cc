@@ -247,19 +247,19 @@ try
 
 	// Primary interest is to perform the INDEX and WRITE phase which create
 	// a database transaction and commit it respectively.
-	vmopts.phase[vm::phase::INDEX] = true;
-	vmopts.phase[vm::phase::WRITE] = true;
+	vmopts.phase.set(vm::phase::INDEX, true);
+	vmopts.phase.set(vm::phase::WRITE, true);
 
 	// Optimize the bootstrap by not updating room heads at every step.
-	vmopts.wopts.appendix[dbs::appendix::ROOM_HEAD] = false;
-	vmopts.wopts.appendix[dbs::appendix::ROOM_HEAD_RESOLVE] = false;
+	vmopts.wopts.appendix.set(dbs::appendix::ROOM_HEAD, false);
+	vmopts.wopts.appendix.set(dbs::appendix::ROOM_HEAD_RESOLVE, false);
 
 	// Perform normal static-conformity checks; there's no reason to accept
 	// inputs that wouldn't normally be accepted. While inputs are supposed
 	// to be trusted and authentic, their correctness should still be checked;
 	// attempting to recover from a catastrophic failure might be the reason
 	// for the rebuild.
-	vmopts.phase[vm::phase::CONFORM] = true;
+	vmopts.phase.set(vm::phase::CONFORM, true);
 
 	//TODO: XXX
 	// This workaround is required for internal rooms to work, for now.
