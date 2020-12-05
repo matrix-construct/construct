@@ -58,12 +58,16 @@ __assert_fail(const char *__assertion,
 extern "C" // for clang
 {
 	extern inline void
-	__attribute__((flatten, always_inline, gnu_inline, artificial))
+	__attribute__((cold, flatten, always_inline, gnu_inline, artificial))
 	__assert_fail(const char *__assertion,
 	              const char *__file,
 	              unsigned int __line,
 	              const char *__function)
 	{
+		#if defined(__SSE2__) && defined(__clang__)
+			asm volatile ("lfence");
+		#endif
+
 		ircd::print_assertion(__assertion, __file, __line, __function);
 		ircd::debugtrap();
 	}
