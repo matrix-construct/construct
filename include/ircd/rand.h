@@ -24,6 +24,8 @@ namespace ircd::rand::dict
 /// Tools for randomization
 namespace ircd::rand
 {
+	struct xoshiro256p;
+
 	// Interface state.
 	extern std::random_device device;
 	extern std::mt19937_64 mt;
@@ -47,6 +49,37 @@ namespace ircd::rand
 	// Random fill of buffer
 	const_buffer fill(const mutable_buffer &out);
 }
+
+struct ircd::rand::xoshiro256p
+{
+	u64x4 s
+	{
+		-1UL, -1UL, -1UL, -1UL
+	};
+
+	uint64_t operator()();
+};
+
+inline uint64_t
+ircd::rand::xoshiro256p::operator()()
+{
+	const u64
+	ret(s[0] + s[3]),
+	t(s[1] << 17);
+	s[2] ^= s[0];
+	s[3] ^= s[1];
+	s[1] ^= s[2];
+	s[0] ^= s[3];
+	s[2] ^= t;
+
+	#if __has_builtin(__builtin_rotateleft64)
+		s[3] = __builtin_rotateleft64(s[3], 45);
+	#else
+		s[3] = (s[3] << 45) | (s[3] >> (64 - 45));
+	#endif
+
+	return ret;
+};
 
 /// Random character from dictionary
 inline char
