@@ -89,7 +89,7 @@ boost::spirit::qi::literal_char<boost::spirit::char_encoding::standard, true, fa
 	{
 		static_assert(std::is_same<CharParam, char_type>::value);
 
-		#ifdef RB_DEBUG
+		#ifndef NDEBUG
 		ircd::always_assert(traits::ischar<CharParam, char_encoding>::call(ch));
 		#endif
 
