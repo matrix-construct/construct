@@ -283,14 +283,18 @@ ircd::m::acquire::fetch_state(const m::event::id &event_id,
 	if(ctx::interruption_requested())
 		return false;
 
-	const auto hostpart
-	{
-		event_id.host()
-	};
-
 	const auto hint
 	{
-		hostpart? hostpart: remote
+		event_id.host() && !my_host(event_id.host())?
+			event_id.host():
+
+		remote && !my_host(remote)?
+			remote:
+
+		opts.room.room_id.host() && !my_host(opts.room.room_id.host())?
+			opts.room.room_id.host():
+
+		string_view{}
 	};
 
 	const bool submitted
