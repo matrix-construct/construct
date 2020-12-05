@@ -683,23 +683,22 @@ noexcept
 		confs.at(lev)
 	};
 
+	bool
+	copy_to_stdout(conf.console_stdout),
+	copy_to_stderr(conf.console_stderr);
+
+	copy_to_stdout &= log.cmasked;
+	copy_to_stderr &= log.cmasked;
+
+	copy_to_stdout &= !console_quiet_stdout[lev];
+	copy_to_stderr &= !console_quiet_stderr[lev];
+
 	// Note that CRITICAL messages unconditionally hit stderr even if their
 	// level and facility are muted.
-	const bool copy_to_stderr
-	{
-		bool(conf.console_stderr)
-		&& ((!console_quiet_stderr[lev] && log.cmasked) || lev == level::CRITICAL)
-	};
-
-	const bool copy_to_stdout
-	{
-		bool(conf.console_stdout)
-		&& !console_quiet_stdout[lev]
-		&& log.cmasked
-	};
+	copy_to_stderr |= lev == level::CRITICAL;
 
 	ret |= copy_to_stdout | copy_to_stderr;
-	if((!copy_to_stdout && !copy_to_stderr) || !msg)
+	if(likely(!(copy_to_stdout | copy_to_stderr) || !msg))
 		return;
 
 	if(unlikely(copy_to_stderr))
