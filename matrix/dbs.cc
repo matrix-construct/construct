@@ -197,7 +197,7 @@ ircd::m::dbs::write_opts::appendix_all{[]
 
 namespace ircd::m::dbs
 {
-	static size_t _prefetch(db::txn &, const event &, const write_opts &);
+	static size_t _prefetch(const event &, const write_opts &);
 	static size_t _index(db::txn &, const event &, const write_opts &);
 	static size_t blacklist(db::txn &txn, const event::id &, const write_opts &);
 }
@@ -217,14 +217,7 @@ try
 			"Cannot write to database: no index specified for event."
 		};
 
-	size_t ret(0);
-	if(prefetch_enable && opts.prefetch)
-		ret = _prefetch(txn, event, opts);
-
-	if(likely(opts.index))
-		ret = _index(txn, event, opts);
-
-	return ret;
+	return _index(txn, event, opts);
 }
 catch(const std::exception &e)
 {
@@ -236,6 +229,31 @@ catch(const std::exception &e)
 	};
 
 	throw;
+}
+
+size_t
+ircd::m::dbs::prefetch(const event &event,
+                       const write_opts &opts)
+try
+{
+	if(unlikely(opts.event_idx == 0))
+		return false;
+
+	if(!prefetch_enable)
+		return false;
+
+	return _prefetch(event, opts);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Event %s txn prefetching error :%s",
+		string_view{event.event_id},
+		e.what()
+	};
+
+	return false;
 }
 
 size_t
@@ -274,13 +292,13 @@ ircd::m::dbs::blacklist(db::txn &txn,
 
 namespace ircd::m::dbs
 {
-	static size_t _prefetch_room_redact(db::txn &, const event &, const write_opts &);
+	static size_t _prefetch_room_redact(const event &, const write_opts &);
 	static void _index_room_redact(db::txn &, const event &, const write_opts &);
 
-	static size_t _prefetch_room(db::txn &, const event &, const write_opts &);
+	static size_t _prefetch_room(const event &, const write_opts &);
 	static void _index_room(db::txn &, const event &, const write_opts &);
 
-	static size_t _prefetch_event(db::txn &, const event &, const write_opts &);
+	static size_t _prefetch_event(const event &, const write_opts &);
 	static void _index_event(db::txn &, const event &, const write_opts &);
 }
 
@@ -299,15 +317,14 @@ ircd::m::dbs::_index(db::txn &txn,
 }
 
 size_t
-ircd::m::dbs::_prefetch(db::txn &txn,
-                        const event &event,
+ircd::m::dbs::_prefetch(const event &event,
                         const write_opts &opts)
 {
 	size_t ret(0);
-	ret += _prefetch_event(txn, event, opts);
+	ret += _prefetch_event(event, opts);
 
 	if(json::get<"room_id"_>(event))
-		ret += _prefetch_room(txn, event, opts);
+		ret += _prefetch_room(event, opts);
 
 	return ret;
 }
@@ -343,8 +360,7 @@ ircd::m::dbs::_index_event(db::txn &txn,
 }
 
 size_t
-ircd::m::dbs::_prefetch_event(db::txn &txn,
-                              const event &event,
+ircd::m::dbs::_prefetch_event(const event &event,
                               const write_opts &opts)
 {
 	size_t ret(0);
@@ -367,10 +383,10 @@ ircd::m::dbs::_prefetch_event(db::txn &txn,
 		;//ret += _prefetch_event_state(txn, event, opts);
 
 	if(opts.appendix.test(appendix::EVENT_REFS) && opts.event_refs.any())
-		ret += _prefetch_event_refs(txn, event, opts);
+		ret += _prefetch_event_refs(event, opts);
 
 	if(opts.appendix.test(appendix::EVENT_HORIZON_RESOLVE) && opts.horizon_resolve.any())
-		ret += _prefetch_event_horizon_resolve(txn, event, opts);
+		ret += _prefetch_event_horizon_resolve(event, opts);
 
 	return ret;
 }
@@ -411,39 +427,38 @@ ircd::m::dbs::_index_room(db::txn &txn,
 }
 
 size_t
-ircd::m::dbs::_prefetch_room(db::txn &txn,
-                             const event &event,
+ircd::m::dbs::_prefetch_room(const event &event,
                              const write_opts &opts)
 {
 	assert(!empty(json::get<"room_id"_>(event)));
 
 	size_t ret(0);
 	if(opts.appendix.test(appendix::ROOM_EVENTS))
-		;//ret += _prefetch_room_events(txn, event, opts);
+		;//ret += _prefetch_room_events(event, opts);
 
 	if(opts.appendix.test(appendix::ROOM_TYPE))
-		;//ret += _prefetch_room_type(txn, event, opts);
+		;//ret += _prefetch_room_type(event, opts);
 
 	if(opts.appendix.test(appendix::ROOM_HEAD))
-		;//ret += _prefetch_room_head(txn, event, opts);
+		;//ret += _prefetch_room_head(event, opts);
 
 	if(opts.appendix.test(appendix::ROOM_HEAD_RESOLVE))
-		;//ret += _prefetch_room_head_resolve(txn, event, opts);
+		;//ret += _prefetch_room_head_resolve(event, opts);
 
 	if(defined(json::get<"state_key"_>(event)))
 	{
 		if(opts.appendix.test(appendix::ROOM_STATE))
-			;//ret += _prefetch_room_state(txn, event, opts);
+			;//ret += _prefetch_room_state(event, opts);
 
 		if(opts.appendix.test(appendix::ROOM_STATE_SPACE))
-			;//ret += _prefetch_room_state_space(txn, event, opts);
+			;//ret += _prefetch_room_state_space(event, opts);
 
 		if(opts.appendix.test(appendix::ROOM_JOINED) && at<"type"_>(event) == "m.room.member")
-			;//ret += _prefetch_room_joined(txn, event, opts);
+			;//ret += _prefetch_room_joined(event, opts);
 	}
 
 	if(opts.appendix.test(appendix::ROOM_REDACT) && json::get<"type"_>(event) == "m.room.redaction")
-		ret += _prefetch_room_redact(txn, event, opts);
+		ret += _prefetch_room_redact(event, opts);
 
 	return ret;
 }
@@ -516,8 +531,7 @@ ircd::m::dbs::_index_room_redact(db::txn &txn,
 }
 
 size_t
-ircd::m::dbs::_prefetch_room_redact(db::txn &txn,
-                                    const event &event,
+ircd::m::dbs::_prefetch_room_redact(const event &event,
                                     const write_opts &opts)
 {
 	assert(opts.appendix.test(appendix::ROOM_REDACT));

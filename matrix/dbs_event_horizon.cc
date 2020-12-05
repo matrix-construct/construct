@@ -190,8 +190,7 @@ ircd::m::dbs::_index_event_horizon_resolve(db::txn &txn,
 }
 
 size_t
-ircd::m::dbs::_prefetch_event_horizon_resolve(db::txn &txn,
-                                              const event &event,
+ircd::m::dbs::_prefetch_event_horizon_resolve(const event &event,
                                               const write_opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_HORIZON_RESOLVE));
