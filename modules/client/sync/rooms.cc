@@ -59,13 +59,31 @@ ircd::m::sync::rooms_linear(data &data)
 	{
 		json::get<"room_id"_>(*data.event)?
 			m::membership(membuf, room, data.user):
-			string_view{}
+
+		string_view{}
 	};
 
 	const scope_restore their_membership
 	{
 		data.membership, membership
 	};
+
+	const bool is_own_membership
+	{
+		json::get<"room_id"_>(*data.event)
+		&& json::get<"type"_>(*data.event) == "m.room.member"
+		&& json::get<"state_key"_>(*data.event) == data.user.user_id
+	};
+
+	const bool is_own_join
+	{
+		is_own_membership
+		&& membership == "join"
+	};
+
+	//assert(!is_own_join || m::membership(*data.event) == "join");
+	assert(!is_own_join || !!m::membership(membuf, room, data.user));
+	assert(is_own_join || !json::get<"room_id"_>(*data.event) || m::exists(room));
 
 	if(should_ignore(data))
 		return false;
