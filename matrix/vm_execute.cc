@@ -1070,6 +1070,12 @@ ircd::m::vm::write_append(eval &eval,
 		*eval.opts
 	};
 
+	assert(eval.room_id);
+	const room room
+	{
+		eval.room_id
+	};
+
 	if(eval.txn)
 		eval.txn->clear();
 
@@ -1109,76 +1115,79 @@ ircd::m::vm::write_append(eval &eval,
 		wopts.appendix[dbs::appendix::ROOM_HEAD] && !dummy_event
 	);
 
-	if(opts.present && json::get<"state_key"_>(event))
+	const auto state_candidate
 	{
-		const room room
+		opts.present
+		&& json::get<"state_key"_>(event)
+	};
+
+	const auto state_idx
+	{
+		state_candidate?
+			room.get(std::nothrow, at<"type"_>(event), at<"state_key"_>(event)):
+			0UL
+	};
+
+	const int64_t state_depth
+	{
+		m::get<int64_t>(std::nothrow, state_idx, "depth", 0L)
+	};
+
+	const auto state_present
+	{
+		!state_depth || state_depth < json::get<"depth"_>(event)
+	};
+
+	const bool authenticate
+	{
+		opts.auth
+		&& opts.phase[phase::AUTH_PRES]
+		&& state_present
+		&& !eval.room_internal
+	};
+
+	const auto &[pass, fail]
+	{
+		authenticate?
+			room::auth::check_present(event):
+			room::auth::passfail{true, {}}
+	};
+
+	if(state_present && fail)
+		log::dwarning
 		{
-			at<"room_id"_>(event)
+			log, "%s fails auth for present state of %s :%s",
+			loghead(eval),
+			string_view{room.room_id},
+			what(fail),
 		};
 
-		const room::state state
-		{
-			room
-		};
+	wopts.appendix.set
+	(
+		dbs::appendix::ROOM_STATE,
+		wopts.appendix[dbs::appendix::ROOM_STATE] && state_present && pass
+	);
 
-		//XXX
-		const auto pres_idx
-		{
-			state.get(std::nothrow, at<"type"_>(event), at<"state_key"_>(event))
-		};
+	wopts.appendix.set
+	(
+		dbs::appendix::ROOM_JOINED,
+		wopts.appendix[dbs::appendix::ROOM_JOINED] && state_present && pass
+	);
 
-		//XXX
-		int64_t pres_depth(0);
-		const auto fresher
-		{
-			!pres_idx ||
-			m::get<int64_t>(pres_idx, "depth", pres_depth) < json::get<"depth"_>(event)
-		};
-
-		if(fresher)
-		{
-			//XXX
-			const auto &[pass, fail]
-			{
-				opts.phase[phase::AUTH_PRES] && !eval.room_internal?
-					room::auth::check_present(event):
-					room::auth::passfail{true, {}}
-			};
-
-			if(fail)
-				log::dwarning
-				{
-					log, "%s fails auth for present state of %s :%s",
-					loghead(eval),
-					string_view{room.room_id},
-					what(fail),
-				};
-
-			wopts.appendix.set
-			(
-				dbs::appendix::ROOM_STATE,
-				pass && wopts.appendix[dbs::appendix::ROOM_STATE]
-			);
-
-			wopts.appendix.set
-			(
-				dbs::appendix::ROOM_JOINED,
-				pass && wopts.appendix[dbs::appendix::ROOM_JOINED]
-			);
-		}
-	}
-
-	assert(eval.txn);
 	const size_t wrote
 	{
-		dbs::write(*eval.txn, event, wopts)
+		dbs::write(txn, event, wopts)
 	};
 
 	log::debug
 	{
-		log, "%s composed transaction wrote:%zu",
+		log, "%s composed transaction wrote:%zu state:%b pres:%b prev:%lu @%ld",
 		loghead(eval),
 		wrote,
+		state_candidate,
+		state_present,
+		state_idx,
+		state_depth,
 	};
 }
 
