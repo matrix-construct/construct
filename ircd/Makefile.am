@@ -174,6 +174,7 @@ libircd_la_SOURCES += stats.cc
 libircd_la_SOURCES += logger.cc
 libircd_la_SOURCES += run.cc
 libircd_la_SOURCES += prof.cc
+libircd_la_SOURCES += prof_psi.cc
 if LINUX
 libircd_la_SOURCES += prof_linux.cc
 endif
