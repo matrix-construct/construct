@@ -981,24 +981,24 @@ ircd::m::room::state::rebuild::rebuild(const room::id &room_id)
 				room::auth::passfail{true, {}}
 		};
 
-		if(!pass)
+		if(likely(pass))
 		{
-			log::dwarning
-			{
-				log, "%s fails for present state in %s :%s",
-				string_view{event.event_id},
-				string_view{room_id},
-				what(fail),
-			};
-
-			return true;
+			auto _opts(opts);
+			_opts.op = db::op::SET;
+			_opts.event_idx = event_idx;
+			dbs::write(txn, event, _opts);
+			++added;
 		}
 
-		auto _opts(opts);
-		_opts.op = db::op::SET;
-		_opts.event_idx = event_idx;
-		dbs::write(txn, event, _opts);
-		++added;
+		log::logf
+		{
+			log, pass? log::level::DEBUG: log::level::DWARNING,
+			"%s in %s present state :%s",
+			string_view{event.event_id},
+			string_view{room_id},
+			pass? "PASS"_sv: what(fail),
+		};
+
 		return true;
 	});
 
