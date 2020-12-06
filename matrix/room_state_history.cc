@@ -177,7 +177,7 @@ const
 	return space.for_each(type, state_key, [&]
 	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
 	{
-		if(bound > -1 && depth >= bound)
+		if(bound > -1 && depth > bound)
 			return true;
 
 		if(type == last_type && state_key == last_state_key)
