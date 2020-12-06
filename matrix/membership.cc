@@ -28,14 +28,9 @@ ircd::m::membership(const room &room,
                     const user::id &user_id,
                     const vector_view<const string_view> &membership)
 {
-	const room::state state
-	{
-		room
-	};
-
 	const auto event_idx
 	{
-		state.get(std::nothrow, "m.room.member", user_id)
+		room.get(std::nothrow, "m.room.member", user_id)
 	};
 
 	return m::membership(event_idx, membership);
@@ -99,14 +94,9 @@ ircd::m::membership(const mutable_buffer &out,
                     const room &room,
                     const user::id &user_id)
 {
-	const room::state state
-	{
-		room
-	};
-
 	const auto event_idx
 	{
-		state.get(std::nothrow, "m.room.member", user_id)
+		room.get(std::nothrow, "m.room.member", user_id)
 	};
 
 	return m::membership(out, event_idx);
