@@ -14,7 +14,7 @@ namespace ircd::m::vm
 	template<class T> static void call_hook(hook::site<T> &, eval &, const event &, T&& data);
 	static size_t calc_txn_reserve(const opts &, const event &);
 	static void write_commit(eval &);
-	static void write_append(eval &, const event &);
+	static void write_append(eval &, const event &, const bool &);
 	static fault execute_edu(eval &, const event &);
 	static fault execute_pdu(eval &, const event &);
 	static fault execute_du(eval &, const event &);
@@ -971,24 +971,8 @@ ircd::m::vm::execute_pdu(eval &eval,
 			eval.phase, phase::INDEX
 		};
 
-		if(eval.txn)
-			eval.txn->clear();
-
-		if(!eval.txn && parent_post)
-			eval.txn = eval.parent->txn;
-
-		if(!eval.txn)
-			eval.txn = std::make_shared<db::txn>
-			(
-				*dbs::events, db::txn::opts
-				{
-					calc_txn_reserve(opts, event),   // reserve_bytes
-					0,                               // max_bytes (no max)
-				}
-			);
-
 		// Transaction composition.
-		write_append(eval, event);
+		write_append(eval, event, parent_post);
 	}
 
 	// Generate post-eval/pre-notify effects. This function may conduct
@@ -1076,7 +1060,8 @@ ircd::m::vm::execute_pdu(eval &eval,
 
 void
 ircd::m::vm::write_append(eval &eval,
-                          const event &event)
+                          const event &event,
+                          const bool &parent_post)
 
 {
 	assert(eval.opts);
@@ -1084,6 +1069,22 @@ ircd::m::vm::write_append(eval &eval,
 	{
 		*eval.opts
 	};
+
+	if(eval.txn)
+		eval.txn->clear();
+
+	if(!eval.txn && parent_post)
+		eval.txn = eval.parent->txn;
+
+	if(!eval.txn)
+		eval.txn = std::make_shared<db::txn>
+		(
+			*dbs::events, db::txn::opts
+			{
+				calc_txn_reserve(opts, event),   // reserve_bytes
+				0,                               // max_bytes (no max)
+			}
+		);
 
 	assert(eval.txn);
 	auto &txn
