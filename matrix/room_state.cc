@@ -942,16 +942,12 @@ ircd::m::room::state::rebuild::rebuild(const room::id &room_id)
 		*m::dbs::events
 	};
 
-	ssize_t deleted(0);
-	present_state.for_each([&opts, &txn, &deleted]
+	m::event::fetch event;
+	ssize_t added(0), deleted(0);
+	present_state.for_each([&opts, &txn, &deleted, &event]
 	(const auto &type, const auto &state_key, const auto &event_idx)
 	{
-		const m::event::fetch &event
-		{
-			std::nothrow, event_idx
-		};
-
-		if(!event.valid)
+		if(!seek(std::nothrow, event, event_idx))
 			return true;
 
 		auto _opts(opts);
@@ -962,16 +958,10 @@ ircd::m::room::state::rebuild::rebuild(const room::id &room_id)
 		return true;
 	});
 
-	ssize_t added(0);
-	history.for_each([&opts, &txn, &added, &room_id, &check_auth]
+	history.for_each([&opts, &txn, &added, &room_id, &check_auth, &event]
 	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
 	{
-		const m::event::fetch &event
-		{
-			std::nothrow, event_idx
-		};
-
-		if(!event.valid)
+		if(!seek(std::nothrow, event, event_idx))
 			return true;
 
 		const auto &[pass, fail]
