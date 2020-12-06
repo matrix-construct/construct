@@ -32,7 +32,7 @@ namespace ircd
 	// System microtime suite
 	microtime_t microtime();
 
-	// System formatted time suite
+	// System formatted time suite (also see util/pretty.h)
 	extern const char *const rfc7231_fmt;
 	string_view timef(const mutable_buffer &out, const struct tm &tm, const char *const &fmt = rfc7231_fmt);
 	string_view timef(const mutable_buffer &out, const time_t &epoch, const char *const &fmt = rfc7231_fmt);

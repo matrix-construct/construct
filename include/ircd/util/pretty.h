@@ -32,7 +32,7 @@ inline namespace util
 	string_view pretty(const mutable_buffer &out, const human_readable_size &, const uint &fmt = 0);
 	std::string pretty(const human_readable_size &, const uint &fmt = 0);
 
-	// Human readable time suite (for timers and counts; otherwise see date.h)
+	// Human readable time suite (for timers and counts; otherwise see ircd/time.h)
 	string_view pretty(const mutable_buffer &out, const nanoseconds &, const uint &fmt = 0);
 	string_view pretty(const mutable_buffer &out, const microseconds &, const uint &fmt = 0);
 	string_view pretty(const mutable_buffer &out, const milliseconds &, const uint &fmt = 0);
