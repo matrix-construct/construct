@@ -333,14 +333,9 @@ noexcept try
 	if(unlikely(!file.name))
 		return false;
 
-	thread_local unique_mutable_buffer path_buf
-	{
-		fs::PATH_MAX_LEN
-	};
-
 	const auto &path
 	{
-		fs::path(path_buf, vector_view<const string_view>
+		fs::path(fs::path_scratch, vector_view<const string_view>
 		{
 			"/proc/pressure"_sv, file.name
 		})
