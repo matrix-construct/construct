@@ -294,12 +294,12 @@ try
 	m::vm::opts vmopts;
 	vmopts.infolog_accept = true;
 	vmopts.unique = false;
-	m::vm::eval
+	m::vm::eval eval
 	{
 		revent, vmopts
 	};
 
-	return revent_id;
+	return eval.event_id;
 }
 catch(const std::exception &e)
 {
