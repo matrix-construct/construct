@@ -8,6 +8,13 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+/// Logging facility
+decltype(ircd::ios::log)
+ircd::ios::log
+{
+	"ios"
+};
+
 /// "main" thread for IRCd; the one the main context landed on.
 decltype(ircd::ios::main_thread_id)
 ircd::ios::main_thread_id;

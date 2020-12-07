@@ -43,6 +43,7 @@ namespace ircd::ios
 	struct defer;
 	struct post;
 
+	extern log::log log;
 	extern std::thread::id main_thread_id;
 	extern asio::executor user;
 	extern asio::executor main;
