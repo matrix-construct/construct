@@ -530,15 +530,24 @@ catch(const std::exception &e)
 }
 
 void
-ircd::m::roomstrap::eval_auth_chain(const json::array &auth_chain,
+ircd::m::roomstrap::eval_auth_chain(const json::array &auth_chain_,
                                     vm::opts vmopts)
 try
 {
+	std::vector<m::event> auth_chain
+	(
+		begin(auth_chain_), end(auth_chain_)
+	);
+
 	log::info
 	{
 		log, "Evaluating %zu authentication events...",
 		auth_chain.size(),
 	};
+
+	// pre-sort here and indicate that to eval.
+	std::sort(begin(auth_chain), end(auth_chain));
+	vmopts.ordered = true;
 
 	vmopts.nothrows = vm::fault::EXISTS;
 	vmopts.fetch = false;
