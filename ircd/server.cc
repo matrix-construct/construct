@@ -4041,11 +4041,17 @@ ircd::server::tag::read_chunk_dynamic_content(const const_buffer &buffer,
 	if(req.in.progress && !done)
 		req.in.progress(buffer, const_buffer{chunk, state.chunk_read});
 
-	if(state.chunk_read == state.chunk_length)
+	const bool content_completed
+	{
+		state.chunk_read == state.chunk_length
+	};
+
+	if(content_completed)
 		chunk_dynamic_content_completed(*this, done);
 
 	assert(state.chunk_read <= state.chunk_length);
-	if(likely(state.chunk_read != state.chunk_length))
+	assert(!content_completed || state.chunk_read == state.chunk_length);
+	if(likely(!content_completed))
 		return {};
 
 	assert(state.chunk_read <= state.content_read);
