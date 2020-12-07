@@ -122,14 +122,17 @@ ircd::m::sync::room_timeline_linear(data &data)
 	const bool is_own_rejoin
 	{
 		is_own_join
-		&& last_membership == "join"
+		&& last_membership
 	};
 
 	const bool is_invite_accept
 	{
-		is_own_join
+		is_own_rejoin
 		&& last_membership == "invite"
 	};
+
+	if(is_own_join && data.reflow_full_state)
+		return false;
 
 	json::stack::object membership_
 	{
