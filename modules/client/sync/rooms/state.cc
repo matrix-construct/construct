@@ -371,25 +371,26 @@ ircd::m::sync::room_state_polylog_events(data &data)
 		&& !full_state_reflow
 	};
 
-	state.for_each([&data, &concurrent, &lazyload_members, &full_state_all]
+	state.for_each([&data, &concurrent, &lazyload_members]
 	(const string_view &type, const string_view &state_key, const event::idx &event_idx)
 	{
-		// Skip this event if it's not in the sync range, except
-		// when the request came with a `?full_state=true`
-		assert(data.args);
-		if(likely(!full_state_all))
-			if(!apropos(data, event_idx))
-				return true;
-
-		// For crazyloading/lazyloading related membership event optimiztions.
-		if(!full_state_all && type == "m.room.member")
+		// Conditions to skip state when not forcing full_state
+		if(likely(!data.args->full_state))
 		{
-			if(lazyload_members)
+			// If this event is not in the sync range
+			if(likely(!apropos(data, event_idx)))
 				return true;
 
-			if(!crazyload_historical_members)
-				if(data.membership == "leave" || data.membership == "ban")
+			// Branch for crazy/lazyloading conditions to skip.
+			if(type == "m.room.member")
+			{
+				if(lazyload_members)
 					return true;
+
+				if(!crazyload_historical_members)
+					if(data.membership == "leave" || data.membership == "ban")
+						return true;
+			}
 		}
 
 		this_ctx::interruption_point();
