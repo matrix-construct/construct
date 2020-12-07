@@ -338,7 +338,7 @@ void
 ircd::m::vm::fetch::auth_chain_eval(const event &event,
                                     vm::eval &eval,
                                     const room &room,
-                                    const json::array &auth_chain,
+                                    const json::array &auth_chain_,
                                     const string_view &origin)
 try
 {
@@ -349,6 +349,16 @@ try
 	opts.warnlog &= ~vm::fault::EXISTS;
 	opts.notify_servers = false;
 	opts.node_id = origin;
+
+	std::vector<m::event> auth_chain
+	(
+		std::begin(auth_chain_), std::end(auth_chain_)
+	);
+
+	// pre-sort here and indicate that to eval.
+	std::sort(begin(auth_chain), end(auth_chain));
+	opts.ordered = true;
+
 	log::debug
 	{
 		log, "Evaluating auth chain for %s in %s events:%zu",
