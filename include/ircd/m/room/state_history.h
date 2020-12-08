@@ -20,6 +20,7 @@ struct ircd::m::room::state::history
 	using closure = std::function<bool (const string_view &, const string_view &, const int64_t &, const event::idx &)>;
 
 	state::space space;
+	event::idx event_idx {0};
 	int64_t bound {-1};
 
   public:

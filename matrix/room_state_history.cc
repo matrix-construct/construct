@@ -39,10 +39,16 @@ ircd::m::room::state::history::history(const m::room &room,
 {
 	room
 }
+,event_idx
+{
+	room.event_id?
+		m::index(room.event_id):
+		0UL
+}
 ,bound
 {
 	bound < 0 && room.event_id?
-		m::get<int64_t>(m::index(room.event_id), "depth"):
+		m::get<int64_t>(event_idx, "depth"):
 		bound
 }
 {
@@ -177,7 +183,7 @@ const
 	return space.for_each(type, state_key, [&]
 	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
 	{
-		if(bound > -1 && depth > bound)
+		if(bound > -1 && depth >= bound && event_idx != this->event_idx)
 			return true;
 
 		if(type == last_type && state_key == last_state_key)
