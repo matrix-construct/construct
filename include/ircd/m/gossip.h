@@ -31,6 +31,7 @@ struct ircd::m::gossip
 
 	const struct opts &opts;
 	std::list<result> requests;
+	std::set<uint128_t> attempts;
 
   private:
 	bool full() const noexcept;
@@ -41,7 +42,7 @@ struct ircd::m::gossip
 	bool start(const event::id &, const string_view &);
 	bool submit(const event::id &, const string_view &);
 	bool handle_head(const m::event &);
-	void gossip_head();
+	bool gossip_head();
 
   public:
 	gossip(const struct opts &);

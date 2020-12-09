@@ -11159,6 +11159,81 @@ console_cmd__room__acquire(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__gossip__list(opt &out, const string_view &line)
+{
+	size_t i(0);
+	for(const auto *const &a : m::gossip::list)
+	{
+		size_t j(0);
+		for(const auto &result : a->requests)
+			out
+			<< std::left << std::setw(4) << i
+			<< " "
+			<< std::left << std::setw(4) << j++
+			<< " "
+			<< std::left << std::setw(50) << trunc(a->opts.room.room_id, 40)
+			<< " ["
+			<< std::right << std::setw(7) << a->opts.depth.first
+			<< " "
+			<< std::right << std::setw(7) << a->opts.depth.second
+			<< " | "
+			<< std::right << std::setw(8) << a->opts.ref.first
+			<< " "
+			<< std::right << std::setw(8) << long(a->opts.ref.second)
+			<< "] "
+			<< std::endl;
+
+		i++;
+	}
+
+	return true;
+}
+
+bool
+console_cmd__room__gossip(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "remote", "rounds"
+	}};
+
+	if(!param["room_id"])
+		return console_cmd__room__gossip__list(out, line);
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const auto remote
+	{
+		param["remote"]
+	};
+
+	const auto rounds
+	{
+		param.at("rounds", -1UL)
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	struct m::gossip::opts opts;
+	opts.room = room;
+	opts.hint = remote != "*"? remote: string_view{};
+	opts.hint_only = !opts.hint.empty();
+	opts.rounds = rounds;
+	m::gossip gossip
+	{
+		opts
+	};
+
+	return true;
+}
+
+bool
 console_cmd__room__messages(opt &out, const string_view &line)
 {
 	const params param{line, " ",
