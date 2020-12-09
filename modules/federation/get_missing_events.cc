@@ -174,10 +174,25 @@ get__missing_events(client &client,
 			queue.pop_front();
 		}};
 
+		bool ok(true);
 		if(!seek(std::nothrow, event, event_id))
-			continue;
+			ok = false;
 
-		if(!visible(event, request.node_id))
+		if(ok && !visible(event, request.node_id))
+			ok = false;
+
+		if(!ok)
+			log::dwarning
+			{
+				m::log, "Failed to divulge missing %s in %s to '%s' queue:%zu limit:%ld",
+				string_view{event_id},
+				string_view{room_id},
+				request.node_id,
+				queue.size(),
+				limit,
+			};
+
+		if(!ok)
 			continue;
 
 		events.append(event);
