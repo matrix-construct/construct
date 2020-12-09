@@ -43,6 +43,9 @@ namespace ircd::ios
 	struct defer;
 	struct post;
 
+	constexpr bool profile_history {false};
+	constexpr bool profile_logging {false};
+
 	extern log::log log;
 	extern std::thread::id main_thread_id;
 	extern asio::executor user;
@@ -148,6 +151,7 @@ struct ircd::ios::handler
 	static thread_local handler *current;
 	static thread_local uint64_t epoch;
 
+	static void enqueue(handler *const &) noexcept;
 	static void *allocate(handler *const &, const size_t &);
 	static void deallocate(handler *const &, void *const &, const size_t &) noexcept;
 	static bool continuation(handler *const &) noexcept;
@@ -168,9 +172,10 @@ struct ircd::ios::handle
 	template<class... args>
 	void operator()(args&&... a) const;
 
-	handle(ios::descriptor &, function);
+	handle(ios::descriptor &, function) noexcept;
 };
 
+// boost handlers
 namespace ircd::ios
 {
 	template<class function>
@@ -187,31 +192,9 @@ namespace ircd::ios
 	void asio_handler_invoke(callable &f, handle<function> *);
 }
 
-template<class function>
-ircd::ios::handle<function>::handle(ios::descriptor &d,
-                                    function f)
-:handler{&d, prof::cycles()}
-,f{std::move(f)}
-{
-	assert(d.stats);
-	d.stats->queued++;
-}
-
-template<class function>
-template<class... args>
-void
-ircd::ios::handle<function>::operator()(args&&... a)
-const
-{
-	assert(descriptor && descriptor->stats);
-	assert(descriptor->stats->queued > 0);
-	descriptor->stats->queued--;
-	f(std::forward<args>(a)...);
-}
-
 template<class callable,
          class function>
-void
+inline void
 ircd::ios::asio_handler_invoke(callable &f,
                                handle<function> *const h)
 try
@@ -229,14 +212,14 @@ catch(...)
 }
 
 template<class function>
-bool
+inline bool
 ircd::ios::asio_handler_is_continuation(handle<function> *const h)
 {
 	return handler::continuation(h);
 }
 
 template<class function>
-void *
+inline void *
 __attribute__((malloc, returns_nonnull, warn_unused_result, alloc_size(1)))
 ircd::ios::asio_handler_allocate(size_t size,
                                  handle<function> *const h)
@@ -245,13 +228,81 @@ ircd::ios::asio_handler_allocate(size_t size,
 }
 
 template<class function>
-void
+inline void
 ircd::ios::asio_handler_deallocate(void *const ptr,
                                    size_t size,
                                    handle<function> *const h)
 {
 	handler::deallocate(h, ptr, size);
 }
+
+//
+// ircd::ios::handle
+//
+
+template<class function>
+inline
+ircd::ios::handle<function>::handle(ios::descriptor &d,
+                                    function f)
+noexcept
+:handler{&d, prof::cycles()}
+,f(std::move(f))
+{
+	handler::enqueue(this);
+}
+
+template<class function>
+template<class... args>
+inline void
+ircd::ios::handle<function>::operator()(args&&... a)
+const
+{
+	assert(descriptor && descriptor->stats);
+	assert(descriptor->stats->queued > 0);
+	descriptor->stats->queued--;
+	f(std::forward<args>(a)...);
+}
+
+//
+// ircd::ios::handler
+//
+
+inline void
+ircd::ios::handler::enqueue(handler *const &handler)
+noexcept
+{
+	assert(handler && handler->descriptor);
+	auto &descriptor(*handler->descriptor);
+
+	assert(descriptor.stats);
+	auto &stats(*descriptor.stats);
+	++stats.queued;
+
+	if constexpr(profile_logging)
+		log::logf
+		{
+			log, log::level::DEBUG,
+			"QUEUE %5u %-20s [%11lu] ------[%9lu] q:%-4lu",
+			descriptor.id,
+			trunc(descriptor.name, 20),
+			stats.calls,
+			0UL,
+			stats.queued,
+		};
+}
+
+inline bool
+ircd::ios::handler::continuation(handler *const &handler)
+noexcept
+{
+	assert(handler && handler->descriptor);
+	auto &descriptor(*handler->descriptor);
+	return descriptor.continuation;
+}
+
+//
+// ircd::ios
+//
 
 inline const ircd::string_view &
 ircd::ios::name(const handler &handler)

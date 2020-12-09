@@ -187,11 +187,6 @@ ircd::ios::descriptor::stats::operator+=(const stats &o)
 // handler
 //
 
-namespace ircd::ios
-{
-	constexpr bool profile_history {false};
-}
-
 decltype(ircd::ios::handler::current)
 thread_local
 ircd::ios::handler::current;
@@ -212,23 +207,27 @@ noexcept
 	auto &stats(*descriptor.stats);
 	++stats.faults;
 
-	bool ret(false);
-	// leave() isn't called if we return false so the tsc counter
-	// needs to be tied off here instead.
-	if(!ret)
+	bool ret
 	{
-		const auto last_ts
+		false
+	};
+
+	if constexpr(profile_logging)
+		log::logf
 		{
-			std::exchange(handler->ts, cycles())
+			log, log::level::DEBUG,
+			"FAULT %5u %-20s [%11lu] faults[%9lu] q:%-4lu",
+			descriptor.id,
+			trunc(descriptor.name, 20),
+			stats.calls,
+			stats.faults,
+			stats.queued,
 		};
 
-		assert(handler->ts >= last_ts);
-		stats.slice_last = handler->ts - last_ts;
-		stats.slice_total += stats.slice_last;
-
-		assert(handler::current == handler);
-		handler::current = nullptr;
-	}
+	// Our API sez if this function returns true, caller is responsible for
+	// calling leave(), otherwise they must not call leave().
+	if(likely(!ret))
+		leave(handler);
 
 	return ret;
 }
@@ -263,6 +262,18 @@ noexcept
 		++descriptor.history_pos;
 	}
 
+	if constexpr(profile_logging)
+		log::logf
+		{
+			log, log::level::DEBUG,
+			"LEAVE %5u %-20s [%11lu] cycles[%9lu] q:%-4lu",
+			descriptor.id,
+			trunc(descriptor.name, 20),
+			stats.calls,
+			stats.slice_last,
+			stats.queued,
+		};
+
 	assert(handler::current == handler);
 	handler::current = nullptr;
 }
@@ -290,16 +301,18 @@ noexcept
 
 	stats.latency_last = handler->ts - last_ts;
 	stats.latency_total += stats.latency_last;
-}
 
-[[gnu::hot]]
-bool
-ircd::ios::handler::continuation(handler *const &handler)
-noexcept
-{
-	assert(handler && handler->descriptor);
-	auto &descriptor(*handler->descriptor);
-	return descriptor.continuation;
+	if constexpr(profile_logging)
+		log::logf
+		{
+			log, log::level::DEBUG,
+			"ENTER %5u %-20s [%11lu] latent[%9lu] q:%-4lu",
+			descriptor.id,
+			trunc(descriptor.name, 20),
+			stats.calls,
+			stats.latency_last,
+			stats.queued,
+		};
 }
 
 [[gnu::hot]]
