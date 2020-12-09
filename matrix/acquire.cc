@@ -72,16 +72,23 @@ ircd::m::acquire::acquire::acquire(const struct opts &opts)
 	// Branch to acquire state
 	if(opts.state)
 		acquire_state();
+}
 
+ircd::m::acquire::~acquire()
+noexcept try
+{
 	// Complete all work before returning, otherwise everything
 	// will be cancelled on unwind.
 	while(!fetching.empty())
 		while(handle());
 }
-
-ircd::m::acquire::~acquire()
-noexcept
+catch(const ctx::interrupted &)
 {
+	return;
+}
+catch(const ctx::terminated &)
+{
+	return;
 }
 
 void
