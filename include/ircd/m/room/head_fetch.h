@@ -46,8 +46,8 @@ struct ircd::m::room::head::fetch
 	fetch(const opts &, const closure & = {});
 
 	// Convenience operation
-	static event::id::buf one(const id &, const string_view &remote, const id::user &);
-	static event::id::buf one(const id &, const string_view &remote);
+	static event one(const mutable_buffer &, const id &, const string_view &remote, const id::user & = {});
+	static event::id::buf one(const id &, const string_view &remote, const id::user & = {});
 };
 
 struct ircd::m::room::head::fetch::opts

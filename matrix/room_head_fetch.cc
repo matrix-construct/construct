@@ -17,7 +17,32 @@ ircd::m::room::head::fetch::timeout
 
 ircd::m::event::id::buf
 ircd::m::room::head::fetch::one(const id &room_id,
-                                const string_view &remote)
+                                const string_view &remote,
+                                const user::id &user_id)
+{
+	const unique_mutable_buffer buf
+	{
+		16_KiB
+	};
+
+	const m::event event
+	{
+		one(buf, room_id, remote, user_id)
+	};
+
+	const m::event::prev prev
+	{
+		event
+	};
+
+	return prev.prev_event(0);
+}
+
+ircd::m::event
+ircd::m::room::head::fetch::one(const mutable_buffer &out,
+                                const id &room_id,
+                                const string_view &remote,
+                                const user::id &user_id_)
 {
 	const m::room room
 	{
@@ -31,7 +56,9 @@ ircd::m::room::head::fetch::one(const id &room_id,
 	// generate a random one from our host as well.
 	m::user::id::buf user_id
 	{
-		any_user(room, my_host(), "join")
+		!user_id_?
+			any_user(room, my_host(), "join"):
+			user_id_
 	};
 
 	// Make another attempt to find an invited user because that carries some
@@ -39,19 +66,22 @@ ircd::m::room::head::fetch::one(const id &room_id,
 	if(!user_id)
 		user_id = any_user(room, my_host(), "invite");
 
-	return one(room_id, remote, user_id);
-}
-
-ircd::m::event::id::buf
-ircd::m::room::head::fetch::one(const id &room_id,
-                                const string_view &remote,
-                                const user::id &user_id)
-{
-	const unique_buffer<mutable_buffer> buf
+	const bool internal_alloc
 	{
-		16_KiB
+		size(out) < 16_KiB
 	};
 
+	const unique_mutable_buffer internal_buf
+	{
+		internal_alloc? 16_KiB: 0_KiB
+	};
+
+	const mutable_buffer buf
+	{
+		internal_alloc? internal_buf: out
+	};
+
+	assert(size(buf) >= 16_KiB);
 	fed::make_join::opts opts;
 	opts.remote = remote;
 	opts.dynamic = false;
@@ -72,20 +102,22 @@ ircd::m::room::head::fetch::one(const id &room_id,
 
 	const json::object event
 	{
-		proto.at("event")
+		proto["event"]
 	};
 
-	const m::event::prev prev
+	const size_t moved
 	{
-		event
+		move(out, string_view(event))
 	};
 
-	const auto &prev_event_id
+	assert(moved == size(string_view(event)));
+	return json::object
 	{
-		prev.prev_event(0)
+		string_view
+		{
+			data(out), moved
+		}
 	};
-
-	return prev_event_id;
 }
 
 //
