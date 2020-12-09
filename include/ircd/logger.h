@@ -124,7 +124,7 @@ struct ircd::log::hook
 /// Lower level interface; this is not a template and defined in the unit.
 struct ircd::log::vlog
 {
-	vlog(const log &log, const level &, const string_view &fmt, const va_rtti &ap);
+	vlog(const log &log, const level &, const string_view &fmt, const va_rtti &ap) noexcept;
 };
 
 /// Lower level interface; allows log facility and level to be specified at

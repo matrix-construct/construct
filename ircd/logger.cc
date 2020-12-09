@@ -476,6 +476,7 @@ ircd::log::vlog::vlog(const log &log,
                       const level &lev,
                       const string_view &fmt,
                       const va_rtti &ap)
+noexcept
 {
 	if(!is_main_thread() && likely(ios::available()))
 	{
