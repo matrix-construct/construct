@@ -19,6 +19,7 @@ namespace ircd::m::sync
 
 	extern conf::item<size_t> limit_default;
 	extern conf::item<size_t> limit_initial_default;
+	extern conf::item<int64_t> reflow_depth;
 	extern item room_timeline;
 }
 
@@ -34,6 +35,13 @@ ircd::m::sync::room_timeline
 	"rooms.timeline",
 	room_timeline_polylog,
 	room_timeline_linear
+};
+
+decltype(ircd::m::sync::reflow_depth)
+ircd::m::sync::reflow_depth
+{
+	{ "name",     "ircd.client.sync.rooms.timeline.reflow.depth" },
+	{ "default",  0L                                             },
 };
 
 decltype(ircd::m::sync::limit_default)
@@ -88,9 +96,19 @@ ircd::m::sync::room_timeline_linear(data &data)
 		room::events::viewport_size
 	};
 
-	if(likely(viewport_size >= 0))
-		if(json::get<"depth"_>(*data.event) + viewport_size < data.room_depth)
-			return false;
+	assert(data.room_depth >= json::get<"depth"_>(*data.event));
+	const auto sounding
+	{
+		data.room_depth - json::get<"depth"_>(*data.event)
+	};
+
+	assert(sounding >= 0);
+	const bool is_stale
+	{
+		sounding
+		&& viewport_size >= 0
+		&& sounding > viewport_size
+	};
 
 	const bool is_own_membership
 	{
@@ -131,7 +149,24 @@ ircd::m::sync::room_timeline_linear(data &data)
 		&& last_membership == "invite"
 	};
 
-	if(is_own_join && data.reflow_full_state)
+	// Conditions to not synchronize this event to the client, at least
+	// for here and now...
+	const bool skip
+	{
+		false
+		|| is_stale
+		|| (is_own_join && data.reflow_full_state)
+	};
+
+	// Conditions to redraw the timeline (limited=true).
+	const bool reflow
+	{
+		false
+		|| is_own_join
+		|| (int64_t(reflow_depth) > 0 && sounding >= int64_t(reflow_depth))
+	};
+
+	if(skip)
 		return false;
 
 	json::stack::object membership_
@@ -149,8 +184,13 @@ ircd::m::sync::room_timeline_linear(data &data)
 		*data.out, "timeline"
 	};
 
-	if(is_own_join)
+	if(reflow)
 	{
+		const auto prev_batch
+		{
+			m::event_id(std::nothrow, data.room_head)
+		};
+
 		json::stack::member
 		{
 			timeline, "limited", json::value{true}
@@ -160,7 +200,7 @@ ircd::m::sync::room_timeline_linear(data &data)
 		{
 			timeline, "prev_batch", json::value
 			{
-				string_view{data.event->event_id}
+				prev_batch, json::STRING
 			}
 		};
 	}
