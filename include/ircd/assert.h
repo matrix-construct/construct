@@ -51,6 +51,23 @@ __assert_fail(const char *__assertion,
               const char *__function);
 #endif
 
+// Custom assert
+#if defined(RB_ASSERT) && defined(RB_ASSERT_INTRINSIC) && !defined(NDEBUG)
+	#undef assert
+	#define assert(expr)                                                 \
+	({                                                                   \
+	    if(__builtin_expect(!static_cast<bool>(expr), 0))                \
+	        __assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__);      \
+	})
+#endif
+
+// Custom addl cases to avoid any trouble w/ clang
+#if defined(RB_ASSERT) && defined(__clang__) && !defined(assert)
+	#ifdef NDEBUG
+		#define assert(expr) (static_cast<void>(0))
+	#endif
+#endif
+
 /// Override the standard assert behavior, if enabled, to trap into the
 /// debugger as close as possible to the offending site.
 ///

@@ -64,26 +64,3 @@ namespace ircd
 #if defined(__FreeBSD__) && !defined(ulong)
 	typedef u_long ulong;
 #endif
-
-#if defined(RB_ASSERT) && defined(RB_ASSERT_INTRINSIC) && !defined(NDEBUG) && defined(__SSE2__)
-	#undef assert
-	#define assert(expr)                                                 \
-	({                                                                   \
-	    if(unlikely(!static_cast<bool>(expr)))                           \
-	        __assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__);      \
-	})
-#endif
-
-//
-// Trouble; clang w/ our custom assert
-//
-
-#if defined(RB_ASSERT) && defined(__clang__) && !defined(assert)
-	#ifdef NDEBUG
-		#define assert(expr) \
-			(static_cast<void>(0))
-	#else
-		#define assert(expr) \
-			(static_cast<bool>(expr)? void(0): __assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__))
-	#endif
-#endif
