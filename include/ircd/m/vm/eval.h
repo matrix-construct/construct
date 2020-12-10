@@ -22,6 +22,7 @@ namespace ircd::m::vm
 	string_view loghead(const mutable_buffer &, const eval &);
 	string_view loghead(const eval &);    // single tls buffer
 
+	size_t fetch_keys(const eval &);
 }
 
 /// Event Evaluation Device
@@ -62,8 +63,6 @@ struct ircd::m::vm::eval
 	hook::base *hook {nullptr};
 	vm::phase phase {vm::phase(0)};
 	bool room_internal {false};
-
-	void mfetch_keys() const;
 
   public:
 	operator const event::id::buf &() const

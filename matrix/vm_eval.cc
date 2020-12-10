@@ -37,6 +37,39 @@ ircd::m::vm::eval::executing;
 decltype(ircd::m::vm::eval::injecting)
 ircd::m::vm::eval::injecting;
 
+size_t
+ircd::m::vm::fetch_keys(const eval &eval)
+{
+	using m::fed::key::server_key;
+
+	assert(eval.opts);
+	const auto &opts
+	{
+		*eval.opts
+	};
+
+	std::set<server_key> miss;
+	for(const auto &event : eval.pdus)
+		for(const auto &[server_name, signatures] : at<"signatures"_>(event))
+			for(const auto &[key_id, signature] : json::object(signatures))
+				if(!m::keys::cache::has(json::get<"origin"_>(event), key_id))
+					miss.emplace(json::get<"origin"_>(event), key_id);
+
+	const std::vector<server_key> queries
+	(
+		begin(miss), end(miss)
+	);
+
+	const size_t fetched
+	{
+		!queries.empty()?
+			m::keys::fetch(queries):
+			0UL
+	};
+
+	return fetched;
+}
+
 ircd::string_view
 ircd::m::vm::loghead(const eval &eval)
 {
@@ -411,69 +444,4 @@ ircd::m::vm::eval::for_each(const std::function<bool (eval &)> &closure)
 			return false;
 
 	return true;
-}
-
-void
-ircd::m::vm::eval::mfetch_keys()
-const
-{
-	using m::fed::key::server_key;
-
-	// Determine federation keys which we don't have.
-	std::set<server_key> miss;
-	for(const auto &event : this->pdus)
-	{
-		assert(opts);
-		const auto &origin
-		{
-			json::get<"origin"_>(event)?
-				string_view{json::get<"origin"_>(event)}:
-				m::user::id{json::get<"sender"_>(event)}.host()
-		};
-
-		// When the node_id is set (eval on behalf of remote) we only parallel
-		// fetch keys from that node for events from that node. This is to
-		// prevent amplification. Note that these will still be evaluated and
-		// key fetching may be attempted, but not here.
-		if(opts->node_id && opts->node_id != origin)
-			continue;
-
-		for(const auto &[server_name, signatures] : at<"signatures"_>(event))
-			for(const auto &[key_id, signature] : json::object(signatures))
-				if(!m::keys::cache::has(origin, key_id))
-					miss.emplace(origin, key_id);
-	}
-
-	if(miss.empty())
-		return;
-
-	log::debug
-	{
-		log, "%s fetching %zu new keys from %zu events...",
-		loghead(*this),
-		miss.size(),
-		this->pdus.size(),
-	};
-
-	const std::vector<server_key> queries
-	(
-		begin(miss), end(miss)
-	);
-
-	const size_t fetched
-	{
-		m::keys::fetch(queries)
-	};
-
-	if(!fetched)
-		return;
-
-	log::info
-	{
-		log, "%s fetched %zu of %zu new keys from %zu events",
-		loghead(*this),
-		fetched,
-		miss.size(),
-		this->pdus.size(),
-	};
 }

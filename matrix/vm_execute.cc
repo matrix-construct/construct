@@ -197,9 +197,29 @@ ircd::m::vm::execute(eval &eval,
 		eval.pdus, events
 	};
 
-	if(likely(opts.phase[phase::VERIFY] && opts.mfetch_keys))
-		if(events.size() > 1)
-			eval.mfetch_keys();
+	const scope_count executing
+	{
+		eval::executing
+	};
+
+	const scope_restore eval_phase
+	{
+		eval.phase, phase::EXECUTE
+	};
+
+	const bool prefetch_keys
+	{
+		opts.phase[phase::VERIFY]
+		&& opts.mfetch_keys
+		&& events.size() > 1
+	};
+
+	const size_t prefetched_keys
+	{
+		prefetch_keys?
+			fetch_keys(eval):
+			0UL
+	};
 
 	size_t accepted(0), existed(0), i, j, k;
 	for(i = 0; i < events.size(); i += j)
@@ -265,17 +285,6 @@ try
 	// This assertion is tripped if the end of your context's stack is
 	// danger close; try increasing your stack size.
 	const ctx::stack_usage_assertion sua;
-
-	// m::vm bookkeeping that someone entered this function
-	const scope_count executing
-	{
-		eval::executing
-	};
-
-	const scope_restore eval_phase
-	{
-		eval.phase, phase::EXECUTE
-	};
 
 	const scope_notify notify
 	{
