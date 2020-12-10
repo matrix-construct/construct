@@ -131,10 +131,11 @@ ircd::m::vm::reflect(const enum phase &code)
 	switch(code)
 	{
 		case phase::NONE:         return "NONE";
-		case phase::DUPCHK:       return "DUPCHK";
 		case phase::EXECUTE:      return "EXECUTE";
-		case phase::ISSUE:        return "ISSUE";
 		case phase::CONFORM:      return "CONFORM";
+		case phase::DUPWAIT:      return "DUPWAIT";
+		case phase::DUPCHK:       return "DUPCHK";
+		case phase::ISSUE:        return "ISSUE";
 		case phase::ACCESS:       return "ACCESS";
 		case phase::VERIFY:       return "VERIFY";
 		case phase::FETCH_AUTH:   return "FETCH_AUTH";

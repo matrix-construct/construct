@@ -23,10 +23,11 @@ enum ircd::m::vm::phase
 :uint
 {
 	NONE,                  ///< No phase; not entered.
-	DUPCHK,                ///< Duplicate check & hold.
 	EXECUTE,               ///< Execution entered.
-	ISSUE,                 ///< Issue phase.
 	CONFORM,               ///< Conformity check phase.
+	DUPWAIT,               ///< Duplicate eval check & hold
+	DUPCHK,                ///< Duplicate existence check
+	ISSUE,                 ///< Issue phase.
 	ACCESS,                ///< Access control phase.
 	VERIFY,                ///< Signature verification.
 	FETCH_AUTH,            ///< Authentication events fetch phase.

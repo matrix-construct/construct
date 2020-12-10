@@ -436,11 +436,11 @@ try
 		event::id::buf{}
 	};
 
-	if(likely(opts.phase[phase::DUPCHK]) && eval.event_id)
+	if(likely(opts.phase[phase::DUPWAIT]) && eval.event_id)
 	{
 		const scope_restore eval_phase
 		{
-			eval.phase, phase::DUPCHK
+			eval.phase, phase::DUPWAIT
 		};
 
 		// Prevent more than one event with the same event_id from
