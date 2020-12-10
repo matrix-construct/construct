@@ -60,7 +60,7 @@ namespace ircd
 #include "query.h"
 #include "dbs/dbs.h"
 #include "hook.h"
-#include "vm.h"
+#include "vm/vm.h"
 #include "invite_3pid.h"
 #include "device.h"
 #include "push.h"

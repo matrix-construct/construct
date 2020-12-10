@@ -1,7 +1,7 @@
-// Matrix Construct
+// The Construct
 //
-// Copyright (C) Matrix Construct Developers, Authors & Contributors
-// Copyright (C) 2016-2018 Jason Volk <jason@zemos.net>
+// Copyright (C) The Construct Developers, Authors & Contributors
+// Copyright (C) 2016-2020 Jason Volk <jason@zemos.net>
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -9,186 +9,16 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_VM_H
+#define HAVE_IRCD_M_VM_OPTS_H
 
-/// Matrix Virtual Machine
-///
 namespace ircd::m::vm
 {
-	struct error; // custom exception
-	struct init;
 	struct opts;
 	struct copts;
-	struct eval;
-	enum fault :uint;
-	enum phase :uint;
-	using fault_t = std::underlying_type<fault>::type;
 
 	extern const opts default_opts;
 	extern const copts default_copts;
-	extern log::log log;
-	extern ctx::dock dock;
-	extern bool ready;
-
-	string_view reflect(const fault &);
-	string_view reflect(const phase &);
-	http::code http_code(const fault &);
-	string_view loghead(const mutable_buffer &, const eval &);
-	string_view loghead(const eval &);    // single tls buffer
-
-	fault execute(eval &, const vector_view<const event> &);
-	fault execute(eval &, const json::array &);
-	fault inject(eval &, json::iov &, const json::iov &);
 }
-
-namespace ircd::m::vm::sequence
-{
-	extern ctx::dock dock;
-	extern uint64_t retired;      // already written; always monotonic
-	extern uint64_t committed;    // pending write; usually monotonic
-	extern uint64_t uncommitted;  // evaluating; not monotonic
-	static size_t pending;
-
-	const uint64_t &get(const eval &);
-	uint64_t get(id::event::buf &); // [GET]
-	uint64_t max();
-	uint64_t min();
-};
-
-struct ircd::m::vm::init
-{
-	init(), ~init() noexcept;
-};
-
-/// Event Evaluation Device
-///
-/// This object conducts the evaluation of an event or a tape of multiple
-/// events. An event is evaluated in an attempt to execute it. Events which
-/// fail during evaluation won't be executed; such is the case for events which
-/// have already been executed, or events which are invalid or lead to invalid
-/// transitions or actions of the machine etc.
-///
-struct ircd::m::vm::eval
-:instance_list<eval>
-{
-	static uint64_t id_ctr;
-	static uint executing;
-	static uint injecting;
-
-	const vm::opts *opts {&default_opts};
-	const vm::copts *copts {nullptr};
-	ctx::ctx *ctx {ctx::current};
-	vm::eval *parent {nullptr};
-	vm::eval *child {nullptr};
-	uint64_t id {++id_ctr};
-	uint64_t sequence {0};
-	std::shared_ptr<db::txn> txn;
-	unique_mutable_buffer buf;
-	size_t evaluated {0};
-	size_t accepted {0};
-	size_t faulted {0};
-
-	vector_view<const m::event> pdus;
-	const json::iov *issue {nullptr};
-	const event *event_ {nullptr};
-	string_view room_id;
-	event::id::buf event_id;
-	event::conforms report;
-	string_view room_version;
-	hook::base *hook {nullptr};
-	vm::phase phase {vm::phase(0)};
-	bool room_internal {false};
-
-	void mfetch_keys() const;
-
-  public:
-	operator const event::id::buf &() const
-	{
-		return event_id;
-	}
-
-	eval(const vm::opts &);
-	eval(const vm::copts &);
-	eval(const event &, const vm::opts & = default_opts);
-	eval(const vector_view<const m::event> &, const vm::opts & = default_opts);
-	eval(const json::array &, const vm::opts & = default_opts);
-	eval(json::iov &event, const json::iov &content, const vm::copts & = default_copts);
-	eval() = default;
-	eval(eval &&) = delete;
-	eval(const eval &) = delete;
-	eval &operator=(eval &&) = delete;
-	eval &operator=(const eval &) = delete;
-	~eval() noexcept;
-
-	static bool for_each(const ctx::ctx *const &, const std::function<bool (eval &)> &);
-	static eval *find_parent(const eval &, const ctx::ctx & = ctx::cur());
-	static eval *find_root(const eval &, const ctx::ctx & = ctx::cur());
-	static size_t count(const ctx::ctx *const &);
-
-	static bool for_each(const std::function<bool (eval &)> &);
-	static bool for_each_pdu(const std::function<bool (const event &)> &);
-	static const event *find_pdu(const eval &, const event::id &);
-	static const event *find_pdu(const event::id &);
-	static size_t count(const event::id &);
-	static eval *find(const event::id &);
-	static eval &get(const event::id &);
-
-	static bool sequnique(const uint64_t &seq);
-	static eval *seqnext(const uint64_t &seq);
-	static eval *seqmax();
-	static eval *seqmin();
-	static void seqsort();
-};
-
-/// Evaluation faults. These are reasons which evaluation has halted but may
-/// continue after the user defaults the fault. They are basically types of
-/// interrupts and traps, which are supposed to be recoverable. Only the
-/// GENERAL protection fault (#gp) is an abort and is not supposed to be
-/// recoverable. The fault codes have the form of bitflags so they can be
-/// used in masks; outside of that case only one fault is dealt with at
-/// a time so they can be switched as they appear in the enum.
-///
-enum ircd::m::vm::fault
-:uint
-{
-	ACCEPT        = 0x00,  ///< No fault.
-	EXISTS        = 0x01,  ///< Replaying existing event. (#ex)
-	GENERAL       = 0x02,  ///< General protection fault. (#gp)
-	INVALID       = 0x04,  ///< Non-conforming event format. (#ud)
-	AUTH          = 0x08,  ///< Auth rules violation. (#av)
-	STATE         = 0x10,  ///< Required state is missing (#st)
-	EVENT         = 0x20,  ///< Eval requires addl events in the ef register (#ef)
-};
-
-/// Evaluation phases
-enum ircd::m::vm::phase
-:uint
-{
-	NONE,                  ///< No phase; not entered.
-	DUPCHK,                ///< Duplicate check & hold.
-	EXECUTE,               ///< Execution entered.
-	ISSUE,                 ///< Issue phase.
-	CONFORM,               ///< Conformity check phase.
-	ACCESS,                ///< Access control phase.
-	VERIFY,                ///< Signature verification.
-	FETCH_AUTH,            ///< Authentication events fetch phase.
-	AUTH_STATIC,           ///< Static authentication phase.
-	FETCH_PREV,            ///< Previous events fetch phase.
-	FETCH_STATE,           ///< State events fetch phase.
-	PRECOMMIT,             ///< Precommit sequence.
-	PREINDEX,              ///< Prefetch indexing & transaction dependencies.
-	AUTH_RELA,             ///< Relative authentication phase.
-	COMMIT,                ///< Commit sequence.
-	AUTH_PRES,             ///< Authentication phase.
-	EVALUATE,              ///< Evaluation phase.
-	INDEX,                 ///< Indexing & transaction building phase.
-	POST,                  ///< Transaction-included effects phase.
-	WRITE,                 ///< Write transaction.
-	RETIRE,                ///< Retire phase
-	NOTIFY,                ///< Notifications phase.
-	EFFECTS,               ///< Effects phase.
-	_NUM_
-};
 
 /// Evaluation Options
 struct ircd::m::vm::opts
@@ -399,47 +229,3 @@ struct ircd::m::vm::copts
 
 	copts() noexcept;
 };
-
-struct ircd::m::vm::error
-:m::error
-{
-	vm::fault code;
-
-	template<class... args> error(const http::code &, const fault &, const string_view &fmt, args&&... a);
-	template<class... args> error(const fault &, const string_view &fmt, args&&... a);
-	template<class... args> error(const string_view &fmt, args&&... a);
-};
-
-template<class... args>
-ircd::m::vm::error::error(const string_view &fmt,
-                          args&&... a)
-:error
-{
-	http::INTERNAL_SERVER_ERROR, fault::GENERAL, fmt, std::forward<args>(a)...
-}
-{}
-
-template<class... args>
-ircd::m::vm::error::error(const fault &code,
-                          const string_view &fmt,
-                          args&&... a)
-:error
-{
-	http_code(code), code, fmt, std::forward<args>(a)...
-}
-{}
-
-template<class... args>
-ircd::m::vm::error::error(const http::code &httpcode,
-                          const fault &code,
-                          const string_view &fmt,
-                          args&&... a)
-:m::error
-{
-	child, httpcode, reflect(code), fmt, std::forward<args>(a)...
-}
-,code
-{
-	code
-}
-{}
