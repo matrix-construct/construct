@@ -15,13 +15,13 @@ namespace ircd::m::vm
 {
 	struct eval;
 
+	const event *find_pdu(const eval &, const event::id &) noexcept;
+	eval *find_parent(const eval &, const ctx::ctx & = ctx::cur()) noexcept;
+	eval *find_root(const eval &, const ctx::ctx & = ctx::cur()) noexcept;
+
 	string_view loghead(const mutable_buffer &, const eval &);
 	string_view loghead(const eval &);    // single tls buffer
 
-	fault execute(eval &, const vector_view<const event> &);
-	fault execute(eval &, const json::array &);
-
-	fault inject(eval &, json::iov &, const json::iov &);
 }
 
 /// Event Evaluation Device
@@ -84,19 +84,21 @@ struct ircd::m::vm::eval
 	eval &operator=(const eval &) = delete;
 	~eval() noexcept;
 
-	static bool for_each(const ctx::ctx *const &, const std::function<bool (eval &)> &);
-	static eval *find_parent(const eval &, const ctx::ctx & = ctx::cur());
-	static eval *find_root(const eval &, const ctx::ctx & = ctx::cur());
-	static size_t count(const ctx::ctx *const &);
-
+	// Tools for all evals
 	static bool for_each(const std::function<bool (eval &)> &);
 	static bool for_each_pdu(const std::function<bool (const event &)> &);
-	static const event *find_pdu(const eval &, const event::id &);
+
+	// Tools for all evals sharing this ircd::context
+	static bool for_each(const ctx::ctx *const &, const std::function<bool (eval &)> &);
+	static size_t count(const ctx::ctx *const &);
+
+	// Event snoop interface
 	static const event *find_pdu(const event::id &);
 	static size_t count(const event::id &);
 	static eval *find(const event::id &);
 	static eval &get(const event::id &);
 
+	// Sequence related interface
 	static bool sequnique(const uint64_t &seq);
 	static eval *seqnext(const uint64_t &seq);
 	static eval *seqmax();

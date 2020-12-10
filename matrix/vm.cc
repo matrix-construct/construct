@@ -109,42 +109,6 @@ noexcept
 	assert(retired == sequence::retired || ircd::read_only);
 }
 
-//
-// m/vm.h
-//
-
-ircd::string_view
-ircd::m::vm::loghead(const eval &eval)
-{
-	thread_local char buf[128];
-	return loghead(buf, eval);
-}
-
-ircd::string_view
-ircd::m::vm::loghead(const mutable_buffer &buf,
-                     const eval &eval)
-{
-	return fmt::sprintf
-	{
-		buf, "vm:%lu:%lu:%lu parent:%lu %s eval:%lu %s seq:%lu %s",
-		sequence::retired,
-		sequence::committed,
-		sequence::uncommitted,
-		eval.parent?
-			eval.parent->id:
-			0UL,
-		eval.parent?
-			reflect(eval.parent->phase):
-			reflect(phase::NONE),
-		eval.id,
-		reflect(eval.phase),
-		sequence::get(eval),
-		eval.event_?
-			string_view{eval.event_->event_id}:
-			"<unidentified>"_sv,
-	};
-}
-
 ircd::http::code
 ircd::m::vm::http_code(const fault &code)
 {

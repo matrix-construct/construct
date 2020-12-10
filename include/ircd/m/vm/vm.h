@@ -29,6 +29,13 @@ namespace ircd::m::vm
 #include "eval.h"
 #include "seq.h"
 
+namespace ircd::m::vm
+{
+	fault execute(eval &, const vector_view<const event> &);
+	fault execute(eval &, const json::array &);
+	fault inject(eval &, json::iov &, const json::iov &);
+}
+
 struct ircd::m::vm::init
 {
 	init(), ~init() noexcept;

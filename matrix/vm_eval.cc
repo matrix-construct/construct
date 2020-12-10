@@ -37,6 +37,172 @@ ircd::m::vm::eval::executing;
 decltype(ircd::m::vm::eval::injecting)
 ircd::m::vm::eval::injecting;
 
+ircd::string_view
+ircd::m::vm::loghead(const eval &eval)
+{
+	thread_local char buf[128];
+	return loghead(buf, eval);
+}
+
+ircd::string_view
+ircd::m::vm::loghead(const mutable_buffer &buf,
+                     const eval &eval)
+{
+	return fmt::sprintf
+	{
+		buf, "vm:%lu:%lu:%lu parent:%lu %s eval:%lu %s seq:%lu %s",
+		sequence::retired,
+		sequence::committed,
+		sequence::uncommitted,
+		eval.parent?
+			eval.parent->id:
+			0UL,
+		eval.parent?
+			reflect(eval.parent->phase):
+			reflect(phase::NONE),
+		eval.id,
+		reflect(eval.phase),
+		sequence::get(eval),
+		eval.event_?
+			string_view{eval.event_->event_id}:
+			"<unidentified>"_sv,
+	};
+}
+
+ircd::m::vm::eval *
+ircd::m::vm::find_root(const eval &a,
+                       const ctx::ctx &c)
+noexcept
+{
+	eval *ret {nullptr}, *parent {nullptr}; do
+	{
+		if(!(parent = find_parent(a, c)))
+			return ret;
+
+		ret = parent;
+	}
+	while(1);
+}
+
+ircd::m::vm::eval *
+ircd::m::vm::find_parent(const eval &a,
+                         const ctx::ctx &c)
+noexcept
+{
+	eval *ret {nullptr};
+	eval::for_each(&c, [&ret, &a]
+	(eval &eval)
+	{
+		const bool cond
+		{
+			(&eval != &a) && (!ret || eval.id > ret->id)
+		};
+
+		ret = cond? &eval : ret;
+		return true;
+	});
+
+	return ret;
+}
+
+const ircd::m::event *
+ircd::m::vm::find_pdu(const eval &eval,
+                      const event::id &event_id)
+noexcept
+{
+	const m::event *ret{nullptr};
+	for(const auto &event : eval.pdus)
+	{
+		if(event.event_id != event_id)
+			continue;
+
+		ret = std::addressof(event);
+		break;
+	}
+
+	return ret;
+}
+
+//
+// eval::eval
+//
+
+ircd::m::vm::eval::eval(const vm::opts &opts)
+:opts{&opts}
+,parent
+{
+	find_parent(*this)
+}
+{
+	if(parent)
+	{
+		assert(!parent->child);
+		parent->child = this;
+	}
+}
+
+ircd::m::vm::eval::eval(const vm::copts &opts)
+:opts{&opts}
+,copts{&opts}
+,parent
+{
+	find_parent(*this)
+}
+{
+	if(parent)
+	{
+		assert(!parent->child);
+		parent->child = this;
+	}
+}
+
+ircd::m::vm::eval::eval(json::iov &event,
+                        const json::iov &content,
+                        const vm::copts &opts)
+:eval{opts}
+{
+	inject(*this, event, content);
+}
+
+ircd::m::vm::eval::eval(const event &event,
+                        const vm::opts &opts)
+:eval
+{
+	vector_view<const m::event>(&event, 1),
+	opts
+}
+{
+}
+
+ircd::m::vm::eval::eval(const json::array &pdus,
+                        const vm::opts &opts)
+:eval{opts}
+{
+	execute(*this, pdus);
+}
+
+ircd::m::vm::eval::eval(const vector_view<const m::event> &events,
+                        const vm::opts &opts)
+:eval{opts}
+{
+	execute(*this, events);
+}
+
+ircd::m::vm::eval::~eval()
+noexcept
+{
+	assert(!child);
+	if(parent)
+	{
+		assert(parent->child == this);
+		parent->child = nullptr;
+	}
+}
+
+//
+// Tools
+//
+
 void
 ircd::m::vm::eval::seqsort()
 {
@@ -194,21 +360,26 @@ ircd::m::vm::eval::find_pdu(const event::id &event_id)
 	return ret;
 }
 
-const ircd::m::event *
-ircd::m::vm::eval::find_pdu(const eval &eval,
-                            const event::id &event_id)
+size_t
+ircd::m::vm::eval::count(const ctx::ctx *const &c)
 {
-	const m::event *ret{nullptr};
-	for(const auto &event : eval.pdus)
+	return std::count_if(begin(eval::list), end(eval::list), [&c]
+	(const eval *const &eval)
 	{
-		if(event.event_id != event_id)
-			continue;
+		return eval->ctx == c;
+	});
+}
 
-		ret = std::addressof(event);
-		break;
-	}
+bool
+ircd::m::vm::eval::for_each(const ctx::ctx *const &c,
+                            const std::function<bool (eval &)> &closure)
+{
+	for(eval *const &eval : eval::list)
+		if(eval->ctx == c)
+			if(!closure(*eval))
+				return false;
 
-	return ret;
+	return true;
 }
 
 bool
@@ -231,6 +402,7 @@ ircd::m::vm::eval::for_each_pdu(const std::function<bool (const event &)> &closu
 		return true;
 	});
 }
+
 bool
 ircd::m::vm::eval::for_each(const std::function<bool (eval &)> &closure)
 {
@@ -239,138 +411,6 @@ ircd::m::vm::eval::for_each(const std::function<bool (eval &)> &closure)
 			return false;
 
 	return true;
-}
-
-size_t
-ircd::m::vm::eval::count(const ctx::ctx *const &c)
-{
-	return std::count_if(begin(eval::list), end(eval::list), [&c]
-	(const eval *const &eval)
-	{
-		return eval->ctx == c;
-	});
-}
-
-ircd::m::vm::eval *
-ircd::m::vm::eval::find_root(const eval &a,
-                             const ctx::ctx &c)
-{
-	eval *ret {nullptr}, *parent {nullptr}; do
-	{
-		if(!(parent = find_parent(a, c)))
-			return ret;
-
-		ret = parent;
-	}
-	while(1);
-}
-
-ircd::m::vm::eval *
-ircd::m::vm::eval::find_parent(const eval &a,
-                               const ctx::ctx &c)
-{
-	eval *ret {nullptr};
-	for_each(&c, [&ret, &a]
-	(eval &eval)
-	{
-		const bool cond
-		{
-			(&eval != &a) && (!ret || eval.id > ret->id)
-		};
-
-		ret = cond? &eval : ret;
-		return true;
-	});
-
-	return ret;
-}
-
-bool
-ircd::m::vm::eval::for_each(const ctx::ctx *const &c,
-                            const std::function<bool (eval &)> &closure)
-{
-	for(eval *const &eval : eval::list)
-		if(eval->ctx == c)
-			if(!closure(*eval))
-				return false;
-
-	return true;
-}
-
-//
-// eval::eval
-//
-
-ircd::m::vm::eval::eval(const vm::opts &opts)
-:opts{&opts}
-,parent
-{
-	find_parent(*this)
-}
-{
-	if(parent)
-	{
-		assert(!parent->child);
-		parent->child = this;
-	}
-}
-
-ircd::m::vm::eval::eval(const vm::copts &opts)
-:opts{&opts}
-,copts{&opts}
-,parent
-{
-	find_parent(*this)
-}
-{
-	if(parent)
-	{
-		assert(!parent->child);
-		parent->child = this;
-	}
-}
-
-ircd::m::vm::eval::eval(json::iov &event,
-                        const json::iov &content,
-                        const vm::copts &opts)
-:eval{opts}
-{
-	inject(*this, event, content);
-}
-
-ircd::m::vm::eval::eval(const event &event,
-                        const vm::opts &opts)
-:eval
-{
-	vector_view<const m::event>(&event, 1),
-	opts
-}
-{
-}
-
-ircd::m::vm::eval::eval(const json::array &pdus,
-                        const vm::opts &opts)
-:eval{opts}
-{
-	execute(*this, pdus);
-}
-
-ircd::m::vm::eval::eval(const vector_view<const m::event> &events,
-                        const vm::opts &opts)
-:eval{opts}
-{
-	execute(*this, events);
-}
-
-ircd::m::vm::eval::~eval()
-noexcept
-{
-	assert(!child);
-	if(parent)
-	{
-		assert(parent->child == this);
-		parent->child = nullptr;
-	}
 }
 
 void
