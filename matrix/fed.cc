@@ -573,9 +573,12 @@ ircd::m::fed::event_auth::event_auth(const m::room::id &room_id,
 		else
 			json::get<"uri"_>(opts.request) = fmt::sprintf
 			{
-				buf, "/_matrix/federation/v1/event_auth/%s/%s",
+				buf, "/_matrix/federation/v1/event_auth/%s/%s%s",
 				url::encode(ridbuf, room_id),
 				url::encode(eidbuf, event_id),
+				opts.ids?
+					"?auth_chain=0&auth_chain_ids=1"_sv:
+					string_view{},
 			};
 
 		consume(buf, size(json::get<"uri"_>(opts.request)));

@@ -42,5 +42,9 @@ struct ircd::m::fed::event_auth
 struct ircd::m::fed::event_auth::opts
 :request::opts
 {
+	/// Receive fast auth_chain_ids from construct; or auth_chain from synapse.
+	bool ids {false};
+
+	/// Receive slower auth_chain_ids; supported by all servers.
 	bool ids_only {false};
 };

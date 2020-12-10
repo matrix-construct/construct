@@ -15330,14 +15330,15 @@ console_cmd__fed__auth(opt &out, const string_view &line)
 		param.at(2, event_id.host())
 	};
 
-	const string_view &ids_only
+	const string_view &op
 	{
 		param["op"]
 	};
 
 	m::fed::event_auth::opts opts;
 	opts.remote = remote;
-	opts.ids_only = ids_only == "ids";
+	opts.ids = op == "ids";
+	opts.ids_only = op == "ids_only";
 	const unique_buffer<mutable_buffer> buf
 	{
 		16_KiB
