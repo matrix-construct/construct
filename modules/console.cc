@@ -16768,7 +16768,7 @@ console_cmd__exec__list(opt &out, const string_view &line)
 		out
 		<< " " << exec->id
 		<< " " << exec->pid
-		<< " " << exec->code
+		<< " " << (!exec->pid? lex_cast(exec->code): "-"_sv)
 		<< " " << exec->path
 		<< std::endl;
 
@@ -16844,7 +16844,7 @@ console_cmd__app(opt &out, const string_view &line)
 		<< " " << std::right << std::setw(5) << app->child.id
 		<< " " << std::right << std::setw(10) << app->event_idx
 		<< " " << std::right << std::setw(8) << app->child.pid
-		<< " " << std::right << std::setw(6) << app->child.code
+		<< " " << std::right << std::setw(6) << (!app->child.pid? lex_cast(app->child.code): "---"_sv)
 		<< " " << std::left << std::setw(40) << room_id
 		<< " `" << app->argv.at(0) << "'"
 		;
