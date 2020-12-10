@@ -19,6 +19,12 @@ namespace ircd::m
 	static string_view authenticate_node(const resource::method &, const client &, resource::request &);
 }
 
+decltype(ircd::m::resource::log)
+ircd::m::resource::log
+{
+	"m.resource"
+};
+
 decltype(ircd::m::x_matrix_verify_origin)
 ircd::m::x_matrix_verify_origin
 {
@@ -70,9 +76,33 @@ try
 		*this, client, request_
 	};
 
+	const string_view &ident
+	{
+		request.bridge_id?:
+		request.node_id?:
+		request.user_id?:
+		string_view{}
+	};
+
+	if(ident)
+		log::debug
+		{
+			log, "%s %s %s `%s'",
+			client.loghead(),
+			ident,
+			request.head.method,
+			request.head.path,
+		};
+
+	const bool cached_error
+	{
+		request.node_id
+		&& fed::errant(request.node_id)
+	};
+
 	// If we have an error cached from previously not being able to
 	// contact this origin we can clear that now that they're alive.
-	if(request.node_id && fed::errant(request.node_id))
+	if(cached_error)
 	{
 		m::burst::opts opts;
 		m::burst::burst

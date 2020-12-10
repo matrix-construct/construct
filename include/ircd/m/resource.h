@@ -23,6 +23,8 @@ struct ircd::m::resource
 	struct method;
 	struct request;
 
+	static log::log log;
+
 	using ircd::resource::resource;
 };
 
