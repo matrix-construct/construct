@@ -153,9 +153,7 @@ try
 
 	const json::object content
 	{
-		origin_server_ts > 0ms?
-			m::get(std::nothrow, event_idx, "content", buf):
-			const_buffer{}
+		m::get(std::nothrow, event_idx, "content", buf)
 	};
 
 	const seconds ttl
