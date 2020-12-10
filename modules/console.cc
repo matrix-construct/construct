@@ -8413,7 +8413,7 @@ console_cmd__event__refs(opt &out, const string_view &line)
 		<< " " << std::left << std::setw(45) << trunc(event_id, 45)
 		<< " " << std::right << std::setw(12) << trunc(reflect(type), 12)
 		<< " -> " << std::right << std::setw(10) << tgt
-		<< " " << std::left << std::setw(45) << trunc(tgt_id? string_view{tgt_id}: "<index error>"_sv, 45)
+		<< " " << std::left << std::setw(60) << trunc(tgt_id? string_view{tgt_id}: "<index error>"_sv, 60)
 		<< std::endl
 		;
 
