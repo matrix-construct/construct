@@ -8424,6 +8424,50 @@ console_cmd__event__refs(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__event__refs__count(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id", "type"
+	}};
+
+	const m::event::id &event_id
+	{
+		param.at("event_id")
+	};
+
+	const m::event::refs refs
+	{
+		index(event_id)
+	};
+
+	const string_view &typestr
+	{
+		param["type"]
+	};
+
+	m::dbs::ref type
+	{
+		empty(typestr)?
+			m::dbs::ref(-1):
+			m::dbs::ref(0)
+	};
+
+	if(!empty(typestr))
+		for(; uint8_t(type) < sizeof(m::dbs::ref) * 256; type = m::dbs::ref(uint8_t(type) + 1))
+			if(reflect(type) == typestr)
+				break;
+
+	const auto count
+	{
+		refs.count(type)
+	};
+
+	out << count << std::endl;
+	return true;
+}
+
+bool
 console_cmd__event__refs__next(opt &out, const string_view &line)
 {
 	const params param{line, " ",
