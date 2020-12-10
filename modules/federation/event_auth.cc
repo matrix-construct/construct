@@ -97,6 +97,11 @@ get__event_auth(client &client,
 			"You are not permitted to view the room at this event"
 		};
 
+	const m::room::auth::chain chain
+	{
+		m::index(event_id)
+	};
+
 	m::resource::response::chunked response
 	{
 		client, http::OK
@@ -107,26 +112,48 @@ get__event_auth(client &client,
 		response.buf, response.flusher(), size_t(event_auth_flush_hiwat)
 	};
 
-	json::stack::object top{out};
-	json::stack::array auth_chain
+	json::stack::object top
 	{
-		top, "auth_chain"
+		out
 	};
 
-	const m::room::auth::chain chain
+	if(request.query.get<bool>("auth_chain", true))
 	{
-		m::index(event_id)
-	};
+		json::stack::array auth_chain
+		{
+			top, "auth_chain"
+		};
 
-	m::event::fetch event;
-	chain.for_each([&auth_chain, &event]
-	(const m::event::idx &event_idx)
+		m::event::fetch event;
+		chain.for_each([&auth_chain, &event]
+		(const m::event::idx &event_idx)
+		{
+			if(likely(seek(std::nothrow, event, event_idx)))
+				auth_chain.append(event);
+
+			return true;
+		});
+	}
+
+	if(request.query.get<bool>("auth_chain_ids", false))
 	{
-		if(seek(std::nothrow, event, event_idx))
-			auth_chain.append(event);
+		json::stack::array auth_chain_ids
+		{
+			top, "auth_chain_ids"
+		};
 
-		return true;
-	});
+		chain.for_each([&auth_chain_ids]
+		(const m::event::idx &event_idx)
+		{
+			m::event_id(std::nothrow, event_idx, [&auth_chain_ids]
+			(const m::event::id &event_id)
+			{
+				auth_chain_ids.append(event_id);
+			});
+
+			return true;
+		});
+	}
 
 	return std::move(response);
 }
