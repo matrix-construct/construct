@@ -1120,7 +1120,7 @@ ircd::fs::aio::system::handle_descriptor
 	// appears to excessively allocate and deallocate 120 bytes; this
 	// is a simple asynchronous operation, we can do better (and perhaps
 	// even better than this below).
-	[](auto &handler, const size_t &size)
+	[](ios::handler &handler, const size_t &size) -> void *
 	{
 		assert(ircd::fs::aio::system);
 		auto &system(*ircd::fs::aio::system);
@@ -1136,7 +1136,7 @@ ircd::fs::aio::system::handle_descriptor
 	},
 
 	// no deallocation; satisfied by class member unique_ptr
-	[](auto &handler, void *const &ptr, const auto &size) {},
+	[](ios::handler &handler, void *const &ptr, const size_t &size) {},
 
 	// continuation
 	true,

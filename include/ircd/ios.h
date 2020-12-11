@@ -110,8 +110,8 @@ struct ircd::ios::descriptor
 	string_view name;
 	uint64_t id {++ids};
 	std::unique_ptr<struct stats> stats;
-	std::function<void *(handler &, const size_t &)> allocator;
-	std::function<void (handler &, void *const &, const size_t &)> deallocator;
+	void *(*allocator)(handler &, const size_t &);
+	void (*deallocator)(handler &, void *const &, const size_t &);
 	std::vector<std::array<uint64_t, 2>> history; // epoch, cycles
 	uint8_t history_pos {0};
 	bool continuation {false};
