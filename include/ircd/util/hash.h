@@ -11,29 +11,38 @@
 #pragma once
 #define HAVE_IRCD_UTIL_HASH_H
 
+// constexpr bernstein string hasher suite; these functions will hash the
+// string at compile time leaving an integer residue at runtime. Decent
+// primes are at least 7681 and 5381.
+
 namespace ircd {
 inline namespace util
 {
-	// constexpr bernstein string hasher suite; these functions will hash the
-	// string at compile time leaving an integer residue at runtime. Decent
-	// primes are at least 7681 and 5381.
-	template<size_t PRIME = 7681> constexpr size_t hash(const char16_t *const str, const size_t i = 0) noexcept;
-	template<size_t PRIME = 7681> constexpr size_t hash(const string_view str, const size_t i = 0) noexcept;
+	template<size_t PRIME = 7681>
+	constexpr size_t hash(const string_view str, size_t i = 0, size_t r = PRIME) noexcept;
+
+	template<size_t PRIME = 7681>
+	constexpr size_t hash(const char16_t *const str, size_t i = 0, size_t r = PRIME) noexcept;
 
 	// Note that at runtime this hash uses multiplication on every character
 	// which can consume many cycles...
-	template<size_t PRIME = 7681> size_t hash(const std::u16string &str, const size_t i = 0) noexcept;
+	template<size_t PRIME = 7681>
+	size_t hash(const std::u16string &str, size_t i = 0, size_t r = PRIME) noexcept;
 }}
 
 /// Runtime hashing of a std::u16string (for js). Non-cryptographic.
 template<size_t PRIME>
 [[gnu::pure]]
-size_t
+inline size_t
 ircd::util::hash(const std::u16string &str,
-                 const size_t i)
+                 size_t i,
+                 size_t r)
 noexcept
 {
-	return i >= str.size()? PRIME : (hash(str, i+1) * 33ULL) ^ str.at(i);
+	for(; i < str.size(); ++i)
+		r = str[i] ^ (r * 33ULL);
+
+	return r;
 }
 
 /// Runtime hashing of a string_view. Non-cryptographic.
@@ -41,10 +50,14 @@ template<size_t PRIME>
 [[gnu::pure]]
 constexpr size_t
 ircd::util::hash(const string_view str,
-                 const size_t i)
+                 size_t i,
+                 size_t r)
 noexcept
 {
-	return i >= str.size()? PRIME : (hash(str, i+1) * 33ULL) ^ str.at(i);
+	for(; i < str.size(); ++i)
+		r = str[i] ^ (r * 33ULL);
+
+	return r;
 }
 
 /// Compile-time hashing of a wider string literal (for js). Non-cryptographic.
@@ -52,8 +65,12 @@ template<size_t PRIME>
 [[gnu::pure]]
 constexpr size_t
 ircd::util::hash(const char16_t *const str,
-                 const size_t i)
+                 size_t i,
+                 size_t r)
 noexcept
 {
-	return !str[i]? PRIME : (hash(str, i+1) * 33ULL) ^ str[i];
+	for(assert(str); str[i]; ++i)
+		r = str[i] ^ (r * 33ULL);
+
+	return r;
 }
