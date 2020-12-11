@@ -75,6 +75,7 @@ ircd::m::client_versions::versions_default
 	"r0.4.0 "
 	"r0.5.0 "
 	"r0.6.0 "
+	"r0.6.1 "
 };
 
 /// Note this conf item doesn't persist to and from the database, which means
