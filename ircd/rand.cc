@@ -44,8 +44,31 @@ decltype(ircd::rand::dict::numeric) ircd::rand::dict::numeric
 	"0123456789"
 };
 
+ircd::string_view
+ircd::rand::string(const mutable_buffer &out,
+                   const std::string &dict)
+noexcept
+{
+	assert(!dict.empty());
+	std::uniform_int_distribution<size_t> dist
+	{
+		0, dict.size() - 1
+	};
+
+	std::generate(data(out), data(out) + size(out), [&dict, &dist]
+	() -> char
+	{
+		const auto &pos(dist(mt));
+		assert(pos < dict.size());
+		return dict[pos];
+	});
+
+	return out;
+}
+
 ircd::const_buffer
 ircd::rand::fill(const mutable_buffer &out)
+noexcept
 {
 	uint64_t *const __restrict__ val
 	{
@@ -67,26 +90,10 @@ ircd::rand::fill(const mutable_buffer &out)
 	return out;
 }
 
-ircd::string_view
-ircd::rand::string(const mutable_buffer &out,
-                   const std::string &dict)
-{
-	std::uniform_int_distribution<size_t> dist
-	{
-		0, dict.size() - 1
-	};
-
-	std::generate(data(out), data(out) + size(out), [&dict, &dist]
-	{
-		return char(dict.at(dist(mt)));
-	});
-
-	return out;
-}
-
 template<>
 ircd::u512x1
 ircd::rand::vector()
+noexcept
 {
 	return u64x8
 	{
@@ -100,6 +107,7 @@ ircd::rand::vector()
 template<>
 ircd::u256x1
 ircd::rand::vector()
+noexcept
 {
 	return u64x4
 	{
@@ -111,9 +119,32 @@ ircd::rand::vector()
 template<>
 ircd::u128x1
 ircd::rand::vector()
+noexcept
 {
 	return u64x2
 	{
 		integer(), integer()
 	};
+}
+
+/// Random integer in range (inclusive)
+uint64_t
+ircd::rand::integer(const uint64_t &min,
+                    const uint64_t &max)
+noexcept
+{
+	std::uniform_int_distribution<uint64_t> dist
+	{
+		min, max
+	};
+
+	return dist(mt);
+}
+
+/// Random 64-bits
+uint64_t
+ircd::rand::integer()
+noexcept
+{
+	return mt();
 }

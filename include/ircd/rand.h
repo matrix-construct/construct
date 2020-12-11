@@ -31,41 +31,90 @@ namespace ircd::rand
 	extern std::mt19937_64 mt;
 
 	// Random integer
-	uint64_t integer();
-	uint64_t integer(const uint64_t &min, const uint64_t &max); // inclusive
+	uint64_t integer() noexcept;
+	uint64_t integer(const uint64_t &min, const uint64_t &max) noexcept; // inclusive
+	uint64_t integer(xoshiro256p &) noexcept;
 
 	// Random vector
-	template<class T> T vector() = delete;
-	template<> u128x1 vector();
-	template<> u256x1 vector();
-	template<> u512x1 vector();
-
-	// Random character from dictionary
-	char character(const std::string &dict = dict::alnum);
-
-	// Random string from dictionary, fills buffer
-	string_view string(const mutable_buffer &out, const std::string &dict);
+	template<class T> T vector() noexcept = delete;
+	template<> u128x1 vector() noexcept;
+	template<> u256x1 vector() noexcept;
+	template<> u512x1 vector() noexcept;
 
 	// Random fill of buffer
-	const_buffer fill(const mutable_buffer &out);
+	const_buffer fill(const mutable_buffer &out) noexcept;
+
+	// Random fill of array
+	template<class T,
+	         size_t S>
+	decltype(auto) fill(T (&buf)[S]) noexcept;
+
+	// Random character from dictionary
+	char character(const std::string &dict = dict::alnum) noexcept;
+
+	// Random string from dictionary, fills buffer
+	string_view string(const mutable_buffer &out, const std::string &dict) noexcept;
 }
 
 struct ircd::rand::xoshiro256p
 {
-	u64x4 s
-	{
-		-1UL, -1UL, -1UL, -1UL
-	};
+	uint64_t s[4];
 
-	uint64_t operator()();
+	xoshiro256p() noexcept;
 };
 
-inline uint64_t
-ircd::rand::xoshiro256p::operator()()
+template<class T,
+         size_t S>
+inline decltype(auto)
+ircd::rand::fill(T (&buf)[S])
+noexcept
 {
+	static_assert
+	(
+		sizeof(buf) == sizeof(T) * S
+	);
+
+	const mutable_buffer mb
+	{
+		reinterpret_cast<char *>(buf), sizeof(buf)
+	};
+
+	fill(mb);
+	return buf;
+}
+
+/// Random character from dictionary
+inline char
+ircd::rand::character(const std::string &dict)
+noexcept
+{
+	assert(!dict.empty());
+	const auto pos
+	{
+		integer(0, dict.size() - 1)
+	};
+
+	assert(pos < dict.size());
+	return dict[pos];
+}
+
+inline
+ircd::rand::xoshiro256p::xoshiro256p()
+noexcept
+{
+	fill(s);
+}
+
+inline uint64_t
+ircd::rand::integer(xoshiro256p &state)
+noexcept
+{
+	auto &s(state.s);
+
 	const u64
 	ret(s[0] + s[3]),
 	t(s[1] << 17);
+
 	s[2] ^= s[0];
 	s[3] ^= s[1];
 	s[1] ^= s[2];
@@ -79,37 +128,4 @@ ircd::rand::xoshiro256p::operator()()
 	#endif
 
 	return ret;
-};
-
-/// Random character from dictionary
-inline char
-ircd::rand::character(const std::string &dict)
-{
-	assert(!dict.empty());
-	const auto pos
-	{
-		integer(0, dict.size() - 1)
-	};
-
-	return dict.at(pos);
-}
-
-/// Random integer in range (inclusive)
-inline uint64_t
-ircd::rand::integer(const uint64_t &min,
-                    const uint64_t &max)
-{
-	std::uniform_int_distribution<uint64_t> dist
-	{
-		min, max
-	};
-
-	return dist(mt);
-}
-
-/// Random 64-bits
-inline uint64_t
-ircd::rand::integer()
-{
-	return mt();
 }
