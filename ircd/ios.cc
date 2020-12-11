@@ -91,6 +91,7 @@ ircd::ios::descriptor::descriptor(const string_view &name,
                                   const decltype(allocator) &allocator,
                                   const decltype(deallocator) &deallocator,
                                   const bool &continuation)
+noexcept
 :name
 {
 	name
@@ -128,28 +129,6 @@ noexcept
 	assert(!stats || stats->queued == 0);
 	assert(!stats || stats->allocs == stats->frees);
 	assert(!stats || stats->alloc_bytes == stats->free_bytes);
-}
-
-[[gnu::hot]]
-void
-ircd::ios::descriptor::default_deallocator(handler &handler,
-                                           void *const &ptr,
-                                           const size_t &size)
-noexcept
-{
-	#ifdef __clang__
-	::operator delete(ptr);
-	#else
-	::operator delete(ptr, size);
-	#endif
-}
-
-[[gnu::hot]]
-void *
-ircd::ios::descriptor::default_allocator(handler &handler,
-                                         const size_t &size)
-{
-	return ::operator new(size);
 }
 
 //
@@ -313,40 +292,6 @@ noexcept
 			stats.latency_last,
 			stats.queued,
 		};
-}
-
-[[gnu::hot]]
-void
-ircd::ios::handler::deallocate(handler *const &handler,
-                               void *const &ptr,
-                               const size_t &size)
-noexcept
-{
-	assert(handler && handler->descriptor);
-	auto &descriptor(*handler->descriptor);
-
-	descriptor.deallocator(*handler, ptr, size);
-
-	assert(descriptor.stats);
-	auto &stats(*descriptor.stats);
-	stats.free_bytes += size;
-	++stats.frees;
-}
-
-[[gnu::hot]]
-void *
-ircd::ios::handler::allocate(handler *const &handler,
-                             const size_t &size)
-{
-	assert(handler && handler->descriptor);
-	auto &descriptor(*handler->descriptor);
-
-	assert(descriptor.stats);
-	auto &stats(*descriptor.stats);
-	stats.alloc_bytes += size;
-	++stats.allocs;
-
-	return descriptor.allocator(*handler, size);
 }
 
 //

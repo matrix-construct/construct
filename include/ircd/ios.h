@@ -119,7 +119,7 @@ struct ircd::ios::descriptor
 	descriptor(const string_view &name,
 	           const decltype(allocator) & = default_allocator,
 	           const decltype(deallocator) & = default_deallocator,
-	           const bool &continuation = false);
+	           const bool &continuation = false) noexcept;
 
 	descriptor(descriptor &&) = delete;
 	descriptor(const descriptor &) = delete;
@@ -267,6 +267,43 @@ const
 // ircd::ios::handler
 //
 
+[[gnu::hot]]
+inline void
+ircd::ios::handler::deallocate(handler *const &handler,
+                               void *const &ptr,
+                               const size_t &size)
+noexcept
+{
+	assert(handler && handler->descriptor);
+	auto &descriptor(*handler->descriptor);
+
+	assert(descriptor.deallocator);
+	descriptor.deallocator(*handler, ptr, size);
+
+	assert(descriptor.stats);
+	auto &stats(*descriptor.stats);
+	stats.free_bytes += size;
+	++stats.frees;
+}
+
+[[gnu::hot]]
+inline void *
+ircd::ios::handler::allocate(handler *const &handler,
+                             const size_t &size)
+{
+	assert(handler && handler->descriptor);
+	auto &descriptor(*handler->descriptor);
+
+	assert(descriptor.stats);
+	auto &stats(*descriptor.stats);
+	stats.alloc_bytes += size;
+	++stats.allocs;
+
+	assert(descriptor.allocator);
+	return descriptor.allocator(*handler, size);
+}
+
+[[gnu::hot]]
 inline void
 ircd::ios::handler::enqueue(handler *const &handler)
 noexcept
@@ -291,6 +328,7 @@ noexcept
 		};
 }
 
+[[gnu::hot]]
 inline bool
 ircd::ios::handler::continuation(handler *const &handler)
 noexcept
@@ -298,6 +336,32 @@ noexcept
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
 	return descriptor.continuation;
+}
+
+//
+// ios::descriptor
+//
+
+[[gnu::hot]]
+inline void
+ircd::ios::descriptor::default_deallocator(handler &handler,
+                                           void *const &ptr,
+                                           const size_t &size)
+noexcept
+{
+	#ifdef __clang__
+		::operator delete(ptr);
+	#else
+		::operator delete(ptr, size);
+	#endif
+}
+
+[[gnu::hot]]
+inline void *
+ircd::ios::descriptor::default_allocator(handler &handler,
+                                         const size_t &size)
+{
+	return ::operator new(size);
 }
 
 //
