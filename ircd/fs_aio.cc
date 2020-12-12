@@ -704,6 +704,10 @@ try
 			sizeof(*head),
 		};
 
+	// If this is not set to true, boost might poll() exclusively on the
+	// eventfd fd and starve the main epoll().
+	resfd.non_blocking(true);
+
 	log::info
 	{
 		log, "AIO id:%u fd:%d max_events:%zu max_submit:%zu compat:%x incompat:%x len:%u nr:%u",
@@ -910,7 +914,11 @@ ircd::fs::aio::system::submit(request &request)
 			"ircd::fs::aio chase"
 		};
 
-		auto handler(std::bind(&system::chase, this));
+		auto handler
+		{
+			std::bind(&system::chase, this)
+		};
+
 		ircd::post(descriptor, std::move(handler));
 	}
 
@@ -1091,14 +1099,14 @@ try
 	handle_set = true;
 	ecount = 0;
 
-	const asio::mutable_buffers_1 bufs
-	{
-		&ecount, sizeof(ecount)
-	};
-
 	auto handler
 	{
 		std::bind(&system::handle, this, ph::_1, ph::_2)
+	};
+
+	const asio::mutable_buffers_1 bufs
+	{
+		&ecount, sizeof(ecount)
 	};
 
 	resfd.async_read_some(bufs, ios::handle(handle_descriptor, std::move(handler)));
@@ -1187,8 +1195,6 @@ void
 ircd::fs::aio::system::handle_events()
 noexcept try
 {
-	assert(!ctx::current);
-
 	// The number of completed requests available in events[]. This syscall
 	// is restarted by us on EINTR. After restart, it may or may not find any ready
 	// events but it never blocks to do so.
