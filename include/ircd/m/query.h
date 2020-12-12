@@ -13,7 +13,7 @@
 
 namespace ircd::m
 {
-	template<class R> R query(std::nothrow_t, const event::idx &, const string_view &key, R&& def, const std::function<R (const string_view &)> &);
+	template<class R, class F> R query(std::nothrow_t, const event::idx &, const string_view &key, R&& def, F&&);
 	template<class F> auto query(std::nothrow_t, const event::idx &, const string_view &key, F&&);
 
 	template<class R, class F> R query(const event::idx &, const string_view &key, R&& def, F&&);
@@ -26,7 +26,7 @@ namespace ircd::m
 /// rather than make further use of it.
 ///
 template<class F>
-auto
+inline auto
 ircd::m::query(const event::idx &event_idx,
                const string_view &key,
                F&& closure)
@@ -45,7 +45,7 @@ ircd::m::query(const event::idx &event_idx,
 
 template<class R,
          class F>
-R
+inline R
 ircd::m::query(const event::idx &event_idx,
                const string_view &key,
                R&& r,
@@ -60,7 +60,7 @@ ircd::m::query(const event::idx &event_idx,
 /// return a default value.
 ///
 template<class F>
-auto
+inline auto
 ircd::m::query(std::nothrow_t,
                const event::idx &event_idx,
                const string_view &key,
@@ -87,15 +87,20 @@ ircd::m::query(std::nothrow_t,
 /// non-throwing behavior when the event_idx/key(column) is not found by
 /// returning a default value supplied by the caller.
 ///
-template<class R>
-R
+template<class R,
+         class F>
+inline R
 ircd::m::query(std::nothrow_t,
                const event::idx &event_idx,
                const string_view &key,
                R&& default_,
-               const std::function<R (const string_view &)> &closure)
+               F&& closure)
 {
-	R ret{std::forward<R>(default_)};
+	R ret
+	{
+		std::forward<R>(default_)
+	};
+
 	m::get(std::nothrow, event_idx, key, [&ret, &closure]
 	(const string_view &value)
 	{

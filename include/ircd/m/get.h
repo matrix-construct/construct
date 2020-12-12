@@ -45,7 +45,7 @@ namespace ircd::m
 }
 
 template<class T>
-typename std::enable_if<std::is_integral<T>::value, T>::type
+inline typename std::enable_if<std::is_integral<T>::value, T>::type
 ircd::m::get(std::nothrow_t,
              const event::idx &event_idx,
              const string_view &key,
@@ -56,7 +56,7 @@ ircd::m::get(std::nothrow_t,
 }
 
 template<class T>
-typename std::enable_if<std::is_integral<T>::value, T>::type
+inline typename std::enable_if<std::is_integral<T>::value, T>::type
 ircd::m::get(const event::idx &event_idx,
              const string_view &key)
 {
@@ -71,7 +71,7 @@ ircd::m::get(const event::idx &event_idx,
 }
 
 template<class T>
-typename std::enable_if<std::is_integral<T>::value, bool>::type
+inline typename std::enable_if<std::is_integral<T>::value, bool>::type
 ircd::m::get(const event::idx &event_idx,
              const string_view &key,
              T &ret)
