@@ -74,12 +74,6 @@ handle_get(client &client,
 			"Invalid since token for this server."
 		};
 
-	if(since && !my_host(m::room::id(since).host()))
-		throw m::BAD_REQUEST
-		{
-			"Invalid since token for this server."
-		};
-
 	const uint8_t limit
 	{
 		request.has("limit")?
