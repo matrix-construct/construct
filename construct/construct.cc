@@ -346,17 +346,20 @@ noexcept try
 	// 1
 	// Execution.
 	// Blocks until a clean exit from a quit() or an exception comes out of it.
-	const size_t handled
+	size_t epoch{0};
+	for(; !ios.stopped(); ++epoch)
 	{
-		ios.run()
-	};
+		ios.run_one();
 
-	ircd::log::debug
-	{
-		"epoch construct:%zu ircd:%zu",
-		handled,
-		ircd::ios::epoch(),
-	};
+		if constexpr(ircd::ios::profile_logging)
+			ircd::log::logf
+			{
+				ircd::ios::log, ircd::log::DEBUG,
+				"EPOCH ----- construct:%zu ircd:%zu %zu",
+				epoch,
+				ircd::ios::epoch(),
+			};
+	}
 
 	// 13
 	// The smoketest is enabled if the first value is true; then all of the
