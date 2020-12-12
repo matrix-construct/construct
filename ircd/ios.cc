@@ -367,7 +367,7 @@ ircd::ios::dispatch::dispatch(descriptor &descriptor,
                               synchronous_t)
 :dispatch
 {
-	dispatch_desc, synchronous, []
+	descriptor, synchronous, []
 	{
 	}
 }
@@ -436,7 +436,7 @@ ircd::ios::defer::defer(descriptor &descriptor,
                         synchronous_t)
 :defer
 {
-	defer_desc, synchronous, []
+	descriptor, synchronous, []
 	{
 	}
 }
