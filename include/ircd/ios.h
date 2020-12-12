@@ -319,9 +319,9 @@ noexcept
 		log::logf
 		{
 			log, log::level::DEBUG,
-			"QUEUE %5u %-20s [%11lu] ------[%9lu] q:%-4lu",
+			"QUEUE %5u %-30s [%11lu] ------[%9lu] q:%-4lu",
 			descriptor.id,
-			trunc(descriptor.name, 20),
+			trunc(descriptor.name, 30),
 			stats.calls,
 			0UL,
 			stats.queued,

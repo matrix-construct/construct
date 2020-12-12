@@ -195,9 +195,9 @@ noexcept
 		log::logf
 		{
 			log, log::level::DEBUG,
-			"FAULT %5u %-20s [%11lu] faults[%9lu] q:%-4lu",
+			"FAULT %5u %-30s [%11lu] faults[%9lu] q:%-4lu",
 			descriptor.id,
-			trunc(descriptor.name, 20),
+			trunc(descriptor.name, 30),
 			stats.calls,
 			stats.faults,
 			stats.queued,
@@ -245,9 +245,9 @@ noexcept
 		log::logf
 		{
 			log, log::level::DEBUG,
-			"LEAVE %5u %-20s [%11lu] cycles[%9lu] q:%-4lu",
+			"LEAVE %5u %-30s [%11lu] cycles[%9lu] q:%-4lu",
 			descriptor.id,
-			trunc(descriptor.name, 20),
+			trunc(descriptor.name, 30),
 			stats.calls,
 			stats.slice_last,
 			stats.queued,
@@ -285,9 +285,9 @@ noexcept
 		log::logf
 		{
 			log, log::level::DEBUG,
-			"ENTER %5u %-20s [%11lu] latent[%9lu] q:%-4lu",
+			"ENTER %5u %-30s [%11lu] latent[%9lu] q:%-4lu",
 			descriptor.id,
-			trunc(descriptor.name, 20),
+			trunc(descriptor.name, 30),
 			stats.calls,
 			stats.latency_last,
 			stats.queued,
