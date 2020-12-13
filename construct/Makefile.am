@@ -30,6 +30,7 @@ AM_LDFLAGS = \
 	-Wl,--dynamic-list-cpp-typeinfo \
 	-Wl,--rosegment \
 	-Wl,-z,noexecstack \
+	-Wl,--wrap=epoll_wait \
 	-L$(top_srcdir)/ircd \
 	-L$(top_srcdir)/modules \
 	$(PLATFORM_LDFLAGS) \

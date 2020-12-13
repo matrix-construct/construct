@@ -597,3 +597,88 @@ applyargs()
 	if(quietmode)
 		ircd::log::console_disable();
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Unfortunate but worthwhile hack hook which allows us to optimize the
+// behavior of the boost::asio event loop by executing more queued tasks
+// before dropping to epoll_wait(2). This reduces the number of syscalls to
+// epoll_wait(2), which tend to occur at the start of every epoch except in a
+// minority of cases. These syscalls produced nothing 99% of the time.
+//
+// boost::asio tends to call epoll_wait(2) with timeout=0 (non-blocking) when
+// it has more work queued that it will execute. If there's nothing queued it
+// will set a timeout. We don't need to collect epoll events so aggressively,
+// Instead, we want to exhaust all work in userspace first, and then collect
+// events from the kernel. We lose some responsiveness with asio::signal_set
+// but gain overall performance in a post-meltdown/post-spectre virtualized
+// reality.
+//
+#if defined(BOOST_ASIO_HAS_EPOLL)
+
+extern "C" int
+__real_epoll_wait(int __epfd, struct epoll_event *__events, int __maxevents, int __timeout);
+
+extern "C" int
+__wrap_epoll_wait(int __epfd,
+                  struct epoll_event *const __events,
+                  int __maxevents,
+                  int __timeout)
+{
+	static const uint64_t freq {12};
+	static uint64_t calls, peeks, skips, results, stall[4];
+
+	const bool peek
+	{
+		__timeout == 0
+	};
+
+	const bool tick
+	{
+		peeks % freq == 0
+	};
+
+	const bool skip
+	{
+		peek && !tick
+	};
+
+	const auto ret
+	{
+		!skip?
+			__real_epoll_wait(__epfd, __events, __maxevents, __timeout): 0
+	};
+
+	calls += 1;
+	peeks += peek;
+	skips += skip;
+	results += ret > 0? ret: 0;
+	stall[0] += ret >= 12;
+	stall[1] += ret >= 24;
+	stall[2] += ret >= 48;
+	stall[3] += ret >= 96;
+
+	if constexpr(ircd::ios::profile::logging)
+		if(!skip)
+			ircd::log::logf
+			{
+				ircd::ios::log, ircd::log::DEBUG,
+				"EPOLL     * timeout:%d results:%lu calls:%lu skips:%lu peeks:%lu stall[%6lu][%6lu][%6lu][%6lu] = %d",
+				__timeout,
+				results,
+				calls,
+				skips,
+				peeks,
+				stall[0],
+				stall[1],
+				stall[2],
+				stall[3],
+				ret,
+			};
+
+	assert(!skip || ret == 0);
+	assert(ret <= 128);
+	return ret;
+}
+
+#endif
