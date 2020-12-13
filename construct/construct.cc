@@ -351,7 +351,7 @@ noexcept try
 	{
 		ios.run_one();
 
-		if constexpr(ircd::ios::profile_logging)
+		if constexpr(ircd::ios::profile::logging)
 			ircd::log::logf
 			{
 				ircd::ios::log, ircd::log::DEBUG,

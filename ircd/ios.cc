@@ -44,10 +44,6 @@ ircd::boost_version_abi
 	"boost", info::versions::ABI //TODO: get this
 };
 
-//
-// init
-//
-
 void
 ircd::ios::init(asio::executor &&user)
 {
@@ -62,6 +58,43 @@ ircd::ios::init(asio::executor &&user)
 
 	// (simple passthru for now)
 	ios::main = ios::user;
+}
+
+void
+ircd::ios::forking()
+{
+	#if BOOST_VERSION >= 107000
+		get().context().notify_fork(asio::execution_context::fork_prepare);
+	#else
+		get().notify_fork(asio::execution_context::fork_prepare);
+	#endif
+}
+
+void
+ircd::ios::forked_child()
+{
+	#if BOOST_VERSION >= 107000
+		get().context().notify_fork(asio::execution_context::fork_child);
+	#else
+		get().notify_fork(asio::execution_context::fork_child);
+	#endif
+}
+
+void
+ircd::ios::forked_parent()
+{
+	#if BOOST_VERSION >= 107000
+		get().context().notify_fork(asio::execution_context::fork_parent);
+	#else
+		get().notify_fork(asio::execution_context::fork_parent);
+	#endif
+}
+
+bool
+ircd::ios::available()
+noexcept
+{
+	return bool(main);
 }
 
 //
@@ -191,7 +224,7 @@ noexcept
 		false
 	};
 
-	if constexpr(profile_logging)
+	if constexpr(profile::logging)
 		log::logf
 		{
 			log, log::level::DEBUG,
@@ -233,7 +266,7 @@ noexcept
 	stats.slice_last = handler->ts - slice_start;
 	stats.slice_total += stats.slice_last;
 
-	if constexpr(profile_history)
+	if constexpr(profile::history)
 	{
 		assert(descriptor.history_pos < descriptor.history.size());
 		descriptor.history[descriptor.history_pos][0] = handler::epoch;
@@ -241,7 +274,7 @@ noexcept
 		++descriptor.history_pos;
 	}
 
-	if constexpr(profile_logging)
+	if constexpr(profile::logging)
 		log::logf
 		{
 			log, log::level::DEBUG,
@@ -281,7 +314,7 @@ noexcept
 	stats.latency_last = handler->ts - last_ts;
 	stats.latency_total += stats.latency_last;
 
-	if constexpr(profile_logging)
+	if constexpr(profile::logging)
 		log::logf
 		{
 			log, log::level::DEBUG,
@@ -295,49 +328,13 @@ noexcept
 }
 
 //
-// ios.h
+// dispatch
 //
 
 namespace ircd::ios
 {
-	extern descriptor post_desc;
-	extern descriptor defer_desc;
 	extern descriptor dispatch_desc;
 }
-
-void
-ircd::ios::forking()
-{
-	#if BOOST_VERSION >= 107000
-		get().context().notify_fork(asio::execution_context::fork_prepare);
-	#else
-		get().notify_fork(asio::execution_context::fork_prepare);
-	#endif
-}
-
-void
-ircd::ios::forked_child()
-{
-	#if BOOST_VERSION >= 107000
-		get().context().notify_fork(asio::execution_context::fork_child);
-	#else
-		get().notify_fork(asio::execution_context::fork_child);
-	#endif
-}
-
-void
-ircd::ios::forked_parent()
-{
-	#if BOOST_VERSION >= 107000
-		get().context().notify_fork(asio::execution_context::fork_parent);
-	#else
-		get().notify_fork(asio::execution_context::fork_parent);
-	#endif
-}
-
-//
-// dispatch
-//
 
 decltype(ircd::ios::dispatch_desc)
 ircd::ios::dispatch_desc
@@ -405,13 +402,15 @@ ircd::ios::dispatch::dispatch(descriptor &descriptor,
 // defer
 //
 
+namespace ircd::ios
+{
+	extern descriptor defer_desc;
+}
+
 decltype(ircd::ios::defer_desc)
 ircd::ios::defer_desc
 {
 	"ircd::ios defer",
-	descriptor::default_allocator,
-	descriptor::default_deallocator,
-	true, // continuation
 };
 
 [[gnu::hot]]
@@ -474,6 +473,11 @@ ircd::ios::defer::defer(descriptor &descriptor,
 // post
 //
 
+namespace ircd::ios
+{
+	extern descriptor post_desc;
+}
+
 decltype(ircd::ios::post_desc)
 ircd::ios::post_desc
 {
@@ -534,11 +538,4 @@ ircd::ios::post::post(descriptor &descriptor,
                       std::function<void ()> function)
 {
 	boost::asio::post(get(), handle(descriptor, std::move(function)));
-}
-
-bool
-ircd::ios::available()
-noexcept
-{
-	return bool(main);
 }
