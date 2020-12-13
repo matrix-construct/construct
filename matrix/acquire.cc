@@ -26,10 +26,6 @@ ircd::util::instance_list<ircd::m::acquire>::list
 	allocator
 };
 
-//
-// execute::execute
-//
-
 ircd::m::acquire::acquire::acquire(const struct opts &opts)
 :opts{opts}
 ,head_vmopts{opts.vmopts}

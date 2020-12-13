@@ -108,10 +108,11 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 	ircd::ctx::current
 }
 {
+	leave();
+
 	// Run the provided routine which performs the actual context switch.
 	// Everything happening in this closure is no longer considered part
 	// of this context, but it is technically operating on this stack.
-	leave();
 	std::exception_ptr eptr; try
 	{
 		closure(static_cast<yield_context &>(*this));
