@@ -919,7 +919,10 @@ ircd::fs::aio::system::submit(request &request)
 			std::bind(&system::chase, this)
 		};
 
-		ircd::post(descriptor, std::move(handler));
+		ircd::defer
+		{
+			descriptor, std::move(handler)
+		};
 	}
 
 	return true;
