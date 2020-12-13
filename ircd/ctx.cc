@@ -3332,6 +3332,17 @@ boost::asio::detail::epoll_reactor::cancel_timer(timer_queue<epoll_time_traits> 
                                                  typename timer_queue<epoll_time_traits>::per_timer_data &t,
                                                  std::size_t max)
 {
+	constexpr bool post_priv {true};
+	constexpr bool post_defer {false};
+	constexpr bool do_dispatch {false};
+	constexpr bool poll_dispatch {false};
+	constexpr bool is_continuation {false};
+
+	auto *const thread_info
+	{
+		static_cast<scheduler_thread_info *>(scheduler::thread_call_stack::top())
+	};
+
 	std::size_t ret;
 	op_queue<operation> ops;
 	{
@@ -3339,14 +3350,20 @@ boost::asio::detail::epoll_reactor::cancel_timer(timer_queue<epoll_time_traits> 
 		ret = queue.cancel_timer(t, ops, max);
 	}
 
-	auto *const thread_info
-	{
-		static_cast<scheduler_thread_info *>(scheduler::thread_call_stack::top())
-	};
+	if constexpr(post_priv)
+		thread_info->private_op_queue.push(ops);
 
-	for(auto *op(ops.front()); op; ops.pop(), op = ops.front())
+	else if constexpr(post_defer)
+		scheduler_.post_deferred_completions(ops);
+
+	else for(auto *op(ops.front()); op; ops.pop(), op = ops.front())
 	{
-		static const bool is_continuation(true);
+		if constexpr(do_dispatch)
+		{
+			scheduler_.do_dispatch(op);
+			continue;
+		}
+
 		scheduler_.post_immediate_completion(op, is_continuation);
 		thread_info->private_outstanding_work -= is_continuation;
 	}
