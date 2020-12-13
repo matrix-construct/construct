@@ -338,6 +338,23 @@ bool
 ircd::ctx::ctx::wake()
 noexcept try
 {
+	if constexpr(ios::profile::logging)
+	{
+		assert(ios_desc.stats);
+		log::logf
+		{
+			ios::log, log::level::DEBUG,
+			"QUEUE %5u %-30s [%11lu] ------[%9lu] q:%-4lu id:%-5u %-30s",
+			ios_desc.id,
+			trunc(ios_desc.name, 30),
+			ios_desc.stats->calls,
+			notes,
+			ios_desc.stats->queued,
+			id,
+			name,
+		};
+	}
+
 	alarm.cancel();
 	return true;
 }
