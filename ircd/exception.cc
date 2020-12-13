@@ -282,48 +282,41 @@ const noexcept
 // terminate
 //
 
-ircd::terminate::terminate()
-noexcept
-{
-	ircd::terminate
-	{
-		std::current_exception()
-	};
-
-	__builtin_unreachable();
-}
-
-ircd::terminate::terminate(const string_view &str)
-noexcept
-{
-	static char buf[512];
-	strlcpy(buf, str);
-	fprintf(stderr, "\nIRCd Terminated :%s\n", buf);
-	::fflush(stderr);
-	std::terminate();
-}
-
+[[noreturn]]
 ircd::terminate::terminate(std::exception_ptr eptr)
 noexcept
 {
-	if(eptr) try
-	{
-		std::rethrow_exception(eptr);
-	}
-	catch(const std::exception &e)
-	{
-		terminate{e};
-	}
-
-	fputs("\nIRCd Terminated.\n", stderr);
+	fprintf(stderr, "\nIRCd Terminated :%s\n", what(eptr).data());
 	::fflush(stderr);
 	std::terminate();
+	__builtin_unreachable();
 }
 
+[[noreturn]]
 ircd::terminate::terminate(const std::exception &e)
 noexcept
+:terminate
 {
-	fprintf(stderr, "\nIRCd Terminated :%s\n", e.what());
-	::fflush(stderr);
-	std::terminate();
+	std::make_exception_ptr(e)
+}
+{
+	__builtin_unreachable();
+}
+
+[[noreturn]]
+ircd::terminate::terminate()
+noexcept
+:terminate
+{
+	std::current_exception()
+}
+{
+	__builtin_unreachable();
+}
+
+[[noreturn]]
+ircd::terminate::~terminate()
+noexcept
+{
+	__builtin_unreachable();
 }

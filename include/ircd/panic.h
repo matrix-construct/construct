@@ -13,21 +13,10 @@
 
 namespace ircd
 {
-	struct terminate;
-
 	void panicking(const std::exception &) noexcept;
 	void panicking(const std::exception_ptr &) noexcept;
 	void _aborting_() noexcept;
 }
-
-/// Always prefer ircd::terminate() to std::terminate() for all project code.
-struct ircd::terminate
-{
-	[[noreturn]] terminate(const std::exception &) noexcept;
-	[[noreturn]] terminate(std::exception_ptr) noexcept;
-	[[noreturn]] terminate(const string_view &) noexcept;
-	[[noreturn]] terminate() noexcept;
-};
 
 /// Creates a panic-type exception.
 ///

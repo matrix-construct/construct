@@ -939,10 +939,10 @@ catch(const std::exception &e)
 {
 	terminate
 	{
-		panic
-		{
-			"AIO(%p) system::chase() qcount:%zu :%s", this, qcount, e.what()
-		}
+		"AIO(%p) system::chase() qcount:%zu :%s",
+		this,
+		qcount,
+		e.what()
 	};
 }
 
@@ -984,15 +984,13 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	ircd::terminate{ircd::error
+	terminate
 	{
 		"AIO(%p) system::submit() qcount:%zu :%s",
 		this,
 		qcount,
 		e.what()
-	}};
-
-	__builtin_unreachable();
+	};
 }
 
 size_t
