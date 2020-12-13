@@ -375,18 +375,19 @@ ircd::ios::dispatch::dispatch(descriptor &descriptor,
                               synchronous_t,
                               const std::function<void ()> &function)
 {
-	const ctx::uninterruptible ui;
-
 	assert(function);
+	assert(ctx::current && handler::current);
+
+	const ctx::uninterruptible ui;
 	ctx::continuation
 	{
 		continuation::false_predicate, continuation::noop_interruptor, [&descriptor, &function]
 		(auto &yield)
 		{
-			dispatch(descriptor, [&function]
-			{
-				function();
-			});
+			assert(!ctx::current && !handler::current);
+			boost::asio::dispatch(get(), handle(descriptor, function));
+
+			assert(!ctx::current && !handler::current);
 		}
 	};
 }
@@ -395,7 +396,27 @@ ircd::ios::dispatch::dispatch(descriptor &descriptor,
 ircd::ios::dispatch::dispatch(descriptor &descriptor,
                               std::function<void ()> function)
 {
-	boost::asio::dispatch(get(), handle(descriptor, std::move(function)));
+	const auto parent(handler::current); try
+	{
+		assert(!ctx::current && handler::current);
+		ios::handler::leave(parent);
+
+		assert(!ctx::current && !handler::current);
+		boost::asio::dispatch(get(), handle(descriptor, std::move(function)));
+
+		assert(!ctx::current && !handler::current);
+		ios::handler::enter(parent);
+	}
+	catch(...)
+	{
+		assert(!ctx::current && !handler::current);
+		ios::handler::enter(parent);
+
+		assert(!ctx::current && handler::current == parent);
+		throw;
+	}
+
+	assert(!ctx::current && handler::current == parent);
 }
 
 //

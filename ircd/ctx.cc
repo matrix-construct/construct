@@ -123,28 +123,37 @@ ircd::ctx::ctx::spawn(context::function func)
 		std::bind(&ctx::operator(), this, ph::_1, std::move(func))
 	};
 
-	auto *const parent_context
+	const auto parent_context
 	{
 		ircd::ctx::current
 	};
 
-	auto *const parent_handler
+	const auto parent_handler
 	{
 		ircd::ios::handler::current
 	};
 
-	assert(!parent_context);
-	assert(parent_handler); try
+	assert(!parent_context && parent_handler); try
 	{
+		assert(!ircd::ctx::current && ios::handler::current);
 		ios::handler::leave(parent_handler);
-		boost::asio::spawn(ios::get(), std::move(bound), attrs);
+
+		assert(!ircd::ctx::current && !ios::handler::current);
+		boost::asio::spawn(ios::get(), ios::handle(ios_desc, std::move(bound)), attrs);
+
+		assert(!ircd::ctx::current && !ios::handler::current);
 		ios::handler::enter(parent_handler);
 	}
 	catch(...)
 	{
+		assert(!ircd::ctx::current && !ios::handler::current);
 		ios::handler::enter(parent_handler);
+
+		assert(!ircd::ctx::current && ios::handler::current == parent_handler);
 		throw;
 	}
+
+	assert(!ircd::ctx::current && ios::handler::current == parent_handler);
 }
 
 /// Base frame for a context.
