@@ -50,6 +50,8 @@ namespace ircd::ios::profile
 #include "handler.h"
 #include "asio.h"
 #include "dispatch.h"
+#include "empt.h"
+#include "epoll.h"
 
 inline const uint64_t &
 __attribute__((always_inline))

@@ -98,6 +98,143 @@ noexcept
 }
 
 //
+// emption
+//
+
+namespace ircd::ios::empt
+{
+	[[gnu::visibility("internal")]]
+	extern const string_view freq_help;
+
+	[[gnu::visibility("internal")]]
+	extern uint64_t stats[9];
+}
+
+decltype(ircd::ios::empt::freq_help)
+ircd::ios::empt::freq_help
+{R"(
+	Coarse frequency to make non-blocking polls to the kernel for events at the
+	beginning of every iteration of the core event loop. boost::asio takes an
+	opportunity to first make a non-blocking poll to gather more events from
+	the kernel even when one or more tasks are already queued, this setting
+	allows more such tasks to first be executed and reduce syscall overhead
+	ncluding a large numbers of unnecessary calls as would be the case
+	otherwise.
+
+	When the frequency is set to 1, the above-described default behavior is
+	unaltered. When greater than 1, voluntary non-blocking polls are only made
+	after N number of tasks. This reduces syscalls to increase overall
+	performance, but may cost in responsiveness and cause stalls. For example,
+	when set to 2, kernel context-switch is made every other userspace context
+	switch. When set to 0, voluntary non-blocking polls are never made.
+
+	This value may be rounded down to nearest base2 so we can avoid invoking
+	the FPU in the core event loop's codepath.
+)"};
+
+decltype(ircd::ios::empt::stats)
+ircd::ios::empt::stats;
+
+/// Voluntary kernel poll frequency.
+decltype(ircd::ios::empt::freq)
+ircd::ios::empt::freq
+{
+	{ "name",      "ircd.ios.empt.freq" },
+	{ "default",   32L                  },
+	{ "help",      freq_help            },
+};
+
+/// Non-blocking call count.
+decltype(ircd::ios::empt::peek)
+ircd::ios::empt::peek
+{
+	stats + 0,
+	{
+		{ "name", "ircd.ios.empt.peek" },
+	},
+};
+
+/// Skipped call count.
+decltype(ircd::ios::empt::skip)
+ircd::ios::empt::skip
+{
+	stats + 1,
+	{
+		{ "name", "ircd.ios.empt.skip" },
+	},
+};
+
+/// Non-skipped call count.
+decltype(ircd::ios::empt::call)
+ircd::ios::empt::call
+{
+	stats + 2,
+	{
+		{ "name", "ircd.ios.empt.call" },
+	},
+};
+
+/// Count of calls which reported zero ready events.
+decltype(ircd::ios::empt::none)
+ircd::ios::empt::none
+{
+	stats + 3,
+	{
+		{ "name", "ircd.ios.empt.none" },
+	},
+};
+
+/// Total number of events reported from all calls.
+decltype(ircd::ios::empt::result)
+ircd::ios::empt::result
+{
+	stats + 4,
+	{
+		{ "name", "ircd.ios.empt.result" },
+	},
+};
+
+/// Count of calls which reported more events than the low threshold.
+decltype(ircd::ios::empt::load_low)
+ircd::ios::empt::load_low
+{
+	stats + 5,
+	{
+		{ "name", "ircd.ios.empt.load.low" },
+	},
+};
+
+/// Count of calls which reported more events than the medium threshold.
+decltype(ircd::ios::empt::load_med)
+ircd::ios::empt::load_med
+{
+	stats + 6,
+	{
+		{ "name", "ircd.ios.empt.load.med" },
+	},
+};
+
+/// Count of calls which reported more events than the high threshold.
+decltype(ircd::ios::empt::load_high)
+ircd::ios::empt::load_high
+{
+	stats + 7,
+	{
+		{ "name", "ircd.ios.empt.load.high" },
+	},
+};
+
+/// Count of calls which reported the maximum number of events.
+decltype(ircd::ios::empt::load_stall)
+ircd::ios::empt::load_stall
+{
+	stats + 8,
+	{
+		{ "name", "ircd.ios.empt.load.stall" },
+	}
+};
+
+//
 // descriptor
 //
 
