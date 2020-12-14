@@ -82,6 +82,9 @@ get_rooms(client &client,
 	if(cmd == "relations")
 		return get__relations(client, request, room_id);
 
+	if(cmd == "aliases")
+		return get__aliases(client, request, room_id);
+
 	throw m::NOT_FOUND
 	{
 		"/rooms command not found"

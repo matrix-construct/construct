@@ -234,3 +234,13 @@ ircd::m::resource::response
 post__upgrade(ircd::client &,
               const ircd::m::resource::request &,
               const ircd::m::room::id &);
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// aliases.cc
+//
+
+ircd::m::resource::response
+get__aliases(ircd::client &,
+             const ircd::m::resource::request &,
+             const ircd::m::room::id &);
