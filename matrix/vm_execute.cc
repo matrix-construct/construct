@@ -850,12 +850,12 @@ ircd::m::vm::execute_pdu(eval &eval,
 	}
 
 	// Obtain sequence number here.
-	const auto *const &top(eval::seqmax());
+	const auto top(eval::seqmax());
 	eval.sequence =
 	{
 		top?
 			std::max(sequence::get(*top) + 1, sequence::uncommitted + 1):
-			sequence::committed + 1
+			sequence::uncommitted + 1
 	};
 
 	log::debug
@@ -864,6 +864,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 		loghead(eval)
 	};
 
+	assert(eval::sequnique(eval.sequence));
 	const auto &parent_phase
 	{
 		eval.parent?
