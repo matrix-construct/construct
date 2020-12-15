@@ -486,26 +486,6 @@ try
 		eval.event_, &_event
 	};
 
-	if(likely(opts.phase[phase::DUPCHK]) && _event.event_id)
-	{
-		const scope_restore eval_phase
-		{
-			eval.phase, phase::DUPCHK
-		};
-
-		// Prevent the same event from being accepted twice.
-		if(likely(!opts.replays) && m::exists(_event.event_id))
-		{
-			if(unlikely(~opts.nothrows & fault::EXISTS))
-				throw error
-				{
-					fault::EXISTS, "Event has already been evaluated."
-				};
-
-			return fault::EXISTS;
-		}
-	}
-
 	return execute_du(eval, _event);
 }
 catch(const vm::error &e)
@@ -783,6 +763,26 @@ ircd::m::vm::execute_pdu(eval &eval,
 	{
 		opts.auth && !eval.room_internal
 	};
+
+	if(likely(opts.phase[phase::DUPCHK]))
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::DUPCHK
+		};
+
+		// Prevent the same event from being accepted twice.
+		if(likely(!opts.replays) && m::exists(event_id))
+		{
+			if(unlikely(~opts.nothrows & fault::EXISTS))
+				throw error
+				{
+					fault::EXISTS, "Event has already been evaluated."
+				};
+
+			return fault::EXISTS;
+		}
+	}
 
 	if(unlikely(eval.room_internal && !my(event)))
 		throw error
