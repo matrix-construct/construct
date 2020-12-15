@@ -87,7 +87,8 @@ struct ircd::resource::response::chunked
 	static conf::item<size_t> default_buffer_size;
 
 	client *c {nullptr};
-	unique_buffer<mutable_buffer> buf;
+	unique_mutable_buffer _buf;
+	mutable_buffer buf;
 	size_t flushed {0};
 	size_t wrote {0};
 	uint count {0};
@@ -99,10 +100,10 @@ struct ircd::resource::response::chunked
 
 	std::function<const_buffer (const const_buffer &)> flusher();
 
-	chunked(client &, const http::code &, const string_view &content_type, const string_view &headers = {}, const size_t &buffer_size = default_buffer_size);
-	chunked(client &, const http::code &, const string_view &content_type, const vector_view<const http::header> &, const size_t &buffer_size = default_buffer_size);
-	chunked(client &, const http::code &, const vector_view<const http::header> &, const size_t &buffer_size = default_buffer_size);
-	chunked(client &, const http::code &, const size_t &buffer_size = default_buffer_size);
+	chunked(client &, const http::code &, const string_view &content_type, const string_view &headers = {}, const size_t &buffer_size = default_buffer_size, const mutable_buffer & = {});
+	chunked(client &, const http::code &, const string_view &content_type, const vector_view<const http::header> &, const size_t &buffer_size = default_buffer_size, const mutable_buffer & = {});
+	chunked(client &, const http::code &, const vector_view<const http::header> &, const size_t &buffer_size = default_buffer_size, const mutable_buffer & = {});
+	chunked(client &, const http::code &, const size_t &buffer_size = default_buffer_size, const mutable_buffer & = {});
 	chunked() = default;
 	chunked(chunked &&) = delete;
 	chunked(const chunked &) = delete;

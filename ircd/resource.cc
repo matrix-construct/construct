@@ -692,10 +692,16 @@ const
 
 ircd::resource::response::chunked::chunked(client &client,
                                            const http::code &code,
-                                           const size_t &buffer_size)
+                                           const size_t &buffer_size,
+                                           const mutable_buffer &buf)
 :chunked
 {
-	client, code, "application/json; charset=utf-8"_sv, string_view{}, buffer_size
+	client,
+	code,
+	"application/json; charset=utf-8"_sv,
+	string_view{},
+	buffer_size,
+	buf,
 }
 {
 }
@@ -703,10 +709,16 @@ ircd::resource::response::chunked::chunked(client &client,
 ircd::resource::response::chunked::chunked(client &client,
                                            const http::code &code,
                                            const vector_view<const http::header> &headers,
-                                           const size_t &buffer_size)
+                                           const size_t &buffer_size,
+                                           const mutable_buffer &buf)
 :chunked
 {
-	client, code, "application/json; charset=utf-8"_sv, headers, buffer_size
+	client,
+	code,
+	"application/json; charset=utf-8"_sv,
+	headers,
+	buffer_size,
+	buf,
 }
 {
 }
@@ -715,7 +727,8 @@ ircd::resource::response::chunked::chunked(client &client,
                                            const http::code &code,
                                            const string_view &content_type,
                                            const vector_view<const http::header> &headers,
-                                           const size_t &buffer_size)
+                                           const size_t &buffer_size,
+                                           const mutable_buffer &buf)
 :chunked
 {
 	client,
@@ -727,13 +740,15 @@ ircd::resource::response::chunked::chunked(client &client,
 		// copied again before the response goes out from resource::response.
 		// There must not be any context switch between now and that copy so
 		// we can return a string_view of this TLS buffer.
+		const critical_assertion ca;
 
 		thread_local char buffer[4_KiB];
 		window_buffer sb{buffer};
 		http::write(sb, headers);
 		return string_view{sb.completed()};
 	}(),
-	buffer_size
+	buffer_size,
+	buf,
 }
 {
 }
@@ -749,21 +764,34 @@ ircd::resource::response::chunked::chunked(client &client,
                                            const http::code &code,
                                            const string_view &content_type,
                                            const string_view &headers,
-                                           const size_t &buffer_size)
+                                           const size_t &buffer_size,
+                                           const mutable_buffer &buf)
 :response
 {
-	client, code, content_type, size_t(-1), headers
+	client,
+	code,
+	content_type,
+	size_t(-1),
+	headers
 }
 ,c
 {
 	&client
 }
-,buf
+,_buf
 {
 	buffer_size
 }
+,buf
+{
+	buffer_size? _buf: buf
+}
 {
 	assert(!empty(content_type));
+	assert(buffer_size > 0 || empty(_buf));
+	assert(buffer_size > 0 || !empty(buf));
+	assert(buffer_size == 0 || empty(buf));
+	assert(buffer_size == 0 || !empty(_buf));
 }
 
 ircd::resource::response::chunked::~chunked()
