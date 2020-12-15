@@ -14703,6 +14703,7 @@ console_cmd__fed__state(opt &out, const string_view &line)
 	vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
 	vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
 	vmopts.notify_servers = false;
+	vmopts.node_id = remote;
 
 	m::vm::eval
 	{
@@ -15088,6 +15089,7 @@ console_cmd__fed__event(opt &out, const string_view &line)
 		vmopts.phase.set(m::vm::phase::WRITE, !has(oparg, "nowrite"));
 		vmopts.replays = has(oparg, "replay");
 		vmopts.notify_servers = false;
+		vmopts.node_id = remote;
 		m::vm::eval eval
 		{
 			event, vmopts
