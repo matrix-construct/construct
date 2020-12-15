@@ -54,7 +54,7 @@ fetch_prev
 	{ "default",  true                              },
 };
 
-void
+static void
 handle_edu(client &client,
            const m::resource::request::object<m::txn> &request,
            const string_view &txn_id,
@@ -80,13 +80,25 @@ handle_edu(client &client,
 	};
 }
 
-void
+static void
 handle_pdus(client &client,
             const m::resource::request::object<m::txn> &request,
             const string_view &txn_id,
-            const json::array &pdus)
+            const json::array &pdus,
+            json::stack &out)
 {
+	json::stack::object top
+	{
+		out
+	};
+
+	json::stack::object out_pdus
+	{
+		out, "pdus"
+	};
+
 	m::vm::opts vmopts;
+	vmopts.out = &out_pdus;
 	vmopts.warnlog = 0;
 	vmopts.infolog_accept = true;
 	vmopts.nothrows = -1U;
@@ -101,11 +113,11 @@ handle_pdus(client &client,
 	};
 }
 
-json::object
+static void
 handle_txn(client &client,
            const m::resource::request::object<m::txn> &request,
            const string_view &txn_id,
-           unique_mutable_buffer &buf)
+           json::stack &out)
 try
 {
 	// We process PDU's before EDU's and we process all PDU's at once by
@@ -113,7 +125,8 @@ try
 	// are detected within the array. If we looped here for eval'ing one
 	// at a time we'd risk issuing fetch requests for prev_events which may
 	// exist in the same array, etc.
-	handle_pdus(client, request, txn_id, json::get<"pdus"_>(request));
+	if(!empty(json::get<"pdus"_>(request)))
+		handle_pdus(client, request, txn_id, json::get<"pdus"_>(request), out);
 
 	// We process EDU's after PDU's. This is because checks on EDU's may
 	// depend on updates provided by PDU's in the same txn; for example:
@@ -121,11 +134,8 @@ try
 	// we also process EDU's one at a time since there is no dependency graph
 	// or anything like that so if this loop wasn't here it would just be
 	// somewhere else.
-	for(const json::object &edu : json::get<"edus"_>(request))
+	for(const json::object edu : json::get<"edus"_>(request))
 		handle_edu(client, request, txn_id, edu);
-
-	//TODO: this should be an error object with problems from PDU evals.
-	return json::empty_object;
 }
 catch(const m::vm::error &e)
 {
@@ -250,17 +260,19 @@ handle_put(client &client,
 			client, http::ACCEPTED
 		};
 
-	// Lazy-allocated response buffer; only for error transcription
-	unique_mutable_buffer response_buffer;
-	const json::object &response
+	char chunk[1536];
+	m::resource::response::chunked response
 	{
-		handle_txn(client, request, txn_id, response_buffer)
+		client, http::OK, 0UL, chunk
 	};
 
-	return m::resource::response
+	json::stack out
 	{
-		client, response
+		response.buf, response.flusher()
 	};
+
+	handle_txn(client, request, txn_id, out);
+	return std::move(response);
 }
 
 m::resource::method
