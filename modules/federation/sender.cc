@@ -39,23 +39,28 @@ struct txndata
 	{}
 };
 
-struct txn
+struct alignas(32_KiB) txn
 :txndata
 ,m::fed::send
 {
 	struct node *node;
 	steady_point timeout;
-	char headers[8_KiB];
+	char buf[31_KiB];
 
 	txn(struct node &node,
 	    std::string content,
 	    m::fed::send::opts opts)
 	:txndata{std::move(content)}
-	,send{this->txnid, string_view{this->content}, this->headers, std::move(opts)}
+	,send{this->txnid, string_view{this->content}, this->buf, std::move(opts)}
 	,node{&node}
 	,timeout{now<steady_point>()} //TODO: conf
 	{}
 };
+
+static_assert
+(
+	sizeof(struct txn) == 32_KiB
+);
 
 struct node
 {
@@ -448,6 +453,7 @@ try
 
 	m::fed::send::opts opts;
 	opts.remote = remote;
+	opts.dynamic = false;
 	opts.sopts = &sopts;
 
 	const vector_view<const json::value> pduv
