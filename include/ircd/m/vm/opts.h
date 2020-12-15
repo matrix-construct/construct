@@ -163,21 +163,30 @@ struct ircd::m::vm::opts
 	/// Mask of faults that are not thrown as exceptions out of eval(). If
 	/// masked, the fault is returned from eval(). By default, the EXISTS
 	/// fault is masked which means existing events won't kill eval loops.
+	/// ACCEPT is ignored in the mask.
 	fault_t nothrows
 	{
 		EXISTS
 	};
 
 	/// Mask of faults that are logged to the error facility in vm::log.
+	/// ACCEPT is ignored in the mask.
 	fault_t errorlog
 	{
 		~(EXISTS)
 	};
 
 	/// Mask of faults that are logged to the warning facility in vm::log
+	/// ACCEPT is ignored in the mask.
 	fault_t warnlog
 	{
 		EXISTS
+	};
+
+	/// Mask of faults that are transcribed to the json::stack output.
+	fault_t outlog
+	{
+		~(EXISTS | ACCEPT)
 	};
 
 	/// Whether to log a debug message on successful eval.
@@ -185,6 +194,9 @@ struct ircd::m::vm::opts
 
 	/// Whether to log an info message on successful eval.
 	bool infolog_accept {false};
+
+	/// Point this at a json::stack to transcribe output.
+	json::stack::object *out {nullptr};
 
 	opts() noexcept;
 };

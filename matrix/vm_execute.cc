@@ -10,7 +10,8 @@
 
 namespace ircd::m::vm
 {
-	template<class... args> static fault handle_error(const opts &, const fault &, const string_view &fmt, args&&... a);
+	template<class... args> static bool output(const vm::opts &, const vm::fault &, const string_view &event_id, const string_view &fmt, args&&...);
+	template<class... args> static fault handle_fault(const opts &, const fault &, const string_view &event_id, const string_view &fmt, args&&...);
 	template<class T> static void call_hook(hook::site<T> &, eval &, const event &, T&& data);
 	static size_t calc_txn_reserve(const opts &, const event &);
 	static void write_commit(eval &);
@@ -229,33 +230,40 @@ ircd::m::vm::execute(eval &eval,
 			ids[j] = events[i + j].event_id;
 
 		// Bitset indicating which events already exist.
-		const uint64_t exists
+		const uint64_t existing
 		{
 			!opts.replays?
 				m::exists(vector_view<const id::event>(ids, j)):
 				0UL
 		};
 
-		const auto num_exists
-		{
-			__builtin_popcountl(exists)
-		};
-
-		existed += num_exists;
-		eval.faulted + num_exists;
 		for(k = 0; k < j; ++k, ++eval.evaluated) try
 		{
-			if(exists & (1 << k))
-				continue;
+			const bool exists
+			(
+				existing & (1 << k)
+			);
 
-			const auto status
+			const auto &event
 			{
-				execute(eval, events[i + k])
+				events[i + k]
 			};
 
-			accepted += status == fault::ACCEPT;
-			eval.accepted += status == fault::ACCEPT;
-			eval.faulted += status != fault::ACCEPT;
+			const auto fault
+			{
+				!exists?
+					execute(eval, event):
+					fault::EXISTS
+			};
+
+			existed += exists;
+			accepted += fault == fault::ACCEPT;
+			eval.accepted += fault == fault::ACCEPT;
+			eval.faulted += fault != fault::ACCEPT;
+
+			// If handle_fault() was not previously called about this eval
+			if(likely(fault == fault::ACCEPT || exists))
+				handle_fault(opts, fault, event.event_id?: eval.event_id, string_view{});
 		}
 		catch(const ctx::interrupted &)
 		{
@@ -506,15 +514,16 @@ catch(const vm::error &e)
 }
 catch(const m::error &e)
 {
+	const ctx::exception_handler eh;
 	const json::object &content
 	{
 		e.content
 	};
 
 	assert(eval.opts);
-	return handle_error
+	return handle_fault
 	(
-		*eval.opts, fault::GENERAL,
+		*eval.opts, fault::GENERAL, event.event_id,
 		"eval %s %s :%s :%s :%s",
 		event.event_id?
 			string_view{event.event_id}:
@@ -533,10 +542,12 @@ catch(const ctx::interrupted &)
 }
 catch(const std::exception &e)
 {
+	const ctx::exception_handler eh;
+
 	assert(eval.opts);
-	return handle_error
+	return handle_fault
 	(
-		*eval.opts, fault::GENERAL,
+		*eval.opts, fault::GENERAL, event.event_id,
 		"eval %s %s (General Protection) :%s",
 		event.event_id?
 			string_view{event.event_id}:
@@ -637,15 +648,17 @@ try
 }
 catch(const vm::error &e) // VM FAULT CODE
 {
+	const ctx::exception_handler eh;
 	const json::object &content{e.content};
 	const json::string &error
 	{
 		content["error"]
 	};
 
-	return handle_error
+	assert(eval.opts);
+	return handle_fault
 	(
-		*eval.opts, e.code,
+		*eval.opts, e.code, event.event_id,
 		"execute %s %s :%s",
 		event.event_id?
 			string_view{event.event_id}:
@@ -658,6 +671,7 @@ catch(const vm::error &e) // VM FAULT CODE
 }
 catch(const m::error &e) // GENERAL MATRIX ERROR
 {
+	const ctx::exception_handler eh;
 	const json::object &content{e.content};
 	const json::string error[]
 	{
@@ -665,9 +679,10 @@ catch(const m::error &e) // GENERAL MATRIX ERROR
 		content["error"]
 	};
 
-	return handle_error
+	assert(eval.opts);
+	return handle_fault
 	(
-		*eval.opts, fault::GENERAL,
+		*eval.opts, fault::GENERAL, event.event_id,
 		"execute %s %s :%s :%s",
 		event.event_id?
 			string_view{event.event_id}:
@@ -685,9 +700,12 @@ catch(const ctx::interrupted &e) // INTERRUPTION
 }
 catch(const std::exception &e) // ALL OTHER ERRORS
 {
-	return handle_error
+	const ctx::exception_handler eh;
+
+	assert(eval.opts);
+	return handle_fault
 	(
-		*eval.opts, fault::GENERAL,
+		*eval.opts, fault::GENERAL, event.event_id,
 		"execute %s %s (General Protection) :%s",
 		event.event_id?
 			string_view{event.event_id}:
@@ -1324,33 +1342,89 @@ catch(const std::exception &e)
 
 template<class... args>
 ircd::m::vm::fault
-ircd::m::vm::handle_error(const vm::opts &opts,
+ircd::m::vm::handle_fault(const vm::opts &opts,
                           const vm::fault &code,
+                          const string_view &event_id,
                           const string_view &fmt,
                           args&&... a)
 {
-	if(opts.errorlog & code)
-		log::error
-		{
-			log, fmt, std::forward<args>(a)...
-		};
-	else if(~opts.warnlog & code)
-		log::derror
-		{
-			log, fmt, std::forward<args>(a)...
-		};
+	if(code != fault::ACCEPT && fmt)
+	{
+		if(opts.errorlog & code)
+			log::error
+			{
+				log, fmt, std::forward<args>(a)...
+			};
+		else if(~opts.warnlog & code)
+			log::derror
+			{
+				log, fmt, std::forward<args>(a)...
+			};
 
-	if(opts.warnlog & code)
-		log::warning
-		{
-			log, fmt, std::forward<args>(a)...
-		};
+		if(opts.warnlog & code)
+			log::warning
+			{
+				log, fmt, std::forward<args>(a)...
+			};
+	}
 
-	if(~opts.nothrows & code)
-		throw error
-		{
-			code, fmt, std::forward<args>(a)...
-		};
+	if(likely(opts.outlog & code))
+		output(opts, code, event_id, fmt, std::forward<args>(a)...);
+
+	if(code != fault::ACCEPT && fmt)
+		if(unlikely(~opts.nothrows & code))
+			throw error
+			{
+				code, fmt, std::forward<args>(a)...
+			};
 
 	return code;
+}
+
+//NOTE: may yield on a json::stack flush
+template<class... args>
+bool
+ircd::m::vm::output(const vm::opts &opts,
+                    const vm::fault &code,
+                    const string_view &event_id,
+                    const string_view &fmt,
+                    args&&... a)
+{
+	if(!opts.out)
+		return false;
+
+	if(unlikely(!event_id))
+		return false;
+
+	json::stack::object object
+	{
+		*opts.out, event_id
+	};
+
+	if(code != fault::ACCEPT)
+		json::stack::member
+		{
+			object, "errcode", json::value
+			{
+				reflect(code), json::STRING
+			}
+		};
+
+	if(!fmt)
+		return true;
+
+	const fmt::bsprintf<1024> text
+	{
+		fmt, std::forward<args>(a)...
+	};
+
+	json::stack::member
+	{
+		object, "error", json::value
+		{
+			string_view{text}, json::STRING
+		}
+	};
+
+	return true;
 }
