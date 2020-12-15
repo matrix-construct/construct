@@ -16,7 +16,7 @@ namespace ircd::mods
 
 	void handle_ebadf(const string_view &what);
 	void handle_stuck(mod &);
-	bool unload(mod &);
+	bool unload(mod &) noexcept;
 
 	extern const std::string prefix;
 	extern const std::string suffix;

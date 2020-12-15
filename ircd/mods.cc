@@ -71,6 +71,7 @@ ircd::mapi::static_destruction;
 
 bool
 ircd::mods::unload(mod &mod)
+noexcept
 {
 	if(!mod.handle.is_loaded())
 		return false;
@@ -78,15 +79,20 @@ ircd::mods::unload(mod &mod)
 	if(mods::unloading(mod.name()))
 		return false;
 
-	// Mark this module in the unloading state.
-	mod.unloading.emplace_front(&mod);
-
+	const ctx::uninterruptible::nothrow ui;
 	log::debug
 	{
 		log, "Attempting unload module '%s' @ `%s'",
 		mod.name(),
 		mod.location()
 	};
+
+	// Mark this module in the unloading state.
+	mod.unloading.emplace_front(&mod);
+	const unwind unloading_remove{[&mod]
+	{
+		mod.unloading.remove(&mod);
+	}};
 
 	// Save the children! dlclose() does not like to be called recursively during static
 	// destruction of a module. The mod ctor recorded all of the modules loaded while this
@@ -110,7 +116,6 @@ ircd::mods::unload(mod &mod)
 	mod.handle.unload();
 
 	mod.loaded.erase(mod.name());
-	mod.unloading.remove(&mod);
 	log::debug
 	{
 		log, "Static unload for '%s' complete=%b loaded:%zu unloading:%zu children:%zu",
