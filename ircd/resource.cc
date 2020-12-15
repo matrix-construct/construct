@@ -423,6 +423,7 @@ noexcept
 			stats->pending
 		};
 
+	const ctx::uninterruptible::nothrow ui;
 	idle_dock.wait([this]
 	{
 		return !stats || stats->pending == 0;
