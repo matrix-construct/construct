@@ -196,7 +196,6 @@ ircd::m::vm::fetch::auth(const event &event,
                          vm::eval &eval,
                          const room &room)
 
-try
 {
 	// Count how many of the auth_events provided exist locally.
 	const auto &opts{*eval.opts};
@@ -211,41 +210,38 @@ try
 		prev.auth_events_exist()
 	};
 
-	// We are satisfied at this point if all auth_events for this event exist,
-	// as those events have themselves been successfully evaluated and so forth.
 	assert(auth_exists <= auth_count);
-	if(auth_exists == auth_count)
-		return;
-
-	// At this point we are missing one or more auth_events for this event.
-	log::dwarning
+	if(auth_exists != auth_count) try
 	{
-		log, "%s auth_events:%zu miss:%zu",
-		loghead(eval),
-		auth_count,
-		auth_count - auth_exists,
-	};
-
-	if(!bool(m::vm::fetch::enable))
-		throw vm::error
+		log::dwarning
 		{
-			vm::fault::AUTH, "Fetching auth_events disabled by configuration",
+			log, "%s auth_events:%zu miss:%zu",
+			loghead(eval),
+			auth_count,
+			auth_count - auth_exists,
 		};
 
-	// This is a blocking call to recursively fetch and evaluate the auth_chain
-	// for this event. Upon return all of the auth_events for this event will
-	// have themselves been fetched and auth'ed recursively.
-	auth_chain(event, eval, room);
-}
-catch(const std::exception &e)
-{
-	throw vm::error
+		if(!bool(m::vm::fetch::enable))
+			throw vm::error
+			{
+				vm::fault::AUTH, "Fetching auth_events disabled by configuration",
+			};
+
+		// This is a blocking call to recursively fetch and evaluate the auth_chain
+		// for this event. Upon return all of the auth_events for this event will
+		// have themselves been fetched and auth'ed recursively.
+		auth_chain(event, eval, room);
+	}
+	catch(const std::exception &e)
 	{
-		vm::fault::AUTH, "Failed to fetch all auth_events :%s",
-		string_view{event.event_id},
-		json::get<"room_id"_>(event),
-		e.what()
-	};
+		throw vm::error
+		{
+			vm::fault::AUTH, "Failed to fetch %zu of %zu auth_events :%s",
+			auth_count - prev.auth_events_exist(),
+			auth_count,
+			e.what()
+		};
+	}
 }
 
 void
