@@ -346,7 +346,7 @@ ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
 	if(!m::room::auth::is_power_event(event))
 		return;
 
-	const event::prev prev
+	const event::auth prev
 	{
 		event
 	};
@@ -411,7 +411,7 @@ ircd::m::dbs::_prefetch_event_refs_auth(const event &event,
 	if(!m::room::auth::is_power_event(event))
 		return false;
 
-	const event::prev prev
+	const event::auth prev
 	{
 		event
 	};

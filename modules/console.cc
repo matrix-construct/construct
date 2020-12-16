@@ -14484,17 +14484,18 @@ console_cmd__fed__head(opt &out, const string_view &line)
 	    << event["depth"]
 	    << std::endl;
 
-	const m::event::prev prev{event};
-	for(size_t i(0); i < prev.auth_events_count(); ++i)
+	const m::event::auth auth{event};
+	for(size_t i(0); i < auth.auth_events_count(); ++i)
 	{
 		const m::event::id &id
 		{
-			prev.auth_event(i)
+			auth.auth_event(i)
 		};
 
 		out << "AUTH    " << id << " " << std::endl;
 	}
 
+	const m::event::prev prev{event};
 	for(size_t i(0); i < prev.prev_events_count(); ++i)
 	{
 		const m::event::id &id

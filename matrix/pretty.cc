@@ -68,10 +68,11 @@ ircd::m::pretty_detailed(std::ostream &out,
 		<< std::endl;
 
 	const m::event::prev prev{event};
-	if(prev.auth_events_count() || prev.prev_events_count())
+	const m::event::auth auth{event};
+	if(auth.auth_events_count() || prev.prev_events_count())
 		out
 		<< std::setw(16) << std::right << "REFERENCES" << "  "
-		<< (prev.auth_events_count() + prev.prev_events_count())
+		<< (auth.auth_events_count() + prev.prev_events_count())
 		<< std::endl;
 
 	const m::event::refs &refs{event_idx};
@@ -82,9 +83,9 @@ ircd::m::pretty_detailed(std::ostream &out,
 		<< std::endl;
 
 	out << std::endl;
-	for(size_t i(0); i < prev.auth_events_count(); ++i)
+	for(size_t i(0); i < auth.auth_events_count(); ++i)
 	{
-		const m::event::id &id{prev.auth_event(i)};
+		const m::event::id &id{auth.auth_event(i)};
 		const m::event::fetch event{std::nothrow, id};
 		if(!event.valid)
 		{
@@ -491,14 +492,15 @@ ircd::m::pretty_oneline(std::ostream &s,
 	else
 		s << "* ";
 
-	const m::event::prev prev(event);
-	for(size_t i(0); i < prev.auth_events_count(); ++i)
+	const m::event::auth auth(event);
+	for(size_t i(0); i < auth.auth_events_count(); ++i)
 		s << 'A';
 
+	const m::event::prev prev(event);
 	for(size_t i(0); i < prev.prev_events_count(); ++i)
 		s << 'P';
 
-	if(prev.auth_events_count() || prev.prev_events_count())
+	if(auth.auth_events_count() || prev.prev_events_count())
 		s << ' ';
 
 	if(event.event_id && event.event_id.version() == "1")
@@ -635,25 +637,25 @@ ircd::m::pretty_msgline(std::ostream &s,
 }
 
 std::string
-ircd::m::pretty(const event::prev &prev)
+ircd::m::pretty(const event::auth &auth)
 {
 	std::string ret;
 	std::stringstream s;
 	pubsetbuf(s, ret, 4096);
-	pretty(s, prev);
+	pretty(s, auth);
 	resizebuf(s, ret);
 	return ret;
 }
 
 std::ostream &
 ircd::m::pretty(std::ostream &s,
-                const event::prev &prev)
+                const event::auth &auth)
 {
-	for(size_t i(0); i < prev.auth_events_count(); ++i)
+	for(size_t i(0); i < auth.auth_events_count(); ++i)
 	{
 		const auto &[event_id, ref_hash]
 		{
-			prev.auth_events(i)
+			auth.auth_events(i)
 		};
 
 		s << std::setw(16) << std::right << "[auth event]"
@@ -669,6 +671,37 @@ ircd::m::pretty(std::ostream &s,
 		s << std::endl;
 	}
 
+	return s;
+}
+
+std::ostream &
+ircd::m::pretty_oneline(std::ostream &s,
+                        const event::auth &auth)
+{
+	const auto &auth_events{json::get<"auth_events"_>(auth)};
+	s << "A[ ";
+	for(const json::array auth_event : auth_events)
+		s << json::string(auth_event[0]) << ' ';
+	s << "] ";
+
+	return s;
+}
+
+std::string
+ircd::m::pretty(const event::prev &prev)
+{
+	std::string ret;
+	std::stringstream s;
+	pubsetbuf(s, ret, 4096);
+	pretty(s, prev);
+	resizebuf(s, ret);
+	return ret;
+}
+
+std::ostream &
+ircd::m::pretty(std::ostream &s,
+                const event::prev &prev)
+{
 	for(size_t i(0); i < prev.prev_events_count(); ++i)
 	{
 		const auto &[event_id, ref_hash]
@@ -696,12 +729,6 @@ std::ostream &
 ircd::m::pretty_oneline(std::ostream &s,
                         const event::prev &prev)
 {
-	const auto &auth_events{json::get<"auth_events"_>(prev)};
-	s << "A[ ";
-	for(const json::array auth_event : auth_events)
-		s << json::string(auth_event[0]) << ' ';
-	s << "] ";
-
 	const auto &prev_events{json::get<"prev_events"_>(prev)};
 	s << "E[ ";
 	for(const json::array prev_event : prev_events)

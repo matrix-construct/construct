@@ -96,6 +96,7 @@ struct ircd::m::event
 	json::property<name::type, json::string>
 >
 {
+	struct auth;
 	struct prev;
 	struct refs;
 	struct horizon;
@@ -155,6 +156,7 @@ struct ircd::m::event
 	event() = default;
 };
 
+#include "auth.h"
 #include "prev.h"
 #include "refs.h"
 #include "horizon.h"

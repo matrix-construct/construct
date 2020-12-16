@@ -102,6 +102,7 @@ libircd_matrix_la_SOURCES += event_get.cc
 libircd_matrix_la_SOURCES += event_id.cc
 libircd_matrix_la_SOURCES += event_index.cc
 libircd_matrix_la_SOURCES += event_prefetch.cc
+libircd_matrix_la_SOURCES += event_auth.cc
 libircd_matrix_la_SOURCES += event_prev.cc
 libircd_matrix_la_SOURCES += event_refs.cc
 libircd_matrix_la_SOURCES += room.cc

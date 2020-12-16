@@ -379,10 +379,11 @@ try
 			set(DEPTH_ZERO);
 
 	const event::prev prev{e};
+	const event::auth auth{e};
 	if(json::get<"event_id"_>(e))
 	{
-		for(size_t i(0); i < prev.auth_events_count(); ++i)
-			if(prev.auth_event(i) == json::get<"event_id"_>(e))
+		for(size_t i(0); i < auth.auth_events_count(); ++i)
+			if(auth.auth_event(i) == json::get<"event_id"_>(e))
 				set(SELF_AUTH_EVENT);
 
 		for(size_t i(0); i < prev.prev_events_count(); ++i)
@@ -390,16 +391,16 @@ try
 				set(SELF_PREV_EVENT);
 	}
 
-	for(size_t i(0); i < prev.auth_events_count(); ++i)
+	for(size_t i(0); i < auth.auth_events_count(); ++i)
 	{
 		const auto &[event_id, ref_hash]
 		{
-			prev.auth_events(i)
+			auth.auth_events(i)
 		};
 
-		for(size_t j(0); j < prev.auth_events_count(); ++j)
+		for(size_t j(0); j < auth.auth_events_count(); ++j)
 			if(i != j)
-				if(event_id == prev.auth_event(j))
+				if(event_id == auth.auth_event(j))
 					set(DUP_AUTH_EVENT);
 	}
 

@@ -1,7 +1,7 @@
-// Matrix Construct
+// The Construct
 //
-// Copyright (C) Matrix Construct Developers, Authors & Contributors
-// Copyright (C) 2016-2018 Jason Volk <jason@zemos.net>
+// Copyright (C) The Construct Developers, Authors & Contributors
+// Copyright (C) 2016-2020 Jason Volk <jason@zemos.net>
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -9,10 +9,10 @@
 // full license for this software is available in the LICENSE file.
 
 bool
-ircd::m::for_each(const event::prev &prev,
+ircd::m::for_each(const event::auth &auth,
                   const event::id::closure_bool &closure)
 {
-	return json::until(prev, [&closure]
+	return json::until(auth, [&closure]
 	(const auto &key, const json::array &prevs)
 	{
 		for(const string_view &prev_ : prevs)
@@ -49,68 +49,42 @@ ircd::m::for_each(const event::prev &prev,
 	});
 }
 
-size_t
-ircd::m::degree(const event::prev &prev)
-{
-	size_t ret{0};
-	json::for_each(prev, [&ret]
-	(const auto &, const json::array &prevs)
-	{
-		ret += prevs.count();
-	});
-
-	return ret;
-}
-
-size_t
-ircd::m::count(const event::prev &prev)
-{
-	size_t ret{0};
-	m::for_each(prev, [&ret](const event::id &event_id)
-	{
-		++ret;
-		return true;
-	});
-
-	return ret;
-}
-
 //
-// event::prev
+// event::auth
 //
 
 bool
-ircd::m::event::prev::prev_exist()
+ircd::m::event::auth::auth_exist()
 const
 {
-	for(size_t i(0); i < prev_events_count(); ++i)
-		if(prev_event_exists(i))
+	for(size_t i(0); i < auth_events_count(); ++i)
+		if(auth_event_exists(i))
 			return true;
 
 	return false;
 }
 
 size_t
-ircd::m::event::prev::prev_events_exist()
+ircd::m::event::auth::auth_events_exist()
 const
 {
-	// the spec max is really 20 but we accept a little more in this
+	// the de facto max is really 4 but we accept a little more in this
 	// subroutine for whatever forward reason...
 	static const auto max
 	{
-		32UL
+		8UL
 	};
 
 	const auto num
 	{
-		std::min(prev_events_count(), max)
+		std::min(auth_events_count(), max)
 	};
 
 	size_t i(0);
 	event::id ids[num];
 	std::generate(ids, ids + num, [this, &i]
 	{
-		return prev_event(i++);
+		return auth_event(i++);
 	});
 
 	const auto mask
@@ -123,49 +97,49 @@ const
 		__builtin_popcountl(mask)
 	};
 
-	assert(size_t(ret) <= max && size_t(ret) <= prev_events_count());
+	assert(size_t(ret) <= max && size_t(ret) <= auth_events_count());
 	return ret;
 }
 
 bool
-ircd::m::event::prev::prev_event_exists(const size_t &idx)
+ircd::m::event::auth::auth_event_exists(const size_t &idx)
 const
 {
-	return m::exists(prev_event(idx));
+	return m::exists(auth_event(idx));
 }
 
 bool
-ircd::m::event::prev::prev_events_has(const event::id &event_id)
+ircd::m::event::auth::auth_events_has(const event::id &event_id)
 const
 {
-	for(size_t i(0); i < prev_events_count(); ++i)
-		if(prev_event(i) == event_id)
+	for(size_t i(0); i < auth_events_count(); ++i)
+		if(auth_event(i) == event_id)
 			return true;
 
 	return false;
 }
 
 size_t
-ircd::m::event::prev::prev_events_count()
+ircd::m::event::auth::auth_events_count()
 const
 {
-	return json::get<"prev_events"_>(*this).count();
+	return json::get<"auth_events"_>(*this).count();
 }
 
 ircd::m::event::id
-ircd::m::event::prev::prev_event(const size_t &idx)
+ircd::m::event::auth::auth_event(const size_t &idx)
 const
 {
-	return std::get<0>(prev_events(idx));
+	return std::get<0>(auth_events(idx));
 }
 
 std::tuple<ircd::m::event::id, ircd::json::object>
-ircd::m::event::prev::prev_events(const size_t &idx)
+ircd::m::event::auth::auth_events(const size_t &idx)
 const
 {
 	const string_view &prev_
 	{
-		json::at<"prev_events"_>(*this).at(idx)
+		json::at<"auth_events"_>(*this).at(idx)
 	};
 
 	switch(json::type(prev_))
@@ -187,7 +161,7 @@ const
 
 		default: throw m::INVALID_MXID
 		{
-			"prev_events[%zu] is invalid", idx
+			"auth_events[%zu] is invalid", idx
 		};
 	}
 }

@@ -199,7 +199,11 @@ ircd::m::vm::fetch::auth(const event &event,
 {
 	// Count how many of the auth_events provided exist locally.
 	const auto &opts{*eval.opts};
-	const event::prev prev{event};
+	const event::auth prev
+	{
+		event
+	};
+
 	const size_t auth_count
 	{
 		prev.auth_events_count()

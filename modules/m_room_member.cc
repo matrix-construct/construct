@@ -125,7 +125,8 @@ ircd::m::auth_room_member_join(const m::event &event,
 	// i. If the only previous event is an m.room.create and the
 	// state_key is the creator, allow.
 	const m::event::prev prev(event);
-	if(prev.prev_events_count() == 1 && prev.auth_events_count() == 1)
+	const m::event::auth auth(event);
+	if(prev.prev_events_count() == 1 && auth.auth_events_count() == 1)
 		if(data.auth_create && data.auth_create->event_id == prev.prev_event(0))
 		{
 			data.allow = true;

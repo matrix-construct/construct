@@ -556,7 +556,7 @@ ircd::m::check_room_auth_rule_9(const m::event &event,
 std::array<ircd::m::event::idx, 5>
 ircd::m::room::auth::static_idx(const event &event)
 {
-	const m::event::prev refs
+	const m::event::auth refs
 	{
 		event
 	};
@@ -856,7 +856,7 @@ const
 		if(!seek(std::nothrow, e, idx))
 			continue;
 
-		const event::prev prev{e};
+		const event::auth prev{e};
 		const size_t count
 		{
 			std::min(prev.auth_events_count(), 5UL)

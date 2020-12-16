@@ -36,7 +36,6 @@ namespace ircd::m
 struct ircd::m::event::prev
 :json::tuple
 <
-	json::property<name::auth_events, json::array>,
 	json::property<name::prev_events, json::array>
 >
 {
@@ -45,25 +44,12 @@ struct ircd::m::event::prev
 		20
 	};
 
-	std::tuple<event::id, json::object> auth_events(const size_t &idx) const;
 	std::tuple<event::id, json::object> prev_events(const size_t &idx) const;
-
-	event::id auth_event(const size_t &idx) const;
 	event::id prev_event(const size_t &idx) const;
-
-	bool auth_event_exists(const size_t &idx) const;
 	bool prev_event_exists(const size_t &idx) const;
-
-	bool auth_events_has(const event::id &) const;
 	bool prev_events_has(const event::id &) const;
-
-	size_t auth_events_count() const;
 	size_t prev_events_count() const;
-
-	size_t auth_events_exist() const;
 	size_t prev_events_exist() const;
-
-	bool auth_exist() const;
 	bool prev_exist() const;
 
 	using super_type::tuple;
