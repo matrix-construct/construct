@@ -105,7 +105,8 @@ ircd::m::vm::conform_check_size
 	}
 };
 
-/// Check if an event originating from this server exceeds maximum size.
+/// Generate the conformity report and place the result into the eval. This
+/// hook may do some IO to find out if an event is the target of a redaction.
 decltype(ircd::m::vm::conform_report)
 ircd::m::vm::conform_report
 {

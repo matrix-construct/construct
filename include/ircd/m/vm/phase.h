@@ -25,9 +25,9 @@ enum ircd::m::vm::phase
 	NONE,                  ///< No phase; not entered.
 	EXECUTE,               ///< Execution entered.
 	CONFORM,               ///< Conformity check phase.
-	DUPWAIT,               ///< Duplicate eval check & hold
-	DUPCHK,                ///< Duplicate existence check
-	ISSUE,                 ///< Issue phase.
+	DUPWAIT,               ///< Duplicate eval check & hold.
+	DUPCHK,                ///< Duplicate existence check.
+	ISSUE,                 ///< Issue phase (for my(event)'s only).
 	ACCESS,                ///< Access control phase.
 	VERIFY,                ///< Signature verification.
 	FETCH_AUTH,            ///< Authentication events fetch phase.

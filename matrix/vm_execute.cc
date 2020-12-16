@@ -308,12 +308,14 @@ try
 	// Determine if this is an internal room creation event
 	const bool is_internal_room_create
 	{
-		json::get<"type"_>(event) == "m.room.create" &&
-		json::get<"sender"_>(event) &&
-		m::myself(json::get<"sender"_>(event))
+		json::get<"type"_>(event) == "m.room.create"
+		&& json::get<"sender"_>(event)
+		&& m::myself(json::get<"sender"_>(event))
 	};
 
-	// Query for whether the room apropos is an internal room.
+	// Query for whether the room apropos is an internal room. Note that the
+	// room_id at this point may not be canonical; however, internal rooms
+	// do not and never will never use non-canonical room_id's.
 	const scope_restore room_internal
 	{
 		eval.room_internal,
@@ -334,12 +336,14 @@ try
 		false
 	};
 
+	// Reset the conformity report before and after this event's eval.
 	const scope_restore eval_report
 	{
 		eval.report, event::conforms{}
 	};
 
-	// These checks only require the event data itself.
+	// Conformity checks only require the event data itself; note that some
+	// local queries may still be made by the hook, such as m::redacted().
 	if(likely(opts.phase[phase::CONFORM]) && !opts.edu)
 	{
 		const scope_restore eval_phase
@@ -350,18 +354,25 @@ try
 		call_hook(conform_hook, eval, event, eval);
 	}
 
+	// If the event is simply missing content while not being authoritatively
+	// redacted, the conformity phase would have thrown a prior exception. Now
+	// we know if the event is legitimately missing content.
 	const bool redacted
 	{
 		eval.report.has(event::conforms::MISMATCH_HASHES)
 	};
 
+	// If the input JSON is insufficient we'll need a buffer to rewrite the
+	// event. This buffer can be reused by subsequent events in the eval.
 	assert(!eval.buf || size(eval.buf) >= event::MAX_SIZE);
 	if(!opts.edu && !eval.buf && (!opts.json_source || redacted))
 		eval.buf = unique_mutable_buffer
 		{
-			event::MAX_SIZE, 64
+			event::MAX_SIZE, simd::alignment
 		};
 
+	// Conjure a view of the correct canonical JSON representation. This will
+	// either reference the input directly or the rewrite into eval.buf.
 	const json::object event_source
 	{
 		// Canonize from some other serialized source.
@@ -385,16 +396,18 @@ try
 		string_view{event.source}
 	};
 
-	m::event _event_
+	// Create a new event tuple from the canonical source, otherwise reference
+	// the existing input tuple directly. From now on we'll be referencing
+	// `_event` instead of `event` to ensure we have canonical values.
+	const m::event &_event
 	{
-		event_source
+		event_source?
+			m::event{event_source}:
+			event
 	};
 
-	const auto &_event
-	{
-		event_source? _event_: event
-	};
-
+	// Now conjure the corrected room_id and reference that for the duration
+	// of this event's eval.
 	const scope_restore eval_room_id
 	{
 		eval.room_id,
@@ -453,6 +466,9 @@ try
 		event::id::buf{}
 	};
 
+	// Enter the phase to check and hold for other evals with the same event_id
+	// to prevent race-conditions. Note that duplicates are blocked but never
+	// rejected here, as the first eval might fail and the second might not.
 	if(likely(opts.phase[phase::DUPWAIT]) && eval.event_id)
 	{
 		const scope_restore eval_phase
@@ -486,6 +502,9 @@ try
 		eval.event_, &_event
 	};
 
+	// Now that the final input is constructed and everything is known about it,
+	// the next frame's exception handlers will build and propagate much better
+	// error messages.
 	return execute_du(eval, _event);
 }
 catch(const vm::error &e)
@@ -764,6 +783,16 @@ ircd::m::vm::execute_pdu(eval &eval,
 		opts.auth && !eval.room_internal
 	};
 
+	// There is no reason for an event from another origin to be sent to an
+	// internal room. This boxes internal room access as a local problem, with
+	// local mistakes.
+	if(unlikely(eval.room_internal && !my(event)))
+		throw error
+		{
+			fault::GENERAL, "Internal room event denied from external source."
+		};
+
+	// Check if an event with the same ID was already accepted.
 	if(likely(opts.phase[phase::DUPCHK]))
 	{
 		const scope_restore eval_phase
@@ -784,14 +813,10 @@ ircd::m::vm::execute_pdu(eval &eval,
 		}
 	}
 
-	if(unlikely(eval.room_internal && !my(event)))
-		throw error
-		{
-			fault::GENERAL, "Internal room event denied from external source."
-		};
-
 	assert(!opts.unique || eval::count(event_id) == 1);
 	assert(opts.replays || !m::exists(event_id));
+
+	// Check if event's proprietor is denied by the room ACL.
 	if(likely(opts.phase[phase::ACCESS]))
 	{
 		const scope_restore eval_phase
