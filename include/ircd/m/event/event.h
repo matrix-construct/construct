@@ -123,7 +123,7 @@ struct ircd::m::event
 	static bool my(const idx &);
 	static json::object preimage(const mutable_buffer &, const json::object &);
 	static void essential(json::iov &event, const json::iov &content, const closure_iov_mutable &);
-	static bool verify(const json::object &, const ed25519::pk &, const ed25519::sig &sig);
+	static bool verify(const json::object &, const ed25519::pk &, const ed25519::sig &sig, const bool &canonical = false);
 	static ed25519::sig sign(const string_view &, const ed25519::sk &);
 	static ed25519::sig sign(const string_view &);
 	static ed25519::sig sign(const json::object &, const ed25519::sk &);

@@ -629,11 +629,14 @@ ircd::m::verify(const event &event_,
 bool
 ircd::m::event::verify(const json::object &event,
                        const ed25519::pk &pk,
-                       const ed25519::sig &sig)
+                       const ed25519::sig &sig,
+                       const bool &canonical)
 {
-	const string_view preimage
+	const auto preimage
 	{
-		stringify(buf[3], event)
+		canonical?
+			string_view{event}:
+			stringify(buf[3], event)
 	};
 
 	return pk.verify(preimage, sig);
