@@ -827,6 +827,37 @@ ircd::m::vm::execute_pdu(eval &eval,
 		call_hook(access_hook, eval, event, eval);
 	}
 
+	// Check if this event is relevant to this server.
+	if(likely(opts.phase[phase::EMPTION]) && !eval.room_internal)
+	{
+		const scope_restore eval_phase
+		{
+			eval.phase, phase::EMPTION
+		};
+
+		const bool my_target_member_event
+		{
+			type == "m.room.member"
+			&& my(m::user(json::get<"state_key"_>(event)))
+		};
+
+		const bool allow
+		{
+			my(event)
+			|| my_target_member_event
+			|| m::local_joined(room_id)
+		};
+
+		if(unlikely(!allow))
+			throw m::ACCESS_DENIED
+			{
+				"I have no users which require (%s,%s) in %s on this server.",
+				type,
+				json::get<"state_key"_>(event),
+				json::get<"room_id"_>(event),
+			};
+	}
+
 	if(likely(opts.phase[phase::VERIFY]))
 	{
 		const scope_restore eval_phase

@@ -29,6 +29,7 @@ enum ircd::m::vm::phase
 	DUPCHK,                ///< Duplicate existence check.
 	ISSUE,                 ///< Issue phase (for my(event)'s only).
 	ACCESS,                ///< Access control phase.
+	EMPTION,               ///< Emption control phase.
 	VERIFY,                ///< Signature verification.
 	FETCH_AUTH,            ///< Authentication events fetch phase.
 	AUTH_STATIC,           ///< Static authentication phase.

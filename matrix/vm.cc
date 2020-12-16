@@ -137,6 +137,7 @@ ircd::m::vm::reflect(const enum phase &code)
 		case phase::DUPCHK:       return "DUPCHK";
 		case phase::ISSUE:        return "ISSUE";
 		case phase::ACCESS:       return "ACCESS";
+		case phase::EMPTION:      return "EMPTION";
 		case phase::VERIFY:       return "VERIFY";
 		case phase::FETCH_AUTH:   return "FETCH_AUTH";
 		case phase::AUTH_STATIC:  return "AUTH_STATIC";
