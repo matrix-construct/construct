@@ -30,6 +30,7 @@ ircd::m::acquire::acquire::acquire(const struct opts &opts)
 :opts{opts}
 ,head_vmopts{opts.vmopts}
 ,history_vmopts{opts.vmopts}
+,state_vmopts{opts.vmopts}
 {
 	if(opts.head)
 	{
