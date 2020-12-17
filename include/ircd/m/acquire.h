@@ -45,6 +45,9 @@ struct ircd::m::acquire
 	bool fetch_history(event::idx &);
 	void acquire_history();
 
+	bool fetch_timeline(event::idx &);
+	void acquire_timeline();
+
 	bool fetch_state(const m::event::id &, const string_view &);
 	void acquire_state();
 
@@ -74,9 +77,13 @@ struct ircd::m::acquire::opts
 	/// a depth ceiling effectively makes this false.
 	bool head {true};
 
-	/// Perform history acquisition. Setting this to false disables operations
-	/// which fill in gaps in the timeline below the head.
+	/// Perform history acquisition. Setting this to false disables depthwise
+	/// operations which fill in timeline gaps below the head.
 	bool history {true};
+
+	/// Perform timeline acquisition. Setting this to false disables
+	/// breadthwise operations which fill in timeline gaps below the head.
+	bool timeline {true};
 
 	/// Perform state acquisition. Setting this to false may result in an
 	/// acquisition that is missing state events and subject to inconsistency
@@ -108,6 +115,9 @@ struct ircd::m::acquire::opts
 	/// Fetch attempt cap passed to m::fetch, because the default there is
 	/// unlimited and that's usually a waste of time in practice.
 	size_t attempt_max {16};
+
+	/// Limit on the depth of leafs pursued by the timeline acquisition.
+	size_t leaf_depth {0};
 
 	/// Default vm::opts to be used during eval; some options are
 	/// unconditionally overriden to perform some evals. Use caution, setting
