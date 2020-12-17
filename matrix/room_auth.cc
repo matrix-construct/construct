@@ -857,22 +857,13 @@ const
 			continue;
 
 		const event::auth prev{e};
-		const size_t count
+		event::idx auth_idxs[prev.MAX];
+		const auto &auth_idx
 		{
-			std::min(prev.auth_events_count(), 5UL)
+			prev.idxs(auth_idxs)
 		};
 
-		event::id auth_id[count];
-		event::idx auth_idx[count];
-		for(size_t i(0); i < count; ++i)
-			auth_id[i] = prev.auth_event(i);
-
-		const auto found
-		{
-			m::index({auth_idx, count}, {auth_id, count})
-		};
-
-		for(size_t i(0); i < count; ++i)
+		for(size_t i(0); i < auth_idx.size(); ++i)
 		{
 			if(!auth_idx[i])
 				continue;
