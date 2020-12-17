@@ -156,11 +156,11 @@ struct ircd::m::event
 	event() = default;
 };
 
+#include "index.h"
 #include "auth.h"
 #include "prev.h"
 #include "refs.h"
 #include "horizon.h"
-#include "index.h"
 #include "event_id.h"
 #include "fetch.h"
 #include "cached.h"

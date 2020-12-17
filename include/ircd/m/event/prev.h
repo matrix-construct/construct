@@ -44,6 +44,8 @@ struct ircd::m::event::prev
 		20
 	};
 
+	template<size_t N> vector_view<event::id> ids(event::id (&)[N]) const;
+	template<size_t N> vector_view<event::idx> idxs(event::idx (&)[N]) const;
 	std::tuple<event::id, json::object> prev_events(const size_t &idx) const;
 	event::id prev_event(const size_t &idx) const;
 	bool prev_event_exists(const size_t &idx) const;
@@ -55,3 +57,43 @@ struct ircd::m::event::prev
 	using super_type::tuple;
 	using super_type::operator=;
 };
+
+template<size_t N>
+inline ircd::vector_view<ircd::m::event::idx>
+ircd::m::event::prev::idxs(event::idx (&out)[N])
+const
+{
+	event::id buf[N];
+	const auto &ids
+	{
+		prev::ids(buf)
+	};
+
+	const auto &found
+	{
+		m::index(out, ids)
+	};
+
+	return vector_view<event::idx>
+	(
+		out, out + ids.size()
+	);
+}
+
+template<size_t N>
+inline ircd::vector_view<ircd::m::event::id>
+ircd::m::event::prev::ids(event::id (&out)[N])
+const
+{
+	size_t i(0);
+	m::for_each(*this, [&i, &out](const event::id &event_id)
+	{
+		out[i++] = event_id;
+		return i < N;
+	});
+
+	return vector_view<event::id>
+	(
+		out, i
+	);
+}
