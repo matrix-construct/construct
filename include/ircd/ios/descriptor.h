@@ -50,21 +50,29 @@ struct ircd::ios::descriptor
 
 struct ircd::ios::descriptor::stats
 {
-	uint64_t queued {0};
-	uint64_t calls {0};
-	uint64_t faults {0};
-	uint64_t allocs {0};
-	uint64_t alloc_bytes{0};
-	uint64_t frees {0};
-	uint64_t free_bytes{0};
-	uint64_t slice_total {0};
-	uint64_t slice_last {0};
-	uint64_t latency_total {0};
-	uint64_t latency_last {0};
+	using value_type = uint64_t;
+	using item = ircd::stats::item<value_type *>;
 
-	stats &operator+=(const stats &) &;
+	value_type value[11];
+	size_t items;
 
-	stats();
+  public:
+	item queued;
+	item calls;
+	item faults;
+	item allocs;
+	item alloc_bytes;
+	item frees;
+	item free_bytes;
+	item slice_total;
+	item slice_last;
+	item latency_total;
+	item latency_last;
+
+	stats(descriptor &);
+	stats() = delete;
+	stats(const stats &) = delete;
+	stats &operator=(const stats &) = delete;
 	~stats() noexcept;
 };
 

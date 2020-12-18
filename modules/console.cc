@@ -1683,7 +1683,6 @@ console_cmd__ios(opt &out, const string_view &line)
 		;
 	}};
 
-	struct ios::descriptor::stats total;
 	for(const auto *const &descriptor : ios::descriptor::list)
 	{
 		assert(descriptor);
@@ -1691,19 +1690,15 @@ console_cmd__ios(opt &out, const string_view &line)
 
 		assert(d.stats);
 		const auto &s(*d.stats);
-		total += s;
 
-		out << std::left << std::setw(3) << d.id
-		    << " " << std::left << std::setw(48) << d.name;
+		out
+		<< std::left << std::setw(3) << d.id
+		<< " " << std::left << std::setw(48) << d.name;
+
 		stats_output(s);
 		out << std::endl;
 	}
 
-	out << std::endl;
-	out << std::left << std::setw(3) << '-'
-	    << " " << std::left << std::setw(48) << "TOTAL";
-	stats_output(total);
-	out << std::endl;
 	return true;
 }
 

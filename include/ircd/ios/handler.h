@@ -136,9 +136,9 @@ noexcept
 			"QUEUE %5u %-30s [%11lu] ------[%9lu] q:%-4lu",
 			descriptor.id,
 			trunc(descriptor.name, 30),
-			stats.calls,
+			uint64_t(stats.calls),
 			0UL,
-			stats.queued,
+			uint64_t(stats.queued),
 		};
 }
 

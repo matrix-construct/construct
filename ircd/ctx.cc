@@ -347,9 +347,9 @@ noexcept try
 			"QUEUE %5u %-30s [%11lu] ------[%9lu] q:%-4lu id:%-5u %-30s",
 			ios_desc.id,
 			trunc(ios_desc.name, 30),
-			ios_desc.stats->calls,
+			uint64_t(ios_desc.stats->calls),
 			notes,
-			ios_desc.stats->queued,
+			uint64_t(ios_desc.stats->queued),
 			id,
 			name,
 		};
@@ -1745,7 +1745,7 @@ noexcept
 	};
 
 	assert(ctx::ios_desc.stats);
-	const auto &last_slice
+	const uint64_t &last_slice
 	{
 		ctx::ios_desc.stats->slice_last
 	};
@@ -1769,7 +1769,7 @@ ircd::ctx::prof::check_slice()
 	};
 
 	assert(ctx::ios_desc.stats);
-	const auto &last_slice
+	const uint64_t &last_slice
 	{
 		ctx::ios_desc.stats->slice_last
 	};

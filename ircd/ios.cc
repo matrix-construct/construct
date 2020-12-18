@@ -268,7 +268,7 @@ noexcept
 }
 ,stats
 {
-	std::make_unique<struct stats>()
+	std::make_unique<struct stats>(*this)
 }
 ,allocator
 {
@@ -305,31 +305,111 @@ noexcept
 // descriptor::stats
 //
 
-ircd::ios::descriptor::stats::stats()
+namespace ircd::ios
 {
+	static thread_local char stats_name_buf[128];
+	static string_view stats_name(const descriptor &d, const string_view &key);
+}
+
+ircd::string_view
+ircd::ios::stats_name(const descriptor &d,
+                      const string_view &key)
+{
+	return fmt::sprintf
+	{
+		stats_name_buf, "ircd.ios.%s.%s",
+		d.name,
+		key,
+	};
+}
+
+ircd::ios::descriptor::stats::stats(descriptor &d)
+:value{0}
+,items{0}
+,queued
+{
+	value + items++,
+	{
+		{ "name", stats_name(d, "queued") },
+	},
+}
+,calls
+{
+	value + items++,
+	{
+		{ "name", stats_name(d, "calls") },
+	},
+}
+,faults
+{
+	value + items++,
+	{
+		{ "name", stats_name(d, "faults") },
+	},
+}
+,allocs
+{
+	value + items++,
+	{
+		{ "name", stats_name(d, "allocs") },
+	},
+}
+,alloc_bytes
+{
+	value + items++,
+	{
+		{ "name", stats_name(d, "alloc_bytes") },
+	},
+}
+,frees
+{
+	value + items++,
+	{
+		{ "name", stats_name(d, "frees") },
+	},
+}
+,free_bytes
+{
+	value + items++,
+	{
+		{ "name", stats_name(d, "free_bytes") },
+	},
+}
+,slice_total
+{
+	value + items++,
+	{
+		{ "name", stats_name(d, "slice_total") },
+	},
+}
+,slice_last
+{
+	value + items++,
+	{
+		{ "name", stats_name(d, "slice_last") },
+	},
+}
+,latency_total
+{
+	value + items++,
+	{
+		{ "name", stats_name(d, "latency_total") },
+	},
+}
+,latency_last
+{
+	value + items++,
+	{
+		{ "name", stats_name(d, "latency_last") },
+	},
+}
+{
+	assert(items <= (sizeof(value) / sizeof(value[0])));
 }
 
 ircd::ios::descriptor::stats::~stats()
 noexcept
 {
-}
-
-struct ircd::ios::descriptor::stats &
-ircd::ios::descriptor::stats::operator+=(const stats &o)
-&
-{
-	queued += o.queued;
-	calls += o.calls;
-	faults += o.faults;
-	allocs += o.allocs;
-	alloc_bytes += o.alloc_bytes;
-	frees += o.frees;
-	free_bytes += o.free_bytes;
-	slice_total += o.slice_total;
-	slice_last += o.slice_last;
-	latency_total += o.latency_total;
-	latency_last += o.latency_last;
-	return *this;
 }
 
 //
@@ -368,9 +448,9 @@ noexcept
 			"FAULT %5u %-30s [%11lu] faults[%9lu] q:%-4lu",
 			descriptor.id,
 			trunc(descriptor.name, 30),
-			stats.calls,
-			stats.faults,
-			stats.queued,
+			uint64_t(stats.calls),
+			uint64_t(stats.faults),
+			uint64_t(stats.queued),
 		};
 
 	// Our API sez if this function returns true, caller is responsible for
@@ -418,9 +498,9 @@ noexcept
 			"LEAVE %5u %-30s [%11lu] cycles[%9lu] q:%-4lu",
 			descriptor.id,
 			trunc(descriptor.name, 30),
-			stats.calls,
-			stats.slice_last,
-			stats.queued,
+			uint64_t(stats.calls),
+			uint64_t(stats.slice_last),
+			uint64_t(stats.queued),
 		};
 
 	assert(handler::current == handler);
@@ -458,9 +538,9 @@ noexcept
 			"ENTER %5u %-30s [%11lu] latent[%9lu] q:%-4lu",
 			descriptor.id,
 			trunc(descriptor.name, 30),
-			stats.calls,
-			stats.latency_last,
-			stats.queued,
+			uint64_t(stats.calls),
+			uint64_t(stats.latency_last),
+			uint64_t(stats.queued),
 		};
 }
 
