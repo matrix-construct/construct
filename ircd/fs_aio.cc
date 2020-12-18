@@ -233,8 +233,15 @@ ircd::fs::aio::read(const fd &fd,
 		waiter, fd, opts, bufs
 	};
 
-	const scope_count cur_reads{stats.cur_reads};
-	stats.max_reads = std::max(stats.max_reads, stats.cur_reads);
+	const scope_count cur_reads
+	{
+		static_cast<uint64_t &>(stats.cur_reads)
+	};
+
+	stats.max_reads = std::max
+	(
+		uint64_t(stats.max_reads), uint64_t(stats.cur_reads)
+	);
 
 	request.submit();
 	const size_t bytes
@@ -287,8 +294,15 @@ ircd::fs::aio::read(const vector_view<read_op> &op)
 	}
 
 	// Update stats
-	const scope_count cur_reads{stats.cur_reads, ushort(num)};
-	stats.max_reads = std::max(stats.max_reads, stats.cur_reads);
+	const scope_count cur_reads
+	{
+		static_cast<uint64_t &>(stats.cur_reads), num
+	};
+
+	stats.max_reads = std::max
+	(
+		uint64_t(stats.max_reads), uint64_t(stats.cur_reads)
+	);
 
 	// Send requests
 	for(size_t i(0); i < num; ++i)
@@ -375,8 +389,15 @@ ircd::fs::aio::write(const fd &fd,
 	};
 
 	// track current write count
-	const scope_count cur_writes{stats.cur_writes};
-	stats.max_writes = std::max(stats.max_writes, stats.cur_writes);
+	const scope_count cur_writes
+	{
+		static_cast<uint64_t &>(stats.cur_writes)
+	};
+
+	stats.max_writes = std::max
+	(
+		uint64_t(stats.max_writes), uint64_t(stats.cur_writes)
+	);
 
 	// track current write bytes count
 	stats.cur_bytes_write += req_bytes;
@@ -503,8 +524,15 @@ ircd::fs::aio::request::submit()
 	stats.bytes_requests += submitted_bytes;
 	stats.requests++;
 
-	const uint16_t &curcnt(stats.requests - stats.complete);
-	stats.max_requests = std::max(stats.max_requests, curcnt);
+	const auto &curcnt
+	{
+		stats.requests - stats.complete
+	};
+
+	stats.max_requests = std::max
+	(
+		static_cast<uint64_t &>(stats.max_requests), curcnt
+	);
 
 	// Wait here until there's room to submit a request
 	system->dock.wait([]
@@ -878,8 +906,11 @@ ircd::fs::aio::system::submit(request &request)
 
 	queue.at(qcount++) = static_cast<iocb *>(&request);
 	stats.cur_queued++;
-	stats.max_queued = std::max(stats.max_queued, stats.cur_queued);
 	assert(stats.cur_queued == qcount);
+	stats.max_queued = std::max
+	(
+		uint64_t(stats.max_queued), uint64_t(stats.cur_queued)
+	);
 
 	// Determine whether this request will trigger a flush of the queue
 	// and be submitted itself as well.
@@ -984,10 +1015,13 @@ noexcept try
 	stats.submits += bool(submitted);
 	stats.cur_queued -= submitted;
 	stats.cur_submits += submitted;
-	stats.max_submits = std::max(stats.max_submits, stats.cur_submits);
+	stats.max_submits = std::max
+	(
+		uint64_t(stats.max_submits), uint64_t(stats.cur_submits)
+	);
+
 	assert(stats.cur_queued == qcount);
 	assert(stats.cur_submits == in_flight);
-
 	if(idle && submitted > 0 && !handle_set)
 		set_handle();
 

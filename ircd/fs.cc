@@ -1673,6 +1673,206 @@ noexcept
 }
 #endif
 
+//
+// stats
+//
+
+ircd::fs::aio::stats::stats()
+:value{0}
+,items{0}
+,requests
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.requests" },
+	}
+}
+,complete
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.complete" },
+	}
+}
+,submits
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.submits" },
+	}
+}
+,chases
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.chases" },
+	}
+}
+,handles
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.handles" },
+	}
+}
+,events
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.events" },
+	}
+}
+,cancel
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.cancel" },
+	}
+}
+,errors
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.errors" },
+	}
+}
+,reads
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.reads" },
+	}
+}
+,writes
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.writes" },
+	}
+}
+,stalls
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.stalls" },
+	}
+}
+,bytes_requests
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.bytes.requests" },
+	}
+}
+,bytes_complete
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.bytes.complete" },
+	}
+}
+,bytes_errors
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.bytes.errors" },
+	}
+}
+,bytes_cancel
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.bytes.cancel" },
+	}
+}
+,bytes_read
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.bytes.read" },
+	}
+}
+,bytes_write
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.bytes.write" },
+	}
+}
+,cur_bytes_write
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.cur.bytes.write" },
+	}
+}
+,cur_reads
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.cur.reads" },
+	}
+}
+,cur_writes
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.cur.writes" },
+	}
+}
+,cur_queued
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.cur.queued" },
+	}
+}
+,cur_submits
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.cur.submits" },
+	}
+}
+,max_requests
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.max.requests" },
+	}
+}
+,max_reads
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.max.reads" },
+	}
+}
+,max_writes
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.max.writes" },
+	}
+}
+,max_queued
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.max.queued" },
+	}
+}
+,max_submits
+{
+	value + items++,
+	{
+		{ "name", "ircd.fs.aio.max.submits" },
+	}
+}
+{
+	assert(items <= (sizeof(value) / sizeof(value[0])));
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // fs/iou.h
@@ -1700,7 +1900,10 @@ ircd::fs::iou::enable
 
 /// Global stats structure
 decltype(ircd::fs::iou::stats)
-ircd::fs::iou::stats;
+ircd::fs::iou::stats
+{
+	fs::aio::stats
+};
 
 /// Non-null when iou is available for use
 decltype(ircd::fs::iou::system)

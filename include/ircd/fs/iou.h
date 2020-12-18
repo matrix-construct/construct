@@ -29,7 +29,6 @@ extern "C"
 namespace ircd::fs::iou
 {
 	struct init;
-	struct stats;
 	struct system;
 	struct request;
 	enum state :uint8_t;
@@ -44,7 +43,7 @@ namespace ircd::fs::iou
 	extern conf::item<size_t> max_submit;
 
 	// runtime state
-	extern struct stats stats;
+	extern struct aio::stats &stats;
 	extern struct system *system;
 
 	// util
@@ -86,13 +85,6 @@ enum ircd::fs::iou::state
 	COMPLETED,
 
 	_NUM
-};
-
-/// Reuse the same stats structure as fs::aio in fs::iou
-struct ircd::fs::iou::stats
-:aio::stats
-{
-	using aio::stats::stats;
 };
 
 /// Internal use; this is simply declared here for when internal headers are

@@ -45,36 +45,43 @@ namespace ircd::fs::aio
 ///
 struct ircd::fs::aio::stats
 {
-	uint64_t requests {0};             ///< count of requests created
-	uint64_t complete {0};             ///< count of requests completed
-	uint64_t submits {0};              ///< count of io_submit calls
-	uint64_t chases {0};               ///< count of chase calls
-	uint64_t handles {0};              ///< count of event_fd callbacks
-	uint64_t events {0};               ///< count of events from io_getevents
-	uint64_t cancel {0};               ///< count of requests canceled
-	uint64_t errors {0};               ///< count of response errcodes
-	uint64_t reads {0};                ///< count of read complete
-	uint64_t writes {0};               ///< count of write complete
-	uint64_t stalls {0};               ///< count of io_submit's blocking.
+	using item = ircd::stats::item<uint64_t *>;
 
-	uint64_t bytes_requests {0};       ///< total bytes for requests created
-	uint64_t bytes_complete {0};       ///< total bytes for requests completed
-	uint64_t bytes_errors {0};         ///< total bytes for completed w/ errc
-	uint64_t bytes_cancel {0};         ///< total bytes for cancels
-	uint64_t bytes_read {0};           ///< total bytes for read completed
-	uint64_t bytes_write {0};          ///< total bytes for write completed
+	uint64_t value[32];
+	size_t items;
 
-	uint32_t cur_bytes_write {0};      ///< pending write bytes
-	uint16_t cur_reads {0};            ///< pending reads
-	uint16_t cur_writes {0};           ///< pending write
-	uint16_t cur_queued {0};           ///< nr of requests in userspace queue
-	uint16_t cur_submits {0};          ///< nr requests in flight with kernel
+	item requests;             ///< count of requests created
+	item complete;             ///< count of requests completed
+	item submits;              ///< count of io_submit calls
+	item chases;               ///< count of chase calls
+	item handles;              ///< count of event_fd callbacks
+	item events;               ///< count of events from io_getevents
+	item cancel;               ///< count of requests canceled
+	item errors;               ///< count of response errcodes
+	item reads;                ///< count of read complete
+	item writes;               ///< count of write complete
+	item stalls;               ///< count of io_submit's blocking.
 
-	uint16_t max_requests {0};         ///< maximum observed pending requests
-	uint16_t max_reads {0};            ///< maximum observed pending reads
-	uint16_t max_writes {0};           ///< maximum observed pending write
-	uint16_t max_queued {0};           ///< maximum observed in queue.
-	uint16_t max_submits {0};          ///< maximum observed in flight.
+	item bytes_requests;       ///< total bytes for requests created
+	item bytes_complete;       ///< total bytes for requests completed
+	item bytes_errors;         ///< total bytes for completed w/ errc
+	item bytes_cancel;         ///< total bytes for cancels
+	item bytes_read;           ///< total bytes for read completed
+	item bytes_write;          ///< total bytes for write completed
+
+	item cur_bytes_write;      ///< pending write bytes
+	item cur_reads;            ///< pending reads
+	item cur_writes;           ///< pending write
+	item cur_queued;           ///< nr of requests in userspace queue
+	item cur_submits;          ///< nr requests in flight with kernel
+
+	item max_requests;         ///< maximum observed pending requests
+	item max_reads;            ///< maximum observed pending reads
+	item max_writes;           ///< maximum observed pending write
+	item max_queued;           ///< maximum observed in queue.
+	item max_submits;          ///< maximum observed in flight.
+
+	stats();
 };
 
 struct ircd::fs::aio::init
