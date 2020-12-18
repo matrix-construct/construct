@@ -303,6 +303,29 @@ ircd::m::pretty_stateline(std::ostream &out,
 		json::get<"depth"_>(event)
 	};
 
+	const json::string &content
+	{
+		type == "m.room.member"?
+			m::membership(event):
+
+		type == "m.room.history_visibility"?
+			json::get<"content"_>(event).get("history_visibility"):
+
+		type == "m.room.join_rules"?
+			json::get<"content"_>(event).get("join_rule"):
+
+		type == "m.room.name"?
+			json::get<"content"_>(event).get("name"):
+
+		type == "m.room.canonical_alias"?
+			json::get<"content"_>(event).get("alias"):
+
+		type == "m.room.avatar"?
+			json::get<"content"_>(event).get("url"):
+
+		json::string{}
+	};
+
 	thread_local char smbuf[48];
 	if(event.event_id.version() == "1")
 	{
@@ -318,7 +341,8 @@ ircd::m::pretty_stateline(std::ostream &out,
 		<< std::setw(10) << event_idx
 		<< std::left << "  "
 		<< std::setw(72) << string_view{event.event_id}
-		<< std::left << " "
+		<< std::left << ' '
+		<< std::left << trunc(content, 80)
 		;
 	} else {
 		out
@@ -335,6 +359,7 @@ ircd::m::pretty_stateline(std::ostream &out,
 		<< std::left << " ]" << flags << " "
 		<< std::setw(10) << event_idx
 		<< ' '
+		<< std::left << trunc(content, 80)
 		;
 	}
 
