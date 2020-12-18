@@ -117,6 +117,12 @@ struct ircd::stats::item<uint64_t *>
 
 	item(uint64_t *const &, const json::members &);
 	item() = default;
+
+	item &operator=(const uint64_t &val) &
+	{
+		static_cast<uint64_t &>(*this) = val;
+		return *this;
+	}
 };
 
 template<>
@@ -145,6 +151,12 @@ struct ircd::stats::item<uint32_t *>
 
 	item(uint32_t *const &, const json::members &);
 	item() = default;
+
+	item &operator=(const uint32_t &val) &
+	{
+		static_cast<uint32_t &>(*this) = val;
+		return *this;
+	}
 };
 
 template<>
@@ -173,10 +185,15 @@ struct ircd::stats::item<uint16_t *>
 
 	item(uint16_t *const &, const json::members &);
 	item() = default;
+
+	item &operator=(const uint16_t &val) &
+	{
+		static_cast<uint16_t &>(*this) = val;
+		return *this;
+	}
 };
 
-template<>
-struct ircd::stats::item<uint64_t>
+template<> struct ircd::stats::item<uint64_t>
 :item<uint64_t *>
 {
 	uint64_t val {0};
@@ -194,6 +211,12 @@ struct ircd::stats::item<uint64_t>
 
 	item(const json::members &);
 	item() = default;
+
+	item &operator=(const uint64_t &val) &
+	{
+		static_cast<uint64_t &>(*this) = val;
+		return *this;
+	}
 };
 
 template<>
@@ -215,6 +238,12 @@ struct ircd::stats::item<uint32_t>
 
 	item(const json::members &);
 	item() = default;
+
+	item &operator=(const uint32_t &val) &
+	{
+		static_cast<uint32_t &>(*this) = val;
+		return *this;
+	}
 };
 
 template<>
@@ -236,4 +265,10 @@ struct ircd::stats::item<uint16_t>
 
 	item(const json::members &);
 	item() = default;
+
+	item &operator=(const uint16_t &val) &
+	{
+		static_cast<uint16_t &>(*this) = val;
+		return *this;
+	}
 };
