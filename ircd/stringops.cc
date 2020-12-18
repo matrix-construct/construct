@@ -254,8 +254,8 @@ noexcept
 	(const char p) -> char
 	{
 		return 0
-		| ((p == before) & after)
-		| ((p != before) & p)
+		| (boolmask<char>(p == before) & after)
+		| (boolmask<char>(p != before) & p)
 		;
 	});
 
@@ -280,8 +280,8 @@ noexcept
 	(const char p) -> char
 	{
 		return 0
-		| ((p == before) & after)
-		| ((p != before) & p)
+		| (boolmask<char>(p == before) & after)
+		| (boolmask<char>(p != before) & p)
 		;
 	});
 
