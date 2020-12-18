@@ -13,6 +13,8 @@ namespace ircd::m::vm
 	template<class... args> static bool output(const vm::opts &, const vm::fault &, const string_view &event_id, const string_view &fmt, args&&...);
 	template<class... args> static fault handle_fault(const opts &, const fault &, const string_view &event_id, const string_view &fmt, args&&...);
 	template<class T> static void call_hook(hook::site<T> &, eval &, const event &, T&& data);
+	static void retire(eval &, const event &);
+	static void emption_check(eval &, const event &);
 	static size_t calc_txn_reserve(const opts &, const event &);
 	static void write_commit(eval &);
 	static void write_append(eval &, const event &, const bool &);
@@ -835,27 +837,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 			eval.phase, phase::EMPTION
 		};
 
-		const bool my_target_member_event
-		{
-			type == "m.room.member"
-			&& my(m::user(json::get<"state_key"_>(event)))
-		};
-
-		const bool allow
-		{
-			my(event)
-			|| my_target_member_event
-			|| m::local_joined(room_id)
-		};
-
-		if(unlikely(!allow))
-			throw m::ACCESS_DENIED
-			{
-				"I have no users which require (%s,%s) in %s on this server.",
-				type,
-				json::get<"state_key"_>(event),
-				json::get<"room_id"_>(event),
-			};
+		emption_check(eval, event);
 	}
 
 	if(likely(opts.phase[phase::VERIFY]))
@@ -1097,49 +1079,89 @@ ircd::m::vm::execute_pdu(eval &eval,
 			eval.phase, phase::RETIRE
 		};
 
-		sequence::dock.wait([&eval]
-		{
-			return eval::seqnext(sequence::retired) == std::addressof(eval);
-		});
-
-		const auto next
-		{
-			eval::seqnext(eval.sequence)
-		};
-
-		const auto highest
-		{
-			next?
-				sequence::get(*next):
-				sequence::get(eval)
-		};
-
-		const auto retire
-		{
-			std::clamp
-			(
-				sequence::get(eval),
-				sequence::retired + 1,
-				highest
-			)
-		};
-
-		log::debug
-		{
-			log, "%s %lu:%lu release %lu",
-			loghead(eval),
-			sequence::get(eval),
-			retire,
-			highest,
-		};
-
-		assert(sequence::get(eval) <= retire);
-		assert(sequence::retired < sequence::get(eval));
-		assert(sequence::retired < retire);
-		sequence::retired = retire;
+		retire(eval, event);
 	}
 
 	return fault::ACCEPT;
+}
+
+void
+ircd::m::vm::retire(eval &eval,
+                    const event &event)
+
+{
+	sequence::dock.wait([&eval]
+	{
+		return eval::seqnext(sequence::retired) == std::addressof(eval);
+	});
+
+	const auto next
+	{
+		eval::seqnext(eval.sequence)
+	};
+
+	const auto highest
+	{
+		next?
+			sequence::get(*next):
+			sequence::get(eval)
+	};
+
+	const auto retire
+	{
+		std::clamp
+		(
+			sequence::get(eval),
+			sequence::retired + 1,
+			highest
+		)
+	};
+
+	log::debug
+	{
+		log, "%s %lu:%lu release %lu",
+		loghead(eval),
+		sequence::get(eval),
+		retire,
+		highest,
+	};
+
+	assert(sequence::get(eval) <= retire);
+	assert(sequence::retired < sequence::get(eval));
+	assert(sequence::retired < retire);
+	sequence::retired = retire;
+}
+
+void
+ircd::m::vm::write_commit(eval &eval)
+{
+	assert(eval.txn);
+	assert(eval.txn.use_count() == 1);
+	auto &txn
+	{
+		*eval.txn
+	};
+
+	#ifdef RB_DEBUG
+	const auto db_seq_before(db::sequence(*m::dbs::events));
+	#endif
+
+	txn();
+
+	#ifdef RB_DEBUG
+	const auto db_seq_after(db::sequence(*m::dbs::events));
+
+	log::debug
+	{
+		log, "%s wrote %lu | db seq %lu:%lu %zu cells in %zu bytes to events database ...",
+		loghead(eval),
+		sequence::get(eval),
+		db_seq_before,
+		db_seq_after,
+		txn.size(),
+		txn.bytes()
+	};
+	#endif
 }
 
 void
@@ -1275,38 +1297,6 @@ ircd::m::vm::write_append(eval &eval,
 	};
 }
 
-void
-ircd::m::vm::write_commit(eval &eval)
-{
-	assert(eval.txn);
-	assert(eval.txn.use_count() == 1);
-	auto &txn
-	{
-		*eval.txn
-	};
-
-	#ifdef RB_DEBUG
-	const auto db_seq_before(db::sequence(*m::dbs::events));
-	#endif
-
-	txn();
-
-	#ifdef RB_DEBUG
-	const auto db_seq_after(db::sequence(*m::dbs::events));
-
-	log::debug
-	{
-		log, "%s wrote %lu | db seq %lu:%lu %zu cells in %zu bytes to events database ...",
-		loghead(eval),
-		sequence::get(eval),
-		db_seq_before,
-		db_seq_after,
-		txn.size(),
-		txn.bytes()
-	};
-	#endif
-}
-
 size_t
 ircd::m::vm::calc_txn_reserve(const opts &opts,
                               const event &event)
@@ -1319,6 +1309,36 @@ ircd::m::vm::calc_txn_reserve(const opts &opts,
 	};
 
 	return reserve_event + opts.reserve_index;
+}
+
+void
+ircd::m::vm::emption_check(eval &eval,
+                           const m::event &event)
+{
+	const bool my_target_member_event
+	{
+		json::get<"type"_>(event) == "m.room.member"
+		&& my(m::user(json::get<"state_key"_>(event)))
+	};
+
+	const bool allow
+	{
+		my(event)
+		|| my_target_member_event
+		|| m::local_joined(room::id(json::get<"room_id"_>(event)))
+	};
+
+	if(unlikely(!allow))
+		throw m::ACCESS_DENIED
+		{
+			"No users require events of type=%s%s%s in %s on this server.",
+			json::get<"type"_>(event),
+			json::get<"state_key"_>(event)?
+				",state_key="_sv:
+				string_view{},
+			json::get<"state_key"_>(event),
+			json::get<"room_id"_>(event),
+		};
 }
 
 template<class T>
