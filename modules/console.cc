@@ -1599,9 +1599,9 @@ console_cmd__stats(opt &out, const string_view &line)
 		param[0] == "-a"? param[1]: param[0]
 	};
 
-	for(const auto &[name_, item] : stats::items)
+	for(const auto &item : stats::items)
 	{
-		if(prefix && !startswith(name_, prefix))
+		if(prefix && !startswith(item->name, prefix))
 			continue;
 
 		assert(item);
@@ -1615,7 +1615,7 @@ console_cmd__stats(opt &out, const string_view &line)
 
 		const fmt::bsprintf<128> name
 		{
-			"%s ", trunc(name_, name_width)
+			"%s ", trunc(item->name, name_width)
 		};
 
 		out

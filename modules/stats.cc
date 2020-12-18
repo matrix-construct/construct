@@ -51,12 +51,12 @@ ircd::stats::get_stats(client &client,
 		ircd::time<milliseconds>()
 	};
 
-	for(const auto &[name_, item] : items)
+	for(const auto &item : items)
 	{
 		char buf[256], name[2][128], val[64];
 		const string_view _name
 		{
-			replace(name[0], name_, '.', '_')
+			replace(name[0], item->name, '.', '_')
 		};
 
 		const string_view line

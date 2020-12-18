@@ -95,12 +95,11 @@ ircd::stats::item<void>::item(const std::type_index &type,
 {
 	opts
 }
+,name
 {
-	const json::string name
-	{
-		this->operator[]("name")
-	};
-
+	this->operator[]("name")
+}
+{
 	if(unlikely(!name))
 		throw invalid
 		{
@@ -116,32 +115,49 @@ ircd::stats::item<void>::item(const std::type_index &type,
 			NAME_MAX_LEN
 		};
 
-	if(unlikely(!items.emplace(name, this).second))
+	static const auto less
+	{
+		[](const auto &a, const auto &b)
+		{
+			return a->name < b->name;
+		}
+	};
+
+	const auto exists
+	{
+		std::binary_search(begin(items), end(items), this, less)
+	};
+
+	if(unlikely(exists))
 		throw invalid
 		{
 			"Stats item named '%s' already exists",
 			name
 		};
+
+	if(items.empty())
+		items.reserve(4096);
+
+	items.emplace_back(this);
+	std::sort(begin(items), end(items), less);
 }
 
 ircd::stats::item<void>::~item()
 noexcept
 {
-	const json::string name
+	if(!name)
+		return;
+
+	const auto eit
 	{
-		this->operator[]("name")
+		std::remove_if(begin(items), end(items), [this]
+		(const auto &item)
+		{
+			return item->name == this->name;
+		})
 	};
 
-	if(name)
-	{
-		const auto it
-		{
-			items.find(name)
-		};
-
-		assert(data(it->first) == data(name));
-		items.erase(it);
-	}
+	items.erase(eit, end(items));
 }
 
 ircd::string_view

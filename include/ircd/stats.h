@@ -55,7 +55,7 @@ namespace ircd::stats
 	template<> struct item<uint16_t>;
 
 	extern const size_t NAME_MAX_LEN;
-	extern std::map<string_view, item<void> *> items;
+	extern std::vector<item<void> *> items;
 
 	string_view string(const mutable_buffer &, const item<void> &);
 	std::ostream &operator<<(std::ostream &, const item<void> &);
@@ -78,6 +78,7 @@ struct ircd::stats::item<void>
 {
 	std::type_index type {typeid(void)};
 	json::strung feature;
+	json::string name;
 
   public:
 	// Access features
