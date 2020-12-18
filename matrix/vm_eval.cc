@@ -50,7 +50,7 @@ ircd::m::vm::fetch_keys(const eval &eval)
 
 	std::set<server_key> miss;
 	for(const auto &event : eval.pdus)
-		for(const auto &[server_name, signatures] : at<"signatures"_>(event))
+		for(const auto &[server_name, signatures] : json::get<"signatures"_>(event))
 			for(const auto &[key_id, signature] : json::object(signatures))
 				if(!m::keys::cache::has(json::get<"origin"_>(event), key_id))
 					miss.emplace(json::get<"origin"_>(event), key_id);
