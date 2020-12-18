@@ -15,9 +15,9 @@
 namespace ircd::fmt
 {
 	IRCD_EXCEPTION(ircd::error, error);
-	IRCD_EXCEPTION(error, invalid_format);
-	IRCD_EXCEPTION(error, invalid_type);
-	IRCD_EXCEPTION(error, illegal);
+	IRCD_PANICKING(error, invalid_format);
+	IRCD_PANICKING(error, invalid_type);
+	IRCD_PANICKING(error, illegal);
 
 	struct sprintf;
 	struct vsprintf;
