@@ -38,6 +38,7 @@ namespace ircd::stats
 {
 	IRCD_EXCEPTION(ircd::error, error)
 	IRCD_EXCEPTION(error, not_found)
+	IRCD_PANICKING(error, invalid)
 
 	// Abstract item
 	template<class T = void> struct item;

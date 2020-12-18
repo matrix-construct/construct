@@ -101,14 +101,14 @@ ircd::stats::item<void>::item(const std::type_index &type,
 		this->operator[]("name")
 	};
 
-	if(!name)
-		throw error
+	if(unlikely(!name))
+		throw invalid
 		{
 			"Stats item must have a 'name' string feature"
 		};
 
-	if(name.size() > NAME_MAX_LEN)
-		throw error
+	if(unlikely(name.size() > NAME_MAX_LEN))
+		throw invalid
 		{
 			"Stats item '%s' name length:%zu exceeds max:%zu",
 			name,
@@ -116,10 +116,11 @@ ircd::stats::item<void>::item(const std::type_index &type,
 			NAME_MAX_LEN
 		};
 
-	if(!items.emplace(name, this).second)
-		throw error
+	if(unlikely(!items.emplace(name, this).second))
+		throw invalid
 		{
-			"Stats item named '%s' already exists", name
+			"Stats item named '%s' already exists",
+			name
 		};
 }
 
