@@ -53,7 +53,7 @@ ircd::ctx::ctx::id_ctr
 decltype(ircd::ctx::ctx::ios_desc)
 ircd::ctx::ctx::ios_desc
 {
-	"ircd::ctx::ctx"
+	"ircd.ctx.ctx"
 };
 
 /// This is a pseudo ircd::ios handler. See ios_desc
@@ -721,7 +721,7 @@ noexcept
 decltype(ircd::ctx::this_ctx::courtesy_yield_desc)
 ircd::ctx::this_ctx::courtesy_yield_desc
 {
-	"ircd::ctx courtesy yield"
+	"ircd.ctx.courtesy_yield"
 };
 
 // set by the continuation object and the base frame.
@@ -1127,9 +1127,9 @@ namespace ircd::ctx
 decltype(ircd::ctx::spawn_desc)
 ircd::ctx::spawn_desc
 {
-	{ "ircd::ctx::spawn post"      },
-	{ "ircd::ctx::spawn defer"     },
-	{ "ircd::ctx::spawn dispatch"  },
+	{ "ircd.ctx.spawn.post"      },
+	{ "ircd.ctx.spawn.defer"     },
+	{ "ircd.ctx.spawn.dispatch"  },
 };
 
 decltype(ircd::ctx::DEFAULT_STACK_SIZE)

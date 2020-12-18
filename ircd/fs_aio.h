@@ -57,6 +57,7 @@ struct ircd::fs::aio::system
 	size_t handle_size {0};
 	std::unique_ptr<uint8_t[]> handle_data;
 	static ios::descriptor handle_descriptor;
+	static ios::descriptor chase_descriptor;
 
 	/// An eventfd which will be notified by the system; we integrate this with
 	/// the ircd io_service core epoll() event loop. The EFD_SEMAPHORE flag is

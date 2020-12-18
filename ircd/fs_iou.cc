@@ -514,7 +514,7 @@ catch(...)
 decltype(ircd::fs::iou::system::handle_descriptor)
 ircd::fs::iou::system::handle_descriptor
 {
-	"ircd::fs::iou sigfd",
+	"ircd.fs.iou.sigfd",
 
 	// allocator; custom allocation strategy because this handler
 	// appears to excessively allocate and deallocate 120 bytes; this

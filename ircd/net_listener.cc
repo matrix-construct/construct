@@ -226,6 +226,18 @@ ircd::net::acceptor::log
 	"net.listen"
 };
 
+decltype(ircd::net::acceptor::accept_desc)
+ircd::net::acceptor::accept_desc
+{
+	"ircd.net.acceptor.accept"
+};
+
+decltype(ircd::net::acceptor::handshake_desc)
+ircd::net::acceptor::handshake_desc
+{
+	"ircd.net.acceptor.handshake"
+};
+
 decltype(ircd::net::acceptor::timeout)
 ircd::net::acceptor::timeout
 {
@@ -476,11 +488,6 @@ bool
 ircd::net::acceptor::set_handle()
 try
 {
-	static ios::descriptor desc
-	{
-		"ircd::net::acceptor accept"
-	};
-
 	const auto &sock
 	{
 		std::make_shared<ircd::socket>(ssl)
@@ -492,7 +499,7 @@ try
 	};
 
 	ip::tcp::socket &sd(*sock);
-	a.async_accept(sd, ios::handle(desc, std::move(handler)));
+	a.async_accept(sd, ios::handle(accept_desc, std::move(handler)));
 	++accepting;
 	return true;
 }
@@ -561,11 +568,6 @@ noexcept try
 		socket::handshake_type::server
 	};
 
-	static ios::descriptor desc
-	{
-		"ircd::net::acceptor async_handshake"
-	};
-
 	const auto it
 	{
 		handshaking.emplace(end(handshaking), sock)
@@ -577,7 +579,7 @@ noexcept try
 	};
 
 	sock->set_timeout(milliseconds(timeout));
-	sock->ssl.async_handshake(handshake_type, ios::handle(desc, std::move(handshake)));
+	sock->ssl.async_handshake(handshake_type, ios::handle(handshake_desc, std::move(handshake)));
 	assert(!openssl::get_app_data(*sock));
 	openssl::set_app_data(*sock, sock.get());
 }

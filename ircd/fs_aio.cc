@@ -673,6 +673,43 @@ ircd::fs::aio::system::eventfd_flags
 	EFD_CLOEXEC | EFD_NONBLOCK
 };
 
+decltype(ircd::fs::aio::system::chase_descriptor)
+ircd::fs::aio::system::chase_descriptor
+{
+	"ircd.fs.aio.chase"
+};
+
+decltype(ircd::fs::aio::system::handle_descriptor)
+ircd::fs::aio::system::handle_descriptor
+{
+	"ircd.fs.aio.sigfd",
+
+	// allocator; custom allocation strategy because this handler
+	// appears to excessively allocate and deallocate 120 bytes; this
+	// is a simple asynchronous operation, we can do better (and perhaps
+	// even better than this below).
+	[](ios::handler &handler, const size_t &size) -> void *
+	{
+		assert(ircd::fs::aio::system);
+		auto &system(*ircd::fs::aio::system);
+
+		if(unlikely(!system.handle_data))
+		{
+			system.handle_size = size;
+			system.handle_data = std::make_unique<uint8_t[]>(size);
+		}
+
+		assert(system.handle_size == size);
+		return system.handle_data.get();
+	},
+
+	// no deallocation; satisfied by class member unique_ptr
+	[](ios::handler &handler, void *const &ptr, const size_t &size) {},
+
+	// continuation
+	true,
+};
+
 //
 // system::system
 //
@@ -940,11 +977,6 @@ ircd::fs::aio::system::submit(request &request)
 	// flush the whole queue down to 0.
 	if(qcount == 1)
 	{
-		static ios::descriptor descriptor
-		{
-			"ircd::fs::aio chase"
-		};
-
 		auto handler
 		{
 			std::bind(&system::chase, this)
@@ -952,7 +984,7 @@ ircd::fs::aio::system::submit(request &request)
 
 		ircd::defer
 		{
-			descriptor, std::move(handler)
+			chase_descriptor, std::move(handler)
 		};
 	}
 
@@ -1153,37 +1185,6 @@ catch(...)
 	handle_set = false;
 	throw;
 }
-
-decltype(ircd::fs::aio::system::handle_descriptor)
-ircd::fs::aio::system::handle_descriptor
-{
-	"ircd::fs::aio sigfd",
-
-	// allocator; custom allocation strategy because this handler
-	// appears to excessively allocate and deallocate 120 bytes; this
-	// is a simple asynchronous operation, we can do better (and perhaps
-	// even better than this below).
-	[](ios::handler &handler, const size_t &size) -> void *
-	{
-		assert(ircd::fs::aio::system);
-		auto &system(*ircd::fs::aio::system);
-
-		if(unlikely(!system.handle_data))
-		{
-			system.handle_size = size;
-			system.handle_data = std::make_unique<uint8_t[]>(size);
-		}
-
-		assert(system.handle_size == size);
-		return system.handle_data.get();
-	},
-
-	// no deallocation; satisfied by class member unique_ptr
-	[](ios::handler &handler, void *const &ptr, const size_t &size) {},
-
-	// continuation
-	true,
-};
 
 /// Handle notifications that requests are complete.
 void

@@ -29,6 +29,8 @@ struct ircd::net::acceptor
 	IRCD_EXCEPTION(error, sni_warning)
 
 	static log::log log;
+	static ios::descriptor accept_desc;
+	static ios::descriptor handshake_desc;
 	static conf::item<size_t> handshaking_max;
 	static conf::item<size_t> handshaking_max_per_peer;
 	static conf::item<milliseconds> timeout;

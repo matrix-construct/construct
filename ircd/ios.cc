@@ -476,7 +476,7 @@ namespace ircd::ios
 decltype(ircd::ios::dispatch_desc)
 ircd::ios::dispatch_desc
 {
-	"ircd::ios dispatch"
+	"ircd.ios.dispatch"
 };
 
 [[gnu::hot]]
@@ -568,7 +568,7 @@ namespace ircd::ios
 decltype(ircd::ios::defer_desc)
 ircd::ios::defer_desc
 {
-	"ircd::ios defer",
+	"ircd.ios.defer",
 };
 
 [[gnu::hot]]
@@ -639,7 +639,7 @@ namespace ircd::ios
 decltype(ircd::ios::post_desc)
 ircd::ios::post_desc
 {
-	"ircd::ios post"
+	"ircd.ios.post"
 };
 
 [[gnu::hot]]

@@ -1143,34 +1143,34 @@ ircd::net::socket::instances
 decltype(ircd::net::socket::desc_connect)
 ircd::net::socket::desc_connect
 {
-	"ircd::net::socket connect"
+	"ircd.net.socket.connect"
 };
 
 decltype(ircd::net::socket::desc_handshake)
 ircd::net::socket::desc_handshake
 {
-	"ircd::net::socket handshake"
+	"ircd.net.socket.handshake"
 };
 
 decltype(ircd::net::socket::desc_disconnect)
 ircd::net::socket::desc_disconnect
 {
-	"ircd::net::socket disconnect"
+	"ircd.net.socket.disconnect"
 };
 
 decltype(ircd::net::socket::desc_timeout)
 ircd::net::socket::desc_timeout
 {
-	"ircd::net::socket timeout"
+	"ircd.net.socket.timeout"
 };
 
 decltype(ircd::net::socket::desc_wait)
 ircd::net::socket::desc_wait
 {
-	{ "ircd::net::socket::wait ready::ANY"   },
-	{ "ircd::net::socket::wait ready::READ"  },
-	{ "ircd::net::socket::wait ready::WRITE" },
-	{ "ircd::net::socket::wait ready::ERROR" },
+	{ "ircd.net.socket.wait.ready.ANY"   },
+	{ "ircd.net.socket.wait.ready.READ"  },
+	{ "ircd.net.socket.wait.ready.WRITE" },
+	{ "ircd.net.socket.wait.ready.ERROR" },
 };
 
 decltype(ircd::net::socket::total_bytes_in)
