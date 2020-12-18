@@ -350,6 +350,56 @@ ircd::resource::method::default_payload_max
 };
 
 //
+// method::stats
+//
+
+namespace ircd
+{
+	static thread_local char method_stats_name_buf[128];
+	static string_view method_stats_name(resource::method &, const string_view &);
+}
+
+ircd::resource::method::stats::stats(method &m)
+:pending
+{
+	{ "name", method_stats_name(m, "pending") }
+}
+,requests
+{
+	{ "name", method_stats_name(m, "requests") }
+}
+,timeouts
+{
+	{ "name", method_stats_name(m, "timeouts") }
+}
+,completions
+{
+	{ "name", method_stats_name(m, "completed") }
+}
+,internal_errors
+{
+	{ "name", method_stats_name(m, "internal_errors") }
+}
+{
+}
+
+ircd::string_view
+ircd::method_stats_name(resource::method &m,
+                        const string_view &key)
+{
+	assert(m.resource);
+	assert(m.resource->path);
+	assert(m.name);
+	assert(key);
+	return fmt::sprintf
+	{
+		method_stats_name_buf, "ircd.resource.%s.%s.%s",
+		m.resource->path,
+		m.name,
+		key,
+	};
+}
+//
 // method::method
 //
 
@@ -385,7 +435,7 @@ ircd::resource::method::method(struct resource &resource,
 }
 ,stats
 {
-	std::make_unique<struct stats>()
+	std::make_unique<struct stats>(*this)
 }
 ,methods_it{[this, &name]
 {
@@ -420,7 +470,7 @@ noexcept
 			"Resource '%s' method '%s' still waiting for %zu pending requests",
 			resource->path,
 			name,
-			stats->pending
+			uint64_t(stats->pending),
 		};
 
 	const ctx::uninterruptible::nothrow ui;
@@ -445,7 +495,7 @@ try
 	++stats->requests;
 	const scope_count pending
 	{
-		stats->pending
+		static_cast<uint64_t &>(stats->pending)
 	};
 
 	// Bail out if the method limited the amount of content and it was exceeded.

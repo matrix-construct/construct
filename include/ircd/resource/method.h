@@ -70,9 +70,13 @@ struct ircd::resource::method::opts
 
 struct ircd::resource::method::stats
 {
-	uint64_t pending {0};             // Clients currently inside the method
-	uint64_t requests {0};            // The method was found and called.
-	uint64_t timeouts {0};            // The method's timeout was exceeded.
-	uint64_t completions {0};         // The handler returned without throwing.
-	uint64_t internal_errors {0};     // The handler threw a very bad exception.
+	using item = ircd::stats::item<uint64_t>;
+
+	item pending;             ///< Clients currently inside the method
+	item requests;            ///< The method was found and called.
+	item timeouts;            ///< The method's timeout was exceeded.
+	item completions;         ///< The handler returned without throwing.
+	item internal_errors;     ///< The handler threw a very bad exception.
+
+	stats(method &);
 };
