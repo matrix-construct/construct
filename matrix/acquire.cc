@@ -383,8 +383,19 @@ ircd::m::acquire::fetch_timeline(event::idx &ref_min)
 				continue;
 
 			pe.emplace_hint(it, prev_idx[i]);
-			if(!seek(std::nothrow, p, prev_idx[i]))
-				continue;
+			if(opts.depth.first || opts.depth.second)
+			{
+				const auto depth
+				{
+					m::get(std::nothrow, prev_idx[i], "depth", 0L)
+				};
+
+				if(depth < opts.depth.first)
+					continue;
+
+				if(opts.depth.second && depth > opts.depth.second)
+					continue;
+			}
 
 			pq.emplace_back(prev_idx[i]);
 			_ref_min = std::max(_ref_min, prev_idx[i]);
