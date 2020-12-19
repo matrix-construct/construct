@@ -22,6 +22,7 @@ namespace ircd::m::vm
 	string_view loghead(const mutable_buffer &, const eval &);
 	string_view loghead(const eval &);    // single tls buffer
 
+	size_t prefetch_refs(const eval &);
 	size_t fetch_keys(const eval &);
 }
 

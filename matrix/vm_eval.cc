@@ -78,6 +78,27 @@ ircd::m::vm::fetch_keys(const eval &eval)
 	return fetched;
 }
 
+size_t
+ircd::m::vm::prefetch_refs(const eval &eval)
+{
+	assert(eval.opts);
+	const dbs::write_opts &wopts
+	{
+		eval.opts->wopts
+	};
+
+	size_t prefetched(0);
+	for(const auto &event : eval.pdus)
+	{
+		if(event.event_id)
+			prefetched += m::prefetch(event.event_id, "_event_idx");
+
+		prefetched += dbs::prefetch(event, wopts);
+	}
+
+	return prefetched;
+}
+
 ircd::string_view
 ircd::m::vm::loghead(const eval &eval)
 {

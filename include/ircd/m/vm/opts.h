@@ -105,6 +105,12 @@ struct ircd::m::vm::opts
 	/// perform a parallel/mass fetch before proceeding with the evals.
 	bool mfetch_keys {true};
 
+	/// Whether to launch prefetches for all event_id's (found at standard
+	/// locations) from the input vector, in addition to some other related
+	/// local db prefetches. Disabled by default because it operates prior
+	/// to verification and access phases; can be enabled explicitly.
+	bool mprefetch_refs {false};
+
 	/// Throws fault::EVENT if *all* of the prev_events do not exist locally.
 	/// This is used to enforce that at least one path is traversable. This
 	/// test is conducted after waiting if fetch_prev and fetch_prev_wait.

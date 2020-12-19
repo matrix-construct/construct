@@ -220,8 +220,20 @@ ircd::m::vm::execute(eval &eval,
 	const size_t prefetched_keys
 	{
 		prefetch_keys?
-			fetch_keys(eval):
-			0UL
+			fetch_keys(eval): 0UL
+	};
+
+	const bool prefetch_refs
+	{
+		opts.phase[phase::PREINDEX]
+		&& opts.mprefetch_refs
+		&& events.size() > 1
+	};
+
+	const size_t prefetched_refs
+	{
+		prefetch_refs?
+			vm::prefetch_refs(eval): 0UL
 	};
 
 	size_t accepted(0), existed(0), i, j, k;
@@ -936,7 +948,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 	};
 
 	// Allocate transaction; prefetch dependencies.
-	if(likely(opts.phase[phase::PREINDEX]))
+	if(likely(opts.phase[phase::PREINDEX]) && !opts.mprefetch_refs)
 	{
 		const scope_restore eval_phase
 		{
