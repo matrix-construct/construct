@@ -255,6 +255,21 @@ ircd::m::acquire::fetch_history(event::idx &ref_min)
 void
 ircd::m::acquire::acquire_timeline()
 {
+	// We only enter this routine if the options are sufficient. Otherwise
+	// the functionality here will overlap with acquire_history() and be
+	// a more expensive form of the same thing.
+	const bool sufficient_options
+	{
+		false
+		|| !opts.history
+		|| opts.viewport_size
+		|| opts.depth.first
+		|| opts.depth.second
+	};
+
+	if(!sufficient_options)
+		return;
+
 	event::idx ref_min
 	{
 		opts.ref.first
