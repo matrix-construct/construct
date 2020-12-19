@@ -257,23 +257,19 @@ ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
 		event
 	};
 
-	const size_t count
+	event::id prev_ids[prev.MAX];
+	const auto &prev_id
 	{
-		std::min(prev.prev_events_count(), event::prev::MAX)
+		prev.ids(prev_ids)
 	};
 
-	event::id prev_id[count];
-	event::idx prev_idx[count];
-	for(size_t i(0); i < count; ++i)
-		prev_id[i] = prev.prev_event(i),
-		prev_idx[i] = 0;
-
-	const size_t found
+	event::idx prev_idx[prev.MAX] {0};
+	const auto &found
 	{
-		find_event_idx({prev_idx, count}, {prev_id, count}, opts)
+		find_event_idx(prev_idx, prev_id, opts)
 	};
 
-	for(size_t i(0); i < count; ++i)
+	for(size_t i(0); i < prev_id.size(); ++i)
 	{
 		if(opts.appendix.test(appendix::EVENT_HORIZON) && !prev_idx[i])
 		{
@@ -322,16 +318,13 @@ ircd::m::dbs::_prefetch_event_refs_prev(const event &event,
 		event
 	};
 
-	const size_t count
-	{
-		std::min(prev.prev_events_count(), event::prev::MAX)
-	};
+	event::id prev_ids[prev.MAX];
+	const vector_view<const event::id> &prev_id
+	(
+		prev.ids(prev_ids)
+	);
 
-	event::id prev_id[count];
-	for(size_t i(0); i < count; ++i)
-		prev_id[i] = prev.prev_event(i);
-
-	return prefetch_event_idx({prev_id, count}, opts);
+	return prefetch_event_idx(prev_id, opts);
 }
 
 // NOTE: QUERY
@@ -346,27 +339,24 @@ ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
 	if(!m::room::auth::is_power_event(event))
 		return;
 
-	const event::auth prev
+	const event::auth auth
 	{
 		event
 	};
 
-	const size_t count
+	event::id auth_ids[auth.MAX];
+	const auto &auth_id
 	{
-		std::min(prev.auth_events_count(), event::prev::MAX)
+		auth.ids(auth_ids)
 	};
 
-	event::id auth_id[count];
-	event::idx auth_idx[count];
-	for(size_t i(0); i < count; ++i)
-		auth_id[i] = prev.auth_event(i);
-
-	const auto found
+	event::idx auth_idx[auth.MAX] {0};
+	const auto &found
 	{
-		find_event_idx({auth_idx, count}, {auth_id, count}, opts)
+		find_event_idx(auth_idx, auth_id, opts)
 	};
 
-	for(size_t i(0); i < count; ++i)
+	for(size_t i(0); i < auth_id.size(); ++i)
 	{
 		if(unlikely(!auth_idx[i]))
 		{
@@ -411,21 +401,18 @@ ircd::m::dbs::_prefetch_event_refs_auth(const event &event,
 	if(!m::room::auth::is_power_event(event))
 		return false;
 
-	const event::auth prev
+	const event::auth auth
 	{
 		event
 	};
 
-	const size_t count
-	{
-		std::min(prev.auth_events_count(), event::prev::MAX)
-	};
+	event::id auth_ids[auth.MAX];
+	const vector_view<const event::id> auth_id
+	(
+		auth.ids(auth_ids)
+	);
 
-	event::id auth_id[count];
-	for(size_t i(0); i < count; ++i)
-		auth_id[i] = prev.auth_event(i);
-
-	return prefetch_event_idx({auth_id, count}, opts);
+	return prefetch_event_idx(auth_id, opts);
 }
 
 // NOTE: QUERY
