@@ -39,7 +39,7 @@ bool norun;
 bool read_only;
 bool write_avoid;
 bool slave;
-std::array<bool, 8> smoketest;
+std::array<bool, 6> smoketest;
 bool soft_assert;
 bool nomatrix;
 bool matrix {true}; // matrix server by default.
@@ -202,25 +202,19 @@ noexcept try
 		}
 	};
 
-	// Setup synchronization primitives on this stack for starting and stopping
-	// the application (matrix homeserver). Note this stack cannot actually use
-	// these; they'll be used to synchronize the closures below running in
-	// different contexts.
-	ircd::ctx::latch start(2), quit(2);
-	std::exception_ptr eptr;
-
 	// Setup the matrix homeserver application. This will be executed on an
 	// ircd::context (dedicated stack). We construct several objects on the
 	// stack which are the basis for our matrix homeserver. When the stack
 	// unwinds, the homeserver will go out of service.
-	const auto homeserver{[&origin, &server_name, &start, &quit, &eptr]
+	const auto homeserver{[&origin, &server_name]
+	(const ircd::main_continuation &run)
 	{
-		try
-		{
-			// 5 Load the matrix library dynamic shared object
-			ircd::matrix matrix;
+		assert(ircd::run::level == ircd::run::level::START);
 
-			// 6 Run a primary homeserver based on the program options given.
+		// Load the matrix library dynamic shared object
+		ircd::matrix matrix; try
+		{
+			// Setup a primary homeserver based on the program options given.
 			struct ircd::m::homeserver::opts opts;
 			opts.origin = origin;
 			opts.server_name = server_name;
@@ -229,86 +223,29 @@ noexcept try
 			opts.autoapps = !noautoapps;
 			const ircd::custom_ptr<ircd::m::homeserver> homeserver
 			{
-				// 6.1
 				matrix.init(&opts), [&matrix]
 				(ircd::m::homeserver *const homeserver)
 				{
-					// 11.1
 					matrix.fini(homeserver);
 				}
 			};
 
-			// 7 Notify the loader the homeserver is ready for service.
-			start.count_down_and_wait();
-
-			// 9 Yield until the loader notifies us; this stack will then unwind.
-			quit.count_down_and_wait();
+			// Run the homeserver (call main()'s continuation). This function
+			// returns (or potentially throws) to unload/quit.
+			run();
 		}
-		catch(...)
+		catch(const std::exception &e)
 		{
-			// ctx::exception_handler allows us to yield an ircd::ctx (stack
-			// switch) inside a catch block, which we'll need in this scope.
-			const ircd::ctx::exception_handler eh;
-
-			// Copy a reference to the current exception which was saved by eh.
-			// Note it is not safe to call std::current_exception() here.
-			eptr = eh;
-
-			// 7' Notify the loader the homeserver failed to start
-			start.count_down_and_wait();
-
-			// 9' Yield until the loader notifies us; this stack will then unwind.
-			quit.count_down_and_wait();
-		}
-
-		// 11
-	}};
-
-	// This object registers a callback for a specific event in libircd; the
-	// closure is called from the main context (#1) running ircd::main().
-	// after libircd is ready for service in runlevel LOAD but before entering
-	// runlevel RUN. It is called again immediately after entering runlevel
-	// QUIT, but before any functionality of libircd destructs. This cues us
-	// to start and stop the homeserver.
-	const ircd::run::changed loader
-	{
-		[&homeserver, &start, &quit, &eptr](const auto &level)
-		{
-			static ircd::context context;
-
-			// 2 This branch is taken the first time this function is called,
-			// and not taken the second time.
-			if(level == ircd::run::level::LOAD && !context && !nomatrix)
+			// Rethrow as ircd::error because we're about to unload the module
+			// and all m:: type exceptions won't exist anymore...
+			throw ircd::error
 			{
-				using namespace ircd::util;
-
-				// 3 Launch the homeserver context (asynchronous).
-				context = { "matrix", 1_MiB, ircd::context::POST, homeserver };
-
-				// 4 Yield until the homeserver function notifies `start`; waiting
-				// here prevents ircd::main() from entering runlevel RUN.
-				start.count_down_and_wait();
-
-				// 8 Check if error on start; rethrowing that here propagates
-				// to ircd::main() and triggers a runlevel QUIT sequence.
-				if(!!eptr)
-					std::rethrow_exception(eptr);
-
-				// 8.1
-				return;
-			}
-
-			if(level != ircd::run::level::UNLOAD || !context)
-				return;
-
-			// 10 Notify the waiting homeserver context to quit; this will
-			// start shutting down the homeserver.
-			quit.count_down_and_wait();
-
-			// 12 Wait for the homeserver context to finish before we return.
-			context.join();
+				"%s", e.what()
+			};
 		}
-	};
+
+		assert(ircd::run::level == ircd::run::level::QUIT);
+	}};
 
 	// This is the sole io_context for Construct, and the ios.run() below is the
 	// the only place where the program actually blocks.
@@ -325,7 +262,7 @@ noexcept try
 
 	// Associates libircd with our io_context and posts the initial routines
 	// to that io_context. Execution of IRCd will then occur during ios::run()
-	ircd::init(ios.get_executor());
+	ircd::init(ios.get_executor(), homeserver);
 
 	// If the user wants to immediately drop to an interactive command line
 	// without having to send a ctrl-c for it, that is provided here. This does
@@ -343,9 +280,9 @@ noexcept try
 	if(norun)
 		return EXIT_SUCCESS;
 
-	// 1
 	// Execution.
-	// Blocks until a clean exit from a quit() or an exception comes out of it.
+	// Loops until a clean exit from a quit() or an exception comes out of it.
+	// Alternatively, ios.run() could be otherwise used here.
 	size_t epoch{0};
 	for(; !ios.stopped(); ++epoch)
 	{

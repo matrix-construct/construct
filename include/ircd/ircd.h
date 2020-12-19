@@ -129,6 +129,18 @@ namespace ircd
 	extern conf::item<bool> write_avoid;     // implies maintenance
 	extern conf::item<bool> read_only;       // implies write_avoid
 	extern conf::item<bool> defaults;
+}
+
+namespace ircd
+{
+	/// Prototype of the continuation supplied to the user's main function.
+	using main_continuation = void (*)();
+
+	/// Prototype of the user's main function.
+	using user_function = void (main_continuation);
+
+	/// User's main function
+	using user_main = std::function<user_function>;
 
 	// Informational
 	seconds uptime();
@@ -136,7 +148,7 @@ namespace ircd
 	// Control panel
 	void cont() noexcept;
 	bool quit() noexcept;
-	void init(boost::asio::executor &&);
+	void init(boost::asio::executor &&, user_main);
 }
 
 #endif // HAVE_IRCD_IRCD_H

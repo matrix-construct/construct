@@ -196,7 +196,7 @@ void
 ircd::m::on_load()
 try
 {
-	assert(ircd::run::level == run::level::LOAD);
+	assert(ircd::run::level == run::level::START);
 }
 catch(const m::error &e)
 {

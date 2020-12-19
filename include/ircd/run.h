@@ -66,13 +66,11 @@ enum class ircd::run::level
 :int
 {
 	FAULT    = -1,   ///<           Unrecoverable fault.
-	HALT     = 0,    ///<   x <--   IRCd Powered off.
+	HALT     = 0,    ///<   X <--   IRCd Powered off.
 	READY    = 1,    ///<   |   |   Ready for user to run ios event loop.
 	START    = 2,    ///<   |   |   Starting internal subsystems.
-	LOAD     = 3,    ///<   |   |   Load user application.
-	RUN      = 4,    ///<   O   |   IRCd in service.
-	QUIT     = 5,    ///<   |   |   Clean shutdown starting.
-	UNLOAD   = 6,    ///<   --> ^   Unload user application.
+	RUN      = 3,    ///<   O   |   IRCd in service.
+	QUIT     = 4,    ///<   >---^   Clean shutdown starting.
 };
 
 /// An instance of this class registers itself to be called back when

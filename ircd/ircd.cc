@@ -17,7 +17,7 @@ namespace ircd
 
 	// Main function. This frame anchors the initialization and destruction of
 	// all non-static assets provided by the library.
-	static void main() noexcept;
+	static void main(user_main) noexcept;
 }
 
 // internal interface to ircd::run (see ircd/run.h, ircd/run.cc)
@@ -174,7 +174,8 @@ ircd::main_context;
 ///
 /// init() can only be called from a run::level::HALT state
 void
-ircd::init(boost::asio::executor &&executor)
+ircd::init(boost::asio::executor &&executor,
+           user_main user)
 try
 {
 	// This function must only be called from a HALT state.
@@ -211,7 +212,10 @@ try
 	//
 	context main_context
 	{
-		"main", 256_KiB, &ircd::main, context::POST | context::SLICE_EXEMPT
+		"main",
+		512_KiB,
+		std::bind(&ircd::main, std::move(user)),
+		context::POST | context::SLICE_EXEMPT
 	};
 
 	// The default behavior for ircd::context is to join the ctx on dtor. We
@@ -266,7 +270,6 @@ noexcept
 		}
 
 		case run::level::START:
-		case run::level::LOAD:
 		{
 			ctx::terminate(*main_context);
 			main_context = nullptr;
@@ -280,7 +283,6 @@ noexcept
 			return true;
 		}
 
-		case run::level::UNLOAD:
 		case run::level::QUIT:
 		case run::level::HALT:
 		case run::level::FAULT:
@@ -309,7 +311,6 @@ noexcept
 
 	switch(run::level)
 	{
-		case run::level::LOAD:
 		case run::level::RUN:
 			break;
 
@@ -339,22 +340,24 @@ noexcept
 /// io_context from running more jobs.
 ///
 void
-ircd::main()
+ircd::main(user_main user)
 noexcept try
 {
-	// When this function completes without exception, subsystems are done shutting down and IRCd
-	// transitions to HALT.
+	// When this function completes without exception, subsystems are done
+	// shutting down and IRCd transitions to HALT.
 	const unwind_defer halted{[]
 	{
 		run::set(run::level::HALT);
 	}};
 
+	// We block interruption/termination of the main context by default;
+	// this covers most of the functionality performed by this function and
+	// its callees. This provides consistent and complete runlevel transitions.
+	const ctx::uninterruptible::nothrow disable_interruption {true};
+
 	// When this function is entered IRCd will transition to START indicating
 	// that subsystems are initializing.
-	{
-		const ctx::uninterruptible ui;
-		run::set(run::level::START);
-	}
+	run::set(run::level::START);
 
 	// These objects are the init()'s and fini()'s for each subsystem.
 	// Appearing here ties their life to the main context. Initialization can
@@ -372,31 +375,39 @@ noexcept try
 	server::init _server_;   // Server related
 	js::init _js_;           // SpiderMonkey
 
-	// Transition to the QUIT and UNLOAD states on unwind.
-	const unwind quit{[]
+	// Continuation passed to the user's main function.
+	const auto continuation{[]
 	{
-		const ctx::uninterruptible::nothrow ui;
-		ircd::run::set(run::level::QUIT);
-		ircd::run::set(run::level::UNLOAD);
+		// Transition to the QUIT state on unwind.
+		const unwind quit{[]
+		{
+			const ctx::uninterruptible::nothrow disable_interruption {true};
+			ircd::run::set(run::level::QUIT);
+		}};
+
+		// Block interruptions again for runlevel transitions.
+		const ctx::uninterruptible disable_interruption {true};
+
+		// IRCd will now transition to the RUN state indicating full functionality.
+		run::set(run::level::RUN);
+
+		// Allow interrupts while running so we can be notified to quit.
+		const ctx::uninterruptible reenable_interruption {false};
+
+		// wait() blocks until the main context is notified or interrupted etc.
+		// Waiting here will hold open this stack with all of the above objects
+		// living on it.
+		ctx::wait();
 	}};
 
-	// IRCd will now transition to the LOAD state allowing library user's to
-	// load their applications using the run::changed callback.
-	{
-		const ctx::uninterruptible ui;
-		run::set(run::level::LOAD);
-	}
+	if(!user)
+		return continuation();
 
-	// IRCd will now transition to the RUN state indicating full functionality.
-	{
-		const ctx::uninterruptible ui;
-		run::set(run::level::RUN);
-	}
+	// Allow interrupts again by default for the duration of the user.
+	const ctx::uninterruptible reenable_interruption {false};
 
-	// This call blocks until the main context is notified or interrupted etc.
-	// Waiting here will hold open this stack with all of the above objects
-	// living on it.
-	ctx::wait();
+	// Call user.
+	user(continuation);
 }
 catch(const std::exception &e)
 {

@@ -142,8 +142,7 @@ try
 		{
 			case level::HALT:   break;
 			case level::QUIT:   break;
-			case level::UNLOAD: break;
-			case level::LOAD:   throw;
+			case level::START:  throw;
 			default:            throw;
 		}
 
@@ -177,8 +176,8 @@ catch(const std::exception &e)
 {
 	switch(new_level)
 	{
-		case level::LOAD:  throw;
-		default:           break;
+		case level::START:  throw;
+		default:            break;
 	}
 
 	log::critical
@@ -199,10 +198,8 @@ ircd::run::reflect(const enum run::level &level)
 		case level::HALT:      return "HALT";
 		case level::READY:     return "READY";
 		case level::START:     return "START";
-		case level::LOAD:      return "LOAD";
 		case level::RUN:       return "RUN";
 		case level::QUIT:      return "QUIT";
-		case level::UNLOAD:    return "UNLOAD";
 		case level::FAULT:     return "FAULT";
 	}
 
