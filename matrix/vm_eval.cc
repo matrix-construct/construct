@@ -42,23 +42,31 @@ ircd::m::vm::fetch_keys(const eval &eval)
 {
 	using m::fed::key::server_key;
 
-	assert(eval.opts);
-	const auto &opts
-	{
-		*eval.opts
-	};
-
-	std::set<server_key> miss;
+	std::vector<server_key> queries;
 	for(const auto &event : eval.pdus)
 		for(const auto &[server_name, signatures] : json::get<"signatures"_>(event))
 			for(const auto &[key_id, signature] : json::object(signatures))
-				if(!m::keys::cache::has(json::get<"origin"_>(event), key_id))
-					miss.emplace(json::get<"origin"_>(event), key_id);
+			{
+				const server_key query
+				{
+					json::get<"origin"_>(event), key_id
+				};
 
-	const std::vector<server_key> queries
-	(
-		begin(miss), end(miss)
-	);
+				// Check if we're already making a query.
+				if(std::binary_search(begin(queries), end(queries), query))
+					continue;
+
+				// Check if we already have the key.
+				if(m::keys::cache::has(json::get<"origin"_>(event), key_id))
+					continue;
+
+				// If there's a cached error on the host we can skip here.
+				if(m::fed::errant(json::get<"origin"_>(event)))
+					continue;
+
+				queries.emplace_back(json::get<"origin"_>(event), key_id);
+				std::sort(begin(queries), end(queries));
+			}
 
 	const size_t fetched
 	{
