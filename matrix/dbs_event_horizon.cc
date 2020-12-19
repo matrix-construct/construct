@@ -194,16 +194,18 @@ ircd::m::dbs::_prefetch_event_horizon_resolve(const event &event,
                                               const write_opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_HORIZON_RESOLVE));
-	assert(opts.event_idx != 0);
-	assert(event.event_id);
+
+	size_t ret(0);
+	if(!event.event_id)
+		return ret;
 
 	char buf[EVENT_HORIZON_KEY_MAX_SIZE];
+	assert(event.event_id);
 	const string_view &key
 	{
 		event_horizon_key(buf, event.event_id)
 	};
 
-	size_t ret(0);
 	for(auto it(dbs::event_horizon.begin(key)); it; ++it)
 	{
 		const auto event_idx

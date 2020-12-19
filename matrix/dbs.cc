@@ -236,9 +236,6 @@ ircd::m::dbs::prefetch(const event &event,
                        const write_opts &opts)
 try
 {
-	if(unlikely(opts.event_idx == 0))
-		return false;
-
 	if(!prefetch_enable)
 		return false;
 
