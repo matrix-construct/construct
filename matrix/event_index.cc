@@ -100,25 +100,40 @@ ircd::m::index(std::nothrow_t,
 
 size_t
 ircd::m::index(const vector_view<event::idx> &out,
-               const event::prev &prev)
+               const event::auth &auth)
 {
-	const auto num
+	event::id ids[event::auth::MAX];
+	const auto &event_ids
 	{
-		std::min(prev.prev_events_count(), event::prev::MAX)
+		auth.ids(ids)
 	};
 
-	size_t i(0);
-	event::id event_id[num];
-	m::for_each(prev, [&num, &i, &event_id]
-	(const auto &prev_id)
+	const auto &found
 	{
-		assert(i < num);
-		event_id[i++] = prev_id;
-		return i < num;
-	});
+		index(out, event_ids)
+	};
 
-	assert(i == num);
-	return index(out, vector_view<const event::id>(event_id, i));
+	assert(found <= event_ids.size());
+	return event_ids.size();
+}
+
+size_t
+ircd::m::index(const vector_view<event::idx> &out,
+               const event::prev &prev)
+{
+	event::id ids[event::prev::MAX];
+	const auto &event_ids
+	{
+		prev.ids(ids)
+	};
+
+	const auto &found
+	{
+		index(out, event_ids)
+	};
+
+	assert(found <= event_ids.size());
+	return event_ids.size();
 }
 
 size_t

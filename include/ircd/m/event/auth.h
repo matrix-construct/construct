@@ -56,20 +56,9 @@ inline ircd::vector_view<ircd::m::event::idx>
 ircd::m::event::auth::idxs(event::idx (&out)[N])
 const
 {
-	event::id buf[N];
-	const auto &ids
-	{
-		auth::ids(buf)
-	};
-
-	const auto &found
-	{
-		m::index(out, ids)
-	};
-
 	return vector_view<event::idx>
 	(
-		out, out + ids.size()
+		out, m::index(out, *this)
 	);
 }
 
