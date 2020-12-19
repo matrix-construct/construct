@@ -51,27 +51,35 @@ ircd::ios::epoll_wait(int _epfd,
                       int _timeout)
 noexcept
 {
-	const bool peek
-	{
-		_timeout == 0
-	};
+	// Call elision tick counter.
+	thread_local uint64_t tick;
 
+	// Configured frequency to allow the call.
 	const uint64_t freq
 	{
 		empt::freq
 	};
 
-	const bool skip_tick
+	const bool skip
 	{
-		!freq || (uint64_t(empt::peek) % freq)
+		!freq || (tick < freq)
+	};
+
+	const bool peek
+	{
+		_timeout == 0
 	};
 
 	// Always allow blocking calls; only allow non-blocking calls which
 	// satisfy our conditions.
 	const bool call
 	{
-		!peek || !skip_tick
+		!peek || !skip
 	};
+
+	// Modify tick counter prior to call, while we have the line.
+	tick -= boolmask<decltype(tick)>(call) & tick;
+	tick += boolmask<decltype(tick)>(!call) & 0x01;
 
 	const int ret
 	{
@@ -94,8 +102,9 @@ noexcept
 		log::logf
 		{
 			log, ircd::log::DEBUG,
-			"EPOLL %5d peek:%lu skip:%lu call:%lu none:%lu result:%lu low:%lu med:%lu high:%lu stall:%lu",
+			"EPOLL %5d tick:%lu peek:%lu skip:%lu call:%lu none:%lu result:%lu low:%lu med:%lu high:%lu stall:%lu",
 			ret,
+			tick,
 			uint64_t(empt::peek),
 			uint64_t(empt::skip),
 			uint64_t(empt::call),
