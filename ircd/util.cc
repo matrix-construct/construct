@@ -445,9 +445,14 @@ ircd::util::a2u(const mutable_buffer &out,
 ircd::util::unwind_defer::~unwind_defer()
 noexcept
 {
-	ircd::defer
+	static ios::descriptor descriptor
 	{
-		std::move(func)
+		"ircd.unwind"
+	};
+
+	ircd::dispatch
+	{
+		descriptor, ios::defer, std::move(func)
 	};
 }
 

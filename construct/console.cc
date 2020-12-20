@@ -158,8 +158,18 @@ try
 			if(!next_command())
 				break;
 
-		if(quit_when_done)
-			ircd::post{ircd::quit};
+		if(unlikely(quit_when_done))
+		{
+			static ircd::ios::descriptor descriptor
+			{
+				"construct.console.quit"
+			};
+
+			ircd::dispatch
+			{
+				descriptor, ios::defer, ircd::quit
+			};
+		}
 
 		return;
 	}

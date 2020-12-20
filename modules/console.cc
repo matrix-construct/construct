@@ -1814,12 +1814,30 @@ console_cmd__ios__history(opt &out, const string_view &line)
 bool
 console_cmd__ios__depth(opt &out, const string_view &line)
 {
+	static ios::descriptor dispatch_desc
+	{
+		"ircd.console.depth.dispatch",
+	};
+
+	static ios::descriptor post_desc
+	{
+		"ircd.console.depth.post",
+	};
+
+	static ios::descriptor defer_desc
+	{
+		"ircd.console.latency.defer",
+		nullptr,
+		nullptr,
+		true,
+	};
+
 	uint64_t returned, executed, started;
 
 	// ios::dispatch
 	{
 		started = ios::epoch();
-		ios::dispatch(ios::synchronous, [&executed]
+		ios::dispatch(dispatch_desc, ios::yield, [&executed]
 		{
 			executed = ios::epoch();
 		});
@@ -1833,27 +1851,10 @@ console_cmd__ios__depth(opt &out, const string_view &line)
 	<< "disp rtt:     "  << (returned - started)    << std::endl
 	<< std::endl;
 
-	// ios::defer
-	{
-		started = ios::epoch();
-		ios::defer(ios::synchronous, [&executed]
-		{
-			executed = ios::epoch();
-		});
-
-		returned = ios::epoch();
-	}
-
-	out
-	<< "defer send:   "  << (executed - started)    << std::endl
-	<< "defer recv:   "  << (returned - executed)   << std::endl
-	<< "defer rtt:    "  << (returned - started)    << std::endl
-	<< std::endl;
-
 	// ios::post
 	{
 		started = ios::epoch();
-		ios::post(ios::synchronous, [&executed]
+		ios::dispatch(post_desc, ios::defer, ios::yield, [&executed]
 		{
 			executed = ios::epoch();
 		});
@@ -1867,6 +1868,23 @@ console_cmd__ios__depth(opt &out, const string_view &line)
 	<< "post rtt:     "  << (returned - started)    << std::endl
 	<< std::endl;
 
+	// ios::defer
+	{
+		started = ios::epoch();
+		ios::dispatch(defer_desc, ios::defer, ios::yield, [&executed]
+		{
+			executed = ios::epoch();
+		});
+
+		returned = ios::epoch();
+	}
+
+	out
+	<< "defer send:   "  << (executed - started)    << std::endl
+	<< "defer recv:   "  << (returned - executed)   << std::endl
+	<< "defer rtt:    "  << (returned - started)    << std::endl
+	<< std::endl;
+
 	return true;
 }
 
@@ -1874,7 +1892,25 @@ console_cmd__ios__depth(opt &out, const string_view &line)
 bool
 console_cmd__ios__latency(opt &out, const string_view &line)
 {
-	volatile long long returned, executed, started;
+	static ios::descriptor dispatch_desc
+	{
+		"ircd.console.latency.dispatch"
+	};
+
+	static ios::descriptor post_desc
+	{
+		"ircd.console.latency.post"
+	};
+
+	static ios::descriptor defer_desc
+	{
+		"ircd.console.latency.defer",
+		nullptr,
+		nullptr,
+		true,
+	};
+
+	long long returned, executed, started;
 
 	// control
 	{
@@ -1910,7 +1946,7 @@ console_cmd__ios__latency(opt &out, const string_view &line)
 		started = prof::cycles();
 		asm volatile ("lfence");
 
-		ios::dispatch(ios::synchronous, [&executed]
+		ios::dispatch(dispatch_desc, ios::yield, [&executed]
 		{
 			__sync_synchronize();
 			asm volatile ("lfence");
@@ -1931,36 +1967,6 @@ console_cmd__ios__latency(opt &out, const string_view &line)
 	<< std::endl;
 
 	//
-	// ios::defer
-	//
-
-	{
-		__sync_synchronize();
-		asm volatile ("lfence");
-		started = prof::cycles();
-		asm volatile ("lfence");
-
-		ios::defer(ios::synchronous, [&executed]
-		{
-			__sync_synchronize();
-			asm volatile ("lfence");
-			executed = prof::cycles();
-			asm volatile ("lfence");
-		});
-
-		__sync_synchronize();
-		asm volatile ("lfence");
-		returned = prof::cycles();
-		asm volatile ("lfence");
-	}
-
-	out
-	<< "defer send:   "  << (executed - started)    << std::endl
-	<< "defer recv:   "  << (returned - executed)   << std::endl
-	<< "defer rtt:    "  << (returned - started)    << std::endl
-	<< std::endl;
-
-	//
 	// ios::post
 	//
 
@@ -1970,7 +1976,7 @@ console_cmd__ios__latency(opt &out, const string_view &line)
 		started = prof::cycles();
 		asm volatile ("lfence");
 
-		ios::post(ios::synchronous, [&executed]
+		ios::dispatch(post_desc, ios::defer, ios::yield, [&executed]
 		{
 			__sync_synchronize();
 			asm volatile ("lfence");
@@ -1988,6 +1994,36 @@ console_cmd__ios__latency(opt &out, const string_view &line)
 	<< "post send:    "  << (executed - started)    << std::endl
 	<< "post recv:    "  << (returned - executed)   << std::endl
 	<< "post rtt:     "  << (returned - started)    << std::endl
+	<< std::endl;
+
+	//
+	// ios::defer
+	//
+
+	{
+		__sync_synchronize();
+		asm volatile ("lfence");
+		started = prof::cycles();
+		asm volatile ("lfence");
+
+		ios::dispatch(defer_desc, ios::defer, ios::yield, [&executed]
+		{
+			__sync_synchronize();
+			asm volatile ("lfence");
+			executed = prof::cycles();
+			asm volatile ("lfence");
+		});
+
+		__sync_synchronize();
+		asm volatile ("lfence");
+		returned = prof::cycles();
+		asm volatile ("lfence");
+	}
+
+	out
+	<< "defer send:   "  << (executed - started)    << std::endl
+	<< "defer recv:   "  << (returned - executed)   << std::endl
+	<< "defer rtt:    "  << (returned - started)    << std::endl
 	<< std::endl;
 
 	return true;

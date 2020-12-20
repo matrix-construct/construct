@@ -34,13 +34,13 @@ _cmd__die(const m::event &event,
 {
 	static ios::descriptor descriptor
 	{
-		"s_control die"
+		"ircd.m.control.die"
 	};
 
-	ircd::post(descriptor, []
+	ircd::dispatch
 	{
-		ircd::quit();
-	});
+		descriptor, ios::defer, ircd::quit
+	};
 
 	ctx::yield();
 }

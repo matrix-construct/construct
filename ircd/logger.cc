@@ -458,7 +458,7 @@ ircd::log::vlog_threadsafe(const log &log,
 
 	// The pointer to the logger is copied to the main thread.
 	auto *const logp{&log};
-	ircd::post(descriptor, [lev, str(std::move(str)), logp]
+	ircd::dispatch{descriptor, ios::defer, [lev, str(std::move(str)), logp]
 	{
 		// If that named logger was destroyed while this closure was
 		// travelling to the main thread then we just discard this message.
@@ -469,7 +469,7 @@ ircd::log::vlog_threadsafe(const log &log,
 		{
 			return copy(out, string_view{str});
 		});
-	});
+	}};
 }
 
 ircd::log::vlog::vlog(const log &log,

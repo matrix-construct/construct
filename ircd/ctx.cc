@@ -530,6 +530,18 @@ noexcept
 	return ctx.note();
 }
 
+namespace ircd::ctx
+{
+	[[gnu::visibility("hidden")]]
+	extern ios::descriptor signal_desc;
+}
+
+decltype(ircd::ctx::signal_desc)
+ircd::ctx::signal_desc
+{
+	"ircd.ctx.signal"
+};
+
 /// Executes `func` sometime between executions of `ctx` with thread-safety
 /// so `func` and `ctx` are never executed concurrently no matter how many
 /// threads the io_service has available to execute events on.
@@ -537,7 +549,10 @@ void
 ircd::ctx::signal(ctx &ctx,
                   std::function<void ()> func)
 {
-	ircd::dispatch(std::move(func));
+	ios::dispatch
+	{
+		signal_desc, ios::defer, std::move(func)
+	};
 }
 
 /// Marks `ctx` for termination. Terminate is similar to interrupt() but the
@@ -721,7 +736,10 @@ noexcept
 decltype(ircd::ctx::this_ctx::courtesy_yield_desc)
 ircd::ctx::this_ctx::courtesy_yield_desc
 {
-	"ircd.ctx.courtesy_yield"
+	"ircd.ctx.courtesy_yield",
+	nullptr,
+	nullptr,
+	true,
 };
 
 // set by the continuation object and the base frame.
@@ -1241,11 +1259,17 @@ ircd::ctx::context::context(const string_view &name,
 	// parent is not itself a context as yielding is not possible anyway.
 	assert(c->flags & POST || ircd::ctx::current);
 	if(c->flags & POST)
-		ios::post(spawn_desc[0], std::move(spawn));
+		ios::dispatch
+		{
+			spawn_desc[0], ios::defer, std::move(spawn)
+		};
 
 	// (experimental) Branch to spawn via defer mechanism.
 	else if(c->flags & DEFER)
-		ios::defer(spawn_desc[1], ios::synchronous, std::move(spawn));
+		ios::dispatch
+		{
+			spawn_desc[1], ios::defer, ios::yield, std::move(spawn)
+		};
 
 	// Branch to spawn via dispatch mechanism. This context will yield while
 	// the spawning takes place on this stack. This is the closest to a direct
@@ -1254,7 +1278,10 @@ ircd::ctx::context::context(const string_view &name,
 	// switch. Note: This is also the default method when no flags are given
 	// and this parent is another context.
 	else if(c->flags & DISPATCH || (true))
-		ios::dispatch(spawn_desc[2], ios::synchronous, std::move(spawn));
+		ios::dispatch
+		{
+			spawn_desc[2], ios::yield, std::move(spawn)
+		};
 }
 
 ircd::ctx::context::context(context &&other)

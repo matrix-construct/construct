@@ -982,9 +982,9 @@ ircd::fs::aio::system::submit(request &request)
 			std::bind(&system::chase, this)
 		};
 
-		ircd::defer
+		ios::dispatch
 		{
-			chase_descriptor, std::move(handler)
+			chase_descriptor, ios::defer, std::move(handler)
 		};
 	}
 

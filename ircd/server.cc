@@ -696,6 +696,16 @@ decltype(ircd::server::peers)
 ircd::server::peers
 {};
 
+//
+// server::peer
+//
+
+decltype(ircd::server::peer::close_desc)
+ircd::server::peer::close_desc
+{
+	"ircd.server.peer.close"
+};
+
 decltype(ircd::server::peer::enable_ipv6)
 ircd::server::peer::enable_ipv6
 {
@@ -1244,10 +1254,13 @@ noexcept try
 	if(err_has())
 	{
 		// The peer can't be closed quite yet b/c the tag hasn't finished.
-		defer{[this]
+		ircd::dispatch
 		{
-			close();
-		}};
+			close_desc, ios::defer, [this]
+			{
+				close();
+			}
+		};
 
 		return;
 	}

@@ -53,9 +53,9 @@ namespace ircd
 inline void
 ircd::ctx::this_ctx::yield()
 {
-	ircd::post
+	ios::dispatch
 	{
-		courtesy_yield_desc, ios::synchronous
+		courtesy_yield_desc, ios::defer, ios::yield
 	};
 }
 

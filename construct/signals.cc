@@ -111,7 +111,7 @@ construct::signals::set_handle()
 {
 	static ircd::ios::descriptor desc
 	{
-		"construct::signals"
+		"construct.signals"
 	};
 
 	auto handler

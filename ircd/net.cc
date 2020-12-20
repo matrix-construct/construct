@@ -1543,10 +1543,10 @@ try
 			static const ilist<mutable_buffer> bufs{buf};
 			if(SSL_peek(ssl.native_handle(), buf, sizeof(buf)) > 0)
 			{
-				ircd::post(desc_wait[1], [handle(std::move(handle))]
+				ircd::dispatch{desc_wait[1], ios::defer, [handle(std::move(handle))]
 				{
 					handle(error_code{});
-				});
+				}};
 
 				return;
 			}

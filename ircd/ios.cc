@@ -548,40 +548,12 @@ noexcept
 // dispatch
 //
 
-namespace ircd::ios
-{
-	extern descriptor dispatch_desc;
-}
-
-decltype(ircd::ios::dispatch_desc)
-ircd::ios::dispatch_desc
-{
-	"ircd.ios.dispatch"
-};
-
-[[gnu::hot]]
-ircd::ios::dispatch::dispatch(std::function<void ()> function)
-:dispatch
-{
-	dispatch_desc, std::move(function)
-}
-{
-}
-
-ircd::ios::dispatch::dispatch(synchronous_t,
-                              const std::function<void ()> &function)
-:dispatch
-{
-	dispatch_desc, synchronous, std::move(function)
-}
-{
-}
-
 ircd::ios::dispatch::dispatch(descriptor &descriptor,
-                              synchronous_t)
+                              defer_t,
+                              yield_t)
 :dispatch
 {
-	descriptor, synchronous, []
+	descriptor, defer, yield, []
 	{
 	}
 }
@@ -589,7 +561,41 @@ ircd::ios::dispatch::dispatch(descriptor &descriptor,
 }
 
 ircd::ios::dispatch::dispatch(descriptor &descriptor,
-                              synchronous_t,
+                              defer_t,
+                              yield_t,
+                              const std::function<void ()> &function)
+{
+	const ctx::uninterruptible::nothrow ui;
+	ctx::latch latch{1};
+	dispatch
+	{
+		descriptor, defer, [&function, &latch]
+		{
+			const unwind uw
+			{
+				[&latch]
+				{
+					latch.count_down();
+				}
+			};
+
+			function();
+		}
+	};
+
+	latch.wait();
+}
+
+[[gnu::hot]]
+ircd::ios::dispatch::dispatch(descriptor &descriptor,
+                              defer_t,
+                              std::function<void ()> function)
+{
+	boost::asio::post(get(), handle(descriptor, std::move(function)));
+}
+
+ircd::ios::dispatch::dispatch(descriptor &descriptor,
+                              yield_t,
                               const std::function<void ()> &function)
 {
 	assert(function);
@@ -634,146 +640,4 @@ ircd::ios::dispatch::dispatch(descriptor &descriptor,
 	}
 
 	assert(!ctx::current && handler::current == parent);
-}
-
-//
-// defer
-//
-
-namespace ircd::ios
-{
-	extern descriptor defer_desc;
-}
-
-decltype(ircd::ios::defer_desc)
-ircd::ios::defer_desc
-{
-	"ircd.ios.defer",
-};
-
-[[gnu::hot]]
-ircd::ios::defer::defer(std::function<void ()> function)
-:defer
-{
-	defer_desc, std::move(function)
-}
-{
-}
-
-ircd::ios::defer::defer(synchronous_t,
-                        const std::function<void ()> &function)
-:defer
-{
-	defer_desc, synchronous, function
-}
-{
-}
-
-ircd::ios::defer::defer(descriptor &descriptor,
-                        synchronous_t)
-:defer
-{
-	descriptor, synchronous, []
-	{
-	}
-}
-{
-}
-
-ircd::ios::defer::defer(descriptor &descriptor,
-                        synchronous_t,
-                        const std::function<void ()> &function)
-{
-	const ctx::uninterruptible::nothrow ui;
-
-	ctx::latch latch(1);
-	defer(descriptor, [&function, &latch]
-	{
-		const unwind uw{[&latch]
-		{
-			latch.count_down();
-		}};
-
-		function();
-	});
-
-	latch.wait();
-}
-
-[[gnu::hot]]
-ircd::ios::defer::defer(descriptor &descriptor,
-                        std::function<void ()> function)
-{
-	boost::asio::defer(get(), handle(descriptor, std::move(function)));
-}
-
-//
-// post
-//
-
-namespace ircd::ios
-{
-	extern descriptor post_desc;
-}
-
-decltype(ircd::ios::post_desc)
-ircd::ios::post_desc
-{
-	"ircd.ios.post"
-};
-
-[[gnu::hot]]
-ircd::ios::post::post(std::function<void ()> function)
-:post
-{
-	post_desc, std::move(function)
-}
-{
-}
-
-ircd::ios::post::post(synchronous_t,
-                      const std::function<void ()> &function)
-:post
-{
-	post_desc, synchronous, function
-}
-{
-}
-
-ircd::ios::post::post(descriptor &descriptor,
-                      synchronous_t)
-:post
-{
-	descriptor, synchronous, []
-	{
-	}
-}
-{
-}
-
-ircd::ios::post::post(descriptor &descriptor,
-                      synchronous_t,
-                      const std::function<void ()> &function)
-{
-	const ctx::uninterruptible::nothrow ui;
-
-	ctx::latch latch(1);
-	post(descriptor, [&function, &latch]
-	{
-		const unwind uw{[&latch]
-		{
-			latch.count_down();
-		}};
-
-		function();
-	});
-
-	latch.wait();
-}
-
-[[gnu::hot]]
-ircd::ios::post::post(descriptor &descriptor,
-                      std::function<void ()> function)
-{
-	boost::asio::post(get(), handle(descriptor, std::move(function)));
 }

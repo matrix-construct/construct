@@ -49,8 +49,8 @@ namespace ircd::ios::profile
 #include "descriptor.h"
 #include "handler.h"
 #include "asio.h"
-#include "dispatch.h"
 #include "empt.h"
+#include "dispatch.h"
 #include "epoll.h"
 
 inline const uint64_t &

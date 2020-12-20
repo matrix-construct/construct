@@ -195,9 +195,14 @@ noexcept try
 				return;
 			};
 
-			ircd::post
+			static ircd::ios::descriptor descriptor
 			{
-				ircd::quit
+				"construct.smoketest"
+			};
+
+			ircd::dispatch
+			{
+				descriptor, ircd::ios::defer, ircd::quit
 			};
 		}
 	};
