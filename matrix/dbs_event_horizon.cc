@@ -261,9 +261,9 @@ ircd::m::dbs::_index_event_horizon_resolve_one(db::txn &txn,
 	_opts.op = opts.op;
 	_opts.event_idx = event_idx;
 	_opts.appendix.reset();
-	_opts.appendix.set(appendix::EVENT_REFS);
-	_opts.appendix.set(appendix::ROOM_REDACT);
-	_opts.appendix.set(appendix::ROOM_HEAD_RESOLVE);
+	_opts.appendix.set(appendix::EVENT_REFS, opts.appendix[appendix::EVENT_REFS]);
+	_opts.appendix.set(appendix::ROOM_REDACT, opts.appendix[appendix::ROOM_REDACT]);
+	_opts.appendix.set(appendix::ROOM_HEAD_RESOLVE, opts.appendix[appendix::ROOM_HEAD_RESOLVE]);
 	_opts.event_refs = opts.horizon_resolve;
 	_opts.interpose = &txn;
 	write(txn, _event, _opts);
