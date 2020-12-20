@@ -115,17 +115,13 @@ ircd::stats::item<void>::item(const std::type_index &type,
 			NAME_MAX_LEN
 		};
 
-	static const auto less
-	{
-		[](const auto &a, const auto &b)
-		{
-			return a->name < b->name;
-		}
-	};
-
 	const auto exists
 	{
-		std::binary_search(begin(items), end(items), this, less)
+		end(items) != std::find_if(begin(items), end(items), [this]
+		(const auto &item)
+		{
+			return item->name == this->name;
+		})
 	};
 
 	if(unlikely(exists))
@@ -139,7 +135,6 @@ ircd::stats::item<void>::item(const std::type_index &type,
 		items.reserve(4096);
 
 	items.emplace_back(this);
-	std::sort(begin(items), end(items), less);
 }
 
 ircd::stats::item<void>::~item()
