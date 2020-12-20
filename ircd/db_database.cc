@@ -2568,7 +2568,7 @@ noexcept
 {
 	log::debug
 	{
-		log, "[%s] job:%d ctx:%lu flushed start '%s' :%s",
+		log, "[%s] job:%d ctx:%lu flush start '%s' :%s",
 		d->name,
 		info.job_id,
 		info.thread_id,
@@ -2768,9 +2768,10 @@ void
 ircd::db::database::events::OnTableFileCreationStarted(const rocksdb::TableFileCreationBriefInfo &info)
 noexcept
 {
-	log::debug
+	log::logf
 	{
-		log, "[%s] job:%d table file opened [%s][%s] '%s'",
+		log, log::level::DEBUG,
+		"[%s] job:%d table file opened [%s][%s] '%s'",
 		d->name,
 		info.job_id,
 		info.db_name,
@@ -2783,13 +2784,16 @@ void
 ircd::db::database::events::OnMemTableSealed(const rocksdb::MemTableInfo &info)
 noexcept
 {
-	log::debug
+	log::logf
 	{
-		log, "[%s] memory table sealed '%s' entries:%lu deletes:%lu",
+		log, log::level::DEBUG,
+		"[%s] [%s] memory table sealed [seq >= %lu first:%lu] entries:%lu deletes:%lu",
 		d->name,
 		info.cf_name,
+		info.earliest_seqno,
+		info.first_seqno,
 		info.num_entries,
-		info.num_deletes
+		info.num_deletes,
 	};
 
 	ctx::yield();
@@ -2801,7 +2805,7 @@ noexcept
 {
 	log::debug
 	{
-		log, "[%s] column[%s] handle closing @ %p",
+		log, "[%s] [%s] handle closing @ %p",
 		d->name,
 		h->GetName(),
 		h
@@ -2815,7 +2819,7 @@ noexcept
 {
 	log::notice
 	{
-		log, "[%s] external file ingested column[%s] external[%s] internal[%s] sequence:%lu",
+		log, "[%s] [%s] external file ingested external[%s] internal[%s] sequence:%lu",
 		this->d->name,
 		info.cf_name,
 		info.external_file_path,
@@ -2899,7 +2903,7 @@ noexcept
 	log::logf
 	{
 		log, level,
-		"'%s' stall condition column[%s] %s -> %s",
+		"[%s] [%s] stall condition %s -> %s",
 		d->name,
 		info.cf_name,
 		reflect(info.condition.prev),
