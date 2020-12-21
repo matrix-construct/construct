@@ -1614,6 +1614,7 @@ ircd::db::database::column::column(database &d,
 ,cmp{this->d, this->descriptor->cmp}
 ,prefix{this->d, this->descriptor->prefix}
 ,cfilter{this, this->descriptor->compactor}
+,stall{rocksdb::WriteStallCondition::kNormal}
 ,stats
 {
 	descriptor.name != "default"s?
@@ -2902,9 +2903,33 @@ noexcept
 {
 	using rocksdb::WriteStallCondition;
 
+	assert(d);
+	auto &column
+	{
+		(*d)[info.cf_name]
+	};
+
+	auto prev
+	{
+		info.condition.prev
+	};
+
+	// We seem to be getting these callbacks out of order sometimes. The only
+	// way to achieve the proper behavior is to always allow transitions to a
+	// normal state, while ignoring any other incorrect transitions.
+	const bool changed
+	{
+		info.condition.cur != WriteStallCondition::kNormal?
+			compare_exchange(column.stall, prev, info.condition.cur):
+			compare_exchange(column.stall, column.stall, info.condition.cur)
+	};
+
+	if(!changed)
+		return;
+
 	const auto level
 	{
-		info.condition.cur == rocksdb::WriteStallCondition::kNormal?
+		column.stall == WriteStallCondition::kNormal?
 			log::level::INFO:
 			log::level::WARNING
 	};
@@ -2912,14 +2937,14 @@ noexcept
 	log::logf
 	{
 		log, level,
-		"[%s] [%s] stall condition %s -> %s",
+		"[%s] [%s] stall condition %s",
 		d->name,
 		info.cf_name,
-		reflect(info.condition.prev),
-		reflect(info.condition.cur)
+		reflect(column.stall),
 	};
 
-	assert(info.condition.cur != rocksdb::WriteStallCondition::kStopped);
+	assert(column.stall == info.condition.cur);
+	//assert(column.stall != WriteStallCondition::kStopped);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

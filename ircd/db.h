@@ -379,6 +379,7 @@ ircd::db::database::column final
 	comparator cmp;
 	prefix_transform prefix;
 	compaction_filter cfilter;
+	rocksdb::WriteStallCondition stall;
 	std::shared_ptr<struct database::stats> stats;
 	std::shared_ptr<struct database::allocator> allocator;
 	rocksdb::BlockBasedTableOptions table_opts;
