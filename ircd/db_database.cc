@@ -2795,8 +2795,6 @@ noexcept
 		info.num_entries,
 		info.num_deletes,
 	};
-
-	ctx::yield();
 }
 
 void
@@ -2910,15 +2908,7 @@ noexcept
 		reflect(info.condition.cur)
 	};
 
-	int i
-	{
-		info.condition.prev == WriteStallCondition::kDelayed? 4:
-		info.condition.prev == WriteStallCondition::kStopped? 8:
-		0
-	};
-
-	while(i--)
-		ctx::yield();
+	assert(info.condition.cur != rocksdb::WriteStallCondition::kStopped);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
