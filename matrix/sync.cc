@@ -135,13 +135,26 @@ ircd::m::sync::make_since(const mutable_buffer &buf,
                           const int64_t &val,
                           const string_view &flags)
 {
-	return fmt::sprintf
+	const string_view &prefix
 	{
-		buf, "ctor_%lu%s%s",
-		val,
+		val?
+			"ctor_"_sv:
+			""_sv
+	};
+
+	const string_view &snapshot
+	{
 		flags?
 			"_0_"_sv:
-			flags,
+			flags
+	};
+
+	return fmt::sprintf
+	{
+		buf, "%s%lu%s%s",
+		prefix,
+		val,
+		snapshot,
 		flags,
 	};
 }
