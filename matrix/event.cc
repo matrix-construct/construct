@@ -778,7 +778,8 @@ catch(const json::not_found &e)
 
 ircd::m::event
 ircd::m::essential(m::event event,
-                   const mutable_buffer &contentbuf)
+                   const mutable_buffer &contentbuf.
+                   const bool &sigs)
 try
 {
 	const auto &type
@@ -902,7 +903,9 @@ try
 		content = "{}"_sv;
 	}
 
-	json::get<"signatures"_>(event) = {};
+	if(likely(!sigs))
+		json::get<"signatures"_>(event) = {};
+
 	return event;
 }
 catch(const json::not_found &e)

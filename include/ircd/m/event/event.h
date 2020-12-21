@@ -43,7 +43,7 @@ namespace ircd::m
 	json::object hashes(const mutable_buffer &, const event &);
 	event signatures(const mutable_buffer &, const m::event &, const string_view &origin);
 	event signatures(const mutable_buffer &, const m::event &);
-	event essential(event, const mutable_buffer &content);
+	event essential(event, const mutable_buffer &content, const bool &sigs = false);
 
 	bool verify_hash(const event &, const sha256::buf &);
 	bool verify_hash(const event &);
