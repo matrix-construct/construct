@@ -778,7 +778,7 @@ catch(const json::not_found &e)
 
 ircd::m::event
 ircd::m::essential(m::event event,
-                   const mutable_buffer &contentbuf.
+                   const mutable_buffer &contentbuf,
                    const bool &sigs)
 try
 {

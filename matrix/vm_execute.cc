@@ -400,11 +400,11 @@ try
 
 		// Canonize and redact from some other serialized source.
 		!opts.edu && !opts.json_source && event.source?
-			json::stringify(mutable_buffer{eval.buf}, m::essential(event.source, event::buf[0])):
+			json::stringify(mutable_buffer{eval.buf}, m::essential(event.source, event::buf[0], true)):
 
 		// Canonize and redact from no source.
 		!opts.edu && !opts.json_source?
-			json::stringify(mutable_buffer{eval.buf}, m::essential(event, event::buf[0])):
+			json::stringify(mutable_buffer{eval.buf}, m::essential(event, event::buf[0], true)):
 
 		// Use the input directly.
 		string_view{event.source}
