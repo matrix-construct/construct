@@ -245,7 +245,11 @@ ircd::db::resume(database &d)
 {
 	assert(d.d);
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard lock{write_mutex};
+	const std::lock_guard lock
+	{
+		d.write_mutex
+	};
+
 	const auto errors
 	{
 		db::errors(d)
@@ -399,7 +403,7 @@ ircd::db::checkpoint(database &d)
 			name(d)
 		};
 
-	const std::lock_guard lock{write_mutex};
+	const std::lock_guard lock{d.write_mutex};
 	const ctx::uninterruptible::nothrow ui;
 	const auto seqnum
 	{
@@ -1289,7 +1293,11 @@ ircd::db::database::~database()
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::unique_lock lock{write_mutex};
+	const std::unique_lock lock
+	{
+		write_mutex
+	};
+
 	log::info
 	{
 		log, "[%s] closing database @ `%s'...",

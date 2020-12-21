@@ -96,14 +96,6 @@ ircd::db::request
 	"db req", request_pool_opts
 };
 
-/// This mutex is necessary to serialize entry into rocksdb's write impl
-/// otherwise there's a risk of a deadlock if their internal pthread
-/// mutexes are contended. This is because a few parts of rocksdb are
-/// incorrectly using std::mutex directly when they ought to be using their
-/// rocksdb::port wrapper.
-decltype(ircd::db::write_mutex)
-ircd::db::write_mutex;
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // init
@@ -2582,7 +2574,11 @@ ircd::db::sort(column &column,
 	opts.allow_write_stall = now;
 
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard lock{write_mutex};
+	const std::lock_guard lock
+	{
+		d.write_mutex
+	};
+
 	log::debug
 	{
 		log, "[%s]'%s' @%lu FLUSH (sort) %s %s",
@@ -2623,7 +2619,7 @@ ircd::db::compact(column &column,
 		const ctx::uninterruptible ui;
 		const std::lock_guard lock
 		{
-			write_mutex
+			d.write_mutex
 		};
 
 		const auto &to_level
@@ -2770,13 +2766,12 @@ ircd::db::ingest(column &column,
 	// data which did actually exist but was physically removed.
 	const auto &copts{d.d->GetOptions(c)};
 	opts.ingest_behind = copts.allow_ingest_behind;
-
 	const std::vector<std::string> files
 	{
 		{ std::string{path} }
 	};
 
-	const std::lock_guard lock{write_mutex};
+	const std::lock_guard lock{d.write_mutex};
 	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
@@ -2793,7 +2788,7 @@ ircd::db::del(column &column,
 	database::column &c(column);
 	auto opts(make_opts(sopts));
 
-	const std::lock_guard lock{write_mutex};
+	const std::lock_guard lock{d.write_mutex};
 	const ctx::uninterruptible::nothrow ui;
 	const ctx::stack_usage_assertion sua;
 	log::debug
@@ -2819,7 +2814,7 @@ ircd::db::del(column &column,
 	database::column &c(column);
 	auto opts(make_opts(sopts));
 
-	const std::lock_guard lock{write_mutex};
+	const std::lock_guard lock{d.write_mutex};
 	const ctx::uninterruptible::nothrow ui;
 	const ctx::stack_usage_assertion sua;
 	log::debug
@@ -2847,7 +2842,7 @@ ircd::db::write(column &column,
 	database::column &c(column);
 	auto opts(make_opts(sopts));
 
-	const std::lock_guard lock{write_mutex};
+	const std::lock_guard lock{d.write_mutex};
 	const ctx::uninterruptible::nothrow ui;
 	const ctx::stack_usage_assertion sua;
 	log::debug
@@ -4506,7 +4501,7 @@ ircd::db::commit(database &d,
 	ircd::timer timer;
 	#endif
 
-	const std::lock_guard lock{write_mutex};
+	const std::lock_guard lock{d.write_mutex};
 	const ctx::uninterruptible ui;
 	const ctx::stack_usage_assertion sua;
 	throw_on_error

@@ -77,7 +77,6 @@ namespace ircd::db
 	extern conf::item<size_t> request_pool_stack_size;
 	extern ctx::pool::opts request_pool_opts;
 	extern ctx::pool request;
-	extern ctx::mutex write_mutex;
 
 	// reflections
 	string_view reflect(const rocksdb::Status::Code &);

@@ -122,6 +122,7 @@ struct ircd::db::database
 	std::unique_ptr<rocksdb::DBOptions> opts;
 	std::unordered_map<string_view, std::shared_ptr<column>> column_names;
 	std::unique_ptr<rocksdb::DB> d;
+	ctx::mutex write_mutex;
 	std::vector<std::shared_ptr<column>> column_index; // indexed by cfid
 	std::list<std::shared_ptr<column>> columns; // active only
 	std::string uuid;
