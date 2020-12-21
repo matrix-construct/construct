@@ -247,6 +247,7 @@ try
 
 	// Primary interest is to perform the INDEX and WRITE phase which create
 	// a database transaction and commit it respectively.
+	vmopts.mprefetch_refs = true;
 	vmopts.phase.set(vm::phase::PREINDEX, true);
 	vmopts.phase.set(vm::phase::INDEX, true);
 	vmopts.phase.set(vm::phase::WRITE, true);
