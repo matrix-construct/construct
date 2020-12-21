@@ -1733,8 +1733,19 @@ ircd::db::database::column::column(database &d,
 			rocksdb::CompactionPri::kOldestLargestSeqFirst:
 			rocksdb::CompactionPri::kOldestLargestSeqFirst;
 
-	this->options.level0_stop_writes_trigger = 64;
-	this->options.level0_slowdown_writes_trigger = 48;
+	// RocksDB sez:
+	// stop_writes_trigger >= slowdown_writes_trigger >= file_num_compaction_trigger
+
+	this->options.level0_stop_writes_trigger =
+		this->options.compaction_style == rocksdb::kCompactionStyleUniversal?
+			(this->options.max_write_buffer_number * 8):
+			64;
+
+	this->options.level0_slowdown_writes_trigger =
+		this->options.compaction_style == rocksdb::kCompactionStyleUniversal?
+			(this->options.max_write_buffer_number * 6):
+			48;
+
 	this->options.level0_file_num_compaction_trigger =
 		this->options.compaction_style == rocksdb::kCompactionStyleUniversal?
 			(this->options.max_write_buffer_number * 2):
