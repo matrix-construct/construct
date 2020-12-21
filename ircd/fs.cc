@@ -612,7 +612,7 @@ catch(boost::system::system_error &e)
 ircd::fs::stdin::tty::tty()
 :fd{[]
 {
-	thread_local char buf[256];
+	char buf[256];
 	syscall(::ttyname_r, STDIN_FILENO, buf, sizeof(buf));
 	return fd
 	{
@@ -2821,7 +2821,8 @@ ircd::make_error_code(const boost::filesystem::filesystem_error &e)
 // error::error
 //
 
-decltype(ircd::fs::error::buf) thread_local
+decltype(ircd::fs::error::buf)
+thread_local
 ircd::fs::error::buf;
 
 ircd::fs::error::error(const boost::filesystem::filesystem_error &e)

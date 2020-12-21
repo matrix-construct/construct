@@ -1201,7 +1201,7 @@ ircd::resource::response::response(client &client,
 		client.timer.at<microseconds>()
 	};
 
-	thread_local char rtime_buf[32];
+	char rtime_buf[32];
 	const string_view rtime
 	{
 		pretty(rtime_buf, request_time, true)

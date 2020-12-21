@@ -221,7 +221,7 @@ void
 ircd::rfc1035::record::A::append(json::stack::object &out)
 const
 {
-	thread_local char ipbuf[64];
+	char ipbuf[64];
 	json::stack::member
 	{
 		out, "ip", net::string_ip4(ipbuf, ip4)
@@ -278,7 +278,7 @@ void
 ircd::rfc1035::record::AAAA::append(json::stack::object &out)
 const
 {
-	thread_local char ipbuf[64];
+	char ipbuf[64];
 	json::stack::member
 	{
 		out, "ip", net::string_ip6(ipbuf, ip6)
@@ -441,7 +441,7 @@ ircd::rfc1035::make_name(const mutable_buffer &out,
 	*pos = '\0';
 	ircd::tokens(fqdn, '.', [&pos, &out](const string_view &label)
 	{
-		thread_local char labelbuf[LABEL_MAX+1];
+		char labelbuf[LABEL_MAX + 1];
 		if(unlikely(size(label) > LABEL_MAX))
 			throw error
 			{

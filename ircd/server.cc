@@ -1066,7 +1066,7 @@ ircd::server::peer::handle_open(link &link,
 		if(std::addressof(link) == std::addressof(links.front()))
 			err_set(eptr);
 
-		thread_local char rembuf[64];
+		char rembuf[64];
 		log::derror
 		{
 			log, "%s [%s]: open :%s",
@@ -1092,9 +1092,9 @@ void
 ircd::server::peer::handle_close(link &link,
                                  std::exception_ptr eptr)
 {
-	thread_local char rembuf[64];
-
 	if(eptr)
+	{
+		char rembuf[64];
 		log::derror
 		{
 			log, "%s [%s]: close :%s",
@@ -1102,6 +1102,7 @@ ircd::server::peer::handle_close(link &link,
 			string(rembuf, remote),
 			what(eptr)
 		};
+	}
 
 	if(link.finished())
 		handle_finished(link);
@@ -1129,9 +1130,13 @@ ircd::server::peer::handle_error(link &link,
 {
 	using std::errc;
 	using boost::asio::error::get_misc_category;
-	thread_local char rembuf[64];
 
-	const auto &ec{e.code()};
+	char rembuf[64];
+	const auto &ec
+	{
+		e.code()
+	};
+
 	if(system_category(ec)) switch(ec.value())
 	{
 		case 0:
@@ -1308,7 +1313,7 @@ ircd::server::peer::handle_head_recv(const link &link,
 	// requests more effectively.
 	if(!server_version && head.server)
 	{
-		thread_local char rembuf[64];
+		char rembuf[64];
 		server_version = std::string{head.server};
 		log::debug
 		{
@@ -1386,7 +1391,7 @@ ircd::server::peer::del(link &link)
 	}));
 
 	assert(it != end(links));
-	thread_local char rembuf[64];
+	char rembuf[64];
 	log::debug
 	{
 		log, "%s removing from peer(%p) %zu of %zu to %s",
@@ -1483,7 +1488,7 @@ try
 }
 catch(const std::exception &e)
 {
-	thread_local char buf[256];
+	char buf[256];
 	log::error
 	{
 		log, "peer(%p) DNS resolution for '%s' :%s",
@@ -2020,8 +2025,7 @@ ircd::string_view
 ircd::server::loghead(const mutable_buffer &buf,
                       const link &link)
 {
-	thread_local char rembuf[2][64];
-
+	char rembuf[2][64];
 	const auto local
 	{
 		link.socket?

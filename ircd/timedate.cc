@@ -20,14 +20,14 @@ ircd::rfc7231_fmt
 std::ostream &
 ircd::operator<<(std::ostream &s, const system_point &tp)
 {
-	thread_local char buf[96];
+	char buf[96];
 	return (s << timef(buf, tp));
 }
 
 std::ostream &
 ircd::operator<<(std::ostream &s, const microtime_t &t)
 {
-	thread_local char buf[64];
+	char buf[64];
 	s << microtime(buf);
 	return s;
 }
@@ -93,7 +93,7 @@ ircd::ago(const mutable_buffer &buf,
 		now<system_point>() - tp
 	};
 
-	thread_local char tmp[64];
+	char tmp[64];
 	return fmt::sprintf
 	{
 		buf, "%s ago",

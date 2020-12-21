@@ -694,7 +694,7 @@ command__ping(const mutable_buffer &buf,
 
 	std::ostringstream out;
 	pubsetbuf(out, buf);
-	thread_local char tmbuf[32];
+	char tmbuf[32];
 	out
 	    << " <font color=\"" << fg << "\" data-mx-bg-color=\"" << bg << "\">"
 	    << " <b>"
@@ -752,13 +752,13 @@ command__ping__room(const mutable_buffer &buf,
 	opts.closure_cached_errors = true;
 	opts.timeout = seconds(10); //TODO: conf
 
-	thread_local char tmbuf[32];
+	char tmbuf[32];
 	std::ostringstream out;
 	pubsetbuf(out, buf);
 
 	util::timer timer;
 	size_t responses{0};
-	m::feds::execute(opts, [&timer, &responses, &buf, &out]
+	m::feds::execute(opts, [&tmbuf, &timer, &responses, &buf, &out]
 	(const auto &result)
 	{
 		++responses;

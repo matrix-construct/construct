@@ -16,7 +16,8 @@ void
 ircd::fpe::_throw_errors(const ushort &flags)
 {
 	assert(flags);
-	thread_local char buf[128];
+
+	char buf[128];
 	throw std::domain_error
 	{
 		reflect(buf, flags)

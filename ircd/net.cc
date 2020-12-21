@@ -186,7 +186,7 @@ ircd::string_view
 ircd::net::loghead(const mutable_buffer &out,
                    const socket &socket)
 {
-	thread_local char buf[2][128];
+	char buf[2][128];
 	return fmt::sprintf
 	{
 		out, "socket:%lu local:%s remote:%s",
@@ -2572,8 +2572,7 @@ const
 std::ostream &
 ircd::net::operator<<(std::ostream &s, const ipport &t)
 {
-	thread_local char buf[128];
-	const critical_assertion ca;
+	char buf[128];
 	s << net::string(buf, t);
 	return s;
 }
@@ -2719,8 +2718,7 @@ ircd::net::make_address(const uint128_t &ip)
 std::ostream &
 ircd::net::operator<<(std::ostream &s, const ipaddr &ipa)
 {
-	thread_local char buf[128];
-	const critical_assertion ca;
+	char buf[128];
 	s << net::string(buf, ipa);
 	return s;
 }

@@ -406,7 +406,7 @@ try
 	send_query(ep, tag);
 
 	#ifdef RB_DEBUG
-	thread_local char buf[128];
+	char buf[128];
 	log::debug
 	{
 		log, "send tag:%u qtype:%u t:%u `%s' to %s",
@@ -469,7 +469,7 @@ try
 }
 catch(const std::exception &e)
 {
-	thread_local char buf[128];
+	char buf[128];
 	log::error
 	{
 		log, "send tag:%u qtype:%u t:%u `%s' to %s :%s",
@@ -635,11 +635,10 @@ ircd::net::dns::resolver::handle_reply(const ipport &from,
                                        const header &header,
                                        const const_buffer &body)
 {
-	thread_local char strbuf[2][128];
+	// The primary mutex is locked here while this result is
+	// processed. This locks out the sendq and timeout worker.
 	const std::lock_guard lock
 	{
-		// The primary mutex is locked here while this result is
-		// processed. This locks out the sendq and timeout worker.
 		mutex
 	};
 
@@ -648,6 +647,7 @@ ircd::net::dns::resolver::handle_reply(const ipport &from,
 		tags.find(header.id)
 	};
 
+	char strbuf[2][128];
 	if(it == end(tags))
 		throw error
 		{

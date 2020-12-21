@@ -454,7 +454,7 @@ try
 	}
 
 	#ifdef RB_DEBUG
-	thread_local char buf[64];
+	char buf[64];
 	log::debug
 	{
 		client::log, "%s leave %s",
@@ -607,7 +607,7 @@ bool
 ircd::handle_ec_default(client &client,
                         const error_code &ec)
 {
-	thread_local char buf[256];
+	char buf[256];
 	log::derror
 	{
 		client::log, "%s :%s",
@@ -1045,8 +1045,6 @@ ircd::client::loghead()
 const
 {
 	thread_local char buf[512];
-	thread_local char rembuf[128];
-	thread_local char locbuf[128];
 
 	const string_view alpn
 	{
@@ -1055,6 +1053,7 @@ const
 			nullptr
 	};
 
+	char rembuf[64], locbuf[64];
 	return fmt::sprintf
 	{
 		buf, "socket:%lu local:%s remote:%s client:%lu %s %lu:%lu",
