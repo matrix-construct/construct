@@ -1,4 +1,81 @@
 :ir
+_ZN4ircd4json4typeERKNS_11string_viewENS0_8strict_tESt9nothrow_t
+# Func Hash:
+72339147494326539
+# Num Counters:
+8
+# Counter Values:
+9990
+0
+0
+0
+0
+0
+0
+16
+# Num Value Kinds:
+1
+# ValueKind = IPVK_IndirectCallTarget:
+0
+# NumValueSites:
+1
+1
+json.cc:_ZZN5boost6spirit8functionIFbRPKcRKS3_RNS0_7contextINS_6fusion4consIRN4ircd4json4typeENS8_4nil_EEENS8_6vectorIJEEEEERKNS0_11unused_typeEEEaSINS0_2qi6detail13parser_binderINSQ_11alternativeINS9_INSQ_8sequenceINS9_INSQ_14omit_directiveINSQ_9referenceIKNSQ_4ruleIS3_SK_SK_SK_SK_EEEEEENS9_INSQ_11attr_parserIKSC_EESE_EEEEEENS9_IS17_NS9_IS17_NS9_IS17_NS9_IS17_SE_EEEEEEEEEEEEN4mpl_5bool_ILb0EEEEEEERSO_T_ENUlRKPKvS4_S6_SJ_SM_E_8__invokeES1N_S4_S6_SJ_SM_:9990
+
+_ZN4ircd4json4typeERKNS_11string_viewESt9nothrow_t
+# Func Hash:
+72339147494326539
+# Num Counters:
+8
+# Counter Values:
+62
+0
+0
+0
+0
+0
+0
+27
+# Num Value Kinds:
+1
+# ValueKind = IPVK_IndirectCallTarget:
+0
+# NumValueSites:
+1
+1
+json.cc:_ZZN5boost6spirit8functionIFbRPKcRKS3_RNS0_7contextINS_6fusion4consIRN4ircd4json4typeENS8_4nil_EEENS8_6vectorIJEEEEERKNS0_11unused_typeEEEaSINS0_2qi6detail13parser_binderINSQ_11alternativeINS9_INSQ_8sequenceINS9_INSQ_14omit_directiveINSQ_9referenceIKNSQ_4ruleIS3_SK_SK_SK_SK_EEEEEENS9_INSQ_11attr_parserIKSC_EESE_EEEEEENS9_IS17_NS9_IS17_NS9_IS17_NS9_IS17_SE_EEEEEEEEEEEEN4mpl_5bool_ILb0EEEEEEERSO_T_ENUlRKPKvS4_S6_SJ_SM_E_8__invokeES1N_S4_S6_SJ_SM_:62
+
+_ZNK4ircd4json6object5beginEv
+# Func Hash:
+281656848091349
+# Num Counters:
+16
+# Counter Values:
+8006
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+# Num Value Kinds:
+1
+# ValueKind = IPVK_IndirectCallTarget:
+0
+# NumValueSites:
+1
+1
+json.cc:_ZZN5boost6spirit8functionIFbRPKcRKS3_RNS0_7contextINS_6fusion4consIRN4ircd4json6object6memberENS8_4nil_EEENS8_6vectorIJEEEEERKNS0_11unused_typeEEEaSINS0_2qi6detail13parser_binderINSR_16expect_directiveINSR_8sequenceINS9_INSR_9referenceIKNSR_4ruleIS3_SL_SL_SL_SL_EEEENS9_INSR_11alternativeINS9_INSR_10eoi_parserENS9_INSV_INS9_INSW_IKNSX_IS3_SD_SL_SL_SL_EEEENS9_IS10_SF_EEEEEESF_EEEEEESF_EEEEEEEEN4mpl_5bool_ILb0EEEEEEERSP_T_ENUlRKPKvS4_S6_SK_SN_E_8__invokeES1P_S4_S6_SK_SN_:8006
+
 _ZN4ircd4json6object14const_iteratorppEv
 # Func Hash:
 281553456398603
@@ -20,3 +97,47 @@ _ZN4ircd4json6object14const_iteratorppEv
 1
 1
 json.cc:_ZZN5boost6spirit8functionIFbRPKcRKS3_RNS0_7contextINS_6fusion4consIRN4ircd4json6object6memberENS8_4nil_EEENS8_6vectorIJEEEEERKNS0_11unused_typeEEEaSINS0_2qi6detail13parser_binderINSR_16expect_directiveINSR_8sequenceINS9_INSR_9referenceIKNSR_4ruleIS3_SD_SL_SL_SL_EEEENS9_INSW_IKNSX_IS3_SL_SL_SL_SL_EEEESF_EEEEEEEEN4mpl_5bool_ILb0EEEEEEERSP_T_ENUlRKPKvS4_S6_SK_SN_E_8__invokeES1H_S4_S6_SK_SN_:16008480
+
+_ZNK4ircd4json5array5beginEv
+# Func Hash:
+281553456398603
+# Num Counters:
+7
+# Counter Values:
+4
+0
+0
+0
+0
+0
+0
+# Num Value Kinds:
+1
+# ValueKind = IPVK_IndirectCallTarget:
+0
+# NumValueSites:
+1
+1
+json.cc:_ZZN5boost6spirit8functionIFbRPKcRKS3_RNS0_7contextINS_6fusion4consIRN4ircd11string_viewENS8_4nil_EEENS8_6vectorIJEEEEERKNS0_11unused_typeEEEaSINS0_2qi6detail13parser_binderINSP_16expect_directiveINSP_8sequenceINS9_INSP_9referenceIKNSP_4ruleIS3_SJ_SJ_SJ_SJ_EEEENS9_INSP_11alternativeINS9_INSP_10eoi_parserENS9_INST_INS9_INSU_IKNSV_IS3_SB_SJ_SJ_SJ_EEEENS9_ISY_SD_EEEEEESD_EEEEEESD_EEEEEEEEN4mpl_5bool_ILb0EEEEEEERSN_T_ENUlRKPKvS4_S6_SI_SL_E_8__invokeES1N_S4_S6_SI_SL_:4
+
+_ZN4ircd4json5array14const_iteratorppEv
+# Func Hash:
+281553456398603
+# Num Counters:
+7
+# Counter Values:
+5838361
+0
+0
+0
+0
+0
+0
+# Num Value Kinds:
+1
+# ValueKind = IPVK_IndirectCallTarget:
+0
+# NumValueSites:
+1
+1
+json.cc:_ZZN5boost6spirit8functionIFbRPKcRKS3_RNS0_7contextINS_6fusion4consIRN4ircd11string_viewENS8_4nil_EEENS8_6vectorIJEEEEERKNS0_11unused_typeEEEaSINS0_2qi6detail13parser_binderINSP_16expect_directiveINSP_8sequenceINS9_INSP_9referenceIKNSP_4ruleIS3_SB_SJ_SJ_SJ_EEEENS9_INSU_IKNSV_IS3_SJ_SJ_SJ_SJ_EEEESD_EEEEEEEEN4mpl_5bool_ILb0EEEEEEERSN_T_ENUlRKPKvS4_S6_SI_SL_E_8__invokeES1F_S4_S6_SI_SL_:5838361
