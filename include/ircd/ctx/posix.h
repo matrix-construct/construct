@@ -8,6 +8,10 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#if !defined(__clockid_t)
+typedef clockid_t __clockid_t;
+#endif
+
 extern "C" int
 ircd_pthread_create(pthread_t *const thread,
                     const pthread_attr_t *const attr,
