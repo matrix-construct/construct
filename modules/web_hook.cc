@@ -687,6 +687,10 @@ github_handle__pull_request(std::ostream &out,
 		    << "</code></pre>"
 		    << ' '
 		    ;
+	else
+		out << ' '
+		    << "<br />"
+		    ;
 
 	if(pr.has("commits"))
 		out << ' '
