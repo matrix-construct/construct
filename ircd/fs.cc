@@ -90,7 +90,7 @@ try
 	syscall(getrlimit, RLIMIT_NOFILE, &rlim[0]);
 
 	rlim[1] = rlim[0];
-	rlim[1].rlim_cur = std::max(rlim[1].rlim_cur, ulong(fs::rlimit_nofile));
+	rlim[1].rlim_cur = std::max(ulong(rlim[1].rlim_cur), ulong(fs::rlimit_nofile));
 	rlim[1].rlim_cur = std::min(rlim[1].rlim_cur, rlim[1].rlim_max);
 	if(rlim[0].rlim_cur == rlim[1].rlim_cur)
 		return;
