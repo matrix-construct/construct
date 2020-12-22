@@ -543,7 +543,7 @@ catch(const qi::expectation_failure<const char *> &e)
 
 struct [[gnu::visibility("internal")]]
 ircd::rfc3986::encoder
-:karma::grammar<char *, const string_view>
+:karma::grammar<char *, string_view>
 {
 	template<class R = unused_type,
 	         class... S>
@@ -555,7 +555,7 @@ ircd::rfc3986::encoder
 		,"url unencoded"
 	};
 
-	const rule<const string_view> encode
+	const rule<string_view> encode
 	{
 		*(unreserved | (lit('%') << karma::right_align(2, '0')[karma::upper[karma::hex]]))
 		,"url encode"
