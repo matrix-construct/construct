@@ -2698,7 +2698,7 @@ ircd::server::link::discard_read()
 
 	const ssize_t has_pending
 	{
-		#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+		#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
 			SSL_has_pending(socket->ssl.native_handle())
 		#else
 			-2L
