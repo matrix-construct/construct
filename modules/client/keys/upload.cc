@@ -162,7 +162,7 @@ upload_one_time_keys(client &client,
 
 		const string_view state_key
 		{
-			strlcat(state_key_buf, ident)
+			ircd::strlcat(state_key_buf, ident)
 		};
 
 		const auto set

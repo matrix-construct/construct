@@ -5627,8 +5627,8 @@ try
 		};
 
 		char flags[16] {0};
-		if(peer.op_resolve)  strlcat(flags, "RESOLVING ");
-		if(peer.op_fini)     strlcat(flags, "FINISHED ");
+		if(peer.op_resolve)  ircd::strlcat(flags, "RESOLVING ");
+		if(peer.op_fini)     ircd::strlcat(flags, "FINISHED ");
 
 		char pbuf[32];
 		out
