@@ -172,21 +172,21 @@ libircd_la_SOURCES += cbor.cc
 libircd_la_SOURCES += conf.cc
 libircd_la_SOURCES += stats.cc
 libircd_la_SOURCES += logger.cc
+libircd_la_SOURCES += ios.cc
 libircd_la_SOURCES += run.cc
 libircd_la_SOURCES += prof.cc
 libircd_la_SOURCES += prof_psi.cc
 if LINUX
 libircd_la_SOURCES += prof_linux.cc
 endif
-libircd_la_SOURCES += fs.cc
-libircd_la_SOURCES += fs_path.cc
-libircd_la_SOURCES += fs_dev.cc
-libircd_la_SOURCES += ios.cc
 libircd_la_SOURCES += ctx_x86_64.S
 libircd_la_SOURCES += ctx.cc
 libircd_la_SOURCES += ctx_eh.cc
 libircd_la_SOURCES += ctx_ole.cc
 libircd_la_SOURCES += ctx_posix.cc
+libircd_la_SOURCES += fs.cc
+libircd_la_SOURCES += fs_path.cc
+libircd_la_SOURCES += fs_dev.cc
 if AIO
 libircd_la_SOURCES += fs_aio.cc
 endif
