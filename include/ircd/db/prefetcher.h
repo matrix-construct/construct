@@ -72,26 +72,30 @@ static_assert
 
 struct ircd::db::prefetcher::ticker
 {
+	template<class T> using item = ircd::stats::item<T>;
+
 	// montonic event counts
-	size_t queries {0};       ///< All incoming user requests
-	size_t rejects {0};       ///< Queries which were ignored; already cached
-	size_t request {0};       ///< Prefetcher requests added to the queue
-	size_t directs {0};       ///< Direct dispatches to db::request pool
-	size_t handles {0};       ///< Incremented before dispatch to db::request
-	size_t handled {0};       ///< Incremented after dispatch to db::request
-	size_t fetches {0};       ///< Incremented before actual database operation
-	size_t fetched {0};       ///< Incremented after actual database operation
-	size_t cancels {0};       ///< Count of canceled operations
+	item<uint64_t> queries;    ///< All incoming user requests
+	item<uint64_t> rejects;    ///< Queries which were ignored; already cached
+	item<uint64_t> request;    ///< Prefetcher requests added to the queue
+	item<uint64_t> directs;    ///< Direct dispatches to db::request pool
+	item<uint64_t> handles;    ///< Incremented before dispatch to db::request
+	item<uint64_t> handled;    ///< Incremented after dispatch to db::request
+	item<uint64_t> fetches;    ///< Incremented before actual database operation
+	item<uint64_t> fetched;    ///< Incremented after actual database operation
+	item<uint64_t> cancels;    ///< Count of canceled operations
 
 	// throughput totals
-	size_t fetched_bytes_key {0};      ///< Total bytes of key data received
-	size_t fetched_bytes_val {0};      ///< Total bytes of value data received
+	item<uint64_t> fetched_bytes_key;    ///< Total bytes of key data received
+	item<uint64_t> fetched_bytes_val;    ///< Total bytes of value data received
 
 	// from last operation only
-	microseconds last_snd_req {0us};   ///< duration request was queued here
-	microseconds last_req_fin {0us};   ///< duration for database operation
+	item<microseconds> last_snd_req;    ///< duration request was queued here
+	item<microseconds> last_req_fin;    ///< duration for database operation
 
 	// accumulated latency totals
-	microseconds accum_snd_req {0us};
-	microseconds accum_req_fin {0us};
+	item<microseconds> accum_snd_req;
+	item<microseconds> accum_req_fin;
+
+	ticker();
 };

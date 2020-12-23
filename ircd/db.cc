@@ -774,7 +774,7 @@ ircd::db::prefetcher::request_worker()
 	assert(request->fin == steady_point::min());
 	request->req = now<steady_point>();
 	ticker->last_snd_req = duration_cast<microseconds>(request->req - request->snd);
-	ticker->accum_snd_req += ticker->last_snd_req;
+	static_cast<microseconds &>(ticker->accum_snd_req) += ticker->last_snd_req;
 
 	ticker->fetches++;
 	request_handle(*request);
@@ -832,7 +832,7 @@ try
 	const ctx::critical_assertion ca;
 	request.fin = now<steady_point>();
 	ticker->last_req_fin = duration_cast<microseconds>(request.fin - request.req);
-	ticker->accum_req_fin += ticker->last_req_fin;
+	static_cast<microseconds &>(ticker->accum_req_fin) += ticker->last_req_fin;
 	const bool lte
 	{
 		valid_lte(*it, key)
@@ -952,6 +952,74 @@ const noexcept
 	{
 		key, len
 	};
+}
+
+//
+// prefetcher::ticker
+//
+
+ircd::db::prefetcher::ticker::ticker()
+:queries
+{
+	{ "name", "ircd.db.prefetch.queries" },
+}
+,rejects
+{
+	{ "name", "ircd.db.prefetch.rejects" },
+}
+,request
+{
+	{ "name", "ircd.db.prefetch.request" },
+}
+,directs
+{
+	{ "name", "ircd.db.prefetch.directs" },
+}
+,handles
+{
+	{ "name", "ircd.db.prefetch.handles" },
+}
+,handled
+{
+	{ "name", "ircd.db.prefetch.handled" },
+}
+,fetches
+{
+	{ "name", "ircd.db.prefetch.fetches" },
+}
+,fetched
+{
+	{ "name", "ircd.db.prefetch.fetched" },
+}
+,cancels
+{
+	{ "name", "ircd.db.prefetch.cancels" },
+}
+,fetched_bytes_key
+{
+	{ "name", "ircd.db.prefetch.fetched_bytes_key" },
+}
+,fetched_bytes_val
+{
+	{ "name", "ircd.db.prefetch.fetched_bytes_val" },
+}
+,last_snd_req
+{
+	{ "name", "ircd.db.prefetch.last_snd_req" },
+}
+,last_req_fin
+{
+	{ "name", "ircd.db.prefetch.last_req_fin" },
+}
+,accum_snd_req
+{
+	{ "name", "ircd.db.prefetch.accum_snd_req" },
+}
+,accum_req_fin
+{
+	{ "name", "ircd.db.prefetch.accum_req_fin" },
+}
+{
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -4654,7 +4722,7 @@ ircd::db::_read(const vector_view<_read_op> &op,
 
 		// Find the correct stats to update, one for the specific column and
 		// one for the database total.
-		ircd::stats::item<uint64_t *> *item_[2]
+		ircd::stats::item<uint64_t> *item_[2]
 		{
 			parallelize && buf[i].empty()?    &c.stats->multiget_referenced:
 			parallelize?                      &c.stats->multiget_copied:
