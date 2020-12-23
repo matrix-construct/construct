@@ -52,11 +52,25 @@ namespace ircd::stats
 	template<> struct item<uint64_t *>;
 	template<> struct item<uint32_t *>;
 	template<> struct item<uint16_t *>;
+	template<> struct item<int64_t *>;
+	template<> struct item<int32_t *>;
+	template<> struct item<int16_t *>;
+	template<> struct item<nanoseconds *>;
+	template<> struct item<microseconds *>;
+	template<> struct item<milliseconds *>;
+	template<> struct item<seconds *>;
 
 	// Value-carrying items
 	template<> struct item<uint64_t>;
 	template<> struct item<uint32_t>;
 	template<> struct item<uint16_t>;
+	template<> struct item<int64_t>;
+	template<> struct item<int32_t>;
+	template<> struct item<int16_t>;
+	template<> struct item<nanoseconds>;
+	template<> struct item<microseconds>;
+	template<> struct item<milliseconds>;
+	template<> struct item<seconds>;
 
 	extern const size_t NAME_MAX_LEN;
 	extern std::vector<item<void> *> items;
@@ -185,6 +199,22 @@ struct ircd::stats::item<uint64_t>
 };
 
 template<>
+struct ircd::stats::item<int64_t *>
+:ptr_item<int64_t>
+{
+	using ptr_item<int64_t>::ptr_item;
+	using ptr_item<int64_t>::operator=;
+};
+
+template<>
+struct ircd::stats::item<int64_t>
+:int_item<int64_t>
+{
+	using int_item<int64_t>::int_item;
+	using int_item<int64_t>::operator=;
+};
+
+template<>
 struct ircd::stats::item<uint32_t *>
 :ptr_item<uint32_t>
 {
@@ -201,6 +231,22 @@ struct ircd::stats::item<uint32_t>
 };
 
 template<>
+struct ircd::stats::item<int32_t *>
+:ptr_item<int32_t>
+{
+	using ptr_item<int32_t>::ptr_item;
+	using ptr_item<int32_t>::operator=;
+};
+
+template<>
+struct ircd::stats::item<int32_t>
+:int_item<int32_t>
+{
+	using int_item<int32_t>::int_item;
+	using int_item<int32_t>::operator=;
+};
+
+template<>
 struct ircd::stats::item<uint16_t *>
 :ptr_item<uint16_t>
 {
@@ -214,4 +260,84 @@ struct ircd::stats::item<uint16_t>
 {
 	using int_item<uint16_t>::int_item;
 	using int_item<uint16_t>::operator=;
+};
+
+template<>
+struct ircd::stats::item<int16_t *>
+:ptr_item<int16_t>
+{
+	using ptr_item<int16_t>::ptr_item;
+	using ptr_item<int16_t>::operator=;
+};
+
+template<>
+struct ircd::stats::item<int16_t>
+:int_item<int16_t>
+{
+	using int_item<int16_t>::int_item;
+	using int_item<int16_t>::operator=;
+};
+
+template<>
+struct ircd::stats::item<ircd::nanoseconds *>
+:ptr_item<nanoseconds>
+{
+	using ptr_item<nanoseconds>::ptr_item;
+	using ptr_item<nanoseconds>::operator=;
+};
+
+template<>
+struct ircd::stats::item<ircd::nanoseconds>
+:int_item<nanoseconds>
+{
+	using int_item<nanoseconds>::int_item;
+	using int_item<nanoseconds>::operator=;
+};
+
+template<>
+struct ircd::stats::item<ircd::microseconds *>
+:ptr_item<microseconds>
+{
+	using ptr_item<microseconds>::ptr_item;
+	using ptr_item<microseconds>::operator=;
+};
+
+template<>
+struct ircd::stats::item<ircd::microseconds>
+:int_item<microseconds>
+{
+	using int_item<microseconds>::int_item;
+	using int_item<microseconds>::operator=;
+};
+
+template<>
+struct ircd::stats::item<ircd::milliseconds *>
+:ptr_item<milliseconds>
+{
+	using ptr_item<milliseconds>::ptr_item;
+	using ptr_item<milliseconds>::operator=;
+};
+
+template<>
+struct ircd::stats::item<ircd::milliseconds>
+:int_item<milliseconds>
+{
+	using int_item<milliseconds>::int_item;
+	using int_item<milliseconds>::operator=;
+};
+
+template<>
+struct ircd::stats::item<ircd::seconds *>
+:ptr_item<seconds>
+{
+	using ptr_item<seconds>::ptr_item;
+	using ptr_item<seconds>::operator=;
+};
+
+template<>
+struct ircd::stats::item<ircd::seconds>
+:int_item<seconds>
+{
+	using int_item<seconds>::int_item;
+	using int_item<seconds>::operator=;
 };

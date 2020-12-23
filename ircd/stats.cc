@@ -35,7 +35,7 @@ ircd::stats::string(const mutable_buffer &buf,
 	{
 		const auto &item
 		{
-			dynamic_cast<const stats::item<uint64_t *> &>(item_)
+			dynamic_cast<const stats::ptr_item<uint64_t> &>(item_)
 		};
 
 		assert(item.val);
@@ -44,24 +44,102 @@ ircd::stats::string(const mutable_buffer &buf,
 			buf, "%lu", *item.val
 		};
 	}
+	else if(item_.type == typeid(int64_t *))
+	{
+		const auto &item
+		{
+			dynamic_cast<const stats::ptr_item<int64_t> &>(item_)
+		};
+
+		assert(item.val);
+		return fmt::sprintf
+		{
+			buf, "%ld", *item.val
+		};
+	}
+	else if(item_.type == typeid(nanoseconds *))
+	{
+		const auto &item
+		{
+			dynamic_cast<const stats::ptr_item<nanoseconds> &>(item_)
+		};
+
+		assert(item.val);
+		return fmt::sprintf
+		{
+			buf, "%ld", item.val->count()
+		};
+	}
+	else if(item_.type == typeid(microseconds *))
+	{
+		const auto &item
+		{
+			dynamic_cast<const stats::ptr_item<microseconds> &>(item_)
+		};
+
+		assert(item.val);
+		return fmt::sprintf
+		{
+			buf, "%ld", item.val->count()
+		};
+	}
+	else if(item_.type == typeid(milliseconds *))
+	{
+		const auto &item
+		{
+			dynamic_cast<const stats::ptr_item<milliseconds> &>(item_)
+		};
+
+		assert(item.val);
+		return fmt::sprintf
+		{
+			buf, "%ld", item.val->count()
+		};
+	}
+	else if(item_.type == typeid(seconds *))
+	{
+		const auto &item
+		{
+			dynamic_cast<const stats::ptr_item<seconds> &>(item_)
+		};
+
+		assert(item.val);
+		return fmt::sprintf
+		{
+			buf, "%ld", item.val->count()
+		};
+	}
 	else if(item_.type == typeid(uint32_t *))
 	{
 		const auto &item
 		{
-			dynamic_cast<const stats::item<uint32_t *> &>(item_)
+			dynamic_cast<const stats::ptr_item<uint32_t> &>(item_)
 		};
 
 		assert(item.val);
 		return fmt::sprintf
 		{
 			buf, "%u", *item.val
+		};
+	}
+	else if(item_.type == typeid(int32_t *))
+	{
+		const auto &item
+		{
+			dynamic_cast<const stats::ptr_item<int32_t> &>(item_)
+		};
+
+		assert(item.val);
+		return fmt::sprintf
+		{
+			buf, "%d", *item.val
 		};
 	}
 	else if(item_.type == typeid(uint16_t *))
 	{
 		const auto &item
 		{
-			dynamic_cast<const stats::item<uint16_t *> &>(item_)
+			dynamic_cast<const stats::ptr_item<uint16_t> &>(item_)
 		};
 
 		assert(item.val);
@@ -70,7 +148,20 @@ ircd::stats::string(const mutable_buffer &buf,
 			buf, "%u", *item.val
 		};
 	}
-	else throw error
+	else if(item_.type == typeid(int16_t *))
+	{
+		const auto &item
+		{
+			dynamic_cast<const stats::ptr_item<int16_t> &>(item_)
+		};
+
+		assert(item.val);
+		return fmt::sprintf
+		{
+			buf, "%d", *item.val
+		};
+	}
+	else throw invalid
 	{
 		"Unsupported value type '%s'",
 		item_.type.name(),
