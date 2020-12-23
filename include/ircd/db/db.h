@@ -51,6 +51,7 @@ namespace ircd::db
 #include "cache.h"
 #include "opts.h"
 #include "column.h"
+#include "column_iterator.h"
 #include "domain.h"
 #include "cell.h"
 #include "row.h"
