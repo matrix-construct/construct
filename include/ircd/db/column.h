@@ -20,9 +20,9 @@ namespace ircd::db
 	using bufs = vector_view<mutable_buffer>;
 
 	// Information about a column
-	uint32_t id(const column &);
-	const std::string &name(const column &);
-	const descriptor &describe(const column &);
+	uint32_t id(const column &) noexcept;
+	const std::string &name(const column &) noexcept;
+	const descriptor &describe(const column &) noexcept;
 	std::vector<std::string> files(const column &);
 	size_t file_count(const column &);
 	size_t bytes(const column &);
@@ -130,13 +130,13 @@ struct ircd::db::column
   public:
 	explicit operator const database &() const;
 	explicit operator const database::column &() const;
-	explicit operator const descriptor &() const;
+	explicit operator const descriptor &() const noexcept;
 
 	explicit operator database &();
 	explicit operator database::column &();
 
-	explicit operator bool() const;
-	bool operator!() const;
+	explicit operator bool() const noexcept;
+	bool operator!() const noexcept;
 
 	// [GET] Iterations
 	const_iterator begin(gopts = {});
@@ -199,11 +199,61 @@ struct ircd::db::column::delta
 	{}
 };
 
+inline
+ircd::db::column::column(database::column &c)
+:c{&c}
+{}
+
+inline void
+ircd::db::column::operator()(const delta &delta,
+                             const sopts &sopts)
+{
+	operator()(&delta, &delta + 1, sopts);
+}
+
+inline void
+ircd::db::column::operator()(const sopts &sopts,
+                             const std::initializer_list<delta> &deltas)
+{
+	operator()(deltas, sopts);
+}
+
+inline void
+ircd::db::column::operator()(const std::initializer_list<delta> &deltas,
+                             const sopts &sopts)
+{
+	operator()(std::begin(deltas), std::end(deltas), sopts);
+}
+
+inline void
+ircd::db::column::operator()(const string_view &key,
+                             const gopts &gopts,
+                             const view_closure &func)
+{
+	return operator()(key, func, gopts);
+}
+
+inline bool
+ircd::db::column::operator()(const string_view &key,
+                             const std::nothrow_t,
+                             const gopts &gopts,
+                             const view_closure &func)
+{
+	return operator()(key, std::nothrow, func, gopts);
+}
+
 inline bool
 ircd::db::column::operator!()
-const
+const noexcept
 {
 	return !bool(*this);
+}
+
+inline ircd::db::column::operator
+const descriptor &()
+const noexcept
+{
+	return describe(*this);
 }
 
 inline ircd::db::column::operator

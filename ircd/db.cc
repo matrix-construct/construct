@@ -3116,6 +3116,7 @@ ircd::db::cached(column &column,
 	;
 }
 
+[[gnu::hot]]
 rocksdb::Cache *
 ircd::db::cache(column &column)
 {
@@ -3130,6 +3131,7 @@ ircd::db::cache_compressed(column &column)
 	return c.table_opts.block_cache_compressed.get();
 }
 
+[[gnu::hot]]
 const rocksdb::Cache *
 ircd::db::cache(const column &column)
 {
@@ -3253,22 +3255,28 @@ ircd::db::files(const column &column)
 	return ret;
 }
 
+[[gnu::hot]]
 const ircd::db::descriptor &
 ircd::db::describe(const column &column)
+noexcept
 {
 	const database::column &c(column);
 	return describe(c);
 }
 
+[[gnu::hot]]
 const std::string &
 ircd::db::name(const column &column)
+noexcept
 {
 	const database::column &c(column);
 	return name(c);
 }
 
+[[gnu::hot]]
 uint32_t
 ircd::db::id(const column &column)
+noexcept
 {
 	const database::column &c(column);
 	return id(c);
@@ -3277,6 +3285,15 @@ ircd::db::id(const column &column)
 //
 // column
 //
+
+ircd::db::column::column(database &d,
+                         const string_view &column_name)
+:column
+{
+	d[column_name]
+}
+{
+}
 
 ircd::db::column::column(database &d,
                          const string_view &column_name,
@@ -3293,41 +3310,6 @@ ircd::db::column::column(database &d,
 		nullptr;
 }()}
 {
-}
-
-ircd::db::column::column(database &d,
-                         const string_view &column_name)
-:column
-{
-	d[column_name]
-}
-{
-}
-
-ircd::db::column::column(database::column &c)
-:c{&c}
-{
-}
-
-void
-ircd::db::column::operator()(const delta &delta,
-                             const sopts &sopts)
-{
-	operator()(&delta, &delta + 1, sopts);
-}
-
-void
-ircd::db::column::operator()(const sopts &sopts,
-                             const std::initializer_list<delta> &deltas)
-{
-	operator()(deltas, sopts);
-}
-
-void
-ircd::db::column::operator()(const std::initializer_list<delta> &deltas,
-                             const sopts &sopts)
-{
-	operator()(std::begin(deltas), std::end(deltas), sopts);
 }
 
 void
@@ -3349,29 +3331,12 @@ ircd::db::column::operator()(const delta *const &begin,
 
 void
 ircd::db::column::operator()(const string_view &key,
-                             const gopts &gopts,
-                             const view_closure &func)
-{
-	return operator()(key, func, gopts);
-}
-
-void
-ircd::db::column::operator()(const string_view &key,
                              const view_closure &func,
                              const gopts &gopts)
 {
 	const auto it(seek(*this, key, gopts));
 	valid_eq_or_throw(*it, key);
 	func(val(*it));
-}
-
-bool
-ircd::db::column::operator()(const string_view &key,
-                             const std::nothrow_t,
-                             const gopts &gopts,
-                             const view_closure &func)
-{
-	return operator()(key, std::nothrow, func, gopts);
 }
 
 bool
@@ -3395,21 +3360,12 @@ const
 	return { *this, key };
 }
 
+[[gnu::hot]]
 ircd::db::column::operator
 bool()
-const
+const noexcept
 {
-	return c?
-		!dropped(*c):
-		false;
-}
-
-ircd::db::column::operator
-const descriptor &()
-const
-{
-	assert(c->descriptor);
-	return *c->descriptor;
+	return c && !dropped(*c);
 }
 
 //
@@ -5234,6 +5190,7 @@ namespace ircd::db
 }
 
 /// Convert our options structure into RocksDB's options structure.
+[[gnu::hot]]
 rocksdb::ReadOptions
 ircd::db::make_opts(const gopts &opts)
 {
@@ -5295,6 +5252,7 @@ ircd::db::enable_wal
 	{ "persist",   false                },
 };
 
+[[gnu::hot]]
 rocksdb::WriteOptions
 ircd::db::make_opts(const sopts &opts)
 {
@@ -5419,18 +5377,21 @@ ircd::db::namepoint(const string_view &name,
 // Iterator
 //
 
+[[gnu::hot]]
 std::pair<ircd::string_view, ircd::string_view>
 ircd::db::operator*(const rocksdb::Iterator &it)
 {
 	return { key(it), val(it) };
 }
 
+[[gnu::hot]]
 ircd::string_view
 ircd::db::key(const rocksdb::Iterator &it)
 {
 	return slice(it.key());
 }
 
+[[gnu::hot]]
 ircd::string_view
 ircd::db::val(const rocksdb::Iterator &it)
 {
@@ -5441,18 +5402,21 @@ ircd::db::val(const rocksdb::Iterator &it)
 // PinnableSlice
 //
 
+[[gnu::hot]]
 size_t
 ircd::db::size(const rocksdb::PinnableSlice &ps)
 {
 	return size(static_cast<const rocksdb::Slice &>(ps));
 }
 
+[[gnu::hot]]
 const char *
 ircd::db::data(const rocksdb::PinnableSlice &ps)
 {
 	return data(static_cast<const rocksdb::Slice &>(ps));
 }
 
+[[gnu::hot]]
 ircd::string_view
 ircd::db::slice(const rocksdb::PinnableSlice &ps)
 {
@@ -5463,24 +5427,28 @@ ircd::db::slice(const rocksdb::PinnableSlice &ps)
 // Slice
 //
 
+[[gnu::hot]]
 size_t
 ircd::db::size(const rocksdb::Slice &slice)
 {
 	return slice.size();
 }
 
+[[gnu::hot]]
 const char *
 ircd::db::data(const rocksdb::Slice &slice)
 {
 	return slice.data();
 }
 
+[[gnu::hot]]
 rocksdb::Slice
 ircd::db::slice(const string_view &sv)
 {
 	return { sv.data(), sv.size() };
 }
 
+[[gnu::hot]]
 ircd::string_view
 ircd::db::slice(const rocksdb::Slice &sk)
 {
