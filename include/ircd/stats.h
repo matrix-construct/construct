@@ -44,6 +44,10 @@ namespace ircd::stats
 	template<class T = void> struct item;
 	template<> struct item<void>;
 
+	// Category item
+	template<class T> struct ptr_item;
+	template<class T> struct int_item;
+
 	// Pointer-to-value items
 	template<> struct item<uint64_t *>;
 	template<> struct item<uint32_t *>;
@@ -93,184 +97,121 @@ struct ircd::stats::item<void>
 	virtual ~item() noexcept;
 };
 
-template<>
-struct ircd::stats::item<uint64_t *>
+/// Abstract pointer item
+template<class T>
+struct ircd::stats::ptr_item
 :item<void>
 {
-	uint64_t *val {nullptr};
+	T *val {nullptr};
 
   public:
 	bool operator!() const override
 	{
-		return !val || !*val;
+		return !val || *val == T{0};
 	}
 
-	operator const uint64_t &() const
+	operator const T &() const
 	{
 		assert(val);
 		return *val;
 	}
 
-	operator uint64_t &()
+	operator T &()
 	{
 		assert(val);
 		return *val;
 	}
 
-	item(uint64_t *const &, const json::members &);
-	item() = default;
-
-	item &operator=(const uint64_t &val) &
+	ptr_item &operator=(const T &val) &
 	{
-		static_cast<uint64_t &>(*this) = val;
+		static_cast<T &>(*this) = val;
 		return *this;
 	}
+
+	ptr_item(T *const &val, const json::members &feature)
+	:item<void>{typeid(T *), feature}
+	,val{val}
+	{}
+
+	ptr_item() = default;
+};
+
+/// Abstract value item
+template<class T>
+struct ircd::stats::int_item
+:ptr_item<T>
+{
+	T val {0};
+
+  public:
+	operator const T &() const noexcept
+	{
+		return val;
+	}
+
+	operator T &() noexcept
+	{
+		return val;
+	}
+
+	int_item &operator=(const T &val) &
+	{
+		static_cast<T &>(*this) = val;
+		return *this;
+	}
+
+	int_item(const json::members &feature)
+	:ptr_item<T>{std::addressof(this->val), feature}
+	,val{0}
+	{}
+
+	int_item() = default;
+};
+
+template<>
+struct ircd::stats::item<uint64_t *>
+:ptr_item<uint64_t>
+{
+	using ptr_item<uint64_t>::ptr_item;
+	using ptr_item<uint64_t>::operator=;
+};
+
+template<>
+struct ircd::stats::item<uint64_t>
+:int_item<uint64_t>
+{
+	using int_item<uint64_t>::int_item;
+	using int_item<uint64_t>::operator=;
 };
 
 template<>
 struct ircd::stats::item<uint32_t *>
-:item<void>
+:ptr_item<uint32_t>
 {
-	uint32_t *val {nullptr};
-
-  public:
-	bool operator!() const override
-	{
-		return !val || !*val;
-	}
-
-	operator const uint32_t &() const
-	{
-		assert(val);
-		return *val;
-	}
-
-	operator uint32_t &()
-	{
-		assert(val);
-		return *val;
-	}
-
-	item(uint32_t *const &, const json::members &);
-	item() = default;
-
-	item &operator=(const uint32_t &val) &
-	{
-		static_cast<uint32_t &>(*this) = val;
-		return *this;
-	}
-};
-
-template<>
-struct ircd::stats::item<uint16_t *>
-:item<void>
-{
-	uint16_t *val {nullptr};
-
-  public:
-	bool operator!() const override
-	{
-		return !val || !*val;
-	}
-
-	operator const uint16_t &() const
-	{
-		assert(val);
-		return *val;
-	}
-
-	operator uint16_t &()
-	{
-		assert(val);
-		return *val;
-	}
-
-	item(uint16_t *const &, const json::members &);
-	item() = default;
-
-	item &operator=(const uint16_t &val) &
-	{
-		static_cast<uint16_t &>(*this) = val;
-		return *this;
-	}
-};
-
-template<> struct ircd::stats::item<uint64_t>
-:item<uint64_t *>
-{
-	uint64_t val {0};
-
-  public:
-	operator const uint64_t &() const noexcept
-	{
-		return val;
-	}
-
-	operator uint64_t &() noexcept
-	{
-		return val;
-	}
-
-	item(const json::members &);
-	item() = default;
-
-	item &operator=(const uint64_t &val) &
-	{
-		static_cast<uint64_t &>(*this) = val;
-		return *this;
-	}
+	using ptr_item<uint32_t>::ptr_item;
+	using ptr_item<uint32_t>::operator=;
 };
 
 template<>
 struct ircd::stats::item<uint32_t>
-:item<uint32_t *>
+:int_item<uint32_t>
 {
-	uint32_t val {0};
+	using int_item<uint32_t>::int_item;
+	using int_item<uint32_t>::operator=;
+};
 
-  public:
-	operator const uint32_t &() const noexcept
-	{
-		return val;
-	}
-
-	operator uint32_t &() noexcept
-	{
-		return val;
-	}
-
-	item(const json::members &);
-	item() = default;
-
-	item &operator=(const uint32_t &val) &
-	{
-		static_cast<uint32_t &>(*this) = val;
-		return *this;
-	}
+template<>
+struct ircd::stats::item<uint16_t *>
+:ptr_item<uint16_t>
+{
+	using ptr_item<uint16_t>::ptr_item;
+	using ptr_item<uint16_t>::operator=;
 };
 
 template<>
 struct ircd::stats::item<uint16_t>
-:item<uint16_t *>
+:int_item<uint16_t>
 {
-	uint16_t val {0};
-
-  public:
-	operator const uint16_t &() const noexcept
-	{
-		return val;
-	}
-
-	operator uint16_t &() noexcept
-	{
-		return val;
-	}
-
-	item(const json::members &);
-	item() = default;
-
-	item &operator=(const uint16_t &val) &
-	{
-		static_cast<uint16_t &>(*this) = val;
-		return *this;
-	}
+	using int_item<uint16_t>::int_item;
+	using int_item<uint16_t>::operator=;
 };
