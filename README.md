@@ -12,8 +12,7 @@ you to contribute new ideas and are liberal in accepting experimental features.
 
 ### Getting Started
 
-1. At this phase of development the best thing to do is pull the master branch
-and use the latest head.
+1. `git clone https://github.com/matrix-construct/construct`. The latest commit on the master branch should be tagged for release. Please checkout the latest tag to be sure; in case of serious regression, we may delete a tag until it is fixed.
 
 2. See the [BUILD](https://github.com/matrix-construct/construct/wiki/BUILD) instructions to compile Construct from source.
 
