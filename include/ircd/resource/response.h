@@ -96,7 +96,7 @@ struct ircd::resource::response::chunked
 
 	size_t write(const const_buffer &chunk, const bool &ignore_empty = true);
 	const_buffer flush(const const_buffer &);
-	bool finish();
+	bool finish(const bool psh = false);
 
 	std::function<const_buffer (const const_buffer &)> flusher();
 

@@ -880,13 +880,17 @@ ircd::resource::response::chunked::flusher()
 }
 
 bool
-ircd::resource::response::chunked::finish()
+ircd::resource::response::chunked::finish(const bool psh)
 {
 	if(!c)
 		return false;
 
 	write(const_buffer{}, false);
 	assert(finished);
+
+	if(psh)
+		net::flush(*c->sock);
+
 	c = nullptr;
 	return true;
 }
