@@ -331,6 +331,44 @@ ircd::net::write_one(socket &socket,
 	return socket.write_one(buffers);
 }
 
+/// Bytes remaining for transmission (in the kernel)
+size_t
+ircd::net::writable(const socket &socket)
+{
+	const ssize_t write_bufsz
+	(
+		net::write_bufsz(socket)
+	);
+
+	const ssize_t flushing
+	(
+		net::flushing(socket)
+	);
+
+	assert(write_bufsz >= flushing);
+	return std::max(write_bufsz - flushing, 0L);
+}
+
+/// Bytes buffered for transmission (in the kernel)
+size_t
+ircd::net::flushing(const socket &socket)
+{
+	const ip::tcp::socket &sd(socket);
+	const auto &fd
+	{
+		mutable_cast(sd).lowest_layer().native_handle()
+	};
+
+	long value(0);
+	#ifdef TIOCOUTQ
+		syscall(::ioctl, fd, TIOCOUTQ, &value);
+	#else
+		#warning "TIOCOUTQ is not defined on this platform."
+	#endif
+
+	return value;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // net/read.h

@@ -15,6 +15,10 @@ namespace ircd::net
 {
 	using const_buffers = vector_view<const const_buffer>;
 
+	// Observers
+	size_t flushing(const socket &);
+	size_t writable(const socket &);
+
 	// Non-blocking; writes at most one system-determined amount of
 	// bytes or less with at most a single syscall.
 	size_t write_one(socket &, const const_buffers &);
