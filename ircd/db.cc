@@ -3168,14 +3168,23 @@ ircd::db::cached(column &column,
 	auto opts(make_opts(gopts));
 	opts.read_tier = NON_BLOCKING;
 	opts.fill_cache = false;
-	const auto status
+
+	std::unique_ptr<rocksdb::Iterator> it;
+	database::column &c(column);
+	const bool valid
 	{
-		_read(column, key, opts)
+		seek(c, key, opts, it)
+	};
+
+	assert(it);
+	const auto code
+	{
+		it->status().code()
 	};
 
 	return false
-	|| status.code() == Status::kOk
-	|| status.code() == Status::kNotFound
+	|| (valid && valid_eq(*it, key))
+	|| (!valid && code != rocksdb::Status::kIncomplete)
 	;
 }
 
