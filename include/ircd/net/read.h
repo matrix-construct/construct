@@ -15,6 +15,10 @@ namespace ircd::net
 {
 	using mutable_buffers = vector_view<const mutable_buffer>;
 
+	// Observers
+	size_t readable(const socket &);
+	size_t available(const socket &) noexcept;
+
 	// Non-blocking; read into buffers in a single syscall
 	size_t read_one(socket &, const mutable_buffers &);
 	size_t read_one(socket &, const mutable_buffer &);

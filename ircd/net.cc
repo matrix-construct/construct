@@ -226,24 +226,6 @@ catch(...)
 	return {};
 }
 
-size_t
-ircd::net::available(const socket &socket)
-noexcept
-{
-	const ip::tcp::socket &sd(socket);
-	boost::system::error_code ec;
-	return sd.available(ec);
-}
-
-size_t
-ircd::net::readable(const socket &socket)
-{
-	ip::tcp::socket &sd(const_cast<net::socket &>(socket));
-	ip::tcp::socket::bytes_readable command{true};
-	sd.io_control(command);
-	return command.get();
-}
-
 bool
 ircd::net::opened(const socket &socket)
 noexcept try
@@ -465,6 +447,26 @@ ircd::net::read_one(socket &socket,
                     const vector_view<const mutable_buffer> &buffers)
 {
 	return socket.read_one(buffers);
+}
+
+/// Bytes available for reading (userspace)
+size_t
+ircd::net::available(const socket &socket)
+noexcept
+{
+	const ip::tcp::socket &sd(socket);
+	boost::system::error_code ec;
+	return sd.available(ec);
+}
+
+/// Bytes available for reading (kernel)
+size_t
+ircd::net::readable(const socket &socket)
+{
+	ip::tcp::socket &sd(const_cast<net::socket &>(socket));
+	ip::tcp::socket::bytes_readable command{true};
+	sd.io_control(command);
+	return command.get();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
