@@ -58,7 +58,7 @@ noexcept
 		b / 8
 	};
 
-	V arg(a), ret;
+	V arg(a), ret(a);
 	for(size_t i(0); i < B; ++i)
 		ret[i] = 0;
 
