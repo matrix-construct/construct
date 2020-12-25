@@ -606,13 +606,26 @@ try
 		tokens(client.request.params, '/', client.request.param)
 	};
 
-	const unwind_nominal completions{[this]
-	{
-		++stats->completions;
-	}};
-
 	// Finally handle the request.
-	return call_handler(client, client.request);
+	const auto &ret
+	{
+		call_handler(client, client.request)
+	};
+
+	// Increment the successful completion counter for the handler.
+	++stats->completions;
+
+	// This branch flips TCP_NODELAY to force transmission here. This is a
+	// good place because the request has finished writing everything; the
+	// socket doesn't know that, but we do, and this is the place. The action
+	// can be disabled by using the flag in the method's options.
+	if(likely(~opts->flags & DELAYED_RESPONSE))
+	{
+		assert(client.sock);
+		net::flush(*client.sock);
+	}
+
+	return ret;
 }
 catch(const http::error &e)
 {
