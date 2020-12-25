@@ -25,12 +25,18 @@ struct ircd::server::peer
 	static const size_t LINK_MAX;
 	static net::sock_opts sock_opts;
 	static ios::descriptor close_desc;
-	static conf::item<bool> enable_ipv6;
 	static conf::item<size_t> link_min_default;
 	static conf::item<size_t> link_max_default;
 	static conf::item<seconds> error_clear_default;
 	static conf::item<seconds> remote_ttl_min;
 	static conf::item<seconds> remote_ttl_max;
+	static conf::item<bool> enable_ipv6;
+	static conf::item<ssize_t> only_ipv6;
+	static conf::item<ssize_t> sock_nodelay;
+	static conf::item<ssize_t> sock_read_bufsz;
+	static conf::item<ssize_t> sock_read_lowat;
+	static conf::item<ssize_t> sock_write_bufsz;
+	static conf::item<ssize_t> sock_write_lowat;
 	static uint64_t ids;
 
 	uint64_t id {++ids};

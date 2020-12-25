@@ -716,13 +716,6 @@ ircd::server::peer::close_desc
 	"ircd.server.peer.close"
 };
 
-decltype(ircd::server::peer::enable_ipv6)
-ircd::server::peer::enable_ipv6
-{
-	{ "name",     "ircd.server.peer.ipv6.enable" },
-	{ "default",  true                           },
-};
-
 decltype(ircd::server::peer::link_min_default)
 ircd::server::peer::link_min_default
 {
@@ -749,6 +742,85 @@ ircd::server::peer::remote_ttl_max
 {
 	{ "name",     "ircd.server.peer.remote.ttl.max" },
 	{ "default",  259200L                           },
+};
+
+decltype(ircd::server::peer::enable_ipv6)
+ircd::server::peer::enable_ipv6
+{
+	{ "name",     "ircd.server.peer.ipv6.enable" },
+	{ "default",  true                           },
+};
+
+decltype(ircd::server::peer::only_ipv6)
+ircd::server::peer::only_ipv6
+{
+	{
+		{ "name",     "ircd.server.peer.ipv6.only" },
+		{ "default",  net::sock_opts::IGN          },
+	}, []
+	{
+		sock_opts.v6only = ssize_t(only_ipv6);
+	}
+};
+
+decltype(ircd::server::peer::sock_nodelay)
+ircd::server::peer::sock_nodelay
+{
+	{
+		{ "name",     "ircd.server.peer.sock.nodelay" },
+		{ "default",  true                            },
+	}, []
+	{
+		sock_opts.nodelay = ssize_t(sock_nodelay);
+	}
+};
+
+decltype(ircd::server::peer::sock_read_bufsz)
+ircd::server::peer::sock_read_bufsz
+{
+	{
+		{ "name",     "ircd.server.peer.sock.read.bufsz" },
+		{ "default",  net::sock_opts::IGN                },
+	}, []
+	{
+		sock_opts.read_bufsz = ssize_t(sock_read_bufsz);
+	}
+};
+
+decltype(ircd::server::peer::sock_read_lowat)
+ircd::server::peer::sock_read_lowat
+{
+	{
+		{ "name",     "ircd.server.peer.sock.read.lowat" },
+		{ "default",  net::sock_opts::IGN                },
+	}, []
+	{
+		sock_opts.read_lowat = ssize_t(sock_read_lowat);
+	}
+};
+
+decltype(ircd::server::peer::sock_write_bufsz)
+ircd::server::peer::sock_write_bufsz
+{
+	{
+		{ "name",     "ircd.server.peer.sock.write.bufsz" },
+		{ "default",  net::sock_opts::IGN                 },
+	}, []
+	{
+		sock_opts.write_bufsz = ssize_t(sock_write_bufsz);
+	}
+};
+
+decltype(ircd::server::peer::sock_write_lowat)
+ircd::server::peer::sock_write_lowat
+{
+	{
+		{ "name",     "ircd.server.peer.sock.write.lowat" },
+		{ "default",  net::sock_opts::IGN                 },
+	}, []
+	{
+		sock_opts.write_lowat = ssize_t(sock_write_lowat);
+	}
 };
 
 decltype(ircd::server::peer::ids)
