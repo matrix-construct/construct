@@ -957,20 +957,24 @@ try
 		return 0UL;
 
 	char headbuf[32];
+	const const_buffer iov[]
+	{
+		// head
+		http::writechunk(headbuf, size(chunk)),
+
+		// body
+		chunk,
+
+		// terminator,
+		http::response::chunk::terminator,
+	};
+
 	const size_t wrote
 	{
 		this->wrote
 	};
 
-	//TODO: bring iov from net::socket -> net::write_() -> client::write_()
-	const auto head
-	{
-		http::writechunk(headbuf, size(chunk))
-	};
-
-	this->wrote += c->write_all(head);
-	this->wrote += !empty(chunk)? c->write_all(chunk) : 0UL;
-	this->wrote += c->write_all("\r\n"_sv);
+	this->wrote += c->write_all(iov);
 	finished |= empty(chunk);
 	count++;
 
