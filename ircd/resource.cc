@@ -553,6 +553,17 @@ try
 		content_partial
 	};
 
+	// When we have incomplete content it's a good time to TCP_QUICKACK to
+	// coax the client into sending more as soon as possible. If we don't do
+	// this we risk waiting for our own kernel's delayed-acknowledgment timer
+	// in the subsequent reads for content below (or in the handler). We don't
+	// QUICKACK when we've received all content since we might be able to make
+	// an actual response all in one shot.
+	if(content_remain && ~opts->flags & DELAYED_ACK)
+		net::quickack(*client.sock, true);
+
+	// Branch taken to receive any remaining content in the common case where
+	// the resource handler does not perform its own consumption of content.
 	if(content_remain && ~opts->flags & CONTENT_DISCRETION)
 	{
 		// Copy any partial content to the final contiguous allocated buffer;

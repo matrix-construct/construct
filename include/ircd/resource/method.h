@@ -50,6 +50,7 @@ enum ircd::resource::method::flag
 	RATE_LIMITED          = 0x02,
 	VERIFY_ORIGIN         = 0x04,   //TODO: matrix abstraction bleed.
 	CONTENT_DISCRETION    = 0x08,
+	DELAYED_ACK           = 0x10,
 };
 
 struct ircd::resource::method::opts
