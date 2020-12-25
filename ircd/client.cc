@@ -1018,7 +1018,7 @@ ircd::client::close(const net::close_opts &opts,
 }
 
 size_t
-ircd::client::write_all(const const_buffer &buf)
+ircd::client::write_all(const net::const_buffers &bufs)
 {
 	if(unlikely(!sock))
 		throw std::system_error
@@ -1032,7 +1032,7 @@ ircd::client::write_all(const const_buffer &buf)
 			make_error_code(std::errc::not_connected)
 		};
 
-	return net::write_all(*sock, buf);
+	return net::write_all(*sock, bufs);
 }
 
 /// Returns a string_view to a static (tls) buffer containing common

@@ -64,6 +64,7 @@ struct ircd::client
 	resource::request request;
 
 	string_view loghead() const;
+	size_t write_all(const net::const_buffers &);
 	size_t write_all(const const_buffer &);
 	void close(const net::close_opts &, net::close_callback);
 	ctx::future<void> close(const net::close_opts & = {});
@@ -120,3 +121,14 @@ struct ircd::client::init
 	init();
 	~init() noexcept;
 };
+
+inline size_t
+ircd::client::write_all(const const_buffer &buf)
+{
+	const const_buffer bufs[]
+	{
+		buf
+	};
+
+	return write_all(bufs);
+}
