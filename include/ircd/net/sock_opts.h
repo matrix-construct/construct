@@ -18,6 +18,7 @@ namespace ircd::net
 	bool v6only(const socket &);
 	bool blocking(const socket &);
 	bool nodelay(const socket &);
+	bool quickack(const socket &);
 	bool keepalive(const socket &);
 	time_t linger(const socket &);
 	size_t read_bufsz(const socket &);
@@ -28,6 +29,7 @@ namespace ircd::net
 	void v6only(socket &, const bool &);
 	void blocking(socket &, const bool &);
 	void nodelay(socket &, const bool &);
+	void quickack(socket &, const bool &);
 	void keepalive(socket &, const bool &);
 	void linger(socket &, const time_t &); // -1 is OFF; >= 0 is ON
 	void read_bufsz(socket &, const size_t &bytes);
@@ -50,6 +52,7 @@ struct ircd::net::sock_opts
 	int8_t v6only { IGN };
 	int8_t blocking { IGN };             // Simulates blocking behavior
 	int8_t nodelay { IGN };
+	int8_t quickack { IGN };
 	int8_t keepalive { IGN };
 	time_t linger { IGN };               // -1 is OFF; >= 0 is ON
 	ssize_t read_bufsz { IGN };

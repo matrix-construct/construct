@@ -795,6 +795,7 @@ ircd::net::sock_opts::sock_opts(const socket &socket)
 :v6only{net::v6only(socket)}
 ,blocking{net::blocking(socket)}
 ,nodelay{net::nodelay(socket)}
+,quickack{net::quickack(socket)}
 ,keepalive{net::keepalive(socket)}
 ,linger{net::linger(socket)}
 ,read_bufsz{ssize_t(net::read_bufsz(socket))}
@@ -818,6 +819,9 @@ ircd::net::set(socket &socket,
 
 	if(opts.nodelay != opts.IGN)
 		net::nodelay(socket, opts.nodelay);
+
+	if(opts.quickack != opts.IGN)
+		net::quickack(socket, opts.quickack);
 
 	if(opts.keepalive != opts.IGN)
 		net::keepalive(socket, opts.keepalive);
@@ -918,6 +922,27 @@ ircd::net::keepalive(socket &socket,
 	ip::tcp::socket &sd(socket);
 	sd.set_option(option);
 }
+
+void
+ircd::net::quickack(socket &socket,
+                    const bool &b)
+#if defined(TCP_QUICKACK) && defined(SOL_SOCKET)
+{
+	ip::tcp::socket &sd(socket);
+	const auto &fd
+	{
+		sd.lowest_layer().native_handle()
+	};
+
+	const int val(b);
+	const socklen_t len(sizeof(val));
+	syscall(::setsockopt, fd, SOL_SOCKET, TCP_QUICKACK, &val, len);
+}
+#else
+{
+	#warning "TCP_QUICKACK is not defined on this platform."
+}
+#endif
 
 void
 ircd::net::nodelay(socket &socket,
@@ -1022,6 +1047,29 @@ ircd::net::keepalive(const socket &socket)
 	sd.get_option(option);
 	return option.value();
 }
+
+bool
+ircd::net::quickack(const socket &socket)
+#if defined(TCP_QUICKACK) && defined(SOL_SOCKET)
+{
+	const ip::tcp::socket &sd(socket);
+	const auto &fd
+	{
+		mutable_cast(sd).lowest_layer().native_handle()
+	};
+
+	uint32_t ret;
+	socklen_t len(sizeof(ret));
+	syscall(::getsockopt, fd, SOL_SOCKET, TCP_QUICKACK, &ret, &len);
+	assert(len <= sizeof(ret));
+	return ret;
+}
+#else
+{
+	#warning "TCP_QUICKACK is not defined on this platform."
+	return false;
+}
+#endif
 
 bool
 ircd::net::nodelay(const socket &socket)
