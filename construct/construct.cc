@@ -40,6 +40,7 @@ bool read_only;
 bool write_avoid;
 bool slave;
 std::array<bool, 6> smoketest;
+bool milltest;
 bool soft_assert;
 bool nomatrix;
 bool matrix {true}; // matrix server by default.
@@ -74,6 +75,7 @@ lgetopt opts[]
 	{ "wa",         &write_avoid,   lgetopt::BOOL,    "Like read-only mode, but writes permitted if triggered" },
 	{ "slave",      &slave,         lgetopt::BOOL,    "Like read-only mode; allows multiple instances of server" },
 	{ "smoketest",  &smoketest[0],  lgetopt::BOOL,    "Starts and stops the daemon to return success" },
+	{ "milltest",   &milltest,      lgetopt::BOOL,    "Trap execution every millionth tick for diagnostic and statistics." },
 	{ "sassert",    &soft_assert,   lgetopt::BOOL,    "Softens assertion effects in debug mode" },
 	{ "nomatrix",   &nomatrix,      lgetopt::BOOL,    "Prevent loading the matrix application module" },
 	{ "matrix",     &matrix,        lgetopt::BOOL,    "Allow loading the matrix application module" },
@@ -289,19 +291,37 @@ noexcept try
 	// Loops until a clean exit from a quit() or an exception comes out of it.
 	// Alternatively, ios.run() could be otherwise used here.
 	size_t epoch{0};
-	for(; !ios.stopped(); ++epoch)
-	{
-		ios.run_one();
+	if(likely(!milltest))
+		for(; !ios.stopped(); ++epoch)
+		{
+			ios.run_one();
+			if constexpr(ircd::ios::profile::logging)
+				ircd::log::logf
+				{
+					ircd::ios::log, ircd::log::DEBUG,
+					"EPOCH ----- construct:%zu ircd:%zu %zu",
+					epoch,
+					ircd::ios::epoch(),
+				};
+		}
 
-		if constexpr(ircd::ios::profile::logging)
-			ircd::log::logf
-			{
-				ircd::ios::log, ircd::log::DEBUG,
-				"EPOCH ----- construct:%zu ircd:%zu %zu",
-				epoch,
-				ircd::ios::epoch(),
-			};
-	}
+	// Milltest is a mock execution which traps on every 1048576th tick.
+	if(milltest)
+		while(!ios.stopped())
+		{
+			ios.run_one();
+			if constexpr(ircd::ios::profile::logging)
+				ircd::log::logf
+				{
+					ircd::ios::log, ircd::log::DEBUG,
+					"EPOCH ----- construct:%zu ircd:%zu %zu",
+					epoch,
+					ircd::ios::epoch(),
+				};
+
+			if(++epoch % 1048576 == 0)
+				ircd::debugtrap();
+		}
 
 	// 13
 	// The smoketest is enabled if the first value is true; then all of the
