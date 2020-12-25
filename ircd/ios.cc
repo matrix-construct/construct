@@ -140,7 +140,7 @@ decltype(ircd::ios::empt::freq)
 ircd::ios::empt::freq
 {
 	{ "name",      "ircd.ios.empt.freq" },
-	{ "default",   32L                  },
+	{ "default",   512                  },
 	{ "help",      freq_help            },
 };
 
