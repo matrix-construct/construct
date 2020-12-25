@@ -700,6 +700,16 @@ ircd::server::peers
 // server::peer
 //
 
+decltype(ircd::server::peer::LINK_MAX)
+ircd::server::peer::LINK_MAX
+{
+	16
+};
+
+decltype(ircd::server::peer::sock_opts)
+ircd::server::peer::sock_opts
+{};
+
 decltype(ircd::server::peer::close_desc)
 ircd::server::peer::close_desc
 {
@@ -759,12 +769,18 @@ ircd::server::peer::peer(const net::hostport &hostport,
 	open_opts
 }
 {
-	const net::hostport canon
-	{
-		this->hostcanon
-	};
+	// Socket options
+	this->open_opts.sopts = &peer::sock_opts;
 
 	// Ensure references are to this class's members
+	const net::hostport canon{this->hostcanon};
+	if(rfc3986::valid(std::nothrow, rfc3986::parser::ip_address, host(canon)))
+		this->remote =
+		{
+			host(canon), port(hostport)
+		};
+
+	this->open_opts.ipport = this->remote;
 	this->open_opts.hostport.host = host(canon);
 	this->open_opts.hostport.service = service(canon);
 	this->open_opts.hostport.port = port(hostport);
@@ -774,14 +790,6 @@ ircd::server::peer::peer(const net::hostport &hostport,
 
 	// Cert verify this name.
 	this->open_opts.common_name = host(canon);
-
-	if(rfc3986::valid(std::nothrow, rfc3986::parser::ip_address, host(canon)))
-		this->remote =
-		{
-			host(canon), port(hostport)
-		};
-
-	this->open_opts.ipport = this->remote;
 }
 
 ircd::server::peer::~peer()

@@ -22,7 +22,8 @@ struct ircd::server::peer
 {
 	struct err;
 
-	static constexpr const size_t &LINK_MAX{16};
+	static const size_t LINK_MAX;
+	static net::sock_opts sock_opts;
 	static ios::descriptor close_desc;
 	static conf::item<bool> enable_ipv6;
 	static conf::item<size_t> link_min_default;
