@@ -50,12 +50,7 @@ handle_edu_m_receipt(const m::event &event,
 	if(json::get<"room_id"_>(event))
 		return;
 
-	const auto &origin
-	{
-		json::get<"origin"_>(event)
-	};
-
-	if(my_host(origin))
+	if(my_host(json::get<"origin"_>(event)))
 		return;
 
 	const json::object &content
@@ -63,27 +58,8 @@ handle_edu_m_receipt(const m::event &event,
 		at<"content"_>(event)
 	};
 
-	for(const auto &[_room_id, content] : content)
-	{
-		const m::room::id &room_id
-		{
-			_room_id
-		};
-
-		if(m::room::server_acl::enable_write && !m::room::server_acl::check(room_id, origin))
-		{
-			log::dwarning
-			{
-				m::receipt::log, "Ignoring m.receipt from '%s' in %s :denied by m.room.server_acl.",
-				json::get<"origin"_>(event),
-				string_view{room_id},
-			};
-
-			continue;
-		}
-
+	for(const auto &[room_id, content] : content)
 		handle_m_receipt(event, room_id, content);
-	}
 }
 
 void
@@ -91,6 +67,41 @@ handle_m_receipt(const m::event &event,
                  const m::room::id &room_id,
                  const json::object &content_)
 {
+	const bool relevant_room
+	{
+		m::local_joined(room_id)
+	};
+
+	if(!relevant_room)
+	{
+		log::dwarning
+		{
+			m::receipt::log, "Ignoring m.receipt from '%s' in %s :no local users joined.",
+			json::get<"origin"_>(event),
+			string_view{room_id},
+		};
+
+		return;
+	}
+
+	const bool access_allow
+	{
+		!m::room::server_acl::enable_write
+		|| m::room::server_acl::check(room_id, json::get<"origin"_>(event))
+	};
+
+	if(!access_allow)
+	{
+		log::dwarning
+		{
+			m::receipt::log, "Ignoring m.receipt from '%s' in %s :denied by m.room.server_acl.",
+			json::get<"origin"_>(event),
+			string_view{room_id},
+		};
+
+		return;
+	}
+
 	for(const auto &[type, content] : content_)
 	{
 		if(type == "m.read")
