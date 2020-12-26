@@ -264,6 +264,21 @@ ircd::m::typing::_handle_edu(const m::event &event,
 		return;
 	}
 
+	// Check if we're even interested in data for this room.
+	if(!my_host(origin))
+		if(!m::local_joined(room_id))
+		{
+			log::dwarning
+			{
+				log, "Ignoring %s from '%s' in %s :no local users joined.",
+				at<"type"_>(event),
+				origin,
+				string_view{room_id},
+			};
+
+			return;
+		}
+
 	// Check if this server can write to the room based on the m.room.server_acl.
 	if(!my_host(origin))
 		if(m::room::server_acl::enable_write && !m::room::server_acl::check(room_id, origin))
