@@ -103,11 +103,10 @@ ircd::m::sync::room_timeline_linear(data &data)
 	};
 
 	assert(sounding >= 0);
-	const bool is_stale
+	const bool viewport_visible
 	{
-		sounding
-		&& viewport_size >= 0
-		&& sounding > viewport_size
+		viewport_size <= 0
+		|| sounding < viewport_size
 	};
 
 	const bool is_own_membership
@@ -154,7 +153,7 @@ ircd::m::sync::room_timeline_linear(data &data)
 	const bool skip
 	{
 		false
-		|| is_stale
+		|| !viewport_visible
 		|| (is_own_join && data.reflow_full_state)
 	};
 
