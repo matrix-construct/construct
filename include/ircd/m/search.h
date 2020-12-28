@@ -13,6 +13,8 @@
 
 namespace ircd::m::search
 {
+	struct query;
+	struct result;
 	struct room_events;
 }
 
@@ -46,4 +48,29 @@ struct ircd::m::search::room_events
 >
 {
 	using super_type::tuple;
+};
+
+struct ircd::m::search::query
+{
+	user::id user_id;
+	size_t batch {-1UL};
+	search::room_events room_events;
+	room_event_filter filter;
+	string_view search_term;
+	size_t limit {-1UL};
+	ushort before_limit {0};
+	ushort after_limit {0};
+};
+
+struct ircd::m::search::result
+{
+	json::stack *out {nullptr};
+	util::timer elapsed;
+	size_t skipped {0};
+	size_t checked {0};
+	size_t matched {0};
+	size_t appends {0};
+	size_t count {0};
+	event::idx event_idx {0UL};
+	long rank {0L};
 };
