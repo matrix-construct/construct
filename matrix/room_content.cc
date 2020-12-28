@@ -8,35 +8,37 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-decltype(ircd::m::room::content::prefetch_max)
-ircd::m::room::content::prefetch_max
-{
-	32
-};
-
 decltype(ircd::m::room::content::prefetch)
 ircd::m::room::content::prefetch
 {
 	{ "name",     "ircd.m.room.content.prefetch" },
-	{ "default",  16L                            },
+	{ "default",  512L                           },
 };
 
 bool
 ircd::m::room::content::for_each(const closure &closure)
 const
 {
-	// ring queue buffer
 	using entry = pair<uint64_t, m::event::idx>;
-	entry queue[prefetch_max];
+	const size_t queue_max
+	{
+		size_t(content::prefetch)
+	};
+
+	// ring queue buffer
+	const std::unique_ptr<entry[]> buf
+	{
+		new entry[queue_max] {{0UL, 0UL}}
+	};
+
+	entry *const __restrict__ queue
+	{
+		buf.get()
+	};
 
 	// ring queue state
 	size_t i{0};           // monotonic
 	size_t pos{0};         // modulated index of the current ring head.
-	const size_t queue_max
-	{
-		std::min(size_t(prefetch), size_t(prefetch_max))
-	};
-
 	bool ret{true};
 	const auto call_user
 	{
