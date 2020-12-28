@@ -18,20 +18,21 @@
 bool
 ircd::m::match(const room_event_filter &filter,
                const event &event)
+noexcept
 {
 	if(json::get<"contains_url"_>(filter) == true)
-		if(!at<"content"_>(event).has("url"))
+		if(!json::get<"content"_>(event).has("url"))
 			return false;
 
-	for(const auto &room_id : json::get<"not_rooms"_>(filter))
-		if(at<"room_id"_>(event) == unquote(room_id))
+	for(const json::string room_id : json::get<"not_rooms"_>(filter))
+		if(json::get<"room_id"_>(event) == room_id)
 			return false;
 
 	if(empty(json::get<"rooms"_>(filter)))
 		return match(event_filter{filter}, event);
 
-	for(const auto &room_id : json::get<"rooms"_>(filter))
-		if(at<"room_id"_>(event) == unquote(room_id))
+	for(const json::string room_id : json::get<"rooms"_>(filter))
+		if(json::get<"room_id"_>(event) == room_id)
 			return match(event_filter{filter}, event);
 
 	return false;
@@ -41,13 +42,14 @@ ircd::m::match(const room_event_filter &filter,
 bool
 ircd::m::match(const event_filter &filter,
                const event &event)
+noexcept
 {
-	for(const auto &type : json::get<"not_types"_>(filter))
-		if(at<"type"_>(event) == unquote(type))
+	for(const json::string type : json::get<"not_types"_>(filter))
+		if(json::get<"type"_>(event) == type)
 			return false;
 
-	for(const auto &sender : json::get<"not_senders"_>(filter))
-		if(at<"sender"_>(event) == unquote(sender))
+	for(const json::string sender : json::get<"not_senders"_>(filter))
+		if(json::get<"sender"_>(event) == sender)
 			return false;
 
 	if(empty(json::get<"senders"_>(filter)) && empty(json::get<"types"_>(filter)))
@@ -55,8 +57,8 @@ ircd::m::match(const event_filter &filter,
 
 	if(empty(json::get<"senders"_>(filter)))
 	{
-		for(const auto &type : json::get<"types"_>(filter))
-			if(at<"type"_>(event) == unquote(type))
+		for(const json::string type : json::get<"types"_>(filter))
+			if(json::get<"type"_>(event) == type)
 				return true;
 
 		return false;
@@ -64,8 +66,8 @@ ircd::m::match(const event_filter &filter,
 
 	if(empty(json::get<"types"_>(filter)))
 	{
-		for(const auto &sender : json::get<"senders"_>(filter))
-			if(at<"sender"_>(event) == unquote(sender))
+		for(const json::string sender : json::get<"senders"_>(filter))
+			if(json::get<"sender"_>(event) == sender)
 				return true;
 
 		return false;

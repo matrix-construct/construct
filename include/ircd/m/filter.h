@@ -19,8 +19,8 @@ namespace ircd::m
 	struct room_event_filter;
 	struct state_filter;
 
-	bool match(const event_filter &, const event &);
-	bool match(const room_event_filter &, const event &);
+	bool match(const event_filter &, const event &) noexcept;
+	bool match(const room_event_filter &, const event &) noexcept;
 }
 
 /// 5.1 "Filter" we use event_filter here
