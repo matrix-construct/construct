@@ -50,6 +50,7 @@ struct ircd::m::event::append::opts
 	bool query_txnid {true};
 	bool query_prev_state {true};
 	bool query_redacted {true};
+	bool query_visible {false};
 };
 
 inline

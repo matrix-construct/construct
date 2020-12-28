@@ -104,6 +104,18 @@ ircd::m::event::append::append(json::stack::object &object,
 	if(opts.event_filter && !m::match(*opts.event_filter, event))
 		return false;
 
+	if(opts.query_visible && opts.user_id && !visible(event, *opts.user_id))
+	{
+		log::debug
+		{
+			log, "Not sending event %s because not visible to %s.",
+			string_view{event.event_id},
+			string_view{*opts.user_id},
+		};
+
+		return false;
+	}
+
 	const bool has_event_idx
 	{
 		opts.event_idx && *opts.event_idx
