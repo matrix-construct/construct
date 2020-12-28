@@ -138,7 +138,7 @@ ircd::m::event::append::append(json::stack::object &object,
 	{
 		log::debug
 		{
-			log, "Not sending event '%s' because redacted.",
+			log, "Not sending event %s because redacted.",
 			string_view{event.event_id},
 		};
 
@@ -166,7 +166,7 @@ ircd::m::event::append::append(json::stack::object &object,
 		{
 			log::debug
 			{
-				log, "Not sending event '%s' because '%s' is ignored by '%s'",
+				log, "Not sending event %s because %s is ignored by %s",
 				string_view{event.event_id},
 				json::get<"sender"_>(event),
 				string_view{*opts.user_id}
