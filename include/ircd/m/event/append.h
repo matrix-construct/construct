@@ -15,6 +15,7 @@
 namespace ircd::m
 {
 	struct room;
+	struct event_filter;
 };
 
 /// Used when transmitting events to clients. This tries to hide and provide
@@ -44,6 +45,7 @@ struct ircd::m::event::append::opts
 	const room *user_room {nullptr};
 	const int64_t *room_depth {nullptr};
 	const event::keys *keys {nullptr};
+	const m::event_filter *event_filter {nullptr};
 	long age {std::numeric_limits<long>::min()};
 	bool query_txnid {true};
 	bool query_prev_state {true};

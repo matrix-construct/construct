@@ -86,44 +86,6 @@ ircd::m::event::append::append(json::stack::object &object,
                                const opts &opts)
 :boolean{[&]
 {
-	const bool has_event_idx
-	{
-		opts.event_idx && *opts.event_idx
-	};
-
-	const bool has_client_txnid
-	{
-		opts.client_txnid && *opts.client_txnid
-	};
-
-	const bool has_user
-	{
-		opts.user_id && opts.user_room
-	};
-
-	const bool sender_is_user
-	{
-		has_user && json::get<"sender"_>(event) == *opts.user_id
-	};
-
-	const auto txnid_idx
-	{
-		!has_client_txnid && sender_is_user && opts.query_txnid?
-			opts.user_room->get(std::nothrow, "ircd.client.txnid", event.event_id):
-			0UL
-	};
-
-	#if defined(RB_DEBUG) && 0
-	if(!has_client_txnid && !txnid_idx && sender_is_user && opts.query_txnid)
-		log::dwarning
-		{
-			log, "Could not find transaction_id for %s from %s in %s",
-			string_view{event.event_id},
-			json::get<"sender"_>(event),
-			json::get<"room_id"_>(event)
-		};
-	#endif
-
 	// Assertions that the event being appended has some required fields. This
 	// is a central butt-end test of data coming through the system to here.
 	assert(event.event_id);
@@ -131,11 +93,21 @@ ircd::m::event::append::append(json::stack::object &object,
 	assert(defined(json::get<"sender"_>(event)));
 	//assert(json::get<"origin_server_ts"_>(event));
 	//assert(json::get<"origin_server_ts"_>(event) != json::undefined_number);
+	#if defined(RB_DEBUG)
 	if(unlikely(!defined(json::get<"type"_>(event))))
 		return false;
 
 	if(unlikely(!defined(json::get<"sender"_>(event))))
 		return false;
+	#endif
+
+	if(opts.event_filter && !m::match(*opts.event_filter, event))
+		return false;
+
+	const bool has_event_idx
+	{
+		opts.event_idx && *opts.event_idx
+	};
 
 	const bool is_state
 	{
@@ -160,6 +132,11 @@ ircd::m::event::append::append(json::stack::object &object,
 
 		return false;
 	}
+
+	const bool has_user
+	{
+		opts.user_id && opts.user_room
+	};
 
 	const bool check_ignores
 	{
@@ -186,6 +163,34 @@ ircd::m::event::append::append(json::stack::object &object,
 			return false;
 		}
 	}
+
+	const bool sender_is_user
+	{
+		has_user && json::get<"sender"_>(event) == *opts.user_id
+	};
+
+	const bool has_client_txnid
+	{
+		opts.client_txnid && *opts.client_txnid
+	};
+
+	const auto txnid_idx
+	{
+		!has_client_txnid && sender_is_user && opts.query_txnid?
+			opts.user_room->get(std::nothrow, "ircd.client.txnid", event.event_id):
+			0UL
+	};
+
+	#if defined(RB_DEBUG) && 0
+	if(!has_client_txnid && !txnid_idx && sender_is_user && opts.query_txnid)
+		log::dwarning
+		{
+			log, "Could not find transaction_id for %s from %s in %s",
+			string_view{event.event_id},
+			json::get<"sender"_>(event),
+			json::get<"room_id"_>(event)
+		};
+	#endif
 
 	if(!json::get<"event_id"_>(event))
 		json::stack::member
