@@ -38,6 +38,7 @@ struct ircd::m::presence
 
 	static bool valid_state(const string_view &state);
 
+	static bool prefetch(const user &);
 	static event::idx get(std::nothrow_t, const user &);
 	static event::idx get(const user &);
 

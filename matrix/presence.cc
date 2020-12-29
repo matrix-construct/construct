@@ -148,6 +148,22 @@ ircd::m::presence::get(const std::nothrow_t,
 	return state.get(std::nothrow, "ircd.presence", "");
 }
 
+bool
+ircd::m::presence::prefetch(const m::user &user)
+{
+	const m::user::room user_room
+	{
+		user
+	};
+
+	const m::room::state state
+	{
+		user_room
+	};
+
+	return state.prefetch("ircd.presence", "");
+}
+
 ircd::m::event::id::buf
 ircd::m::presence::set(const m::presence &content)
 {
