@@ -130,8 +130,8 @@ ircd::m::gossip::submit(const m::event::id &event_id,
 {
 	const auto hash
 	{
-		(uint128_t(ircd::hash(remote)) << 64) |
-		(uint128_t(ircd::hash(event_id)) >> 64)
+		(uint128_t(ircd::hash(event_id)))
+		| (uint128_t(ircd::hash(remote)) << 64)
 	};
 
 	auto it
