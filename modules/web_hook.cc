@@ -1516,6 +1516,9 @@ github_handle__create(std::ostream &out,
 	<< "</b>"
 	;
 
+	if(ref_type == "tag")
+		out << ' ' << "🎉";
+
 	return true;
 }
 
