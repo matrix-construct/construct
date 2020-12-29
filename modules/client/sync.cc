@@ -244,7 +244,8 @@ ircd::m::sync::handle_get(client &client,
 	// device id. This is for developer and debug use (including client devs).
 	const bool paused
 	{
-		has(string_view(pause), request.user_id)
+		(request.query.get("pause", false) && is_oper(request.user_id))
+		|| has(string_view(pause), request.user_id)
 		|| has(string_view(pause), device_id)
 	};
 
