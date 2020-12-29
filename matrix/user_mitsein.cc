@@ -71,16 +71,11 @@ const
 	// here we gooooooo :/
 	///TODO: ideal: db schema
 	///TODO: minimally: custom alloc?
-	std::set<std::string, std::less<>> seen;
+	std::set<uint128_t, std::less<>> seen;
 	return rooms.for_each(membership, rooms::closure_bool{[&membership, &closure, &seen]
-	(m::room room, const string_view &)
+	(const m::room &room, const string_view &_membership)
 	{
-		static const event::fetch::opts fopts
-		{
-			event::keys::include {"state_key"}
-		};
-
-		room.fopts = &fopts;
+		assert(_membership == membership);
 		const m::room::members members
 		{
 			room
@@ -89,16 +84,20 @@ const
 		return members.for_each(membership, [&seen, &closure]
 		(const user::id &other)
 		{
-			const auto it
+			const auto hash
 			{
-				seen.lower_bound(other)
+				uint128_t(ircd::hash(other))
+				| (uint128_t(ircd::hash(other.host())) << 64)
 			};
 
-			if(it != end(seen) && *it == other)
-				return true;
+			const bool inserted
+			{
+				seen.emplace(hash).second
+			};
 
-			seen.emplace_hint(it, std::string{other});
-			return closure(m::user{other});
+			return inserted?
+				closure(m::user{other}):
+				true;
 		});
 	}});
 }
