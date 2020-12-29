@@ -28,6 +28,7 @@ namespace ircd::m::sync
 	extern conf::item<bool> polylog_phased;
 	extern conf::item<bool> polylog_only;
 	extern conf::item<bool> MSC2855;
+	extern conf::item<std::string> pause;
 
 	extern resource::method method_get;
 	extern const string_view description;
@@ -158,6 +159,13 @@ ircd::m::sync::MSC2855
 	{ "default",  true                              },
 };
 
+decltype(ircd::m::sync::pause)
+ircd::m::sync::pause
+{
+	{ "name",     "ircd.client.sync.pause" },
+	{ "default",  string_view{}            },
+};
+
 //
 // GET sync
 //
@@ -230,6 +238,14 @@ ircd::m::sync::handle_get(client &client,
 	const device::id::buf device_id
 	{
 		m::user::tokens::device(request.access_token)
+	};
+
+	// Determine if there's a diagnostic hold on this sync based on user or
+	// device id. This is for developer and debug use (including client devs).
+	const bool paused
+	{
+		has(string_view(pause), request.user_id)
+		|| has(string_view(pause), device_id)
 	};
 
 	// Keep state for statistics of this sync here on the stack.
@@ -362,8 +378,12 @@ ircd::m::sync::handle_get(client &client,
 	bool complete
 	{
 		false
+		|| paused
 		|| invalid_since
 	};
+
+	if(paused)
+		ctx::sleep_until(data.args->timesout);
 
 	if(!complete && should_polylog)
 		complete = polylog_handle(data);
@@ -374,13 +394,16 @@ ircd::m::sync::handle_get(client &client,
 	if(!complete)
 		complete = longpoll_handle(data);
 
-	if(!complete || invalid_since)
+	if(!complete || invalid_since || paused)
 		complete = empty_response(data, uint64_t
 		{
 			invalid_since?
 				0UL:
 
 			polylog_only?
+				data.range.first:
+
+			paused?
 				data.range.first:
 
 			data.range.second
