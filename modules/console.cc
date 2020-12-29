@@ -12894,14 +12894,14 @@ console_cmd__user__mitsein(opt &out, const string_view &line)
 		m::user(param.at("user_id_a"))
 	};
 
-	const m::user user_b
+	const string_view user_b
 	{
-		m::user(param.at("user_id_b"))
+		param.at("user_id_b", "*"_sv)
 	};
 
 	const string_view membership
 	{
-		param.at("membership", "join"_sv)
+		param["membership"]
 	};
 
 	const m::user::mitsein mitsein
@@ -12909,14 +12909,24 @@ console_cmd__user__mitsein(opt &out, const string_view &line)
 		user_a
 	};
 
-	mitsein.for_each(user_b, membership, [&out]
-	(const m::room &room, const string_view &membership)
-	{
-		out << room.room_id
-		    << std::endl;
-
-		return true;
-	});
+	if(user_b != "*")
+		mitsein.for_each(m::user(user_b), membership, [&out]
+		(const m::room &room, const string_view &membership)
+		{
+			out
+			<< room.room_id
+			<< std::endl;
+			return true;
+		});
+	else
+		mitsein.for_each(membership, [&out]
+		(const m::user &other)
+		{
+			out
+			<< other.user_id
+			<< std::endl;
+			return true;
+		});
 
 	return true;
 }
