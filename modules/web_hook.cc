@@ -522,6 +522,21 @@ bool
 github_handle__push(std::ostream &out,
                     const json::object &content)
 {
+	const bool created
+	{
+		content.get("created", false)
+	};
+
+	const bool deleted
+	{
+		content.get("deleted", false)
+	};
+
+	const bool forced
+	{
+		content.get("forced", false)
+	};
+
 	const json::array commits
 	{
 		content["commits"]
@@ -532,7 +547,7 @@ github_handle__push(std::ostream &out,
 		size(commits)
 	};
 
-	if(!count)
+	if(!count && deleted)
 	{
 		out << " <font color=\"#FF0000\">";
 		if(content["ref"])
@@ -541,6 +556,9 @@ github_handle__push(std::ostream &out,
 		out << " deleted</font>";
 		return true;
 	}
+
+	if(!count && !webhook_status_verbose)
+		return false;
 
 	if(content["ref"])
 	{
