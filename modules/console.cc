@@ -12922,6 +12922,47 @@ console_cmd__user__mitsein(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__user__mitsein__count(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id_a", "user_id_b", "membership"
+	}};
+
+	const m::user user_a
+	{
+		m::user(param.at("user_id_a"))
+	};
+
+	const string_view user_b
+	{
+		param.at("user_id_b", "*"_sv)
+	};
+
+	const string_view membership
+	{
+		param["membership"]
+	};
+
+	const m::user::mitsein mitsein
+	{
+		user_a
+	};
+
+	const auto result
+	{
+		user_b != "*"?
+			mitsein.count(m::user(user_b), membership):
+			mitsein.count(membership)
+	};
+
+	out
+	<< result
+	<< std::endl;
+	return true;
+}
+
+bool
 console_cmd__user__tokens(opt &out, const string_view &line)
 {
 	const params param{line, " ",
