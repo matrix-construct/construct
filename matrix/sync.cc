@@ -523,9 +523,10 @@ ircd::m::sync::loghead(const data &data)
 
 	return fmt::sprintf
 	{
-		headbuf, "%s %s %ld:%lu|%lu%s%s chunk:%zu sent:%s of %s in %s",
+		headbuf, "%s %s %s %ld:%lu|%lu%s%s chunk:%zu sent:%s of %s in %s",
 		remstr,
 		string_view{data.user.user_id},
+		string_view{data.device_id},
 		data.range.first,
 		data.range.second,
 		vm::sequence::retired,
