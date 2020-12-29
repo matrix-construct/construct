@@ -276,13 +276,14 @@ ircd::m::sync::room_timeline_polylog(data &data)
 	};
 
 	// limited
-	json::stack::member
-	{
-		*data.out, "limited", json::value{limited}
-	};
+	if(ret)
+		json::stack::member
+		{
+			*data.out, "limited", json::value{limited}
+		};
 
 	// prev_batch
-	if(likely(prev))
+	if(ret && likely(prev))
 		json::stack::member
 		{
 			*data.out, "prev_batch", string_view{prev}
@@ -356,6 +357,8 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 			ret |= _room_timeline_append(data, array, it.event_idx(), event);
 		}
 
+	assert(i >= 0);
+	event_idx &= boolmask<event::idx>(ret);
 	return m::event_id(std::nothrow, event_idx);
 }
 
