@@ -18,6 +18,7 @@ namespace ircd::m::search
 	static void handle_room_events(client &, const resource::request &, const json::object &, json::stack::object &);
 	static resource::response search_post_handle(client &, const resource::request &);
 
+	extern conf::item<size_t> limit_override;
 	extern conf::item<bool> count_total;
 	extern resource::method search_post;
 	extern resource search_resource;
@@ -68,6 +69,13 @@ ircd::m::search::count_total
 {
 	{ "name",     "ircd.m.search.count.total" },
 	{ "default",  false                       },
+};
+
+decltype(ircd::m::search::limit_override)
+ircd::m::search::limit_override
+{
+	{ "name",     "ircd.m.search.limit.override" },
+	{ "default",  1L                             },
 };
 
 ircd::m::resource::response
@@ -141,6 +149,15 @@ try
 		0
 	};
 
+	// Override the limit to 1 to return a result and appease the user as
+	// quickly as possible. The client can call us again for more results.
+	const size_t limit
+	{
+		limit_override?
+			size_t(limit_override):
+			size_t(json::get<"limit"_>(room_event_filter))
+	};
+
 	const search::query query
 	{
 		request.user_id,
@@ -148,7 +165,7 @@ try
 		room_events,
 		room_event_filter,
 		at<"search_term"_>(room_events),
-		size_t(json::get<"limit"_>(query.filter))?: -1UL,
+		limit,
 		event_context.get("before_limit", context_default),
 		event_context.get("after_limit", context_default),
 	};
