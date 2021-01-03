@@ -14,8 +14,7 @@ namespace ircd::ctx::posix
 	struct disable_pthread;
 
 	extern log::log log;
-	extern bool hook_pthread_create;
-	extern bool unhook_pthread_create;
+	extern int enable_hook; // -1 = pthread; 0 = auto; 1 = ircd::ctx.
 	extern std::vector<context> ctxs;
 }
 
@@ -25,19 +24,19 @@ namespace ircd::ctx::posix
 /// disable_pthread.
 struct ircd::ctx::posix::enable_pthread
 {
-	bool theirs
+	int theirs
 	{
-		unhook_pthread_create
+		enable_hook
 	};
 
 	enable_pthread(const bool &ours = true)
 	{
-		unhook_pthread_create = ours;
+		enable_hook = ours? -1: theirs;
 	}
 
 	~enable_pthread() noexcept
 	{
-		unhook_pthread_create = theirs;
+		enable_hook = theirs;
 	}
 };
 
@@ -48,18 +47,18 @@ struct ircd::ctx::posix::enable_pthread
 /// precedence.
 struct ircd::ctx::posix::disable_pthread
 {
-	bool theirs
+	int theirs
 	{
-		hook_pthread_create
+		enable_hook
 	};
 
 	disable_pthread(const bool &ours = true)
 	{
-		hook_pthread_create = ours;
+		enable_hook = ours? 1: theirs;
 	}
 
-	~disable_pthread()
+	~disable_pthread() noexcept
 	{
-		hook_pthread_create = theirs;
+		enable_hook = theirs;
 	}
 };

@@ -38,6 +38,13 @@ ircd_pthread_timedjoin_np(pthread_t __th,
 noexcept;
 
 extern "C" int
+ircd_pthread_clockjoin_np(pthread_t __th,
+                          void **__thread_return,
+                          clockid_t clockid,
+                          const struct timespec *__abstime)
+noexcept;
+
+extern "C" int
 ircd_pthread_detach(pthread_t __th)
 noexcept;
 

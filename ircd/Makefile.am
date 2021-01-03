@@ -28,7 +28,9 @@ AM_LDFLAGS = \
 	-Wl,--unresolved-symbols=ignore-in-shared-libs \
 	-Wl,--wrap=pthread_create \
 	-Wl,--wrap=pthread_join \
+	-Wl,--wrap=pthread_tryjoin_np \
 	-Wl,--wrap=pthread_timedjoin_np \
+	-Wl,--wrap=pthread_clockjoin_np \
 	-Wl,--wrap=pthread_self \
 	-Wl,--wrap=pthread_setname_np \
 	-Wl,-z,nodelete \

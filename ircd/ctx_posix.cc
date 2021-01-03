@@ -16,6 +16,7 @@
 // the project and to other users of the address space.
 //
 
+#include <dlfcn.h>
 #include <pthread.h>
 #include "ctx_posix.h"
 
@@ -23,35 +24,50 @@
 
 namespace ircd::ctx::posix
 {
+	static bool is_main_thread() noexcept;
+	static bool hook_enabled() noexcept;
 	static bool is(const pthread_t &) noexcept;
+
+	[[gnu::visibility("internal")]]
+	extern void *real_pthread; // custom_ptr<void> real_pthread;
 }
 
 using ircd::always_assert;
 
+/// Unit's logging facility.
 decltype(ircd::ctx::posix::log)
 ircd::ctx::posix::log
 {
 	"ctx.posix"
 };
 
-/// When asserted true, real pthread is never created and ircd::ctx is
-/// spawned instead. By default it's false, which will allow other settings
-/// or automated determination to decide.
-decltype(ircd::ctx::posix::hook_pthread_create)
-ircd::ctx::posix::hook_pthread_create;
+/// Points to a dlopen(3) handle of libpthread.so to give us the untainted
+/// location of real pthread functions; regardless of our hook solution for
+/// the platform. It remains null until this interface is used to spawn an
+/// actually real pthread. Note that this might not be available if static
+/// destruction occurs prior to any joining thread accessing it.
+decltype(ircd::ctx::posix::real_pthread)
+ircd::ctx::posix::real_pthread
+{
+	nullptr, //::dlclose
+};
 
-/// When asserted true, real pthread is always created and ircd::ctx is
-/// never spawned. By default it's false, which will allow other settings
-/// or automated determination to decide.
-decltype(ircd::ctx::posix::unhook_pthread_create)
-ircd::ctx::posix::unhook_pthread_create;
+/// -1 = pthread interface not hooked, forwards to real pthread.
+///  0 = determined automatically based on contextual information.
+///  1 = pthread interface hooked, forwards to ircd::ctx.
+decltype(ircd::ctx::posix::enable_hook)
+ircd::ctx::posix::enable_hook;
 
+/// State container for ircd::ctx's that are being operated through the hooked
+/// pthread interface.
 decltype(ircd::ctx::posix::ctxs)
 ircd::ctx::posix::ctxs;
 
+/// Hook generation macro. If the hook is accomplished with __wrap/__real
+/// then also be sure to add the line to the linker flags in Makefile.am.
 #define IRCD_WRAP(symbol, target, prototype, body)                         \
     extern "C" int __real_##symbol prototype;                              \
-    extern "C" int __wrap_##symbol prototype body                          \
+    extern "C" int __wrap_##symbol prototype noexcept body                 \
     extern "C" int symbol prototype __attribute__((weak, alias(target)));
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -65,22 +81,39 @@ IRCD_WRAP(pthread_create, "__wrap_pthread_create",
 	const pthread_attr_t *const attr,
 	void *(*const start_routine)(void *),
 	void *const arg
-), {
-	const bool hook_enabled
-	{
-		// When enable_pthread is asserted, the hook is never enabled.
-		!ircd::ctx::posix::unhook_pthread_create
+),
+{
+	if(ircd::ctx::posix::hook_enabled())
+		return ircd_pthread_create(thread, attr, start_routine, arg);
 
-		// When disable_pthread is asserted, the hook is otherwise enabled.
-		// Otherwise if we're already running on an ircd::ctx stack we continue
-		// to spawn more ircd::ctx. By default on another stack (or main stack)
-		// we spawn a true pthread.
-		&& (ircd::ctx::posix::hook_pthread_create || ircd::ctx::current)
+	// hack on the hack: linker's __real_pthread_create isn't working and we
+	// need something stronger.
+	if(!ircd::ctx::posix::real_pthread)
+	{
+		// 2p the dlopen() handle so it's init once by any real thread.
+		static std::mutex mutex;
+		const std::lock_guard lock
+		{
+			mutex
+		};
+
+		if(!ircd::ctx::posix::real_pthread)
+			ircd::ctx::posix::real_pthread = //.reset
+			(
+				dlopen("libpthread.so", RTLD_LOCAL | RTLD_LAZY)
+			);
+	}
+
+	assert(ircd::ctx::posix::real_pthread);
+	const auto __real_pthread_create
+	{
+		reinterpret_cast<int (*)(pthread_t *, const pthread_attr_t *, void *(*)(void *), void *)>
+		(
+			dlsym(ircd::ctx::posix::real_pthread, "pthread_create")
+		)
 	};
 
-	return hook_enabled?
-		ircd_pthread_create(thread, attr, start_routine, arg):
-		__real_pthread_create(thread, attr, start_routine, arg);
+	return __real_pthread_create(thread, attr, start_routine, arg);
 })
 
 int
@@ -120,10 +153,22 @@ IRCD_WRAP(pthread_join, "__wrap_pthread_join",
 (
 	pthread_t __th,
 	void **__thread_return
-), {
-	return ircd::ctx::posix::is(__th)?
-		ircd_pthread_join(__th, __thread_return):
-		__real_pthread_join(__th, __thread_return);
+),
+{
+	if(ircd::ctx::posix::is(__th))
+		return ircd_pthread_join(__th, __thread_return);
+
+	assert(ircd::ctx::posix::real_pthread);
+	const auto __real_pthread_join
+	{
+		reinterpret_cast<int (*)(pthread_t, void **)>
+		(
+			dlsym(ircd::ctx::posix::real_pthread, "pthread_join")
+		)
+	};
+
+	assert(__real_pthread_join);
+	return __real_pthread_join(__th, __thread_return);
 })
 
 int
@@ -156,6 +201,27 @@ noexcept
 	return 0;
 }
 
+IRCD_WRAP(pthread_tryjoin_np, "__wrap_pthread_tryjoin_np",
+(
+	pthread_t __th,
+	void **__thread_return
+),
+{
+	if(ircd::ctx::posix::is(__th))
+		return ircd_pthread_tryjoin_np(__th, __thread_return);
+
+	assert(ircd::ctx::posix::real_pthread);
+	const auto __real_pthread_tryjoin_np
+	{
+		reinterpret_cast<int (*)(pthread_t, void **)>
+		(
+			dlsym(ircd::ctx::posix::real_pthread, "pthread_tryjoin_np")
+		)
+	};
+
+	return __real_pthread_tryjoin_np(__th, __thread_return);
+})
+
 int
 ircd_pthread_tryjoin_np(pthread_t __th,
                         void **__thread_return)
@@ -170,11 +236,23 @@ IRCD_WRAP(pthread_timedjoin_np, "__wrap_pthread_timedjoin_np",
 	pthread_t __th,
 	void **__thread_return,
 	const struct timespec *__abstime
-), {
-	return ircd::ctx::posix::is(__th)?
-		ircd_pthread_timedjoin_np(__th, __thread_return, __abstime):
-		__real_pthread_timedjoin_np(__th, __thread_return, __abstime);
-});
+),
+{
+	if(ircd::ctx::posix::is(__th))
+		return ircd_pthread_timedjoin_np(__th, __thread_return, __abstime);
+
+	assert(ircd::ctx::posix::real_pthread);
+	const auto __real_pthread_timedjoin_np
+	{
+		reinterpret_cast<int (*)(pthread_t, void **, const struct timespec *)>
+		(
+			dlsym(ircd::ctx::posix::real_pthread, "pthread_timedjoin_np")
+		)
+	};
+
+	assert(__real_pthread_timedjoin_np);
+	return __real_pthread_timedjoin_np(__th, __thread_return, __abstime);
+})
 
 int
 ircd_pthread_timedjoin_np(pthread_t __th,
@@ -183,6 +261,42 @@ ircd_pthread_timedjoin_np(pthread_t __th,
 noexcept
 {
 	//TODO: XXX ctx timed join
+	ircd_pthread_join(__th, __thread_return);
+	return 0;
+}
+
+IRCD_WRAP(pthread_clockjoin_np, "__wrap_pthread_clockjoin_np",
+(
+	pthread_t __th,
+	void **__thread_return,
+	clockid_t clockid,
+	const struct timespec *__abstime
+),
+{
+	if(ircd::ctx::posix::is(__th))
+		return ircd_pthread_clockjoin_np(__th, __thread_return, clockid, __abstime);
+
+	assert(ircd::ctx::posix::real_pthread);
+	const auto __real_pthread_clockjoin_np
+	{
+		reinterpret_cast<int (*)(pthread_t, void **, clockid_t, const struct timespec *)>
+		(
+			dlsym(ircd::ctx::posix::real_pthread, "pthread_clockjoin_np")
+		)
+	};
+
+	assert(__real_pthread_clockjoin_np);
+	return __real_pthread_clockjoin_np(__th, __thread_return, clockid, __abstime);
+})
+
+int
+ircd_pthread_clockjoin_np(pthread_t __th,
+                          void **__thread_return,
+                          clockid_t clockid,
+                          const struct timespec *__abstime)
+noexcept
+{
+	//TODO: XXX ctx clock join
 	ircd_pthread_join(__th, __thread_return);
 	return 0;
 }
@@ -210,9 +324,17 @@ __real_pthread_self(void);
 extern "C" pthread_t
 __wrap_pthread_self(void)
 {
-	return ircd::ctx::current?
-		ircd_pthread_self():
-		__real_pthread_self();
+	const bool hook_enabled
+	{
+		true
+		&& ircd::ctx::current
+		&& ircd::ctx::posix::enable_hook >= 0
+	};
+
+	if(hook_enabled)
+		return ircd_pthread_self();
+
+	return __real_pthread_self();
 }
 
 #if 0
@@ -360,10 +482,22 @@ IRCD_WRAP(pthread_setname_np, "__wrap_pthread_setname_np",
 (
 	pthread_t __target_thread,
 	const char *__name
-), {
-	return ircd::ctx::posix::is(__target_thread)?
-		ircd_pthread_setname_np(__target_thread, __name):
-		__real_pthread_setname_np(__target_thread, __name);
+),
+{
+	if(ircd::ctx::posix::is(__target_thread))
+		return ircd_pthread_setname_np(__target_thread, __name);
+
+	assert(ircd::ctx::posix::real_pthread);
+	const auto __real_pthread_setname_np
+	{
+		reinterpret_cast<int (*)(pthread_t, const char *)>
+		(
+			dlsym(ircd::ctx::posix::real_pthread, "pthread_setname_np")
+		)
+	};
+
+	assert(__real_pthread_setname_np);
+	return __real_pthread_setname_np(__target_thread, __name);
 })
 
 int
@@ -1532,6 +1666,10 @@ bool
 ircd::ctx::posix::is(const pthread_t &target)
 noexcept
 {
+	// Can't be an ircd::ctx if it's not the main thread, nor can we look.
+	if(!is_main_thread())
+		return false;
+
 	const auto it
 	{
 		std::find_if(begin(ctxs), end(ctxs), [&]
@@ -1542,4 +1680,40 @@ noexcept
 	};
 
 	return it != end(ctxs);
+}
+
+bool
+ircd::ctx::posix::hook_enabled()
+noexcept
+{
+	// The hook is only enabled on the main thread.
+	if(!is_main_thread())
+		return false;
+
+	// When disable_pthread is asserted, the hook is always enabled.
+	if(ircd::ctx::posix::enable_hook > 0)
+		return true;
+
+	// When enable_pthread is asserted, the hook is never enabled.
+	if(ircd::ctx::posix::enable_hook < 0)
+		return false;
+
+	// Consider the hook enabled if called from an ircd::ctx stack, since
+	// that is clearly our code, and if we call into a library on such a
+	// stack we will use an explicit enable_pthread if we need it.
+	//
+	// OTOH, when not on an ircd::ctx stack, we assume the call is coming from
+	// some other code is running somewhere else in the address space, perhaps
+	// totally unrelated, and we give that the expected unhooked behavior.
+	return ircd::ctx::current != nullptr;
+}
+
+bool
+ircd::ctx::posix::is_main_thread()
+noexcept
+{
+	return false
+	|| ircd::ios::handler::current != nullptr
+	|| ircd::ctx::current != nullptr
+	|| ircd::ctx::is_main_thread();
 }

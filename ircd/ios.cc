@@ -17,7 +17,10 @@ ircd::ios::log
 
 /// "main" thread for IRCd; the one the main context landed on.
 decltype(ircd::ios::main_thread_id)
-ircd::ios::main_thread_id;
+ircd::ios::main_thread_id
+{
+	std::this_thread::get_id()
+};
 
 /// The embedder/executable's (library user) asio::executor provided on init.
 decltype(ircd::ios::user)
