@@ -114,6 +114,7 @@ namespace ircd::ctx
 #include "concurrent.h"
 #include "concurrent_for_each.h"
 #include "trit.h"
+#include "posix.h"
 
 // Exports to ircd::
 namespace ircd

@@ -17,16 +17,13 @@
 //
 
 #include <pthread.h>
-#include <ircd/ctx/posix.h>
+#include "ctx_posix.h"
 
 //#define IRCD_PTHREAD_DEADLK_CHK
 
 namespace ircd::ctx::posix
 {
 	static bool is(const pthread_t &) noexcept;
-
-	extern std::vector<context> ctxs;
-	extern log::log log;
 }
 
 using ircd::always_assert;
@@ -36,6 +33,18 @@ ircd::ctx::posix::log
 {
 	"ctx.posix"
 };
+
+/// When asserted true, real pthread is never created and ircd::ctx is
+/// spawned instead. By default it's false, which will allow other settings
+/// or automated determination to decide.
+decltype(ircd::ctx::posix::hook_pthread_create)
+ircd::ctx::posix::hook_pthread_create;
+
+/// When asserted true, real pthread is always created and ircd::ctx is
+/// never spawned. By default it's false, which will allow other settings
+/// or automated determination to decide.
+decltype(ircd::ctx::posix::unhook_pthread_create)
+ircd::ctx::posix::unhook_pthread_create;
 
 decltype(ircd::ctx::posix::ctxs)
 ircd::ctx::posix::ctxs;
@@ -57,7 +66,19 @@ IRCD_WRAP(pthread_create, "__wrap_pthread_create",
 	void *(*const start_routine)(void *),
 	void *const arg
 ), {
-	return ircd::ctx::current?
+	const bool hook_enabled
+	{
+		// When enable_pthread is asserted, the hook is never enabled.
+		!ircd::ctx::posix::unhook_pthread_create
+
+		// When disable_pthread is asserted, the hook is otherwise enabled.
+		// Otherwise if we're already running on an ircd::ctx stack we continue
+		// to spawn more ircd::ctx. By default on another stack (or main stack)
+		// we spawn a true pthread.
+		&& (ircd::ctx::posix::hook_pthread_create || ircd::ctx::current)
+	};
+
+	return hook_enabled?
 		ircd_pthread_create(thread, attr, start_routine, arg):
 		__real_pthread_create(thread, attr, start_routine, arg);
 })
