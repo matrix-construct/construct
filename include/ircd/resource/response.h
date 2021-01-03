@@ -84,6 +84,8 @@ struct ircd::resource::response
 struct ircd::resource::response::chunked
 :resource::response
 {
+	struct json;
+
 	static conf::item<size_t> default_buffer_size;
 
 	client *c {nullptr};
@@ -111,3 +113,39 @@ struct ircd::resource::response::chunked
 	chunked &operator=(const chunked &&) = delete;
 	~chunked() noexcept;
 };
+
+/// Convenience amalgam. This class reduces a common pattern of objects
+/// constructed in a response handler using chunked encoding to stream
+/// json::object content.
+///
+struct ircd::resource::response::chunked::json
+:resource::response::chunked
+{
+	ircd::json::stack out;
+	ircd::json::stack::object top;
+
+	operator ircd::json::stack &()
+	{
+		return out;
+	}
+
+	template<class... args>
+	json(args&&... a);
+};
+
+template<class... args>
+inline
+ircd::resource::response::chunked::json::json(args&&... a)
+:resource::response::chunked
+{
+	std::forward<args>(a)...
+}
+,out
+{
+	this->buf, this->flusher()
+}
+,top
+{
+	this->out
+}
+{}
