@@ -479,6 +479,7 @@ applyargs()
 		nocompact = true;
 		noautoapps = true;
 		ircd::server::enable.set("false");
+		ircd::db::auto_deletion.set("false");
 	}
 
 	if(single && !bootstrap)

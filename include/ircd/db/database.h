@@ -20,6 +20,7 @@ namespace ircd::db
 	extern conf::item<bool> open_repair;
 	extern conf::item<bool> open_slave;
 	extern conf::item<bool> auto_compact;
+	extern conf::item<bool> auto_deletion;
 
 	// General information
 	const std::string &name(const database &);

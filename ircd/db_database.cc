@@ -70,6 +70,17 @@ ircd::db::auto_compact
 	{ "persist",  false                  },
 };
 
+/// Conf item toggles whether rocksdb is allowed to perform file deletion and
+/// garbage collection operations as normal. This can be prevented for
+/// diagnostic and safemode purposes.
+decltype(ircd::db::auto_deletion)
+ircd::db::auto_deletion
+{
+	{ "name",     "ircd.db.deletion.auto" },
+	{ "default",  true                    },
+	{ "persist",  false                   },
+};
+
 /// Conf item dictates whether databases will be opened in slave mode; this
 /// is a recent feature of RocksDB which may not be available. It allows two
 /// instances of a database, so long as only one is not opened as a slave.
@@ -1232,6 +1243,12 @@ try
 	return checkpointer;
 }()}
 {
+	// Disable file deletions here if ordered by the conf item (generally for
+	// -safe mode operation). If this can be done via DBOptions rather than
+	// here it would be better.
+	if(!db::auto_deletion)
+		db::fdeletions(*this, false);
+
 	// Conduct drops from schema changes. The database must be fully opened
 	// as if they were not dropped first, then we conduct the drop operation
 	// here. The drop operation has no effects until the database is next
