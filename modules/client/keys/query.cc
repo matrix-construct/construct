@@ -35,13 +35,15 @@ send_requests(const host_users_map &,
               failure_map &);
 
 static void
-recv_response(const string_view &,
+recv_response(const m::resource::request &,
+              const string_view &,
               m::fed::user::keys::query &,
               failure_map &,
               json::stack::object &);
 
 static void
-recv_responses(query_map &,
+recv_responses(const m::resource::request &,
+               query_map &,
                failure_map &,
                json::stack::object &,
                const milliseconds &);
@@ -179,7 +181,7 @@ post__keys_query(client &client,
 		out
 	};
 
-	recv_responses(queries, failures, top, timeout);
+	recv_responses(request, queries, failures, top, timeout);
 	handle_failures(failures, top);
 	return {};
 }
@@ -205,7 +207,8 @@ handle_failures(const failure_map &failures,
 }
 
 void
-recv_responses(query_map &queries,
+recv_responses(const m::resource::request &client_request,
+               query_map &queries,
                failure_map &failures,
                json::stack::object &out,
                const milliseconds &timeout)
@@ -248,7 +251,7 @@ try
 		if(failures.count(remote))
 			continue;
 
-		recv_response(remote, request, failures, response_keys);
+		recv_response(client_request, remote, request, failures, response_keys);
 	}
 }
 catch(const std::exception &)
@@ -258,7 +261,8 @@ catch(const std::exception &)
 }
 
 void
-recv_response(const string_view &remote,
+recv_response(const m::resource::request &client_request,
+              const string_view &remote,
               m::fed::user::keys::query &request,
               failure_map &failures,
               json::stack::object &object)
@@ -296,6 +300,72 @@ try
 			{
 				user_object, device_id, keys
 			};
+	}
+
+	const json::object &master_keys
+	{
+		response["master_keys"]
+	};
+
+	for(const auto &[_user_id, master_key] : master_keys)
+	{
+		const m::user::id &user_id
+		{
+			_user_id
+		};
+
+		json::stack::member
+		{
+			object, user_id, json::object
+			{
+				master_key
+			}
+		};
+	}
+
+	const json::object &self_signing_keys
+	{
+		response["self_signing_keys"]
+	};
+
+	for(const auto &[_user_id, self_signing_key] : self_signing_keys)
+	{
+		const m::user::id &user_id
+		{
+			_user_id
+		};
+
+		json::stack::member
+		{
+			object, user_id, json::object
+			{
+				self_signing_key
+			}
+		};
+	}
+
+	const json::object &user_signing_keys
+	{
+		response["user_signing_keys"]
+	};
+
+	for(const auto &[_user_id, user_signing_key] : user_signing_keys)
+	{
+		const m::user::id &user_id
+		{
+			_user_id
+		};
+
+		if(client_request.user_id != _user_id)
+			continue;
+
+		json::stack::member
+		{
+			object, user_id, json::object
+			{
+				user_signing_key
+			}
+		};
 	}
 }
 catch(const std::exception &e)
