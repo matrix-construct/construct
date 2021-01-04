@@ -209,4 +209,6 @@ struct ircd::m::name
 	static constexpr const char *const msgtype {"msgtype"};
 	static constexpr const char *const format {"format"};
 	static constexpr const char *const formatted_body {"formatted_body"};
+
+	static constexpr const char *const usage {"usage"};
 };

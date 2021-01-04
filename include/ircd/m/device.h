@@ -16,7 +16,33 @@ namespace ircd::m
 	struct device;
 	struct device_keys;
 	struct device_list_update;
+	struct cross_signing_key;
 }
+
+struct ircd::m::cross_signing_key
+:json::tuple
+<
+	/// Required. The ID of the user the key belongs to.
+	json::property<name::user_id, json::string>,
+
+	/// Required. What the key is used for.
+	/// One of: ["master", "self_signing", "user_signing"]
+	json::property<name::usage, json::string>,
+
+	/// Required. The public key. The object must have exactly one property,
+	/// whose name is in the form <algorithm>:<unpadded_base64_public_key>,
+	/// and whose value is the unpadded base64 public key.
+	json::property<name::keys, json::object>,
+
+	/// Signatures of the key, calculated using the process described at
+	/// Signing JSON. Optional for the master key. Other keys must be signed
+	/// by the user's master key.
+	json::property<name::signatures, json::object>
+>
+{
+	using super_type::tuple;
+	using super_type::operator=;
+};
 
 struct ircd::m::device_keys
 :json::tuple
