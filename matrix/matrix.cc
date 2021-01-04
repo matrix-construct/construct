@@ -63,6 +63,7 @@ ircd::m::matrix::module_names
 	"m_control",
 	"m_device",
 	"m_device_list_update",
+	"m_signing_key_update",
 	"m_direct",
 	"m_direct_to_device",
 	"m_ignored_user_list",

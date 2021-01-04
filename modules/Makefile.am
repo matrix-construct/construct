@@ -81,6 +81,7 @@ m_command_la_SOURCES = m_command.cc
 m_control_la_SOURCES = m_control.cc
 m_device_la_SOURCES = m_device.cc
 m_device_list_update_la_SOURCES = m_device_list_update.cc
+m_signing_key_update_la_SOURCES = m_signing_key_update.cc
 m_direct_la_SOURCES = m_direct.cc
 m_direct_to_device_la_SOURCES = m_direct_to_device.cc
 m_ignored_user_list_la_SOURCES = m_ignored_user_list.cc
@@ -113,6 +114,7 @@ m_module_LTLIBRARIES = \
 	m_control.la \
 	m_device.la \
 	m_device_list_update.la \
+	m_signing_key_update.la \
 	m_direct.la \
 	m_direct_to_device.la \
 	m_ignored_user_list.la \
