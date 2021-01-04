@@ -54,42 +54,65 @@ get__user_devices(client &client,
 		url::decode(user_id, request.parv[0])
 	};
 
+	const m::user::room user_room
+	{
+		user_id
+	};
+
 	const m::user::devices user_devices
 	{
 		user_id
 	};
 
-	m::resource::response::chunked response
+	m::resource::response::chunked::json response
 	{
 		client, http::OK
 	};
 
-	json::stack out
+	json::stack::member
 	{
-		response.buf, response.flusher()
-	};
-
-	json::stack::object top
-	{
-		out
+		response, "user_id", user_id
 	};
 
 	json::stack::member
 	{
-		top, "user_id", user_id
-	};
-
-	json::stack::member
-	{
-		top, "stream_id", json::value
+		response, "stream_id", json::value
 		{
 			0L // unused; triggers query from synapse on m.device_list_update
 		}
 	};
 
+	const auto master_event_idx
+	{
+		user_room.get(std::nothrow, "ircd.device.signing.master", "")
+	};
+
+	m::get(std::nothrow, master_event_idx, "content", [&response]
+	(const json::object &content)
+	{
+		json::stack::member
+		{
+			response, "master_key", content
+		};
+	});
+
+	const auto self_event_idx
+	{
+		user_room.get(std::nothrow, "ircd.device.signing.self", "")
+	};
+
+	m::get(std::nothrow, self_event_idx, "content", [&response]
+	(const json::object &content)
+	{
+		json::stack::member
+		{
+			response, "self_signing_keys", content
+		};
+	});
+
 	json::stack::array devices
 	{
-		top, "devices"
+		response, "devices"
 	};
 
 	user_devices.for_each([&user_devices, &devices]
