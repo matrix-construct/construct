@@ -70,36 +70,68 @@ ircd::m::post_keys_device_signing_upload(client &client,
 		request["auth"]
 	};
 
-	const json::object &master_key
+	const json::string &auth_type
 	{
-		request["master_key"]
+		auth["type"]
 	};
 
-	const json::object &self_signing_key
+	if(auth_type != "m.login.password")
+		return m::resource::response
+		{
+			client, http::UNAUTHORIZED, json::object{flows}
+		};
+
+	const json::string &password
 	{
-		request["self_signing_key"]
+		auth["password"]
 	};
 
-	const json::object &user_signing_key
-	{
-		request["user_signing_key"]
-	};
-
-	const m::device::id::buf device_id
-	{
-		m::user::tokens::device(request.access_token)
-	};
-
-	const m::user::room user_room
+	const m::user::room room
 	{
 		request.user_id
 	};
 
-	if(empty(auth))
-		return resource::response
+	if(!room.user.is_password(password))
+		throw m::ACCESS_DENIED
 		{
-			client, http::UNAUTHORIZED, json::object{flows}
+			"Incorrect password."
 		};
+
+	const json::object &msk
+	{
+		request["master_key"]
+	};
+
+	const auto master_id
+	{
+		msk?
+			send(room, request.user_id, "ircd.device.signing.master", "", msk):
+			event::id::buf{}
+	};
+
+	const json::object &ssk
+	{
+		request["self_signing_key"]
+	};
+
+	const auto self_signing_id
+	{
+		ssk?
+			send(room, request.user_id, "ircd.device.signing.self", "", ssk):
+			event::id::buf{}
+	};
+
+	const json::object &usk
+	{
+		request["user_signing_key"]
+	};
+
+	const auto user_signing_id
+	{
+		usk?
+			send(room, request.user_id, "ircd.device.signing.user", "", usk):
+			event::id::buf{}
+	};
 
 	return resource::response
 	{
