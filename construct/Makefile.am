@@ -64,6 +64,7 @@ construct_LDADD = \
 
 construct_SOURCES = \
 	construct.cc    \
+	homeserver.cc   \
 	signals.cc      \
 	console.cc      \
 	lgetopt.cc      \

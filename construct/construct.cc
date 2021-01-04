@@ -13,6 +13,7 @@
 #include <ircd/asio.h>
 #include "lgetopt.h"
 #include "construct.h"
+#include "homeserver.h"
 #include "signals.h"
 #include "console.h"
 
@@ -36,6 +37,7 @@ bool noiou;
 bool no6;
 bool yes6;
 bool norun;
+bool nomain;
 bool read_only;
 bool write_avoid;
 bool slave;
@@ -70,7 +72,8 @@ lgetopt opts[]
 	{ "noiou",      &noiou,         lgetopt::BOOL,    "Disable the io_uring interface and fallback to AIO or system calls. " },
 	{ "no6",        &no6,           lgetopt::BOOL,    "Disable IPv6 operations (default)" },
 	{ "6",          &yes6,          lgetopt::BOOL,    "Enable IPv6 operations" },
-	{ "norun",      &norun,         lgetopt::BOOL,    "[debug & testing only] Initialize but never run the event loop" },
+	{ "norun",      &norun,         lgetopt::BOOL,    "[debug] Initialize but never run the event loop" },
+	{ "nomain",     &nomain,        lgetopt::BOOL,    "[debug] Initialize and run without entering ircd::main()" },
 	{ "ro",         &read_only,     lgetopt::BOOL,    "Read-only mode. No writes to database allowed" },
 	{ "wa",         &write_avoid,   lgetopt::BOOL,    "Like read-only mode, but writes permitted if triggered" },
 	{ "slave",      &slave,         lgetopt::BOOL,    "Like read-only mode; allows multiple instances of server" },
@@ -109,6 +112,7 @@ const char *const usererrstr
 )"};
 
 [[noreturn]] static void do_restart(char *const *const &argv, char *const *const &envp);
+static void smoketest_handler(const enum ircd::run::level &);
 static bool startup_checks();
 static void applyargs();
 static void enable_coredumps();
@@ -177,82 +181,45 @@ noexcept try
 			"usage :%s <origin> [servername]", progname
 		};
 
+	// Setup the matrix homeserver application. This will be executed on an
+	// ircd::context (dedicated stack). We construct several objects on the
+	// stack which are the basis for our matrix homeserver. When the stack
+	// unwinds, the homeserver will go out of service.
+	struct ircd::m::homeserver::opts opts;
+	opts.origin = origin;
+	opts.server_name = server_name;
+	opts.bootstrap_vector_path = bootstrap;
+	opts.backfill = !nobackfill;
+	opts.autoapps = !noautoapps;
+	const std::function<void (ircd::main_continuation)> homeserver
+	{
+		[&opts](const ircd::main_continuation &main)
+		{
+			// Load the matrix module
+			ircd::matrix matrix;
+
+			// Construct the homeserver.
+			construct::homeserver homeserver
+			{
+				matrix, opts
+			};
+
+			// Bail for debug/testing purposes.
+			if(nomain)
+				return;
+
+			// Call main()'s continuation.
+			main();
+		}
+	};
+
 	// The smoketest uses this ircd::run::level callback to set a flag when
 	// each ircd::run::level is reached. All flags must be set to pass. The
 	// smoketest is inert unless the -smoketest program option is used.
 	const ircd::run::changed smoketester
 	{
-		[](const auto &level)
-		{
-			smoketest.at(size_t(level) + 1) = true;
-			if(!smoketest[0])
-				return;
-
-			if(level != ircd::run::level::RUN)
-				return;
-
-			if(construct::console::active())
-			{
-				construct::console::quit_when_done = true;
-				return;
-			};
-
-			static ircd::ios::descriptor descriptor
-			{
-				"construct.smoketest"
-			};
-
-			ircd::dispatch
-			{
-				descriptor, ircd::ios::defer, ircd::quit
-			};
-		}
+		smoketest_handler
 	};
-
-	// Setup the matrix homeserver application. This will be executed on an
-	// ircd::context (dedicated stack). We construct several objects on the
-	// stack which are the basis for our matrix homeserver. When the stack
-	// unwinds, the homeserver will go out of service.
-	const auto homeserver{[&origin, &server_name]
-	(const ircd::main_continuation &run)
-	{
-		assert(ircd::run::level == ircd::run::level::START);
-
-		// Load the matrix library dynamic shared object
-		ircd::matrix matrix; try
-		{
-			// Setup a primary homeserver based on the program options given.
-			struct ircd::m::homeserver::opts opts;
-			opts.origin = origin;
-			opts.server_name = server_name;
-			opts.bootstrap_vector_path = bootstrap;
-			opts.backfill = !nobackfill;
-			opts.autoapps = !noautoapps;
-			const ircd::custom_ptr<ircd::m::homeserver> homeserver
-			{
-				matrix.init(&opts), [&matrix]
-				(ircd::m::homeserver *const homeserver)
-				{
-					matrix.fini(homeserver);
-				}
-			};
-
-			// Run the homeserver (call main()'s continuation). This function
-			// returns (or potentially throws) to unload/quit.
-			run();
-		}
-		catch(const std::exception &e)
-		{
-			// Rethrow as ircd::error because we're about to unload the module
-			// and all m:: type exceptions won't exist anymore...
-			throw ircd::error
-			{
-				"%s", e.what()
-			};
-		}
-
-		assert(ircd::run::level == ircd::run::level::QUIT);
-	}};
 
 	// This is the sole io_context for Construct, and the ios.run() below is the
 	// the only place where the program actually blocks.
@@ -269,7 +236,7 @@ noexcept try
 
 	// Associates libircd with our io_context and posts the initial routines
 	// to that io_context. Execution of IRCd will then occur during ios::run()
-	ircd::init(ios.get_executor(), homeserver);
+	ircd::init(ios.get_executor(), matrix? homeserver: nullptr);
 
 	// If the user wants to immediately drop to an interactive command line
 	// without having to send a ctrl-c for it, that is provided here. This does
@@ -463,6 +430,33 @@ do_restart(char *const *const &_argv,
 	argv.emplace_back(nullptr);
 	ircd::syscall(::execve, _argv[0], argv.data(), _envp);
 	__builtin_unreachable();
+}
+
+void
+smoketest_handler(const enum ircd::run::level &level)
+{
+	smoketest.at(size_t(level) + 1) = true;
+	if(!smoketest[0])
+		return;
+
+	if(level != ircd::run::level::RUN)
+		return;
+
+	if(construct::console::active())
+	{
+		construct::console::quit_when_done = true;
+		return;
+	};
+
+	static ircd::ios::descriptor descriptor
+	{
+		"construct.smoketest"
+	};
+
+	ircd::dispatch
+	{
+		descriptor, ircd::ios::defer, ircd::quit
+	};
 }
 
 /// These operations are safe to call before ircd::init() and anytime after

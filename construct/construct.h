@@ -12,6 +12,7 @@ namespace construct
 {
 	struct signals;
 	struct console;
+	struct homeserver;
 
 	extern struct console *console;
 }
