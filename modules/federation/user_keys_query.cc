@@ -32,6 +32,21 @@ _query_user_device(client &,
                    const string_view &device_id,
                    json::stack::object &out);
 
+static void
+_query_self_keys(client &,
+                 const m::resource::request &,
+                 json::stack &);
+
+static void
+_query_master_keys(client &,
+                   const m::resource::request &,
+                   json::stack &);
+
+static void
+_query_device_keys(client &,
+                   const m::resource::request &,
+                   json::stack &);
+
 static m::resource::response
 post__user_keys_query(client &client,
                       const m::resource::request &request);
@@ -49,25 +64,30 @@ m::resource::response
 post__user_keys_query(client &client,
                       const m::resource::request &request)
 {
-	const json::object &request_keys
-	{
-		request.at("device_keys")
-	};
-
-	m::resource::response::chunked response
+	m::resource::response::chunked::json response
 	{
 		client, http::OK
 	};
 
-	json::stack out
-	{
-		response.buf, response.flusher()
-	};
+	_query_device_keys(client, request, response);
+	_query_master_keys(client, request, response);
+	_query_self_keys(client, request, response);
+	return std::move(response);
+}
 
-	json::stack::object top{out};
+void
+_query_device_keys(client &client,
+                   const m::resource::request &request,
+                   json::stack &out)
+{
 	json::stack::object response_keys
 	{
-		top, "device_keys"
+		out, "device_keys"
+	};
+
+	const json::object request_keys
+	{
+		request.at("device_keys")
 	};
 
 	for(const auto &[user_id_, device_ids_] : request_keys)
@@ -100,11 +120,95 @@ post__user_keys_query(client &client,
 				return true;
 			});
 		else
-			for(const json::string &device_id : device_ids)
+			for(const json::string device_id : device_ids)
 				_query_user_device(client, request, devices, device_id, response_keys_user);
 	}
+}
 
-	return std::move(response);
+void
+_query_master_keys(client &client,
+                   const m::resource::request &request,
+                   json::stack &out)
+{
+	const json::object request_keys
+	{
+		request.at("device_keys")
+	};
+
+	json::stack::object response_keys
+	{
+		out, "master_keys"
+	};
+
+	for(const auto &[user_id_, device_ids_] : request_keys)
+	{
+		const m::user::id &user_id
+		{
+			user_id_
+		};
+
+		const m::user::room room
+		{
+			user_id
+		};
+
+		const auto event_idx
+		{
+			room.get(std::nothrow, "ircd.device.signing.master", "")
+		};
+
+		m::get(std::nothrow, event_idx, "content", [&response_keys, &user_id]
+		(const json::object &content)
+		{
+			json::stack::member
+			{
+				response_keys, user_id, content
+			};
+		});
+	}
+}
+
+void
+_query_self_keys(client &client,
+                 const m::resource::request &request,
+                 json::stack &out)
+{
+	const json::object request_keys
+	{
+		request.at("device_keys")
+	};
+
+	json::stack::object response_keys
+	{
+		out, "self_signing_keys"
+	};
+
+	for(const auto &[user_id_, device_ids_] : request_keys)
+	{
+		const m::user::id &user_id
+		{
+			user_id_
+		};
+
+		const m::user::room room
+		{
+			user_id
+		};
+
+		const auto event_idx
+		{
+			room.get(std::nothrow, "ircd.device.signing.self", "")
+		};
+
+		m::get(std::nothrow, event_idx, "content", [&response_keys, &user_id]
+		(const json::object &content)
+		{
+			json::stack::member
+			{
+				response_keys, user_id, content
+			};
+		});
+	}
 }
 
 void
