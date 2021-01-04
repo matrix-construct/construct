@@ -25,6 +25,8 @@ namespace ircd::m::sync
 	static bool room_invite_state_linear(data &);
 	static bool room_state_linear(data &);
 
+	static const size_t MEMBER_SCAN_MAX {32};
+	extern conf::item<size_t> member_scan_max;
 	extern conf::item<bool> lazyload_members_enable;
 	extern conf::item<bool> crazyload_historical_members;
 
@@ -276,6 +278,13 @@ ircd::m::sync::_room_state_polylog(data &data)
 		return room_state_polylog_events(data);
 }
 
+decltype(ircd::m::sync::member_scan_max)
+ircd::m::sync::member_scan_max
+{
+	{ "name",         "ircd.client.sync.rooms.state.members.scan.max" },
+	{ "default",      12L                                             },
+};
+
 decltype(ircd::m::sync::lazyload_members_enable)
 ircd::m::sync::lazyload_members_enable
 {
@@ -411,14 +420,14 @@ ircd::m::sync::room_state_polylog_events(data &data)
 bool
 ircd::m::sync::room_state_phased_prefetch(data &data)
 {
-	static const size_t &member_scan_max
+	const size_t configured_count
 	{
-		24
+		std::min(size_t(room::events::viewport_size), size_t(member_scan_max))
 	};
 
-	static const size_t &member_max
+	const size_t member_count
 	{
-		std::min(size_t(room::events::viewport_size), member_scan_max)
+		std::min(configured_count, MEMBER_SCAN_MAX)
 	};
 
 	const std::pair<string_view, string_view> state_keys[]
@@ -446,7 +455,7 @@ ircd::m::sync::room_state_phased_prefetch(data &data)
 	};
 
 	// Prefetch the senders of the recent room events
-	for(size_t i(0); events && i < member_max; --events, ++i)
+	for(size_t i(0); events && i < member_count; --events, ++i)
 		m::prefetch(events.event_idx(), "sender");
 
 	return true;
@@ -548,10 +557,14 @@ ircd::m::sync::room_state_phased_member_events(data &data,
                                                json::stack::array &array)
 {
 	// The number of recent room events we'll seek senders for.
-	static const size_t &max{24}; //TODO: XXX dedup
-	const size_t &count
+	const size_t configured_count
 	{
-		std::min(size_t(room::events::viewport_size), max)
+		std::min(size_t(room::events::viewport_size), size_t(member_scan_max))
+	};
+
+	const size_t count
+	{
+		std::min(configured_count, MEMBER_SCAN_MAX)
 	};
 
 	m::room::events it
@@ -561,8 +574,8 @@ ircd::m::sync::room_state_phased_member_events(data &data,
 
 	// Prefetch the senders of the recent room events
 	size_t i(0), prefetched(0);
-	std::array<event::idx, max> event_idx;
-	assert(count <= max && count <= event_idx.size());
+	std::array<event::idx, MEMBER_SCAN_MAX> event_idx;
+	assert(count <= MEMBER_SCAN_MAX && count <= event_idx.size());
 	for(; it && i < count; --it, ++i)
 	{
 		event_idx[i] = it.event_idx();
