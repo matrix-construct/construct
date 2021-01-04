@@ -17,6 +17,7 @@ namespace ircd::m
 	struct device_keys;
 	struct device_list_update;
 	struct cross_signing_key;
+	struct signing_key_update;
 }
 
 struct ircd::m::cross_signing_key
@@ -38,6 +39,25 @@ struct ircd::m::cross_signing_key
 	/// Signing JSON. Optional for the master key. Other keys must be signed
 	/// by the user's master key.
 	json::property<name::signatures, json::object>
+>
+{
+	using super_type::tuple;
+	using super_type::operator=;
+};
+
+/// An EDU that lets servers push details to each other when one of their
+/// users updates their cross-signing keys.
+struct ircd::m::signing_key_update
+:json::tuple
+<
+	/// Required. The user ID whose cross-signing keys have changed.
+	json::property<name::user_id, json::string>,
+
+	/// Cross signing key
+	json::property<name::master_key, json::object>,
+
+	/// Cross signing key
+	json::property<name::self_signing_key, json::object>
 >
 {
 	using super_type::tuple;

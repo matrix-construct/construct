@@ -211,4 +211,6 @@ struct ircd::m::name
 	static constexpr const char *const formatted_body {"formatted_body"};
 
 	static constexpr const char *const usage {"usage"};
+	static constexpr const char *const master_key {"master_key"};
+	static constexpr const char *const self_signing_key {"self_signing_key"};
 };
