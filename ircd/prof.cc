@@ -113,6 +113,10 @@ noexcept
 ircd::prof::syscall_usage_warning::~syscall_usage_warning()
 noexcept
 {
+	// Ignore this if we get here during static initialization before main()
+	if(unlikely(!ircd::ios::epoch()))
+		return;
+
 	const uint64_t total
 	{
 		timer.stopped?
