@@ -365,6 +365,7 @@ noexcept try
 	// more appropriate.
 
 	fs::init _fs_;           // Local filesystem
+	cl::init _cl_;           // OpenCL
 	magic::init _magic_;     // libmagic
 	ctx::ole::init _ole_;    // Thread OffLoad Engine
 	magick::init _magick_;   // ImageMagick

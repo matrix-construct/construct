@@ -76,6 +76,7 @@
 #include "globular.h"
 #include "tokens.h"
 #include "iov.h"
+#include "cl.h"
 #include "grammar.h"
 #include "parse.h"
 #include "color.h"
