@@ -283,7 +283,7 @@ ircd::m::dbs::desc::content__cache__size
 {
 	{
 		{ "name",     "ircd.m.dbs.content.cache.size"  },
-		{ "default",  long(48_MiB)                     },
+		{ "default",  long(64_MiB)                     },
 	}, []
 	{
 		auto &column(event_column.at(json::indexof<event, "content"_>()));
