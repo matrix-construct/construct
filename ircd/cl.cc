@@ -83,9 +83,10 @@ ircd::cl::init::init()
 
 	char buf[4][128];
 	for(size_t i(0); i < platforms; ++i)
-		log::info
+		log::logf
 		{
-			log, "OpenCL:%d [%u][*] :%s :%s :%s :%s",
+			log, log::level::DEBUG,
+			"OpenCL:%d [%u][*] :%s :%s :%s :%s",
 			CL_TARGET_OPENCL_VERSION,
 			i,
 			info(clGetPlatformInfo, platform[i], CL_PLATFORM_VERSION, buf[0]),
@@ -114,10 +115,10 @@ ircd::cl::init::init()
 				CL_TARGET_OPENCL_VERSION,
 				i,
 				j,
-				info(clGetDeviceInfo, device[i][j], CL_DRIVER_VERSION, buf[0]),
 				info(clGetDeviceInfo, device[i][j], CL_DEVICE_VERSION, buf[1]),
 				info(clGetDeviceInfo, device[i][j], CL_DEVICE_VENDOR, buf[2]),
 				info(clGetDeviceInfo, device[i][j], CL_DEVICE_NAME, buf[3]),
+				info(clGetDeviceInfo, device[i][j], CL_DRIVER_VERSION, buf[0]),
 			};
 
 	// Gather all devices we'll use.
@@ -134,11 +135,12 @@ ircd::cl::init::init()
 	throw_on_error(err);
 
 	// Create a queue for each device.
-	cl_queue_properties qprop {0};
+	cl_command_queue_properties qprop {0};
+	qprop |= CL_QUEUE_PROFILING_ENABLE;
 	for(size_t i(0); i < platforms; ++i)
 		for(size_t j(0); j < devices[i]; ++j)
 		{
-			queue[i][j] = clCreateCommandQueueWithProperties(primary, device[i][j], &qprop, &err);
+			queue[i][j] = clCreateCommandQueue(primary, device[i][j], qprop, &err);
 			throw_on_error(err);
 		}
 }
@@ -147,10 +149,14 @@ ircd::cl::init::~init()
 noexcept
 {
 	if(primary)
+	{
 		log::debug
 		{
 			log, "Shutting down OpenCL...",
 		};
+
+		sync();
+	}
 
 	for(size_t i(0); i < PLATFORM_MAX; ++i)
 		for(size_t j(0); j < DEVICE_MAX; ++j)
@@ -165,6 +171,718 @@ noexcept
 		call(clReleaseContext, primary);
 		primary = nullptr;
 	}
+}
+
+//
+// interface
+//
+
+void
+ircd::cl::sync()
+{
+	auto &q
+	{
+		queue[0][0]
+	};
+
+	call
+	(
+		clFinish, q
+	);
+}
+
+void
+ircd::cl::flush()
+{
+	auto &q
+	{
+		queue[0][0]
+	};
+
+	call
+	(
+		clFlush, q
+	);
+}
+
+//
+// exec
+//
+
+ircd::cl::exec::exec(kern &kern,
+                     const kern::range &work)
+try
+{
+	const auto &handle
+	{
+		reinterpret_cast<cl_kernel>(kern.handle)
+	};
+
+	size_t dim(0);
+	for(size_t i(0); i < work.global.size(); ++i)
+		dim += work.global[i] > 0;
+
+	size_t dependencies {0};
+	cl_event *const dependency
+	{
+		nullptr
+	};
+
+	auto &q
+	{
+		queue[0][0]
+	};
+
+	call
+	(
+		clEnqueueNDRangeKernel,
+		q,
+		handle,
+		dim,
+		work.offset.data(),
+		work.global.data(),
+		work.local.data(),
+		dependencies,
+		dependency,
+		reinterpret_cast<cl_event *>(&this->handle)
+	);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Exec Kern :%s",
+		e.what(),
+	};
+
+	throw;
+}
+
+ircd::cl::exec::exec(data &data,
+                     const mutable_buffer &buf,
+                     const bool blocking)
+try
+{
+	const auto &handle
+	{
+		reinterpret_cast<cl_mem>(data.handle)
+	};
+
+	size_t dependencies {0};
+	cl_event *const dependency
+	{
+		nullptr
+	};
+
+	auto &q
+	{
+		queue[0][0]
+	};
+
+	call
+	(
+		clEnqueueReadBuffer,
+		q,
+		handle,
+		blocking,
+		0UL, //offset,
+		ircd::size(buf),
+		ircd::data(buf),
+		dependencies,
+		dependency,
+		reinterpret_cast<cl_event *>(&this->handle)
+	);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Exec Read :%s",
+		e.what(),
+	};
+
+	throw;
+}
+
+ircd::cl::exec::exec(data &data,
+                     const const_buffer &buf,
+                     const bool blocking)
+try
+{
+	const auto &handle
+	{
+		reinterpret_cast<cl_mem>(data.handle)
+	};
+
+	size_t dependencies {0};
+	cl_event *const dependency
+	{
+		nullptr
+	};
+
+	auto &q
+	{
+		queue[0][0]
+	};
+
+	call
+	(
+		clEnqueueReadBuffer,
+		q,
+		handle,
+		blocking,
+		0UL, //offset,
+		ircd::size(buf),
+		mutable_cast(ircd::data(buf)),
+		dependencies,
+		dependency,
+		reinterpret_cast<cl_event *>(&this->handle)
+	);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Exec Write :%s",
+		e.what(),
+	};
+
+	throw;
+}
+
+//
+// kern
+//
+
+ircd::cl::kern::kern(code &code,
+                     const string_view &name)
+try
+{
+	const auto &program
+	{
+		reinterpret_cast<cl_program>(code.handle)
+	};
+
+	int err {CL_SUCCESS};
+	handle = clCreateKernel(program, name.c_str(), &err);
+	throw_on_error(err);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Kernel Create '%s' :%s",
+		name,
+		e.what(),
+	};
+
+	throw;
+}
+
+ircd::cl::kern::kern(kern &&o)
+noexcept
+:handle{std::move(o.handle)}
+{
+	o.handle = nullptr;
+}
+
+ircd::cl::kern &
+ircd::cl::kern::operator=(kern &&o)
+noexcept
+{
+	this->~kern();
+	handle = std::move(o.handle);
+	o.handle = nullptr;
+	return *this;
+}
+
+ircd::cl::kern::~kern()
+noexcept try
+{
+	call(clReleaseKernel, reinterpret_cast<cl_kernel>(handle));
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "Kernel Release :%s",
+		e.what(),
+	};
+
+	return;
+}
+
+void
+ircd::cl::kern::arg(const int i,
+                    data &data)
+{
+	const auto &handle
+	{
+		reinterpret_cast<cl_kernel>(this->handle)
+	};
+
+	const auto &arg_handle
+	{
+		reinterpret_cast<cl_mem>(data.handle)
+	};
+
+	call(clSetKernelArg, handle, i, sizeof(cl_mem), &arg_handle);
+}
+
+//
+// code
+//
+
+ircd::cl::code::code(const string_view &src)
+:code
+{
+	vector_view<const string_view>(&src, 1)
+}
+{
+}
+
+ircd::cl::code::code(const vector_view<const string_view> &srcs)
+{
+	static const size_t iov_max
+	{
+		64 //TODO: ???
+	};
+
+	if(unlikely(srcs.size() > iov_max))
+		throw error
+		{
+			"Maximum number of sources exceeded: lim:%zu got:%zu",
+			iov_max,
+			srcs.size(),
+		};
+
+	const size_t count
+	{
+		std::min(srcs.size(), iov_max)
+	};
+
+	size_t len[count];
+	const char *src[count];
+	for(size_t i(0); i < count; ++i)
+		src[i] = ircd::data(srcs[i]),
+		len[i] = ircd::size(srcs[i]);
+
+	int err {CL_SUCCESS};
+	handle = clCreateProgramWithSource(primary, count, src, len, &err);
+	throw_on_error(err);
+}
+
+ircd::cl::code::code(code &&o)
+noexcept
+:handle{std::move(o.handle)}
+{
+	o.handle = nullptr;
+}
+
+ircd::cl::code &
+ircd::cl::code::operator=(code &&o)
+noexcept
+{
+	this->~code();
+	handle = std::move(o.handle);
+	o.handle = nullptr;
+	return *this;
+}
+
+ircd::cl::code::~code()
+noexcept try
+{
+	call(clReleaseProgram, reinterpret_cast<cl_program>(handle));
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "Program Release :%s",
+		e.what(),
+	};
+
+	return;
+}
+
+namespace ircd::cl
+{
+	static void
+	handle_built(cl_program program, void *priv)
+	{
+		ircd::always_assert(false);
+	}
+}
+
+void
+ircd::cl::code::build(const string_view &opts)
+try
+{
+	const auto &handle
+	{
+		reinterpret_cast<cl_program>(this->handle)
+	};
+
+	const uint num_devices {0};
+	const cl_device_id *const device_list {nullptr};
+	call
+	(
+		clBuildProgram,
+		handle,
+		num_devices,
+		device_list,
+		opts.c_str(),
+		&cl::handle_built,
+		nullptr
+	);
+}
+catch(const std::exception &e)
+{
+	const auto error_closure{[this]
+	(const mutable_buffer &buf)
+	{
+		size_t len {0}; call
+		(
+			clGetProgramBuildInfo,
+			reinterpret_cast<cl_program>(this->handle),
+			device[0][0],
+			CL_PROGRAM_BUILD_LOG,
+			ircd::size(buf),
+			ircd::data(buf),
+			&len
+		);
+
+		return len;
+	}};
+
+	const auto error_message
+	{
+		ircd::string(8_KiB | SHRINK_TO_FIT, error_closure)
+	};
+
+	ircd::tokens(error_message, '\n', []
+	(const string_view &line)
+	{
+		// note last line is just a CR
+		if(likely(line.size() > 1))
+			log::logf
+			{
+				log, log::DERROR, "%s", line,
+			};
+	});
+
+	throw;
+}
+
+//
+// data::mmap
+//
+
+ircd::cl::data::mmap::mmap(data &data,
+                           const size_t size,
+                           const bool write,
+                           const bool writeonly)
+try
+:memory{&data}
+{
+	const auto &handle
+	{
+		reinterpret_cast<cl_mem>(data.handle)
+	};
+
+	size_t dependencies {0};
+	cl_event *const dependency
+	{
+		nullptr
+	};
+
+	auto &q
+	{
+		queue[0][0]
+	};
+
+	cl_map_flags flags {0};
+	flags |= write? CL_MAP_WRITE: 0;
+	flags |= !writeonly? CL_MAP_READ: 0;
+
+	int err {CL_SUCCESS};
+	void *const map
+	{
+		clEnqueueMapBuffer
+		(
+			q,
+			handle,
+			true, // blocking,
+			flags,
+			0UL, // offset,
+			size,
+			dependencies,
+			dependency,
+			nullptr,
+			&err
+		)
+	};
+
+	throw_on_error(err);
+	static_cast<mutable_buffer &>(*this) = mutable_buffer
+	{
+		reinterpret_cast<char *>(map), size
+	};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Push Mmap :%s",
+		e.what(),
+	};
+
+	throw;
+}
+
+ircd::cl::data::mmap::mmap(mmap &&o)
+noexcept
+:mutable_buffer{std::move(o)}
+,memory{std::move(o.memory)}
+{
+	std::get<0>(o) = nullptr;
+	std::get<1>(o) = nullptr;
+	o.memory = nullptr;
+}
+
+ircd::cl::data::mmap &
+ircd::cl::data::mmap::operator=(mmap &&o)
+noexcept
+{
+	this->~mmap();
+	static_cast<mutable_buffer &>(*this) = std::move(o);
+	memory = std::move(o.memory);
+	std::get<0>(o) = nullptr;
+	std::get<1>(o) = nullptr;
+	o.memory = nullptr;
+	return *this;
+}
+
+ircd::cl::data::mmap::~mmap()
+noexcept try
+{
+	if(!std::get<0>(*this))
+		return;
+
+	assert(!memory || memory->handle);
+	if(!memory || !memory->handle)
+		return;
+
+	size_t dependencies {0};
+	cl_event *const dependency
+	{
+		nullptr
+	};
+
+	auto &q
+	{
+		queue[0][0]
+	};
+
+	call
+	(
+		clEnqueueUnmapMemObject,
+		q,
+		reinterpret_cast<cl_mem>(memory->handle),
+		std::get<0>(*this),
+		dependencies,
+		dependency,
+		nullptr
+	);
+
+	//TODO: replace with better waiter
+	cl::sync();
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "Mmap Release :%s",
+		e.what(),
+	};
+
+	return;
+}
+
+//
+// data
+//
+
+ircd::cl::data::data(const size_t size,
+                     const bool w,
+                     const bool wonly)
+{
+	int err {CL_SUCCESS};
+	cl_mem_flags flags {0};
+	flags |= wonly? CL_MEM_WRITE_ONLY: 0;
+	flags |= !w? CL_MEM_READ_ONLY: 0;
+	handle = clCreateBuffer(primary, flags, size, nullptr, &err);
+	throw_on_error(err);
+}
+
+ircd::cl::data::data(const mutable_buffer &buf,
+                     const bool wonly)
+{
+	int err {CL_SUCCESS};
+	cl_mem_flags flags {0};
+	flags |= CL_MEM_USE_HOST_PTR;
+	flags |= wonly? CL_MEM_WRITE_ONLY: CL_MEM_READ_WRITE;
+	handle = clCreateBuffer(primary, flags, ircd::size(buf), ircd::data(buf), &err);
+	throw_on_error(err);
+}
+
+ircd::cl::data::data(const const_buffer &buf)
+{
+	int err {CL_SUCCESS};
+	cl_mem_flags flags {0};
+	flags |= CL_MEM_USE_HOST_PTR;
+	flags |= CL_MEM_READ_ONLY;
+	handle = clCreateBuffer(primary, flags, ircd::size(buf), mutable_cast(ircd::data(buf)), &err);
+	throw_on_error(err);
+}
+
+ircd::cl::data::data(data &&o)
+noexcept
+:handle{std::move(o.handle)}
+{
+	o.handle = nullptr;
+}
+
+ircd::cl::data &
+ircd::cl::data::operator=(data &&o)
+noexcept
+{
+	this->~data();
+	handle = std::move(o.handle);
+	o.handle = nullptr;
+	return *this;
+}
+
+ircd::cl::data::~data()
+noexcept try
+{
+	call(clReleaseMemObject, reinterpret_cast<cl_mem>(handle));
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "Memory Release :%s",
+		e.what(),
+	};
+
+	return;
+}
+
+//
+// cl::work (event)
+//
+
+namespace ircd::cl
+{
+	struct handle_event_data
+	{
+		ctx::ctx *c {ctx::current};
+	};
+
+	static void handle_event(cl_event, cl_int, void *) noexcept;
+}
+
+//
+// work::work
+//
+
+ircd::cl::work::work(void *const &handle)
+{
+	call(clRetainEvent, cl_event(handle));
+	this->handle = handle;
+}
+
+ircd::cl::work::~work()
+noexcept try
+{
+	const auto handle
+	{
+		reinterpret_cast<cl_event>(this->handle)
+	};
+
+	if(likely(handle))
+	{
+		struct handle_event_data hdata;
+		call(clSetEventCallback, handle, CL_COMPLETE, &cl::handle_event, &hdata);
+
+		char status_buf[8] {0};
+		const auto &status
+		{
+			info<int>(clGetEventInfo, handle, CL_EVENT_COMMAND_EXECUTION_STATUS, status_buf)
+		};
+
+		if(status != CL_COMPLETE)
+		{
+			const ctx::uninterruptible::nothrow ui;
+			while(hdata.c)
+			{
+				ctx::wait();
+				std::atomic_thread_fence(std::memory_order_acquire);
+			}
+		}
+
+		call(clReleaseEvent, reinterpret_cast<cl_event>(handle));
+	}
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "Work Release :%s",
+		e.what(),
+	};
+
+	return;
+}
+
+std::array<uint64_t, 4>
+ircd::cl::work::profile()
+const
+{
+	const auto handle
+	{
+		reinterpret_cast<cl_event>(this->handle)
+	};
+
+	char buf[4][8];
+	return std::array<uint64_t, 4>
+	{
+		info<size_t>(clGetEventProfilingInfo, handle, CL_PROFILING_COMMAND_QUEUED, buf[0]),
+		info<size_t>(clGetEventProfilingInfo, handle, CL_PROFILING_COMMAND_SUBMIT, buf[1]),
+		info<size_t>(clGetEventProfilingInfo, handle, CL_PROFILING_COMMAND_START, buf[2]),
+		info<size_t>(clGetEventProfilingInfo, handle, CL_PROFILING_COMMAND_END, buf[3]),
+	};
+}
+
+void
+ircd::cl::handle_event(cl_event event,
+                       cl_int status,
+                       void *const priv)
+noexcept
+{
+	auto hdata
+	{
+		reinterpret_cast<handle_event_data *>(priv)
+	};
+
+	const auto c
+	{
+		std::exchange(hdata->c, nullptr)
+	};
+
+	ctx::notify(*c);
+	std::atomic_thread_fence(std::memory_order_release);
 }
 
 //
@@ -202,6 +920,9 @@ ircd::cl::info(F&& func,
                const param &p,
                const mutable_buffer &out)
 {
+	using ircd::data;
+	using ircd::size;
+
 	size_t len {0};
 	call(std::forward<F>(func), i, p, size(out), data(out), &len);
 	const string_view str
@@ -209,7 +930,7 @@ ircd::cl::info(F&& func,
 		data(out), len
 	};
 
-	return lex_cast<T>(str);
+	return byte_view<T>(str);
 }
 
 template<class func,
