@@ -530,20 +530,31 @@ noexcept
 		ircd::log::console_ansi.at(lev)
 	};
 
-	// Get one of the two primary slice epoch counters. If this is being
-	// invoked on an ircd::ctx, we grab the ctx slice counter; otherwise we
-	// grab the ios slice counter.
+	// Get the current tick count for the core event-loop.
 	const auto &epoch
 	{
 		ios::epoch()
 	};
 
+	// Fxied width of the epoch column
 	static const size_t epoch_width
 	{
 		12
 	};
 
-	// Compose the prefix sequence into the buffer through stringstream
+	// Fxied width of the log level column.
+	static const size_t lev_width
+	{
+		8
+	};
+
+	// Fxied width of the context idnum column.
+	static const size_t ctx_id_width
+	{
+		5
+	};
+
+	// Compose the prefix sequence into the buffer.
 	std::stringstream s;
 	pubsetbuf(s, buf);
 	s
@@ -554,7 +565,7 @@ noexcept
 	<< epoch
 	<< ' '
 	<< console_ansi
-	<< std::setw(8)
+	<< std::setw(lev_width)
 	<< std::right
 	<< reflect(lev)
 	<< (console_ansi? "\033[0m " : " ")
@@ -563,7 +574,7 @@ noexcept
 	<< std::left
 	<< trunc(log.name, LOG_NAME_TRUNC)
 	<< ' '
-	<< std::setw(5)
+	<< std::setw(ctx_id_width)
 	<< std::right
 	<< ctx::id()
 	<< ' '
