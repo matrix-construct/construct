@@ -38,4 +38,6 @@ enum ircd::m::vm::fault
 	AUTH          = 0x08,  ///< Auth rules violation. (#av)
 	STATE         = 0x10,  ///< Required state is missing (#st)
 	EVENT         = 0x20,  ///< Eval requires addl events in the ef register (#ef)
+	BOUNCE        = 0x40,  ///< The event is not needed at this time (#bo)
+	DONOTWANT     = 0x80,  ///< The event will never be needed (cache this) (#dw)
 };

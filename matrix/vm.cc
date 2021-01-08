@@ -173,6 +173,8 @@ ircd::m::vm::reflect(const enum fault &code)
 		case fault::AUTH:         return "#AUTH";
 		case fault::EVENT:        return "#EVENT";
 		case fault::STATE:        return "#STATE";
+		case fault::BOUNCE:       return "#BOUNCE";
+		case fault::DONOTWANT:    return "#DONOTWANT";
 	}
 
 	return "??????";

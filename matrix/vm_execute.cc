@@ -1341,8 +1341,9 @@ ircd::m::vm::emption_check(eval &eval,
 	};
 
 	if(unlikely(!allow))
-		throw m::ACCESS_DENIED
+		throw vm::error
 		{
+			http::UNAUTHORIZED, fault::BOUNCE,
 			"No users require events of type=%s%s%s in %s on this server.",
 			json::get<"type"_>(event),
 			json::get<"state_key"_>(event)?
