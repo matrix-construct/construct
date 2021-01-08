@@ -153,10 +153,10 @@ noexcept
 		worker_pool->terminate();
 
 	if(worker_context)
-	{
 		ctx::terminate(*worker_context);
-		worker_context = nullptr;
-	}
+
+	worker_context = nullptr;
+	worker_pool = nullptr;
 }
 
 void
