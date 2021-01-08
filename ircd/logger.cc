@@ -706,8 +706,10 @@ noexcept
 	copy_to_stderr &= !console_quiet_stderr[lev];
 
 	// Note that CRITICAL messages unconditionally hit stderr even if their
-	// level and facility are muted.
-	copy_to_stderr |= lev == level::CRITICAL;
+	// level and facility are muted. The only CRITICAL message which won't
+	// hit stderr is the initial startup diagnostic if console logging is
+	// quieted at startup.
+	copy_to_stderr |= lev == level::CRITICAL && ios::epoch() != 0;
 
 	ret |= copy_to_stdout | copy_to_stderr;
 	if(likely(!(copy_to_stdout | copy_to_stderr) || !msg))
