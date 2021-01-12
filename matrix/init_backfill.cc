@@ -45,7 +45,7 @@ decltype(ircd::m::init::backfill::pool_size)
 ircd::m::init::backfill::pool_size
 {
 	{ "name",     "ircd.m.init.backfill.pool_size" },
-	{ "default",  12L                              },
+	{ "default",  32L                              },
 };
 
 decltype(ircd::m::init::backfill::local_joined_only)
