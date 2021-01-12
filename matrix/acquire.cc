@@ -617,12 +617,11 @@ try
 	fetch::opts fopts;
 	fopts.room_id = opts.room.room_id;
 	fopts.event_id = event_id;
-
 	fopts.backfill_limit = limit;
 	fopts.op =
-		limit > 1?
-		fetch::op::backfill:
-		fetch::op::event;
+		(limit > 1 || hint)?
+			fetch::op::backfill:
+			fetch::op::event;
 
 	fopts.hint = hint;
 	fopts.attempt_limit =
