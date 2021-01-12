@@ -87,11 +87,6 @@ handle_pdus(client &client,
             const json::array &pdus,
             json::stack &out)
 {
-	json::stack::object top
-	{
-		out
-	};
-
 	json::stack::object out_pdus
 	{
 		out, "pdus"
@@ -269,6 +264,11 @@ handle_put(client &client,
 	json::stack out
 	{
 		response.buf, response.flusher()
+	};
+
+	json::stack::object top
+	{
+		out
 	};
 
 	handle_txn(client, request, txn_id, out);
