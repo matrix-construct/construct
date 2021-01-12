@@ -306,6 +306,13 @@ ircd::m::dbs::desc::content__cache_comp__size
 	}
 };
 
+decltype(ircd::m::dbs::desc::content__file__size__max)
+ircd::m::dbs::desc::content__file__size__max
+{
+	{ "name",     "ircd.m.dbs.content.file.size.max"  },
+	{ "default",  long(256_MiB)                       },
+};
+
 const ircd::db::descriptor
 ircd::m::dbs::desc::content
 {
@@ -363,6 +370,18 @@ ircd::m::dbs::desc::content
 
 	// compression
 	string_view{content__comp},
+
+	// compactor
+	{},
+
+	// compaction priority algorithm,
+	"Universal"s,
+
+	// target_file_size
+	{
+		size_t(content__file__size__max),
+		1L,
+	},
 };
 
 //

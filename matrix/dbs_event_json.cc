@@ -65,6 +65,13 @@ ircd::m::dbs::desc::event_json__bloom__bits
 	{ "default",  0L                                  },
 };
 
+decltype(ircd::m::dbs::desc::event_json__file__size__max)
+ircd::m::dbs::desc::event_json__file__size__max
+{
+	{ "name",     "ircd.m.dbs._event_json.file.size.target" },
+	{ "default",  long(512_MiB)                             },
+};
+
 const ircd::db::descriptor
 ircd::m::dbs::desc::event_json
 {
@@ -124,8 +131,8 @@ ircd::m::dbs::desc::event_json
 
 	// target_file_size
 	{
-		2_GiB,   // base
-		1L,      // multiplier
+		size_t(event_json__file__size__max),  // base
+		1L,                                   // multiplier
 	},
 };
 

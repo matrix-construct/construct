@@ -43,6 +43,7 @@ namespace ircd::m::dbs::desc
 	extern conf::item<size_t> content__meta_block__size;
 	extern conf::item<size_t> content__cache__size;
 	extern conf::item<size_t> content__cache_comp__size;
+	extern conf::item<size_t> content__file__size__max;
 	extern const db::descriptor content;
 
 	extern conf::item<std::string> depth__comp;
