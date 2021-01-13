@@ -108,7 +108,6 @@ libircd_la_LIBADD = \
 	@JS_LIBS@ \
 	@ICU_LIBS@ \
 	@BOOST_LIBS@ \
-	@OPENCL_LIBS@ \
 	@PBC_LIBS@ \
 	@SSL_LIBS@ \
 	@CRYPTO_LIBS@ \

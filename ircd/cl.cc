@@ -8,6 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <dlfcn.h>
 #include <CL/cl.h>
 
 // Util
@@ -23,12 +24,20 @@ namespace ircd::cl
 namespace ircd::cl
 {
 	static const size_t
+	OPTION_MAX {8},
 	PLATFORM_MAX {8},
 	DEVICE_MAX {8};
 
 	static uint
+	options,
 	platforms,
 	devices[PLATFORM_MAX];
+
+	static char
+	option[OPTION_MAX][256];
+
+	static void
+	*linkage;
 
 	static cl_platform_id
 	platform[PLATFORM_MAX];
@@ -67,10 +76,7 @@ ircd::cl::version_api
 decltype(ircd::cl::version_abi)
 ircd::cl::version_abi
 {
-	"OpenCL", info::versions::ABI, 0,
-	{
-		0, 0, 0
-	}
+	"OpenCL", info::versions::ABI
 };
 
 //
@@ -79,6 +85,27 @@ ircd::cl::version_abi
 
 ircd::cl::init::init()
 {
+	const ctx::posix::enable_pthread enable_pthread;
+
+	// Setup options
+	strlcpy{option[options++], "LP_NUM_THREADS=0"};
+	strlcpy{option[options++], "MESA_GLSL_CACHE_DISABLE=true"};
+	strlcpy{option[options++], "AMD_DEBUG=nogfx"};
+	assert(options <= OPTION_MAX);
+
+	// Configure options into the environment. TODO: XXX don't overwrite
+	while(options--)
+		sys::call(putenv, option[options]);
+
+	// Load the pipe.
+	assert(!linkage);
+	if(!(linkage = dlopen("libOpenCL.so", RTLD_LAZY | RTLD_GLOBAL)))
+		return;
+
+	// OpenCL sez platform=null is implementation defined.
+	info(clGetPlatformInfo, nullptr, CL_PLATFORM_VERSION, version_abi.string);
+
+	// Get the platforms.
 	call(clGetPlatformIDs, PLATFORM_MAX, platform, &platforms);
 
 	char buf[4][128];
@@ -148,6 +175,10 @@ ircd::cl::init::init()
 ircd::cl::init::~init()
 noexcept
 {
+	if(!linkage)
+		return;
+
+	const ctx::posix::enable_pthread enable_pthread;
 	if(primary)
 	{
 		log::debug
@@ -171,6 +202,8 @@ noexcept
 		call(clReleaseContext, primary);
 		primary = nullptr;
 	}
+
+	dlclose(linkage);
 }
 
 //

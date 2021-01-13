@@ -25,8 +25,9 @@ namespace ircd::cl
 	struct data;
 	struct work;
 
+	extern const info::versions version_api;
+	extern info::versions version_abi;
 	extern log::log log;
-	extern const info::versions version_api, version_abi;
 
 	string_view reflect_error(const int code) noexcept;
 
