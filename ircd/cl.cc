@@ -881,6 +881,9 @@ noexcept
 		std::exchange(hdata->c, nullptr)
 	};
 
+	if(likely(c == ctx::current))
+		return;
+
 	ctx::notify(*c);
 	std::atomic_thread_fence(std::memory_order_release);
 }
