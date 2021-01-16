@@ -259,9 +259,12 @@ dnl
 AC_MSG_CHECKING(whether to enable link-time optimization)
 AC_ARG_ENABLE(lto, RB_HELP_STRING([--disable-lto], [Enable link-time optimization]),
 [
-	lto="no"
-	AC_MSG_RESULT([no, explicitly disabled])
+	lto=$enableval
 ], [
+	lto="yes"
+])
+
+if test "$lto" = "yes"; then
 	AM_COND_IF(OPTIMIZE,
 	[
 		AM_COND_IF(CLANG,
@@ -284,7 +287,7 @@ AC_ARG_ENABLE(lto, RB_HELP_STRING([--disable-lto], [Enable link-time optimizatio
 		lto="no"
 		AC_MSG_RESULT([no, optimizations disabled])
 	])
-])
+fi
 
 AM_CONDITIONAL([LTO], [[[[ "$LTO" = "1" ]]]])
 
@@ -439,11 +442,11 @@ dnl
 dnl Precompiled headers
 dnl
 
-AC_MSG_CHECKING(whether to disable precompiled headers)
+AC_MSG_CHECKING(whether to enable precompiled headers)
 AC_ARG_ENABLE(pch, RB_HELP_STRING([--disable-pch], [Disable precompiled header generation]),
 [
-	build_pch="no"
-	AC_MSG_RESULT([no])
+	build_pch=$enableval
+	AC_MSG_RESULT([$enableval])
 ], [
 	build_pch="yes"
 	CPPDEFINE([PCH])
@@ -490,14 +493,14 @@ dnl
 dnl Disable third-party allocators
 dnl
 
-AC_MSG_CHECKING(whether to prevent available third-party allocator libraries from being used)
+AC_MSG_CHECKING(whether to allow available third-party allocator libraries from being used)
 AC_ARG_ENABLE(malloc-libs, RB_HELP_STRING([--disable-malloc-libs], [Disable third-party dynamic memory libraries (jemalloc/tcmalloc/etc)]),
 [
-	use_malloc_libs="no"
-	AC_MSG_RESULT([yes])
+	use_malloc_libs=$enableval
+	AC_MSG_RESULT([$enableval])
 ], [
 	use_malloc_libs="yes"
-	AC_MSG_RESULT([no])
+	AC_MSG_RESULT([yes])
 ])
 
 AM_CONDITIONAL([MALLOC_LIBS], [[[[ "$use_malloc_libs" = "yes" ]]]])
@@ -1177,7 +1180,7 @@ dnl
 
 AC_ARG_ENABLE(ipv6, RB_HELP_STRING([--disable-ipv6], [Disable IPv6 support]),
 [
-	ipv6="no"
+	ipv6=$enableval
 ], [
 	ipv6="yes"
 ])
@@ -2112,11 +2115,11 @@ PKG_CHECK_MODULES(jemalloc, [jemalloc],
 	])
 ])
 
-AC_MSG_CHECKING(whether to disable use of any found jemalloc)
+AC_MSG_CHECKING(whether to enable use of any found jemalloc)
 AC_ARG_ENABLE(jemalloc, RB_HELP_STRING([--disable-jemalloc], [Disable jemalloc as third-party dynamic memory manager]),
 [
-	AC_MSG_RESULT([yes])
-	enable_jemalloc="no"
+	AC_MSG_RESULT([$enableval])
+	enable_jemalloc=$enableval
 ], [
 	AC_MSG_RESULT([no])
 	enable_jemalloc="yes"
@@ -2253,16 +2256,14 @@ PKG_CHECK_MODULES(MesaOpenCL, [MesaOpenCL],
 	])
 ])
 
-AC_MSG_CHECKING(whether to disable use of any found OpenCL)
+AC_MSG_CHECKING(whether to enable use of any found OpenCL)
 AC_ARG_ENABLE(opencl, RB_HELP_STRING([--disable-opencl], [Disable OpenCL support]),
 [
-	AC_MSG_RESULT([no])
-	enable_opencl="no"
-	opencl_enable="disabled"
+	AC_MSG_RESULT([$enableval])
+	enable_opencl=$enableval
 ], [
 	AC_MSG_RESULT([yes])
 	enable_opencl="yes"
-	opencl_enable="enabled"
 ])
 
 AM_CONDITIONAL([OPENCL], [test "x$have_opencl" = "xyes" && test "x$enable_opencl" = "xyes" ])
@@ -2720,7 +2721,7 @@ echo "Sodium support .................... $have_sodium"
 echo "GNU MP support .................... $have_gmp"
 echo "PBC support ....................... $have_pbc"
 echo "LLVM library support .............. $have_libllvm"
-echo "OpenCL support .................... $have_opencl ($opencl_enable)"
+echo "OpenCL support .................... $have_opencl"
 echo "MesaOpenCL support ................ $have_mesa_opencl"
 echo "Linux AIO support ................. $aio"
 echo "Linux io_uring support ............ $io_uring"
