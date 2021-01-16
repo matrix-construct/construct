@@ -9,7 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 #include <RB_INC_SIGNAL_H
-#include <RB_INC_PNG_H
 #include <RB_INC_MAGICK_API_H
 
 namespace ircd::magick

@@ -96,6 +96,7 @@ libircd_la_LDFLAGS = \
 	@SODIUM_LDFLAGS@ \
 	@MAGIC_LDFLAGS@ \
 	@IMAGEMAGICK_LDFLAGS@ \
+	@PNG_LDFLAGS@ \
 	@ZSTD_LDFLAGS@ \
 	@SNAPPY_LDFLAGS@ \
 	@LZ4_LDFLAGS@ \
@@ -212,6 +213,7 @@ endif
 if IMAGEMAGICK
 libircd_la_SOURCES += magick.cc
 endif
+libircd_la_SOURCES += png.cc
 if OPENCL
 libircd_la_SOURCES += cl.cc
 endif
@@ -305,6 +307,9 @@ parse.lo:             AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
 if PBC
 pbc.lo:               AM_CPPFLAGS := @PBC_CPPFLAGS@ ${AM_CPPFLAGS}
 endif
+if PNG
+png.o:                AM_CPPFLAGS := @PNG_CPPFLAGS@ ${AM_CPPFLAGS}
+endif PNG
 rfc1459.lo:           AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 rfc1459.lo:           AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
 rfc3986.lo:           AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
