@@ -1973,6 +1973,57 @@ AM_CONDITIONAL([PBC], [test "x$have_pbc" = "xyes" ])
 
 dnl
 dnl
+dnl Portable Network Graphics (PNG) support
+dnl
+dnl
+
+AC_SUBST(PNG_CPPFLAGS, [])
+AC_SUBST(PNG_LDFLAGS, [])
+AC_SUBST(PNG_LIBS, [])
+
+AC_ARG_WITH(png-includes,
+RB_HELP_STRING([--with-png-includes=[[[DIR]]]], [Path to PNG include directory]),
+[
+	PNG_CPPFLAGS+="-I$withval"
+], [
+	PNG_CPPFLAGS+="-isystem /usr/include/GraphicsMagick/"
+])
+
+AC_ARG_WITH(png-libs,
+RB_HELP_STRING([--with-png-libs=[[[DIR]]]], [Path to PNG library directory]),
+[
+	PNG_LDFLAGS+="-L$withval"
+], [])
+
+RB_CHK_SYSHEADER([png.h], [PNG_H])
+PKG_CHECK_MODULES(PNG, [png],
+[
+	dnl May not be DT_NEEDED in actual library since Magick loads it dynamically.
+	PNG_LIBS+="-lpng"
+	have_png="yes"
+], [
+	AC_CHECK_LIB([png], [png_access_version_number],
+	[
+		have_png="yes"
+		PNG_LIBS+="-lpng"
+	], [
+		have_png="no"
+		AC_MSG_WARN([Unable to find libpng for portable network graphics on this system.])
+	])
+])
+
+AM_CONDITIONAL([PNG], [test "x$have_png" = "xyes"])
+
+dnl IRCD_ENABLE_MAGICK is always defined for use in a constexpr if
+AM_COND_IF([PNG],
+[
+	IRCD_DEFINE(USE_PNG, [1], [Portable Network Graphics (PNG) support is available and enabled])
+], [
+	IRCD_DEFINE(USE_PNG, [0], [Portable Network Graphics (PNG) support is unavailable or disabled])
+])
+
+dnl
+dnl
 dnl ImageMagick support
 dnl
 dnl
@@ -2655,8 +2706,9 @@ echo "Optimized runtime ................. $profiling_used"
 echo "Optimization level ................ $optimize_level"
 echo "Machine tuned ..................... $machine_tuning"
 echo
-echo "ImageMagick support ............... $have_imagemagick"
 echo "Magic support ..................... $have_magic"
+echo "ImageMagick support ............... $have_imagemagick"
+echo "PNG support ....................... $have_png"
 echo "Unicode (icuuc) support ........... $have_icuuc"
 echo "Ziplinks (libz) support ........... $have_zlib"
 echo "Zstandard (zstd) support .......... $have_zstd"
