@@ -2253,16 +2253,16 @@ PKG_CHECK_MODULES(MesaOpenCL, [MesaOpenCL],
 	])
 ])
 
-AC_MSG_CHECKING(whether to enable use of any found OpenCL)
-AC_ARG_ENABLE(opencl, RB_HELP_STRING([--enable-opencl], [Enable OpenCL support]),
+AC_MSG_CHECKING(whether to disable use of any found OpenCL)
+AC_ARG_ENABLE(opencl, RB_HELP_STRING([--disable-opencl], [Disable OpenCL support]),
 [
-	AC_MSG_RESULT([yes])
-	enable_opencl="yes"
-	opencl_enable="enabled"
-], [
 	AC_MSG_RESULT([no])
 	enable_opencl="no"
 	opencl_enable="disabled"
+], [
+	AC_MSG_RESULT([yes])
+	enable_opencl="yes"
+	opencl_enable="enabled"
 ])
 
 AM_CONDITIONAL([OPENCL], [test "x$have_opencl" = "xyes" && test "x$enable_opencl" = "xyes" ])

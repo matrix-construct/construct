@@ -18,6 +18,8 @@ namespace ircd::cl
 	static int throw_on_error(const int &code);
 	template<class func, class... args> static int call(func&&, args&&...);
 	template<class T = string_view, class F, class id, class param> static T info(F&&, const id &, const param &, const mutable_buffer &);
+
+	extern conf::item<bool> enable;
 }
 
 // Runtime state
@@ -79,12 +81,30 @@ ircd::cl::version_abi
 	"OpenCL", info::versions::ABI
 };
 
+decltype(ircd::cl::enable)
+ircd::cl::enable
+{
+	{ "name",      "ircd.cl.enable"  },
+	{ "default",   false             },
+	{ "persist",   false             },
+};
+
 //
 // init
 //
 
 ircd::cl::init::init()
 {
+	if(!enable)
+	{
+		log::dwarning
+		{
+			log, "OpenCL hardware acceleration is not available or enabled."
+		};
+
+		return;
+	}
+
 	const ctx::posix::enable_pthread enable_pthread;
 
 	// Setup options
