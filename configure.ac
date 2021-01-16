@@ -2142,7 +2142,7 @@ PKG_CHECK_MODULES(LLVM, [LLVM],
 ])
 
 AC_MSG_CHECKING(whether to enable experimental libllvm module)
-AC_ARG_ENABLE(devllvm, RB_HELP_STRING([--enable-devllvm], [Enable experimental LLVM module development])
+AC_ARG_ENABLE(devllvm, RB_HELP_STRING([--enable-devllvm], [Enable experimental LLVM module development]),
 [
 	AC_MSG_RESULT([yes])
 ], [
