@@ -772,17 +772,17 @@ ircd::fs::flush(const fd &fd,
 
 	#ifdef IRCD_USE_IOU
 	if(iou::system && opts.aio)
-		return iou::fsync(fd, opts);
+		return void(iou::fsync(fd, opts));
 	#endif
 
 	#ifdef IRCD_USE_AIO
 	if(aio::system && opts.aio)
 	{
 		if(support::aio_fdsync && !opts.metadata)
-			aio::fsync(fd, opts);
+			return void(aio::fsync(fd, opts));
 
-		if(support::aio_fsync && opts.metadata)
-			aio::fsync(fd, opts);
+		else if(support::aio_fsync && opts.metadata)
+			return void(aio::fsync(fd, opts));
 	}
 	#endif
 
