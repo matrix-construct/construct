@@ -27,6 +27,13 @@ ircd::m::media::thumbnail::enable_remote
 	{ "default", true                                   },
 };
 
+decltype(ircd::m::media::thumbnail::animation_enable)
+ircd::m::media::thumbnail::animation_enable
+{
+	{ "name",    "ircd.m.media.thumbnail.animation.enable" },
+	{ "default", true                                      },
+};
+
 decltype(ircd::m::media::thumbnail::width_min)
 ircd::m::media::thumbnail::width_min
 {
@@ -281,6 +288,18 @@ get__thumbnail_local(client &client,
 		&& (!mime_whitelist || has(mime_whitelist, mime_type))
 	};
 
+	const bool animated
+	{
+		// Administrator's fuse to disable animation detection.
+		bool(animation_enable)
+
+		// If the type is not permitted don't bother checking for animation.
+		&& permitted
+
+		// Case for APNG; do not permit them to be thumbnailed
+		&& (has(mime_type, "image/png") && png::is_animated(buf))
+	};
+
 	const bool valid_args
 	{
 		// Both dimension parameters given in query string
@@ -300,6 +319,9 @@ get__thumbnail_local(client &client,
 
 		// Access denied for this operation
 		|| !permitted
+
+		// Bypassed to prevent loss of animation
+		|| animated
 
 		//  Arguments invalid.
 		|| !valid_args

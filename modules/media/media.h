@@ -36,6 +36,7 @@ namespace ircd::m::media::thumbnail
 {
 	extern conf::item<bool> enable;
 	extern conf::item<bool> enable_remote;
+	extern conf::item<bool> animation_enable;
 	extern conf::item<size_t> width_min;
 	extern conf::item<size_t> width_max;
 	extern conf::item<size_t> height_min;
