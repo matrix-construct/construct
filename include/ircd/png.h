@@ -14,6 +14,8 @@
 /// Portable Network Graphics; wrappers a la carte
 namespace ircd::png
 {
+	IRCD_EXCEPTION(ircd::error, error)
+
 	bool is_animated(const const_buffer &);
 
 	extern const info::versions version_api, version_abi;
