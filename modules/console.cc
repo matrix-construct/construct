@@ -12676,6 +12676,64 @@ console_cmd__user__read(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__user__read__count(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "room_id"
+	}};
+
+	const m::user::id user_id
+	{
+		param.at("user_id")
+	};
+
+	const auto room_id
+	{
+		param["room_id"]?
+			m::room_id(param["room_id"]):
+			m::room::id::buf{}
+	};
+
+	const m::user::room user_room
+	{
+		user_id
+	};
+
+	if(!room_id)
+	{
+		const m::room::state state
+		{
+			user_room
+		};
+
+		const size_t count
+		{
+			state.count("ircd.read")
+		};
+
+		out << count << std::endl;
+		return true;
+	}
+
+	const m::room::state::space space
+	{
+		user_room
+	};
+
+	size_t count {0};
+	space.for_each("ircd.read", room_id, [&out, &count]
+	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx) -> bool
+	{
+		++count;
+		return true;
+	});
+
+	out << count << std::endl;
+	return true;
+}
+
+bool
 console_cmd__user__read__receipt(opt &out, const string_view &line)
 {
 	const params param{line, " ",
