@@ -68,9 +68,13 @@ handle_receipt_m_read(client &client,
                       const m::event::id &event_id)
 {
 	// Check if event_id is more recent than the last receipt's event_id.
-	// We currently don't do anything with receipts targeting the past.
-	if(!m::receipt::freshest(room_id, request.user_id, event_id))
-		return;
+	// If it's not the latest we'll mark it as hidden and it won't be sent
+	// over the federation or to clients. It will then be used to indicate
+	// the user's eye track as an attention head.
+	const bool freshest
+	{
+		m::receipt::freshest(room_id, request.user_id, event_id)
+	};
 
 	const bool ignoring
 	{
@@ -95,11 +99,12 @@ handle_receipt_m_read(client &client,
 	// transmitting it to local and remote parties. This behavior is achieved
 	// by the m.hidden tag. If the options do not contain this tag we add it.
 	std::string options_buf;
-	if(ignoring && !options.get("m.hidden", false))
-	{
-		options_buf = json::insert(options, {"m.hidden", true});
-		options = options_buf;
-	}
+	if(!freshest || ignoring)
+		if(!options.get("m.hidden", false))
+			options = options_buf = json::replace(options,
+			{
+				{ "m.hidden", true }
+			});
 
 	m::receipt::read(room_id, request.user_id, event_id, options);
 }
