@@ -16,7 +16,7 @@ const
 	{
 		json::members
 		{
-			{ "rooms", rooms }
+			{ "recent_rooms", rooms }
 		}
 	};
 
@@ -63,7 +63,7 @@ const
 	{
 		const json::array &rooms
 		{
-			object["rooms"]
+			object["recent_rooms"]
 		};
 
 		closure(rooms);
