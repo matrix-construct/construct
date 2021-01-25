@@ -13568,6 +13568,40 @@ console_cmd__user__viewing(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__user__reading(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id"
+	}};
+
+	const m::user::id user_id
+	{
+		param.at("user_id")
+	};
+
+	const m::user::reading r
+	{
+		user_id
+	};
+
+	out
+	<< r.room_id
+	<< " "
+	<< r.last
+	<< " "
+	<< r.last_ts
+	<< " "
+	<< r.full
+	<< " "
+	<< r.full_ots
+	<< " "
+	<< (r.currently_active? "active"_sv: "inactive"_sv)
+	<< std::endl;
+	return true;
+}
+
+bool
 console_cmd__user__pushrules(opt &out, const string_view &line)
 {
 	const params param{line, " ",

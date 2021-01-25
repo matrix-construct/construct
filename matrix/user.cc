@@ -14,6 +14,64 @@ namespace ircd::m
 	static room create_user_room(const user::id &, const room::id &, const json::members &contents);
 }
 
+ircd::m::user::reading::reading(const user &user)
+{
+	if(!(room_id = viewing(user)))
+		return;
+
+	const user::room user_room
+	{
+		user
+	};
+
+	const auto last_event_idx
+	{
+		user_room.get(std::nothrow, "ircd.read", room_id)
+	};
+
+	const bool last_content_prefetched
+	{
+		prefetch(last_event_idx, "content")
+	};
+
+	time_t last_ots {0};
+	get<time_t>(last_event_idx, "origin_server_ts", last_ots);
+	this->last_ots = milliseconds(last_ots) / 1000;
+
+	get(std::nothrow, last_event_idx, "content", [this]
+	(const json::object &content)
+	{
+		this->last_ts = content.get<milliseconds>("ts");
+		this->last = json::string
+		{
+			content["event_id"]
+		};
+	});
+
+	const user::room_account_data room_account_data
+	{
+		user, room_id
+	};
+
+	room_account_data.get(std::nothrow, "m.fully_read", [this]
+	(const string_view &key, const json::object &content)
+	{
+		this->full = json::string
+		{
+			content["event_id"]
+		};
+	});
+
+	//TODO: XXX
+	// full_ots
+
+	presence::get(std::nothrow, user, [this]
+	(const json::object &event)
+	{
+		this->currently_active = event.get<bool>("currently_active", false);
+	});
+}
+
 ircd::m::room::id::buf
 ircd::m::viewing(const user &user,
                  size_t i)
