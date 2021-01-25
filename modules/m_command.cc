@@ -166,7 +166,7 @@ try
 		{ "formatted_body",  html? html_val: undef_val         },
 		{ "room_id",         room_id                           },
 		{ "input",           input                             },
-    });
+	});
 }
 catch(const std::exception &e)
 {

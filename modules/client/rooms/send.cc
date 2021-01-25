@@ -21,7 +21,7 @@ static void
 save_transaction_id(const m::event &,
                     m::vm::eval &);
 
-static m::resource::response
+static m::event::id::buf
 handle_command(client &,
                const m::resource::request &,
                const room &);
@@ -141,6 +141,7 @@ put__send(client &client,
 		room_id, &copts
 	};
 
+	bool command_echo {false};
 	if(type == "m.room.message")
 	{
 		const m::room::message message
@@ -148,20 +149,49 @@ put__send(client &client,
 			content
 		};
 
-		const bool cmd
+		const bool command
 		{
-			json::get<"msgtype"_>(message) == "m.text" &&
-			startswith(json::get<"body"_>(message), "\\\\")
+			json::get<"msgtype"_>(message) == "m.text"
+			&& startswith(json::get<"body"_>(message), "\\\\")
 		};
 
-		if(cmd)
-			return handle_command(client, request, room);
+		const bool echo
+		{
+			startswith(lstrip(json::get<"body"_>(message), "\\\\"), '!')
+		};
+
+		if(command && !echo)
+		{
+			const auto event_id
+			{
+				handle_command(client, request, room)
+			};
+
+			return m::resource::response
+			{
+				client, json::members
+				{
+					{ "event_id",  event_id },
+					{ "cmd",       true     },
+				}
+			};
+		}
+		else command_echo = command && echo;
 	}
 
 	const auto event_id
 	{
 		m::send(room, request.user_id, type, content)
 	};
+
+	// For public echo, run the command after sending the command to the room.
+	if(command_echo)
+	{
+		const auto cmd_event_id
+		{
+			handle_command(client, request, room)
+		};
+	}
 
 	return m::resource::response
 	{
@@ -172,7 +202,7 @@ put__send(client &client,
 	};
 }
 
-m::resource::response
+m::event::id::buf
 handle_command(client &client,
                const m::resource::request &request,
                const room &room)
@@ -192,14 +222,7 @@ handle_command(client &client,
 		})
 	};
 
-	return m::resource::response
-	{
-		client, json::members
-		{
-			{ "event_id",  event_id },
-			{ "cmd",       true     },
-		}
-	};
+	return event_id;
 }
 
 void
