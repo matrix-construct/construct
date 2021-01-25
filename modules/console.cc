@@ -12590,7 +12590,7 @@ console_cmd__user__read(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"user_id",
+		"user_id", "room_id", "limit"
 	}};
 
 	const m::user::id user_id
@@ -12598,17 +12598,24 @@ console_cmd__user__read(opt &out, const string_view &line)
 		param.at("user_id")
 	};
 
+	const auto room_id
+	{
+		param["room_id"]?
+			m::room_id(param["room_id"]):
+			m::room::id::buf{}
+	};
+
+	size_t limit
+	{
+		param.at("limit", 32UL)
+	};
+
 	const m::user::room user_room
 	{
 		user_id
 	};
 
-	const m::room::state state
-	{
-		user_room
-	};
-
-	state.for_each("ircd.read", m::event::closure{[&out]
+	const m::event::closure each_event{[&out]
 	(const m::event &event)
 	{
 		const milliseconds origin_server_ts
@@ -12633,7 +12640,37 @@ console_cmd__user__read(opt &out, const string_view &line)
 		    << " " << event.event_id
 		    << " " << ago
 		    << std::endl;
-	}});
+	}};
+
+	if(!room_id)
+	{
+		const m::room::state state
+		{
+			user_room
+		};
+
+		state.for_each("ircd.read", each_event);
+		return true;
+	}
+
+	const m::room::state::space space
+	{
+		user_room
+	};
+
+	space.for_each("ircd.read", room_id, [&each_event, &limit]
+	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx) -> bool
+	{
+		const m::event::fetch event
+		{
+			std::nothrow, event_idx
+		};
+
+		if(likely(event.valid))
+			each_event(event);
+
+		return --limit;
+	});
 
 	return true;
 }
