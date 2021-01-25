@@ -14,6 +14,29 @@ namespace ircd::m
 	static room create_user_room(const user::id &, const room::id &, const json::members &contents);
 }
 
+ircd::m::room::id::buf
+ircd::m::viewing(const user &user,
+                 size_t i)
+{
+	const m::breadcrumbs breadcrumbs
+	{
+		user
+	};
+
+	room::id::buf ret;
+	breadcrumbs.for_each([&ret, &i]
+	(const auto &room_id)
+	{
+		if(i-- > 0)
+			return true;
+
+		ret = room_id;
+		return false;
+	});
+
+	return ret;
+}
+
 bool
 ircd::m::is_oper(const user &user)
 {

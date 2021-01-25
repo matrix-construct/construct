@@ -21,6 +21,8 @@ namespace ircd::m
 	bool active(const user &);
 	bool is_oper(const user &);
 
+	id::room::buf viewing(const user &, size_t i = 0);
+
 	user create(const id::user &, const json::members &args = {});
 }
 

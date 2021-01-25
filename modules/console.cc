@@ -13536,6 +13536,38 @@ console_cmd__user__breadcrumbs(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__user__viewing(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "idx"
+	}};
+
+	const m::user::id user_id
+	{
+		param.at("user_id")
+	};
+
+	const size_t idx
+	{
+		param.at("idx", 0UL)
+	};
+
+	const m::user user
+	{
+		user_id
+	};
+
+	const auto room_id
+	{
+		m::viewing(user, idx)
+	};
+
+	out << room_id << std::endl;
+	return true;
+}
+
+bool
 console_cmd__user__pushrules(opt &out, const string_view &line)
 {
 	const params param{line, " ",
