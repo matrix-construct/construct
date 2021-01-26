@@ -12600,9 +12600,20 @@ console_cmd__user__read(opt &out, const string_view &line)
 
 	const auto room_id
 	{
-		param["room_id"]?
+		param["room_id"] && !startswith(param["room_id"], '*')?
 			m::room_id(param["room_id"]):
 			m::room::id::buf{}
+	};
+
+	const bool all_rooms
+	{
+		param["room_id"] == "*"
+	};
+
+	const bool eye_track
+	{
+		param["room_id"] == "**"
+		|| !param["room_id"]
 	};
 
 	size_t limit
@@ -12676,7 +12687,7 @@ console_cmd__user__read(opt &out, const string_view &line)
 		out << std::endl;
 	}};
 
-	if(!room_id)
+	if(all_rooms)
 	{
 		const m::room::state state
 		{
@@ -12684,6 +12695,30 @@ console_cmd__user__read(opt &out, const string_view &line)
 		};
 
 		state.for_each("ircd.read", each_event);
+		return true;
+	}
+
+	if(eye_track)
+	{
+		const m::room::type type
+		{
+			user_room, "ircd.read"
+		};
+
+		type.for_each("ircd.read", [&each_event, &limit]
+		(const auto &, const auto &, const auto &event_idx) -> bool
+		{
+			const m::event::fetch event
+			{
+				std::nothrow, event_idx
+			};
+
+			if(likely(event.valid))
+				each_event(event);
+
+			return --limit;
+		});
+
 		return true;
 	}
 
