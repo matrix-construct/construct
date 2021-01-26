@@ -12618,28 +12618,62 @@ console_cmd__user__read(opt &out, const string_view &line)
 	const m::event::closure each_event{[&out]
 	(const m::event &event)
 	{
+		const json::string event_id
+		{
+			json::get<"content"_>(event).get("event_id")
+		};
+
+		const milliseconds receipt_ts
+		{
+			json::get<"content"_>(event).get("ts", 0ms)
+		};
+
 		const milliseconds origin_server_ts
 		{
 			json::get<"origin_server_ts"_>(event)
 		};
 
-		char tsbuf[2][64];
-		const auto timef
+		const bool hidden
 		{
-			ircd::timef(tsbuf[0], origin_server_ts.count() / 1000L)
+			json::get<"content"_>(event).get("m.hidden", false)
 		};
 
-		const auto ago
+		char tsbuf[2][2][64];
+		const string_view timef[2]
 		{
-			ircd::ago(tsbuf[1], system_point(origin_server_ts))
+			ircd::timef(tsbuf[0][0], origin_server_ts.count() / 1000L),
+			ircd::timef(tsbuf[1][0], receipt_ts.count() / 1000L, ircd::localtime),
 		};
 
-		out << timef
-		    << " " << json::get<"state_key"_>(event)
-		    << " " << json::get<"content"_>(event)
-		    << " " << event.event_id
-		    << " " << ago
-		    << std::endl;
+		const string_view ago[2]
+		{
+			ircd::ago(tsbuf[0][1], system_point(origin_server_ts)),
+			ircd::ago(tsbuf[1][1], system_point(receipt_ts), 1),
+		};
+
+		const m::event::fetch target
+		{
+			std::nothrow, event_id
+		};
+
+		out
+		<< (!hidden? "PUBLIC"_sv: "      "_sv)
+		<< ' ' << std::right << std::setw(12) << ago[1]
+		<< ' ' << std::left << timef[1]
+		<< ' '
+		;
+
+		if(!target.valid)
+		{
+			out
+			<< json::get<"state_key"_>(event)
+			<< ' ' << std::left << std::setw(60) << event_id
+			<< std::endl;
+			return;
+		}
+
+		m::pretty_oneline(out, target);
+		out << std::endl;
 	}};
 
 	if(!room_id)
