@@ -12616,6 +12616,11 @@ console_cmd__user__read(opt &out, const string_view &line)
 		|| !param["room_id"]
 	};
 
+	const bool fully_read
+	{
+		param["room_id"] == "***"
+	};
+
 	size_t limit
 	{
 		param.at("limit", 32UL)
@@ -12669,8 +12674,8 @@ console_cmd__user__read(opt &out, const string_view &line)
 
 		out
 		<< (!hidden? "PUBLIC"_sv: "      "_sv)
-		<< ' ' << std::right << std::setw(12) << ago[1]
-		<< ' ' << std::left << timef[1]
+		<< ' ' << std::right << std::setw(12) << ago[bool(receipt_ts.count())]
+		<< ' ' << std::left << timef[bool(receipt_ts.count())]
 		<< ' '
 		;
 
@@ -12705,7 +12710,7 @@ console_cmd__user__read(opt &out, const string_view &line)
 			user_room, "ircd.read"
 		};
 
-		type.for_each("ircd.read", [&each_event, &limit]
+		type.for_each([&each_event, &limit]
 		(const auto &, const auto &, const auto &event_idx) -> bool
 		{
 			const m::event::fetch event
@@ -12716,6 +12721,34 @@ console_cmd__user__read(opt &out, const string_view &line)
 			if(likely(event.valid))
 				each_event(event);
 
+			return --limit;
+		});
+
+		return true;
+	}
+
+	if(fully_read)
+	{
+		const m::room::type type
+		{
+			user_room, "ircd.account_data!", { -1UL, -1UL }, true
+		};
+
+		type.for_each([&each_event, &limit]
+		(const auto &, const auto &, const auto &event_idx) -> bool
+		{
+			const m::event::fetch event
+			{
+				std::nothrow, event_idx
+			};
+
+			if(!event.valid)
+				return true;
+
+			if(json::get<"state_key"_>(event) != "m.fully_read")
+				return true;
+
+			each_event(event);
 			return --limit;
 		});
 
