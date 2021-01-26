@@ -112,40 +112,26 @@ try
 		user_id
 	};
 
-	bool ret{true};
-	user_room.get("ircd.read", room_id, [&ret, &event_id]
-	(const m::event &event)
+	const m::event::idx event_idx
 	{
-		const auto &content
-		{
-			at<"content"_>(event)
-		};
+		index(std::nothrow, event_id)
+	};
 
-		const m::event::id &previous_id
-		{
-			unquote(content.get("event_id"))
-		};
+	if(!event_idx)
+		return true;
 
-		if(event_id == previous_id)
-		{
-			ret = false;
-			return;
-		}
+	const auto last_idx
+	{
+		user_room.get(std::nothrow, "ircd.read", room_id)
+	};
 
-		const m::event::idx &previous_idx
-		{
-			index(previous_id)
-		};
+	if(!last_idx)
+		return true;
 
-		const m::event::idx &event_idx
-		{
-			index(event_id)
-		};
+	if(last_idx < event_idx)
+		return true;
 
-		ret = event_idx > previous_idx;
-	});
-
-	return ret;
+	return false;
 }
 catch(const std::exception &e)
 {
