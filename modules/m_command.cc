@@ -158,6 +158,26 @@ try
 		"org.matrix.custom.html", json::STRING
 	};
 
+	char reply_buf[288];
+	const json::object in_reply_to
+	{
+		json::stringify(reply_buf, json::members
+		{
+			{ "event_id",  event.event_id  },
+		})
+	};
+
+	char relates_buf[576];
+	const json::object relates_to
+	{
+		json::stringify(relates_buf, json::members
+		{
+			{ "event_id",      event.event_id  },
+			{ "rel_type",      "ircd.cmd"      },
+			{ "m.in_reply_to", in_reply_to     },
+		})
+	};
+
 	m::send(response_room, response_sender, response_type,
 	{
 		{ "msgtype",         msgtype?: "m.notice"              },
@@ -166,6 +186,7 @@ try
 		{ "formatted_body",  html? html_val: undef_val         },
 		{ "room_id",         room_id                           },
 		{ "input",           input                             },
+		{ "m.relates_to",    relates_to                        },
 	});
 }
 catch(const std::exception &e)
