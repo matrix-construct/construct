@@ -326,7 +326,7 @@ ircd::m::pretty_stateline(std::ostream &out,
 		json::string{}
 	};
 
-	thread_local char smbuf[48];
+	char smbuf[48];
 	if(event.event_id.version() == "1")
 	{
 		out
@@ -418,7 +418,7 @@ ircd::m::pretty(std::ostream &s,
 
 	const auto &ts{json::get<"origin_server_ts"_>(event)};
 	{
-		thread_local char buf[128];
+		char buf[128];
 		s << std::setw(16) << std::right << "origin_server_ts" << " :"
 		  << timef(buf, ts / 1000L, ircd::localtime)
 		  << " (" << ts << ")"
@@ -489,13 +489,12 @@ ircd::m::pretty_oneline(std::ostream &s,
                         const event &event,
                         const int &fmt)
 {
-	thread_local char sdbuf[48];
-
 	if(defined(json::get<"room_id"_>(event)))
 		s << json::get<"room_id"_>(event) << ' ';
 	else
 		s << "* ";
 
+	char sdbuf[48];
 	if(event.event_id && event.event_id.version() != "1")
 		s << event.event_id << ' ';
 	else if(!event.event_id) try
@@ -624,10 +623,14 @@ std::ostream &
 ircd::m::pretty_msgline(std::ostream &s,
                         const event &event)
 {
-	s << json::get<"depth"_>(event) << " :";
-	s << json::get<"type"_>(event) << ' ';
-	s << json::get<"sender"_>(event) << ' ';
+	s << json::get<"depth"_>(event) << ' ';
+
+	char sdbuf[48];
+	if(json::get<"origin_server_ts"_>(event) != json::undefined_number)
+		s << smalldate(sdbuf, json::get<"origin_server_ts"_>(event) / 1000L) << ' ';
+
 	s << event.event_id << ' ';
+	s << json::get<"sender"_>(event) << ' ';
 
 	const auto &state_key
 	{
