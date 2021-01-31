@@ -25,8 +25,8 @@ namespace ircd::m
 	std::string pretty(const event &);
 
 	// Informational content-oriented
-	std::ostream &pretty_msgline(std::ostream &, const event &);
-	std::string pretty_msgline(const event &);
+	std::ostream &pretty_msgline(std::ostream &, const event &, const int &fmt = 0);
+	std::string pretty_msgline(const event &, const int &fmt = 0);
 
 	// Informational pretty for state
 	// io=true will run db queries to enhance w/ more information.

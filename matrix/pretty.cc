@@ -609,40 +609,50 @@ ircd::m::pretty_oneline(std::ostream &s,
 }
 
 std::string
-ircd::m::pretty_msgline(const event &event)
+ircd::m::pretty_msgline(const event &event,
+                        const int &fmt)
 {
 	std::string ret;
 	std::stringstream s;
 	pubsetbuf(s, ret, 4096);
-	pretty_msgline(s, event);
+	pretty_msgline(s, event, fmt);
 	resizebuf(s, ret);
 	return ret;
 }
 
 std::ostream &
 ircd::m::pretty_msgline(std::ostream &s,
-                        const event &event)
+                        const event &event,
+                        const int &fmt)
 {
-	s << json::get<"depth"_>(event) << ' ';
+	const bool text_only
+	(
+		fmt & 1
+	);
 
-	char sdbuf[48];
-	if(json::get<"origin_server_ts"_>(event) != json::undefined_number)
-		s << smalldate(sdbuf, json::get<"origin_server_ts"_>(event) / 1000L) << ' ';
-
-	s << event.event_id << ' ';
-	s << json::get<"sender"_>(event) << ' ';
-
-	const auto &state_key
+	if(!text_only)
 	{
-		json::get<"state_key"_>(event)
-	};
+		s << json::get<"depth"_>(event) << ' ';
 
-	if(defined(state_key) && empty(state_key))
-		s << "\"\"" << ' ';
-	else if(defined(state_key))
-		s << state_key << ' ';
-	else
-		s << "*" << ' ';
+		char sdbuf[48];
+		if(json::get<"origin_server_ts"_>(event) != json::undefined_number)
+			s << smalldate(sdbuf, json::get<"origin_server_ts"_>(event) / 1000L) << ' ';
+
+		s << event.event_id << ' ';
+		s << json::get<"sender"_>(event) << ' ';
+
+		const auto &state_key
+		{
+			json::get<"state_key"_>(event)
+		};
+
+		if(defined(state_key) && empty(state_key))
+			s << "\"\"" << ' ';
+		else if(defined(state_key))
+			s << state_key << ' ';
+		else
+			s << "*" << ' ';
+	}
 
 	const json::object &content
 	{
@@ -652,11 +662,30 @@ ircd::m::pretty_msgline(std::ostream &s,
 	switch(hash(json::get<"type"_>(event)))
 	{
 		case "m.room.message"_:
-			s << json::string(content.get("msgtype")) << ' ';
-			s << json::string(content.get("body")) << ' ';
+		{
+			const json::string msgtype
+			{
+				content["msgtype"]
+			};
+
+			const json::string body
+			{
+				content["body"]
+			};
+
+			if(!text_only)
+				s << msgtype << ' ';
+			else if(msgtype != "m.text")
+				break;
+
+			s << body;
 			break;
+		}
 
 		default:
+			if(text_only)
+				break;
+
 			s << string_view{content};
 			break;
 	}

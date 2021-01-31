@@ -11326,9 +11326,21 @@ console_cmd__room__messages(opt &out, const string_view &line)
 		param.at<int64_t>(1, std::numeric_limits<int64_t>::max())
 	};
 
-	const char order
+	const char order_
 	{
-		param.at(2, "b"_sv).at(0)
+		param.at(2, "B"_sv).at(0)
+	};
+
+	const char order
+	(
+		std::tolower(order_)
+	);
+
+	const bool text_only
+	{
+		false
+		|| order_ == 'B'
+		|| order_ == 'F'
 	};
 
 	ssize_t limit
@@ -11348,8 +11360,9 @@ console_cmd__room__messages(opt &out, const string_view &line)
 		it.seek(depth);
 
 	for(; it && limit >= 0; order == 'b'? --it : ++it, --limit)
-		out << pretty_msgline(*it)
-		    << std::endl;
+		out
+		<< pretty_msgline(*it, text_only? 1: 0)
+		<< std::endl;
 
 	return true;
 }
