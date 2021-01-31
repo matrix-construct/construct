@@ -14,6 +14,9 @@ namespace ircd::m::client_versions
 	static void append_versions(client &, resource::request &, json::stack &);
 	static resource::response get(client &, resource::request &);
 
+	extern conf::item<bool> e2ee_forced_public;
+	extern conf::item<bool> e2ee_forced_private;
+	extern conf::item<bool> e2ee_forced_trusted_private;
 	extern conf::item<bool> m_require_identity_server;
 	extern conf::item<bool> org_matrix_e2e_cross_signing;
 	extern conf::item<bool> org_matrix_label_based_filtering;
@@ -138,6 +141,27 @@ ircd::m::client_versions::m_require_identity_server
 	{ "default",  false,                                             },
 };
 
+decltype(ircd::m::client_versions::e2ee_forced_public)
+ircd::m::client_versions::e2ee_forced_public
+{
+	{ "name",     "ircd.m.client.versions.e2ee_forced.public" },
+	{ "default",  false,                                      },
+};
+
+decltype(ircd::m::client_versions::e2ee_forced_private)
+ircd::m::client_versions::e2ee_forced_private
+{
+	{ "name",     "ircd.m.client.versions.e2ee_forced.private" },
+	{ "default",  false,                                       },
+};
+
+decltype(ircd::m::client_versions::e2ee_forced_trusted_private)
+ircd::m::client_versions::e2ee_forced_trusted_private
+{
+	{ "name",     "ircd.m.client.versions.e2ee_forced.trusted_private" },
+	{ "default",  false,                                               },
+};
+
 void
 ircd::m::client_versions::append_unstable_features(client &client,
                                                    resource::request &request,
@@ -181,6 +205,33 @@ ircd::m::client_versions::append_unstable_features(client &client,
 		out, "m.require_identity_server", json::value
 		{
 			bool(m_require_identity_server)
+		}
+	};
+
+	// e2ee_forced.public
+	json::stack::member
+	{
+		out, "io.element.e2ee_forced.public", json::value
+		{
+			bool(e2ee_forced_public)
+		}
+	};
+
+	// e2ee_forced.private
+	json::stack::member
+	{
+		out, "io.element.e2ee_forced.private", json::value
+		{
+			bool(e2ee_forced_private)
+		}
+	};
+
+	// e2ee_forced.trusted_private
+	json::stack::member
+	{
+		out, "io.element.e2ee_forced.trusted_private", json::value
+		{
+			bool(e2ee_forced_trusted_private)
 		}
 	};
 }
