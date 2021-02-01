@@ -1144,6 +1144,26 @@ ircd::m::vm::retire(eval &eval,
 	sequence::retired = retire;
 }
 
+namespace ircd::m::vm
+{
+	[[gnu::visibility("internal")]]
+	extern stats::item<uint64_t>
+	write_commit_count,
+	write_commit_cycles;
+}
+
+decltype(ircd::m::vm::write_commit_cycles)
+ircd::m::vm::write_commit_cycles
+{
+	{ "name", "ircd.m.vm.write_commit.cycles" },
+};
+
+decltype(ircd::m::vm::write_commit_count)
+ircd::m::vm::write_commit_count
+{
+	{ "name", "ircd.m.vm.write_commit.count" },
+};
+
 void
 ircd::m::vm::write_commit(eval &eval)
 {
@@ -1154,26 +1174,47 @@ ircd::m::vm::write_commit(eval &eval)
 		*eval.txn
 	};
 
-	#ifdef RB_DEBUG
-	const auto db_seq_before(db::sequence(*m::dbs::events));
-	#endif
+	const auto db_seq_before
+	{
+		#ifdef RB_DEBUG
+			db::sequence(*m::dbs::events)
+		#else
+			0UL
+		#endif
+	};
 
-	txn();
+	const uint64_t cyc_before {write_commit_cycles};
+	{
+		const prof::scope_cycles cycles
+		{
+			write_commit_cycles
+		};
 
-	#ifdef RB_DEBUG
-	const auto db_seq_after(db::sequence(*m::dbs::events));
+		txn();
+	}
+
+	++write_commit_count;
+	const auto db_seq_after
+	{
+		#ifdef RB_DEBUG
+			db::sequence(*m::dbs::events)
+		#else
+			0UL
+		#endif
+	};
 
 	log::debug
 	{
-		log, "%s wrote %lu | db seq %lu:%lu %zu cells in %zu bytes to events database ...",
+		log, "%s wrote %lu | db seq:%lu:%lu txn:%lu cells:%zu in bytes:%zu cycles:%lu to events database",
 		loghead(eval),
 		sequence::get(eval),
 		db_seq_before,
 		db_seq_after,
+		uint64_t(write_commit_count),
 		txn.size(),
-		txn.bytes()
+		txn.bytes(),
+		uint64_t(write_commit_cycles) - cyc_before,
 	};
-	#endif
 }
 
 void
