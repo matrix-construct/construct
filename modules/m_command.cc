@@ -77,6 +77,11 @@ try
 		unquote(content.at("room_id"))
 	};
 
+	const json::string &event_id
+	{
+		content["event_id"]
+	};
+
 	const json::string &input_
 	{
 		content.at("body")
@@ -138,6 +143,13 @@ try
 		public_response? "m.room.message" : "ircd.cmd.result"
 	};
 
+	const auto &response_event_id
+	{
+		public_response?
+			string_view{event_id}:
+			string_view{event.event_id}
+	};
+
 	const json::value html_val
 	{
 		html, json::STRING
@@ -163,7 +175,7 @@ try
 	{
 		json::stringify(reply_buf, json::members
 		{
-			{ "event_id",  event.event_id  },
+			{ "event_id",  event_id },
 		})
 	};
 
@@ -172,9 +184,9 @@ try
 	{
 		json::stringify(relates_buf, json::members
 		{
-			{ "event_id",      event.event_id  },
-			{ "rel_type",      "ircd.cmd"      },
-			{ "m.in_reply_to", in_reply_to     },
+			{ "event_id",       event_id      },
+			{ "rel_type",       "ircd.cmd"    },
+			{ "m.in_reply_to",  in_reply_to   },
 		})
 	};
 

@@ -24,7 +24,8 @@ save_transaction_id(const m::event &,
 static m::event::id::buf
 handle_command(client &,
                const m::resource::request &,
-               const room &);
+               const m::room &,
+               const string_view & = {});
 
 m::hookfn<m::vm::eval &>
 save_transaction_id_hookfn
@@ -189,7 +190,7 @@ put__send(client &client,
 	{
 		const auto cmd_event_id
 		{
-			handle_command(client, request, room)
+			handle_command(client, request, room, event_id)
 		};
 	}
 
@@ -205,7 +206,8 @@ put__send(client &client,
 m::event::id::buf
 handle_command(client &client,
                const m::resource::request &request,
-               const room &room)
+               const m::room &room,
+               const string_view &echo_id)
 {
 	const user::room user_room
 	{
@@ -219,6 +221,7 @@ handle_command(client &client,
 			{ "msgtype",  "m.text"         },
 			{ "body",     request["body"]  },
 			{ "room_id",  room.room_id     },
+			{ "event_id", echo_id          },
 		})
 	};
 
