@@ -13,6 +13,11 @@
 using namespace ircd::m;
 using namespace ircd;
 
+static bool
+append_event(const m::resource::request &request,
+             json::stack::array &,
+             const m::event::idx &event_idx);
+
 static m::resource::response
 get__state(client &client,
            const m::resource::request &request,
@@ -155,13 +160,40 @@ get__state(client &client,
 	};
 
 	state.for_each([&request, &top]
-	(const m::event &event)
+	(const m::event::idx &event_idx)
 	{
-		if(!visible(event, request.user_id))
-			return;
-
-		top.append(event);
+		append_event(request, top, event_idx);
 	});
 
 	return std::move(response);
+}
+
+bool
+append_event(const m::resource::request &request,
+             json::stack::array &array,
+             const event::idx &event_idx)
+{
+	const m::event::fetch event
+	{
+		std::nothrow, event_idx
+	};
+
+	if(unlikely(!event.valid))
+		return false;
+
+	if(!visible(event, request.user_id))
+		return false;
+
+	m::event::append::opts opts;
+	opts.event_idx = &event_idx;
+	opts.user_id = &request.user_id;
+	opts.query_redacted = false;
+	opts.query_prev_state = false;
+	opts.query_txnid = false;
+	m::event::append
+	{
+		array, event, opts
+	};
+
+	return true;
 }
