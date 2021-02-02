@@ -55,11 +55,25 @@ ircd::m::visible(const m::event &event,
 	if(empty(mxid))
 		return false;
 
-	if(m::valid(m::id::USER, mxid))
-		return visible_to_user(room, history_visibility, mxid, event);
-
 	if(rfc3986::valid_remote(std::nothrow, mxid))
 		return visible_to_node(room, mxid, event);
+
+	if(m::valid(m::id::USER, mxid))
+	{
+		const m::user::id user_id
+		{
+			mxid
+		};
+
+		if(visible_to_user(room, history_visibility, user_id, event))
+			return true;
+
+		// Unrestricted visibility for opers
+		if(is_oper(user_id))
+			return true;
+
+		return false;
+	}
 
 	throw m::UNSUPPORTED
 	{
