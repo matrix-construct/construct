@@ -19,6 +19,7 @@ namespace ircd::m::bridge
 	struct query;
 
 	bool exists(const string_view &id);
+	string_view make_uri(const mutable_buffer &, const config &, const string_view &path);
 
 	extern log::log log;
 }

@@ -8,11 +8,36 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+namespace ircd::m::bridge
+{
+	static thread_local char tmp[2][512];
+}
+
 decltype(ircd::m::bridge::log)
 ircd::m::bridge::log
 {
 	"m.bridge"
 };
+
+ircd::string_view
+ircd::m::bridge::make_uri(const mutable_buffer &buf,
+                          const config &config,
+                          const string_view &path)
+{
+	const rfc3986::uri base_url
+	{
+		at<"url"_>(config)
+	};
+
+	char hs_token[256];
+	return fmt::sprintf
+	{
+		buf, "%s/_matrix/app/v1/%s?access_token=%s",
+		base_url.path,
+		path,
+		url::encode(hs_token, at<"hs_token"_>(config)),
+	};
+}
 
 bool
 ircd::m::bridge::exists(const string_view &id)
@@ -23,11 +48,6 @@ ircd::m::bridge::exists(const string_view &id)
 //
 // query
 //
-
-namespace ircd::m::bridge
-{
-	thread_local char urlencbuf[512];
-}
 
 decltype(ircd::m::bridge::query::timeout)
 ircd::m::bridge::query::timeout
@@ -48,13 +68,10 @@ ircd::m::bridge::query::query(const config &config,
 }
 ,uri
 {
-	fmt::sprintf
+	make_uri(buf, config, fmt::sprintf
 	{
-		buf, "%s/_matrix/app/v1/rooms/%s?access_token=%s",
-		base_url.path,
-		url::encode(urlencbuf, alias),
-		at<"hs_token"_>(config),
-	}
+		tmp[0], "rooms/%s", string_view{alias}
+	})
 }
 ,wb
 {
@@ -92,13 +109,10 @@ ircd::m::bridge::query::query(const config &config,
 }
 ,uri
 {
-	fmt::sprintf
+	make_uri(buf, config, fmt::sprintf
 	{
-		buf, "%s/_matrix/app/v1/users/%s?access_token=%s",
-		base_url.path,
-		url::encode(urlencbuf, user_id),
-		at<"hs_token"_>(config),
-	}
+		tmp[0], "users/%s", string_view{user_id}
+	})
 }
 ,wb
 {
