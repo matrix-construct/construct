@@ -18,16 +18,19 @@ ircd::m::room::purge(const room &room)
 	};
 
 	room.for_each([&txn, &ret]
-	(const m::event::idx &idx)
+	(const m::event::idx &event_idx)
 	{
 		const m::event::fetch event
 		{
-			idx
+			std::nothrow, event_idx
 		};
+
+		if(!event.valid)
+			return;
 
 		m::dbs::write_opts opts;
 		opts.op = db::op::DELETE;
-		opts.event_idx = idx;
+		opts.event_idx = event_idx;
 		m::dbs::write(txn, event, opts);
 		++ret;
 	});
