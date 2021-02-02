@@ -133,9 +133,14 @@ get__state(client &client,
 			string_view{room_id}
 		};
 
+	const json::object content
+	{
+		json::get<"content"_>(event)
+	};
+
 	return m::resource::response
 	{
-		client, event.source
+		client, content
 	};
 }
 
