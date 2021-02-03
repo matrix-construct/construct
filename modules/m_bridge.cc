@@ -384,6 +384,16 @@ catch(const std::exception &e)
 	return range_.first;
 }
 
+namespace ircd::m::bridge
+{
+	static bool pick_alias(const config &, const event::idx &, const event &, const room &, const json::array &);
+	static bool pick_room(const config &, const event::idx &, const event &, const room &, const json::array &);
+	static bool pick_user(const config &, const event::idx &, const event &, const json::array &, const m::user::id &);
+	static bool pick_user(const config &, const event::idx &, const event &, const room &, const json::array &);
+	static bool pick(const config &, const event::idx &, const event &);
+	static bool append(const config &, json::stack::array &, events::range &, size_t &, const event::idx &, const event &);
+}
+
 size_t
 ircd::m::bridge::make_txn(const config &config,
                           json::stack &out,
@@ -400,32 +410,202 @@ ircd::m::bridge::make_txn(const config &config,
 	};
 
 	size_t count {0};
-	m::events::for_each(events::range{range}, [&]
-	(const event::idx &event_idx, m::event event)
+	m::events::for_each(m::events::range{range}, [&]
+	(const event::idx &event_idx, const event &event)
 	{
-		if(m::internal(json::get<"room_id"_>(event)))
+		if(!pick(config, event_idx, event))
 			return true;
 
-		m::event::append::opts opts;
-		opts.event_idx = &event_idx;
-		opts.query_txnid = false;
-		opts.query_prev_state = true;
-		opts.query_redacted = false;
-		m::event::append
-		{
-			events, event
-		};
+		if(!append(config, events, range, count, event_idx, event))
+			return false;
 
-		range.second = event_idx;
-		++count;
-
-		const bool sufficient_buffer
-		{
-			out.remaining() > event::MAX_SIZE + 16_KiB
-		};
-
-		return sufficient_buffer;
+		return true;
 	});
 
 	return count;
+}
+
+bool
+ircd::m::bridge::append(const config &config,
+                        json::stack::array &events,
+                        events::range &range,
+                        size_t &count,
+                        const event::idx &event_idx,
+                        const event &event)
+{
+	event::append::opts opts;
+	opts.event_idx = &event_idx;
+	opts.query_txnid = false;
+	opts.query_prev_state = true;
+	opts.query_redacted = false;
+	event::append
+	{
+		events, event, opts
+	};
+
+	log::debug
+	{
+		log, "[%s] ADD %s in %s idx:%lu txn:%lu:%lu events:%zu buffer:%zu",
+		json::get<"id"_>(config),
+		string_view{event.event_id},
+		json::get<"room_id"_>(event),
+		event_idx,
+		range.first,
+		range.second,
+		count,
+		events.s->remaining(),
+	};
+
+	++count;
+	range.second = event_idx;
+	const bool sufficient_buffer
+	{
+		events.s->remaining() > event::MAX_SIZE + 16_KiB
+	};
+
+	return sufficient_buffer;
+}
+
+bool
+ircd::m::bridge::pick(const config &config,
+                      const event::idx &event_idx,
+                      const event &event)
+{
+	const room room
+	{
+		json::get<"room_id"_>(event)
+	};
+
+	if(internal(room))
+		return false;
+
+	const bridge::namespaces &namespaces
+	{
+		json::get<"namespaces"_>(config)
+	};
+
+	return false
+	|| pick_user(config, event_idx, event, room, json::get<"users"_>(namespaces))
+	|| pick_room(config, event_idx, event, room, json::get<"rooms"_>(namespaces))
+	|| pick_alias(config, event_idx, event, room, json::get<"aliases"_>(namespaces))
+	;
+}
+
+bool
+ircd::m::bridge::pick_user(const config &config,
+                           const event::idx &event_idx,
+                           const event &event,
+                           const room &room,
+                           const json::array &namespaces)
+{
+	const m::user::id &sender
+	{
+		json::get<"sender"_>(event)
+	};
+
+	// Bridged user is the sender
+	if(pick_user(config, event_idx, event, namespaces, sender))
+		return true;
+
+	// Bridged user is target of a membership state transition
+	if(json::get<"type"_>(event) == "m.room.member")
+	{
+		// event::conforms ensures this is always a valid user_id
+		const user::id &state_key
+		{
+			json::get<"state_key"_>(event)
+		};
+
+		if(pick_user(config, event_idx, event, namespaces, state_key))
+			return true;
+	}
+
+	const room::members members
+	{
+		room
+	};
+
+	// Bridged user is in the room.
+	return !members.for_each("join", my_host(), [&]
+	(const id::user &user_id)
+	{
+		return !pick_user(config, event_idx, event, namespaces, user_id);
+	});
+}
+
+bool
+ircd::m::bridge::pick_user(const config &config,
+                           const event::idx &event_idx,
+                           const event &event,
+                           const json::array &namespaces,
+                           const user::id &user_id)
+{
+	for(const json::object object : namespaces)
+	{
+		const bridge::namespace_ ns
+		{
+			object
+		};
+
+		const globular_imatch match
+		{
+			json::get<"regex"_>(ns)
+		};
+
+		if(match(user_id))
+			return true;
+	}
+
+	return false;
+}
+
+bool
+ircd::m::bridge::pick_room(const config &config,
+                           const event::idx &event_idx,
+                           const event &event,
+                           const room &room,
+                           const json::array &namespaces)
+{
+	for(const json::object object : namespaces)
+	{
+		const bridge::namespace_ ns
+		{
+			object
+		};
+
+		const globular_imatch match
+		{
+			json::get<"regex"_>(ns)
+		};
+
+		if(match(room.room_id))
+			return true;
+	}
+
+	return false;
+}
+
+bool
+ircd::m::bridge::pick_alias(const config &config,
+                            const event::idx &event_idx,
+                            const event &event,
+                            const room &room,
+                            const json::array &namespaces)
+{
+	for(const json::object object : namespaces)
+	{
+		const bridge::namespace_ ns
+		{
+			object
+		};
+
+		const globular_imatch match
+		{
+			json::get<"regex"_>(ns)
+		};
+
+		//TODO: XXX
+	}
+
+	return false;
 }
