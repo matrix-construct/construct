@@ -1331,6 +1331,23 @@ catch(const std::out_of_range &e)
 	return ""_sv;
 }
 
+enum ircd::log::level
+ircd::http::severity(const enum category &category)
+noexcept
+{
+	switch(category)
+	{
+		case http::category::NONE:        return log::level::DERROR;
+		case http::category::SUCCESS:     return log::level::DEBUG;
+		case http::category::REDIRECT:    return log::level::DWARNING;
+		case http::category::ERROR:       return log::level::DERROR;
+		case http::category::SERVER:      return log::level::DERROR;
+		case http::category::INTERNAL:    return log::level::ERROR;
+		default:
+		case http::category::UNKNOWN:     return log::level::DWARNING;
+	}
+}
+
 enum ircd::http::category
 ircd::http::category(const string_view &str)
 noexcept
@@ -1368,6 +1385,9 @@ noexcept
 	if(ushort(code) < 500)
 		return category::ERROR;
 
+	if(ushort(code) == 500)
+		return category::INTERNAL;
+
 	if(ushort(code) < 600)
 		return category::SERVER;
 
@@ -1386,6 +1406,7 @@ noexcept
 		case category::REDIRECT:  return "REDIRECT";
 		case category::ERROR:     return "ERROR";
 		case category::SERVER:    return "SERVER";
+		case category::INTERNAL:  return "INTERNAL";
 		default:
 		case category::UNKNOWN:   return "UNKNOWN";
 	}

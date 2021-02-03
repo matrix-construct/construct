@@ -30,6 +30,7 @@ namespace ircd::http
 	string_view category(const enum category &) noexcept;
 	enum category category(const enum code &) noexcept;
 	enum category category(const string_view &) noexcept;
+	enum log::level severity(const enum category &) noexcept;
 
 	void writeline(window_buffer &);
 	void writeline(window_buffer &, const window_buffer::closure &);
@@ -48,12 +49,13 @@ enum class ircd::http::category
 :uint8_t
 {
 	NONE          = 0,   ///< Sentinel
-	INFO          = 1,   ///< Informational
-	SUCCESS       = 2,   ///< Successful
-	REDIRECT      = 3,   ///< Redirectional
-	ERROR         = 4,   ///< Erroneous
-	SERVER        = 6,   ///< Server Error
-	UNKNOWN       = 7,   /// Pair with default case in switch/tables
+	INFO          = 1,   ///< Informational  (100-199)
+	SUCCESS       = 2,   ///< Successful     (200-299)
+	REDIRECT      = 3,   ///< Redirectional  (300-399)
+	ERROR         = 4,   ///< Client Error   (400-499)
+	SERVER        = 5,   ///< Server Error   (501-599)
+	INTERNAL      = 6,   ///< Internal Error (500 only)
+	UNKNOWN       = 7,   ///< Pair with default case in switch/tables
 };
 
 /// HTTP Status codes.

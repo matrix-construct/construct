@@ -1278,17 +1278,7 @@ ircd::resource::response::response(client &client,
 	#ifdef RB_DEBUG
 	const log::level level
 	{
-		ushort(code) >= 200 && ushort(code) < 300?
-			log::level::DEBUG:
-		ushort(code) >= 300 && ushort(code) < 400?
-			log::level::DWARNING:
-		ushort(code) >= 400 && ushort(code) < 500?
-			log::level::DERROR:
-		ushort(code) == 500?
-			log::level::ERROR:
-		ushort(code) > 500?
-			log::level::DERROR:
-			log::level::ERROR
+		http::severity(http::category(code))
 	};
 
 	log::logf
