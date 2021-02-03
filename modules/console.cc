@@ -16901,7 +16901,7 @@ console_cmd__bridge(opt &out, const string_view &line)
 	if(!id)
 	{
 		m::bridge::config::for_each([&out]
-		(const auto &event_idx, const m::bridge::config &config)
+		(const auto &event_idx, const auto &event, const m::bridge::config &config)
 		{
 			out
 			<< json::get<"id"_>(config)
@@ -16913,7 +16913,7 @@ console_cmd__bridge(opt &out, const string_view &line)
 	}
 
 	m::bridge::config::get(id, [&out]
-	(const auto &event_idx, const m::bridge::config &config)
+	(const auto &event_idx, const auto &event, const m::bridge::config &config)
 	{
 		for(const auto &[key, val] : config.source)
 			out
@@ -16946,7 +16946,7 @@ console_cmd__bridge__query(opt &out, const string_view &line)
 
 	std::string config;
 	m::bridge::config::get(bridge_id, [&config]
-	(const auto &, const auto &object)
+	(const auto &, const auto &, const auto &object)
 	{
 		config = object.source;
 	});

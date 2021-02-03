@@ -104,16 +104,6 @@ try
 		control_room_id
 	};
 
-	const m::room::id::buf bridge_room_id
-	{
-		"bridge", origin(*this)
-	};
-
-	const m::room bridge_room
-	{
-		bridge_room_id
-	};
-
 	if(my_id.hostname() == "localhost")
 		log::warning
 		{
@@ -133,7 +123,6 @@ try
 	create(public_room, me);
 	create(alias_room, me);
 	create(control_room, me);
-	create(bridge_room, me);
 
 	send(my_room, me, "m.room.name", "",
 	{

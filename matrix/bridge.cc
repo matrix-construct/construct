@@ -39,12 +39,6 @@ ircd::m::bridge::make_uri(const mutable_buffer &buf,
 	};
 }
 
-bool
-ircd::m::bridge::exists(const string_view &id)
-{
-	return config::idx(std::nothrow, id);
-}
-
 //
 // query
 //
@@ -143,29 +137,11 @@ ircd::m::bridge::query::query(const config &config,
 //
 
 bool
-ircd::m::bridge::config::for_each(const closure_bool &closure)
+ircd::m::bridge::config::exists(const string_view &id)
 {
-	const m::room::id::buf bridge_room_id
+	return get(std::nothrow, id, []
+	(const auto &, const auto &, const auto &)
 	{
-		"bridge", my_host()
-	};
-
-	const m::room::state state
-	{
-		bridge_room_id
-	};
-
-	return state.for_each("ircd.bridge", [&closure]
-	(const string_view &type, const string_view &state_key, const event::idx &event_idx)
-	{
-		bool ret{true};
-		m::get(std::nothrow, event_idx, "content", [&event_idx, &closure, &ret]
-		(const json::object &content)
-		{
-			ret = closure(event_idx, content);
-		});
-
-		return ret;
 	});
 }
 
@@ -173,11 +149,11 @@ void
 ircd::m::bridge::config::get(const string_view &id,
                              const closure &closure)
 {
-	if(!get(std::nothrow, id, closure))
+	if(unlikely(!get(std::nothrow, id, closure)))
 		throw m::NOT_FOUND
 		{
-			"Configuration for appservice '%s' not found.",
-			id
+			"No bridge config found for '%s'",
+			id,
 		};
 }
 
@@ -186,49 +162,68 @@ ircd::m::bridge::config::get(std::nothrow_t,
                              const string_view &id,
                              const closure &closure)
 {
-	const auto event_idx
+	return !config::for_each([&id, &closure]
+	(const auto &event_idx, const auto &event, const config &config)
 	{
-		idx(std::nothrow, id)
-	};
+		if(json::get<"id"_>(config) != id)
+			return true;
 
-	return m::get(std::nothrow, event_idx, "content", [&event_idx, &closure]
-	(const json::object &content)
-	{
-		closure(event_idx, content);
+		closure(event_idx, event, config);
+		return false;
 	});
 }
 
-ircd::m::event::idx
-ircd::m::bridge::config::idx(const string_view &id)
+bool
+ircd::m::bridge::config::for_each(const closure_bool &closure)
 {
-	const auto ret
+	return events::type::for_each_in("ircd.bridge", [&closure]
+	(const string_view &, const event::idx &event_idx)
 	{
-		idx(std::nothrow, id)
-	};
-
-	if(!ret)
-		throw m::NOT_FOUND
+		const m::event::fetch event
 		{
-			"Configuration for appservice '%s' not found.",
-			id
+			std::nothrow, event_idx
 		};
 
-	return ret;
-}
+		if(unlikely(!event.valid))
+			return true;
 
-ircd::m::event::idx
-ircd::m::bridge::config::idx(std::nothrow_t,
-                             const string_view &id)
-{
-	const m::room::id::buf bridge_room_id
-	{
-		"bridge", my_host()
-	};
+		if(!my(event))
+			return true;
 
-	const m::room::state state
-	{
-		bridge_room_id
-	};
+		if(!defined(json::get<"state_key"_>(event)))
+			return true;
 
-	return state.get("ircd.bridge", id);
+		const bridge::config config
+		{
+			json::get<"content"_>(event)
+		};
+
+		if(!json::get<"id"_>(config))
+			return true;
+
+		// the state_key has to match the id for now
+		if(json::get<"id"_>(config) != json::get<"state_key"_>(event))
+			return true;
+
+		// filter replaced state
+		if(room::state::next(event_idx))
+			return true;
+
+		// filter redacted state
+		if(redacted(event_idx))
+			return true;
+
+		const user::id sender
+		{
+			json::get<"sender"_>(event)
+		};
+
+		if(!is_oper(sender))
+			return true;
+
+		if(likely(closure(event_idx, event, config)))
+			return true;
+
+		return false;
+	});
 }

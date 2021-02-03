@@ -18,7 +18,6 @@ namespace ircd::m::bridge
 	struct config;
 	struct query;
 
-	bool exists(const string_view &id);
 	string_view make_uri(const mutable_buffer &, const config &, const string_view &path);
 
 	extern log::log log;
@@ -106,16 +105,13 @@ struct ircd::m::bridge::config
 	json::property<name::protocols, json::array>
 >
 {
-	using closure_bool = std::function<bool (const event::idx &, const config &)>;
-	using closure = std::function<void (const event::idx &, const config &)>;
-
-	static event::idx idx(std::nothrow_t, const string_view &id);
-	static event::idx idx(const string_view &id);
-
-	static bool get(std::nothrow_t, const string_view &id, const closure &);
-	static void get(const string_view &id, const closure &);
+	using closure_bool = std::function<bool (const event::idx &, const event &, const config &)>;
+	using closure = std::function<void (const event::idx &, const event &, const config &)>;
 
 	static bool for_each(const closure_bool &);
+	static bool get(std::nothrow_t, const string_view &id, const closure &);
+	static void get(const string_view &id, const closure &);
+	static bool exists(const string_view &id);
 
 	using super_type::tuple;
 };
