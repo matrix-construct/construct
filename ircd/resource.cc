@@ -915,6 +915,20 @@ ircd::resource::response::chunked::finish(const bool psh)
 	if(psh)
 		net::flush(*c->sock);
 
+	assert(count > 0);
+	char tmbuf[32];
+	log::debug
+	{
+		log, "%s HTTP --- `%s' in %s wrote:%zu flushed:%zu chunks:%u psh:%b",
+		c->loghead(),
+		c->request.head.path,
+		pretty(tmbuf, c->timer.at<microseconds>(), true),
+		wrote,
+		flushed,
+		count - 1,    // no count terminator chunk
+		psh,
+	};
+
 	c = nullptr;
 	return true;
 }
