@@ -1265,10 +1265,10 @@ ircd::resource::response::response(client &client,
 			"HTTP headers too large for buffer of %zu", sizeof(head_buf)
 		};
 
-	size_t wrote{0};
+	size_t wrote_head {0};
 	std::exception_ptr eptr; try
 	{
-		wrote = client.write_all(head.completed());
+		wrote_head += client.write_all(head.completed());
 	}
 	catch(...)
 	{
@@ -1284,7 +1284,7 @@ ircd::resource::response::response(client &client,
 	log::logf
 	{
 		log, level,
-		"%s HTTP %u `%s' %s in %s; %s content-length:%s wrote:%zu %s%s",
+		"%s HTTP %u `%s' %s in %s; %s content-length:%s head-length:%zu %s%s",
 		client.loghead(),
 		uint(code),
 		client.request.head.path,
@@ -1294,7 +1294,7 @@ ircd::resource::response::response(client &client,
 		ssize_t(content_length) >= 0?
 			lex_cast(content_length):
 			"chunked"_sv,
-		wrote,
+		wrote_head,
 		eptr?
 			"error:"_sv:
 			string_view{},
@@ -1302,10 +1302,10 @@ ircd::resource::response::response(client &client,
 	};
 	#endif
 
-	if(eptr)
+	if(unlikely(eptr))
 		std::rethrow_exception(eptr);
 
-	assert(wrote == size(head.completed()));
+	assert(wrote_head == size(head.completed()));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
