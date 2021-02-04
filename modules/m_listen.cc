@@ -219,7 +219,19 @@ load_listener(const m::event &event)
 		json::get<"content"_>(event)
 	};
 
-	return load_listener(name, opts);
+	if(!load_listener(name, opts))
+		return false;
+
+	log::notice
+	{
+		"Listener '%s' configured for %s:%s by %s",
+		name,
+		opts["host"],
+		opts["port"],
+		string_view{event.event_id},
+	};
+
+	return true;
 }
 
 ctx::context
