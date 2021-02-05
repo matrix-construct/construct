@@ -386,6 +386,7 @@ catch(const std::exception &e)
 
 namespace ircd::m::bridge
 {
+	static bool pick_alias(const config &, const event::idx &, const event &, const json::array &, const m::room::alias &);
 	static bool pick_alias(const config &, const event::idx &, const event &, const room &, const json::array &);
 	static bool pick_room(const config &, const event::idx &, const event &, const room &, const json::array &);
 	static bool pick_user(const config &, const event::idx &, const event &, const json::array &, const m::user::id &);
@@ -592,6 +593,25 @@ ircd::m::bridge::pick_alias(const config &config,
                             const room &room,
                             const json::array &namespaces)
 {
+	const m::room::aliases aliases
+	{
+		room
+	};
+
+	return !aliases.for_each(my_host(), [&]
+	(const room::alias &alias)
+	{
+		return !pick_alias(config, event_idx, event, namespaces, alias);
+	});
+}
+
+bool
+ircd::m::bridge::pick_alias(const config &config,
+                            const event::idx &event_idx,
+                            const event &event,
+                            const json::array &namespaces,
+                            const m::room::alias &room_alias)
+{
 	for(const json::object object : namespaces)
 	{
 		const bridge::namespace_ ns
@@ -604,7 +624,8 @@ ircd::m::bridge::pick_alias(const config &config,
 			json::get<"regex"_>(ns)
 		};
 
-		//TODO: XXX
+		if(match(room_alias))
+			return true;
 	}
 
 	return false;
