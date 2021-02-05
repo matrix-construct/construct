@@ -18,6 +18,13 @@ handle_receipt_m_read(client &client,
                       const m::room::id &room_id,
                       const m::event::id &event_id);
 
+static conf::item<bool>
+receipt_read_attention
+{
+	{ "name",     "ircd.m.receipt.read.attention" },
+	{ "default",  false                           },
+};
+
 m::resource::response
 post__receipt(client &client,
               const m::resource::request &request,
@@ -67,22 +74,61 @@ handle_receipt_m_read(client &client,
                       const m::room::id &room_id,
                       const m::event::id &event_id)
 {
-	// Check if event_id is more recent than the last receipt's event_id.
-	// If it's not the latest we'll mark it as hidden and it won't be sent
-	// over the federation or to clients. It will then be used to indicate
-	// the user's eye track as an attention head.
+	const bool client_hidden
+	{
+		// Spec hidden; defaults to false.
+		request.get("m.hidden", false)
+	};
+
 	const bool freshest
 	{
-		m::receipt::freshest(room_id, request.user_id, event_id)
+		// If the receipt already to be marked hidden we can elide queries.
+		client_hidden
+
+		// Check if deepest receipt in the room.
+		|| m::receipt::freshest(room_id, request.user_id, event_id)
 	};
 
 	const bool ignoring
 	{
+		// If the receipt already to be marked hidden we can elide queries.
+		(client_hidden || !freshest)
+
 		// Check if user wants to prevent sending receipts to this room.
-		m::receipt::ignoring(request.user_id, room_id)
+		|| m::receipt::ignoring(request.user_id, room_id)
 
 		// Check if user wants to prevent based on this event's specifics.
 		|| m::receipt::ignoring(request.user_id, event_id)
+	};
+
+	const bool hidden
+	{
+		false
+
+		// Client wants it hidden.
+		|| client_hidden
+
+		// The freshest receipt is the one on the effectively deepest event
+		// in the room and what we'll end up revealing to the federation.
+		|| !freshest
+
+		// Feature to not send receipts based on configurable state in user's room
+		|| ignoring
+	};
+
+	// When the receipt is not federated (marked as hidden) we don't need
+	// to save it locally unless configured for advanced eye-tracking
+	// features; bail out here.
+	if(!receipt_read_attention && hidden)
+		return;
+
+	const bool add_hidden
+	{
+		// Has to be hidden to add m.hidden
+		hidden
+
+		// Don't need to add hidden if client already made it hidden
+		&& !client_hidden
 	};
 
 	// The options object starts with anything in the request content, which
@@ -99,12 +145,11 @@ handle_receipt_m_read(client &client,
 	// transmitting it to local and remote parties. This behavior is achieved
 	// by the m.hidden tag. If the options do not contain this tag we add it.
 	std::string options_buf;
-	if(!freshest || ignoring)
-		if(!options.get("m.hidden", false))
-			options = options_buf = json::replace(options,
-			{
-				{ "m.hidden", true }
-			});
+	if(add_hidden)
+		options = options_buf = json::replace(options,
+		{
+			{ "m.hidden", true }
+		});
 
 	m::receipt::read(room_id, request.user_id, event_id, options);
 }
