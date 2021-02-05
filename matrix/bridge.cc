@@ -19,6 +19,36 @@ ircd::m::bridge::log
 	"m.bridge"
 };
 
+ircd::json::object
+ircd::m::bridge::protocol(const mutable_buffer &buf,
+                          const config &config,
+                          const string_view &name)
+{
+	const string_view &uri
+	{
+		make_uri(tmp[0], config, fmt::sprintf
+		{
+			tmp[1], "thirdparty/protocol/%s",
+			url::encode(tmp[2], name),
+		})
+	};
+
+	switch(const query query{config, uri, buf}; query.code)
+	{
+		case http::OK:
+			return json::object
+			{
+				query.request.in.content
+			};
+
+		default:
+			throw http::error
+			{
+				query.code
+			};
+	}
+}
+
 bool
 ircd::m::bridge::exists(const config &config,
                         const m::user::id &user_id)

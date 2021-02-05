@@ -23,6 +23,8 @@ namespace ircd::m::bridge
 	bool exists(const config &, const m::user::id &);
 	bool exists(const config &, const m::room::alias &);
 
+	json::object protocol(const mutable_buffer &, const config &, const string_view &name);
+
 	extern log::log log;
 }
 

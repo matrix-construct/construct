@@ -16990,6 +16990,45 @@ console_cmd__bridge__exists(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__bridge__protocol(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"id", "protocol"
+	}};
+
+	const string_view &id
+	{
+		param["id"]
+	};
+
+	const string_view &protocol
+	{
+		param["protocol"]
+	};
+
+	m::bridge::config::get(id, [&out, &protocol]
+	(const auto &event_idx, const auto &event, const m::bridge::config &config)
+	{
+		const unique_mutable_buffer buf
+		{
+			8_KiB
+		};
+
+		const json::object &info
+		{
+			m::bridge::protocol(buf, config, protocol)
+		};
+
+		out
+		<< string_view{info}
+		<< std::endl;
+	});
+
+	return true;
+}
+
 //
 // icu
 //
