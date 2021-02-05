@@ -2880,6 +2880,9 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 	    << "PEAK OBSERVED"
 	    << " "
 	    << std::setw(25)
+	    << "IN CORE"
+	    << " "
+	    << std::setw(25)
 	    << "LIMIT"
 	    << " "
 	    << std::setw(6)
@@ -2932,6 +2935,9 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 
 		out << " "
 		    << std::setw(25) << std::right << pretty(pbuf, iec(ctx::stack::get(ctx).peak));
+
+		out << " "
+		    << std::setw(25) << std::right << pretty(pbuf, iec(allocator::incore(ctx::stack::get(ctx).buf)));
 
 		out << " "
 		    << std::setw(25) << std::right << pretty(pbuf, iec(ctx::stack::get(ctx).max));
