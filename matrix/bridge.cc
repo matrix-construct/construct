@@ -10,7 +10,7 @@
 
 namespace ircd::m::bridge
 {
-	static thread_local char tmp[2][512];
+	static thread_local char tmp[4][512];
 }
 
 decltype(ircd::m::bridge::log)
@@ -18,6 +18,56 @@ ircd::m::bridge::log
 {
 	"m.bridge"
 };
+
+bool
+ircd::m::bridge::exists(const config &config,
+                        const m::user::id &user_id)
+{
+	const string_view &uri
+	{
+		make_uri(tmp[0], config, fmt::sprintf
+		{
+			tmp[1], "users/%s",
+			url::encode(tmp[2], user_id),
+		})
+	};
+
+	switch(const query query{config, uri}; query.code)
+	{
+		case http::OK:          return true;
+		case http::NOT_FOUND:   return false;
+		default:
+			throw http::error
+			{
+				query.code
+			};
+	}
+}
+
+bool
+ircd::m::bridge::exists(const config &config,
+                        const m::room::alias &room_alias)
+{
+	const string_view &uri
+	{
+		make_uri(tmp[0], config, fmt::sprintf
+		{
+			tmp[1], "rooms/%s",
+			url::encode(tmp[2], room_alias),
+		})
+	};
+
+	switch(const query query{config, uri}; query.code)
+	{
+		case http::OK:          return true;
+		case http::NOT_FOUND:   return false;
+		default:
+			throw http::error
+			{
+				query.code
+			};
+	}
+}
 
 ircd::string_view
 ircd::m::bridge::make_uri(const mutable_buffer &buf,
@@ -47,11 +97,12 @@ decltype(ircd::m::bridge::query::timeout)
 ircd::m::bridge::query::timeout
 {
 	{ "name",      "ircd.m.bridge.query.timeout"  },
-	{ "default",   5L                             },
+	{ "default",   10L                            },
 };
 
 ircd::m::bridge::query::query(const config &config,
-                              const m::room::alias &alias)
+                              const string_view &uri,
+                              const mutable_buffer &in_body)
 :base_url
 {
 	at<"url"_>(config)
@@ -62,14 +113,11 @@ ircd::m::bridge::query::query(const config &config,
 }
 ,uri
 {
-	make_uri(buf, config, fmt::sprintf
-	{
-		tmp[0], "rooms/%s", string_view{alias}
-	})
+	uri
 }
 ,wb
 {
-	buf + size(uri)
+	buf
 }
 ,hypertext
 {
@@ -78,52 +126,16 @@ ircd::m::bridge::query::query(const config &config,
 	"GET",
 	uri,
 }
-,request
+,sopts
 {
-	net::hostport  { base_url.remote                },
-	server::out    { wb.completed(),  {}            },
-	server::in     { wb.remains(),    wb.remains()  },
-}
-,code
-{
-	request.get(seconds(timeout))
-}
-{
-}
-
-ircd::m::bridge::query::query(const config &config,
-                              const m::user::id &user_id)
-:base_url
-{
-	at<"url"_>(config)
-}
-,buf
-{
-	8_KiB
-}
-,uri
-{
-	make_uri(buf, config, fmt::sprintf
-	{
-		tmp[0], "users/%s", string_view{user_id}
-	})
-}
-,wb
-{
-	buf + size(uri)
-}
-,hypertext
-{
-	wb,
-	base_url.remote,
-	"GET",
-	uri,
+	false, // http_exceptions
 }
 ,request
 {
-	net::hostport  { base_url.remote                },
-	server::out    { wb.completed(),  {}            },
-	server::in     { wb.remains(),    wb.remains()  },
+	net::hostport  { base_url.remote                                          },
+	server::out    { wb.completed(),  {}                                      },
+	server::in     { wb.remains(),    !empty(in_body)? in_body: wb.remains()  },
+	&sopts,
 }
 ,code
 {

@@ -16927,7 +16927,7 @@ console_cmd__bridge(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__bridge__query(opt &out, const string_view &line)
+console_cmd__bridge__exists(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -16951,25 +16951,18 @@ console_cmd__bridge__query(opt &out, const string_view &line)
 		config = object.source;
 	});
 
+	bool exists {false};
 	switch(m::sigil(mxid))
 	{
 		case m::id::USER:
 		{
-			m::bridge::query
-			{
-				m::bridge::config{config}, m::user::id{mxid}
-			};
-
+			exists = m::bridge::exists(m::bridge::config(config), m::user::id(mxid));
 			break;
 		}
 
 		case m::id::ROOM_ALIAS:
 		{
-			m::bridge::query
-			{
-				m::bridge::config{config}, m::room::alias{mxid}
-			};
-
+			exists = m::bridge::exists(m::bridge::config(config), m::room::alias(mxid));
 			break;
 		}
 
@@ -16980,6 +16973,14 @@ console_cmd__bridge__query(opt &out, const string_view &line)
 			};
 	}
 
+	out
+	<< mxid
+	<< " "
+	<< (exists? "exists"_sv: "does not exist")
+	<< " on the "
+	<< bridge_id
+	<< " bridge."
+	<< std::endl;
 	return true;
 }
 

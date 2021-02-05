@@ -20,6 +20,9 @@ namespace ircd::m::bridge
 
 	string_view make_uri(const mutable_buffer &, const config &, const string_view &path);
 
+	bool exists(const config &, const m::user::id &);
+	bool exists(const config &, const m::room::alias &);
+
 	extern log::log log;
 }
 
@@ -32,12 +35,11 @@ struct ircd::m::bridge::query
 	string_view uri;
 	window_buffer wb;
 	http::request hypertext;
+	server::request::opts sopts;
 	server::request request;
 	http::code code;
 
-  public:
-	query(const config &, const m::user::id &);
-	query(const config &, const m::room::alias &);
+	query(const config &, const string_view &uri, const mutable_buffer &resp_body = {});
 };
 
 struct ircd::m::bridge::namespace_
