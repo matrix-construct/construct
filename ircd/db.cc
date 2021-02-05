@@ -553,7 +553,7 @@ ircd::db::prefetcher::prefetcher()
 ,context
 {
 	"db.prefetcher",
-	128_KiB,
+	256_KiB,
 	context::POST,
 	std::bind(&prefetcher::worker, this)
 }
