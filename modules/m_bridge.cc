@@ -527,8 +527,9 @@ ircd::m::bridge::pick_user(const config &config,
 	};
 
 	// Bridged user is in the room.
-	return !members.for_each("join", my_host(), [&]
-	(const id::user &user_id)
+	return true
+	&& !namespaces.empty() // avoid this query io if there's nothing to match.
+	&& !members.for_each("join", my_host(), [&](const id::user &user_id)
 	{
 		return !pick_user(config, event_idx, event, namespaces, user_id);
 	});
@@ -598,8 +599,9 @@ ircd::m::bridge::pick_alias(const config &config,
 		room
 	};
 
-	return !aliases.for_each(my_host(), [&]
-	(const room::alias &alias)
+	return true
+	&& !namespaces.empty()
+	&& !aliases.for_each(my_host(), [&](const room::alias &alias)
 	{
 		return !pick_alias(config, event_idx, event, namespaces, alias);
 	});
