@@ -25,11 +25,10 @@ namespace ircd
 	using string_views = vector_view<const string_view>;
 	size_t indexof(const string_view &, const string_views &) noexcept;
 
-	// return view without any trailing characters contained in c
+	// return view without any {l=leading,r=trailing} characters contained in c
 	string_view rstripa(const string_view &str, const string_view &c);
-
-	// return view without any leading characters contained in c
 	string_view lstripa(const string_view &str, const string_view &c);
+	string_view stripa(const string_view &str, const string_view &dict = "\t\n\v\f\r\x20");
 
 	// return view without leading occurrences of c
 	string_view lstrip(const string_view &str, const char &c = ' ');
@@ -534,6 +533,15 @@ ircd::lstrip(const string_view &str,
 	return pos != string_view::npos?
 		string_view{str.substr(pos)}:
 		string_view{str.data(), size_t{0}};
+}
+
+/// Strip any of the leading and trailing characters in the dictionary.
+/// The default dictionary is std::isspace/whitespace.
+inline ircd::string_view
+ircd::stripa(const string_view &str,
+             const string_view &dict)
+{
+	return rstripa(lstripa(str, dict), dict);
 }
 
 /// Remove leading instances of any character in c from the returned view
