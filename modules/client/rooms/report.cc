@@ -56,7 +56,7 @@ post__report(client &client,
 
 	const json::string &reason
 	{
-		request.at("reason")
+		trunc(request.at("reason"), size_t(reason_max))
 	};
 
 	const m::room::id::buf report_room_id
@@ -75,12 +75,55 @@ post__report(client &client,
 			"Sorry, reporting content is not available right now."
 		};
 
-	send(room, request.user_id, "ircd.reported",
+	// Include raw report data for bots.
+	const json::members report
 	{
-		{ "room_id",     room_id                           },
-		{ "event_id",    event_id                          },
-		{ "score",       score                             },
-		{ "reason",      trunc(reason, size_t(reason_max)) },
+		{ "room_id",     room_id      },
+		{ "event_id",    event_id     },
+		{ "score",       score        },
+		{ "reason",      reason       },
+	};
+
+	// Generate a plaintext summary for text clients.
+	const fmt::bsprintf<2_KiB> body
+	{
+		"Report by %s of %s in %s :%s",
+		string_view{request.user_id},
+		string_view{event_id},
+		string_view{room_id},
+		reason,
+	};
+
+	const fmt::snstringf formatted_body
+	{
+		4_KiB,
+		R"(
+			<h4>Reported %s</h4>
+			<blockquote>%s</blockquote>
+			https://matrix.to/#/%s/%s
+		)",
+		string_view{room_id},
+		string_view{reason},
+		string_view{room_id},
+		string_view{event_id},
+	};
+
+	// Generate a relates_to/in_reply_to of the event being reported so the
+	// censors can be debauched by its content directly in the !abuse room.
+	const json::members relates_to[2]
+	{
+		{ { "event_id",       event_id      } },
+		{ { "m.in_reply_to",  relates_to[0] } },
+	};
+
+	send(room, request.user_id, "m.room.message",
+	{
+		{ "msgtype",         "m.notice"                 },
+		{ "format",          "org.matrix.custom.html"   },
+		{ "formatted_body",  stripa(formatted_body)     },
+		{ "body",            body                       },
+		{ "m.relates_to",    relates_to[1]              },
+		{ "ircd.report",     report                     },
 	});
 
 	return m::resource::response
