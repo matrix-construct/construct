@@ -163,6 +163,7 @@ put__invite(client &client,
 
 	// Synapse may 403 a fetch of the prev_event of the invite event.
 	vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
+	vmopts.phase.set(m::vm::phase::EMPTION, false);
 
 	// We don't want this eval throwing an exception because the response has
 	// already been made for this request.

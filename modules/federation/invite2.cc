@@ -233,6 +233,7 @@ try
 
 	// Synapse may 403 a fetch of the prev_event of the invite event.
 	vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
+	vmopts.phase.set(m::vm::phase::EMPTION, false);
 
 	// Don't throw an exception for a re-evaluation; this will just be a no-op
 	vmopts.nothrows |= m::vm::fault::EXISTS;
