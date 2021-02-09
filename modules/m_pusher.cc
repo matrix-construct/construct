@@ -373,7 +373,7 @@ ircd::m::push::notify_http(const m::user &user,
 
 	const net::hostport target
 	{
-		req->url.remote, "https"
+		req->url
     };
 
 	// Compose request head
