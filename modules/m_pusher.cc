@@ -10,9 +10,11 @@
 
 namespace ircd::m::push
 {
+	static long count_missed_calls(const user &, const room &, const event::idx &);
+	static long count_unread(const user &, const room &, const event::idx &);
 	static void make_content_devices(json::stack::array &, const pusher &, const event::idx &);
-	static void make_content_counts(json::stack::object &, const user &);
-	static void make_content(json::stack::object &, const user &, const room &, const event &, const pusher &, const event::idx &);
+	static void make_content_counts(json::stack::object &, const user &, const room &, const event::idx &);
+	static void make_content(json::stack::object &, const user &, const room &, const event &, const event::idx &, const pusher &, const event::idx &);
 	static bool notify_email(const user &, const room &, const event::fetch &, const pusher &, const event::idx &pusher_idx);
 	static bool notify_http(const user &, const room &, const event::fetch &, const pusher &, const event::idx &pusher_idx);
 	static bool notify(const user &, const room &, const event::fetch &, const pusher &, const event::idx &pusher_idx);
@@ -362,7 +364,7 @@ ircd::m::push::notify_http(const m::user &user,
 		json::stack out{buf};
 		{
 			json::stack::object top{out};
-			make_content(top, user, room, event, pusher, pusher_idx);
+			make_content(top, user, room, event, event.event_idx, pusher, pusher_idx);
 		}
 
 		req->content = out.completed();
@@ -437,6 +439,7 @@ ircd::m::push::make_content(json::stack::object &top,
                             const m::user &user,
                             const m::room &room,
                             const m::event &event,
+                            const event::idx &event_idx,
                             const pusher &pusher,
                             const m::event::idx &pusher_idx)
 {
@@ -506,7 +509,7 @@ ircd::m::push::make_content(json::stack::object &top,
 			note, "counts"
 		};
 
-		make_content_counts(counts, user);
+		make_content_counts(counts, user, room, event_idx);
 	}
 
 	char room_name_buf[256];
@@ -587,25 +590,27 @@ ircd::m::push::make_content_devices(json::stack::array &devices,
 
 void
 ircd::m::push::make_content_counts(json::stack::object &counts,
-                                   const m::user &user)
+                                   const user &user,
+                                   const room &room,
+                                   const event::idx &event_idx)
 {
-	long total_unread
+	const auto unread
 	{
-		0L//TODO: XXX
+		count_unread(user, room, event_idx)
 	};
 
-	if(total_unread)
+	if(likely(unread))
 		json::stack::member
 		{
 			counts, "unread", json::value
 			{
-				total_unread
+				unread
 			}
 		};
 
 	long missed_calls
 	{
-		0L //TODO: XXX
+		count_missed_calls(user, room, event_idx)
 	};
 
 	if(missed_calls)
@@ -616,4 +621,43 @@ ircd::m::push::make_content_counts(json::stack::object &counts,
 				missed_calls
 			}
 		};
+}
+
+long
+ircd::m::push::count_unread(const user &user,
+                            const room &room,
+                            const event::idx &event_idx)
+{
+	m::event::id::buf read_buf;
+	const auto read_id
+	{
+		m::receipt::get(read_buf, room, user)
+	};
+
+	const auto read_idx
+	{
+		read_id?
+			index(std::nothrow, read_id):
+			room::index(room)
+	};
+
+	const event::idx_range unread_range
+	{
+		std::minmax(read_idx, event_idx)
+	};
+
+	const auto unread
+	{
+		room::events::count(room, unread_range)
+	};
+
+	return unread;
+}
+
+long
+ircd::m::push::count_missed_calls(const user &user,
+                                  const room &room,
+                                  const event::idx &event_idx)
+{
+	return 0L; //TODO: XXX
 }
