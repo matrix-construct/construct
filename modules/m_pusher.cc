@@ -510,16 +510,28 @@ ircd::m::push::make_content(json::stack::object &top,
 	}
 
 	char room_name_buf[256];
-	json::stack::member
+	const auto room_name
 	{
-		note, "room_name", m::display_name(room_name_buf, room)
+		m::display_name(room_name_buf, room)
 	};
 
+	if(room_name)
+		json::stack::member
+		{
+			note, "room_name", room_name
+		};
+
 	char sender_name_buf[256];
-	json::stack::member
+	const auto sender_display_name
 	{
-		note, "sender_display_name", m::user::profile(sender).get(sender_name_buf, "displayname")
+		user::profile(sender).get(sender_name_buf, "displayname")
 	};
+
+	if(sender_display_name)
+		json::stack::member
+		{
+			note, "sender_display_name", sender_display_name
+		};
 
 	json::stack::member
 	{
