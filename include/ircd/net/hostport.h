@@ -101,7 +101,9 @@ ircd::net::hostport::hostport(const rfc3986::uri &uri)
 }
 ,service
 {
-	uri.scheme
+	!rfc3986::port(uri.remote)?
+		uri.scheme:
+		string_view{}
 }
 ,port
 {
