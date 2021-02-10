@@ -19,6 +19,11 @@
 //
 // #define RB_PROF_ALLOC
 
+namespace ircd::allocator
+{
+	static void advise_hugepage(void *const &, const size_t &alignment, const size_t &size);
+}
+
 std::unique_ptr<char, decltype(&std::free)>
 ircd::allocator::aligned_alloc(const size_t &alignment_,
                                const size_t &size_)
@@ -61,6 +66,9 @@ ircd::allocator::aligned_alloc(const size_t &alignment_,
 	assert(ret != nullptr);
 	assert(uintptr_t(ret) % alignment == 0);
 
+	if(likely(info::thp_size))
+		advise_hugepage(ret, alignment, size);
+
 	#ifdef RB_PROF_ALLOC
 	auto &this_thread(ircd::allocator::profile::this_thread);
 	this_thread.alloc_bytes += size;
@@ -72,6 +80,40 @@ ircd::allocator::aligned_alloc(const size_t &alignment_,
 		reinterpret_cast<char *>(ret), &std::free
 	};
 }
+
+void
+ircd::allocator::advise_hugepage(void *const &ptr,
+                                 const size_t &alignment,
+                                 const size_t &size)
+
+#if defined(MADV_HUGEPAGE)
+try
+{
+	if(likely(alignment < info::thp_size))
+		return;
+
+	if(likely(alignment % size_t(info::thp_size) != 0))
+		return;
+
+	if(!has(info::thp_enable, "[madvise]"))
+		return;
+
+	sys::call(::madvise, ptr, size, MADV_HUGEPAGE);
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		"Failed to madvise(%p, %zu, MADV_HUGEPAGE) :%s",
+		ptr,
+		size,
+		e.what(),
+	};
+}
+#else
+{
+}
+#endif
 
 size_t
 ircd::allocator::incore(const const_buffer &buf)
