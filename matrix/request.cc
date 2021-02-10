@@ -8,6 +8,24 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+namespace ircd::m
+{
+	static unique_mutable_buffer request_content_buf;
+}
+
+decltype(ircd::m::request::headers_max)
+ircd::m::request::headers_max
+{
+	32UL
+};
+
+decltype(ircd::m::request::content_max)
+ircd::m::request::content_max
+{
+	{ "name",    "ircd.m.request.content.max" },
+	{ "default",  long(4_MiB)                 },
+};
+
 ircd::m::request::request(const string_view &method,
                           const string_view &uri,
                           const mutable_buffer &body_buf,
@@ -75,12 +93,6 @@ ircd::m::request::request(const string_view &origin,
 			destination
 		};
 }
-
-decltype(ircd::m::request::headers_max)
-ircd::m::request::headers_max
-{
-	32UL
-};
 
 ircd::string_view
 ircd::m::request::operator()(const mutable_buffer &out,
@@ -155,31 +167,24 @@ const
 	return sb.completed();
 }
 
-decltype(ircd::m::request::generate_content_max)
-ircd::m::request::generate_content_max
-{
-	{ "name",    "ircd.m.request.generate.content_max" },
-	{ "default",  long(4_MiB)                          },
-};
-
-namespace ircd::m
-{
-	static unique_mutable_buffer request_generate_content_buf;
-}
-
 ircd::string_view
 ircd::m::request::generate(const mutable_buffer &out,
                            const ed25519::sk &sk,
                            const string_view &pkid)
 const
 {
-	const ctx::critical_assertion _ca;
-	auto &buf{request_generate_content_buf};
-	if(unlikely(buffer::size(buf) != size_t(generate_content_max)))
-		buf = unique_mutable_buffer
+	const ctx::critical_assertion ca;
+	if(unlikely(buffer::size(request_content_buf) != size_t(content_max)))
+		request_content_buf = unique_mutable_buffer
 		{
-			size_t(generate_content_max), info::page_size
+			size_t(content_max), info::page_size
 		};
+
+	assert(!empty(request_content_buf));
+	const mutable_buffer buf
+	{
+		request_content_buf
+	};
 
 	const auto serial_size
 	{
@@ -257,18 +262,24 @@ const
 	return verified;
 }
 
-decltype(ircd::m::request::verify_content_max)
-ircd::m::request::verify_content_max
-{
-	{ "name",    "ircd.m.request.verify.content_max" },
-	{ "default",  long(4_MiB)                        },
-};
-
 bool
 ircd::m::request::verify(const ed25519::pk &pk,
                          const ed25519::sig &sig)
 const
 {
+	const ctx::critical_assertion ca;
+	if(unlikely(buffer::size(request_content_buf) != size_t(content_max)))
+		request_content_buf = unique_mutable_buffer
+		{
+			size_t(content_max), info::page_size
+		};
+
+	assert(!empty(request_content_buf));
+	const mutable_buffer buf
+	{
+		request_content_buf
+	};
+
 	// Matrix spec sez that an empty content object {} is excluded entirely
 	// from the verification. Our JSON only excludes members if they evaluate
 	// to undefined i.e json::object{}/string_view{} but not json::object{"{}"}
@@ -277,12 +288,6 @@ const
 	auto _this(*this);
 	if(empty(json::get<"content"_>(*this)))
 		json::get<"content"_>(_this) = json::object{};
-
-	const ctx::critical_assertion ca;
-	thread_local unique_buffer<mutable_buffer> buf
-	{
-		size_t(verify_content_max)
-	};
 
 	const size_t request_size
 	{
