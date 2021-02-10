@@ -279,6 +279,19 @@ get__thumbnail_local(client &client,
 		split(content_type, ';').first
 	};
 
+	const bool supported
+	{
+		// Available in build
+		#ifdef IRCD_USE_MAGICK
+			(true)
+		#else
+			(false)
+		#endif
+
+		// Enabled by configuration
+		&& enable
+	};
+
 	const bool permitted
 	{
 		// If there's a blacklist, mime type must not in the blacklist.
@@ -292,6 +305,9 @@ get__thumbnail_local(client &client,
 	{
 		// Administrator's fuse to disable animation detection.
 		bool(animation_enable)
+
+		// Only call into libpng if magick is supported/enabled
+		&& supported
 
 		// If the type is not permitted don't bother checking for animation.
 		&& permitted
@@ -311,11 +327,8 @@ get__thumbnail_local(client &client,
 
 	const bool fallback // Reasons to just send the original image
 	{
-		// Not available in build
-		!IRCD_USE_MAGICK
-
-		// Disabled by configuration
-		|| !enable
+		// Thumbnailer support not enabled or available
+		!supported
 
 		// Access denied for this operation
 		|| !permitted
