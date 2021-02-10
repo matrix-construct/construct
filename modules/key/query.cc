@@ -81,22 +81,11 @@ ircd::m::handle_key_query_post(client &client,
 		}
 
 		for(const auto &[key_id, criteria] : json::object(requests))
-		{
-			const time_t &minimum_valid_until_ts
-			{
-				json::object(criteria).get<time_t>("minimum_valid_until_ts", ircd::time<milliseconds>())
-			};
-
-			keys::cache::get(server_name, key_id, [&server_keys_out, &minimum_valid_until_ts]
+			keys::cache::get(server_name, key_id, [&server_keys_out]
 			(const m::keys &keys)
 			{
-				// Condition ignored to match synapse behavior.
-				if((false) && json::get<"valid_until_ts"_>(keys) < minimum_valid_until_ts)
-					return;
-
 				server_keys_out.append(keys.source);
 			});
-		}
 	}
 
 	return {};
@@ -130,11 +119,6 @@ ircd::m::handle_key_query_get(client &client,
 		request.parv.size() > 1?
 			url::decode(key_id_buf, request.parv[1]):
 			string_view{}
-	};
-
-	const time_t minimum_valid_until_ts
-	{
-		request.query.get<time_t>("minimum_valid_until_ts", ircd::time<milliseconds>())
 	};
 
 	if(key_id)
@@ -175,13 +159,9 @@ ircd::m::handle_key_query_get(client &client,
 		top, "server_keys"
 	};
 
-	keys::cache::for_each(server_name, [&server_keys, &minimum_valid_until_ts]
+	keys::cache::for_each(server_name, [&server_keys]
 	(const m::keys &keys)
 	{
-		// Condition ignored to match synapse behavior.
-		if((false) && json::get<"valid_until_ts"_>(keys) < minimum_valid_until_ts)
-			return true;
-
 		server_keys.append(keys.source);
 		return true;
 	});
