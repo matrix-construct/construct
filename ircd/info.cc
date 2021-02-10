@@ -1004,13 +1004,15 @@ ircd::info::dump_sys_info()
 	log::logf
 	{
 		log::star, log::DEBUG,
-		"page_size=%zu iov_max=%zd aio_max=%zd aio_reqprio_max=%zd memlock_limit=%s clock_source=%s",
+		"page_size=%zu iov_max=%zd aio_max=%zd aio_reqprio_max=%zd memlock_limit=%s clock_source=%s thp=%s:%zu",
 		page_size,
 		iov_max,
 		aio_max,
 		aio_reqprio_max,
 		pretty(buf[0], iec(allocator::rlimit_memlock())),
 		clock_source,
+		between(thp_enable, '[', ']'),
+		thp_size,
 	};
 	//#endif
 }
@@ -1150,6 +1152,21 @@ ircd::info::page_size
 	#ifdef _SC_PAGESIZE
 		size_t(syscall(::sysconf, _SC_PAGESIZE))
 	#endif
+};
+
+decltype(ircd::info::thp_size)
+ircd::info::thp_size
+{
+	sys::get<size_t>("kernel/mm/transparent_hugepage/hpage_pmd_size", 0UL)
+};
+
+static char ircd_info_thp_enable_buf[128];
+decltype(ircd::info::thp_enable)
+ircd::info::thp_enable
+{
+	thp_size?
+		sys::get(ircd_info_thp_enable_buf, "kernel/mm/transparent_hugepage/enabled"):
+		string_view{}
 };
 
 //

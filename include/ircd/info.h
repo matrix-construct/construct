@@ -58,6 +58,8 @@ namespace ircd::info
 	extern const size_t aio_max;
 	extern const size_t iov_max;
 	extern const size_t page_size;
+	extern const size_t thp_size;
+	extern const string_view thp_enable;
 	extern const size_t total_ram;
 	extern const size_t total_swap;
 
