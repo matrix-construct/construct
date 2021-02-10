@@ -351,6 +351,7 @@ noexcept
 namespace ircd::m
 {
 	extern conf::item<std::string> ed25519_key_dir;
+	extern conf::item<milliseconds> ed25519_key_valid_for;
 }
 
 decltype(ircd::m::ed25519_key_dir)
@@ -358,6 +359,13 @@ ircd::m::ed25519_key_dir
 {
 	{ "name",     "ircd.keys.ed25519_key_dir"  },
 	{ "default",  fs::cwd()                    },
+};
+
+decltype(ircd::m::ed25519_key_valid_for)
+ircd::m::ed25519_key_valid_for
+{
+	{ "name",     "ircd.keys.ed25519_valid_for"     },
+	{ "default",  1000 * 60 * 60 * 24 * 7 * 52L     },
 };
 
 ircd::m::homeserver::key::key(const struct opts &opts)
@@ -415,17 +423,21 @@ ircd::m::homeserver::key::key(const struct opts &opts)
 		}
 	};
 
-	const time_t ts
+	const auto valid_until
 	{
-		//TODO: XXX
-		ircd::time<milliseconds>() + (1000 * 60 * 60 * 24 * 7)
+		ircd::now<system_point>() + milliseconds(ed25519_key_valid_for)
+	};
+
+	const auto valid_until_ts
+	{
+		duration_cast<milliseconds>(tse(valid_until))
 	};
 
 	m::keys key;
 	json::get<"server_name"_>(key) = opts.origin;
 	json::get<"old_verify_keys"_>(key) = "{}";
 	json::get<"verify_keys"_>(key) = verify_keys;
-	json::get<"valid_until_ts"_>(key) = ts;
+	json::get<"valid_until_ts"_>(key) = valid_until_ts.count();
 	json::strung ret
 	{
 		key
