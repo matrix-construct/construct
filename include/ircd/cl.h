@@ -19,7 +19,6 @@ namespace ircd::cl
 
 	struct init;
 	struct exec;
-	struct mmap;
 	struct kern;
 	struct code;
 	struct data;
@@ -55,8 +54,6 @@ struct ircd::cl::work
 /// cl_mem wrapping
 struct ircd::cl::data
 {
-	struct mmap;
-
 	void *handle {nullptr};
 
   public:
@@ -69,21 +66,6 @@ struct ircd::cl::data
 	data &operator=(const data &) = delete;
 	data &operator=(data &&) noexcept;
 	~data() noexcept;
-};
-
-/// cl_map wrapping
-struct ircd::cl::data::mmap
-:mutable_buffer
-{
-	cl::data *memory {nullptr};
-
-  public:
-	mmap(data &, const size_t size, const bool w = true, const bool wonly = false);
-	mmap() = default;
-	mmap(mmap &&) noexcept;
-	mmap &operator=(const mmap &) = delete;
-	mmap &operator=(mmap &&) noexcept;
-	~mmap() noexcept;
 };
 
 /// cl_program wrapping
