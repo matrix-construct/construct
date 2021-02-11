@@ -266,11 +266,6 @@ ircd::cl::exec::exec(kern &kern,
                      const kern::range &work)
 try
 {
-	const auto &handle
-	{
-		reinterpret_cast<cl_kernel>(kern.handle)
-	};
-
 	size_t dim(0);
 	for(size_t i(0); i < work.global.size(); ++i)
 		dim += work.global[i] > 0;
@@ -290,7 +285,7 @@ try
 	(
 		clEnqueueNDRangeKernel,
 		q,
-		handle,
+		cl_kernel(kern.handle),
 		dim,
 		work.offset.data(),
 		work.global.data(),
@@ -316,11 +311,6 @@ ircd::cl::exec::exec(data &data,
                      const bool blocking)
 try
 {
-	const auto &handle
-	{
-		reinterpret_cast<cl_mem>(data.handle)
-	};
-
 	size_t dependencies {0};
 	cl_event *const dependency
 	{
@@ -336,7 +326,7 @@ try
 	(
 		clEnqueueReadBuffer,
 		q,
-		handle,
+		cl_mem(data.handle),
 		blocking,
 		0UL, //offset,
 		ircd::size(buf),
@@ -362,11 +352,6 @@ ircd::cl::exec::exec(data &data,
                      const bool blocking)
 try
 {
-	const auto &handle
-	{
-		reinterpret_cast<cl_mem>(data.handle)
-	};
-
 	size_t dependencies {0};
 	cl_event *const dependency
 	{
@@ -382,7 +367,7 @@ try
 	(
 		clEnqueueReadBuffer,
 		q,
-		handle,
+		cl_mem(data.handle),
 		blocking,
 		0UL, //offset,
 		ircd::size(buf),
@@ -411,13 +396,8 @@ ircd::cl::kern::kern(code &code,
                      const string_view &name)
 try
 {
-	const auto &program
-	{
-		reinterpret_cast<cl_program>(code.handle)
-	};
-
 	int err {CL_SUCCESS};
-	handle = clCreateKernel(program, name.c_str(), &err);
+	handle = clCreateKernel(cl_program(code.handle), name.c_str(), &err);
 	throw_on_error(err);
 }
 catch(const std::exception &e)
@@ -452,7 +432,7 @@ noexcept
 ircd::cl::kern::~kern()
 noexcept try
 {
-	call(clReleaseKernel, reinterpret_cast<cl_kernel>(handle));
+	call(clReleaseKernel, cl_kernel(handle));
 }
 catch(const std::exception &e)
 {
@@ -469,17 +449,12 @@ void
 ircd::cl::kern::arg(const int i,
                     data &data)
 {
-	const auto &handle
+	const auto &data_handle
 	{
-		reinterpret_cast<cl_kernel>(this->handle)
+		cl_mem(data.handle)
 	};
 
-	const auto &arg_handle
-	{
-		reinterpret_cast<cl_mem>(data.handle)
-	};
-
-	call(clSetKernelArg, handle, i, sizeof(cl_mem), &arg_handle);
+	call(clSetKernelArg, cl_kernel(handle), i, sizeof(cl_mem), &data_handle);
 }
 
 //
@@ -545,7 +520,7 @@ noexcept
 ircd::cl::code::~code()
 noexcept try
 {
-	call(clReleaseProgram, reinterpret_cast<cl_program>(handle));
+	call(clReleaseProgram, cl_program(handle));
 }
 catch(const std::exception &e)
 {
@@ -571,17 +546,12 @@ void
 ircd::cl::code::build(const string_view &opts)
 try
 {
-	const auto &handle
-	{
-		reinterpret_cast<cl_program>(this->handle)
-	};
-
 	const uint num_devices {0};
 	const cl_device_id *const device_list {nullptr};
 	call
 	(
 		clBuildProgram,
-		handle,
+		cl_program(handle),
 		num_devices,
 		device_list,
 		opts.c_str(),
@@ -597,7 +567,7 @@ catch(const std::exception &e)
 		size_t len {0}; call
 		(
 			clGetProgramBuildInfo,
-			reinterpret_cast<cl_program>(this->handle),
+			cl_program(this->handle),
 			device[0][0],
 			CL_PROGRAM_BUILD_LOG,
 			ircd::size(buf),
@@ -684,7 +654,7 @@ noexcept
 ircd::cl::data::~data()
 noexcept try
 {
-	call(clReleaseMemObject, reinterpret_cast<cl_mem>(handle));
+	call(clReleaseMemObject, cl_mem(handle));
 }
 catch(const std::exception &e)
 {
@@ -724,9 +694,9 @@ ircd::cl::work::work(void *const &handle)
 ircd::cl::work::~work()
 noexcept try
 {
-	const auto handle
+	const auto &handle
 	{
-		reinterpret_cast<cl_event>(this->handle)
+		cl_event(this->handle)
 	};
 
 	if(likely(handle))
@@ -750,7 +720,7 @@ noexcept try
 			}
 		}
 
-		call(clReleaseEvent, reinterpret_cast<cl_event>(handle));
+		call(clReleaseEvent, cl_event(handle));
 	}
 }
 catch(const std::exception &e)
@@ -770,7 +740,7 @@ const
 {
 	const auto handle
 	{
-		reinterpret_cast<cl_event>(this->handle)
+		cl_event(this->handle)
 	};
 
 	char buf[4][8];
