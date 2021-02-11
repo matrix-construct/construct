@@ -68,7 +68,7 @@ struct ircd::m::room::events
 	explicit operator event::idx() const;
 
 	// Perform a new lookup / iterator
-	bool seek_idx(const event::idx &);
+	bool seek_idx(const event::idx &, const bool &lower_bound = false);
 	bool seek(const uint64_t &depth = -1);
 	bool seek(const event::id &);
 

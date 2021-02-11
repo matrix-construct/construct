@@ -381,7 +381,8 @@ ircd::m::room::events::seek(const uint64_t &depth)
 }
 
 bool
-ircd::m::room::events::seek_idx(const event::idx &event_idx)
+ircd::m::room::events::seek_idx(const event::idx &event_idx,
+                                const bool &lower_bound)
 try
 {
 	uint64_t depth(0);
@@ -401,9 +402,10 @@ try
 	if(!bool(*this))
 		return false;
 
-	// Check if this event_idx is actually in this room
-	if(event_idx && event_idx != this->event_idx())
-		return false;
+	// When lower_bound=false we need to find the exact event being sought
+	if(event_idx && !lower_bound)
+		if(event_idx != this->event_idx())
+			return false;
 
 	return true;
 }
