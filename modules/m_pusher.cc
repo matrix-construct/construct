@@ -651,14 +651,9 @@ ircd::m::push::count_unread(const user &user,
                             const event::idx &event_idx)
 {
 	event::id::buf read_buf;
-	const auto read_id
-	{
-		receipt::get(read_buf, room, user)
-	};
-
 	const auto read_idx
 	{
-		index(std::nothrow, read_id)
+		index(std::nothrow, receipt::get(read_buf, room, user))
 	};
 
 	const event::idx_range unread_range
@@ -666,11 +661,19 @@ ircd::m::push::count_unread(const user &user,
 		std::minmax(read_idx, event_idx)
 	};
 
+	const user::notifications notifications
+	{
+		user
+	};
+
+	user::notifications::opts opts;
+	opts.room_id = room.room_id;
+	opts.only = "highlight";
+	opts.from = unread_range.second;
+	opts.to = unread_range.first;
 	const auto unread
 	{
-		read_idx?
-			room::events::count(room, unread_range):
-			0UL
+		notifications.count(opts)
 	};
 
 	return unread;
