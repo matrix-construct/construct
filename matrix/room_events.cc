@@ -360,9 +360,7 @@ ircd::m::room::events::seek(const event::id &event_id)
 		m::index(std::nothrow, event_id)
 	};
 
-	return event_idx?
-		seek_idx(event_idx):
-		false;
+	return seek_idx(event_idx);
 }
 
 bool
@@ -383,14 +381,14 @@ ircd::m::room::events::seek(const uint64_t &depth)
 bool
 ircd::m::room::events::seek_idx(const event::idx &event_idx,
                                 const bool &lower_bound)
-try
 {
-	uint64_t depth(0);
-	if(event_idx)
-		m::get(event_idx, "depth", mutable_buffer
-		{
-			reinterpret_cast<char *>(&depth), sizeof(depth)
-		});
+	if(!event_idx)
+		return false;
+
+	const uint64_t depth
+	{
+		m::get(std::nothrow, event_idx, "depth", -1UL)
+	};
 
 	char buf[dbs::ROOM_EVENTS_KEY_MAX_SIZE];
 	const auto &seek_key
@@ -403,15 +401,10 @@ try
 		return false;
 
 	// When lower_bound=false we need to find the exact event being sought
-	if(event_idx && !lower_bound)
-		if(event_idx != this->event_idx())
-			return false;
+	if(!lower_bound && event_idx != this->event_idx())
+		return false;
 
 	return true;
-}
-catch(const db::not_found &e)
-{
-	return false;
 }
 
 ircd::m::room::events::operator
