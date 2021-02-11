@@ -124,8 +124,6 @@ ircd::m::room::events::count(const m::event::idx_range &range)
 		range
 	};
 
-	// Get the room_id from b here; a might not be in the same room but downstream
-	// the counter seeks to a in the given room and will properly fail there.
 	room::id::buf room_id
 	{
 		m::get(std::min(a, b), "room_id", room_id)
@@ -143,32 +141,22 @@ ircd::m::room::events::count(const m::room &room,
 		range
 	};
 
+	assert(a <= b);
 	m::room::events it
 	{
-		room
+		room, event::id{}
 	};
 
-	assert(a <= b);
-	it.seek_idx(a);
-	if(!it && !exists(room))
-		throw m::NOT_FOUND
-		{
-			"Cannot find room '%s' to count events in",
-			string_view{room.room_id}
-		};
-	else if(!it)
-		throw m::NOT_FOUND
-		{
-			"Event @ idx:%lu or idx:%lu not found in room '%s' or at all",
-			a,
-			b,
-			string_view{room.room_id}
-		};
+	size_t ret(0);
+	if(a == b)
+		return ret;
 
-	size_t ret{0};
-	// Hit the iterator once first otherwise the count will always increment
-	// to `1` erroneously when it ought to show `0`.
-	for(++it; it && it.event_idx() < b; ++it, ++ret);
+	if(unlikely(!it.seek_idx(b, true)))
+		return ret;
+
+	for(assert(it); it && it.event_idx() > a; --it)
+		++ret;
+
 	return ret;
 }
 
