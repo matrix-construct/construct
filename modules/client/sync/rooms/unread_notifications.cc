@@ -12,6 +12,7 @@ namespace ircd::m::sync
 {
 	static long _notification_count(const room &, const event::idx &a, const event::idx &b);
 	static long _highlight_count(const room &, const user &u, const event::idx &a, const event::idx &b);
+	static event::idx _read_marker(data &, const room &);
 	static bool room_unread_notifications_polylog(data &);
 	static bool room_unread_notifications_linear(data &);
 
@@ -102,17 +103,10 @@ ircd::m::sync::room_unread_notifications_linear(data &data)
 			if(json::get<"depth"_>(*data.event) + room::events::viewport_size < data.room_depth)
 				return false;
 
-	m::event::id::buf last_read;
-	if(likely(!is_self_read))
-		if(!m::receipt::get(last_read, room.room_id, data.user))
-			return false;
-
-	const auto start_idx
+	const event::idx marker_idx
 	{
-		last_read?
-			index(last_read):
 		!is_self_read?
-			index(room):
+			_read_marker(data, room):
 			0UL
 	};
 
@@ -138,13 +132,13 @@ ircd::m::sync::room_unread_notifications_linear(data &data)
 
 	const event::idx upper_bound
 	{
-		std::max(data.range.second, data.event_idx + 1)
+		std::max(data.range.second, data.event_idx)
 	};
 
 	const auto notification_count
 	{
-		start_idx && !is_self_read?
-			_notification_count(room, start_idx, upper_bound):
+		marker_idx?
+			_notification_count(room, marker_idx, upper_bound):
 			0L
 	};
 
@@ -161,7 +155,7 @@ ircd::m::sync::room_unread_notifications_linear(data &data)
 		*data.out, "highlight_count", json::value
 		{
 			notification_count?
-				_highlight_count(room, data.user, start_idx, upper_bound):
+				_highlight_count(room, data.user, marker_idx, upper_bound):
 				0L
 		}
 	};
@@ -181,27 +175,17 @@ ircd::m::sync::room_unread_notifications_polylog(data &data)
 		*data.room
 	};
 
-	m::event::id::buf last_read_buf;
-	const auto last_read
+	const event::idx marker_idx
 	{
-		m::receipt::get(last_read_buf, room.room_id, data.user)
+		_read_marker(data, room)
 	};
 
-	const auto start_idx
-	{
-		last_read?
-			index(last_read):
-		data.membership == "join"?
-			room::index(room):
-			0UL
-	};
-
-	if(!apropos(data, start_idx))
+	if(!marker_idx)
 		return false;
 
 	const auto notification_count
 	{
-		_notification_count(room, start_idx, data.range.second)
+		_notification_count(room, marker_idx, data.range.second)
 	};
 
 	json::stack::member
@@ -217,12 +201,50 @@ ircd::m::sync::room_unread_notifications_polylog(data &data)
 		*data.out, "highlight_count", json::value
 		{
 			notification_count?
-				_highlight_count(room, data.user, start_idx, data.range.second):
+				_highlight_count(room, data.user, marker_idx, data.range.second):
 				0L
 		}
 	};
 
 	return true;
+}
+
+ircd::m::event::idx
+ircd::m::sync::_read_marker(data &data,
+                            const room &room)
+try
+{
+	const m::user::room_account_data account_data
+	{
+		data.user, room
+	};
+
+	m::event::idx ret(0);
+	account_data.get(std::nothrow, "m.fully_read", [&ret]
+	(const string_view &, const json::object &content)
+	{
+		ret = index(std::nothrow, event::id
+		{
+			json::string
+			{
+				content["event_id"]
+			}
+		});
+	});
+
+	return ret;
+}
+catch(const m::INVALID_MXID &e)
+{
+	log::derror
+	{
+		log, "account_data for %s in %s :invalid m.fully_read marker :%s",
+		string_view{data.user.user_id},
+		string_view{room.room_id},
+		e.what(),
+	};
+
+	return 0;
 }
 
 long
