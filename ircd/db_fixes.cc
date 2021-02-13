@@ -111,58 +111,6 @@ rocksdb::WriteThread::BlockingAwaitState(Writer *const w,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// DeleteScheduler unconditionally starts an std::thread (pthread_create)
-// rather than using the rocksdb::Env system. We override this function to
-// simply not start that thread.
-//
-
-//
-// Mitigations now achieved by killing SstFileManager itself; these obsolete
-// the requirement for the DeleteScheduler specific interpositions. This is
-// required post RocksDB v6.10.2, and required for prior versions of no other
-// specific mitigations against DeleteScheduler are taken.
-//
-
-#if __has_include("file/sst_file_manager_impl.h") || __has_include("util/sst_file_manager_impl.h")
-rocksdb::SstFileManager *
-rocksdb::NewSstFileManager(Env *env,
-                           std::shared_ptr<Logger> info_log,
-                           std::string trash_dir,
-                           int64_t rate_bytes_per_sec,
-                           bool delete_existing_trash,
-                           Status* status,
-                           double max_trash_db_ratio,
-                           uint64_t bytes_max_delete_chunk)
-{
-	if(status)
-		*status = Status::NotSupported();
-
-	return nullptr;
-}
-#endif
-
-#if defined(IRCD_DB_HAS_ENV_FILESYSTEM) \
-&& (__has_include("file/sst_file_manager_impl.h") || __has_include("util/sst_file_manager_impl.h"))
-rocksdb::SstFileManager *
-rocksdb::NewSstFileManager(Env *env,
-                           std::shared_ptr<FileSystem> fs,
-                           std::shared_ptr<Logger> info_log,
-                           const std::string& trash_dir,
-                           int64_t rate_bytes_per_sec,
-                           bool delete_existing_trash,
-                           Status* status,
-                           double max_trash_db_ratio,
-                           uint64_t bytes_max_delete_chunk)
-{
-	if(status)
-		*status = Status::NotSupported();
-
-	return nullptr;
-}
-#endif
-
-///////////////////////////////////////////////////////////////////////////////
-//
 // ThreadLocalPtr
 //
 
