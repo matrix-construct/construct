@@ -668,7 +668,6 @@ ircd::m::push::count_unread(const user &user,
 
 	user::notifications::opts opts;
 	opts.room_id = room.room_id;
-	opts.only = "highlight";
 	opts.from = unread_range.second;
 	opts.to = unread_range.first;
 	const auto unread
