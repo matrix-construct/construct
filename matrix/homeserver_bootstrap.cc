@@ -236,10 +236,14 @@ try
 
 	// Primary interest is to perform the INDEX and WRITE phase which create
 	// a database transaction and commit it respectively.
-	vmopts.mprefetch_refs = true;
-	vmopts.phase.set(vm::phase::PREINDEX, true);
 	vmopts.phase.set(vm::phase::INDEX, true);
 	vmopts.phase.set(vm::phase::WRITE, true);
+
+	// Perform prefetches over the whole batch;
+	vmopts.mprefetch_refs = true;
+
+	//XXX Consider enable for large batch size.
+	//vmopts.phase.set(vm::phase::PREINDEX, true);
 
 	// Optimize the bootstrap by not updating room heads at every step.
 	vmopts.wopts.appendix.set(dbs::appendix::ROOM_HEAD, false);
@@ -274,7 +278,7 @@ try
 	// Outputs to infolog for each event; may be noisy;
 	vmopts.infolog_accept = false;
 
-	static const size_t batch_max {2048};
+	static const size_t batch_max {64};
 	std::vector<m::event> vec(batch_max);
 	size_t count {0}, ebytes[2] {0, 1}, accept {0};
 	vm::eval eval
@@ -323,10 +327,8 @@ try
 
 		// advise dontneed
 		ebytes[0] += evict(map, incore, opts);
-
-		if(validate_json_only)
-			if(count % (batch_max * 64) != 0)
-				continue;
+		if(count % (batch_max * 64) != 0)
+			continue;
 
 		const auto db_bytes
 		{
@@ -351,7 +353,6 @@ try
 			pretty(pbuf[3], iec(db_bytes / std::max(elapsed, 1L)), 1),
 		};
 
-		ctx::yield();
 		ctx::yield();
 		ctx::interruption_point();
 	}
