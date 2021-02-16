@@ -21,6 +21,9 @@ namespace ircd::m::init::backfill
 	extern conf::item<seconds> gossip_timeout;
 	extern conf::item<bool> gossip_enable;
 	extern conf::item<bool> local_joined_only;
+	extern conf::item<bool> reset_head;
+	extern conf::item<bool> reset_state;
+	extern conf::item<bool> reset_state_space;
 	extern conf::item<size_t> viewports;
 	extern conf::item<size_t> attempt_max;
 	extern conf::item<size_t> pool_size;
@@ -53,6 +56,27 @@ ircd::m::init::backfill::local_joined_only
 {
 	{ "name",     "ircd.m.init.backfill.local_joined_only" },
 	{ "default",  true                                     },
+};
+
+decltype(ircd::m::init::backfill::reset_head)
+ircd::m::init::backfill::reset_head
+{
+	{ "name",     "ircd.m.init.backfill.reset.head" },
+	{ "default",  true                              },
+};
+
+decltype(ircd::m::init::backfill::reset_state)
+ircd::m::init::backfill::reset_state
+{
+	{ "name",     "ircd.m.init.backfill.reset.state" },
+	{ "default",  true                               },
+};
+
+decltype(ircd::m::init::backfill::reset_state_space)
+ircd::m::init::backfill::reset_state_space
+{
+	{ "name",     "ircd.m.init.backfill.reset.state_space" },
+	{ "default",  false                                    },
 };
 
 decltype(ircd::m::init::backfill::gossip_enable)
@@ -322,12 +346,22 @@ ircd::m::init::backfill::handle_room(const room::id &room_id)
 		{
 			opts
 		};
-
-		const size_t num_reset
-		{
-			m::room::head::reset(opts.room)
-		};
 	}
+
+	if(reset_head)
+		room::head::reset(room(room_id));
+
+	if(reset_state && reset_state_space)
+		room::state::space::rebuild
+		{
+			room_id
+		};
+
+	if(reset_state)
+		room::state::rebuild
+		{
+			room_id
+		};
 
 	if((false))
 	{
