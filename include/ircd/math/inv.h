@@ -9,7 +9,30 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_MATH_MATH_H
+#define HAVE_IRCD_MATH_INV_H
 
-#include "log2.h"
-#include "inv.h"
+namespace ircd::math
+{
+	template<class Z> constexpr Z inv(Z a, const Z m);
+}
+
+/// Modular Inverse
+template<class Z>
+inline constexpr Z
+ircd::math::inv(Z a,
+                const Z m)
+{
+	auto b{m}, x0{0}, x1{1};
+	if(likely(m != 1)) while(a > 1)
+	{
+		auto t{b}, q{a / b};
+		b = a % b;
+		a = t;
+		t = x0;
+		x0 = x1 - q * x0;
+		x1 = t;
+	}
+
+	x1 += boolmask<Z>(x1 < 0) & m;
+	return x1;
+}
