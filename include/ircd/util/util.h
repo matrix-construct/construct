@@ -241,25 +241,6 @@ until(it_a a,
 	return true;
 }
 
-constexpr bool
-is_powerof2(const long long v)
-{
-	return v && !(v & (v - 1LL));
-}
-
-constexpr uint64_t
-next_powerof2(uint64_t v)
-{
-	--v;
-	v |= v >> 1;
-	v |= v >> 2;
-	v |= v >> 4;
-	v |= v >> 8;
-	v |= v >> 16;
-	v |= v >> 32;
-	return ++v;
-}
-
 template<class T>
 T
 minmax(T ret,

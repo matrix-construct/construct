@@ -285,7 +285,7 @@ try
 		+ 128                         // algorithm
 	};
 
-	static_assert(is_powerof2(buffer_unit_size));
+	static_assert(math::is_pow2(buffer_unit_size));
 	const size_t buffer_size
 	{
 		8_KiB + // headers

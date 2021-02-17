@@ -462,7 +462,7 @@ ircd::db::database::allocator::allocator(database *const &d,
 	#endif
 }
 {
-	assert(is_powerof2(alignment));
+	assert(math::is_pow2(alignment));
 }
 
 ircd::db::database::allocator::~allocator()
