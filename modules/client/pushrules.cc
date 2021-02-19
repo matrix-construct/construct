@@ -226,8 +226,7 @@ ircd::m::push::method_put
 {
 	resource, "PUT", handle_put,
 	{
-		method_put.REQUIRES_AUTH |
-		method_put.RATE_LIMITED // review this!
+		method_put.REQUIRES_AUTH
 	}
 };
 
