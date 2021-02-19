@@ -43,7 +43,8 @@ ircd::m::push::pushers_set_post
 {
 	pushers_set_resource, "POST", handle_pushers_set,
 	{
-		pushers_set_post.REQUIRES_AUTH
+		pushers_set_post.REQUIRES_AUTH |
+		pushers_set_post.RATE_LIMITED              
 	}
 };
 

@@ -55,8 +55,9 @@ ircd::m::search::search_post
 {
 	search_resource, "POST", search_post_handle,
 	{
-		search_post.REQUIRES_AUTH,
-
+		search_post.REQUIRES_AUTH |
+		search_post.RATE_LIMITED,
+ 
 		// Some queries can take a really long time, especially under
 		// development. We don't need the default request timer getting
 		// in the way for now.

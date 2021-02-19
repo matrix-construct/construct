@@ -76,6 +76,7 @@ post_password
 {
 	account_password, "POST", post__password,
 	{
-		post_password.REQUIRES_AUTH
+		post_password.REQUIRES_AUTH |
+		post_password.RATE_LIMITED
 	}
 };

@@ -48,7 +48,8 @@ method_put
 {
 	profile_resource, "PUT", put__profile,
 	{
-		method_put.REQUIRES_AUTH
+		method_put.REQUIRES_AUTH |
+		method_put.RATE_LIMITED
 	}
 };
 
