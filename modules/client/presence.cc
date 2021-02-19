@@ -153,7 +153,8 @@ method_put
 {
 	presence_resource, "PUT", put__presence,
 	{
-		method_put.REQUIRES_AUTH
+		method_put.REQUIRES_AUTH |
+		method_put.RATE_LIMITED
 	}
 };
 

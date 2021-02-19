@@ -92,7 +92,8 @@ method_post
 {
 	join_resource, "POST", post__join,
 	{
-		method_post.REQUIRES_AUTH
+		method_post.REQUIRES_AUTH |
+		method_post.RATE_LIMITED
 	}
 };
 

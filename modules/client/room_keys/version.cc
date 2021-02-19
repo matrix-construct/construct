@@ -50,7 +50,8 @@ ircd::m::room_keys_version_post
 {
 	room_keys_version, "POST", post_room_keys_version,
 	{
-		room_keys_version_post.REQUIRES_AUTH
+		room_keys_version_post.REQUIRES_AUTH |
+		room_keys_version_post.RATE_LIMITED
 	}
 };
 
@@ -119,7 +120,8 @@ ircd::m::room_keys_version_delete
 {
 	room_keys_version, "DELETE", delete_room_keys_version,
 	{
-		room_keys_version_delete.REQUIRES_AUTH
+		room_keys_version_delete.REQUIRES_AUTH |
+		room_keys_version_delete.RATE_LIMITED
 	}
 };
 
@@ -175,7 +177,8 @@ ircd::m::room_keys_version_put
 {
 	room_keys_version, "PUT", put_room_keys_version,
 	{
-		room_keys_version_put.REQUIRES_AUTH
+		room_keys_version_put.REQUIRES_AUTH |
+		room_keys_version_put.RATE_LIMITED
 	}
 };
 
@@ -199,7 +202,8 @@ ircd::m::room_keys_version_get
 {
 	room_keys_version, "GET", get_room_keys_version,
 	{
-		room_keys_version_get.REQUIRES_AUTH
+		room_keys_version_get.REQUIRES_AUTH |
+		room_keys_version_get.RATE_LIMITED
 	}
 };
 
