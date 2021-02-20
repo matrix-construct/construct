@@ -38,6 +38,7 @@
 #include "transform.h"
 #include "generate.h"
 #include "accumulate.h"
+#include "tokens.h"
 #include "print.h"
 
 namespace ircd
