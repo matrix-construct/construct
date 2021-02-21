@@ -171,6 +171,50 @@ noexcept
 	return u_toupper(ch);
 }
 
+ircd::u32x16
+ircd::icu::is_char(const c32x16 ch)
+noexcept
+{
+	u32x16 ret{0};
+	for(size_t i{0}; i < 16; ++i)
+		ret[i] = boolmask<u32>(is_char(ch[i]));
+
+	return ret;
+}
+
+ircd::u32x16
+ircd::icu::is_nonchar(const c32x16 ch)
+noexcept
+{
+	u32x16 ret{0};
+	for(size_t i{0}; i < 16; ++i)
+		ret[i] = boolmask<u32>(is_nonchar(ch[i]));
+
+	return ret;
+}
+
+ircd::i32x16
+ircd::icu::block(const c32x16 ch)
+noexcept
+{
+	i32x16 ret{0};
+	for(size_t i{0}; i < 16; ++i)
+		ret[i] = ch[i]? (1U << block(ch[i])): 0;
+
+	return ret;
+}
+
+ircd::i32x16
+ircd::icu::category(const c32x16 ch)
+noexcept
+{
+	i32x16 ret{0};
+	for(size_t i{0}; i < 16; ++i)
+		ret[i] = ch[i]? (1U << category(ch[i])): 0;
+
+	return ret;
+}
+
 bool
 ircd::icu::is_char(const char32_t &ch)
 noexcept

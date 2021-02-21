@@ -21,6 +21,11 @@ namespace ircd::icu
 	bool is_nonchar(const char32_t &) noexcept;
 	bool is_char(const char32_t &) noexcept;
 
+	i32x16 category(const c32x16) noexcept;
+	i32x16 block(const c32x16) noexcept;
+	u32x16 is_nonchar(const c32x16) noexcept; // returns mask
+	u32x16 is_char(const c32x16) noexcept; // returns mask
+
 	char32_t toupper(const char32_t &) noexcept;
 	char32_t tolower(const char32_t &) noexcept;
 
