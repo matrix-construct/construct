@@ -53,6 +53,11 @@ namespace ircd                                                \
 
 namespace ircd
 {
+	#ifdef HAVE_CHAR8_T
+	typedef char8_t       c8;
+	#endif
+	typedef char16_t      c16;
+	typedef char32_t      c32;
 	typedef int8_t        i8;
 	typedef int16_t       i16;
 	typedef int32_t       i32;
@@ -136,6 +141,24 @@ IRCD_SIMD_TYPEDEF(i16x8,    i16, 16)  // [_0_|_1_|_2_|_3_|_4_|_5_|_6_|_7_]
 IRCD_SIMD_TYPEDEF(i8x64,    i8,  64)  // [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|0|1|2|3|4|5|6|7|...
 IRCD_SIMD_TYPEDEF(i8x32,    i8,  32)  // [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|0|1|2|3|4...
 IRCD_SIMD_TYPEDEF(i8x16,    i8,  16)  // [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f]
+
+//
+// character
+//
+
+IRCD_SIMD_TYPEDEF(c32x16,   c32, 64)  // [__0__|__1__|__2__|__3__|__4__|__5__|__6__|__7__|...
+IRCD_SIMD_TYPEDEF(c32x8,    c32, 32)  // [__0__|__1__|__2__|__3__|__4__|...
+IRCD_SIMD_TYPEDEF(c32x4,    c32, 16)  // [__0__|__1__|__2__|__3__]
+
+IRCD_SIMD_TYPEDEF(c16x32,   c16, 64)  // [_0_|_1_|_2_|_3_|_4_|_5_|_6_|_7_|_8_|_9_|_a_|_b_|...
+IRCD_SIMD_TYPEDEF(c16x16,   c16, 32)  // [_0_|_1_|_2_|_3_|_4_|_5_|_6_|_7_|_8_|_9_|...
+IRCD_SIMD_TYPEDEF(c16x8,    c16, 16)  // [_0_|_1_|_2_|_3_|_4_|_5_|_6_|_7_]
+
+#ifdef HAVE_CHAR8_T
+IRCD_SIMD_TYPEDEF(c8x64,    c8,  64)  // [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|0|1|2|3|4|5|6|7|...
+IRCD_SIMD_TYPEDEF(c8x32,    c8,  32)  // [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|0|1|2|3|4...
+IRCD_SIMD_TYPEDEF(c8x16,    c8,  16)  // [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f]
+#endif
 
 //
 // floating point precision
