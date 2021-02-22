@@ -39,6 +39,7 @@ __attribute__((visibility("internal")))
 	using spirit::auto_;
 	using spirit::_pass;
 	using spirit::_val;
+	using spirit::inf;
 
 	using qi::locals;
 	using qi::_a;
