@@ -34,4 +34,14 @@ namespace ircd::simd
 	          const T,
 	          const uint &fmt = 0)
 	noexcept;
+
+	/// Print the contents of the vector as characters for each byte
+	/// space-separated by lane. The fmt argument is reserved to offer some
+	/// additional variations on the output format.
+	template<class T>
+	string_view
+	print_chr(const mutable_buffer &buf,
+	          const T,
+	          const uint &fmt = 0)
+	noexcept;
 }

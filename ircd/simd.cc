@@ -923,3 +923,94 @@ noexcept
 		data(buf), size_t(len)
 	};
 }
+
+//
+// Stringify characters (memory format) for each lane.
+//
+
+template<>
+ircd::string_view
+ircd::simd::print_chr(const mutable_buffer &buf,
+                      const u8x16 a,
+                      const uint &fmt)
+noexcept
+{
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"%c %c %c %c %c %c %c %c %c %c %c %c %c %c %c %c",
+		std::isprint(a[0x00])? a[0x00]: ' ',
+		std::isprint(a[0x01])? a[0x01]: ' ',
+		std::isprint(a[0x02])? a[0x02]: ' ',
+		std::isprint(a[0x03])? a[0x03]: ' ',
+		std::isprint(a[0x04])? a[0x04]: ' ',
+		std::isprint(a[0x05])? a[0x05]: ' ',
+		std::isprint(a[0x06])? a[0x06]: ' ',
+		std::isprint(a[0x07])? a[0x07]: ' ',
+		std::isprint(a[0x08])? a[0x08]: ' ',
+		std::isprint(a[0x09])? a[0x09]: ' ',
+		std::isprint(a[0x0a])? a[0x0a]: ' ',
+		std::isprint(a[0x0b])? a[0x0b]: ' ',
+		std::isprint(a[0x0c])? a[0x0c]: ' ',
+		std::isprint(a[0x0d])? a[0x0d]: ' ',
+		std::isprint(a[0x0e])? a[0x0e]: ' ',
+		std::isprint(a[0x0f])? a[0x0f]: ' '
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
+
+template<>
+ircd::string_view
+ircd::simd::print_chr(const mutable_buffer &buf,
+                      const u8x32 a,
+                      const uint &fmt)
+noexcept
+{
+	const auto len(::snprintf
+	(
+		data(buf), size(buf),
+		"%c %c %c %c %c %c %c %c %c %c %c %c %c %c %c %c "
+		"%c %c %c %c %c %c %c %c %c %c %c %c %c %c %c %c",
+		std::isprint(a[0x00])? a[0x00]: ' ',
+		std::isprint(a[0x01])? a[0x01]: ' ',
+		std::isprint(a[0x02])? a[0x02]: ' ',
+		std::isprint(a[0x03])? a[0x03]: ' ',
+		std::isprint(a[0x04])? a[0x04]: ' ',
+		std::isprint(a[0x05])? a[0x05]: ' ',
+		std::isprint(a[0x06])? a[0x06]: ' ',
+		std::isprint(a[0x07])? a[0x07]: ' ',
+		std::isprint(a[0x08])? a[0x08]: ' ',
+		std::isprint(a[0x09])? a[0x09]: ' ',
+		std::isprint(a[0x0a])? a[0x0a]: ' ',
+		std::isprint(a[0x0b])? a[0x0b]: ' ',
+		std::isprint(a[0x0c])? a[0x0c]: ' ',
+		std::isprint(a[0x0d])? a[0x0d]: ' ',
+		std::isprint(a[0x0e])? a[0x0e]: ' ',
+		std::isprint(a[0x0f])? a[0x0f]: ' ',
+		std::isprint(a[0x10])? a[0x10]: ' ',
+		std::isprint(a[0x11])? a[0x11]: ' ',
+		std::isprint(a[0x12])? a[0x12]: ' ',
+		std::isprint(a[0x13])? a[0x13]: ' ',
+		std::isprint(a[0x14])? a[0x14]: ' ',
+		std::isprint(a[0x15])? a[0x15]: ' ',
+		std::isprint(a[0x16])? a[0x16]: ' ',
+		std::isprint(a[0x17])? a[0x17]: ' ',
+		std::isprint(a[0x18])? a[0x18]: ' ',
+		std::isprint(a[0x19])? a[0x19]: ' ',
+		std::isprint(a[0x1a])? a[0x1a]: ' ',
+		std::isprint(a[0x1b])? a[0x1b]: ' ',
+		std::isprint(a[0x1c])? a[0x1c]: ' ',
+		std::isprint(a[0x1d])? a[0x1d]: ' ',
+		std::isprint(a[0x1e])? a[0x1e]: ' ',
+		std::isprint(a[0x1f])? a[0x1f]: ' '
+	));
+
+	return string_view
+	{
+		data(buf), size_t(len)
+	};
+}
