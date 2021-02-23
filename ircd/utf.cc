@@ -406,7 +406,7 @@ noexcept
 	u32x4 cp[2];
 	for(size_t i(0); i < 2; ++i)
 		for(size_t j(0); j < 4; ++j)
-			cp[i][j] = codepoint[(i + 1) * j];
+			cp[i][j] = codepoint[i * 4 + j];
 
 	cp[0] = _encode(cp[0]);
 	cp[1] = _encode(cp[1]);
@@ -414,7 +414,7 @@ noexcept
 	u32x8 ret;
 	for(size_t i(0); i < 2; ++i)
 		for(size_t j(0); j < 4; ++j)
-			ret[(i + 1) * j] = cp[i][j];
+			ret[i * 4 + j] = cp[i][j];
 
 	return ret;
 }
@@ -433,7 +433,7 @@ noexcept
 	u32x8 cp[2];
 	for(size_t i(0); i < 2; ++i)
 		for(size_t j(0); j < 8; ++j)
-			cp[i][j] = codepoint[(i + 1) * j];
+			cp[i][j] = codepoint[i * 8 + j];
 
 	cp[0] = encode(cp[0]);
 	cp[1] = encode(cp[1]);
@@ -441,7 +441,7 @@ noexcept
 	u32x16 ret;
 	for(size_t i(0); i < 2; ++i)
 		for(size_t j(0); j < 8; ++j)
-			ret[(i + 1) * j] = cp[i][j];
+			ret[i * 8 + j] = cp[i][j];
 
 	return ret;
 }
@@ -516,7 +516,7 @@ noexcept
 	u32x4 cp[2];
 	for(size_t i(0); i < 2; ++i)
 		for(size_t j(0); j < 4; ++j)
-			cp[i][j] = codepoint[(i + 1) * j];
+			cp[i][j] = codepoint[i * 4 + j];
 
 	cp[0] = _length(cp[0]);
 	cp[1] = _length(cp[1]);
@@ -524,7 +524,7 @@ noexcept
 	u32x8 ret;
 	for(size_t i(0); i < 2; ++i)
 		for(size_t j(0); j < 4; ++j)
-			ret[(i + 1) * j] = cp[i][j];
+			ret[i * 4 + j] = cp[i][j];
 
 	return ret;
 }
@@ -543,7 +543,7 @@ noexcept
 	u32x8 cp[2];
 	for(size_t i(0); i < 2; ++i)
 		for(size_t j(0); j < 8; ++j)
-			cp[i][j] = codepoint[(i + 1) * j];
+			cp[i][j] = codepoint[i * 8 + j];
 
 	cp[0] = length(cp[0]);
 	cp[1] = length(cp[1]);
@@ -551,7 +551,7 @@ noexcept
 	u32x16 ret;
 	for(size_t i(0); i < 2; ++i)
 		for(size_t j(0); j < 8; ++j)
-			ret[(i + 1) * j] = cp[i][j];
+			ret[i * 8 + j] = cp[i][j];
 
 	return ret;
 }
