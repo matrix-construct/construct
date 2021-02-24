@@ -39,6 +39,7 @@
 #include "generate.h"
 #include "accumulate.h"
 #include "tokens.h"
+#include "str.h"
 #include "print.h"
 
 namespace ircd
