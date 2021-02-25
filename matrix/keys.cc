@@ -236,7 +236,7 @@ try
 	};
 
 	bool ret(false);
-	for(const json::object &key : response) try
+	for(const json::object key : response) try
 	{
 		verify(m::keys{key});
 		if(!closure(key))
@@ -357,7 +357,7 @@ try
 		request
 	};
 
-	for(const json::object &keys : response)
+	for(const json::object keys : response)
 	{
 		if(unquote(keys["server_name"]) != server_name)
 			continue;
@@ -464,7 +464,7 @@ ircd::m::keys::get(const queries &queries,
 			result.object["server_keys"]
 		};
 
-		for(const json::object &keys : server_keys)
+		for(const json::object keys : server_keys)
 		{
 			const json::string &server_name
 			{

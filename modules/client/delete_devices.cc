@@ -92,7 +92,7 @@ post__delete_devices(client &client,
 		request.user_id
 	};
 
-	for(const json::string &device_id : devices)
+	for(const json::string device_id : devices)
 		user_devices.del(device_id);
 
 	return m::resource::response

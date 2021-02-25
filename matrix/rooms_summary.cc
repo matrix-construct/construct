@@ -101,7 +101,7 @@ ircd::m::rooms::summary::fetch::fetch(const string_view &origin,
 		response.get("chunk")
 	};
 
-	for(const json::object &summary : chunk)
+	for(const json::object summary : chunk)
 	{
 		const json::string &room_id
 		{
@@ -401,7 +401,7 @@ ircd::m::rooms::summary::chunk_local(const m::room &room,
 				content["aliases"]
 			};
 
-			for(const json::string &a : aliases)
+			for(const json::string a : aliases)
 				array.append(a);
 		});
 	}

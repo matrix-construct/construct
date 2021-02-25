@@ -153,9 +153,9 @@ const
 			push::rules::defaults.get<json::array>(kind)
 		};
 
-		for(const json::object &rule : rules)
+		for(const json::object rule : rules)
 		{
-			const json::string &_ruleid
+			const json::string _ruleid
 			{
 				rule["rule_id"]
 			};
@@ -214,9 +214,9 @@ const
 			if(kind && kind != _kind)
 				continue;
 
-			for(const json::object &rule : push::rules::defaults.at<json::array>(_kind))
+			for(const json::object rule : push::rules::defaults.at<json::array>(_kind))
 			{
-				const json::string &_ruleid
+				const json::string _ruleid
 				{
 					rule["rule_id"]
 				};

@@ -158,7 +158,7 @@ get__missing_events(client &client,
 		return true;
 	}};
 
-	for(const json::string &event_id : latest)
+	for(const json::string event_id : latest)
 		add_queue(event_id);
 
 	m::event::fetch event;
