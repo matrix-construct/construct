@@ -990,9 +990,12 @@ AC_CHECK_TYPES([__uint128_t])
 AC_CHECK_SIZEOF([__uint128_t])
 
 dnl Gauge the support of experimental compact floating point formats
-AC_CHECK_SIZEOF([__fp16])
-AC_CHECK_SIZEOF([__bf16])
+AC_CHECK_TYPES([_Float16])
 AC_CHECK_SIZEOF([_Float16])
+AC_CHECK_TYPES([__fp16])
+AC_CHECK_SIZEOF([__fp16])
+AC_CHECK_TYPES([__bf16])
+AC_CHECK_SIZEOF([__bf16])
 
 dnl -fsigned-char ensures 'char' is signed on all platforms
 RB_VAR_PREPEND([CFLAGS], ["-fsigned-char"])
