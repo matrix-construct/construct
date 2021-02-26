@@ -3548,14 +3548,19 @@ ircd::u64x2
 ircd::json::string_unescape_utf16(u8x16 &block,
                                   const u8x16 block_mask)
 {
-	const u32x4 unicode
+	const u8x16 surr_mark
 	{
-		utf16::decode_surrogate_aligned_next(block & block_mask)
+		utf16::find_surrogate(block) & block_mask
 	};
 
-	const u32x4 length
+	const u8x16 surr_mask
 	{
-		utf8::length(unicode)
+		utf16::mask_surrogate(surr_mark)
+	};
+
+	const u32x4 unicode
+	{
+		utf16::decode_surrogate_aligned_next(block)
 	};
 
 	const u32x4 encoded_sparse
@@ -3567,6 +3572,22 @@ ircd::json::string_unescape_utf16(u8x16 &block,
 	(
 		encoded_sparse
 	);
+
+	u32x4 is_surrogate
+	{
+		-1U, -1U, 0, 0
+	};
+
+	for(size_t i(0); i < 6; ++i)
+	{
+		is_surrogate[0] &= surr_mask[i];
+		is_surrogate[1] &= surr_mask[i + 6];
+	}
+
+	const u32x4 length
+	{
+		utf8::length(unicode) & is_surrogate
+	};
 
 	size_t di(0), i(0);
 	for(; i < 2 && length[i] > 0; ++i)
