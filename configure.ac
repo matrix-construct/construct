@@ -759,6 +759,12 @@ AM_COND_IF([GCC],
 	RB_VAR_PREPEND([CXXFLAGS], ["-flax-vector-conversions"])
 ])
 
+dnl Enables matrix_type attribute for vectors of vectors etc
+AM_COND_IF([CLANG11],
+[
+	RB_VAR_PREPEND([CXXFLAGS], ["-fenable-matrix"])
+])
+
 dnl
 dnl Machine Tuning
 dnl
