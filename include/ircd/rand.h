@@ -41,6 +41,11 @@ namespace ircd::rand
 	template<> u256x1 vector() noexcept;
 	template<> u512x1 vector() noexcept;
 
+	// Random vector over distribution
+	template<class T,
+	         class distribution>
+	T vector(distribution &);
+
 	// Random fill of buffer
 	const_buffer fill(const mutable_buffer &out) noexcept;
 
@@ -96,6 +101,23 @@ noexcept
 
 	assert(pos < dict.size());
 	return dict[pos];
+}
+
+template<class T,
+         class distribution>
+inline T
+ircd::rand::vector(distribution &dist)
+{
+	constexpr auto lanes
+	{
+		simd::lanes<T>()
+	};
+
+	T ret;
+	for(unsigned i(0); i < lanes; ++i)
+		ret[i] = dist(mt);
+
+	return ret;
 }
 
 inline
