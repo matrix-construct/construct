@@ -69,7 +69,13 @@ namespace ircd
 	typedef uint64_t      u64;
 	typedef uint128_t     u128;
 	typedef int8_t        f8;   // ???
-	typedef int16_t       f16;  // ???
+	#if defined(HAVE__FLOAT16)
+	typedef _Float16      f16;
+	#elif defined(HAVE___FP16)
+	typedef __fp16        f16;
+	#else
+	#error "Missing half-precision floating point support."
+	#endif
 	typedef float         f32;
 	typedef double        f64;
 	typedef long double   f128;
