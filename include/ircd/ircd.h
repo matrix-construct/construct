@@ -99,6 +99,7 @@
 #include "ios/ios.h"
 #include "ctx/ctx.h"
 #include "cl.h"
+#include "gpt/gpt.h"
 #include "exec.h"
 #include "db/db.h"
 #include "js.h"
