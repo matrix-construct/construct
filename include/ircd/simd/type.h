@@ -11,28 +11,44 @@
 #pragma once
 #define HAVE_IRCD_SIMD_TYPE_H
 
-#define IRCD_SIMD_TYPEUSE(_T_, _U_, _V_)    \
-namespace ircd                              \
-{                                           \
-    namespace simd                          \
-    {                                       \
-        using _T_ = _U_                     \
-        __attribute__((aligned((_V_))));    \
-    }                                       \
-                                            \
-    using simd::_T_;                        \
+namespace ircd::simd
+{
+	template<class T>
+	using lane_type = typename std::remove_reference<decltype(T{}[0])>::type;
+
+	template<class V,
+	         class U = lane_type<V>>
+	static constexpr size_t sizeof_lane() = delete;
 }
 
-#define IRCD_SIMD_TYPEVEC(_T_, _U_, _V_)      \
-namespace ircd                                \
-{                                             \
-    namespace simd                            \
-    {                                         \
-        using _T_ = _U_                       \
-        __attribute__((vector_size((_V_))));  \
-    }                                         \
-                                              \
-    using simd::_T_;                          \
+#define IRCD_SIMD_TYPEVEC(_T_, _U_, _V_)                      \
+namespace ircd                                                \
+{                                                             \
+    namespace simd                                            \
+    {                                                         \
+        using _T_ = _U_                                       \
+        __attribute__((vector_size((_V_))));                  \
+    }                                                         \
+                                                              \
+    using simd::_T_;                                          \
+}
+
+#define IRCD_SIMD_TYPEUSE(_T_, _U_, _V_)                      \
+namespace ircd                                                \
+{                                                             \
+    namespace simd                                            \
+    {                                                         \
+        using _T_ = _U_                                       \
+        __attribute__((aligned((_V_))));                      \
+                                                              \
+        template<>                                            \
+        constexpr size_t sizeof_lane<_T_, _U_>()              \
+        {                                                     \
+            return sizeof(_U_);                               \
+        }                                                     \
+    }                                                         \
+                                                              \
+    using simd::_T_;                                          \
 }
 
 #define IRCD_SIMD_TYPEDEF(_T_, _U_, _V_)                      \
@@ -42,6 +58,12 @@ namespace ircd                                                \
     {                                                         \
         using _T_ = _U_                                       \
         __attribute__((vector_size((_V_)), aligned((_V_))));  \
+                                                              \
+        template<>                                            \
+        constexpr size_t sizeof_lane<_T_, _U_>()              \
+        {                                                     \
+            return sizeof(_U_);                               \
+        }                                                     \
     }                                                         \
                                                               \
     using simd::_T_;                                          \
@@ -68,7 +90,9 @@ namespace ircd
 	typedef uint32_t      u32;
 	typedef uint64_t      u64;
 	typedef uint128_t     u128;
-	typedef int8_t        f8;   // ???
+	#if defined(HAVE___FP8)
+	typedef __fp8         f8;
+	#endif
 	#if defined(HAVE__FLOAT16)
 	typedef _Float16      f16;
 	#elif defined(HAVE___FP16)
@@ -190,9 +214,11 @@ IRCD_SIMD_TYPEDEF(f16x32,   f16, 64)  // - [_0_|_1_|_2_|_3_|_4_|_5_|_6_|_7_|_8_|
 IRCD_SIMD_TYPEDEF(f16x16,   f16, 32)  // - [_0_|_1_|_2_|_3_|_4_|_5_|_6_|_7_|_8_|_9_|...
 IRCD_SIMD_TYPEDEF(f16x8,    f16, 16)  // - [_0_|_1_|_2_|_3_|_4_|_5_|_6_|_7_]
 
+#if defined(HAVE___FP8)
 IRCD_SIMD_TYPEDEF(f8x64,    f8,  64)  // - [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|0|1|2|3|4|5|6|7|...
 IRCD_SIMD_TYPEDEF(f8x32,    f8,  32)  // - [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|0|1|2|3|4...
 IRCD_SIMD_TYPEDEF(f8x16,    f8,  16)  // + [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f]
+#endif
 
 //
 // other words
