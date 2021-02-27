@@ -33,7 +33,7 @@ namespace ircd::rand
 	// Random integer
 	uint64_t integer() noexcept;
 	uint64_t integer(const uint64_t &min, const uint64_t &max) noexcept; // inclusive
-	uint64_t integer(xoshiro256p &) noexcept;
+	uint64_t integer(xoshiro256p &);
 
 	// Random vector
 	template<class T> T vector() noexcept = delete;
@@ -52,10 +52,10 @@ namespace ircd::rand
 	// Random fill of array
 	template<class T,
 	         size_t S>
-	decltype(auto) fill(T (&buf)[S]) noexcept;
+	decltype(auto) fill(T (&buf)[S]);
 
 	// Random character from dictionary
-	char character(const std::string &dict = dict::alnum) noexcept;
+	char character(const std::string &dict = dict::alnum);
 
 	// Random string from dictionary, fills buffer
 	string_view string(const mutable_buffer &out, const std::string &dict) noexcept;
@@ -65,14 +65,13 @@ struct ircd::rand::xoshiro256p
 {
 	uint64_t s[4];
 
-	xoshiro256p() noexcept;
+	xoshiro256p();
 };
 
 template<class T,
          size_t S>
 inline decltype(auto)
 ircd::rand::fill(T (&buf)[S])
-noexcept
 {
 	static_assert
 	(
@@ -91,7 +90,6 @@ noexcept
 /// Random character from dictionary
 inline char
 ircd::rand::character(const std::string &dict)
-noexcept
 {
 	assert(!dict.empty());
 	const auto pos
@@ -122,14 +120,12 @@ ircd::rand::vector(distribution &dist)
 
 inline
 ircd::rand::xoshiro256p::xoshiro256p()
-noexcept
 {
 	fill(s);
 }
 
 inline uint64_t
 ircd::rand::integer(xoshiro256p &state)
-noexcept
 {
 	auto &s(state.s);
 
