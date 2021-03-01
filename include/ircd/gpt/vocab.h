@@ -26,6 +26,11 @@ namespace ircd::gpt::vocab
 	token [65536][16],
 	merge [65536][2][16];
 
+	// Paths to the files containing token and merge datas.
+	extern conf::item<std::string>
+	tokens_path,
+	merges_path;
+
 	// Tokenize UTF-8 input string of any length into proper token values,
 	vector_view<u16>
 	tokenize(const vector_view<u16> &out,

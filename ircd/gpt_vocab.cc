@@ -13,19 +13,19 @@ namespace ircd::gpt::vocab
 	static u16 find_token(const u8x16) noexcept;
 	static uint find_tokens(u16x16 &, const uint, const u8x16 (&)[16], const uint) noexcept;
 	static u16 find_merge(const u8x16, const u8x16) noexcept;
+
 	static u16 bpe_score(u16 (&)[16], const u8x16 (&)[16][2], const uint) noexcept;
 	static uint bpe_merge(u8x16 (&)[16][2], u16 (&)[16], const uint, const u16) noexcept;
 	static uint bpe_postpare(u8x16 (&)[16], const u8x16 (&)[16][2], const uint) noexcept;
 	static uint bpe_prepare(u8x16 (&)[16][2], const u8x16) noexcept;
 	static uint bpe_tokenize(u8x16 (&)[16], const u8x16) noexcept;
+
 	static u64x2 pre_tokenize_split(u8x16 (&)[16], u32x16, u32x16, u32x16) noexcept;
 	static u64x2 pre_tokenize(u8x16 (&)[16], const u8x16, const u8x16) noexcept;
-	static u64x2 tokenize_block(u16x16 &, const u8x16, const u8x16) noexcept;
-	static void init_tokens() noexcept;
-	static void init_merges() noexcept;
 
-	extern conf::item<std::string> tokens_path;
-	extern conf::item<std::string> merges_path;
+	static u64x2 tokenize_block(u16x16 &, const u8x16, const u8x16) noexcept;
+
+	static void init_tokens(), init_merges();
 }
 
 decltype(ircd::gpt::vocab::tokens)
@@ -64,7 +64,6 @@ ircd::gpt::vocab::merges_path
 
 void
 ircd::gpt::vocab::init_tokens()
-noexcept
 {
 	if(!tokens_path)
 		return;
@@ -89,7 +88,6 @@ noexcept
 
 void
 ircd::gpt::vocab::init_merges()
-noexcept
 {
 	if(!merges_path)
 		return;
@@ -130,7 +128,7 @@ noexcept
 {
 	mutable_buffer buf(out);
 	for(const u16 &token : in)
-		consume(buf, copy(buf, const_buffer(vocab::token[token], simd::strlen(vocab::token[token]))));
+		consume(buf, copy(buf, const_buffer(vocab::token[token], size(string_view(vocab::token[token])))));
 
 	return string_view
 	{
@@ -412,6 +410,12 @@ ircd::gpt::vocab::bpe_tokenize(u8x16 (&str)[16],
                                const u8x16 pre_token)
 noexcept
 {
+	if(simd::strlen(pre_token) < 2)
+	{
+		str[0] = pre_token;
+		return 1;
+	}
+
 	u8x16 pair[16][2];
 	auto pairs
 	{

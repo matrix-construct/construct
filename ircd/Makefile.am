@@ -217,7 +217,7 @@ libircd_la_SOURCES += png.cc
 if OPENCL
 libircd_la_SOURCES += cl.cc
 endif
-libircd_la_SOURCES += gpt.cc
+libircd_la_SOURCES += gpt_vocab.cc
 libircd_la_SOURCES += openssl.cc
 libircd_la_SOURCES += rfc1459.cc
 libircd_la_SOURCES += rfc3986.cc
