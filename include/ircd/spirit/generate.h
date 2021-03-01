@@ -14,12 +14,6 @@
 /// it involves extremely expensive boost headers for creating formal spirit
 /// grammars. This file is automatically included in the spirit.h group.
 
-#ifdef __clang__
-	#define IRCD_SPIRIT_GSPTR_LINKAGE static
-#else
-	#define IRCD_SPIRIT_GSPTR_LINKAGE extern
-#endif
-
 namespace ircd {
 namespace spirit
 __attribute__((visibility("default")))
@@ -31,7 +25,7 @@ __attribute__((visibility("default")))
 	generator_buffer_size {64_KiB},
 	generator_buffer_count {8};
 
-	IRCD_SPIRIT_GSPTR_LINKAGE thread_local struct generator_state *
+	extern thread_local struct generator_state *
 	generator_state;
 
 	extern thread_local char
@@ -70,7 +64,7 @@ __attribute__((visibility("internal")))
 /// height of any stack growing from an ircd::spirit::generate() call without
 /// need for reentrancy. This gives us the ability to pre-allocate thread_local
 /// buffers.
-struct [[gnu::visibility("hidden")]]
+struct [[gnu::visibility("internal")]]
 ircd::spirit::generator_state
 {
 	/// The number of instances stacked behind the current state. This should

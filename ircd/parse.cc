@@ -28,11 +28,9 @@ decltype(ircd::spirit::rule_buffer)
 ircd::spirit::rule_buffer
 alignas(64);
 
-#ifndef __clang__
 thread_local
 decltype(ircd::spirit::generator_state)
 ircd::spirit::generator_state;
-#endif
 
 thread_local
 decltype(ircd::spirit::generator_buffer)
