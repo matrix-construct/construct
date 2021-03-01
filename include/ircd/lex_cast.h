@@ -18,22 +18,31 @@ namespace ircd
 {
 	IRCD_EXCEPTION_HIDENAME(ircd::error, bad_lex_cast)
 
+	// Test if lex_cast will succeed
 	template<class T> bool lex_castable(const string_view &) noexcept = delete;
 
+	// Convert from ascii to integral
 	template<class T> T lex_cast(std::string &);
 	template<class T> T lex_cast(const std::string &);
 	template<class T> T lex_cast(const std::string_view &);
 	template<class T> T lex_cast(const string_view &);
 
-	// User supplied destination buffer
+	// Convert from integral to ascii (user supplied destination buffer)
 	template<class T> string_view lex_cast(T, const mutable_buffer &buf);
 
-	// Circular static thread_local buffer
-	extern const size_t LEX_CAST_BUFS;
-	extern const size_t LEX_CAST_BUFSIZE;
+	// Convert from integral to ascii (circular internal thread_local buffer)
 	template<class T> string_view lex_cast(const T &t);
 }
 
+// Internal convenience ring buffer related
+namespace ircd
+{
+	constexpr size_t LEX_CAST_BUFS {256}, LEX_CAST_BUFSIZE {64};
+	extern thread_local char lex_cast_buf[LEX_CAST_BUFS][LEX_CAST_BUFSIZE];
+	extern thread_local uint8_t lex_cast_buf_head;
+}
+
+// Explicit linkages
 namespace ircd
 {
 	template<> bool lex_castable<std::string>(const string_view &) noexcept;       // stub always true
@@ -113,7 +122,7 @@ template<class T>
 inline ircd::string_view
 ircd::lex_cast(const T &t)
 {
-	return lex_cast<T>(t, null_buffer);
+	return lex_cast<T>(t, lex_cast_buf[lex_cast_buf_head++]);
 }
 
 /// Conversion to an std::string creates a copy when the input is a
