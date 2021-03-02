@@ -16,6 +16,20 @@ namespace ircd::simd
 	template<class T>
 	static constexpr size_t lanes();
 
+	template<class U,
+	         class T>
+	static constexpr bool is_lane_same();
+
+	template<class U,
+	         class T>
+	static constexpr bool is_lane_base_of();
+
+	template<class T>
+	static constexpr bool is_lane_integral();
+
+	template<class T>
+	static constexpr bool is_lane_floating();
+
 	// lane number convenience constants
 	extern const u8x64    u8x64_lane_id;
 	extern const u8x32    u8x32_lane_id;
@@ -40,6 +54,36 @@ namespace ircd::simd
 		support::sse?      16:
 		                    8
 	};
+}
+
+template<class T>
+constexpr bool
+ircd::simd::is_lane_floating()
+{
+	return std::is_floating_point<lane_type<T>>::value;
+}
+
+template<class T>
+constexpr bool
+ircd::simd::is_lane_integral()
+{
+	return std::is_integral<lane_type<T>>::value;
+}
+
+template<class U,
+         class T>
+constexpr bool
+ircd::simd::is_lane_same()
+{
+	return std::is_same<U, lane_type<T>>::value;
+}
+
+template<class U,
+         class T>
+constexpr bool
+ircd::simd::is_lane_base_of()
+{
+	return std::is_base_of<U, lane_type<T>>::value;
 }
 
 /// Get number of lanes for vector type (the number after the x in the
