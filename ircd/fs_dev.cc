@@ -27,6 +27,9 @@ ircd::fs::dev::for_each(const string_view &type,
 			split(filename(path_scratch, dir), ':')
 		};
 
+		if(!major || !minor)
+			continue;
+
 		const ulong id
 		{
 			dev::id({lex_cast<ulong>(major), lex_cast<ulong>(minor)})
