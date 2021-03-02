@@ -30,6 +30,9 @@ namespace ircd::simd
 	template<class T>
 	static constexpr bool is_lane_floating();
 
+	template<class T>
+	T mask_full();
+
 	// lane number convenience constants
 	extern const u8x64    u8x64_lane_id;
 	extern const u8x32    u8x32_lane_id;
@@ -54,6 +57,17 @@ namespace ircd::simd
 		support::sse?      16:
 		                    8
 	};
+}
+
+template<class T>
+[[const]]
+inline T
+ircd::simd::mask_full()
+{
+	if constexpr(is_lane_floating<T>())
+		return T{};
+	else
+		return ~T{0};
 }
 
 template<class T>

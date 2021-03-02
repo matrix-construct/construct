@@ -149,7 +149,7 @@ noexcept
 	{
 		static const auto mask
 		{
-			~block_t{0}
+			mask_full<block_t>()
 		};
 
 		const auto si
@@ -230,7 +230,7 @@ noexcept
 
 		static const auto mask
 		{
-			~block_t{0}
+			mask_full<block_t>()
 		};
 
 		const auto si
@@ -302,7 +302,7 @@ noexcept
 
 		static const auto mask
 		{
-			~block_t{0}
+			mask_full<block_t>()
 		};
 
 		const auto si
