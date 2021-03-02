@@ -19,6 +19,12 @@ namespace ircd::simd
 	template<class V,
 	         class U = lane_type<V>>
 	static constexpr size_t sizeof_lane() = delete;
+
+	template<class T>
+	static constexpr bool is()
+	{
+		return false;
+	}
 }
 
 #define IRCD_SIMD_TYPEVEC(_T_, _U_, _V_)                      \
@@ -63,6 +69,12 @@ namespace ircd                                                \
         constexpr size_t sizeof_lane<_T_, _U_>()              \
         {                                                     \
             return sizeof(_U_);                               \
+        }                                                     \
+                                                              \
+        template<>                                            \
+        constexpr bool is<_T_>()                              \
+        {                                                     \
+            return true;                                      \
         }                                                     \
     }                                                         \
                                                               \
