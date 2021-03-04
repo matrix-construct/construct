@@ -83,6 +83,8 @@ class ircd::fmt::snprintf
 	}{}
 };
 
+/// Same as snprintf() where n= is deduced by the buffer size argument
+///
 struct ircd::fmt::sprintf
 :snprintf
 {
@@ -120,6 +122,8 @@ struct ircd::fmt::vsnprintf
 	}{}
 };
 
+/// Same as vsnprintf() where n is deduced from the buffer size.
+///
 struct ircd::fmt::vsprintf
 :snprintf
 {
@@ -132,6 +136,9 @@ struct ircd::fmt::vsprintf
 	}{}
 };
 
+/// Allocates a buffer (std::string) of size for the result.
+///
+/// see snstringf() for vararg format overload.
 struct ircd::fmt::vsnstringf
 :std::string
 {
@@ -151,6 +158,11 @@ struct ircd::fmt::vsnstringf
 	}{}
 };
 
+/// Allocates a buffer (std::string) of size for the result.
+///
+/// Note: that OR'ing the size with ircd::SHRINK_TO_FIT constant will trigger
+/// a standard string re-evaluation to determine if the final result string
+/// should be transferred to a smaller buffer.
 struct ircd::fmt::snstringf
 :vsnstringf
 {
@@ -164,6 +176,12 @@ struct ircd::fmt::snstringf
 	}{}
 };
 
+/// Efficient in-place buffer convenience template.
+///
+/// This is an object which contains the result buffer internally. The size
+/// of that buffer is given in the template parameter. This is clean and
+/// efficient for basic format string operations on the stack while avoiding
+/// the clutter of buffer statements and mgmt.
 template<size_t MAX>
 struct ircd::fmt::bsprintf
 :snprintf
@@ -184,11 +202,13 @@ struct ircd::fmt::bsprintf
 	}{}
 };
 
+/// Experimental typedef for format strings.
 struct ircd::fmt::literal_snstringf
 {
 	string_view format;
 };
 
+/// Experimental typedef for format strings.
 struct ircd::fmt::literal_snstringf__max
 {
 	literal_snstringf format;
