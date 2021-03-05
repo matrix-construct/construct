@@ -15,6 +15,8 @@
 ///
 namespace ircd::gpt::vocab
 {
+	IRCD_EXCEPTION(gpt::error, error)
+
 	// Actual number of tokens and merges stored in following lists.
 	extern size_t
 	tokens,
@@ -32,12 +34,8 @@ namespace ircd::gpt::vocab
 	merges_path;
 
 	// Tokenize UTF-8 input string of any length into proper token values,
-	vector_view<u16>
-	tokenize(const vector_view<u16> &out,
-	         const string_view &in) noexcept;
+	vector_view<u16> tokenize(const vector_view<u16> &out, const string_view &in);
 
 	// Decode token values to build output text string.
-	string_view
-	detokenize(const mutable_buffer &out,
-	           const vector_view<const u16> &in) noexcept;
+	string_view detokenize(const mutable_buffer &out, const vector_view<const u16> &in);
 }
