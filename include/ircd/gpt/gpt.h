@@ -16,9 +16,19 @@
 namespace ircd::gpt
 {
 	IRCD_EXCEPTION(ircd::error, error)
+
+	u16
+	generate(const vector_view<const f32> &) noexcept;
+
+	vector_view<f32>
+	embed(const vector_view<f32> &,
+	      const vector_view<const u16> &) noexcept;
+
+	extern log::log log;
 }
 
 #include "vocab.h"
+#include "model.h"
 
 namespace ircd::gpt
 {

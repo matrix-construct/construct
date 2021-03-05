@@ -217,6 +217,8 @@ libircd_la_SOURCES += png.cc
 if OPENCL
 libircd_la_SOURCES += cl.cc
 endif
+libircd_la_SOURCES += gpt.cc
+libircd_la_SOURCES += gpt_model.cc
 libircd_la_SOURCES += gpt_vocab.cc
 libircd_la_SOURCES += openssl.cc
 libircd_la_SOURCES += rfc1459.cc
@@ -254,6 +256,16 @@ ROCKSDB_SRC_CPPFLAGS =#
 ROCKSDB_SRC_CPPFLAGS += -isystem $(top_srcdir)/deps/rocksdb/include
 ROCKSDB_SRC_CPPFLAGS += -isystem $(top_srcdir)/deps/rocksdb
 
+GPT_FP_CXXFLAGS =#
+GPT_FP_CXXFLAGS += -fno-math-errno
+GPT_FP_CXXFLAGS += -fno-trapping-math
+GPT_FP_CXXFLAGS += -ffinite-math-only
+GPT_FP_CXXFLAGS += -fno-signed-zeros
+GPT_FP_CXXFLAGS += -fdenormal-fp-math=positive-zero
+GPT_FP_CXXFLAGS += -fassociative-math
+GPT_FP_CXXFLAGS += -ffp-contract=fast
+GPT_FP_CXXFLAGS += -freciprocal-math
+
 #
 # Specific unit option composition
 #
@@ -282,6 +294,7 @@ endif
 if IOU
 fs_iou.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 endif
+gpt.lo:               AM_CXXFLAGS := ${AM_CXXFLAGS} ${GPT_FP_CXXFLAGS}
 http.lo:              AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 http.lo:              AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
 ios.lo:               AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
