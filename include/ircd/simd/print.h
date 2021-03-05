@@ -44,4 +44,54 @@ namespace ircd::simd
 	          const T,
 	          const uint &fmt = 0)
 	noexcept;
+
+	/// Print the contents of the vector to stdout; developer convenience.
+	/// One of the other functions in this suite must be selected by this
+	/// template to generate the desired string.
+	template<class T,
+	         class F>
+	bool
+	print(const T,
+	      F&& printer      = print_mem<T>,
+	      const uint &fmt  = 0,
+	      const bool &lf   = true);
+}
+
+/// Developer convenience. Reference another print_*() in the template. All
+/// arguments are passed thru.
+template<class T,
+         class F>
+inline bool
+ircd::simd::print(const T vec,
+                  F&& printer,
+	              const uint &fmt,
+	              const bool &lf)
+{
+	thread_local char buf[1024];
+	const string_view str
+	{
+		printer(buf, vec, fmt)
+	};
+
+	const auto term
+	{
+		std::min(str.size(), sizeof(buf) - 1)
+	};
+
+	assert(buf[term] == 0x0);
+	buf[term] = lf? '\n': buf[term];
+	const auto len
+	{
+		size(str) + lf
+	};
+
+	size_t wrote {0}, last {0}; do
+	{
+		last = ::fwrite(data(str) + wrote, 1, len - wrote, ::stdout);
+		wrote += last;
+	}
+	while(wrote < len && last > 0); // ensure last!=0 or break for error.
+
+	assert(wrote <= len);
+	return wrote == len;
 }
