@@ -250,6 +250,14 @@ libircd_la_SOURCES += ircd.cc
 # Specific unit configurations
 #
 
+ROCKSDB_SRC_CPPFLAGS =#
+ROCKSDB_SRC_CPPFLAGS += -isystem $(top_srcdir)/deps/rocksdb/include
+ROCKSDB_SRC_CPPFLAGS += -isystem $(top_srcdir)/deps/rocksdb
+
+#
+# Specific unit option composition
+#
+
 client.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 ctx_x86_64.lo:        AM_CPPFLAGS := -I$(top_srcdir)/include
 ctx.lo:               AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
@@ -260,8 +268,7 @@ db_allocator.lo:      AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 db_database.lo:       AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 db_env.lo:            AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 db_fixes.lo:          AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-db_fixes.lo:          AM_CPPFLAGS += -isystem $(top_srcdir)/deps/rocksdb/include
-db_fixes.lo:          AM_CPPFLAGS += -isystem $(top_srcdir)/deps/rocksdb
+db_fixes.lo:          AM_CPPFLAGS += ${ROCKSDB_SRC_CPPFLAGS}
 db_port.lo:           AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 exception.lo:         AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 exec.lo:              AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
