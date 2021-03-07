@@ -16,8 +16,11 @@ namespace ircd::fpe
 	struct errors_handle;
 	struct scope_round;
 
-	string_view reflect_sicode(const int &);
-	string_view reflect(const ushort &flag);
+	template<class T>
+	string_view classify(const T &) noexcept;
+
+	string_view reflect_sicode(const int &) noexcept;
+	string_view reflect(const ushort &flag) noexcept;
 	string_view reflect(const mutable_buffer &, const ushort &flags);
 
 	[[noreturn]] void _throw_errors(const ushort &flags);

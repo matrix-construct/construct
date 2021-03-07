@@ -46,6 +46,7 @@ ircd::fpe::reflect(const mutable_buffer &buf,
 
 ircd::string_view
 ircd::fpe::reflect(const ushort &flag)
+noexcept
 {
 	switch(flag)
 	{
@@ -62,6 +63,7 @@ ircd::fpe::reflect(const ushort &flag)
 
 ircd::string_view
 ircd::fpe::reflect_sicode(const int &code)
+noexcept
 {
 	switch(code)
 	{
@@ -79,3 +81,23 @@ ircd::fpe::reflect_sicode(const int &code)
 
 	return "?????";
 }
+
+template<class T>
+ircd::string_view
+ircd::fpe::classify(const T &a)
+noexcept
+{
+	switch(std::fpclassify(a))
+	{
+		case FP_NAN:          return "NAN";
+		case FP_ZERO:         return "ZERO";
+		case FP_NORMAL:       return "NORMAL";
+		case FP_SUBNORMAL:    return "SUBNORMAL";
+		case FP_INFINITE:     return "INFINITE";
+	}
+
+	return "????";
+}
+template ircd::string_view ircd::fpe::classify(const long double &a) noexcept;
+template ircd::string_view ircd::fpe::classify(const double &a) noexcept;
+template ircd::string_view ircd::fpe::classify(const float &a) noexcept;
