@@ -45,52 +45,86 @@ template<class input_t,
 inline ircd::u64x2
 ircd::simd::tokens(block_t *const __restrict__ out_,
                    const char *const __restrict__ in,
-                   const u64x2 max_,
+                   const u64x2 max,
                    lambda&& closure)
 noexcept
 {
-	char *const __restrict__ &out
+	using input_t_u = unaligned<input_t>;
+	using block_t_u = unaligned<block_t>;
+	using token_t = lane_type<block_t>;
+
+	u64x2 count
 	{
-		reinterpret_cast<char *__restrict__>(out_)
+		0, // total token count (one for each lane populated in block_t's)
+		0, // input pos (bytes)
 	};
 
-	const u64x2 max
+	const auto out
 	{
-		max_[0] * sizeof_lane<block_t>(),
-		max_[1]
+		reinterpret_cast<token_t *>(out_)
 	};
 
-	assert(max[0] % sizeof(block_t) == 0);
-	const u64x2 consumed
+	// primary broadband loop
+	while(count[1] + sizeof(input_t) <= max[1] && count[0] + lanes<block_t>() <= max[0])
 	{
-		transform<input_t>(out, in, max, [&closure]
-		(input_t &block, const auto mask)
+		static const auto mask
 		{
-			const u64x2 res
-			{
-				closure(reinterpret_cast<block_t &>(block), block, mask)
-			};
+			mask_full<input_t>()
+		};
 
-			// Closure returns the number of elems they filled of the output
-			// block; we convert that to bytes for the transform template.
-			assert(res[0] <= lanes<block_t>());
-			assert(res[1] <= sizeof(block_t));
-			return u64x2
-			{
-				res[0] * sizeof_lane<block_t>(),
-				res[1],
-			};
-		})
-	};
+		const auto di
+		{
+			reinterpret_cast<block_t_u *>(out + count[0])
+		};
 
-	assert(consumed[0] % sizeof_lane<block_t>() == 0);
+		const auto si
+		{
+			reinterpret_cast<const input_t_u *>(in + count[1])
+		};
+
+		const input_t input
+		(
+			*si
+		);
+
+		block_t output;
+		const auto consume
+		{
+			closure(output, input, mask)
+		};
+
+		*di = output;
+		count += consume;
+	}
+
+	// trailing narrowband loop
+	while(count[0] < max[0] && count[1] < max[1])
+	{
+		block_t output;
+		input_t input {0}, mask {0};
+		for(size_t i(0); count[1] + i < max[1] && i < sizeof(input_t); ++i)
+		{
+			input[i] = in[count[1] + i];
+			mask[i] = 0xff;
+		}
+
+		const auto consume
+		{
+			closure(output, input, mask)
+		};
+
+		assert(consume[0] < sizeof(block_t));
+		for(size_t i(0); i < consume[0] && count[0] + i < max[0]; ++i)
+			out[count[0] + i] = output[i];
+
+		count += consume;
+	}
+
 	const u64x2 ret
 	{
-		consumed[0] / sizeof_lane<block_t>(),
-		std::min(consumed[1], max[1]),
+		std::min(count[0], max[0]),
+		std::min(count[1], max[1]),
 	};
 
-	assert(ret[0] <= max_[0]);
-	assert(ret[1] <= max_[1]);
 	return ret;
 }

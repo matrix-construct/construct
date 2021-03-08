@@ -18,6 +18,7 @@
 #include "cast.h"
 #include "lane_cast.h"
 #include "broad_cast.h"
+#include "print.h"
 #include "split.h"
 #include "lower.h"
 #include "upper.h"
@@ -40,7 +41,6 @@
 #include "accumulate.h"
 #include "tokens.h"
 #include "str.h"
-#include "print.h"
 
 namespace ircd
 {

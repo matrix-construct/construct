@@ -186,6 +186,7 @@ noexcept
 			closure(block, mask)
 		};
 
+		assert(consume[0] <= sizeof(block_t));
 		for(size_t i(0); i < consume[0] && count[0] + i < max[0]; ++i)
 			out[count[0] + i] = block[i];
 
