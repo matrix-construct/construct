@@ -38,4 +38,7 @@ namespace ircd::gpt::vocab
 
 	// Decode token values to build output text string.
 	string_view detokenize(const mutable_buffer &out, const vector_view<const u16> &in);
+
+	// Other tools
+	string_view debug(const mutable_buffer &buf, const u16 token);
 }

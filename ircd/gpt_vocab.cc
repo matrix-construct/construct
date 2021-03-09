@@ -155,6 +155,25 @@ ircd::gpt::vocab::init_merges()
 	});
 }
 
+ircd::string_view
+ircd::gpt::vocab::debug(const mutable_buffer &out,
+                        const u16 idx)
+{
+	const auto *const token
+	{
+		reinterpret_cast<const u8x16 *>(vocab::token)
+	};
+
+	thread_local char strbuf[2][512];
+	return string_view{fmt::sprintf
+	{
+		out, "%5u  %s  [%32s]",
+		idx,
+		simd::print_mem(strbuf[0], token[idx]),
+		simd::print_chr(strbuf[1], token[idx]),
+	}};
+}
+
 //
 // detokenize
 //
