@@ -86,6 +86,11 @@ struct ircd::vector_view
 	:vector_view(start, start + size)
 	{}
 
+	vector_view(const vector_view<value_type> &start, const size_t &size)
+	noexcept
+	:vector_view(start.data(), std::min(start.size(), size))
+	{}
+
 	vector_view(const std::initializer_list<value_type> &list)
 	noexcept
 	:vector_view(std::begin(list), std::end(list))
