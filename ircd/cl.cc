@@ -365,7 +365,7 @@ try
 
 	call
 	(
-		clEnqueueReadBuffer,
+		clEnqueueWriteBuffer,
 		q,
 		cl_mem(data.handle),
 		blocking,
