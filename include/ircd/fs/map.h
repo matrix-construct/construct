@@ -29,8 +29,10 @@ struct ircd::fs::map
 {
 	struct opts;
 
+	static const opts default_opts;
+
 	map() = default;
-	map(const fd &, const opts &opts, const size_t &size = 0UL);
+	map(const fd &, const opts &opts = default_opts, const size_t &size = 0UL);
 	map(map &&) noexcept;
 	map(const map &) = delete;
 	map &operator=(map &&) noexcept;

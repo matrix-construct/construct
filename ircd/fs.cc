@@ -2049,6 +2049,9 @@ ircd::fs::advise(const map &map,
 // map::map
 //
 
+decltype(ircd::fs::map::default_opts)
+ircd::fs::map::default_opts;
+
 ircd::fs::map::map(const fd &fd,
                    const opts &opts,
                    const size_t &size)
