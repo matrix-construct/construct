@@ -18,25 +18,23 @@ namespace ircd::gpt
 	IRCD_EXCEPTION(ircd::error, error)
 
 	struct opts;
-	struct context;
+	struct task;
 
 	extern const opts default_opts;
 	extern log::log log;
-
-	vector_view<u16>
-	generate(const vector_view<u16> &out,
-	         const vector_view<const u16> &in,
-	         const opts & = default_opts);
-
-	string_view
-	generate(const mutable_buffer &out,
-	         const string_view &in,
-	         const opts & = default_opts);
 }
 
 #include "vocab.h"
 #include "model.h"
+#include "task.h"
+#include "generate.h"
 
+/// Primary Options
+///
+/// Use this structure to configure and control specifics of the machine.
+/// These settings are immutable for the operations. To maintain state between
+/// calls see task.h
+///
 struct ircd::gpt::opts
 {
 	/// Specifies the nominal halting condition based on the sequence of
@@ -64,9 +62,21 @@ struct ircd::gpt::opts
 
 	/// Limit number of output tokens. Default of -1 is unlimited; the number
 	/// of tokens generated will be limited by other factors.
-	uint limit {-1U};
+	uint limit
+	{
+		-1U
+	};
 
 	/// Flip random coins over the top k logits each round. Setting to 1
 	/// deterministically selects the top logit.
-	uint top_k {2};
+	uint top_k
+	{
+		2
+	};
+
+	/// Pointer to the model
+	const model::decoder *model
+	{
+		model::default_model
+	};
 };

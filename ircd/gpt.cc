@@ -28,27 +28,21 @@ namespace ircd::gpt
 	static void logits(float *, const float (&)[768], const model::decoder &);
 	static void tail(float *, const float *, const model::decoder &);
 	static u16 argmax(const float *, const opts &);
-
-	static vector_view<f32> embed(const vector_view<f32> &out, const u16 token, const u16 position);
-
-	std::unique_ptr<model::decoder> device
-	{
-		new model::decoder{}
-	};
+	static void embed(float *, const u16 token, const u16 position, const opts &);
 
 	static f32
 	logit alignas(64) [65536],
 	scratch alignas(64) [1024 * 768];
 }
 
-decltype(ircd::gpt::default_opts)
-ircd::gpt::default_opts;
-
 decltype(ircd::gpt::log)
 ircd::gpt::log
 {
 	"gpt"
 };
+
+decltype(ircd::gpt::default_opts)
+ircd::gpt::default_opts;
 
 namespace ircd::gpt::model
 {
@@ -86,7 +80,8 @@ namespace ircd::gpt::model
 ircd::string_view
 ircd::gpt::generate(const mutable_buffer &out,
                     const string_view &in,
-                    const opts &opts)
+                    const opts *opts,
+                    task *task)
 {
 	u16 buf[2][256];
 	const auto input_tokens
@@ -96,7 +91,7 @@ ircd::gpt::generate(const mutable_buffer &out,
 
 	const auto output_tokens
 	{
-		generate(buf[1], input_tokens, opts)
+		generate(buf[1], input_tokens, opts, task)
 	};
 
 	const auto output
@@ -110,12 +105,13 @@ ircd::gpt::generate(const mutable_buffer &out,
 ircd::vector_view<ircd::u16>
 ircd::gpt::generate(const vector_view<u16> &out,
                     const vector_view<const u16> &in,
-                    const opts &opts)
+                    const opts *opts,
+                    task *task)
 {
 	size_t ret(0);
 	bool halt(false);
 	uint errc[3] {0}, accc[3] {0};
-	for(uint i(0); !halt && i < out.size() && ret < opts.limit; ++i)
+	for(uint i(0); !halt && i < out.size() && ret < opts->limit; ++i)
 	{
 		const size_t tokens
 		{
@@ -134,10 +130,7 @@ ircd::gpt::generate(const vector_view<u16> &out,
 				data(scratch) + j * 768, 768
 			};
 
-			const auto embedding
-			{
-				embed(dst, in[j], j)
-			};
+			embed(data(dst), in[j], j, *opts);
 		}
 
 		for(uint j(0); j < ret; ++j)
@@ -147,32 +140,29 @@ ircd::gpt::generate(const vector_view<u16> &out,
 				data(scratch) + (in.size() + j) * 768, 768
 			};
 
-			const auto embedding
-			{
-				embed(dst, out[j], in.size() + j)
-			};
+			embed(data(dst), out[j], in.size() + j, *opts);
 		}
 
-		transform(data(scratch), tokens, *device);
+		transform(data(scratch), tokens, *opts->model);
 
 		const vector_view<f32> last_embed
 		{
 			data(scratch) + ((tokens - 1) * 768), 768
 		};
 
-		tail(logit, data(last_embed), *device);
-		out[i] = argmax(logit, opts);
+		tail(logit, data(last_embed), *opts->model);
+		out[i] = argmax(logit, *opts);
 
 		for(uint j(0); j < 3; ++j)
 		{
-			errc[j] = out[i] == opts.error_code[j][errc[j]]? errc[j] + 1: 0;
-			accc[j] = out[i] == opts.accept_code[j][accc[j]]? accc[j] + 1: 0;
+			errc[j] = out[i] == opts->error_code[j][errc[j]]? errc[j] + 1: 0;
+			accc[j] = out[i] == opts->accept_code[j][accc[j]]? accc[j] + 1: 0;
 		}
 
 		for(uint j(0); j < 3; ++j)
 		{
-			halt |= errc[j] >= 3 || (errc[j] && opts.error_code[j][errc[j] + 1] == -1U);
-			halt |= accc[j] >= 3 || (accc[j] && opts.accept_code[j][accc[j] + 1] == -1U);
+			halt |= errc[j] >= 3 || (errc[j] && opts->error_code[j][errc[j] + 1] == -1U);
+			halt |= accc[j] >= 3 || (accc[j] && opts->accept_code[j][accc[j] + 1] == -1U);
 		}
 
 		++ret;
@@ -184,30 +174,25 @@ ircd::gpt::generate(const vector_view<u16> &out,
 	};
 }
 
-ircd::vector_view<ircd::f32>
-ircd::gpt::embed(const vector_view<f32> &out,
+void
+ircd::gpt::embed(float *const out,
                  const u16 token,
-                 const u16 position)
+                 const u16 position,
+                 const opts &opts)
 {
-	assert(device);
-
+	assert(opts.model);
 	const auto &wpe
 	{
-		device->wpe[position]
+		opts.model->wpe[position]
 	};
 
 	const auto &wte
 	{
-		device->wte[token]
+		opts.model->wte[token]
 	};
 
 	for(uint j(0); j < 768; ++j)
 		out[j] = wte[j] + wpe[j];
-
-	return vector_view<f32>
-	{
-		data(out), 768
-	};
 }
 
 uint16_t

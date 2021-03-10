@@ -18,6 +18,8 @@ namespace ircd::gpt::model
 	struct ffnn;
 	struct block;
 	struct decoder;
+
+	extern const decoder *default_model;
 }
 
 /// Attention aperature

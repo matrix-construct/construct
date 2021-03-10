@@ -10,6 +10,9 @@
 
 namespace ircd::gpt::model
 {
+	using init_func = void (*)(decoder &, const string_view &, const size_t &, const json::array &);
+	using init_handler = std::pair<string_view, init_func>;
+
 	static void
 	init_f_weight(decoder &, const string_view &, const size_t &, const json::array &),
 	init_f_bias(decoder &, const string_view &, const size_t &, const json::array &),
@@ -27,18 +30,23 @@ namespace ircd::gpt::model
 	init_h_attn_attn_bias(decoder &, const string_view &, const size_t &, const json::array &),
 	init_h_attn_proj_weight(decoder &, const string_view &, const size_t &, const json::array &),
 	init_h_attn_proj_bias(decoder &, const string_view &, const size_t &, const json::array &),
-	init_h_attn_bias(decoder &, const string_view &, const size_t &, const json::array &),
-	init() noexcept;
+	init_h_attn_bias(decoder &, const string_view &, const size_t &, const json::array &);
 
-	extern conf::item<std::string> path;
-	extern const std::pair
-	<
-		string_view,
-		void (*)(decoder &, const string_view &, const size_t &, const json::array &)
-	>
+	static bool init_from_cache(const string_view &);
+	static void init_from_json_handle(decoder &, const init_handler &, const size_t &);
+	static void init_from_json(const string_view &, const string_view &);
+	static void init() noexcept;
+
+	extern const init_handler
 	manifest[],
 	manifest_h[],
 	manifest_td[];
+
+	extern conf::item<std::string> path;
+	extern conf::item<std::string> cache_path;
+
+	static fs::map default_model_shm;
+	static std::unique_ptr<decoder> default_model_res;
 }
 
 decltype(ircd::gpt::model::manifest_h)
@@ -76,6 +84,13 @@ ircd::gpt::model::manifest_td
 	{ "train.jsonl",   nullptr,  },
 };
 
+decltype(ircd::gpt::model::cache_path)
+ircd::gpt::model::cache_path
+{
+	{ "name",     "ircd.gpt.model.cache.path" },
+	{ "default",  "model.cache.localhost"     },
+};
+
 decltype(ircd::gpt::model::path)
 ircd::gpt::model::path
 {
@@ -86,11 +101,8 @@ ircd::gpt::model::path
 	init
 };
 
-//TODO: XXX
-namespace ircd::gpt
-{
-	extern const std::unique_ptr<model::decoder> device;
-}
+decltype(ircd::gpt::model::default_model)
+ircd::gpt::model::default_model;
 
 void
 ircd::gpt::model::init()
@@ -99,93 +111,164 @@ noexcept
 	if(!model::path)
 		return;
 
-	const size_t layers
+	if(!init_from_cache(model::cache_path))
+		init_from_json(model::cache_path, model::path);
+}
+
+bool
+ircd::gpt::model::init_from_cache(const string_view &cache_path)
+{
+	if(!fs::is_reg(cache_path))
+		return false;
+
+	const auto size
 	{
-		12
+		fs::size(cache_path)
 	};
 
-	const auto handle{[]
-	(const auto &a, const auto &b, const auto &i)
+	if(unlikely(size != sizeof(model::decoder)))
+		throw error
+		{
+			"Cached model `%s' size %zu differs from %zu.",
+			cache_path,
+			size,
+			sizeof(model::decoder),
+		};
+
+	const fs::fd fd
 	{
-		const auto &[fmt, handler]
-		{
-			a[b]
-		};
+		cache_path
+	};
 
-		char namebuf[128] {0};
-		const string_view path_part[2]
-		{
-			model::path, fmt::sprintf
-			{
-				namebuf, fmt, i
-			}
-		};
-
-		const fs::fd fd
-		{
-			fs::path(fs::path_scratch, path_part)
-		};
-
-		fs::map::opts map_opts;
-		const fs::map map
-		{
-			fd, map_opts
-		};
-
-		const json::array mat
-		{
-			map
-		};
-
-		assert(gpt::device);
-		handler(*gpt::device, path_part[1], i, mat);
-		log::logf
-		{
-			log, log::level::DEBUG,
-			"Model init [%2d][%2d] :%s",
-			i,
-			b,
-			path_part[1],
-		};
-	}};
-
-	ircd::timer sw;
-	size_t read(0), wrote(0);
-	if(fs::exists("model"))
+	fs::map::opts map_opts;
+	default_model_shm = fs::map
 	{
-		const auto _read
-		{
-			fs::read(fs::fd{"model"}, mutable_buffer{(char *)(gpt::device.get()), sizeof(model::decoder)})
-		};
+		fd, map_opts, sizeof(decoder)
+	};
 
-		read = size(_read);
-	} else {
-		memset(device.get(),  0x0, sizeof(model::decoder));
+	default_model = reinterpret_cast<decoder *>
+	(
+		data(default_model_shm)
+	);
 
-		handle(manifest, 0, 0);
-		handle(manifest, 1, 0);
-		handle(manifest, 2, 0);
-		handle(manifest, 3, 0);
-		for(size_t i(0); i < layers; ++i)
-			for(size_t j(0); j < 13; ++j)
-				handle(manifest_h, j, i);
-
-		const auto _wrote
-		{
-			fs::write("model", const_buffer{(const char *)(gpt::device.get()), sizeof(model::decoder)})
-		};
-
-		wrote = size(_wrote);
-	}
-
-	char pbuf[3][48];
-	log::logf
+	char pbuf[48];
+	log::info
 	{
-		log, log::level::DEBUG,
-		"Model init completed in %s read %s wrote %s",
-		sw.pretty(pbuf[0]),
-		pretty(pbuf[1], iec(size(read))),
-		pretty(pbuf[2], iec(size(wrote))),
+		log, "model(%p) mapped cached model `%s' %s",
+		data(default_model_shm),
+		cache_path,
+		pretty(pbuf, iec(size)),
+	};
+
+	return true;
+}
+
+void
+ircd::gpt::model::init_from_json(const string_view &cache_path,
+                                 const string_view &model_path)
+{
+	util::timer stopwatch;
+	auto decoder
+	{
+		std::make_unique<model::decoder>()
+	};
+
+	// Load the top level files, vocab etc
+	for(size_t i(0); i < 4; ++i)
+		init_from_json_handle(*decoder, manifest[i], 0);
+
+	// Load the transformer files by layer
+	const size_t layers {12};
+	for(size_t i(0); i < layers; ++i)
+		for(size_t j(0); j < 13; ++j)
+			init_from_json_handle(*decoder, manifest_h[j], i);
+
+	const const_buffer src
+	{
+		reinterpret_cast<char *>(decoder.get()), sizeof(model::decoder)
+	};
+
+	const auto wrote
+	{
+		fs::write(cache_path, src)
+	};
+
+	char pbuf[2][48];
+	log::info
+	{
+		log, "model(%p) parsed `%s' cached %s to `%s' in %s",
+		decoder.get(),
+		model_path,
+		pretty(pbuf[0], iec(size(wrote))),
+		cache_path,
+		stopwatch.pretty(pbuf[1]),
+	};
+
+	default_model_res = std::move(decoder);
+	default_model = default_model_res.get();
+}
+
+void
+ircd::gpt::model::init_from_json_handle(decoder &d,
+                                        const init_handler &handler,
+                                        const size_t &layer)
+{
+	const auto &[fmt, func]
+	{
+		handler
+	};
+
+	char namebuf[128];
+	const string_view path_part[2]
+	{
+		model::path, fmt::sprintf
+		{
+			namebuf, fmt, layer
+		}
+	};
+
+	const auto path
+	{
+		fs::path(fs::path_scratch, path_part)
+	};
+
+	fs::fd::opts fdopts;
+	fdopts.sequential = true;
+	const fs::fd fd
+	{
+		path, fdopts
+	};
+
+	// mmap of the file
+	const fs::map map
+	{
+		fd
+	};
+
+	// Each file is a JSON array at the top level.
+	const json::array matrix
+	{
+		map
+	};
+
+	// Readable name for logging
+	const auto &name
+	{
+		path_part[1]
+	};
+
+	if(likely(func))
+		func(d, name, layer, matrix);
+
+	// Check for interrupt after long operation
+	ctx::interruption_point();
+
+	log::info
+	{
+		log, "model(%p) loaded layer:%zu :%s",
+		&d,
+		layer,
+		name,
 	};
 }
 
