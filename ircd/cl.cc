@@ -461,15 +461,18 @@ ircd::cl::kern::arg(const int i,
 // code
 //
 
-ircd::cl::code::code(const string_view &src)
+ircd::cl::code::code(const string_view &src,
+                     const string_view &build_opts)
 :code
 {
-	vector_view<const string_view>(&src, 1)
+	vector_view<const string_view>(&src, 1),
+	build_opts
 }
 {
 }
 
-ircd::cl::code::code(const vector_view<const string_view> &srcs)
+ircd::cl::code::code(const vector_view<const string_view> &srcs,
+                     const string_view &build_opts)
 {
 	static const size_t iov_max
 	{
@@ -498,6 +501,9 @@ ircd::cl::code::code(const vector_view<const string_view> &srcs)
 	int err {CL_SUCCESS};
 	handle = clCreateProgramWithSource(primary, count, src, len, &err);
 	throw_on_error(err);
+
+	if(!null(build_opts))
+		build(build_opts);
 }
 
 ircd::cl::code::code(code &&o)

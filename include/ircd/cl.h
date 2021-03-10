@@ -76,8 +76,8 @@ struct ircd::cl::code
   public:
 	void build(const string_view &opts = {});
 
-	code(const vector_view<const string_view> &srcs);
-	code(const string_view &src);
+	code(const vector_view<const string_view> &srcs, const string_view &opts = {});
+	code(const string_view &src, const string_view &opts = {});
 	code() = default;
 	code(code &&) noexcept;
 	code &operator=(const code &) = delete;
