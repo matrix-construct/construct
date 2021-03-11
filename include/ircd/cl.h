@@ -134,3 +134,25 @@ struct ircd::cl::init
 inline ircd::cl::init::init() {}
 inline ircd::cl::init::~init() noexcept {}
 #endif
+
+inline
+ircd::cl::work::work(work &&other)
+noexcept
+:handle{std::move(other.handle)}
+,context{std::move(other.context)}
+{
+	other.handle = nullptr;
+	other.context = nullptr;
+}
+
+inline ircd::cl::work &
+ircd::cl::work::operator=(work &&other)
+noexcept
+{
+	this->~work();
+	handle = std::move(other.handle);
+	context = std::move(other.context);
+	other.handle = nullptr;
+	other.context = nullptr;
+	return *this;
+}
