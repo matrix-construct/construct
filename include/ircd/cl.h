@@ -36,8 +36,12 @@ namespace ircd::cl
 
 /// cl_event wrapping
 struct ircd::cl::work
+:instance_list<cl::work>
 {
 	void *handle {nullptr};
+	ctx::ctx *context {ctx::current};
+
+	static void init(), fini() noexcept;
 
   public:
 	std::array<uint64_t, 4> profile() const;
