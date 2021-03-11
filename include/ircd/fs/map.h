@@ -48,6 +48,7 @@ struct ircd::fs::map::opts
 	bool shared {false};
 	bool reserve {false};
 	bool populate {false};
+	bool locked {false};
 
 	opts(const fd::opts &opts = {std::ios::in})
 	:fd::opts(opts)

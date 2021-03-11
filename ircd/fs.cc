@@ -2181,6 +2181,11 @@ ircd::fs::flags(const map::opts &opts)
 		ret |= MAP_NORESERVE;
 	#endif
 
+	#if defined(MAP_LOCKED)
+	if(opts.locked)
+		ret |= MAP_LOCKED;
+	#endif
+
 	return ret;
 }
 
