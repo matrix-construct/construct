@@ -131,9 +131,12 @@ noexcept
 		handle_stuck(mod);
 		return false;
 	}
-	else log::info
+
+	log::logf
 	{
-		log, "Unloaded '%s'", mod.name()
+		log, log::level::DEBUG,
+		"Unloaded '%s'",
+		mod.name()
 	};
 
 	assert(!mod.handle.is_loaded());
