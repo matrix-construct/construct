@@ -2186,6 +2186,32 @@ ircd::fs::flags(const map::opts &opts)
 		ret |= MAP_LOCKED;
 	#endif
 
+	#if defined(MAP_HUGE_TLB) && defined(MAP_HUGE_2MB)
+	if(opts.huge2mb)
+		ret |= MAP_HUGETLB | MAP_HUGE_2MB;
+	#elif defined(MAP_HUGE_SHIFT)
+	if(opts.huge2mb)
+		ret |= (21 << MAP_HUGE_SHIFT);
+	#elif defined(MAP_HUGETLB)
+	if(opts.huge2mb)
+		ret |= MAP_HUGE_TLB
+	#else
+		#warning "MAP_HUGETLB (2MB) not supported"
+	#endif
+
+	#if defined(MAP_HUGE_TLB) && defined(MAP_HUGE_1GB)
+	if(opts.huge1gb)
+		ret |= MAP_HUGE_1GB;
+	#elif defined(MAP_HUGE_SHIFT)
+	if(opts.huge1gb)
+		ret |= (30 << MAP_HUGE_SHIFT);
+	#elif defined(MAP_HUGE_TLB)
+	if(opts.huge1gb)
+		ret |= MAP_HUGE_TLB
+	#else
+		#warning "MAP_HUGETLB (1GB) not supported"
+	#endif
+
 	return ret;
 }
 
