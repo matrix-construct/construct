@@ -29,6 +29,7 @@ namespace ircd::ios
 	extern log::log log;
 	extern asio::executor user, main;
 	extern std::thread::id main_thread_id;
+	extern thread_local bool is_main_thread;
 
 	bool available() noexcept;
 	const uint64_t &epoch() noexcept;

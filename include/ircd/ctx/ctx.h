@@ -204,6 +204,5 @@ __attribute__((always_inline))
 ircd::ctx::is_main_thread()
 noexcept
 {
-	return current ||
-	std::this_thread::get_id() == ios::main_thread_id;
+	return ios::is_main_thread;
 }

@@ -22,6 +22,11 @@ ircd::ios::main_thread_id
 	std::this_thread::get_id()
 };
 
+/// True only for the main thread.
+decltype(ircd::ios::is_main_thread)
+thread_local
+ircd::ios::is_main_thread;
+
 /// The embedder/executable's (library user) asio::executor provided on init.
 decltype(ircd::ios::user)
 ircd::ios::user;
@@ -55,6 +60,9 @@ ircd::ios::init(asio::executor &&user)
 	// consider a main thread yet. We need something set for many assertions
 	// to pass.
 	main_thread_id = std::this_thread::get_id();
+
+	// Set the thread-local bit to true; all other threads will see false.
+	is_main_thread = true;
 
 	// Set a reference to the user's ios_service
 	ios::user = std::move(user);

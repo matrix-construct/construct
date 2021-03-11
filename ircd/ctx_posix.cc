@@ -1712,8 +1712,5 @@ bool
 ircd::ctx::posix::is_main_thread()
 noexcept
 {
-	return false
-	|| ircd::ios::handler::current != nullptr
-	|| ircd::ctx::current != nullptr
-	|| ircd::ctx::is_main_thread();
+	return ircd::ios::is_main_thread;
 }
