@@ -201,6 +201,7 @@ try
 
 	fs::map::opts map_opts(fileopts);
 	map_opts.sequential = true;
+	map_opts.huge2mb = true;
 	const fs::map map
 	{
 		file, map_opts
@@ -327,7 +328,7 @@ try
 
 		// advise dontneed
 		ebytes[0] += evict(map, incore, opts);
-		if(count % (batch_max * 64) != 0)
+		if(count % (batch_max * 256) != 0)
 			continue;
 
 		const auto db_bytes
