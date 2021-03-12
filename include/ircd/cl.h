@@ -116,12 +116,50 @@ struct ircd::cl::kern::range
 	local  { 0, 0, 0, 0, 0 };
 };
 
+/// Construction enqueues the task; destruction waits for completion.
+///
+/// clEnqueue* construction with resulting cl_event wrapping. Instances
+/// represent the full lifecycle of work creation, submission and completion.
+///
+/// Our interface is tied directly to ircd::ctx for intuitive control flow and
+/// interaction with the device. By default, all constructions are dependent
+/// on the last construction made on the same ircd::ctx, providing sequential
+/// consistency for each ircd::ctx, and independence between different ctxs.
+/// Each instance destructs only when complete, otherwise the ircd::ctx will
+/// block in the destructor.
 struct ircd::cl::exec
 :work
 {
-	exec(data &, const mutable_buffer &, const bool blocking = false);
-	exec(data &, const const_buffer &, const bool blocking = false);
-	exec(kern &, const kern::range &);
+	struct opts;
+
+	static const opts opts_default;
+
+	// Read data from the device into buffer.
+	exec(data &, const mutable_buffer &, const opts & = opts_default);
+
+	// Write data to the device from buffer.
+	exec(data &, const const_buffer &, const opts & = opts_default);
+
+	// Execute a kernel on a range.
+	exec(kern &, const kern::range &, const opts & = opts_default);
+
+	// Execute a barrier.
+	exec(const opts &);
+};
+
+/// Options for an exec.
+struct ircd::cl::exec::opts
+{
+	/// Specify a list of dependencies. When provided, this list overrides the
+	/// default sequential behavior; thus can be used to start new dependency
+	/// chains for some task concurrency on the same ircd::ctx. Providing a
+	/// single reference to the last exec on the same stack is equivalent to
+	/// the default.
+	vector_view<cl::exec> deps;
+
+	/// For operations that have an optional blocking behavior;
+	/// otherwise ignored.
+	bool blocking {false};
 };
 
 struct ircd::cl::init

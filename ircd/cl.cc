@@ -266,7 +266,11 @@ ircd::cl::flush()
 
 namespace ircd::cl
 {
-	size_t depend_ctx_last(const vector_view<cl_event> &, cl::work *const &);
+	static const size_t _deps_list_max {256};
+	static thread_local cl_event _deps_list[_deps_list_max];
+
+	static vector_view<cl_event> make_deps_default(cl::work *const &, const exec::opts &);
+	static vector_view<cl_event> make_deps(cl::work *const &, const exec::opts &);
 }
 
 template<>
@@ -281,8 +285,45 @@ ircd::util::instance_list<ircd::cl::work>::list
     allocator
 };
 
+decltype(ircd::cl::exec::opts_default)
+ircd::cl::exec::opts_default;
+
+ircd::cl::exec::exec(const opts &opts)
+try
+{
+	auto &q
+	{
+		queue[0][0]
+	};
+
+	const auto deps
+	{
+		make_deps(this, opts)
+	};
+
+	call
+	(
+		clEnqueueBarrierWithWaitList,
+		q,
+		deps.size(),
+		deps.size()? deps.data(): nullptr,
+		reinterpret_cast<cl_event *>(&this->handle)
+	);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Exec Barrier :%s",
+		e.what(),
+	};
+
+	throw;
+}
+
 ircd::cl::exec::exec(kern &kern,
-                     const kern::range &work)
+                     const kern::range &work,
+                     const opts &opts)
 try
 {
 	size_t dim(0);
@@ -294,14 +335,9 @@ try
 		queue[0][0]
 	};
 
-	cl_event dependency[1]
+	const auto deps
 	{
-		nullptr
-	};
-
-	const auto dependencies
-	{
-		depend_ctx_last(dependency, this)
+		make_deps(this, opts)
 	};
 
 	call
@@ -313,8 +349,8 @@ try
 		work.offset.data(),
 		work.global.data(),
 		work.local.data(),
-		dependencies,
-		dependencies? dependency: nullptr,
+		deps.size(),
+		deps.size()? deps.data(): nullptr,
 		reinterpret_cast<cl_event *>(&this->handle)
 	);
 }
@@ -331,7 +367,7 @@ catch(const std::exception &e)
 
 ircd::cl::exec::exec(data &data,
                      const mutable_buffer &buf,
-                     const bool blocking)
+                     const opts &opts)
 try
 {
 	auto &q
@@ -339,14 +375,9 @@ try
 		queue[0][0]
 	};
 
-	cl_event dependency[1]
+	const auto deps
 	{
-		nullptr
-	};
-
-	const auto dependencies
-	{
-		depend_ctx_last(dependency, this)
+		make_deps(this, opts)
 	};
 
 	call
@@ -354,12 +385,12 @@ try
 		clEnqueueReadBuffer,
 		q,
 		cl_mem(data.handle),
-		blocking,
+		opts.blocking,
 		0UL, //offset,
 		ircd::size(buf),
 		ircd::data(buf),
-		dependencies,
-		dependencies? dependency: nullptr,
+		deps.size(),
+		deps.size()? deps.data(): nullptr,
 		reinterpret_cast<cl_event *>(&this->handle)
 	);
 }
@@ -376,7 +407,7 @@ catch(const std::exception &e)
 
 ircd::cl::exec::exec(data &data,
                      const const_buffer &buf,
-                     const bool blocking)
+                     const opts &opts)
 try
 {
 	auto &q
@@ -384,14 +415,9 @@ try
 		queue[0][0]
 	};
 
-	cl_event dependency[1]
+	const auto deps
 	{
-		nullptr
-	};
-
-	const auto dependencies
-	{
-		depend_ctx_last(dependency, this)
+		make_deps(this, opts)
 	};
 
 	call
@@ -399,12 +425,12 @@ try
 		clEnqueueWriteBuffer,
 		q,
 		cl_mem(data.handle),
-		blocking,
+		opts.blocking,
 		0UL, //offset,
 		ircd::size(buf),
 		mutable_cast(ircd::data(buf)),
-		dependencies,
-		dependencies? dependency: nullptr,
+		deps.size(),
+		deps.size()? deps.data(): nullptr,
 		reinterpret_cast<cl_event *>(&this->handle)
 	);
 }
@@ -419,11 +445,30 @@ catch(const std::exception &e)
 	throw;
 }
 
-size_t
-ircd::cl::depend_ctx_last(const vector_view<cl_event> &deps,
-                          cl::work *const &work)
+ircd::vector_view<cl_event>
+ircd::cl::make_deps(cl::work *const &work,
+                    const exec::opts &opts)
+{
+	if(empty(opts.deps))
+		return make_deps_default(work, opts);
+
+	size_t ret(0);
+	vector_view<cl_event> out(_deps_list);
+	for(auto &exec : opts.deps)
+		out.at(ret++) = cl_event(exec.handle);
+
+	return vector_view<cl_event>
+	{
+		out, ret
+	};
+}
+
+ircd::vector_view<cl_event>
+ircd::cl::make_deps_default(cl::work *const &work,
+                            const exec::opts &opts)
 {
 	size_t ret(0);
+	vector_view<cl_event> out(_deps_list);
 	for(auto it(rbegin(cl::work::list)); it != rend(cl::work::list); ++it)
 	{
 		cl::work *const &other{*it};
@@ -433,11 +478,14 @@ ircd::cl::depend_ctx_last(const vector_view<cl_event> &deps,
 		if(other->context != ctx::current)
 			continue;
 
-		deps.at(ret++) = cl_event(other->handle);
+		out.at(ret++) = cl_event(other->handle);
 		break;
 	}
 
-	return ret;
+	return vector_view<cl_event>
+	{
+		out, ret
+	};
 }
 
 //
