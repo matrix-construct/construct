@@ -2290,6 +2290,61 @@ AM_COND_IF([OPENCL],
 
 dnl
 dnl
+dnl Arm NN
+dnl
+dnl
+
+AC_SUBST(ARMNN_CPPFLAGS, [])
+AC_SUBST(ARMNN_LDFLAGS, [])
+AC_SUBST(ARMNN_LIBS, [])
+
+AC_ARG_WITH(armnn-includes,
+RB_HELP_STRING([--with-armnn-includes=[[[DIR]]]], [Path to Arm NN include directory]),
+[
+	armnn_incdir="$withval"
+	ARMNN_CPPFLAGS="-isystem $withval"
+], [])
+
+AC_ARG_WITH(armnn-libs,
+RB_HELP_STRING([--with-armnn-libs=[[[DIR]]]], [Path to Arm NN library directory]),
+[
+	armnn_libdir="$withval"
+	ARMNN_LDFLAGS="-L$withval"
+], [])
+
+RB_CHK_SYSHEADER(armnn/ArmNN.hpp, [ARMNN_ARMNN_HPP])
+PKG_CHECK_MODULES(armnn, [armnn],
+[
+	have_armnn="yes"
+], [
+	AC_CHECK_LIB(armnn, _ZN5armnn7RuntimeD1Ev,
+	[
+		have_armnn="yes"
+	], 	[
+		have_armnn="no"
+	])
+])
+
+AC_MSG_CHECKING(whether to enable use of any found ArmNN)
+AC_ARG_ENABLE(armnn, RB_HELP_STRING([--disable-armnn], [Disable Arm NN support]),
+[
+	AC_MSG_RESULT([$enableval])
+	enable_armnn=$enableval
+], [
+	AC_MSG_RESULT([yes])
+	enable_armnn="yes"
+])
+
+AM_CONDITIONAL([ARMNN], [test "x$have_armnn" = "xyes" && test "x$enable_armnn" = "xyes" ])
+
+AM_COND_IF([ARMNN],
+[
+	IRCD_DEFINE(USE_ARMNN, [1], [Arm NN support is available and enabled])
+	ARMNN_LIBS+="-larmnn"
+])
+
+dnl
+dnl
 dnl boost support
 dnl
 dnl
@@ -2728,6 +2783,7 @@ echo "Sodium support .................... $have_sodium"
 echo "GNU MP support .................... $have_gmp"
 echo "PBC support ....................... $have_pbc"
 echo "LLVM library support .............. $have_libllvm"
+echo "ARM NN support .................... $have_armnn"
 echo "OpenCL support .................... $have_opencl"
 echo "MesaOpenCL support ................ $have_mesa_opencl"
 echo "Linux AIO support ................. $aio"
