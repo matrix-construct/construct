@@ -60,7 +60,7 @@ namespace ircd::simd
 }
 
 template<class T>
-[[const]]
+[[gnu::const]]
 inline T
 ircd::simd::mask_full()
 {
