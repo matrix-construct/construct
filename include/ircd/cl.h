@@ -26,6 +26,7 @@ namespace ircd::cl
 
 	extern const info::versions version_api;
 	extern info::versions version_abi;
+	extern conf::item<bool> enable;
 	extern log::log log;
 
 	string_view reflect_error(const int code) noexcept;

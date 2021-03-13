@@ -18,8 +18,6 @@ namespace ircd::cl
 	static int throw_on_error(const int &code);
 	template<class func, class... args> static int call(func&&, args&&...);
 	template<class T = string_view, class F, class id, class param> static T info(F&&, const id &, const param &, const mutable_buffer &);
-
-	extern conf::item<bool> enable;
 }
 
 // Runtime state
