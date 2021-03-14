@@ -100,6 +100,7 @@ struct ircd::cl::kern
   public:
 	void arg(const int, data &);
 
+	template<class... argv> kern(code &, const string_view &name, argv&&...);
 	kern(code &, const string_view &name);
 	kern() = default;
 	kern(kern &&) noexcept;
@@ -194,4 +195,25 @@ noexcept
 	other.handle = nullptr;
 	other.context = nullptr;
 	return *this;
+}
+
+template<class... argv>
+inline
+ircd::cl::kern::kern(code &c,
+                     const string_view &name,
+                     argv&&... a)
+:kern{c, name}
+{
+	constexpr uint argc
+	{
+		sizeof...(a)
+	};
+
+	data *const datas[argc]
+	{
+		std::addressof(a)...
+	};
+
+	for(uint i(0); i < argc; ++i)
+		this->arg(i, *datas[i]);
 }
