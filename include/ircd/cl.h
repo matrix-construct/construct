@@ -62,9 +62,10 @@ struct ircd::cl::data
 	void *handle {nullptr};
 
   public:
-	data(const size_t, const bool w = false, const bool wonly = false);
-	data(const mutable_buffer &, const bool wonly = false); // host
-	data(const const_buffer &); // host
+	data(const size_t, const mutable_buffer &, const bool wonly = false); // device rw
+	data(const size_t, const const_buffer &); // device ro
+	data(const mutable_buffer &, const bool wonly = false); // host rw
+	data(const const_buffer &); // host ro
 	data(const data &) = delete;
 	data() = default;
 	data(data &&) noexcept;
