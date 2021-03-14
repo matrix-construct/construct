@@ -13,14 +13,17 @@
 namespace ircd::ctx::ole
 {
 	extern conf::item<size_t> thread_max;
-	std::mutex mutex;
-	std::condition_variable cond;
-	std::deque<offload::function> queue;
-	std::vector<std::thread> threads;
-	bool termination;
+
+	static std::mutex mutex;
+	static std::condition_variable cond;
+	static std::deque<offload::function> queue;
+	static ssize_t working;
+	static std::vector<std::thread> threads;
+	static bool termination alignas(64);
 
 	static offload::function pop();
 	static void push(offload::function &&);
+	static void worker_remove() noexcept;
 	static void worker() noexcept;
 }
 
@@ -114,13 +117,29 @@ ircd::ctx::ole::offload::offload(const opts &opts,
 void
 ircd::ctx::ole::push(offload::function &&func)
 {
-	if(unlikely(threads.size() < size_t(thread_max)))
-		threads.emplace_back(&worker);
-
 	const std::lock_guard lock
 	{
 		mutex
 	};
+
+	assert(working >= 0);
+	const bool need_thread
+	{
+		threads.empty()
+		|| threads.size() == size_t(working)
+	};
+
+	const bool add_thread
+	{
+		need_thread
+		&& threads.size() < size_t(thread_max)
+	};
+
+	if(unlikely(add_thread))
+	{
+		++working; // pre-increment under lock here
+		threads.emplace_back(&worker);
+	}
 
 	queue.emplace_back(std::move(func));
 	cond.notify_all();
@@ -128,9 +147,9 @@ ircd::ctx::ole::push(offload::function &&func)
 
 void
 ircd::ctx::ole::worker()
-noexcept try
+noexcept
 {
-	while(1)
+	while(!termination) try
 	{
 		const auto func
 		{
@@ -139,9 +158,16 @@ noexcept try
 
 		func();
 	}
-}
-catch(const interrupted &)
-{
+	catch(const interrupted &)
+	{
+		break;
+	}
+	catch(const std::exception &e)
+	{
+		assert(false);
+		continue;
+	}
+
 	const std::lock_guard lock
 	{
 		mutex
@@ -171,16 +197,15 @@ ircd::ctx::ole::pop()
 		mutex
 	};
 
+	--working;
+	assert(working >= 0);
 	cond.wait(lock, []
 	{
-		if(!queue.empty())
-			return true;
-
-		if(unlikely(termination))
-			throw interrupted{};
-
-		return false;
+		return !queue.empty() || termination;
 	});
+
+	if(unlikely(termination))
+		throw interrupted{};
 
 	auto function
 	{
@@ -188,5 +213,7 @@ ircd::ctx::ole::pop()
 	};
 
 	queue.pop_front();
+	++working;
+	assert(working > 0);
 	return function;
 }
