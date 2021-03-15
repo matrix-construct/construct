@@ -9,15 +9,21 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_MATH_MATH_H
+#define HAVE_IRCD_MATH_TANH_H
 
-#include "log2.h"
-#include "inv.h"
-#include "mean.h"
-#include "tanh.h"
-
-namespace ircd
+namespace ircd::math
 {
-	using math::mean;
-	using math::tanh;
+	template<class T>
+	typename std::enable_if<simd::is<T>(), T>::type
+	tanh(T);
+}
+
+template<class T>
+inline typename std::enable_if<ircd::simd::is<T>(), T>::type
+ircd::math::tanh(T a)
+{
+	for(uint i(0); i < simd::lanes<T>(); ++i)
+		a[i] = std::tanh(a[i]);
+
+	return a;
 }
