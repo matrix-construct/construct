@@ -21,6 +21,7 @@ struct ircd::buffer::const_buffer
 	void insert(const char *const &, const char &);
 
 	using buffer<const char *>::buffer;
+	template<class T, size_t SIZE> explicit const_buffer(const T (&)[SIZE]);
 	template<size_t SIZE> const_buffer(const char (&buf)[SIZE]);
 	template<size_t SIZE> const_buffer(const std::array<char, SIZE> &buf);
 	const_buffer(const buffer<const char *> &b);
@@ -72,6 +73,13 @@ template<size_t SIZE>
 inline __attribute__((always_inline))
 ircd::buffer::const_buffer::const_buffer(const std::array<char, SIZE> &buf)
 :buffer<const char *>{reinterpret_cast<const char *>(buf.data()), SIZE}
+{}
+
+template<class T,
+         size_t SIZE>
+inline __attribute__((always_inline))
+ircd::buffer::const_buffer::const_buffer(const T (&buf)[SIZE])
+:buffer<const char *>{reinterpret_cast<const char *>(buf), SIZE * sizeof(T)}
 {}
 
 #ifndef _NDEBUG

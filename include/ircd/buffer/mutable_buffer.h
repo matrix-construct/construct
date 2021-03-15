@@ -27,6 +27,7 @@ struct ircd::buffer::mutable_buffer
 	void insert(char *const &it, const value_type &v);
 
 	using buffer<char *>::buffer;
+	template<class T, size_t SIZE> explicit mutable_buffer(T (&)[SIZE]);
 	template<size_t SIZE> mutable_buffer(char (&buf)[SIZE]);
 	template<size_t SIZE> mutable_buffer(std::array<char, SIZE> &buf);
 	mutable_buffer(const std::function<void (const mutable_buffer &)> &);
@@ -66,6 +67,13 @@ template<size_t SIZE>
 inline __attribute__((always_inline))
 ircd::buffer::mutable_buffer::mutable_buffer(std::array<char, SIZE> &buf)
 :buffer<char *>{buf.data(), SIZE}
+{}
+
+template<class T,
+         size_t SIZE>
+inline __attribute__((always_inline))
+ircd::buffer::mutable_buffer::mutable_buffer(T (&buf)[SIZE])
+:buffer<char *>{reinterpret_cast<char *>(buf), SIZE * sizeof(T)}
 {}
 
 inline void
