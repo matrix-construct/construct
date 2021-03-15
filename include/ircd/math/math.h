@@ -15,6 +15,7 @@
 #include "inv.h"
 #include "mean.h"
 #include "tanh.h"
+#include "fmma.h"
 
 namespace ircd
 {
