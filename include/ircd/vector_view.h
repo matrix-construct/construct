@@ -31,11 +31,11 @@ struct ircd::vector_view
 	using iterator = value_type *;
 	using const_iterator = const value_type *;
 
-	value_type *_data                            { nullptr                                         };
-	value_type *_stop                            { nullptr                                         };
+	pointer _data                                { nullptr                                         };
+	pointer _stop                                { nullptr                                         };
 
   public:
-	value_type *data() const noexcept            { return _data;                                   }
+	pointer data() const noexcept                { return _data;                                   }
 	size_t size() const noexcept                 { return std::distance(_data, _stop);             }
 	bool empty() const noexcept                  { return !size();                                 }
 
@@ -47,14 +47,14 @@ struct ircd::vector_view
 	iterator end() noexcept                      { return _stop;                                   }
 
 	// Bounds check in debug only.
-	value_type &operator[](const size_t &pos) const noexcept
+	reference operator[](const size_t &pos) const noexcept
 	{
 		assert(pos < size());
 		return *(data() + pos);
 	}
 
 	// Bounds check at runtime.
-	value_type &at(const size_t &pos) const
+	reference at(const size_t &pos) const
 	{
 		if(unlikely(pos >= size()))
 			throw std::out_of_range
@@ -65,23 +65,23 @@ struct ircd::vector_view
 		return operator[](pos);
 	}
 
-	value_type &back() const
+	reference back() const
 	{
 		return at(size() - 1);
 	}
 
-	value_type &front() const
+	reference front() const
 	{
 		return at(0);
 	}
 
-	vector_view(value_type *const &start, value_type *const &stop)
+	vector_view(const pointer start, const pointer stop)
 	noexcept
 	:_data{start}
 	,_stop{stop}
 	{}
 
-	vector_view(value_type *const &start, const size_t &size)
+	vector_view(const pointer start, const size_t size)
 	noexcept
 	:vector_view(start, start + size)
 	{}
