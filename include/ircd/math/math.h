@@ -16,5 +16,6 @@
 #include "mean.h"
 #include "tanh.h"
 #include "pow.h"
+#include "exp.h"
 #include "fmma.h"
 #include "norm.h"
