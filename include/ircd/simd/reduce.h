@@ -13,7 +13,7 @@
 
 namespace ircd::simd
 {
-	/// Perform a horizontal operation among lanes. The operation is specified
+	/// Perform a horizontal left-reduce among lanes. The operation is given
 	/// by the caller who supplies a functor template like `std::bit_or` or
 	/// `std::plus` etc. The result resides in lane[0] of the return vector
 	/// while all other lanes of the return vector are undefined/junk as far

@@ -32,6 +32,7 @@
 #include "lzcnt.h"
 #include "tzcnt.h"
 #include "reduce.h"
+#include "hadd.h"
 #include "any.h"
 #include "all.h"
 #include "stream.h"
