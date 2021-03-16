@@ -9,19 +9,24 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_MATH_MATH_H
+#define HAVE_IRCD_MATH_POW_H
 
-#include "log2.h"
-#include "inv.h"
-#include "mean.h"
-#include "tanh.h"
-#include "pow.h"
-#include "fmma.h"
-#include "norm.h"
-
-namespace ircd
+namespace ircd::math
 {
-	using math::mean;
-	using math::tanh;
-	using math::pow;
+	template<class T,
+	         class E>
+	typename std::enable_if<simd::is<T>(), T>::type
+	pow(T, const E);
+}
+
+template<class T,
+         class E>
+inline typename std::enable_if<ircd::simd::is<T>(), T>::type
+ircd::math::pow(T a,
+                const E e)
+{
+	for(uint i(0); i < simd::lanes<T>(); ++i)
+		a[i] = std::pow(a[i], e);
+
+	return a;
 }
