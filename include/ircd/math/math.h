@@ -16,6 +16,7 @@
 #include "mean.h"
 #include "tanh.h"
 #include "fmma.h"
+#include "norm.h"
 
 namespace ircd
 {
