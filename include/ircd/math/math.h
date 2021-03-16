@@ -18,10 +18,3 @@
 #include "pow.h"
 #include "fmma.h"
 #include "norm.h"
-
-namespace ircd
-{
-	using math::mean;
-	using math::tanh;
-	using math::pow;
-}

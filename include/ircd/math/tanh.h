@@ -16,6 +16,44 @@ namespace ircd::math
 	template<class T>
 	typename std::enable_if<simd::is<T>(), T>::type
 	tanh(T);
+
+	template<class T>
+	typename std::enable_if<simd::is<T>(), T>::type
+	tanhf(T);
+
+	template<class T>
+	typename std::enable_if<simd::is<T>(), T>::type
+	tanhl(T);
+}
+
+namespace ircd
+{
+	using ::tanh;
+	using ::tanhf;
+	using ::tanhl;
+	using math::tanh;
+	using math::tanhf;
+	using math::tanhl;
+}
+
+template<class T>
+inline typename std::enable_if<ircd::simd::is<T>(), T>::type
+ircd::math::tanhl(T a)
+{
+	for(uint i(0); i < simd::lanes<T>(); ++i)
+		a[i] = ::tanhl(a[i]);
+
+	return a;
+}
+
+template<class T>
+inline typename std::enable_if<ircd::simd::is<T>(), T>::type
+ircd::math::tanhf(T a)
+{
+	for(uint i(0); i < simd::lanes<T>(); ++i)
+		a[i] = ::tanhf(a[i]);
+
+	return a;
 }
 
 template<class T>

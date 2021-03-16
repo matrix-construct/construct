@@ -17,6 +17,50 @@ namespace ircd::math
 	         class E>
 	typename std::enable_if<simd::is<T>(), T>::type
 	pow(T, const E);
+
+	template<class T,
+	         class E>
+	typename std::enable_if<simd::is<T>(), T>::type
+	powf(T, const E);
+
+	template<class T,
+	         class E>
+	typename std::enable_if<simd::is<T>(), T>::type
+	powl(T, const E);
+}
+
+namespace ircd
+{
+	using ::pow;
+	using ::powf;
+	using ::powl;
+	using math::pow;
+	using math::powf;
+	using math::powl;
+}
+
+template<class T,
+         class E>
+inline typename std::enable_if<ircd::simd::is<T>(), T>::type
+ircd::math::powl(T a,
+                 const E e)
+{
+	for(uint i(0); i < simd::lanes<T>(); ++i)
+		a[i] = ::powl(a[i], e);
+
+	return a;
+}
+
+template<class T,
+         class E>
+inline typename std::enable_if<ircd::simd::is<T>(), T>::type
+ircd::math::powf(T a,
+                 const E e)
+{
+	for(uint i(0); i < simd::lanes<T>(); ++i)
+		a[i] = ::powf(a[i], e);
+
+	return a;
 }
 
 template<class T,

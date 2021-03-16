@@ -24,6 +24,11 @@ namespace ircd::math
 	mean(const vector_view<const T>);
 }
 
+namespace ircd
+{
+	using math::mean;
+}
+
 template<class T,
          class R>
 inline typename std::enable_if<ircd::simd::is<T>(), ircd::simd::lane_type<R>>::type
