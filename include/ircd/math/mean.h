@@ -13,35 +13,39 @@
 
 namespace ircd::math
 {
-	template<class T>
-	typename std::enable_if<!simd::is<T>(), T>::type
-	mean(const vector_view<const T> &);
+	template<class T,
+	         class R = T>
+	typename std::enable_if<!simd::is<T>(), R>::type
+	mean(const vector_view<const T>);
 
-	template<class T>
-	typename std::enable_if<simd::is<T>(), simd::lane_type<T>>::type
-	mean(const vector_view<const T> &);
+	template<class T,
+	         class R = T>
+	typename std::enable_if<simd::is<T>(), simd::lane_type<R>>::type
+	mean(const vector_view<const T>);
 }
 
-template<class T>
-inline typename std::enable_if<ircd::simd::is<T>(), ircd::simd::lane_type<T>>::type
-ircd::math::mean(const vector_view<const T> &a)
+template<class T,
+         class R>
+inline typename std::enable_if<ircd::simd::is<T>(), ircd::simd::lane_type<R>>::type
+ircd::math::mean(const vector_view<const T> a)
 {
-	using value_type = simd::lane_type<T>;
-
-	const auto &sum
+	R acc {0};
+	simd::for_each(a.data(), u64x2{0, a.size()}, [&acc]
+	(const auto block, const auto mask)
 	{
-		simd::accumulate(a.data(), u64x2{0, a.size()}, T{0}, []
-		(auto &ret, const auto block, const auto mask)
-		{
-			ret += block;
-		})
-	};
+		const R dp
+		(
+			simd::lane_cast<R>(block)
+		);
 
-	value_type num {0};
-	for(size_t i{0}; i < simd::lanes<T>(); ++i)
-		num += sum[i];
+		acc += dp;
+	});
 
-	const auto &den
+	auto num(acc[0]);
+	for(uint i(1); i < simd::lanes<T>(); ++i)
+		num += acc[i];
+
+	const auto den
 	{
 		a.size() * simd::lanes<T>()
 	};
@@ -50,12 +54,12 @@ ircd::math::mean(const vector_view<const T> &a)
 	return num;
 }
 
-template<class T>
-inline typename std::enable_if<!ircd::simd::is<T>(), T>::type
-ircd::math::mean(const vector_view<const T> &a)
+template<class T,
+         class R>
+inline typename std::enable_if<!ircd::simd::is<T>(), R>::type
+ircd::math::mean(const vector_view<const T> a)
 {
-	T ret{0};
-
+	R ret{0};
 	size_t i{0};
 	while(i < a.size())
 		ret += a[i++];
