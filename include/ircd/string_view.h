@@ -118,7 +118,7 @@ struct ircd::string_view
 	}
 
 	// (non-standard) our iterator-based assign
-	string_view &assign(const char *const &begin, const char *const &end)
+	string_view &assign(const char *const &__restrict__ begin, const char *const &__restrict__ end)
 	{
 		this->~string_view();
 		new (this) string_view{begin, end};
@@ -152,7 +152,7 @@ struct ircd::string_view
 	}
 
 	// (non-standard) our iterator-based constructor
-	constexpr string_view(const char *const &begin, const char *const &end) noexcept
+	constexpr string_view(const char *const &__restrict__ begin, const char *const &__restrict__ end) noexcept
 	:string_view{begin, size_t(end - begin)}
 	{
 		assert(begin <= end);
@@ -175,17 +175,17 @@ struct ircd::string_view
 	// (non-standard) our buffer based constructor
 	template<size_t SIZE> constexpr
 	__attribute__((always_inline))
-	string_view(const char (&buf)[SIZE]) noexcept
+	string_view(const char (&__restrict__ buf)[SIZE]) noexcept
 	:string_view
 	{
 		buf, std::find(buf, buf + SIZE, '\0')
 	}{}
 
-	constexpr string_view(const char *const &start, const size_t &size) noexcept
+	constexpr string_view(const char *const &__restrict__ start, const size_t &size) noexcept
 	:std::string_view{start, size}
 	{}
 
-	constexpr string_view(const char *const &start) noexcept
+	constexpr string_view(const char *const &__restrict__ start) noexcept
 	:std::string_view{start, _constexpr_strlen(start)}
 	{}
 

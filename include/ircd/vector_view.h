@@ -75,13 +75,13 @@ struct ircd::vector_view
 		return at(0);
 	}
 
-	vector_view(const pointer start, const pointer stop)
+	vector_view(const pointer __restrict__ start, const pointer __restrict__ stop)
 	noexcept
 	:_data{start}
 	,_stop{stop}
 	{}
 
-	vector_view(const pointer start, const size_t size)
+	vector_view(const pointer __restrict__ start, const size_t size)
 	noexcept
 	:vector_view(start, start + size)
 	{}
@@ -111,7 +111,7 @@ struct ircd::vector_view
 	{}
 
 	template<size_t SIZE>
-	vector_view(value_type (&buffer)[SIZE])
+	vector_view(value_type (&__restrict__ buffer)[SIZE])
 	noexcept
 	:vector_view(buffer, SIZE)
 	{}
