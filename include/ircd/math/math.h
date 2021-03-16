@@ -19,3 +19,4 @@
 #include "exp.h"
 #include "fmma.h"
 #include "norm.h"
+#include "smax.h"
