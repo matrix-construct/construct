@@ -2061,10 +2061,14 @@ ircd::fs::map::map(const fd &fd,
 		size?: fs::size(fd)
 	};
 
+	#ifdef HAVE_MMAP
 	void *const &ptr
 	{
 		::mmap(nullptr, map_size, prot(opts), flags(opts), int(fd), opts.offset)
 	};
+	#else
+	#error "Missing ::mmap(2) on this platform."
+	#endif
 
 	if(unlikely(ptr == MAP_FAILED))
 		throw_system_error(errno);
