@@ -900,6 +900,22 @@ ircd::cl::handle_offload()
 		return;
 	}
 
+	int status; try
+	{
+		char buf[4] {0};
+		status = info<int>(clGetEventInfo, p.event, CL_EVENT_COMMAND_EXECUTION_STATUS, buf);
+	}
+	catch(...)
+	{
+		status = -1;
+	}
+
+	if(status < 0 || status == CL_COMPLETE)
+	{
+		handle_event(p.event, status, p.ctx);
+		return;
+	}
+
 	const auto res
 	{
 		clSetEventCallback(p.event, CL_COMPLETE, &handle_event, p.ctx)
@@ -921,7 +937,7 @@ ircd::cl::handle_event(cl_event event,
                        void *const priv)
 noexcept
 {
-	assert(status == CL_COMPLETE);
+	always_assert(status < 0 || status == CL_COMPLETE);
 
 	// Prepare response to the main thread. The event pointer is anulled to
 	// indicate completion.
@@ -1024,13 +1040,13 @@ noexcept try
 		cl_event(this->handle)
 	};
 
-	char status_buf[8] {0};
+	char status_buf[4] {0};
 	const auto &status
 	{
 		info<int>(clGetEventInfo, handle, CL_EVENT_COMMAND_EXECUTION_STATUS, status_buf)
 	};
 
-	if(status != CL_COMPLETE)
+	if(status >= 0 && status != CL_COMPLETE)
 		handle_incomplete(*this, status);
 
 	call(clReleaseEvent, cl_event(handle));
