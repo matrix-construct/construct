@@ -299,6 +299,7 @@ try
 		make_deps(this, opts)
 	};
 
+	assert(!this->handle);
 	call
 	(
 		clEnqueueBarrierWithWaitList,
@@ -338,6 +339,7 @@ try
 		make_deps(this, opts)
 	};
 
+	assert(!this->handle);
 	call
 	(
 		clEnqueueNDRangeKernel,
@@ -378,6 +380,7 @@ try
 		make_deps(this, opts)
 	};
 
+	assert(!this->handle);
 	call
 	(
 		clEnqueueReadBuffer,
@@ -471,6 +474,9 @@ ircd::cl::make_deps_default(cl::work *const &work,
 	{
 		cl::work *const &other{*it};
 		if(other == work)
+			continue;
+
+		if(!other->handle)
 			continue;
 
 		if(other->context != ctx::current)
@@ -1032,24 +1038,7 @@ ircd::cl::work::work(void *const &handle)
 ircd::cl::work::~work()
 noexcept try
 {
-	if(!this->handle)
-		return;
-
-	const auto handle
-	{
-		cl_event(this->handle)
-	};
-
-	char status_buf[4] {0};
-	const auto &status
-	{
-		info<int>(clGetEventInfo, handle, CL_EVENT_COMMAND_EXECUTION_STATUS, status_buf)
-	};
-
-	if(status >= 0 && status != CL_COMPLETE)
-		handle_incomplete(*this, status);
-
-	call(clReleaseEvent, cl_event(handle));
+	wait();
 }
 catch(const std::exception &e)
 {
@@ -1060,6 +1049,26 @@ catch(const std::exception &e)
 	};
 
 	return;
+}
+
+bool
+ircd::cl::work::wait()
+{
+	if(!handle)
+		return false;
+
+	char buf[4];
+	const auto &status
+	{
+		info<int>(clGetEventInfo, cl_event(handle), CL_EVENT_COMMAND_EXECUTION_STATUS, buf)
+	};
+
+	if(status >= 0 && status != CL_COMPLETE)
+		handle_incomplete(*this, status);
+
+	call(clReleaseEvent, cl_event(handle));
+	handle = nullptr;
+	return true;
 }
 
 std::array<uint64_t, 4>

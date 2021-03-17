@@ -47,6 +47,8 @@ struct ircd::cl::work
   public:
 	std::array<uint64_t, 4> profile() const;
 
+	bool wait();
+
 	work(void *const &handle); // note: RetainEvent()
 	work() = default;
 	work(work &&) noexcept;
