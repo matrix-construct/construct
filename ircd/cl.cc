@@ -493,6 +493,11 @@ try
 	assert(this->handle);
 	assert(ptr);
 
+	// Perform the unmapping on unwind. This is after the mapping event
+	// completed and the closure was called below. The unmapping event will
+	// replace the event handle for this exec instance until its actual dtor;
+	// thus the lifetime of the exec we are constructing actually represents
+	// the unmapping event.
 	const unwind unmap{[this, &data, &q, &ptr]
 	{
 		assert(!this->handle);
@@ -508,6 +513,16 @@ try
 		);
 	}};
 
+	// After the closure is called below, or throws, or if wait() throws,
+	// we free the completed map event here to allow for the unmap event.
+	const unwind rehandle{[this]
+	{
+		assert(this->handle);
+		call(clReleaseEvent, cl_event(this->handle));
+		this->handle = nullptr;
+	}};
+
+	// Wait for the mapping to complete before presenting the buffer.
 	wait();
 	closure(const_buffer
 	{
@@ -585,6 +600,13 @@ try
 			nullptr, // depslist
 			reinterpret_cast<cl_event *>(&this->handle)
 		);
+	}};
+
+	const unwind rehandle{[this]
+	{
+		assert(this->handle);
+		call(clReleaseEvent, cl_event(this->handle));
+		this->handle = nullptr;
 	}};
 
 	wait();
@@ -1089,6 +1111,11 @@ ircd::cl::work::work(void *const &handle)
 ircd::cl::work::~work()
 noexcept try
 {
+	const unwind free{[this]
+	{
+		call(clReleaseEvent, cl_event(handle));
+	}};
+
 	wait();
 }
 catch(const std::exception &e)
@@ -1107,12 +1134,6 @@ ircd::cl::work::wait()
 {
 	if(!handle)
 		return false;
-
-	const unwind free{[this]
-	{
-		call(clReleaseEvent, cl_event(handle));
-		handle = nullptr;
-	}};
 
 	char buf[4] {0};
 	const int status
