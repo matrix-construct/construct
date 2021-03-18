@@ -64,6 +64,10 @@ struct ircd::cl::data
 	void *handle {nullptr};
 
   public:
+	uint flags() const;
+	size_t size() const;
+	char *ptr() const; // host only
+
 	data(const size_t, const mutable_buffer &, const bool wonly = false); // device rw
 	data(const size_t, const const_buffer &); // device ro
 	data(const mutable_buffer &, const bool wonly = false); // host rw

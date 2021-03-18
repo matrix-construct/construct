@@ -813,6 +813,36 @@ catch(const std::exception &e)
 	return;
 }
 
+char *
+ircd::cl::data::ptr()
+const
+{
+	assert(handle);
+
+	char buf[sizeof(void *)] {0};
+	return info<char *>(clGetMemObjectInfo, cl_mem(mutable_cast(handle)), CL_MEM_SIZE, buf);
+}
+
+size_t
+ircd::cl::data::size()
+const
+{
+	assert(handle);
+
+	char buf[sizeof(size_t)] {0};
+	return info<size_t>(clGetMemObjectInfo, cl_mem(mutable_cast(handle)), CL_MEM_SIZE, buf);
+}
+
+uint
+ircd::cl::data::flags()
+const
+{
+	assert(handle);
+
+	char buf[sizeof(uint)] {0};
+	return info<uint>(clGetMemObjectInfo, cl_mem(mutable_cast(handle)), CL_MEM_FLAGS, buf);
+}
+
 //
 // cl::work (event)
 //
