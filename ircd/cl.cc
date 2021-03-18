@@ -387,7 +387,7 @@ try
 		q,
 		cl_mem(data.handle),
 		opts.blocking,
-		0UL, //offset,
+		opts.offset,
 		ircd::size(buf),
 		ircd::data(buf),
 		deps.size(),
@@ -421,13 +421,14 @@ try
 		make_deps(this, opts)
 	};
 
+	assert(!this->handle);
 	call
 	(
 		clEnqueueWriteBuffer,
 		q,
 		cl_mem(data.handle),
 		opts.blocking,
-		0UL, //offset,
+		opts.offset,
 		ircd::size(buf),
 		mutable_cast(ircd::data(buf)),
 		deps.size(),
@@ -440,6 +441,163 @@ catch(const std::exception &e)
 	log::error
 	{
 		log, "Exec Write :%s",
+		e.what(),
+	};
+
+	throw;
+}
+
+ircd::cl::exec::exec(data &data,
+                     const read_closure &closure,
+                     const opts &opts)
+try
+{
+	auto &q
+	{
+		queue[0][0]
+	};
+
+	const auto deps
+	{
+		make_deps(this, opts)
+	};
+
+	const auto size
+	{
+		opts.size?: data.size()
+	};
+
+	cl_map_flags flags {0};
+	flags |= CL_MAP_READ;
+
+	int err {CL_SUCCESS};
+	assert(!this->handle);
+	void *const ptr
+	{
+		clEnqueueMapBuffer
+		(
+			q,
+			cl_mem(data.handle),
+			opts.blocking,
+			flags,
+			opts.offset,
+			size,
+			deps.size(),
+			deps.size()? deps.data(): nullptr,
+			reinterpret_cast<cl_event *>(&this->handle),
+			&err
+		)
+	};
+
+	throw_on_error(err);
+	assert(this->handle);
+	assert(ptr);
+
+	const unwind unmap{[this, &data, &q, &ptr]
+	{
+		assert(!this->handle);
+		call
+		(
+			clEnqueueUnmapMemObject,
+			q,
+			cl_mem(data.handle),
+			ptr,
+			0, // deps
+			nullptr, // depslist
+			reinterpret_cast<cl_event *>(&this->handle)
+		);
+	}};
+
+	wait();
+	closure(const_buffer
+	{
+		reinterpret_cast<const char *>(ptr), size
+	});
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Exec Read Closure :%s",
+		e.what(),
+	};
+
+	throw;
+}
+
+ircd::cl::exec::exec(data &data,
+                     const write_closure &closure,
+                     const opts &opts)
+try
+{
+	auto &q
+	{
+		queue[0][0]
+	};
+
+	const auto deps
+	{
+		make_deps(this, opts)
+	};
+
+	const auto size
+	{
+		opts.size?: data.size()
+	};
+
+	cl_map_flags flags {0};
+	flags |= CL_MAP_WRITE;
+	flags |= opts.duplex? CL_MAP_READ: 0;
+
+	int err {CL_SUCCESS};
+	assert(!this->handle);
+	void *const ptr
+	{
+		clEnqueueMapBuffer
+		(
+			q,
+			cl_mem(data.handle),
+			opts.blocking,
+			flags,
+			opts.offset,
+			size,
+			deps.size(),
+			deps.size()? deps.data(): nullptr,
+			reinterpret_cast<cl_event *>(&this->handle),
+			&err
+		)
+	};
+
+	throw_on_error(err);
+	assert(this->handle);
+	assert(ptr);
+
+	const unwind unmap{[this, &data, &q, &ptr]
+	{
+		assert(!this->handle);
+		call
+		(
+			clEnqueueUnmapMemObject,
+			q,
+			cl_mem(data.handle),
+			ptr,
+			0, // deps
+			nullptr, // depslist
+			reinterpret_cast<cl_event *>(&this->handle)
+		);
+	}};
+
+	wait();
+	closure(mutable_buffer
+	{
+		reinterpret_cast<char *>(ptr), size
+	});
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Exec Write Closure :%s",
 		e.what(),
 	};
 

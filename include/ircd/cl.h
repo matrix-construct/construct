@@ -14,15 +14,18 @@
 /// OpenCL Interface
 namespace ircd::cl
 {
-	IRCD_EXCEPTION(ircd::error, error)
-	IRCD_EXCEPTION(error, opencl_error)
-
 	struct init;
 	struct exec;
 	struct kern;
 	struct code;
 	struct data;
 	struct work;
+
+	IRCD_EXCEPTION(ircd::error, error)
+	IRCD_EXCEPTION(error, opencl_error)
+
+	using read_closure = std::function<void (const_buffer)>;
+	using write_closure = std::function<void (mutable_buffer)>;
 
 	extern const info::versions version_api;
 	extern info::versions version_abi;
@@ -143,11 +146,17 @@ struct ircd::cl::exec
 
 	static const opts opts_default;
 
-	// Read data from the device into buffer.
-	exec(data &, const mutable_buffer &, const opts & = opts_default);
+	// View data written by the device to the GTT (synchronous closure).
+	exec(data &, const read_closure &, const opts & = opts_default);
 
-	// Write data to the device from buffer.
+	// View buffer in the GTT which the device will read (synchronous closure).
+	exec(data &, const write_closure &, const opts & = opts_default);
+
+	// Copy data from the buffer to the GTT for use by the device.
 	exec(data &, const const_buffer &, const opts & = opts_default);
+
+	// Copy data written by the device to the GTT into our buffer.
+	exec(data &, const mutable_buffer &, const opts & = opts_default);
 
 	// Execute a kernel on a range.
 	exec(kern &, const kern::range &, const opts & = opts_default);
@@ -166,8 +175,21 @@ struct ircd::cl::exec::opts
 	/// the default.
 	vector_view<cl::exec> deps;
 
-	/// For operations that have an optional blocking behavior;
-	/// otherwise ignored.
+	/// For operations which have a size; otherwise ignored, or serves as
+	/// sentinel for automatic size.
+	size_t size {0};
+
+	/// For operations which have an offset; otherwise ignored.
+	off_t offset {0};
+
+	/// For operations which plan to both read and write to the GTT, set to
+	/// true and execute the write_closure; otherwise ignored. Can be used
+	/// to de-optimize the write_closure, which is unidirectional by default.
+	bool duplex {false};
+
+	/// For operations that have an optional blocking behavior; otherwise
+	/// ignored. Note that this is a thread-level blocking mechanism and
+	/// does not yield the ircd::ctx; for testing/special use only.
 	bool blocking {false};
 };
 
