@@ -53,8 +53,16 @@ ircd::buffer::move(char *&dest,
                    const const_buffer &src)
 {
 	assert(dest <= stop);
-	const size_t remain(std::distance(dest, stop));
-	const size_t cpsz(std::min(size(src), remain));
+	const size_t remain
+	(
+		std::distance(dest, stop)
+	);
+
+	const size_t cpsz
+	{
+		std::min(size(src), remain)
+	};
+
 	assert(cpsz <= size(src));
 	assert(cpsz <= remain);
 	__builtin_memmove(dest, data(src), cpsz);

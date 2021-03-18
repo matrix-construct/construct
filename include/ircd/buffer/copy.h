@@ -62,25 +62,38 @@ ircd::buffer::copy(const mutable_buffer &dst,
 
 inline char *&
 __attribute__((always_inline))
-ircd::buffer::copy(char *&dest,
-                   char *const &stop,
+ircd::buffer::copy(char *&__restrict__ dest,
+                   char *const &__restrict__ stop,
                    const const_buffer &src)
 {
 	assert(dest <= stop);
-	const size_t remain(std::distance(dest, stop));
-	const size_t cpsz(std::min(size(src), remain));
+	const auto *const __restrict__ srcp
+	{
+		data(src)
+	};
+
+	const size_t remain
+	(
+		std::distance(dest, stop)
+	);
+
+	const size_t cpsz
+	{
+		std::min(size(src), remain)
+	};
+
 	assert(!overlap(const_buffer(dest, cpsz), src));
 	assert(cpsz <= size(src));
 	assert(cpsz <= remain);
-	__builtin_memcpy(dest, data(src), cpsz);
+	__builtin_memcpy(dest, srcp, cpsz);
 	dest += cpsz;
 	assert(dest <= stop);
 	return dest;
 }
 
 inline char *&
-ircd::buffer::copy(char *&dest,
-                   char *const &stop,
+ircd::buffer::copy(char *&__restrict__ dest,
+                   char *const &__restrict__ stop,
                    char src)
 {
 	assert(dest <= stop);
