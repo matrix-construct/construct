@@ -1032,7 +1032,7 @@ namespace ircd::cl
 	struct completion;
 
 	static void handle_event(cl_event, cl_int, void *) noexcept;
-	static void handle_incomplete(work &, const int &);
+	static int handle_incomplete(work &, const int &, const int);
 }
 
 struct ircd::cl::completion
@@ -1055,9 +1055,10 @@ noexcept
 	cl::sync();
 }
 
-void
+int
 ircd::cl::handle_incomplete(work &work,
-                            const int &status)
+                            const int &status,
+                            const int desired)
 {
 	completion c
 	{
@@ -1069,17 +1070,17 @@ ircd::cl::handle_incomplete(work &work,
 	(
 		clSetEventCallback,
 		cl_event(work.handle),
-		CL_COMPLETE,
+		desired,
 		&handle_event,
 		&c
 	);
 
-	c.dock.wait([&c]
+	c.dock.wait([&c, &desired]
 	{
-		return !c.event || c.status == CL_COMPLETE;
+		return !c.event || c.status == desired;
 	});
 
-	throw_on_error(c.status);
+	return c.status;
 }
 
 void
@@ -1093,7 +1094,7 @@ noexcept
 		reinterpret_cast<completion *>(priv)
 	};
 
-	assert(c.event != nullptr);
+	assert(event != nullptr);
 	c->status = status;
 	c->dock.notify_one();
 }
@@ -1113,7 +1114,8 @@ noexcept try
 {
 	const unwind free{[this]
 	{
-		call(clReleaseEvent, cl_event(handle));
+		if(likely(handle))
+			call(clReleaseEvent, cl_event(handle));
 	}};
 
 	wait();
@@ -1131,20 +1133,39 @@ catch(const std::exception &e)
 
 bool
 ircd::cl::work::wait()
+try
 {
 	if(!handle)
 		return false;
 
-	char buf[4] {0};
-	const int status
+	char buf[4];
+	int status
 	{
 		info<int>(clGetEventInfo, cl_event(handle), CL_EVENT_COMMAND_EXECUTION_STATUS, buf)
 	};
 
-	if(status >= 0 && status != CL_COMPLETE)
-		handle_incomplete(*this, status);
+	if(likely(status == CL_COMPLETE))
+		return false;
 
+	if(unlikely(status >= 0))
+		status = handle_incomplete(*this, status, CL_COMPLETE);
+
+	if(unlikely(status < 0))
+		throw_on_error(status);
+
+	assert(status == CL_COMPLETE);
 	return true;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "work(%p) :%s",
+		this,
+		e.what(),
+	};
+
+	throw;
 }
 
 std::array<uint64_t, 4>

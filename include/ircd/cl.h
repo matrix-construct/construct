@@ -123,9 +123,9 @@ struct ircd::cl::kern
 struct ircd::cl::kern::range
 {
 	std::array<size_t, 5>
-	offset { 0, 0, 0, 0, 0 },
 	global { 0, 0, 0, 0, 0 },
-	local  { 0, 0, 0, 0, 0 };
+	local  { 0, 0, 0, 0, 0 },
+	offset { 0, 0, 0, 0, 0 };
 };
 
 /// Construction enqueues the task; destruction waits for completion.
