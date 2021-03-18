@@ -162,11 +162,21 @@ ircd::replace(const mutable_buffer &out_,
 			in.substr(0, p)
 		};
 
-		consumed += consume(out, copy(out, prologue));
+		const auto prologue_copied
+		{
+			move(out, prologue)
+		};
+
+		consumed += consume(out, prologue_copied);
 		produced += size(prologue);
 		if(p != in.npos)
 		{
-			consumed += consume(out, copy(out, after));
+			const auto after_copied
+			{
+				move(out, after)
+			};
+
+			consumed += consume(out, after_copied);
 			produced += size(after);
 			in = in.substr(p + size(after));
 			p = in.find(before);
@@ -183,7 +193,7 @@ ircd::replace(const mutable_buffer &out_,
 
     return string_view
     {
-		data(out_), data(out),
+		data(out_), data(out)
     };
 }
 
@@ -203,11 +213,21 @@ ircd::replace(const mutable_buffer &out_,
 			in.substr(0, p)
 		};
 
-		consumed += consume(out, copy(out, prologue));
+		const auto prologue_copied
+		{
+			move(out, prologue)
+		};
+
+		consumed += consume(out, prologue_copied);
 		produced += size(prologue);
 		if(p != in.npos)
 		{
-			consumed += consume(out, copy(out, after));
+			const auto after_copied
+			{
+				move(out, after)
+			};
+
+			consumed += consume(out, after_copied);
 			produced += size(after);
 			in = in.substr(p + 1);
 			p = in.find(before);
@@ -224,7 +244,7 @@ ircd::replace(const mutable_buffer &out_,
 
     return string_view
     {
-		data(out_), data(out),
+		data(out_), data(out)
     };
 }
 
