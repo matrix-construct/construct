@@ -365,6 +365,53 @@ catch(const std::exception &e)
 	throw;
 }
 
+ircd::cl::exec::exec(data &dst,
+                     const data &src,
+                     const opts &opts)
+try
+{
+	auto &q
+	{
+		queue[0][0]
+	};
+
+	const auto deps
+	{
+		make_deps(this, opts)
+	};
+
+	const size_t size
+	{
+		opts.size?:
+			std::min(dst.size(), src.size())
+	};
+
+	assert(!this->handle);
+	call
+	(
+		clEnqueueCopyBuffer,
+		q,
+		cl_mem(src.handle),
+		cl_mem(dst.handle),
+		opts.offset[1],
+		opts.offset[0],
+		size,
+		deps.size(),
+		deps.size()? deps.data(): nullptr,
+		reinterpret_cast<cl_event *>(&this->handle)
+	);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Exec Copy :%s",
+		e.what(),
+	};
+
+	throw;
+}
+
 ircd::cl::exec::exec(data &data,
                      const mutable_buffer &buf,
                      const opts &opts)
@@ -387,7 +434,7 @@ try
 		q,
 		cl_mem(data.handle),
 		opts.blocking,
-		opts.offset,
+		opts.offset[0],
 		ircd::size(buf),
 		ircd::data(buf),
 		deps.size(),
@@ -428,7 +475,7 @@ try
 		q,
 		cl_mem(data.handle),
 		opts.blocking,
-		opts.offset,
+		opts.offset[0],
 		ircd::size(buf),
 		mutable_cast(ircd::data(buf)),
 		deps.size(),
@@ -480,7 +527,7 @@ try
 			cl_mem(data.handle),
 			opts.blocking,
 			flags,
-			opts.offset,
+			opts.offset[0],
 			size,
 			deps.size(),
 			deps.size()? deps.data(): nullptr,
@@ -574,7 +621,7 @@ try
 			cl_mem(data.handle),
 			opts.blocking,
 			flags,
-			opts.offset,
+			opts.offset[0],
 			size,
 			deps.size(),
 			deps.size()? deps.data(): nullptr,

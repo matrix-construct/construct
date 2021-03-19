@@ -158,6 +158,9 @@ struct ircd::cl::exec
 	// Copy data written by the device to the GTT into our buffer.
 	exec(data &, const mutable_buffer &, const opts & = opts_default);
 
+	// Copy data directly between buffers.
+	exec(data &, const data &, const opts & = opts_default);
+
 	// Execute a kernel on a range.
 	exec(kern &, const kern::range &, const opts & = opts_default);
 
@@ -179,8 +182,8 @@ struct ircd::cl::exec::opts
 	/// sentinel for automatic size.
 	size_t size {0};
 
-	/// For operations which have an offset; otherwise ignored.
-	off_t offset {0};
+	/// For operations which have an offset (or two); otherwise ignored.
+	off_t offset[2] {0};
 
 	/// Starts a new dependency chain; allowing empty deps without implicit
 	/// dependency on the last work item constructed on the ircd::ctx.
