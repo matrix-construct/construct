@@ -630,8 +630,11 @@ ircd::vector_view<cl_event>
 ircd::cl::make_deps(cl::work *const &work,
                     const exec::opts &opts)
 {
-	if(empty(opts.deps))
+	if(empty(opts.deps) && !opts.indep)
 		return make_deps_default(work, opts);
+
+	if(empty(opts.deps))
+		return {};
 
 	size_t ret(0);
 	vector_view<cl_event> out(_deps_list);

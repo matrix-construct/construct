@@ -182,6 +182,10 @@ struct ircd::cl::exec::opts
 	/// For operations which have an offset; otherwise ignored.
 	off_t offset {0};
 
+	/// Starts a new dependency chain; allowing empty deps without implicit
+	/// dependency on the last work item constructed on the ircd::ctx.
+	bool indep {false};
+
 	/// For operations which plan to both read and write to the GTT, set to
 	/// true and execute the write_closure; otherwise ignored. Can be used
 	/// to de-optimize the write_closure, which is unidirectional by default.
