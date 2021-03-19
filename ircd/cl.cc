@@ -828,11 +828,9 @@ catch(const std::exception &e)
 
 namespace ircd::cl
 {
-	static void
-	handle_built(cl_program program, void *priv)
-	{
-		ircd::always_assert(false);
-	}
+	static void build_handle_error_log_line(const string_view &line);
+	static void build_handle_error(code &, const opencl_error &);
+	static void build_handle(cl_program program, void *priv);
 }
 
 void
@@ -848,46 +846,95 @@ try
 		num_devices,
 		device_list,
 		opts.c_str(),
-		&cl::handle_built,
+		cl::build_handle,
 		nullptr
 	);
 }
+catch(const opencl_error &e)
+{
+	build_handle_error(*this, e);
+	throw;
+}
 catch(const std::exception &e)
 {
-	const auto error_closure{[this]
-	(const mutable_buffer &buf)
+	log::error
 	{
-		size_t len {0}; call
-		(
-			clGetProgramBuildInfo,
-			cl_program(this->handle),
-			device[0][0],
-			CL_PROGRAM_BUILD_LOG,
-			ircd::size(buf),
-			ircd::data(buf),
-			&len
-		);
+		log, "code(%p) :Failed to build :%s",
+		this,
+		e.what(),
+	};
 
-		return len;
-	}};
+	throw;
+}
+
+void
+ircd::cl::build_handle(cl_program program,
+                       void *const priv)
+{
+	ircd::always_assert(false);
+}
+
+void
+ircd::cl::build_handle_error(code &code,
+                             const opencl_error &e)
+{
+	const auto string_closure
+	{
+		[&code](const mutable_buffer &buf)
+		{
+			size_t len {0}; call
+			(
+				clGetProgramBuildInfo,
+				cl_program(code.handle),
+				device[0][0],
+				CL_PROGRAM_BUILD_LOG,
+				ircd::size(buf),
+				ircd::data(buf),
+				&len
+			);
+
+			return len;
+		}
+	};
 
 	const auto error_message
 	{
-		ircd::string(8_KiB | SHRINK_TO_FIT, error_closure)
+		ircd::string(8_KiB | SHRINK_TO_FIT, string_closure)
 	};
 
-	ircd::tokens(error_message, '\n', []
-	(const string_view &line)
+	const auto lines
 	{
-		// note last line is just a CR
-		if(likely(line.size() > 1))
-			log::logf
-			{
-				log, log::DERROR, "%s", line,
-			};
-	});
+		ircd::tokens(error_message, '\n', build_handle_error_log_line)
+	};
+}
 
-	throw;
+void
+ircd::cl::build_handle_error_log_line(const string_view &line)
+{
+	// note last line is just a CR
+	if(line.size() <= 1)
+		return;
+
+	const auto &[loc, line_]    { split(line, ' ')   };
+	const auto &[fac, msg]      { split(line_, ' ')  };
+	const auto &[fname, pos]    { split(loc, ':')    };
+	const auto &[row, col]      { split(pos, ':')    };
+
+	const auto level
+	{
+		startswith(fac, "warning")?
+			log::level::WARNING:
+
+		startswith(fac, "error")?
+			log::level::ERROR:
+
+		log::level::ERROR
+	};
+
+	log::logf
+	{
+		log, level, "%s", line
+	};
 }
 
 //
@@ -1258,7 +1305,7 @@ ircd::cl::throw_on_error(const int &code)
 	if(unlikely(is_error(code)))
 		throw opencl_error
 		{
-			"(#%d) :%s",
+			"(%d) :%s",
 			code,
 			reflect_error(code),
 		};
