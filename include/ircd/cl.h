@@ -164,6 +164,9 @@ struct ircd::cl::exec
 	// Execute a kernel on a range.
 	exec(kern &, const kern::range &, const opts & = opts_default);
 
+	// Execute a kernel on a range.
+	exec(kern &, const opts &, const kern::range &);
+
 	// Execute a barrier.
 	exec(const opts &);
 };
@@ -253,3 +256,13 @@ ircd::cl::kern::kern(code &c,
 	for(uint i(0); i < argc; ++i)
 		this->arg(i, *datas[i]);
 }
+
+inline
+ircd::cl::exec::exec(kern &kern,
+                     const opts &opts,
+                     const kern::range &range)
+:exec
+{
+	kern, range, opts
+}
+{}
