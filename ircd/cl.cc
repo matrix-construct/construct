@@ -87,6 +87,14 @@ ircd::cl::enable
 	{ "persist",   false             },
 };
 
+decltype(ircd::cl::profile_queue)
+ircd::cl::profile_queue
+{
+	{ "name",      "ircd.cl.profile.queue"  },
+	{ "default",   false                    },
+	{ "persist",   false                    },
+};
+
 //
 // init
 //
@@ -181,7 +189,7 @@ ircd::cl::init::init()
 
 	// Create a queue for each device.
 	cl_command_queue_properties qprop {0};
-	qprop |= CL_QUEUE_PROFILING_ENABLE;
+	qprop |= (profile_queue? CL_QUEUE_PROFILING_ENABLE: 0);
 	for(size_t i(0); i < platforms; ++i)
 		for(size_t j(0); j < devices[i]; ++j)
 		{

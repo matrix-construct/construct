@@ -29,6 +29,7 @@ namespace ircd::cl
 
 	extern const info::versions version_api;
 	extern info::versions version_abi;
+	extern conf::item<bool> profile_queue;
 	extern conf::item<bool> enable;
 	extern log::log log;
 
