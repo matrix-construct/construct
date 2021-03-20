@@ -51,10 +51,10 @@ struct ircd::cl::work
   public:
 	std::array<uint64_t, 4> profile() const;
 
-	bool wait();
+	void wait(const uint = 0);
 
-	work(void *const &handle); // note: RetainEvent()
-	work() = default;
+	explicit work(void *const &handle); // note: RetainEvent()
+	work() noexcept;
 	work(work &&) noexcept;
 	work(const work &) = delete;
 	work &operator=(work &&) noexcept;

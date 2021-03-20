@@ -1137,7 +1137,7 @@ namespace ircd::cl
 	struct completion;
 
 	static void handle_event(cl_event, cl_int, void *) noexcept;
-	static int handle_incomplete(work &, const int &, const int);
+	static int wait_status(work &, const int, const int);
 }
 
 struct ircd::cl::completion
@@ -1150,7 +1150,6 @@ struct ircd::cl::completion
 void
 ircd::cl::work::init()
 {
-
 }
 
 void
@@ -1160,53 +1159,14 @@ noexcept
 	cl::sync();
 }
 
-int
-ircd::cl::handle_incomplete(work &work,
-                            const int &status,
-                            const int desired)
-{
-	completion c
-	{
-		cl_event(work.handle),
-		status,
-	};
-
-	call
-	(
-		clSetEventCallback,
-		cl_event(work.handle),
-		desired,
-		&handle_event,
-		&c
-	);
-
-	c.dock.wait([&c, &desired]
-	{
-		return !c.event || c.status == desired;
-	});
-
-	return c.status;
-}
-
-void
-ircd::cl::handle_event(cl_event event,
-                       cl_int status,
-                       void *const priv)
-noexcept
-{
-	auto *const c
-	{
-		reinterpret_cast<completion *>(priv)
-	};
-
-	assert(event != nullptr);
-	c->status = status;
-	c->dock.notify_one();
-}
-
 //
 // work::work
 //
+
+ircd::cl::work::work()
+noexcept
+{
+}
 
 ircd::cl::work::work(void *const &handle)
 {
@@ -1217,10 +1177,13 @@ ircd::cl::work::work(void *const &handle)
 ircd::cl::work::~work()
 noexcept try
 {
+	if(!handle)
+		return;
+
 	const unwind free{[this]
 	{
-		if(likely(handle))
-			call(clReleaseEvent, cl_event(handle));
+		assert(handle);
+		call(clReleaseEvent, cl_event(handle));
 	}};
 
 	wait();
@@ -1236,12 +1199,12 @@ catch(const std::exception &e)
 	return;
 }
 
-bool
-ircd::cl::work::wait()
+void
+ircd::cl::work::wait(const uint desired)
 try
 {
-	if(!handle)
-		return false;
+	static_assert(CL_COMPLETE == 0);
+	assert(handle);
 
 	char buf[4];
 	int status
@@ -1249,24 +1212,21 @@ try
 		info<int>(clGetEventInfo, cl_event(handle), CL_EVENT_COMMAND_EXECUTION_STATUS, buf)
 	};
 
-	if(likely(status == CL_COMPLETE))
-		return false;
-
-	if(unlikely(status >= 0))
-		status = handle_incomplete(*this, status, CL_COMPLETE);
+	if(status > int(desired))
+		status = wait_status(*this, status, desired);
 
 	if(unlikely(status < 0))
 		throw_on_error(status);
 
-	assert(status == CL_COMPLETE);
-	return true;
+	assert(int(status) == int(desired));
 }
 catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "work(%p) :%s",
+		log, "work(%p)::wait(%u) :%s",
 		this,
+		desired,
 		e.what(),
 	};
 
@@ -1290,6 +1250,53 @@ const
 		info<size_t>(clGetEventProfilingInfo, handle, CL_PROFILING_COMMAND_START, buf[2]),
 		info<size_t>(clGetEventProfilingInfo, handle, CL_PROFILING_COMMAND_END, buf[3]),
 	};
+}
+
+int
+ircd::cl::wait_status(work &work,
+                      const int status,
+                      const int desired)
+{
+	assert(status > desired);
+	assert(work.handle);
+
+	completion c
+	{
+		cl_event(work.handle),
+		status,
+	};
+
+	call
+	(
+		clSetEventCallback,
+		c.event,
+		desired,
+		&handle_event,
+		&c
+	);
+
+	c.dock.wait([&c, &desired]
+	{
+		return !c.event || c.status <= desired;
+	});
+
+	return c.status;
+}
+
+void
+ircd::cl::handle_event(cl_event event,
+                       cl_int status,
+                       void *const priv)
+noexcept
+{
+	auto *const c
+	{
+		reinterpret_cast<completion *>(priv)
+	};
+
+	assert(event != nullptr);
+	c->status = status;
+	c->dock.notify_one();
 }
 
 //
