@@ -188,12 +188,17 @@ ircd::cl::init::init()
 	throw_on_error(err);
 
 	// Create a queue for each device.
-	cl_command_queue_properties qprop {0};
-	qprop |= (profile_queue? CL_QUEUE_PROFILING_ENABLE: 0);
+	//cl_command_queue_properties qprop {0};
+	cl_queue_properties qprop {0};
+	qprop = (profile_queue? CL_QUEUE_PROFILING_ENABLE: cl_queue_properties(0));
+	//qprop |= CL_QUEUE_ON_DEVICE;
+	//qprop |= CL_QUEUE_ON_DEVICE_DEFAULT;
+	//qprop |= CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
 	for(size_t i(0); i < platforms; ++i)
 		for(size_t j(0); j < devices[i]; ++j)
 		{
-			queue[i][j] = clCreateCommandQueue(primary, device[i][j], qprop, &err);
+			//queue[i][j] = clCreateCommandQueue(primary, device[i][j], qprop, &err);
+			queue[i][j] = clCreateCommandQueueWithProperties(primary, device[i][j], &qprop, &err);
 			throw_on_error(err);
 		}
 
@@ -272,7 +277,7 @@ ircd::cl::flush()
 
 namespace ircd::cl
 {
-	static const size_t _deps_list_max {256};
+	static const size_t _deps_list_max {32};
 	static thread_local cl_event _deps_list[_deps_list_max];
 
 	static vector_view<cl_event> make_deps_default(cl::work *const &, const exec::opts &);
@@ -685,7 +690,8 @@ ircd::vector_view<cl_event>
 ircd::cl::make_deps(cl::work *const &work,
                     const exec::opts &opts)
 {
-	if(empty(opts.deps) && !opts.indep)
+	//TODO: for out-of-order queue
+	if((false) && empty(opts.deps) && !opts.indep)
 		return make_deps_default(work, opts);
 
 	if(empty(opts.deps))
