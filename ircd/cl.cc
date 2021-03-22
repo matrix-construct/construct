@@ -780,7 +780,8 @@ noexcept
 ircd::cl::kern::~kern()
 noexcept try
 {
-	call(clReleaseKernel, cl_kernel(handle));
+	if(likely(handle))
+		call(clReleaseKernel, cl_kernel(handle));
 }
 catch(const std::exception &e)
 {
@@ -925,7 +926,8 @@ noexcept
 ircd::cl::code::~code()
 noexcept try
 {
-	call(clReleaseProgram, cl_program(handle));
+	if(likely(handle))
+		call(clReleaseProgram, cl_program(handle));
 }
 catch(const std::exception &e)
 {
@@ -1142,7 +1144,8 @@ noexcept
 ircd::cl::data::~data()
 noexcept try
 {
-	call(clReleaseMemObject, cl_mem(handle));
+	if(likely(handle))
+		call(clReleaseMemObject, cl_mem(handle));
 }
 catch(const std::exception &e)
 {
