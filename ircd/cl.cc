@@ -854,6 +854,50 @@ ircd::cl::code::code(const vector_view<const string_view> &srcs,
 		build(build_opts);
 }
 
+ircd::cl::code::code(const vector_view<const const_buffer> &bins,
+                     const string_view &build_opts)
+{
+	static const size_t iov_max
+	{
+		64 //TODO: ???
+	};
+
+	if(unlikely(bins.size() > iov_max))
+		throw error
+		{
+			"Maximum number of binaries exceeded: lim:%zu got:%zu",
+			iov_max,
+			bins.size(),
+		};
+
+	const size_t count
+	{
+		std::min(bins.size(), iov_max)
+	};
+
+	size_t len[iov_max + 1] {0};
+	const uint8_t *bin[iov_max + 1] {nullptr};
+	for(size_t i(0); i < count; ++i)
+		bin[i] = reinterpret_cast<const uint8_t *>(ircd::data(bins[i])),
+		len[i] = ircd::size(bins[i]);
+
+	size_t devs {0};
+	cl_device_id dev[DEVICE_MAX] {0};
+	for(size_t i(0); i < platforms; ++i)
+		for(size_t j(0); j < devices[i]; ++j)
+			dev[devs++] = device[i][j];
+
+	int err {CL_SUCCESS};
+	int binerr[iov_max + 1] {CL_SUCCESS};
+	handle = clCreateProgramWithBinary(primary, devs, dev, len, bin, binerr, &err);
+	throw_on_error(err);
+	for(size_t i(0); i < count; ++i)
+		throw_on_error(binerr[i]);
+
+	if(!null(build_opts))
+		build(build_opts);
+}
+
 ircd::cl::code::code(code &&o)
 noexcept
 :handle{std::move(o.handle)}

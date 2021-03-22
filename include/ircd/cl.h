@@ -92,6 +92,7 @@ struct ircd::cl::code
   public:
 	void build(const string_view &opts = {});
 
+	explicit code(const vector_view<const const_buffer> &bins, const string_view &opts = {});
 	code(const vector_view<const string_view> &srcs, const string_view &opts = {});
 	code(const string_view &src, const string_view &opts = {});
 	code() = default;
