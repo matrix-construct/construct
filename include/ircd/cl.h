@@ -111,6 +111,8 @@ struct ircd::cl::kern
 
   public:
 	void arg(const int, data &);
+	void arg(const int, const const_buffer &);
+	template<class T> void arg(const int, const T &);
 
 	template<class... argv> kern(code &, const string_view &name, argv&&...);
 	kern(code &, const string_view &name);
@@ -257,6 +259,14 @@ ircd::cl::kern::kern(code &c,
 
 	for(uint i(0); i < argc; ++i)
 		this->arg(i, *datas[i]);
+}
+
+template<class T>
+inline void
+ircd::cl::kern::arg(const int pos,
+                    const T &val)
+{
+	arg(pos, const_buffer(&val, 1));
 }
 
 inline

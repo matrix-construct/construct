@@ -805,6 +805,13 @@ ircd::cl::kern::arg(const int i,
 	call(clSetKernelArg, cl_kernel(handle), i, sizeof(cl_mem), &data_handle);
 }
 
+void
+ircd::cl::kern::arg(const int i,
+                    const const_buffer &buf)
+{
+	call(clSetKernelArg, cl_kernel(handle), i, ircd::size(buf), ircd::data(buf));
+}
+
 //
 // code
 //
