@@ -342,6 +342,9 @@ try
 	for(size_t i(0); i < work.global.size(); ++i)
 		dim += work.global[i] > 0;
 
+	if(!dim)
+		return;
+
 	auto &q
 	{
 		queue[0][0]
