@@ -273,7 +273,11 @@ inline void
 ircd::cl::kern::arg(const int pos,
                     const T &val)
 {
-	arg(pos, const_buffer(&val, 1));
+	static_assert(!std::is_same<T, cl::data>());
+	arg(pos, const_buffer
+	{
+		reinterpret_cast<const char *>(&val), sizeof(T)
+	});
 }
 
 inline
