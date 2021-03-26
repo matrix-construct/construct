@@ -205,6 +205,13 @@ struct ircd::cl::exec::opts
 	/// ignored. Note that this is a thread-level blocking mechanism and
 	/// does not yield the ircd::ctx; for testing/special use only.
 	bool blocking {false};
+
+	/// Perform a flush of the queue directly after submit.
+	bool flush {false};
+
+	/// Perform a sync of the queue directly after submit; this will block in
+	/// the ctor; all work will be complete at full construction.
+	bool sync {false};
 };
 
 struct ircd::cl::init

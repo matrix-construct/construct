@@ -312,6 +312,7 @@ namespace ircd::cl
 	static const size_t _deps_list_max {32};
 	static thread_local cl_event _deps_list[_deps_list_max];
 
+	static void handle_submitted(cl::exec *const &, const exec::opts &);
 	static vector_view<cl_event> make_deps_default(cl::work *const &, const exec::opts &);
 	static vector_view<cl_event> make_deps(cl::work *const &, const exec::opts &);
 }
@@ -354,8 +355,8 @@ try
 		reinterpret_cast<cl_event *>(&this->handle)
 	);
 
-	primary_stats.exec_tasks += 1;
 	primary_stats.exec_barrier_tasks += 1;
+	handle_submitted(this, opts);
 }
 catch(const std::exception &e)
 {
@@ -413,10 +414,10 @@ try
 	for(size_t i(1); i < dim; ++i)
 		local_size *= work.local[i];
 
-	primary_stats.exec_tasks += 1;
 	primary_stats.exec_kern_tasks += 1;
 	primary_stats.exec_kern_threads += global_size;
 	primary_stats.exec_kern_groups += global_size / local_size;
+	handle_submitted(this, opts);
 }
 catch(const std::exception &e)
 {
@@ -465,7 +466,7 @@ try
 		reinterpret_cast<cl_event *>(&this->handle)
 	);
 
-	primary_stats.exec_tasks += 1;
+	handle_submitted(this, opts);
 }
 catch(const std::exception &e)
 {
@@ -508,7 +509,7 @@ try
 		reinterpret_cast<cl_event *>(&this->handle)
 	);
 
-	primary_stats.exec_tasks += 1;
+	handle_submitted(this, opts);
 }
 catch(const std::exception &e)
 {
@@ -551,7 +552,7 @@ try
 		reinterpret_cast<cl_event *>(&this->handle)
 	);
 
-	primary_stats.exec_tasks += 1;
+	handle_submitted(this, opts);
 }
 catch(const std::exception &e)
 {
@@ -607,6 +608,7 @@ try
 	};
 
 	throw_on_error(err);
+	handle_submitted(this, opts);
 	assert(this->handle);
 	assert(ptr);
 
@@ -615,7 +617,7 @@ try
 	// replace the event handle for this exec instance until its actual dtor;
 	// thus the lifetime of the exec we are constructing actually represents
 	// the unmapping event.
-	const unwind unmap{[this, &data, &q, &ptr]
+	const unwind unmap{[this, &data, &q, &ptr, &opts]
 	{
 		assert(!this->handle);
 		call
@@ -629,7 +631,7 @@ try
 			reinterpret_cast<cl_event *>(&this->handle)
 		);
 
-		primary_stats.exec_tasks += 2;
+		handle_submitted(this, opts);
 	}};
 
 	// After the closure is called below, or throws, or if wait() throws,
@@ -703,10 +705,11 @@ try
 	};
 
 	throw_on_error(err);
+	handle_submitted(this, opts);
 	assert(this->handle);
 	assert(ptr);
 
-	const unwind unmap{[this, &data, &q, &ptr]
+	const unwind unmap{[this, &data, &q, &ptr, &opts]
 	{
 		assert(!this->handle);
 		call
@@ -720,7 +723,7 @@ try
 			reinterpret_cast<cl_event *>(&this->handle)
 		);
 
-		primary_stats.exec_tasks += 2;
+		handle_submitted(this, opts);
 	}};
 
 	const unwind rehandle{[this]
@@ -745,6 +748,19 @@ catch(const std::exception &e)
 	};
 
 	throw;
+}
+
+void
+ircd::cl::handle_submitted(cl::exec *const &exec,
+                           const exec::opts &opts)
+{
+	primary_stats.exec_tasks += 1;
+
+	if(opts.flush)
+		cl::flush();
+
+	if(opts.sync)
+		cl::sync();
 }
 
 ircd::vector_view<cl_event>
