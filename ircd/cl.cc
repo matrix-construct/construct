@@ -48,11 +48,31 @@ namespace ircd::cl
 	static cl_context
 	primary;
 
+	extern struct stats
+	primary_stats;
+
 	static cl_command_queue
 	queue[PLATFORM_MAX][DEVICE_MAX];
 
 	static void handle_notify(const char *, const void *, size_t, void *) noexcept;
 }
+
+struct ircd::cl::stats
+{
+	template<class T>
+	using item = ircd::stats::item<T>;
+
+	item<uint64_t>
+	alloc_count,
+	alloc_bytes,
+	dealloc_count,
+	dealloc_bytes,
+	exec_tasks,
+	exec_kern_tasks,
+	exec_kern_threads,
+	exec_kern_groups,
+	exec_barrier_tasks;
+};
 
 decltype(ircd::cl::log)
 ircd::cl::log
@@ -93,6 +113,18 @@ ircd::cl::profile_queue
 	{ "name",      "ircd.cl.profile.queue"  },
 	{ "default",   false                    },
 	{ "persist",   false                    },
+};
+
+decltype(ircd::cl::primary_stats)
+ircd::cl::primary_stats
+{
+	{ { "name", "ircd.cl.alloc.count"        } },
+	{ { "name", "ircd.cl.alloc.bytes"        } },
+	{ { "name", "ircd.cl.dealloc.count"      } },
+	{ { "name", "ircd.cl.dealloc.bytes"      } },
+	{ { "name", "ircd.cl.exec.tasks"         } },
+	{ { "name", "ircd.cl.exec.kern.tasks"    } },
+	{ { "name", "ircd.cl.exec.kern.threads"  } },
 };
 
 //
@@ -321,6 +353,9 @@ try
 		deps.size()? deps.data(): nullptr,
 		reinterpret_cast<cl_event *>(&this->handle)
 	);
+
+	primary_stats.exec_tasks += 1;
+	primary_stats.exec_barrier_tasks += 1;
 }
 catch(const std::exception &e)
 {
@@ -340,7 +375,7 @@ try
 {
 	size_t dim(0);
 	for(size_t i(0); i < work.global.size(); ++i)
-		dim += work.global[i] > 0;
+		dim += work.global[i] > 0 && dim == i;
 
 	if(!dim)
 		return;
@@ -369,6 +404,19 @@ try
 		deps.size()? deps.data(): nullptr,
 		reinterpret_cast<cl_event *>(&this->handle)
 	);
+
+	size_t global_size(work.global[0]);
+	for(size_t i(1); i < dim; ++i)
+		global_size *= work.global[i];
+
+	size_t local_size(work.local[0]);
+	for(size_t i(1); i < dim; ++i)
+		local_size *= work.local[i];
+
+	primary_stats.exec_tasks += 1;
+	primary_stats.exec_kern_tasks += 1;
+	primary_stats.exec_kern_threads += global_size;
+	primary_stats.exec_kern_groups += global_size / local_size;
 }
 catch(const std::exception &e)
 {
@@ -416,6 +464,8 @@ try
 		deps.size()? deps.data(): nullptr,
 		reinterpret_cast<cl_event *>(&this->handle)
 	);
+
+	primary_stats.exec_tasks += 1;
 }
 catch(const std::exception &e)
 {
@@ -457,6 +507,8 @@ try
 		deps.size()? deps.data(): nullptr,
 		reinterpret_cast<cl_event *>(&this->handle)
 	);
+
+	primary_stats.exec_tasks += 1;
 }
 catch(const std::exception &e)
 {
@@ -498,6 +550,8 @@ try
 		deps.size()? deps.data(): nullptr,
 		reinterpret_cast<cl_event *>(&this->handle)
 	);
+
+	primary_stats.exec_tasks += 1;
 }
 catch(const std::exception &e)
 {
@@ -574,6 +628,8 @@ try
 			nullptr, // depslist
 			reinterpret_cast<cl_event *>(&this->handle)
 		);
+
+		primary_stats.exec_tasks += 2;
 	}};
 
 	// After the closure is called below, or throws, or if wait() throws,
@@ -663,6 +719,8 @@ try
 			nullptr, // depslist
 			reinterpret_cast<cl_event *>(&this->handle)
 		);
+
+		primary_stats.exec_tasks += 2;
 	}};
 
 	const unwind rehandle{[this]
@@ -1080,6 +1138,9 @@ ircd::cl::data::data(const size_t size_,
 	int err {CL_SUCCESS};
 	handle = clCreateBuffer(primary, flags, size, ptr, &err);
 	throw_on_error(err);
+
+	primary_stats.alloc_count += 1;
+	primary_stats.alloc_bytes += size;
 }
 
 ircd::cl::data::data(const size_t size_,
@@ -1102,6 +1163,9 @@ ircd::cl::data::data(const size_t size_,
 	int err {CL_SUCCESS};
 	handle = clCreateBuffer(primary, flags, size, mutable_cast(ptr), &err);
 	throw_on_error(err);
+
+	primary_stats.alloc_count += 1;
+	primary_stats.alloc_bytes += size;
 }
 
 ircd::cl::data::data(const mutable_buffer &buf,
@@ -1148,7 +1212,17 @@ ircd::cl::data::~data()
 noexcept try
 {
 	if(likely(handle))
+	{
+		const auto size
+		{
+			this->size()
+		};
+
 		call(clReleaseMemObject, cl_mem(handle));
+
+		primary_stats.dealloc_count += 1;
+		primary_stats.dealloc_bytes += size;
+	}
 }
 catch(const std::exception &e)
 {
