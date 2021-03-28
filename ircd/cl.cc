@@ -489,6 +489,14 @@ try
 		queue[0][0]
 	};
 
+	const auto size
+	{
+		opts.size?: ircd::size(buf)
+	};
+
+	if(!size)
+		return;
+
 	const auto deps
 	{
 		make_deps(this, opts)
@@ -502,7 +510,7 @@ try
 		cl_mem(data.handle),
 		opts.blocking,
 		opts.offset[0],
-		ircd::size(buf),
+		size,
 		ircd::data(buf),
 		deps.size(),
 		deps.size()? deps.data(): nullptr,
@@ -532,6 +540,14 @@ try
 		queue[0][0]
 	};
 
+	const auto size
+	{
+		opts.size?: ircd::size(buf)
+	};
+
+	if(!size)
+		return;
+
 	const auto deps
 	{
 		make_deps(this, opts)
@@ -545,7 +561,7 @@ try
 		cl_mem(data.handle),
 		opts.blocking,
 		opts.offset[0],
-		ircd::size(buf),
+		size,
 		mutable_cast(ircd::data(buf)),
 		deps.size(),
 		deps.size()? deps.data(): nullptr,
