@@ -582,6 +582,7 @@ catch(const std::exception &e)
 }
 
 ircd::cl::exec::exec(data &data,
+                     const pair<size_t, off_t> &slice,
                      const read_closure &closure,
                      const opts &opts)
 try
@@ -591,14 +592,25 @@ try
 		queue[0][0]
 	};
 
+	const auto size
+	{
+		slice.first?:
+		opts.size?:
+			data.size()
+	};
+
+	const auto offset
+	{
+		slice.second?:
+			opts.offset[0]
+	};
+
+	assert(size_t(size) <= data.size());
+	assert(size_t(offset) <= data.size());
+
 	const auto deps
 	{
 		make_deps(this, opts)
-	};
-
-	const auto size
-	{
-		opts.size?: data.size()
 	};
 
 	cl_map_flags flags {0};
@@ -614,7 +626,7 @@ try
 			cl_mem(data.handle),
 			opts.blocking,
 			flags,
-			opts.offset[0],
+			offset,
 			size,
 			deps.size(),
 			deps.size()? deps.data(): nullptr,
@@ -678,6 +690,7 @@ catch(const std::exception &e)
 }
 
 ircd::cl::exec::exec(data &data,
+                     const pair<size_t, off_t> &slice,
                      const write_closure &closure,
                      const opts &opts)
 try
@@ -687,14 +700,25 @@ try
 		queue[0][0]
 	};
 
+	const auto size
+	{
+		slice.first?:
+		opts.size?:
+			data.size()
+	};
+
+	const auto offset
+	{
+		slice.second?:
+			opts.offset[0]
+	};
+
+	assert(size_t(size) <= data.size());
+	assert(size_t(offset) <= data.size());
+
 	const auto deps
 	{
 		make_deps(this, opts)
-	};
-
-	const auto size
-	{
-		opts.size?: data.size()
 	};
 
 	cl_map_flags flags {0};
@@ -711,7 +735,7 @@ try
 			cl_mem(data.handle),
 			opts.blocking,
 			flags,
-			opts.offset[0],
+			offset,
 			size,
 			deps.size(),
 			deps.size()? deps.data(): nullptr,
