@@ -1187,8 +1187,7 @@ ircd::cl::data::data(const size_t size_,
 	};
 
 	cl_mem_flags flags {0};
-	flags |= CL_MEM_READ_WRITE;
-	flags |= wonly? CL_MEM_WRITE_ONLY: 0;
+	flags |= wonly? CL_MEM_WRITE_ONLY: CL_MEM_READ_WRITE;
 	flags |= ircd::size(buf)? CL_MEM_COPY_HOST_PTR: 0;
 
 	int err {CL_SUCCESS};
