@@ -1246,6 +1246,20 @@ ircd::cl::data::data(const const_buffer &buf)
 	throw_on_error(err);
 }
 
+ircd::cl::data::data(data &master,
+                     const pair<size_t, off_t> &slice)
+{
+	cl_mem_flags flags {0};
+
+	cl_buffer_region region {0};
+	region.origin = slice.second;
+	region.size = slice.first;
+
+	int err {CL_SUCCESS};
+	handle = clCreateSubBuffer(cl_mem(master.handle), flags, CL_BUFFER_CREATE_TYPE_REGION, &region, &err);
+	throw_on_error(err);
+}
+
 ircd::cl::data::data(data &&o)
 noexcept
 :handle{std::move(o.handle)}

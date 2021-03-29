@@ -76,6 +76,7 @@ struct ircd::cl::data
 	data(const size_t, const const_buffer &); // device ro
 	data(const mutable_buffer &, const bool wonly = false); // host rw
 	data(const const_buffer &); // host ro
+	data(data &, const pair<size_t, off_t> &); // subbuffer
 	data(const data &) = delete;
 	data() = default;
 	data(data &&) noexcept;
