@@ -17297,3 +17297,69 @@ console_cmd__app__signal(opt &out, const string_view &line)
 	out << "not found." << std::endl;
 	return true;
 }
+
+//
+// gpt
+//
+
+bool
+console_cmd__gpt__raw(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"limit"
+	}};
+
+	const auto text
+	{
+		tokens_after(line, " ", 0)
+	};
+
+	const unique_mutable_buffer buf
+	{
+		2048, 64
+	};
+
+	gpt::opts opts;
+	opts.limit = param.at<uint>("limit");
+	opts.top_k = 3;
+
+	gpt::task task;
+	const auto output
+	{
+		gpt::generate(buf, text, &opts, &task)
+	};
+
+	out
+	<< output
+	<< std::endl;
+	return true;
+}
+
+bool
+console_cmd__gpt(opt &out, const string_view &line)
+{
+	return console_cmd__gpt__raw(out, line);
+}
+
+bool
+console_cmd__gpt__token(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"idx"
+	}};
+
+	const auto idx
+	{
+		param.at<ushort>("idx")
+	};
+
+	char buf[512];
+
+	out
+	<< gpt::vocab::debug(buf, idx)
+	<< std::endl;
+
+	return true;
+}
