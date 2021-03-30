@@ -4,6 +4,7 @@ Makefile
 *.o
 *.so
 *.lo
+*.clo
 *.la
 *.orig
 *.log

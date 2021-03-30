@@ -218,6 +218,10 @@ if OPENCL
 libircd_la_SOURCES += cl.cc
 endif
 libircd_la_SOURCES += gpt.cc
+libircd_la_SOURCES += gpt_pipe.cc
+if OPENCL
+BUILT_SOURCES += gpt_cl.clo
+endif
 libircd_la_SOURCES += gpt_model.cc
 libircd_la_SOURCES += gpt_vocab.cc
 libircd_la_SOURCES += openssl.cc
@@ -348,3 +352,6 @@ endif
 # LLVM PGO text to binary for -fprofile-use
 default.profdata:
 	-$(LLVM_PROFDATA) merge -output=default.profdata default.proftext
+
+gpt_cl.clo: gpt_cl.cl
+	clang++-11 -std=CL1.1 -c -pipe -Xclang -finclude-default-header -o gpt_cl.clo $^
