@@ -141,6 +141,8 @@ ircd::gpt::model::init_from_cache(const string_view &cache_path)
 	};
 
 	fs::map::opts map_opts;
+	map_opts.huge2mb = true;
+	map_opts.locked = false;
 	default_model_shm = fs::map
 	{
 		fd, map_opts, sizeof(decoder)
@@ -283,9 +285,9 @@ ircd::gpt::model::init_wpe_weight(decoder &d,
 	{
 		size_t j(0);
 		for(const auto &elem : vec)
-			d.wpe[i][j++] = lex_cast<float>(elem);
+			d.word.pos[i][j++] = lex_cast<float>(elem);
 
-		always_assert(j == sizeof(d.wpe[i]) / sizeof(float));
+		always_assert(j == sizeof(d.word.pos[i]) / sizeof(float));
 		++i;
 	}
 }
@@ -301,9 +303,9 @@ ircd::gpt::model::init_wte_weight(decoder &d,
 	{
 		size_t j(0);
 		for(const auto &elem : vec)
-			d.wte[i][j++] = lex_cast<float>(elem);
+			d.word.token[i][j++] = lex_cast<float>(elem);
 
-		always_assert(j == sizeof(d.wte[i]) / sizeof(float));
+		always_assert(j == sizeof(d.word.token[i]) / sizeof(float));
 		++i;
 	}
 }

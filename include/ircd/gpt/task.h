@@ -23,6 +23,12 @@ struct ircd::gpt::task
 	/// Current task status.
 	enum status status {'\0'};
 
+	/// State counters for the accept codes specified in the options.
+	uint8_t accept_seq[3] {0};
+
+	/// State counters for the error codes specified in the options.
+	uint8_t error_seq[3] {0};
+
 	/// Accumulates the number of executions by the user. Each call to the
 	/// interface is an execution.
 	uint64_t epoch {0};

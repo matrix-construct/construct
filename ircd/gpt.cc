@@ -183,12 +183,12 @@ ircd::gpt::embed(float *const out,
 	assert(opts.model);
 	const auto &wpe
 	{
-		opts.model->wpe[position]
+		opts.model->word.pos[position]
 	};
 
 	const auto &wte
 	{
-		opts.model->wte[token]
+		opts.model->word.token[token]
 	};
 
 	for(uint j(0); j < 768; ++j)

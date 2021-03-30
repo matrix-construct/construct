@@ -17,8 +17,10 @@ namespace ircd::gpt::model
 	struct attn;
 	struct ffnn;
 	struct block;
+	struct embed;
 	struct decoder;
 
+	constexpr auto align {64};
 	extern const decoder *default_model;
 }
 
@@ -26,29 +28,35 @@ namespace ircd::gpt::model
 struct ircd::gpt::model::attn
 {
 	float
-	attn_bias    alignas(64) [2304],
-	attn_weight  alignas(64) [768][2304],
-	proj_bias    alignas(64) [768],
-	proj_weight  alignas(64) [768][768];
-	bool bias    alignas(64) [1024][1024];
+	attn_bias    alignas(align) [2304],
+	attn_weight  alignas(align) [768][2304];
+
+	bool
+	bias         alignas(align) [1024][1024];
+
+	float
+	proj_bias    alignas(align) [768],
+	proj_weight  alignas(align) [768][768];
 };
 
 /// Feed-forward neural network
 struct ircd::gpt::model::ffnn
 {
 	float
-	fc_bias      alignas(64) [3072],
-	fc_weight    alignas(64) [768][3072],
-	proj_bias    alignas(64) [768],
-	proj_weight  alignas(64) [3072][768];
+	fc_bias      alignas(align) [3072],
+	fc_weight    alignas(align) [768][3072];
+
+	float
+	proj_bias    alignas(align) [768],
+	proj_weight  alignas(align) [3072][768];
 };
 
 /// Layer normalization
 struct ircd::gpt::model::norm
 {
 	float
-	bias    alignas(64) [768],
-	weight  alignas(64) [768];
+	bias    alignas(align) [768],
+	weight  alignas(align) [768];
 };
 
 /// Transformer block
@@ -56,15 +64,24 @@ struct ircd::gpt::model::block
 {
 	norm ln1;
 	model::attn attn;
+
 	norm ln2;
 	model::ffnn ffnn;
 };
 
-struct ircd::gpt::model::decoder
+/// Vocabulary embeddings
+struct ircd::gpt::model::embed
 {
 	float
-	wpe  alignas(64) [1024][768],
-	wte  alignas(64) [65536][768];
-	block layer[12];
-	norm f;
+	pos     alignas(align) [1024][768],
+	token   alignas(align) [65536][768];
 };
+
+struct ircd::gpt::model::decoder
+{
+	block layer[12];
+
+	norm f;
+	embed word;
+}
+__attribute__((packed));
