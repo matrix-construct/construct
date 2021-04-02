@@ -64,3 +64,11 @@ namespace ircd
 #if defined(__FreeBSD__) && !defined(ulong)
 	typedef u_long ulong;
 #endif
+
+//
+// Other
+//
+
+#if !defined(uchar)
+	typedef unsigned char uchar;
+#endif
