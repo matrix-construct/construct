@@ -523,7 +523,11 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "Exec Read :%s",
+		log, "Exec Read data:%p cl_mem:%p buf:%p,%zu :%s",
+		&data,
+		data.handle,
+		ircd::data(buf),
+		ircd::size(buf),
 		e.what(),
 	};
 
@@ -574,7 +578,11 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "Exec Write :%s",
+		log, "Exec Write data:%p cl_mem:%p buf:%p,%zu :%s",
+		&data,
+		data.handle,
+		ircd::data(buf),
+		ircd::size(buf),
 		e.what(),
 	};
 
