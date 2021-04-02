@@ -59,11 +59,13 @@ struct ircd::gpt::pipe::model::block
 	model::attn attn;
 	model::ffnn ffnn;
 
+	block(cl::data &, const off_t, const gpt::model::block &, const size_t);
 	block(const gpt::model::block &, const size_t);
 };
 
 struct ircd::gpt::pipe::model::decoder
 {
+	cl::data master;
 	model::block block[12];
 	tensor norm;
 

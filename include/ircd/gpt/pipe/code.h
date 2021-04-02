@@ -9,20 +9,14 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_GPT_GENERATE_H
+#define HAVE_IRCD_GPT_PIPE_CODE_H
 
-namespace ircd::gpt
+/// Pipe code segment.
+struct ircd::gpt::pipe::code
+:cl::code
 {
-	void
-	generate(task &);
+	static const string_view compile_opts;
 
-	vector_view<u16>
-	generate(const vector_view<u16> &out,
-	         const vector_view<const u16> &in,
-	         task &);
-
-	string_view
-	generate(const mutable_buffer &out,
-	         const string_view &in,
-	         task &);
-}
+	code();
+	~code() noexcept;
+};

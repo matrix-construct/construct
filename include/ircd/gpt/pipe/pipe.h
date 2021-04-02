@@ -17,7 +17,6 @@ namespace ircd::gpt::pipe
 	struct code;
 	struct desc;
 	struct exec;
-	struct bank;
 
 	extern model *default_model;
 	extern code *default_code;
@@ -27,70 +26,6 @@ namespace ircd::gpt::pipe
 };
 
 #include "model.h"
-#include "ctrl.h"
-
-struct ircd::gpt::pipe::code
-:cl::code
-{
-	static const string_view compile_opts;
-
-	code();
-	~code() noexcept;
-};
-
-struct ircd::gpt::pipe::desc
-{
-	struct layer;
-
-	pipe::model *model;
-	pipe::code *code;
-
-	cl::data opts;
-	cl::data ctrl;
-	cl::data state;
-	cl::data xattn;
-	cl::data accum;
-	cl::data logit;
-	cl::kern anode;
-	std::unique_ptr<struct desc::layer> layer[12];
-	cl::kern cathode;
-	cl::kern lmhead;
-	cl::kern lmamax;
-
-	desc(pipe::code &, pipe::model &);
-};
-
-struct ircd::gpt::pipe::desc::layer
-{
-	cl::kern negative;
-	cl::kern selfattn;
-	cl::kern positive;
-
-	layer(pipe::desc &, const int);
-};
-
-struct ircd::gpt::pipe::exec
-{
-	pipe::desc *desc;
-
-	mutable_buffer out_ctrl;
-	const_buffer in_ctrl, in_opts;
-
-	cl::kern::range range_anode;
-	cl::kern::range range_coil;
-	cl::kern::range range_negative;
-	cl::kern::range range_selfattn;
-	cl::kern::range range_positive;
-	cl::kern::range range_cathode;
-	cl::kern::range range_lmhead;
-	cl::kern::range range_lmamax;
-
-	cl::exec send[2];
-	cl::exec tail[1];
-	cl::exec coil[12 * 3];
-	cl::exec head[3];
-	cl::exec recv[1];
-
-	exec(ctor_ctrl &, const ctor_opts &);
-	~exec() noexcept;
-};
+#include "code.h"
+#include "desc.h"
+#include "exec.h"

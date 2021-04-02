@@ -142,7 +142,7 @@ ircd::gpt::model::init_from_cache(const string_view &cache_path)
 
 	fs::map::opts map_opts;
 	map_opts.huge2mb = true;
-	map_opts.locked = false;
+	map_opts.locked = true;
 	default_model_shm = fs::map
 	{
 		fd, map_opts, sizeof(decoder)

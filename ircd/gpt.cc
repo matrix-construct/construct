@@ -34,12 +34,8 @@ namespace ircd::gpt
 
 	static f32
 	logit alignas(64) [65536],
+	embeds alignas(64) [1024 * 768],
 	scratch alignas(64) [1024 * 768];
-}
-
-namespace ircd::gpt
-{
-	extern void transform(ctor_ctrl &, const ctor_opts &);
 }
 
 decltype(ircd::gpt::log)
@@ -48,16 +44,12 @@ ircd::gpt::log
 	"gpt"
 };
 
-decltype(ircd::gpt::default_opts)
-ircd::gpt::default_opts;
-
 ircd::string_view
 ircd::gpt::generate(const mutable_buffer &out,
                     const string_view &in,
-                    const opts *opts,
-                    task *task)
+                    task &task)
 {
-	u16 buf[2][256];
+	u16 buf[2][1024];
 	const auto input_tokens
 	{
 		vocab::tokenize(buf[0], in)
@@ -65,7 +57,7 @@ ircd::gpt::generate(const mutable_buffer &out,
 
 	const auto output_tokens
 	{
-		generate(buf[1], input_tokens, opts, task)
+		generate(buf[1], input_tokens, task)
 	};
 
 	const auto output
@@ -79,13 +71,92 @@ ircd::gpt::generate(const mutable_buffer &out,
 ircd::vector_view<ircd::u16>
 ircd::gpt::generate(const vector_view<u16> &out,
                     const vector_view<const u16> &in,
-                    const opts *opts,
-                    task *task)
+                    task &task)
 {
+	assert(task.ctrl);
+	assert(task.opts);
+
+	uint ret(0);
+	bool halt(false);
+
+	const auto &opts(*task.opts);
+	auto &ctrl(*task.ctrl);
+	auto &errc(ctrl.error_seq);
+	auto &accc(ctrl.accept_seq);
+	ctrl.tokens = in.size();
+
+	const size_t tmax
+	{
+		in.size() + opts.limit
+	};
+
+	const vector_view<f32> accum
+	{
+		gpt::scratch, tmax * 768
+	};
+
+	const vector_view<f32> embeds
+	{
+		gpt::embeds, tmax * 768
+	};
+
+	for(uint j(0); j < in.size(); ++j)
+	{
+		const vector_view<f32> dst
+		{
+			data(embeds) + j * 768, 768
+		};
+
+		if(ircd::cl::enable)
+			ctrl.token[j] = in[j];
+		else
+			embed(data(dst), in[j], j, opts);
+
+		static char dbuf[512] {0};
+		char report[1536] {0};
+		char tmbuf[1][64] {{0}};
+		const size_t report_size = snprintf
+		(
+			report, sizeof(report),
+			"%-2u -- %-3u [%5u] --- --- %s        0        0  |  %8s",
+			j,
+			ctrl.tokens,
+			ctrl.token[j],
+			vocab::debug(dbuf, ctrl.token[j]).c_str(),
+			pretty(tmbuf[0], milliseconds(ctrl.elapsed), 1).c_str()
+		);
+
+		log::info
+		{
+			log, "%s",
+			string_view{report, report_size}
+		};
+	}
+
+	uint64_t cycles(0);
+	milliseconds last_time {0};
+	util::timer stopwatch;
+	{
+		const prof::scope_cycles task_cycles
+		{
+			cycles
+		};
+
+		generate(task);
+	}
+	last_time = stopwatch.at<milliseconds>();
+	ctrl.elapsed += last_time.count();
+
+	/*
+		coil(data(scratch), tokens, *opts.model);
+		tail(logit, data(last_embed), *opts.model);
+		out[i] = argmax(logit, *opts);
+	*/
+
 	uint accc_thresh[3] {3, 3, 3};
 	for(uint i(0); i < 3; ++i)
 		for(uint j(3); j > 0; --j)
-			if(opts->accept_code[i][j - 1] == -1U)
+			if(opts.accept_code[i][j - 1] == -1U)
 				--accc_thresh[i];
 			else
 				break;
@@ -93,99 +164,22 @@ ircd::gpt::generate(const vector_view<u16> &out,
 	uint errc_thresh[3] {3, 3, 3};
 	for(uint i(0); i < 3; ++i)
 		for(uint j(3); j > 0; --j)
-			if(opts->error_code[i][j - 1] == -1U)
+			if(opts.error_code[i][j - 1] == -1U)
 				--errc_thresh[i];
 			else
 				break;
 
-	uint ret(0);
-	bool halt(false);
-	auto &errc(task->error_seq);
-	auto &accc(task->accept_seq);
-	for(uint i(0); !halt && i < out.size() && ret < opts->limit; ++i)
+	for(auto &j(ret); j + in.size() < ctrl.tokens && j < out.size() && !halt; ++j)
 	{
-		ctor_ctrl ctrl alignas(4096) {0};
-		ctrl.pc = 1;
-
-		const size_t tokens
-		{
-			in.size() + i
-		};
-
-		const vector_view<f32> scratch
-		{
-			gpt::scratch, tokens * 768
-		};
-
-		for(uint j(0); j < in.size(); ++j)
-		{
-			const vector_view<f32> dst
-			{
-				data(scratch) + j * 768, 768
-			};
-
-			if(ircd::cl::enable)
-				ctrl.body.token[ctrl.tokens++] = in[j];
-			else
-				embed(data(dst), in[j], j, *opts);
-		}
-
-		for(uint j(0); j < i; ++j)
-		{
-			const vector_view<f32> dst
-			{
-				data(scratch) + (in.size() + j) * 768, 768
-			};
-
-			if(ircd::cl::enable)
-				ctrl.body.token[ctrl.tokens++] = out[j];
-			else
-				embed(data(dst), out[j], in.size() + j, *opts);
-		}
-
-		assert(!ircd::cl::enable || ctrl.tokens == tokens);
-		const vector_view<f32> last_embed
-		{
-			data(scratch) + (tokens - 1) * 768, 768
-		};
-
-		const auto last_cycl(task->cycles);
-		milliseconds last_time {0};
-		{
-			util::timer stopwatch;
-			const prof::scope_cycles task_cycles
-			{
-				task->cycles
-			};
-
-			if(ircd::cl::enable)
-			{
-				static const ctor_opts opts alignas(4096) {0};
-
-				transform(ctrl, opts);
-				out[i] = ctrl.body.token[ctrl.tokens - 1];
-				assert(ctrl.tokens == tokens + 1);
-			} else {
-				coil(data(scratch), tokens, *opts->model);
-				tail(logit, data(last_embed), *opts->model);
-				out[i] = argmax(logit, *opts);
-			}
-
-			last_time = stopwatch.at<milliseconds>();
-			task->time += last_time;
-		}
+		out[j] = ctrl.token[(in.size() + j + ctrl.head) % opts.buffer_tokens];
 
 		for(uint j(0); j < 3; ++j)
-			errc[j] =
-				opts->error_code[j][errc[j]] == out[i]?
-					errc[j] + 1:
-					0;
+			errc[j] = opts.error_code[j][errc[j]] == out[j]?
+				errc[j] + 1: 0;
 
 		for(uint j(0); j < 3; ++j)
-			accc[j] =
-				opts->accept_code[j][accc[j]] == out[i]?
-					accc[j] + 1:
-					0;
+			accc[j] = opts.accept_code[j][accc[j]] == out[j]?
+				accc[j] + 1: 0;
 
 		for(uint j(0); j < 3; ++j)
 			halt |= accc_thresh[j] && accc[j] >= accc_thresh[j],
@@ -194,21 +188,23 @@ ircd::gpt::generate(const vector_view<u16> &out,
 		static char dbuf[512] {0};
 		char report[1536] {0};
 		char tmbuf[4][64] {0};
-		size_t report_size;
-		report_size = snprintf
+		const size_t bsz(ctrl.tokens - in.size());
+		const size_t report_size = snprintf
 		(
 			report, sizeof(report),
-			"%-2u %-3u %-3u [%5u] a:%u e:%u %s %8s %8s  |  %8s",
-			i,
+			"%-2u %-2u %-3u %-3u %-3u [%5u] a:%u e:%u %s %8s %8s  |  %8s",
+			j,
+			j + in.size(),
 			ctrl.tokens,
-			ret,
-			out[i],
+			ctrl.cycle,
+			ctrl.epoch,
+			out[j],
 			accc[0] + accc[1] + accc[2],
 			errc[0] + errc[1] + errc[2],
-			vocab::debug(dbuf, out[i]).c_str(),
-			pretty(tmbuf[0], last_time, 1).c_str(),
-			pretty(tmbuf[1], si(last_cycl), 1).c_str(),
-			pretty(tmbuf[2], task->time, 1).c_str()
+			vocab::debug(dbuf, out[j]).c_str(),
+			pretty(tmbuf[0], milliseconds(last_time / bsz), 1).c_str(),
+			pretty(tmbuf[1], si(cycles / bsz), 1).c_str(),
+			pretty(tmbuf[2], milliseconds(ctrl.elapsed), 1).c_str()
 		);
 
 		log::info
@@ -216,24 +212,22 @@ ircd::gpt::generate(const vector_view<u16> &out,
 			log, "%s",
 			string_view{report, report_size}
 		};
-
-		++ret;
-		ctx::yield();
-		ctx::interruption_point();
 	}
 
+	ret = ctrl.tokens - in.size();
 	for(uint i(0); i < 3; ++i)
-		if(accc_thresh[i] && task->accept_seq[i] >= accc_thresh[i])
+		if(accc_thresh[i] && ctrl.accept_seq[i] >= accc_thresh[i])
 		{
 			ret -= (3 - accc_thresh[i]);
 			break;
 		}
-		else if(errc_thresh[i] && task->error_seq[i] >= errc_thresh[i])
+		else if(errc_thresh[i] && ctrl.error_seq[i] >= errc_thresh[i])
 		{
 			ret -= (3 - errc_thresh[i]);
 			break;
 		}
 
+	ctx::interruption_point();
 	return vector_view<u16>
 	{
 		out, ret

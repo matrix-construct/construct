@@ -9,78 +9,46 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_GPT_PIPE_CTRL_H
+#ifdef __OPENCL_C_VERSION__
+#define HAVE_IRCD_GPT_TOKEN_H
 
-struct ctor_ctrl
-{
-	long call;
-	ulong pc;
-	ulong tokens;
-	ulong magic;
-	uchar pad[1024 - 32];
-
-	union
-	{
-		char str[3072];
-		ushort token[1536];
-	}
-	body;
-}
-__attribute__((aligned(4096)));
-
-struct ctor_opts
-{
-    uchar pad[4096];
-}
-__attribute__((aligned(4096)));
-
-#ifndef __OPENCL_C_VERSION__
-static_assert(sizeof(struct ctor_ctrl) == 4096);
-#endif
-
-#ifndef __OPENCL_C_VERSION__
-static_assert(sizeof(struct ctor_opts) == 4096);
-#endif
-
-#ifndef __cplusplus
-
-union token
+union ircd_gpt_token
 {
 	float
 	word[768],
 	attn[12][64];
 };
 
-union tokenv
+union ircd_gpt_tokenv
 {
 	float4
 	word[768/4],
 	attn[12][64/4];
 };
 
-struct qkv
+struct ircd_gpt_qkv
 {
-	union token
+	union ircd_gpt_tokenv
 	qry,
 	key,
 	val;
 };
 
-struct qkvv
+struct ircd_gpt_qkvv
 {
-	union tokenv
+	union ircd_gpt_tokenv
 	qry,
 	key,
 	val;
 };
 
-struct attn_mask
+struct ircd_gpt_attn_mask
 {
 	bool
 	token[1024];
 };
 
-union aperature
+union ircd_gpt_aperature
 {
 	float
 	word[768],
@@ -90,7 +58,7 @@ union aperature
 	attn[12][64];
 };
 
-union aperaturev
+union ircd_gpt_aperaturev
 {
 	float4
 	word[768/4],
