@@ -1448,6 +1448,9 @@ const
 		cl_event(this->handle)
 	};
 
+	if(!profile_queue || !handle)
+		return {0};
+
 	char buf[4][8];
 	return std::array<uint64_t, 4>
 	{
