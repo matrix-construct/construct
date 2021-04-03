@@ -19,6 +19,9 @@ namespace ircd::cl
 	template<class func, class... args> static int call(func&&, args&&...);
 	template<class T = string_view, class F, class id, class param> static T info(F&&, const id &, const param &, const mutable_buffer &);
 	template<class T = string_view, class F, class id0, class id1, class param> static T info(F&&, const id0 &, const id1 &, const param &, const mutable_buffer &);
+
+	static uint query_warp_size(cl_context, cl_device_id);
+	static void dump_device_info(const uint i, const uint j);
 }
 
 // Runtime state
@@ -172,9 +175,9 @@ ircd::cl::init::init()
 		log::logf
 		{
 			log, log::level::DEBUG,
-			"OpenCL:%d [%u][*] :%s :%s :%s :%s",
-			CL_TARGET_OPENCL_VERSION,
+			"OpenCL [%u][*] %-3d :%s :%s :%s :%s",
 			i,
+			CL_TARGET_OPENCL_VERSION,
 			info(clGetPlatformInfo, platform[i], CL_PLATFORM_VERSION, buf[0]),
 			info(clGetPlatformInfo, platform[i], CL_PLATFORM_VENDOR, buf[1]),
 			info(clGetPlatformInfo, platform[i], CL_PLATFORM_NAME, buf[2]),
@@ -193,20 +196,6 @@ ircd::cl::init::init()
 		devices_total += devices[i];
 	}
 
-	for(size_t i(0); i < platforms; ++i)
-		for(size_t j(0); j < devices[i]; ++j)
-			log::info
-			{
-				log, "OpenCL:%d [%u][%u] :%s :%s :%s :%s",
-				CL_TARGET_OPENCL_VERSION,
-				i,
-				j,
-				info(clGetDeviceInfo, device[i][j], CL_DEVICE_VERSION, buf[1]),
-				info(clGetDeviceInfo, device[i][j], CL_DEVICE_VENDOR, buf[2]),
-				info(clGetDeviceInfo, device[i][j], CL_DEVICE_NAME, buf[3]),
-				info(clGetDeviceInfo, device[i][j], CL_DRIVER_VERSION, buf[0]),
-			};
-
 	// Gather all devices we'll use.
 	size_t _devs {0};
 	cl_device_id _dev[DEVICE_MAX];
@@ -219,6 +208,11 @@ ircd::cl::init::init()
 	cl_context_properties ctxprop {0};
 	primary = clCreateContext(&ctxprop, _devs, _dev, handle_notify, nullptr, &err);
 	throw_on_error(err);
+
+	// Dump device details to infolog
+	for(size_t i(0); i < platforms; ++i)
+		for(size_t j(0); j < devices[i]; ++j)
+			dump_device_info(i, j);
 
 	// Create a queue for each device.
 	//cl_command_queue_properties qprop {0};
@@ -270,6 +264,113 @@ noexcept
 	}
 
 	dlclose(linkage);
+}
+
+void
+ircd::cl::dump_device_info(const uint i,
+                           const uint j)
+{
+	const auto &dev
+	{
+		device[i][j]
+	};
+
+	char buf[12][192];
+	char pbuf[8][64];
+	log::info
+	{
+		log, "OpenCL [%u][%u] %-3d :%s :%s :%s :%s",
+		i, j,
+		CL_TARGET_OPENCL_VERSION,
+		info(clGetDeviceInfo, dev, CL_DEVICE_VERSION, buf[0]),
+		info(clGetDeviceInfo, dev, CL_DEVICE_VENDOR, buf[1]),
+		info(clGetDeviceInfo, dev, CL_DEVICE_NAME, buf[2]),
+		info(clGetDeviceInfo, dev, CL_DRIVER_VERSION, buf[3]),
+	};
+
+	const auto wid
+	{
+		info<std::array<size_t, 3>>(clGetDeviceInfo, dev, CL_DEVICE_MAX_WORK_ITEM_SIZES, buf[0])
+	};
+
+	log::info
+	{
+		log, "OpenCL [%u][%u] %u$mHz unit %u[%lu:%lu] work %u[%u:%u:%u]",
+		i, j,
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_CLOCK_FREQUENCY, buf[0]),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_COMPUTE_UNITS, buf[1]),
+		primary? query_warp_size(primary, dev): 0UL,
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_WORK_GROUP_SIZE, buf[3]),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, buf[4]),
+		wid[0], wid[1], wid[2],
+	};
+
+	const bool native_kernel
+	(
+		info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_EXECUTION_CAPABILITIES, buf[0]) & CL_EXEC_NATIVE_KERNEL
+	);
+
+	log::info
+	{
+		log, "OpenCL [%u][%u] %u$bit-%s %s native:%b align %s page %s alloc %s",
+		i, j,
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_ADDRESS_BITS, buf[0]),
+		info<bool>(clGetDeviceInfo, dev, CL_DEVICE_ENDIAN_LITTLE, buf[1])?
+			"LE"_sv: "BE"_sv,
+		info<bool>(clGetDeviceInfo, dev, CL_DEVICE_ERROR_CORRECTION_SUPPORT, buf[2])?
+			"ECC"_sv: "non-ECC"_sv,
+		native_kernel,
+		pretty(pbuf[0], iec(info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE, buf[3]))),
+		pretty(pbuf[1], iec(info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MEM_BASE_ADDR_ALIGN, buf[4]))),
+		pretty(pbuf[2], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_MAX_MEM_ALLOC_SIZE, buf[5]))),
+	};
+
+	log::info
+	{
+		log, "OpenCL [%u][%u] global %s cache %s line %s type[%02x]; local %s type[%02x]; const %s argc:%u",
+		i, j,
+		pretty(pbuf[0], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_SIZE, buf[0]))),
+		pretty(pbuf[1], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, buf[1]))),
+		pretty(pbuf[2], iec(info<uint>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, buf[2]))),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_CACHE_TYPE, buf[3]),
+		pretty(pbuf[3], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_LOCAL_MEM_SIZE, buf[4]))),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_LOCAL_MEM_TYPE, buf[5]),
+		pretty(pbuf[4], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE, buf[6]))),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_CONSTANT_ARGS, buf[7]),
+	};
+
+	log::info
+	{
+		log, "OpenCL [%u][%u] :%s",
+		i,
+		j,
+		info(clGetDeviceInfo, dev, CL_DEVICE_EXTENSIONS, buf[0]),
+	};
+}
+
+/// Silly quirks of OpenCL force us to setup a context, compile a program, and
+/// instantiate a kernel to find out the warp/wavefront size characteristic.
+/// Note that other thread-grouping characteristics are available from device
+/// properties directly.
+uint
+ircd::cl::query_warp_size(cl_context context,
+                          cl_device_id device)
+{
+	//TODO: XXX
+	assert(primary);
+	assert(context == primary);
+
+	cl::code code
+	{
+		"__kernel void ircd_test() {}"
+	};
+
+	cl::kern kern
+	{
+		code, "ircd_test"
+	};
+
+	return kern.preferred_group_size_multiple(device);
 }
 
 //
@@ -873,6 +974,28 @@ try
 	int err {CL_SUCCESS};
 	handle = clCreateKernel(cl_program(code.handle), name.c_str(), &err);
 	throw_on_error(err);
+
+	const std::array<size_t, 3> cgs
+	{
+		#ifdef RB_DEBUG
+		compile_group_size()
+		#else
+		0, 0, 0
+		#endif
+	};
+
+	char buf[1][16];
+	char pbuf[2][48];
+	log::debug
+	{
+		log, "kernel stack %s local %s group:%zu pref:%zu comp:%zu:%zu:%zu :%s",
+		pretty(pbuf[0], iec(stack_mem_size())),
+		pretty(pbuf[1], iec(local_mem_size())),
+		group_size(),
+		preferred_group_size_multiple(),
+		cgs[0], cgs[1], cgs[2],
+		name,
+	};
 }
 catch(const std::exception &e)
 {
