@@ -939,6 +939,56 @@ ircd::cl::kern::arg(const int i,
 	call(clSetKernelArg, cl_kernel(handle), i, ircd::size(buf), ircd::data(buf));
 }
 
+std::array<size_t, 3>
+ircd::cl::kern::compile_group_size(void *const dev)
+const
+{
+	char buf[24];
+	const auto handle(cl_kernel(this->handle));
+	constexpr auto flag(CL_KERNEL_COMPILE_WORK_GROUP_SIZE);
+	return info<std::array<size_t, 3>>(clGetKernelWorkGroupInfo, handle, cl_device_id(dev), flag, buf);
+}
+
+size_t
+ircd::cl::kern::preferred_group_size_multiple(void *const dev)
+const
+{
+	char buf[16];
+	const auto handle(cl_kernel(this->handle));
+	constexpr auto flag(CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE);
+	return info<size_t>(clGetKernelWorkGroupInfo, handle, cl_device_id(dev), flag, buf);
+}
+
+size_t
+ircd::cl::kern::group_size(void *const dev)
+const
+{
+	char buf[16];
+	const auto handle(cl_kernel(this->handle));
+	constexpr auto flag(CL_KERNEL_WORK_GROUP_SIZE);
+	return info<size_t>(clGetKernelWorkGroupInfo, handle, cl_device_id(dev), flag, buf);
+}
+
+size_t
+ircd::cl::kern::local_mem_size(void *const dev)
+const
+{
+	char buf[16];
+	const auto handle(cl_kernel(this->handle));
+	constexpr auto flag(CL_KERNEL_LOCAL_MEM_SIZE);
+	return info<ulong>(clGetKernelWorkGroupInfo, handle, cl_device_id(dev), flag, buf);
+}
+
+size_t
+ircd::cl::kern::stack_mem_size(void *const dev)
+const
+{
+	char buf[16];
+	const auto handle(cl_kernel(this->handle));
+	constexpr auto flag(CL_KERNEL_PRIVATE_MEM_SIZE);
+	return info<ulong>(clGetKernelWorkGroupInfo, handle, cl_device_id(dev), flag, buf);
+}
+
 //
 // code
 //

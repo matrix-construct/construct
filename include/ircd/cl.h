@@ -111,6 +111,12 @@ struct ircd::cl::kern
 	void *handle {nullptr};
 
   public:
+	std::array<size_t, 3> compile_group_size(void *dev = nullptr) const;
+	size_t preferred_group_size_multiple(void *dev = nullptr) const;
+	size_t group_size(void *dev = nullptr) const;
+	size_t local_mem_size(void *dev = nullptr) const;
+	size_t stack_mem_size(void *dev = nullptr) const;
+
 	void arg(const int, data &);
 	void arg(const int, const const_buffer &);
 	template<class T> void arg(const int, const T &);
