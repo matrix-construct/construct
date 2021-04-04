@@ -13,9 +13,8 @@
 
 namespace ircd::math
 {
-	template<const struct fmma_opts &opts,
-	         class T>
-	void fmma(T *, const T *, const T *, size_t = 0, size_t = 0);
+	template<class T>
+	void fmma(T *, const T *, const T *, const struct fmma_opts &);
 }
 
 /// Options for the template.
@@ -24,28 +23,23 @@ struct ircd::math::fmma_opts
 	size_t cols     {   0 };
 	size_t rows     {   0 };
 	size_t tiles    {   1 };
-	char polarity   { 'x' };
 };
 
 /// Fused Matrix-Multiply & Accumulate
 /// clang11 FMA vfmadd213ps/vfmadd231ps
 /// clang11 FMA4 vfmaddps
-template<const ircd::math::fmma_opts &opts,
-         class T>
+template<class T>
 inline void
 ircd::math::fmma(T *const __restrict__ out,
                  const T *const __restrict__ in,
                  const T *const __restrict__ weight,
-                 size_t cols,
-                 size_t rows)
+                 const struct fmma_opts &opts)
 {
-	static const auto
+	const auto
+	&cols{opts.cols},
+	&rows{opts.rows},
 	&tiles{opts.tiles},
 	&lanes{simd::lanes<T>()};
-
-	cols = cols?: opts.cols;
-	rows = rows?: opts.rows;
-	std::swap(rows, opts.polarity == 'y'? cols: rows);
 
 	const auto width
 	{
