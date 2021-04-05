@@ -312,14 +312,13 @@ ircd::cl::dump_device_info(const uint i,
 
 	log::info
 	{
-		log, "OpenCL [%u][%u] %u$bit-%s %s native:%b align %s page %s alloc %s",
+		log, "OpenCL [%u][%u] %u$bit-%s %s align %s page %s alloc %s",
 		i, j,
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_ADDRESS_BITS, buf[0]),
 		info<bool>(clGetDeviceInfo, dev, CL_DEVICE_ENDIAN_LITTLE, buf[1])?
 			"LE"_sv: "BE"_sv,
 		info<bool>(clGetDeviceInfo, dev, CL_DEVICE_ERROR_CORRECTION_SUPPORT, buf[2])?
 			"ECC"_sv: "non-ECC"_sv,
-		native_kernel,
 		pretty(pbuf[0], iec(info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE, buf[3]))),
 		pretty(pbuf[1], iec(info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MEM_BASE_ADDR_ALIGN, buf[4]))),
 		pretty(pbuf[2], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_MAX_MEM_ALLOC_SIZE, buf[5]))),
@@ -327,7 +326,7 @@ ircd::cl::dump_device_info(const uint i,
 
 	log::info
 	{
-		log, "OpenCL [%u][%u] global %s cache %s line %s type[%02x]; local %s type[%02x]; const %s argc:%u",
+		log, "OpenCL [%u][%u] global %s cache %s line %s type[%02x]; local %s type[%02x]; const %s",
 		i, j,
 		pretty(pbuf[0], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_SIZE, buf[0]))),
 		pretty(pbuf[1], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, buf[1]))),
@@ -336,7 +335,22 @@ ircd::cl::dump_device_info(const uint i,
 		pretty(pbuf[3], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_LOCAL_MEM_SIZE, buf[4]))),
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_LOCAL_MEM_TYPE, buf[5]),
 		pretty(pbuf[4], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE, buf[6]))),
-		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_CONSTANT_ARGS, buf[7]),
+	};
+
+	log::info
+	{
+		log, "OpenCL [%u][%u] char%u short%u half%u int%u float%u long%u double%u; argc:%u cargc:%u SPIR-V:%b",
+		i, j,
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR, buf[0]),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT, buf[1]),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF, buf[2]),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NATIVE_VECTOR_WIDTH_INT, buf[3]),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NATIVE_VECTOR_WIDTH_FLOAT, buf[4]),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG, buf[5]),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NATIVE_VECTOR_WIDTH_DOUBLE, buf[6]),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_PARAMETER_SIZE, buf[7]),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_CONSTANT_ARGS, buf[8]),
+		native_kernel,
 	};
 
 	log::info
