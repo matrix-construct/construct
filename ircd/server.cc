@@ -2620,8 +2620,8 @@ ircd::server::link::handle_readable_success()
 	// because this loop isn't executing in any ircd::ctx. Since the buffers
 	// we're using are supplied by users in other ctxs they will continue to
 	// exist as this loop continues to the next tags. There is one exception
-	// case though: canceled requests have their buffers free'ed when the tag
-	// is pop'ed from this link's queue, because the user is gone; the scratch
+	// case though: canceled requests have their buffers freed when the tag
+	// is popped from this link's queue, because the user is gone; the scratch
 	// buffer is maintained between iterations in that case.
 	unique_buffer<mutable_buffer> scratch;
 	const_buffer overrun; do
@@ -2687,7 +2687,7 @@ try
 	}
 
 	// Branch to handle overrun out of a cancelled tag which needs its data
-	// copied to scratch before being pop'ed off the queue; fairly rare case.
+	// copied to scratch before being popped off the queue; fairly rare case.
 	// If the tag is not in a canceled state, the overrun will point to valid
 	// data for the next tag even after being popped off the queue.
 	if(!empty(overrun) && tag.canceled())
