@@ -67,14 +67,25 @@ struct ircd::cl::stats
 	using item = ircd::stats::item<T>;
 
 	item<uint64_t>
+	sync_count,
+	flush_count,
 	alloc_count,
 	alloc_bytes,
 	dealloc_count,
 	dealloc_bytes,
+	work_waits,
+	work_waits_async,
+	work_errors,
 	exec_tasks,
 	exec_kern_tasks,
 	exec_kern_threads,
 	exec_kern_groups,
+	exec_write_tasks,
+	exec_write_bytes,
+	exec_read_tasks,
+	exec_read_bytes,
+	exec_copy_tasks,
+	exec_copy_bytes,
 	exec_barrier_tasks;
 };
 
@@ -122,13 +133,26 @@ ircd::cl::profile_queue
 decltype(ircd::cl::primary_stats)
 ircd::cl::primary_stats
 {
-	{ { "name", "ircd.cl.alloc.count"        } },
-	{ { "name", "ircd.cl.alloc.bytes"        } },
-	{ { "name", "ircd.cl.dealloc.count"      } },
-	{ { "name", "ircd.cl.dealloc.bytes"      } },
-	{ { "name", "ircd.cl.exec.tasks"         } },
-	{ { "name", "ircd.cl.exec.kern.tasks"    } },
-	{ { "name", "ircd.cl.exec.kern.threads"  } },
+	{ { "name", "ircd.cl.sync.count"          } },
+	{ { "name", "ircd.cl.flush.count"         } },
+	{ { "name", "ircd.cl.alloc.count"         } },
+	{ { "name", "ircd.cl.alloc.bytes"         } },
+	{ { "name", "ircd.cl.dealloc.count"       } },
+	{ { "name", "ircd.cl.dealloc.bytes"       } },
+	{ { "name", "ircd.cl.work.waits"          } },
+	{ { "name", "ircd.cl.work.waits.async"    } },
+	{ { "name", "ircd.cl.work.errors"         } },
+	{ { "name", "ircd.cl.exec.tasks"          } },
+	{ { "name", "ircd.cl.exec.kern.tasks"     } },
+	{ { "name", "ircd.cl.exec.kern.threads"   } },
+	{ { "name", "ircd.cl.exec.kern.groups"    } },
+	{ { "name", "ircd.cl.exec.write.tasks"    } },
+	{ { "name", "ircd.cl.exec.write.bytes"    } },
+	{ { "name", "ircd.cl.exec.read.tasks"     } },
+	{ { "name", "ircd.cl.exec.read.bytes"     } },
+	{ { "name", "ircd.cl.exec.copy.tasks"     } },
+	{ { "name", "ircd.cl.exec.copy.bytes"     } },
+	{ { "name", "ircd.cl.exec.barrier.tasks"  } },
 };
 
 //
@@ -403,6 +427,8 @@ ircd::cl::sync()
 	(
 		clFinish, q
 	);
+
+	++primary_stats.sync_count;
 }
 
 void
@@ -417,6 +443,8 @@ ircd::cl::flush()
 	(
 		clFlush, q
 	);
+
+	++primary_stats.flush_count;
 }
 
 //
@@ -582,6 +610,8 @@ try
 		reinterpret_cast<cl_event *>(&this->handle)
 	);
 
+	primary_stats.exec_copy_bytes += size;
+	primary_stats.exec_copy_tasks += 1;
 	handle_submitted(this, opts);
 }
 catch(const std::exception &e)
@@ -633,6 +663,8 @@ try
 		reinterpret_cast<cl_event *>(&this->handle)
 	);
 
+	primary_stats.exec_read_bytes += size;
+	primary_stats.exec_read_tasks += 1;
 	handle_submitted(this, opts);
 }
 catch(const std::exception &e)
@@ -688,6 +720,8 @@ try
 		reinterpret_cast<cl_event *>(&this->handle)
 	);
 
+	primary_stats.exec_write_bytes += size;
+	primary_stats.exec_write_tasks += 1;
 	handle_submitted(this, opts);
 }
 catch(const std::exception &e)
@@ -760,6 +794,8 @@ try
 	};
 
 	throw_on_error(err);
+	primary_stats.exec_read_bytes += size;
+	primary_stats.exec_read_tasks += 1;
 	handle_submitted(this, opts);
 	assert(this->handle);
 	assert(ptr);
@@ -869,11 +905,14 @@ try
 	};
 
 	throw_on_error(err);
+	// Account for read operation only when caller maps read/write.
+	primary_stats.exec_read_bytes += opts.duplex? size: 0UL;
+	primary_stats.exec_read_tasks += opts.duplex;
 	handle_submitted(this, opts);
 	assert(this->handle);
 	assert(ptr);
 
-	const unwind unmap{[this, &data, &q, &ptr, &opts]
+	const unwind unmap{[this, &data, &q, &ptr, &opts, &size]
 	{
 		assert(!this->handle);
 		call
@@ -887,6 +926,8 @@ try
 			reinterpret_cast<cl_event *>(&this->handle)
 		);
 
+		primary_stats.exec_write_bytes += size;
+		primary_stats.exec_write_tasks += 1;
 		handle_submitted(this, opts);
 	}};
 
@@ -1665,12 +1706,21 @@ ircd::cl::wait_status(work &work,
 	assert(status > desired);
 	assert(work.handle);
 
+	// Completion state structure on this ircd::ctx's stack.
 	completion c
 	{
 		cl_event(work.handle),
 		status,
 	};
 
+	// Completion condition closure to be satisfied.
+	const auto condition{[&c, &desired]() -> bool
+	{
+		return !c.event || c.status <= desired;
+	}};
+
+	// Register callback with OpenCL; note that the callback might be
+	// dispatched immediately from this call itself (see below).
 	call
 	(
 		clSetEventCallback,
@@ -1680,11 +1730,18 @@ ircd::cl::wait_status(work &work,
 		&c
 	);
 
-	c.dock.wait([&c, &desired]
-	{
-		return !c.event || c.status <= desired;
-	});
+	// This stats item counts clSetEventCallback()'s which return before OpenCL
+	// calls the callback, verifying asynchronicity. If this stats item remains
+	// zero, the OpenCL runtime has hijacked our thread for a blocking wait.
+	primary_stats.work_waits_async += !condition();
 
+	// Yield ircd::ctx while condition unsatisfied
+	c.dock.wait(condition);
+
+	// Increment stats
+	const bool is_err(c.status < 0);
+	primary_stats.work_errors += is_err;
+	primary_stats.work_waits += 1;
 	return c.status;
 }
 
@@ -1699,7 +1756,9 @@ noexcept
 		reinterpret_cast<completion *>(priv)
 	};
 
+	assert(priv != nullptr);
 	assert(event != nullptr);
+	assert(c->event == event);
 	c->status = status;
 	c->dock.notify_one();
 }
