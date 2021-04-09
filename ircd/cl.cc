@@ -238,21 +238,36 @@ ircd::cl::init::init()
 		for(size_t j(0); j < devices[i]; ++j)
 			dump_device_info(i, j);
 
-	// Create a queue for each device.
-	//cl_command_queue_properties qprop {0};
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
+	// Setup legacy queue properties
+	cl_command_queue_properties legacy_qprop {0};
+	legacy_qprop |= (profile_queue? CL_QUEUE_PROFILING_ENABLE: cl_command_queue_properties{0});
+	//legacy_qprop |= CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+
+	// Setup modern queue properties
 	cl_queue_properties qprop {0};
-	qprop = (profile_queue? CL_QUEUE_PROFILING_ENABLE: cl_queue_properties(0));
+	qprop |= (profile_queue? CL_QUEUE_PROFILING_ENABLE: cl_queue_properties{0});
+	//qprop |= CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
 	//qprop |= CL_QUEUE_ON_DEVICE;
 	//qprop |= CL_QUEUE_ON_DEVICE_DEFAULT;
-	//qprop |= CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+
+	// Create a queue for each device.
 	for(size_t i(0); i < platforms; ++i)
 		for(size_t j(0); j < devices[i]; ++j)
 		{
-			//queue[i][j] = clCreateCommandQueue(primary, device[i][j], qprop, &err);
-			queue[i][j] = clCreateCommandQueueWithProperties(primary, device[i][j], &qprop, &err);
+			queue[i][j] = profile_queue?
+				clCreateCommandQueue(primary, device[i][j], legacy_qprop, &err):
+				clCreateCommandQueueWithProperties(primary, device[i][j], &qprop, &err);
+				//clCreateCommandQueue(primary, device[i][j], legacy_qprop, &err);
+
 			throw_on_error(err);
 		}
 
+	#pragma GCC diagnostic pop
+
+	// For any inits in the work subsystem.
 	work::init();
 }
 
@@ -1493,7 +1508,8 @@ ircd::cl::data::data(data &master,
 	region.size = slice.first;
 
 	int err {CL_SUCCESS};
-	handle = clCreateSubBuffer(cl_mem(master.handle), flags, CL_BUFFER_CREATE_TYPE_REGION, &region, &err);
+	constexpr auto type {CL_BUFFER_CREATE_TYPE_REGION};
+	handle = clCreateSubBuffer(cl_mem(master.handle), flags, type, &region, &err);
 	throw_on_error(err);
 }
 
