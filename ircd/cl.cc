@@ -1579,15 +1579,33 @@ namespace ircd::cl
 {
 	struct completion;
 
-	static void handle_event(cl_event, cl_int, void *) noexcept;
-	static int wait_status(work &, const int, const int);
+	extern conf::item<bool> offload_enable;
+	extern const ctx::ole::opts offload_opts;
+
+	static void handle_event_callback(cl_event, cl_int, void *) noexcept;
+	static int wait_event_callback(work &, const int, const int);
+	static int wait_event_offload(work &, const int, const int);
+	static int wait_event(work &, const int, const int);
 }
 
-struct ircd::cl::completion
+struct alignas(64) ircd::cl::completion
 {
 	cl_event event {nullptr};
 	cl_int status {CL_COMPLETE};
 	ctx::dock dock;
+};
+
+decltype(ircd::cl::offload_enable)
+ircd::cl::offload_enable
+{
+	{ "name",     "ircd.cl.offload.enable"  },
+	{ "default",  true                      },
+};
+
+decltype(ircd::cl::offload_opts)
+ircd::cl::offload_opts
+{
+	"cl"
 };
 
 void
@@ -1609,6 +1627,7 @@ noexcept
 ircd::cl::work::work()
 noexcept
 {
+	assert(ircd::run::level == run::level::RUN);
 }
 
 ircd::cl::work::work(void *const &handle)
@@ -1656,7 +1675,7 @@ try
 	};
 
 	if(status > int(desired))
-		status = wait_status(*this, status, desired);
+		status = wait_event(*this, status, desired);
 
 	if(unlikely(status < 0))
 		throw_on_error(status);
@@ -1699,13 +1718,68 @@ const
 }
 
 int
-ircd::cl::wait_status(work &work,
-                      const int status,
-                      const int desired)
+ircd::cl::wait_event(work &work,
+                     const int status,
+                     const int desired)
 {
-	assert(status > desired);
 	assert(work.handle);
+	assert(status > desired);
+	const ctx::uninterruptible::nothrow ui;
 
+	const bool use_offload
+	{
+		// conf item
+		bool(offload_enable)
+	};
+
+	const auto ret
+	{
+		use_offload?
+			wait_event_offload(work, status, desired):
+			wait_event_callback(work, status, desired)
+	};
+
+	const bool is_err
+	{
+		ret < 0
+	};
+
+	primary_stats.work_errors += is_err;
+	primary_stats.work_waits += 1;
+	return ret;
+}
+
+int
+ircd::cl::wait_event_offload(work &work,
+                             const int status,
+                             const int desired)
+{
+	completion c
+	{
+		cl_event(work.handle),
+		status,
+	};
+
+	ctx::ole::offload
+	{
+		offload_opts, [&c]
+		{
+			call(clWaitForEvents, 1UL, &c.event);
+		}
+	};
+
+	char buf[4];
+	//c.status = info<int>(clGetEventInfo, c.event, CL_EVENT_COMMAND_EXECUTION_STATUS, buf);
+	c.status = CL_COMPLETE;
+	assert(c.status == CL_COMPLETE);
+	return c.status;
+}
+
+int
+ircd::cl::wait_event_callback(work &work,
+                              const int status,
+                              const int desired)
+{
 	// Completion state structure on this ircd::ctx's stack.
 	completion c
 	{
@@ -1726,7 +1800,7 @@ ircd::cl::wait_status(work &work,
 		clSetEventCallback,
 		c.event,
 		desired,
-		&handle_event,
+		&handle_event_callback,
 		&c
 	);
 
@@ -1737,18 +1811,13 @@ ircd::cl::wait_status(work &work,
 
 	// Yield ircd::ctx while condition unsatisfied
 	c.dock.wait(condition);
-
-	// Increment stats
-	const bool is_err(c.status < 0);
-	primary_stats.work_errors += is_err;
-	primary_stats.work_waits += 1;
 	return c.status;
 }
 
 void
-ircd::cl::handle_event(cl_event event,
-                       cl_int status,
-                       void *const priv)
+ircd::cl::handle_event_callback(cl_event event,
+                                cl_int status,
+                                void *const priv)
 noexcept
 {
 	auto *const c
