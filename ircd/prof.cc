@@ -137,9 +137,10 @@ noexcept
 	};
 
 	char tmbuf[64];
-	log::dwarning
+	log::logf
 	{
-		log, "[%s] context id:%lu watchdog :system call took %s :%s",
+		log, log::level::DWARNING,
+		"[%s] context id:%lu watchdog :system call took %s :%s",
 		ctx::current?
 			name(ctx::cur()):
 		ios::handler::current?
