@@ -138,6 +138,8 @@ ircd::ctx::ole::push(offload::function &&func)
 	if(unlikely(add_thread))
 	{
 		++working; // pre-increment under lock here
+
+		const posix::enable_pthread enable_pthread;
 		threads.emplace_back(&worker);
 	}
 
