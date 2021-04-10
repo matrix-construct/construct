@@ -183,9 +183,9 @@ ircd::lex::throw_error(const rule &r,
 {
 	throw bad_lex_cast
 	{
-		"%s :%s",
-		e.what(),
-		demangle(typeid(T).name())
+		"Invalid lexical conversion of %s (%s).",
+		r.name(),
+		demangle(typeid(T).name()),
 	};
 }
 
