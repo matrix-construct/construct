@@ -411,12 +411,13 @@ construct::console::cmd__watch()
 
 	this->line = line; do
 	{
+		const ircd::ctx::uninterruptible::nothrow ui;
+
 		std::cout << '\n';
-		const ircd::ctx::uninterruptible ui;
 		handle_line(); try
 		{
-			ircd::ctx::interruptible(true);
 			const log::console_quiet quiet(false);
+			const ircd::ctx::uninterruptible ri(false);
 			ctx::sleep(sleep_time);
 		}
 		catch(const ctx::interrupted &)
