@@ -92,7 +92,7 @@ construct::console::interrupt()
 		construct::console->context.interrupt();
 		return true;
 	}
-	return false;
+	else return false;
 }
 
 bool
@@ -103,7 +103,7 @@ construct::console::terminate()
 		construct::console->context.terminate();
 		return true;
 	}
-	return false;
+	else return false;
 }
 
 bool
@@ -137,10 +137,10 @@ construct::console::console()
 
 void
 construct::console::main()
-try
 {
-	const unwind destruct{[]
+	const unwind dtor{[]
 	{
+		assert(construct::console);
 		construct::console->context.detach();
 		delete construct::console;
 		construct::console = nullptr;
@@ -149,30 +149,22 @@ try
 	if(!wait_running())
 		return;
 
-	ircd::module module{"console"};
-	this->module = &module;
-
-	if(next_command())
+	ircd::module module
 	{
-		while(handle_line())
-			if(!next_command())
-				break;
+		"console"
+	};
 
-		if(unlikely(quit_when_done))
-		{
-			static ircd::ios::descriptor descriptor
-			{
-				"construct.console.quit"
-			};
+	this->module = &module;
+	loop();
+}
 
-			ircd::dispatch
-			{
-				descriptor, ios::defer, ircd::quit
-			};
-		}
-
-		return;
-	}
+void
+construct::console::loop()
+try
+{
+	if(next_command())
+		if(handle_queued())
+			return;
 
 	show_message(); do
 	{
@@ -193,6 +185,39 @@ catch(const std::exception &e)
 	{
 		"The console session has ended: %s", e.what()
 	};
+}
+catch(...)
+{
+	log::debug
+	{
+		"The console session has terminated."
+	};
+}
+
+bool
+construct::console::handle_queued()
+{
+	while(handle_line())
+		if(!next_command())
+			break;
+
+	if(!quit_when_done)
+		return true;
+
+	if(run::level != run::level::RUN)
+		return true;
+
+	static ircd::ios::descriptor descriptor
+	{
+		"construct.console.quit"
+	};
+
+	ircd::dispatch
+	{
+		descriptor, ios::defer, ircd::quit
+	};
+
+	return true;
 }
 
 bool
@@ -513,10 +538,6 @@ construct::console::on_runlevel(const enum ircd::run::level &runlevel)
 	switch(runlevel)
 	{
 		case ircd::run::level::QUIT:
-			if(terminate())
-				context.join();
-			break;
-
 		case ircd::run::level::HALT:
 			terminate();
 			break;

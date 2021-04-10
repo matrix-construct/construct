@@ -190,7 +190,6 @@ void
 construct::handle_quit()
 try
 {
-	console::terminate();
 	ircd::quit();
 }
 catch(const std::exception &e)

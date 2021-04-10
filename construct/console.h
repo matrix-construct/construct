@@ -41,6 +41,8 @@ struct construct::console
 	bool cmd__watch();
 	int handle_line_bymodule();
 	bool handle_line();
+	bool handle_queued();
+	void loop();
 	void main();
 
 	console();
