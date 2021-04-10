@@ -547,22 +547,28 @@ ircd::gpt::vocab::unk_tokenize(u16x16 &token,
 	u64 tokens(0), consumed(0);
 	const auto len(simd::strlen(str));
 	while(consumed < len && num + tokens < 16)
-		for(uint i(0); i < len; ++i)
+	{
+		u16 slen(0), tok;
+		for(uint i(1); i < len; ++i)
 		{
 			u8x16 s(str);
 			for(uint j(0); j < consumed; ++j)
 				s = shr<8>(s);
 
-			for(uint j(len - i); j < 16; ++j)
+			for(uint j(i); j < 16; ++j)
 				s[j] = 0;
 
-			if((token[num + tokens] = find_token(s)) != u16(-1))
-			{
-				consumed += len - i;
-				++tokens;
-				break;
-			}
+			if((tok = find_token(s)) == u16(-1))
+				continue;
+
+			slen = simd::strlen(s);
+			token[num + tokens] = tok;
 		}
+
+		//assert(slen > 0);
+		consumed += slen;
+		tokens += bool(slen);
+	}
 
 	assert(len >= consumed);
 	assert(num + tokens <= 16);
