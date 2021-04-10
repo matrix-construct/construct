@@ -126,7 +126,7 @@ construct::console::console()
 	"console",
 	stack_sz,
 	std::bind(&console::main, this),
-	ircd::context::DISPATCH,
+	ircd::context::DISPATCH | ircd::context::SLICE_EXEMPT,
 }
 ,runlevel_changed
 {
