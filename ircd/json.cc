@@ -414,10 +414,7 @@ ircd::json::printer::string_generate(unused_type,
                                      bool &ret)
 noexcept
 {
-	#if __has_builtin(__builtin_assume)
-		__builtin_assume(ret == true);
-	#endif
-
+	assume(ret == true);
 	assert(generator_state);
 	auto &state
 	{
