@@ -42,7 +42,7 @@
 // 128 bit integer support
 //
 
-#if !defined(HAVE_INT128_T) || !defined(HAVE_UINT128_T)
+#if defined(__cplusplus) && (!defined(HAVE_INT128_T) || !defined(HAVE_UINT128_T))
 namespace ircd
 {
 	#if defined(HAVE___INT128_T) && defined(HAVE__UINT128_T)
@@ -58,17 +58,29 @@ namespace ircd
 #endif
 
 //
+// Other convenience typedefs
+//
+
+#if defined(__cplusplus)
+namespace ircd
+{
+    using longlong = long long;
+    using ulonglong = unsigned long long;
+}
+#endif
+
+//
+// OpenCL compat
+//
+
+#if !defined(uchar)
+	typedef unsigned char uchar;
+#endif
+
+//
 // Trouble; FreeBSD unsigned long ctype
 //
 
 #if defined(__FreeBSD__) && !defined(ulong)
 	typedef u_long ulong;
-#endif
-
-//
-// Other
-//
-
-#if !defined(uchar)
-	typedef unsigned char uchar;
 #endif
