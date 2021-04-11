@@ -28,15 +28,16 @@ ircd_simt_reduce_add_f4lldr(__local float4 *const buf,
 /// the greatest value is placed in index [0], the rest of the buffer is
 /// trashed.
 inline void
-ircd_simt_reduce_max_f4lldr(__local float *const buf,
-                            const uint ln,
-                            const uint li)
+ircd_simt_reduce_max_flldr(__local float *const buf,
+                           const uint ln,
+                           const uint li)
 {
 	for(uint stride = ln >> 1; stride > 0; stride >>= 1)
 	{
 		barrier(CLK_LOCAL_MEM_FENCE);
 
 		if(li < stride)
-			buf[li] = max(buf[li], buf[li + stride]);
+			if(buf[li] < buf[li + stride])
+				buf[li] = buf[li + stride];
 	}
 }

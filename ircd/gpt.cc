@@ -8,17 +8,14 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <ircd/gpt/pipe/pipe.h>
-
 namespace ircd::gpt
 {
+	template<class T>
+	static void fmma(T *out, const T *in, const T *bias, const T *weight, const math::fmma_opts &);
+
 	static void gelu(f32x4 &, const f32x4 &);
 	static void gelu(f32x4 *, const f32x4 *);
 	static void norm(f32x4 *, const f32x4 *, const f32x4 *, const f32x4 *, const f32);
-	static void fmma4(f32x4 *, const f32x4 *, const f32x4 *, const f32x4 *);
-	static void fmma3(f32x4 *, const f32x4 *, const f32x4 *, const f32x4 *);
-	static void fmma2(f32x4 *, const f32x4 *, const f32x4 *, const f32x4 *, const size_t);
-	static void fmma1(f32x4 *, const f32x4 *, const f32x4 *, const f32x4 *);
 	static void vals(float (&)[12][1024][64], const float (&)[12][1024][1024], const float (&)[3][1024][12][64], const size_t);
 	static void pare(float (&)[12][1024][1024], const float (&)[3][1024][12][64], const size_t);
 	static void mask(float (&)[12][1024][1024], const float (&)[12][1024][1024], const bool (&)[1024][1024], const size_t);
@@ -84,6 +81,7 @@ ircd::gpt::generate(const vector_view<u16> &out,
 	auto &errc(ctrl.error_seq);
 	auto &accc(ctrl.accept_seq);
 	ctrl.tokens = in.size();
+	ctrl.head = 0;
 
 	const size_t tmax
 	{
@@ -112,25 +110,34 @@ ircd::gpt::generate(const vector_view<u16> &out,
 		else
 			embed(data(dst), in[j], j, opts);
 
+		#if RB_DEBUG
 		static char dbuf[512] {0};
 		char report[1536] {0};
 		char tmbuf[1][64] {{0}};
 		const size_t report_size = snprintf
 		(
 			report, sizeof(report),
-			"%-2u -- %-3u [%5u] --- --- %s        0        0  |  %8s",
+			"%-4u %4u %4u:%-4u %1u%1u  [ %6.2fL %6.2f%% ] %6.2fL %5.1f%%  %s",
+			ctrl.epoch,
+			ctrl.cycle,
 			j,
 			ctrl.tokens,
-			ctrl.token[j],
-			vocab::debug(dbuf, ctrl.token[j]).c_str(),
-			pretty(tmbuf[0], milliseconds(ctrl.elapsed), 1).c_str()
+			0,
+			0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			vocab::debug(dbuf, in[j]).c_str()
 		);
 
-		log::info
+		log::logf
 		{
-			log, "%s",
+			log, log::level::DEBUG,
+			"%s",
 			string_view{report, report_size}
 		};
+		#endif
 	}
 
 	uint64_t cycles(0);
@@ -192,24 +199,30 @@ ircd::gpt::generate(const vector_view<u16> &out,
 		const size_t report_size = snprintf
 		(
 			report, sizeof(report),
-			"%-2u %-2u %-3u %-3u %-3u [%5u] a:%u e:%u %s %8s %8s  |  %8s",
-			j,
+			"%4u:%-4u %4u:%-4u %1u%1u [ %4.1f%% %6.2f%% %5.2fL ] %5.1f%% %5.1f%% %4.1fL  %s %04x  %8s %8s | %8s",
 			j + in.size(),
 			ctrl.tokens,
-			ctrl.cycle,
 			ctrl.epoch,
-			out[j],
+			ctrl.cycle,
 			accc[0] + accc[1] + accc[2],
 			errc[0] + errc[1] + errc[2],
+			ctrl.cert_mean < 100.0? ctrl.cert_mean: NAN,
+			ctrl.perp_mean < 100.0? ctrl.perp_mean: NAN,
+			ctrl.loss_mean < 100.0? ctrl.loss_mean: NAN,
+			ctrl.cert < 100.0? ctrl.cert: NAN,
+			ctrl.perp < 100.0? ctrl.perp: NAN,
+			ctrl.loss < 100.0? ctrl.loss: NAN,
 			vocab::debug(dbuf, out[j]).c_str(),
+			out[j],
 			pretty(tmbuf[0], milliseconds(last_time / bsz), 1).c_str(),
 			pretty(tmbuf[1], si(cycles / bsz), 1).c_str(),
 			pretty(tmbuf[2], milliseconds(ctrl.elapsed), 1).c_str()
 		);
 
-		log::info
+		log::logf
 		{
-			log, "%s",
+			log, log::level::DEBUG,
+			"%s",
 			string_view{report, report_size}
 		};
 	}
@@ -375,39 +388,17 @@ ircd::gpt::coil(float *__restrict__ accum,
 					a[j][k * 64 + l] = attns[k][j][l];
 		}
 
+		static const math::fmma_opts fmma_opts
+		{
+			768, 768, 2U
+		};
+
 		for(uint j(0); j < tokens; ++j)
-			fmma2((f32x4 *)(accum + j * 768), (const f32x4 *)(a[j]), (const f32x4 *)layer.attn.proj_bias, (const f32x4 *)layer.attn.proj_weight, tokens);
+			fmma((f32x4 *)(accum + j * 768), (const f32x4 *)(a[j]), (const f32x4 *)layer.attn.proj_bias, (const f32x4 *)layer.attn.proj_weight, fmma_opts);
 
 		for(uint j(0); j < tokens; ++j)
 			ffnn(accum + j * 768, accum + j * 768, decoder, i);
 	}
-}
-
-void
-ircd::gpt::ffnn(float *const out,
-                const float *const in,
-                const model::decoder &decoder,
-                const uint laynum)
-{
-	constexpr float ln2_epsilon
-	{
-		0.00001
-	};
-
-	const auto &layer
-	{
-		decoder.layer[laynum]
-	};
-
-	static float
-	buf alignas(64) [768],
-	buf2 alignas(64) [3072];
-
-	memset(buf2, 0x0, sizeof(buf2));
-	norm((f32x4 *)buf, (const f32x4 *)in, (const f32x4 *)layer.ln2.bias, (const f32x4 *)layer.ln2.weight, ln2_epsilon);
-	fmma3((f32x4 *)buf2, (const f32x4 *)buf, (const f32x4 *)layer.ffnn.fc_bias, (const f32x4 *)layer.ffnn.fc_weight);
-	gelu((f32x4 *)buf2, (const f32x4 *)buf2);
-	fmma4((f32x4 *)out, (const f32x4 *)buf2, (const f32x4 *)layer.ffnn.proj_bias, (const f32x4 *)layer.ffnn.proj_weight);
 }
 
 void
@@ -440,8 +431,13 @@ ircd::gpt::ctrl(float (&__restrict__ out)[3][1024][12][64],
 
 		norm((f32x4 *)buf, (const f32x4 *)(in + i * 768), (const f32x4 *)layer.ln1.bias, (const f32x4 *)layer.ln1.weight, ln1_epsilon);
 
+		static const math::fmma_opts fmma_opts
+		{
+			768, 2304, 2U,
+		};
+
 		memset(proj, 0x0, sizeof(proj));
-		fmma1((f32x4 *)proj, (const f32x4 *)buf, (const f32x4 *)layer.attn.attn_bias, (const f32x4 *)layer.attn.attn_weight);
+		fmma((f32x4 *)proj, (const f32x4 *)buf, (const f32x4 *)layer.attn.attn_bias, (const f32x4 *)layer.attn.attn_weight, fmma_opts);
 
 		#pragma clang loop unroll (disable)
 		for(uint j(0); j < 12; ++j)
@@ -549,6 +545,43 @@ ircd::gpt::vals(float (&__restrict__ out)[12][1024][64],
 }
 
 void
+ircd::gpt::ffnn(float *const out,
+                const float *const in,
+                const model::decoder &decoder,
+                const uint laynum)
+{
+	static const math::fmma_opts fmma3_opts
+	{
+		768, 3072, 2U,
+	};
+
+	static const math::fmma_opts fmma4_opts
+	{
+		3072, 768, 2U,
+	};
+
+	constexpr float ln2_epsilon
+	{
+		0.00001
+	};
+
+	const auto &layer
+	{
+		decoder.layer[laynum]
+	};
+
+	static float
+	buf alignas(64) [768],
+	buf2 alignas(64) [3072];
+
+	memset(buf2, 0x0, sizeof(buf2));
+	norm((f32x4 *)buf, (const f32x4 *)in, (const f32x4 *)layer.ln2.bias, (const f32x4 *)layer.ln2.weight, ln2_epsilon);
+	fmma((f32x4 *)buf2, (const f32x4 *)buf, (const f32x4 *)layer.ffnn.fc_bias, (const f32x4 *)layer.ffnn.fc_weight, fmma3_opts);
+	gelu((f32x4 *)buf2, (const f32x4 *)buf2);
+	fmma((f32x4 *)out, (const f32x4 *)buf2, (const f32x4 *)layer.ffnn.proj_bias, (const f32x4 *)layer.ffnn.proj_weight, fmma4_opts);
+}
+
+void
 ircd::gpt::norm(f32x4 *const __restrict__ out,
                 const f32x4 *const __restrict__ in,
                 const f32x4 *const __restrict__ bias,
@@ -567,143 +600,18 @@ ircd::gpt::norm(f32x4 *const __restrict__ out,
 		out[j] = out[j] * weight[j] + bias[j];
 }
 
+template<class T>
 void
-ircd::gpt::fmma1(f32x4 *const __restrict__ out,
-                 const f32x4 *const __restrict__ in,
-                 const f32x4 *const __restrict__ bias,
-                 const f32x4 *const __restrict__ weight)
+ircd::gpt::fmma(T *const __restrict__ out,
+                const T *const __restrict__ in,
+                const T *const __restrict__ bias,
+                const T *const __restrict__ weight,
+                const math::fmma_opts &opts)
 {
-	constexpr uint width
-	{
-		2304
-	};
+	for(uint i(0); i < opts.rows / simd::lanes<T>(); ++i)
+		out[i] += bias[i];
 
-	constexpr uint height
-	{
-		768
-	};
-
-	constexpr uint lanes
-	{
-		simd::lanes<f32x4>()
-	};
-
-	for(uint j(0); j < width / lanes; ++j)
-		out[j] += bias[j];
-
-	static const math::fmma_opts opts
-	{
-		width,
-		height,
-		2U,
-		'y',
-	};
-
-	math::fmma<opts>(out, in, weight);
-}
-
-void
-ircd::gpt::fmma2(f32x4 *const __restrict__ out,
-                 const f32x4 *const __restrict__ in,
-                 const f32x4 *const __restrict__ bias,
-                 const f32x4 *const __restrict__ weight,
-                 const size_t num)
-{
-	constexpr uint width
-	{
-		768
-	};
-
-	constexpr uint height
-	{
-		768
-	};
-
-	constexpr uint lanes
-	{
-		simd::lanes<f32x4>()
-	};
-
-	for(uint j(0); j < width / lanes; ++j)
-		out[j] += bias[j];
-
-	static const math::fmma_opts opts
-	{
-		width,
-		height,
-		2U,
-	};
-
-	math::fmma<opts>(out, in, weight);
-}
-
-void
-ircd::gpt::fmma3(f32x4 *const __restrict__ out,
-                 const f32x4 *const __restrict__ in,
-                 const f32x4 *const __restrict__ bias,
-                 const f32x4 *const __restrict__ weight)
-{
-	constexpr uint width
-	{
-		3072
-	};
-
-	constexpr uint height
-	{
-		768
-	};
-
-	constexpr uint lanes
-	{
-		simd::lanes<f32x4>()
-	};
-
-	for(uint j(0); j < width / lanes; ++j)
-		out[j] += bias[j];
-
-	static const math::fmma_opts opts
-	{
-		width,
-		height,
-		2U,
-		'y',
-	};
-
-	math::fmma<opts>(out, in, weight);
-}
-
-void
-ircd::gpt::fmma4(f32x4 *const __restrict__ out,
-                 const f32x4 *const __restrict__ in,
-                 const f32x4 *const __restrict__ bias,
-                 const f32x4 *const __restrict__ weight)
-{
-	constexpr uint width
-	{
-		3072
-	};
-
-	constexpr uint height
-	{
-		768
-	};
-
-	constexpr uint lanes
-	{
-		simd::lanes<f32x4>()
-	};
-
-	for(uint j(0); j < height / lanes; ++j)
-		out[j] += bias[j];
-
-	static const math::fmma_opts opts
-	{
-		width,
-		height,
-		2U,
-	};
-
-	math::fmma<opts>(out, in, weight);
+	math::fmma(out, in, weight, opts);
 }
 
 void

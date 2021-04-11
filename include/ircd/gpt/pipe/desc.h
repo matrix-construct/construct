@@ -22,7 +22,9 @@ struct ircd::gpt::pipe::desc
 	cl::data
 	state,         // qry/key/val projection (tokens * embed * 3 * float)
 	accum,         // accumulator (tokens * embed * float)
-	logit,         // result output vector (50257 * float)
+	logit,         // result logit vector (50257 * float)
+	logexp,        // outputs distribution (50257 * float)
+	logsm,         // outputs distribution (50257 * float)
 	ctrl,          // control page
 	opts;          // options page
 
@@ -30,6 +32,7 @@ struct ircd::gpt::pipe::desc
 	lm_embed,
 	lm_norm,
 	lm_logit,
+	lm_logsm,
 	lm_select;
 
 	std::unique_ptr<struct desc::layer>

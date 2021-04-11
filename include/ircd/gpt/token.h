@@ -9,8 +9,13 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#ifdef __OPENCL_C_VERSION__
 #define HAVE_IRCD_GPT_TOKEN_H
+
+struct ircd_gpt_attn_mask
+{
+	bool
+	token[1024];
+};
 
 union ircd_gpt_token
 {
@@ -19,36 +24,37 @@ union ircd_gpt_token
 	attn[12][64];
 };
 
+#ifdef __OPENCL_C_VERSION__
 union ircd_gpt_tokenv
 {
 	float4
 	word[768/4],
 	attn[12][64/4];
+
+	union ircd_gpt_token
+	token;
+};
+#endif
+
+struct ircd_gpt_attn_qkv
+{
+	union ircd_gpt_token
+	qry,
+	key,
+	val;
 };
 
-struct ircd_gpt_qkv
+#ifdef __OPENCL_C_VERSION__
+struct ircd_gpt_attn_qkvv
 {
 	union ircd_gpt_tokenv
 	qry,
 	key,
 	val;
 };
+#endif
 
-struct ircd_gpt_qkvv
-{
-	union ircd_gpt_tokenv
-	qry,
-	key,
-	val;
-};
-
-struct ircd_gpt_attn_mask
-{
-	bool
-	token[1024];
-};
-
-union ircd_gpt_aperature
+union ircd_gpt_attn_aperature
 {
 	float
 	word[768],
@@ -56,9 +62,13 @@ union ircd_gpt_aperature
 	proj[3][768],
 	qkv[3][12][64],
 	attn[12][64];
+
+	union ircd_gpt_token
+	token[3];
 };
 
-union ircd_gpt_aperaturev
+#ifdef __OPENCL_C_VERSION__
+union ircd_gpt_attn_aperaturev
 {
 	float4
 	word[768/4],
@@ -66,6 +76,32 @@ union ircd_gpt_aperaturev
 	proj[3][768/4],
 	qkv[3][12][64/4],
 	attn[12][64/4];
+
+	union ircd_gpt_tokenv
+	token[3];
+};
+#endif
+
+union ircd_gpt_ffnn_aperature
+{
+	float
+	word[768],
+	fcon[3072],
+	proj[4][768];
+
+	union ircd_gpt_token
+	token[4];
 };
 
+#ifdef __OPENCL_C_VERSION__
+union ircd_gpt_ffnn_aperaturev
+{
+	float4
+	word[768/4],
+	fcon[3072/4],
+	proj[4][768/4];
+
+	union ircd_gpt_tokenv
+	token[4];
+};
 #endif

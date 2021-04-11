@@ -71,6 +71,42 @@ struct ircd_gpt_task
 	/// State counters for the accept/error sequence codes.
 	uint accept_seq[4], error_seq[4];
 
+	/// Loss for last token of last cycle
+	float loss;
+
+	/// Sum loss over all cycles
+	float loss_sum;
+
+	/// Average loss over all cycles
+	float loss_mean;
+
+	/// Perplexity score for last token of last cycle
+	float perp;
+
+	/// Perplexity sum over all cycles
+	float perp_sum;
+
+	/// Perplexity mean over context
+	float perp_mean;
+
+	/// Logit softmax mu
+	float samax_mu;
+
+	/// Logit softmax sum
+	float samax_sum;
+
+	/// Logit softmax lambda
+	float samax_lambda;
+
+	/// Certainty difference score for last token of last cycle
+	float cert;
+
+	/// Certainty sum over all cycles
+	float cert_sum;
+
+	/// Certainty mean over context
+	float cert_mean;
+
 	/// The token buffer starts at offset 2048 and continues to the end of
 	/// the page; options specify the size of the tokens buffer in tokens.
 	/// Additional pages must be attached for larger buffer sizes.
@@ -112,5 +148,6 @@ enum ircd::gpt::task::status
 };
 
 static_assert(sizeof(struct ircd_gpt_task) == 4096);
+static_assert(offsetof(struct ircd_gpt_task, token) == 2048);
 static_assert(std::is_standard_layout<struct ircd_gpt_task>::value);
 #endif

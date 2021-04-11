@@ -32,20 +32,25 @@ namespace ircd::gpt::model
 	init_h_attn_proj_bias(decoder &, const string_view &, const size_t &, const json::array &),
 	init_h_attn_bias(decoder &, const string_view &, const size_t &, const json::array &);
 
+	static bool init_dataset(const string_view &);
 	static bool init_from_cache(const string_view &);
 	static void init_from_json_handle(decoder &, const init_handler &, const size_t &);
 	static void init_from_json(const string_view &, const string_view &);
-	static void init() noexcept;
+	static void init(), fini() noexcept;
 
 	extern const init_handler
 	manifest[],
-	manifest_h[],
-	manifest_td[];
+	manifest_h[];
 
-	extern conf::item<std::string> path;
-	extern conf::item<std::string> cache_path;
+	extern conf::item<std::string>
+	path,
+	cache_path,
+	dataset_path;
 
-	static fs::map default_model_shm;
+	static fs::map
+	default_model_shm,
+	default_dataset_shm;
+
 	static std::unique_ptr<decoder> default_model_res;
 }
 
@@ -76,19 +81,18 @@ ircd::gpt::model::manifest
 	{ "wte.weight.json",    init_wte_weight },
 };
 
-decltype(ircd::gpt::model::manifest_td)
-ircd::gpt::model::manifest_td
-{
-	{ "test.jsonl",    nullptr,  },
-	{ "valid.jsonl",   nullptr,  },
-	{ "train.jsonl",   nullptr,  },
-};
-
 decltype(ircd::gpt::model::cache_path)
 ircd::gpt::model::cache_path
 {
 	{ "name",     "ircd.gpt.model.cache.path" },
 	{ "default",  "model.cache.localhost"     },
+};
+
+decltype(ircd::gpt::model::dataset_path)
+ircd::gpt::model::dataset_path
+{
+	{ "name",     "ircd.gpt.model.dataset.path" },
+	{ "default",  string_view{}                 },
 };
 
 decltype(ircd::gpt::model::path)
@@ -104,15 +108,35 @@ ircd::gpt::model::path
 decltype(ircd::gpt::model::default_model)
 ircd::gpt::model::default_model;
 
+decltype(ircd::gpt::model::default_dataset)
+ircd::gpt::model::default_dataset;
+
+decltype(ircd::gpt::model::default_data)
+ircd::gpt::model::default_data;
+
 void
 ircd::gpt::model::init()
-noexcept
 {
 	if(!model::path)
 		return;
 
 	if(!init_from_cache(model::cache_path))
 		init_from_json(model::cache_path, model::path);
+
+	if(model::dataset_path)
+		init_dataset(model::dataset_path);
+}
+
+void
+ircd::gpt::model::fini()
+noexcept
+{
+	default_model = nullptr;
+	default_model_shm = {};
+
+	default_dataset = nullptr;
+	default_data.clear();
+	default_dataset_shm = {};
 }
 
 bool
@@ -170,10 +194,9 @@ ircd::gpt::model::init_from_json(const string_view &cache_path,
                                  const string_view &model_path)
 {
 	util::timer stopwatch;
-	auto decoder
-	{
-		std::make_unique<model::decoder>()
-	};
+
+	auto decoder(std::make_unique<model::decoder>());
+	memset(decoder.get(), 0x0, sizeof(model::decoder));
 
 	// Load the top level files, vocab etc
 	for(size_t i(0); i < 4; ++i)
@@ -272,6 +295,55 @@ ircd::gpt::model::init_from_json_handle(decoder &d,
 		layer,
 		name,
 	};
+}
+
+bool
+ircd::gpt::model::init_dataset(const string_view &path)
+{
+	if(!fs::is_reg(path))
+		return false;
+
+	const auto size
+	{
+		fs::size(path)
+	};
+
+	const fs::fd fd
+	{
+		path
+	};
+
+	fs::map::opts map_opts;
+	map_opts.huge2mb = true;
+	default_dataset_shm = fs::map
+	{
+		fd, map_opts, size
+	};
+
+	default_dataset = string_view
+	(
+		default_dataset_shm
+	);
+
+	size_t checkpoint(0);
+	default_data.resize(260000); //TODO: XXX
+	ircd::tokens(default_dataset, '\n', [&checkpoint]
+	(const string_view &line)
+	{
+		default_data.at(checkpoint++) = line;
+	});
+
+	char pbuf[48];
+	log::info
+	{
+		log, "dataset(%p) mapped `%s' %s @%lu",
+		data(default_dataset_shm),
+		path,
+		pretty(pbuf, iec(size)),
+		checkpoint,
+	};
+
+	return true;
 }
 
 void

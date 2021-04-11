@@ -17,7 +17,7 @@
 /// This stucture and its mutable companion in `task.h` determine the outcome
 /// of the next execution cycle; options are immutable to device software but
 /// may be changed by the host between executions cycles if desired.
-/// 
+///
 struct ircd_gpt_opts
 {
 	/// Specifies the nominal halting condition based on a sequence of tokens.
@@ -89,11 +89,113 @@ struct ircd_gpt_opts
 	#endif
 	;
 
+	/// Embedding vector elements
+	uint embed_elems
+	#ifdef __cplusplus
+	{
+		768
+	}
+	#endif
+	;
+
+	/// Attention unit width multiple
+	uint attn_elems
+	#ifdef __cplusplus
+	{
+		embed_elems * 3
+	}
+	#endif
+	;
+
+	/// FFNN unit width multiple
+	uint ffnn_elems
+	#ifdef __cplusplus
+	{
+		embed_elems * 4
+	}
+	#endif
+	;
+
+	uint embed_width
+	#ifdef __cplusplus
+	{
+		embed_elems / 4
+	}
+	#endif
+	;
+
+	uint attn_width
+	#ifdef __cplusplus
+	{
+		attn_elems / 4
+	}
+	#endif
+	;
+
+	uint attn_height
+	#ifdef __cplusplus
+	{
+		embed_elems / 4
+	}
+	#endif
+	;
+
+	uint ffnn_width
+	#ifdef __cplusplus
+	{
+		ffnn_elems / 4
+	}
+	#endif
+	;
+
+	uint ffnn_height
+	#ifdef __cplusplus
+	{
+		embed_elems / 4
+	}
+	#endif
+	;
+
+	/// Specifies the token context size in tokens.
+	uint logits
+	#ifdef __cplusplus
+	{
+		50257
+	}
+	#endif
+	;
+
 	/// Seed for the task's PRNG.
 	ulong seed
 	#ifdef __cplusplus
 	{
 		1234567890UL
+	}
+	#endif
+	;
+
+	/// Training steps
+	ulong training_steps
+	#ifdef __cplusplus
+	{
+		250000
+	}
+	#endif
+	;
+
+	/// Validation steps
+	ulong validation_steps
+	#ifdef __cplusplus
+	{
+		5000
+	}
+	#endif
+	;
+
+	ushort label
+	#ifdef __cplusplus
+	{
+		198
 	}
 	#endif
 	;

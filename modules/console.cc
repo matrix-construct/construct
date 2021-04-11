@@ -17336,6 +17336,7 @@ console_cmd__gpt__raw(opt &out, const string_view &line)
 	};
 
 	out
+	<< text
 	<< output
 	<< std::endl;
 	return true;
@@ -17345,6 +17346,14 @@ bool
 console_cmd__gpt(opt &out, const string_view &line)
 {
 	return console_cmd__gpt__raw(out, line);
+}
+
+bool
+console_cmd__gpt__pipe__reset(opt &out, const string_view &line)
+{
+	gpt::pipe::fini();
+	gpt::pipe::init();
+	return true;
 }
 
 bool
@@ -17364,6 +17373,36 @@ console_cmd__gpt__token(opt &out, const string_view &line)
 
 	out
 	<< gpt::vocab::debug(buf, idx)
+	<< std::endl;
+
+	return true;
+}
+
+bool
+console_cmd__gpt__data(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"id"
+	}};
+
+	const auto idx
+	{
+		param.at<uint>("id")
+	};
+
+	const json::object step
+	{
+		gpt::model::default_data.at(idx)
+	};
+
+	out
+	<< "#" << step["id"]
+	<< " | " << step["length"]
+	<< " " << (step["ended"]? "ended"_sv: string_view{})
+	<< std::endl
+	<< std::endl
+	<< step["text"]
 	<< std::endl;
 
 	return true;

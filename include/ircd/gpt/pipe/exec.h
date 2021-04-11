@@ -40,6 +40,7 @@ struct ircd::gpt::pipe::exec
 	range_positive,    // Dimension range of a layer kernel.
 	range_lm_norm,     // Dimension range of the final norm kernel.
 	range_lm_logit,    // Dimension range of the language logit kernel.
+	range_lm_logsm,    // Dimension range of the language statistic kernel.
 	range_lm_select;   // Dimension range of the language token kernel.
 
 	cl::exec
@@ -48,7 +49,8 @@ struct ircd::gpt::pipe::exec
 	lm_embed,          // Compute token and positional embeddings.
 	coil[12 * 2],      // Pass over all layers.
 	lm_norm,           // Final normalization.
-	lm_logit,          // Compute logit result vector.
+	lm_logit,          // Compute language logits.
+	lm_logsm,          // Statistics on the logits.
 	lm_select,         // Select next token.
 	acquire_ctrl;      // Acquire the control page.
 

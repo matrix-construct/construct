@@ -32,7 +32,7 @@ decltype(ircd::gpt::pipe::flush_cycles)
 ircd::gpt::pipe::flush_cycles
 {
 	{ "name",     "ircd.gpt.pipe.flush" },
-	{ "default",  0L,                   },
+	{ "default",  1L,                   },
 };
 
 decltype(ircd::gpt::pipe::default_model)
@@ -73,20 +73,40 @@ ircd::gpt::pipe::init()
 	{
 		*pipe::default_code, *pipe::default_model
 	};
+
+	log::debug
+	{
+		log, "Pipe initialized from model:%p data:%p code:%p desc:%p",
+		&default_model,
+		pipe::default_model,
+		pipe::default_code,
+		pipe::default_desc,
+	};
 }
 
 void
 ircd::gpt::pipe::fini()
 noexcept
 {
-	delete default_desc;
-	default_desc = nullptr;
+	const auto pending
+	{
+		cl::work::list.size()
+	};
 
-	delete default_code;
-	default_code = nullptr;
+	if(pending)
+	{
+		log::warning
+		{
+			log, "Waiting for %zu pending tasks to leave the pipe...",
+			pending,
+		};
 
-	delete default_model;
-	default_model = nullptr;
+		cl::sync();
+	}
+
+	delete default_desc;   default_desc = nullptr;
+	delete default_code;   default_code = nullptr;
+	delete default_model;  default_model = nullptr;
 }
 
 //
@@ -96,26 +116,29 @@ noexcept
 void
 ircd::gpt::generate(task &task)
 {
-	if(unlikely(!pipe::default_model))
-		pipe::init();
+	assert(pipe::default_model);
 
+	assert(task.opts);
 	const auto &opts
 	{
 		*task.opts
 	};
 
+	assert(task.ctrl);
 	auto &ctrl
 	{
 		*task.ctrl
 	};
 
+	ctrl.cycle = 0;
 	ctrl.call = IRCD_GPT_ECOMPLETE;
 	ctrl.host_tsc = prof::cycles();
-	size_t cycle(ctrl.cycle);
-	const size_t tokens(ctrl.tokens);
+	volatile const size_t tokens(ctrl.tokens);
+	volatile const auto epoch(ctrl.epoch);
+	volatile size_t cycle(ctrl.cycle);
 
 	std::deque<pipe::exec> list;
-	for(; cycle < opts.limit; ++cycle)
+	for(; cycle < opts.limit && run::level == run::level::RUN; ++cycle)
 	{
 		// When the release/acquire bits are set the control pages are sent
 		// and received; only set on first and last iterations of this loop.
@@ -137,7 +160,7 @@ ircd::gpt::generate(task &task)
 			pipe::flush_cycles
 
 			// Skip flushing on cycles already performing IO or waiting.
-			&& !rel && !acq && list.size() <= pipe::queue_cycles
+			&& !acq && list.size() <= pipe::queue_cycles
 
 			// The configuration item can specify an interval greater than
 			// one between flushes.
@@ -167,6 +190,8 @@ ircd::gpt::generate(task &task)
 	// Wait for all unfinished
 	list.clear();
 
+	assert(ctrl.magic == 0xC7012C70);
+
 	// Interp error codes
 	if(unlikely(ctrl.call <= 0))
 		throw error
@@ -176,7 +201,7 @@ ircd::gpt::generate(task &task)
 			reflect(ctrl.call),
 		};
 
-	always_assert(ctrl.cycle == cycle);
+	assert(ctrl.cycle == cycle);
 }
 
 void
@@ -199,7 +224,7 @@ ircd::gpt::pipe::profile_dumplog(pipe::exec &exec)
 		log::logf
 		{
 			log, log::level::DEBUG,
-			"coil:%-2lu %8s %8s %8s %8s\n",
+			"coil:%-2lu %8s %8s %8s %8s",
 			i,
 			util::pretty(tmbuf[0], si(pro[0]), 1),
 			util::pretty(tmbuf[1], si(pro[1]), 1),
@@ -259,13 +284,18 @@ ircd::gpt::pipe::exec::exec(task &task,
 }
 ,range_lm_logit
 {
-	{ 262 * 192UL, 0 },  // align_up(50257) / 192
-	{       192UL, 0 },
+	{  786 * 64UL, 0 },  // align_up(50257) / 64
+	{        64UL, 0 },
+}
+,range_lm_logsm
+{
+	{   1 * 256UL, 0 },
+	{       256UL, 0 },
 }
 ,range_lm_select
 {
-	{   1 * 192UL, 0 },
-	{       192UL, 0 },
+	{   1 * 256UL, 0 },
+	{       256UL, 0 },
 }
 ,release_opts
 {
@@ -314,6 +344,10 @@ ircd::gpt::pipe::exec::exec(task &task,
 {
 	desc->lm_logit, range_lm_logit, lmhead_opts
 }
+,lm_logsm
+{
+	desc->lm_logsm, range_lm_logsm, lmhead_opts
+}
 ,lm_select
 {
 	desc->lm_select, range_lm_select, lmamax_opts
@@ -342,8 +376,8 @@ ircd::gpt::pipe::code::compile_opts
 	" -cl-finite-math-only"
 	" -cl-unsafe-math-optimizations"
 	" -cl-fast-relaxed-math"
-	//" -cl-mad-enable"
-	//" -cl-single-precision-constant"
+	" -cl-mad-enable"
+	" -cl-single-precision-constant"
 	//" -cl-fp32-correctly-rounded-divide-sqrt"
 };
 
@@ -412,6 +446,16 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 	65536 * sizeof(float),
 	mutable_buffer{}
 }
+,logexp
+{
+	65536 * sizeof(float),
+	mutable_buffer{}
+}
+,logsm
+{
+	65536 * sizeof(float),
+	mutable_buffer{}
+}
 ,ctrl
 {
 	sizeof(struct ircd_gpt_task),
@@ -452,12 +496,24 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 	accum,
 	model.embed->token,
 }
+,lm_logsm
+{
+	code,
+	"ircd_gpt_lm_logsm",
+	ctrl,
+	opts,
+	logsm,
+	logexp,
+	logit,
+}
 ,lm_select
 {
 	code,
 	"ircd_gpt_lm_select",
 	ctrl,
 	opts,
+	logsm,
+	logexp,
 	logit,
 }
 ,layer
