@@ -120,7 +120,19 @@ ircd::gpt::vocab::init_tokens()
 	for(const auto &[key, val] : json::object(vocab_json))
 	{
 		assert(tokens == lex_cast<uint16_t>(val));
-		json::unescape(token[tokens++], key);
+
+		auto &buf
+		{
+			token[tokens++]
+		};
+
+		const auto unescaped
+		{
+			json::unescape(buf, key)
+		};
+
+		for(size_t i(size(unescaped)); i < 16; ++i)
+			buf[i] = 0;
 	}
 }
 
