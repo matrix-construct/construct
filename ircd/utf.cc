@@ -463,14 +463,14 @@ noexcept
 	const u32xN enc_2
 	{
 		(((codepoint >> 6) | 0xc0) & 0xff) // byte[0]
-		| ((((codepoint & 0x3f) | 0x80) &0xff) << 8) // byte[1]
+		| ((((codepoint & 0x3f) | 0x80) & 0xff) << 8) // byte[1]
 	};
 
 	const u32xN enc_3
 	{
 		(((codepoint >> 12) | 0xe0) & 0xff) | // byte[0]
 		(((((codepoint >> 6) & 0x3f) | 0x80) & 0xff) << 8) | // byte[1]
-		((((codepoint & 0x3f) | 0x80) & 0xff) << 16) // byte[3]
+		((((codepoint & 0x3f) | 0x80) & 0xff) << 16) // byte[2]
 	};
 
 	const u32xN enc_4
