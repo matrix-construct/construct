@@ -18,15 +18,14 @@ ircd_simt_sort_idx16_flldr(__local ushort *const idx,
 	for(uint stride = ln >> 1; stride > 0; stride >>= 1)
 	{
 		barrier(CLK_LOCAL_MEM_FENCE);
+		if(li >= stride || val[idx[li]] >= val[idx[li + stride]])
+			continue;
 
-		if(li < stride && val[idx[li]] < val[idx[li + stride]])
-		{
-			const ushort
-			ours = idx[li],
-			theirs = idx[li + stride];
+		const ushort
+		ours = idx[li],
+		theirs = idx[li + stride];
 
-			idx[li] = theirs;
-			idx[li + stride] = ours;
-		}
+		idx[li] = theirs;
+		idx[li + stride] = ours;
 	}
 }

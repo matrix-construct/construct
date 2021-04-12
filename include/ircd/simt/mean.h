@@ -20,16 +20,11 @@ ircd_simt_math_mean_f4lldr(__local float4 *const restrict out,
 	ircd_simt_reduce_add_f4lldr(out, num, i);
 
 	if(i == 0)
-	{
-		float numerator = 0.0f;
-		float4 numeratorv = out[i];
-		for(uint k = 0; k < 4; ++k)
-			numerator += numeratorv[k];
+		for(uint k = 1; k < 4; ++k)
+			out[i][0] += out[i][k];
 
-		out[i] = numerator;
-	}
+	if(i == 0)
+		out[i] = out[i][0] / (num * 4);
 
 	ircd_simt_broadcast_f4lldr(out, num, i);
-	const float4 numeratorv = out[i];
-	out[i] = numeratorv / (num * 4);
 }
