@@ -339,22 +339,40 @@ ircd::gpt::vocab::pre_tokenize(u8x16 (&token)[16],
 
 	const u8x16 is_ascii_letter
 	(
-		(in >= 'a' && in <= 'z') || (in >= 'A' && in <= 'Z')
+		(in >= 'a' && in <= 'z') ||
+		(in >= 'A' && in <= 'Z')
 	);
 
-	const u8x16 ascii_identified
+	const u8x16 is_ascii_punct
 	(
-		is_ascii_ctrl | is_ascii_space | is_ascii_number | is_ascii_letter
+		(in >= '!' && in <= '/') ||
+		(in >= ':' && in <= '@') ||
+		(in >= '[' && in <= '`') ||
+		(in >= '{' && in <= '~')
+	);
+
+	const u8x16 ascii_categorized
+	(0
+		| is_ascii_ctrl
+		| is_ascii_space
+		| is_ascii_punct
+		| is_ascii_letter
+		| is_ascii_number
 	);
 
 	const u8x16 maybe_notascii
 	(
-		~ascii_identified & in_mask
+		~ascii_categorized & in_mask
 	);
 
 	const u32x16 ch
 	(
 		utf8::decode(in)
+	);
+
+	const u32x16 ch_mask
+	(
+		lane_cast<u32x16>(in_mask) != 0
 	);
 
 	const u32x16 uc_cat
@@ -385,37 +403,40 @@ ircd::gpt::vocab::pre_tokenize(u8x16 (&token)[16],
 		| (lane_cast<u32x16>(is_ascii_ctrl) != 0)
 	);
 
+	const u32x16 is_punct
+	(0
+		| (lane_cast<u32x16>(is_ascii_punct) != 0)
+	);
+
+	// Decide characters which do not start a new token based on the
+	// preceding character.
 	const u32x16 is_trail
 	(0
 		| (is_L & shl<32>(is_L))
 		| (is_N & shl<32>(is_N))
 		| (is_Z & shl<32>(is_Z))
+		| (is_L & shl<32>(is_punct))
 	);
 
-	const u32x16 fat_mask
-	(
-		lane_cast<u32x16>(in_mask) != 0
-	);
-
-	// mask candidate start of token
+	// Decide characters which may start a token.
 	const u32x16 is_head
 	(
-		(~is_trail | is_C0) & fat_mask
+		(~is_trail | is_C0) & ch_mask
 	);
 
-	// mask if token is preceded by a space
+	// Decide if candidate token is preceded by a space.
 	const u32x16 leading_space
 	(
 		is_head & shl<32>(is_Z)
 	);
 
-	// mask if next char is also the same char
+	// Mask if next char is also the same char.
 	const u32x16 is_rep
 	(
 		is_head & (shl<32>(ch) == ch)
 	);
 
-	// zero or one preceding space becomes prefixed to the next token
+	// Decide the starting character of each token.
 	const u32x16 tok_head
 	(0
 		| (is_head & ~leading_space & ~is_rep)
@@ -434,7 +455,7 @@ ircd::gpt::vocab::pre_tokenize(u8x16 (&token)[16],
 
 	const auto ret
 	{
-		pre_tokenize_split(token, ch, fat_mask, tok_mask)
+		pre_tokenize_split(token, ch, ch_mask, tok_mask)
 	};
 
 	return ret;
