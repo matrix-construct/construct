@@ -11,12 +11,12 @@ CXXFLAGS += \
 
 AM_CXXFLAGS = \
 	-ftls-model=global-dynamic \
+	-include $(top_srcdir)/include/ircd/matrix.pic.h \
+	-include $(top_srcdir)/include/ircd/mods/mapi.h \
 	###
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
-	-include $(top_srcdir)/include/ircd/matrix.pic.h \
-	-include $(top_srcdir)/include/ircd/mods/mapi.h \
 	$(EXTRA_CPPFLAGS) \
 	###
 

@@ -13,12 +13,12 @@ CXXFLAGS += \
 	###
 
 AM_CXXFLAGS = \
+	-include ircd/matrix.pic.h \
+	-include ircd/mods/mapi.h \
 	###
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
-	-include ircd/matrix.pic.h \
-	-include ircd/mods/mapi.h \
 	$(EXTRA_CPPFLAGS) \
 	###
 

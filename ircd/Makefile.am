@@ -13,11 +13,11 @@ CXXFLAGS += \
 
 AM_CXXFLAGS = \
 	-ftls-model=initial-exec \
+	-include ircd/ircd.pic.h \
 	###
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
-	-include ircd/ircd.pic.h \
 	$(EXTRA_CPPFLAGS) \
 	###
 
