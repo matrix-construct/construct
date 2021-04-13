@@ -219,11 +219,11 @@ libircd_la_SOURCES += cl.cc
 endif
 libircd_la_SOURCES += gpt.cc
 libircd_la_SOURCES += gpt_pipe.cc
-if OPENCL
-BUILT_SOURCES += gpt_cl.clo
-endif
 libircd_la_SOURCES += gpt_model.cc
 libircd_la_SOURCES += gpt_vocab.cc
+if OPENCL
+BUILT_SOURCES += gpt_cl.o
+endif
 libircd_la_SOURCES += openssl.cc
 libircd_la_SOURCES += rfc1459.cc
 libircd_la_SOURCES += rfc3986.cc
@@ -353,5 +353,5 @@ endif
 default.profdata:
 	-$(LLVM_PROFDATA) merge -output=default.profdata default.proftext
 
-gpt_cl.clo: gpt_cl.cl
-	clang++-11 -std=CL1.1 -c -pipe -Xclang -finclude-default-header -o gpt_cl.clo $^
+gpt_cl.o: gpt_cl.cl
+	$(CC) -std=CL1.1 $(AM_CPPFLAGS) $(CPPFLAGS) $(DEFS) -Xclang -finclude-default-header -include "ircd/config.h" -o $@ -c $^

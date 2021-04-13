@@ -24,6 +24,9 @@ enum ircd_gpt_hypercall
 	/// sets this value; it is the initial value set by the host before
 	/// execution.
 	IRCD_GPT_ECOMPLETE = 0,
+
+	/// Erroneous token buffer
+	IRCD_GPT_ETOKENS = -1,
 };
 
 #ifdef __cplusplus

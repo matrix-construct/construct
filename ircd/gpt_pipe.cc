@@ -379,6 +379,8 @@ ircd::gpt::pipe::code::compile_opts
 	" -cl-mad-enable"
 	" -cl-single-precision-constant"
 	//" -cl-fp32-correctly-rounded-divide-sqrt"
+
+	" -cl-kernel-arg-info"
 };
 
 ircd::gpt::pipe::code::code()
@@ -893,6 +895,7 @@ noexcept
 	{
 		case IRCD_GPT_ACCEPT:      return "ACCEPT";
 		case IRCD_GPT_ECOMPLETE:   return "ECOMPLETE";
+		case IRCD_GPT_ETOKENS:     return "ETOKENS";
 	}
 
 	return "??????";
