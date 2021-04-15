@@ -180,6 +180,9 @@ struct ircd::cl::exec
 
 	// Execute a barrier.
 	exec(const opts &);
+
+	// No-op
+	exec() = default;
 };
 
 /// Options for an exec.
