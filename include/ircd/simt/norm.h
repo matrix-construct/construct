@@ -13,21 +13,23 @@
 inline void
 ircd_simt_math_norm_f4lldr(__local float4 *const out,
                            __local const float4 *const in,
-                           __local float4 *const restrict tmp,
-                           const uint num,
-                           const uint i)
+                           __local float4 *const restrict tmp)
 {
-	ircd_simt_math_mean_f4lldr(tmp, in, num, i);
+	const uint
+	li = get_local_id(0),
+	ln = get_local_size(0);
+
+	ircd_simt_math_mean_f4lldr(tmp, in);
 
 	const float4
-	sub_mean = in[i] - tmp[i];
+	sub_mean = in[li] - tmp[li];
 
-	tmp[i] = pow(sub_mean, 2);
-	ircd_simt_math_mean_f4lldr(out, tmp, num, i);
+	tmp[li] = pow(sub_mean, 2);
+	ircd_simt_math_mean_f4lldr(out, tmp);
 
 	const float4
 	epsilon = 0.00001f,
-	s = sqrt(out[i] + epsilon);
+	s = sqrt(out[li] + epsilon);
 
-	out[i] = sub_mean / s;
+	out[li] = sub_mean / s;
 }

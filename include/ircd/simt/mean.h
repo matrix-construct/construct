@@ -10,20 +10,24 @@
 
 /// Compute average of all elements in the input. The result is broadcast
 /// to all elements of the output.
+///
+/// provide:
+/// li = local thread id
+/// ln = local group size
+///
 inline void
 ircd_simt_math_mean_f4lldr(__local float4 *const restrict out,
-                           __local const float4 *const restrict in,
-                           const uint num,
-                           const uint i)
+                           __local const float4 *const restrict in)
 {
-	out[i] = in[i];
-	ircd_simt_reduce_add_f4lldr(out, num, i);
+	const uint
+	li = get_local_id(0),
+	ln = get_local_size(0);
 
-	if(i == 0)
-		out[i][0] = ircd_simt_reduce_add_f4(out[i]);
+	out[li] = in[li];
+	ircd_simt_reduce_add_f4lldr(out);
 
-	if(i == 0)
-		out[i] = out[i][0] / (num * 4);
+	if(li == 0)
+		out[li] = ircd_simt_reduce_add_f4(out[li]) / (ln * 4);
 
-	ircd_simt_broadcast_f4lldr(out, num, i);
+	ircd_simt_broadcast_f4lldr(out);
 }

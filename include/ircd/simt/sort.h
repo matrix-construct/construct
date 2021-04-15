@@ -11,10 +11,12 @@
 /// Sort indices in `idx` which point to values contained in `val`.
 inline void
 ircd_simt_sort_idx16_flldr(__local ushort *const idx,
-                           __global const float *const val,
-                           const uint ln,
-                           const uint li)
+                           __global const float *const val)
 {
+	const uint
+	li = get_local_id(0),
+	ln = get_local_size(0);
+
 	for(uint stride = ln >> 1; stride > 0; stride >>= 1)
 	{
 		barrier(CLK_LOCAL_MEM_FENCE);

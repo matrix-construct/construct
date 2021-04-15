@@ -11,10 +11,12 @@
 /// Broadcast originating from the local leader (index [0]). All threads in the
 /// group participate.
 inline void
-ircd_simt_broadcast_f4lldr(__local float4 *const buf,
-                           const uint ln,
-                           const uint li)
+ircd_simt_broadcast_f4lldr(__local float4 *const buf)
 {
+	const uint
+	li = get_local_id(0),
+	ln = get_local_size(0);
+
 	for(uint stride = 1; stride < ln; stride <<= 1)
 	{
 		if(li < stride)
