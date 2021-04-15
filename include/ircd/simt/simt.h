@@ -12,7 +12,8 @@
 #define HAVE_IRCD_SIMT_H
 
 #include "broadcast.h"
-#include "reduce.h"
+#include "reduce_add.h"
+#include "reduce_max.h"
 #include "sort.h"
 #include "mean.h"
 #include "norm.h"
