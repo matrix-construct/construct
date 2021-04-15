@@ -1438,6 +1438,9 @@ ircd::cl::data::data(const size_t size_,
 		ircd::size(buf)?: size_
 	};
 
+	if(!size)
+		return;
+
 	cl_mem_flags flags {0};
 	flags |= wonly? CL_MEM_WRITE_ONLY: CL_MEM_READ_WRITE;
 	flags |= ircd::size(buf)? CL_MEM_COPY_HOST_PTR: 0;
@@ -1453,15 +1456,18 @@ ircd::cl::data::data(const size_t size_,
 ircd::cl::data::data(const size_t size_,
                      const const_buffer &buf)
 {
-	const auto ptr
+	const auto &ptr
 	{
 		ircd::size(buf)? ircd::data(buf): nullptr
 	};
 
-	const auto size
+	const auto &size
 	{
 		ircd::size(buf)?: size_
 	};
+
+	if(!size)
+		return;
 
 	cl_mem_flags flags {0};
 	flags |= CL_MEM_READ_ONLY;
@@ -1478,23 +1484,44 @@ ircd::cl::data::data(const size_t size_,
 ircd::cl::data::data(const mutable_buffer &buf,
                      const bool wonly)
 {
+	const auto &size
+	{
+		ircd::size(buf)
+	};
+
+	if(!size)
+		return;
+
 	cl_mem_flags flags {0};
 	flags |= CL_MEM_USE_HOST_PTR;
 	flags |= wonly? CL_MEM_WRITE_ONLY: CL_MEM_READ_WRITE;
 
 	int err {CL_SUCCESS};
-	handle = clCreateBuffer(primary, flags, ircd::size(buf), ircd::data(buf), &err);
+	handle = clCreateBuffer(primary, flags, size, ircd::data(buf), &err);
 	throw_on_error(err);
 }
 
 ircd::cl::data::data(const const_buffer &buf)
 {
+	const auto &ptr
+	{
+		mutable_cast(ircd::data(buf))
+	};
+
+	const auto &size
+	{
+		ircd::size(buf)
+	};
+
+	if(!size)
+		return;
+
 	cl_mem_flags flags {0};
 	flags |= CL_MEM_USE_HOST_PTR;
 	flags |= CL_MEM_READ_ONLY;
 
 	int err {CL_SUCCESS};
-	handle = clCreateBuffer(primary, flags, ircd::size(buf), mutable_cast(ircd::data(buf)), &err);
+	handle = clCreateBuffer(primary, flags, size, ptr, &err);
 	throw_on_error(err);
 }
 
