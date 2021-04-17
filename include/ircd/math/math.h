@@ -20,3 +20,4 @@
 #include "fmma.h"
 #include "norm.h"
 #include "smax.h"
+#include "sqrt.h"
