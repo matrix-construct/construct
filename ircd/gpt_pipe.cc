@@ -95,15 +95,13 @@ noexcept
 	};
 
 	if(pending)
-	{
 		log::warning
 		{
 			log, "Waiting for %zu pending tasks to leave the pipe...",
 			pending,
 		};
 
-		cl::sync();
-	}
+	cl::sync();
 
 	delete default_desc;   default_desc = nullptr;
 	delete default_code;   default_code = nullptr;
@@ -139,13 +137,13 @@ ircd::gpt::generate(task &task)
 	volatile size_t cycle(ctrl.cycle);
 
 	std::deque<pipe::exec> list;
-	for(; cycle < opts.limit && run::level == run::level::RUN; ++cycle)
+	for(; cycle < opts.limit; ++cycle)
 	{
 		// When the release/acquire bits are set the control pages are sent
 		// and received; only set on first and last iterations of this loop.
 		const bool
 		rel(cycle == 0),
-		acq(cycle + 1 >= opts.limit);
+		acq(cycle + 1 >= opts.limit || ctx::interruption_requested());
 
 		// Enqueue the cycle's commands
 		list.emplace_back
@@ -171,6 +169,10 @@ ircd::gpt::generate(task &task)
 		if(flush)
 			cl::flush();
 
+		if(ctx::interruption_requested())
+			if(acq || termination(ctx::cur()))
+				break;
+
 		// Enqueue consecutive repetitions of our kernel batch before waiting
 		// on the first; based on the configuration. XXX get from ircd::cl
 		if(list.size() <= pipe::queue_cycles)
@@ -192,6 +194,7 @@ ircd::gpt::generate(task &task)
 	list.clear();
 
 	assert(ctrl.magic == 0xC7012C70);
+	this_ctx::interruption_point();
 
 	// Interp error codes
 	if(unlikely(ctrl.call <= 0))
@@ -202,7 +205,7 @@ ircd::gpt::generate(task &task)
 			reflect(ctrl.call),
 		};
 
-	assert(ctrl.cycle == cycle);
+	assert(ctrl.cycle == cycle || ctx::interruption_requested());
 }
 
 void

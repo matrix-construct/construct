@@ -80,12 +80,13 @@ ircd_gpt_ffnn_fcon(__global const struct ircd_gpt_task *const ctrl,
 	li = get_local_id(0),
 	ln = get_local_size(0),
 	width = opts->ffnn_width,
-	height = opts->ffnn_height;
+	height = opts->ffnn_height,
+	tiles = opts->ffnn_mult;
 
-	for(uint i = 0; i < opts->ffnn_mult; ++i)
+	for(uint i = 0; i < tiles; ++i)
 		ircd_gpt_sgemv(out->fcon, in->word, bias, weight, width, height, i * ln + li);
 
-	for(uint i = 0; i < opts->ffnn_mult; ++i)
+	for(uint i = 0; i < tiles; ++i)
 		ircd_gpt_ffnn_gelu(out->fcon, out->fcon, i * ln + li);
 }
 
@@ -114,7 +115,7 @@ ircd_gpt_ffnn(__global const struct ircd_gpt_task *const ctrl,
 	height = opts->ffnn_height;
 
 	// Layer re-normalization
-	ircd_simt_math_norm_f4lldr(token->word, token->word, buf->word, ln, li);
+	ircd_simt_math_norm_f4lldr(token->word, token->word, buf->word);
 	ircd_gpt_norm_fmad(tmp->word, token->word, norm_bias, norm_weight, li);
 
 	// ln's writes are still pending but fcon reads results across threads.
@@ -135,7 +136,7 @@ __attribute__((always_inline))
 ircd_gpt_attn_self(__global const struct ircd_gpt_task *const ctrl,
                    __constant const struct ircd_gpt_opts *const opts,
                    __local union ircd_gpt_tokenv *const restrict out,
-                   __local union ircd_gpt_tokenv *const restrict tmp,
+                   __local float self[][12],
                    __global const struct ircd_gpt_attn_qkvv *const restrict token,
                    __global const struct ircd_gpt_attn_mask *const restrict mask)   // [1024][1024],
 {
@@ -145,53 +146,69 @@ ircd_gpt_attn_self(__global const struct ircd_gpt_task *const ctrl,
 	li = get_local_id(0),
 	ln = get_local_size(0),
 	wi = get_group_id(0),
-	wn = get_num_groups(0);
+	wn = get_num_groups(0),
+	ti = li % 12,
+	ki = li / 12;
 
-	__local union ircd_gpt_token *const restrict self = &tmp->token;
-
-	for(uint i = 0; i < wn; ++i)
-		if(mask[wi].token[i])
-			self->attn[li][i] = 0.0f;
-		else
-			self->attn[li][i] = -10000.0f;
-
-	for(uint i = 0; i < wn; ++i)
-		if(mask[wi].token[i])
-			for(uint j = 0; j < 64/4; ++j)
+	// Low-rank mask
+	if(li < 12)
+	{
+		for(uint i = 0; i < wn; ++i)
+		{
+			if(!mask[wi].token[i])
 			{
-				float4
-				qry = token[wi].qry.attn[li][j],
-				key = token[i].key.attn[li][j],
-				res = qry * key;
-				for(uint k = 0; k < 4; ++k)
-					self->attn[li][i] += res[k];
+				self[i][li] = -10000.0f;
+				continue;
 			}
 
-	for(uint i = 0; i < wn; ++i)
-		if(mask[wi].token[i])
-			self->attn[li][i] /= 8.0f;
+			float4 acc = 0.0f;
+			for(uint k = 0; k < 64/4; ++k)
+			{
+				float4
+				qry = token[wi].qry.attn[li][k],
+				key = token[i].key.attn[li][k];
 
-	float mu = -10000.0f;
-	for(uint i = 0; i < wn; ++i)
-		mu = max(mu, self->attn[li][i]);
+				acc += qry * key;
+			}
 
-	for(uint i = 0; i < wn; ++i)
-		self->attn[li][i] = exp(self->attn[li][i] - mu);
+			const float
+			sum = ircd_simt_reduce_add_f4(acc),
+			res = sum / 8.0f;
 
-	float sum = 0.0f;
-	for(uint i = 0; i < wn; ++i)
-		sum += self->attn[li][i];
+			self[i][li] = res;
+		}
 
-	const float lambda = 1.0f / sum;
-	for(uint i = 0; i < wn; ++i)
-		self->attn[li][i] *= lambda;
+		// Three-piece softmax
+		float mu = -10000.0f;
+		for(uint i = 0; i < wn; ++i)
+			mu = max(mu, self[i][li]);
 
-	for(uint j = 0; j < 64/4; ++j)
-		out->attn[li][j] = 0.0f;
+		for(uint i = 0; i < wn; ++i)
+			self[i][li] = exp(self[i][li] - mu);
 
+		float sum = 0.0f;
+		for(uint i = 0; i < wn; ++i)
+			sum += self[i][li];
+
+		const float lambda = 1.0f / sum;
+		for(uint i = 0; i < wn; ++i)
+			self[i][li] *= lambda;
+	}
+
+	// Propagate to full width for value dot prod.
+	barrier(CLK_LOCAL_MEM_FENCE);
+
+	float4 acc = 0.0f;
 	for(uint i = 0; i < wn; ++i)
-		for(uint j = 0; j < 64/4; ++j)
-			out->attn[li][j] += token[i].val.attn[li][j] * self->attn[li][i];
+	{
+		const float4
+		attn = self[i][ti],
+		val = token[i].val.attn[ti][ki];
+
+		acc += attn * val;
+	}
+
+	out->attn[ti][ki] = acc;
 }
 
 inline void
@@ -210,11 +227,11 @@ ircd_gpt_attn_proj(__global const struct ircd_gpt_task *const ctrl,
 	ln = get_local_size(0),
 	wi = get_group_id(0),
 	wn = get_num_groups(0),
-	height = opts->attn_height,
-	width = opts->attn_height;  // same
+	width = opts->attn_height,  // same
+	height = opts->attn_height;
 
 	// Projection
-	ircd_gpt_sgemv(out->word, xattn->word, bias, weight, height, width, li);
+	ircd_gpt_sgemv(out->word, xattn->word, bias, weight, width, height, li);
 }
 
 __kernel void
@@ -223,7 +240,7 @@ ircd_gpt_coil(__global const struct ircd_gpt_task *const ctrl,
               __global union ircd_gpt_tokenv *const restrict accum,
               __global const struct ircd_gpt_attn_qkvv *const restrict state,
               __global const struct ircd_gpt_attn_mask *const restrict mask,   // [1024][1024],
-              __global 	const float4 *const restrict attn_proj_bias,
+              __global const float4 *const restrict attn_proj_bias,
               __global const float4 *const restrict attn_proj_weight,
               __global const float4 *const restrict ffnn_norm_bias,
               __global const float4 *const restrict ffnn_norm_weight,
@@ -236,11 +253,14 @@ ircd_gpt_coil(__global const struct ircd_gpt_task *const ctrl,
 	li = get_local_id(0),
 	wi = get_group_id(0);
 
-	__local union ircd_gpt_ffnn_aperaturev
-	ffnn_fcon;
+	__local float
+	self[96][12];
 
 	__local union ircd_gpt_tokenv
-	buf0, buf1;
+	buf1, buf0;
+
+	__local union ircd_gpt_ffnn_aperaturev
+	ffnn_fcon;
 
 	// Self-attention backend; this computes the self-attention result now
 	// that keys and values are globally visible across tokens.
@@ -249,13 +269,11 @@ ircd_gpt_coil(__global const struct ircd_gpt_task *const ctrl,
 		ctrl,
 		opts,
 		&buf1,
-		&buf0,
+		self,
 		state,
 		mask
 	);
 
-	// Self-attention's writes are pending on each thread but each proj
-	// call requires results from all threads for input to the matmul.
 	barrier(CLK_LOCAL_MEM_FENCE);
 
 	// Project result of self-attention.
@@ -324,7 +342,8 @@ ircd_gpt_attn_fcon(__global const struct ircd_gpt_task *const ctrl,
 	wi = get_group_id(0),
 	wn = get_num_groups(0),
 	width = opts->attn_width,
-	height = opts->attn_height;
+	height = opts->attn_height,
+	tiles = opts->attn_mult;
 
 	__local union ircd_gpt_attn_aperaturev
 	token;
@@ -335,18 +354,18 @@ ircd_gpt_attn_fcon(__global const struct ircd_gpt_task *const ctrl,
 	token.word[li] = accum[wi].word[li];
 
 	// Layer re-normalization
-	ircd_simt_math_norm_f4lldr(token.word, token.word, tmp, ln, li);
+	ircd_simt_math_norm_f4lldr(token.word, token.word, tmp);
 	ircd_gpt_norm_fmad(tmp, token.word, norm_bias, norm_weight, li);
 
 	// Ln's writes are still pending; fcon requires results across threads.
 	barrier(CLK_LOCAL_MEM_FENCE);
 
 	// Fully connected
-	for(uint i = 0; i < opts->attn_mult; ++i)
+	for(uint i = 0; i < tiles; ++i)
 		ircd_gpt_sgemv(token.fcon, tmp, fcon_bias, fcon_weight, width, height, i * ln + li);
 
 	// Export queries, keys, and values.
-	for(uint i = 0; i < opts->attn_mult; ++i)
+	for(uint i = 0; i < tiles; ++i)
 		state[wi].proj[i][li] = token.proj[i][li];
 }
 
@@ -407,7 +426,7 @@ ircd_gpt_lm_norm(__global const struct ircd_gpt_task *const ctrl,
 	token.word[li] = accum[wi].word[li];
 
 	// Final re-normalization
-	ircd_simt_math_norm_f4lldr(token.word, token.word, tmp.word, ln, li);
+	ircd_simt_math_norm_f4lldr(token.word, token.word, tmp.word);
 	ircd_gpt_norm_fmad(tmp.word, token.word, norm_bias, norm_weight, li);
 
 	accum[wi].word[li] = tmp.word[li];
@@ -436,12 +455,11 @@ ircd_gpt_lm_logit(__global const struct ircd_gpt_task *const ctrl,
 		acc += vocab * in;
 	}
 
-	float res = 0.0f;
-	for(uint k = 0; k < 4; ++k)
-		res += acc[k];
+	const float
+	ret = ircd_simt_reduce_add_f4(acc);
 
 	if(gi < opts->logits)
-		logit[gi] = res;
+		logit[gi] = ret;
 	else
 		logit[gi] = -10000.0f;
 }
@@ -473,12 +491,12 @@ ircd_gpt_lm_logsm(__global struct ircd_gpt_task *const ctrl,
 	for(uint k = 0; k < 4; ++k)
 		share[li] = max(share[li], share4[li][k]);
 
-	ircd_simt_reduce_max_flldr(share, ln, li);
+	ircd_simt_reduce_max_flldr(share);
 
 	if(li == 0)
 		share4[li] = ctrl->samax_mu = share[li];
 
-	ircd_simt_broadcast_f4lldr(share4, ln, li);
+	ircd_simt_broadcast_f4lldr(share4);
 
 	const float4
 	mu = share4[li];
@@ -487,43 +505,38 @@ ircd_gpt_lm_logsm(__global struct ircd_gpt_task *const ctrl,
 	for(uint i = ti; i < ti + tn; ++i)
 	{
 		const float4
-		reg = logit[i] - mu,
-		res = exp(reg);
+		reg = logit[i] - mu;
 
+		float4 res;
 		for(uint k = 0; k < 4; ++k)
 			if(i * 4 + k < logits)
-				share4[li][k] += res[k];
-
-		for(uint k = 0; k < 4; ++k)
-			if(i * 4 + k < logits)
-				logexp[i][k] = res[k];
+				res[k] = exp(reg[k]);
 			else
-				logexp[i][k] = 0.0f;
+				res[k] = 0.0f;
+
+		share4[li] += res;
+		logexp[i] = res;
 	}
 
-	ircd_simt_reduce_add_f4lldr(share4, ln, li);
+	ircd_simt_reduce_add_f4lldr(share4);
 
 	if(li == 0)
 	{
-		float sum = 0.0f;
-		for(uint k = 0; k < 4; ++k)
-			sum += share4[li][k];
+		const float
+		sum = ircd_simt_reduce_add_f4(share4[li]);
 
 		share4[li][0] = ctrl->samax_sum = sum;
 		share4[li][1] = ctrl->samax_lambda = 1.0f / sum;
 	}
 
-	ircd_simt_broadcast_f4lldr(share4, ln, li);
+	ircd_simt_broadcast_f4lldr(share4);
 
 	const float4
 	sum = share4[li][0],
 	lambda = share4[li][1];
+
 	for(uint i = ti; i < ti + tn; ++i)
-		for(uint k = 0; k < 4; ++k)
-			if(i * 4 + k < logits)
-				logsm[i] = logexp[i] * lambda;
-			else
-				logsm[i] = 0.0f;
+		logsm[i] = logexp[i] * lambda;
 }
 
 inline void
@@ -543,7 +556,7 @@ ircd_gpt_leave(__global struct ircd_gpt_task *const ctrl,
 
 	// Run debug checks and assertions.
 	#ifdef RB_DEBUG
-	if(li == 0 && ctrl->call == IRCD_GPT_ECOMPLETE)
+	if(ctrl->call == IRCD_GPT_ECOMPLETE)
 		if(ctrl->tokens < 2)
 			ctrl->call = IRCD_GPT_ETOKENS;
 	#endif
@@ -598,6 +611,13 @@ ircd_gpt_lm_result(__global struct ircd_gpt_task *const ctrl,
 	head = buffer_full?
 		(ctrl->head + 1) % opts->buffer_tokens: ctrl->head;
 
+	ctrl->head = head;
+	ctrl->tokens = tokens;
+	ctrl->token[dest] = token;
+
+	if(opts->top_k > 1)
+		return;
+
 	const ushort
 	next_select = select + 1,
 	next_token = idx[next_select];
@@ -624,9 +644,6 @@ ircd_gpt_lm_result(__global struct ircd_gpt_task *const ctrl,
 	ctrl->cert = cert;
 	ctrl->cert_sum = cert_sum;
 	ctrl->cert_mean = cert_mean;
-	ctrl->head = head;
-	ctrl->tokens = tokens;
-	ctrl->token[dest] = token;
 }
 
 __kernel void
