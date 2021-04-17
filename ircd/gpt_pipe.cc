@@ -14,7 +14,8 @@ namespace ircd::gpt::pipe
 
 	static ircd::cl::exec::opts
 	negative_opts, positive_opts, selfattn_opts,
-	cathode_opts, anode_opts, lmhead_opts, lmamax_opts;
+	cathode_opts, anode_opts, lmhead_opts, lmamax_opts,
+	backprop_opts;
 
 	extern conf::item<size_t> flush_cycles;
 	extern conf::item<size_t> queue_cycles;
@@ -53,7 +54,7 @@ ircd::gpt::pipe::handle_quit
 void
 ircd::gpt::pipe::init()
 {
-	const auto &default_model
+	const gpt::model::decoder &default_model
 	{
 		*gpt::model::default_model
 	};
@@ -475,8 +476,8 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 	ctrl,
 	opts,
 	accum,
-	model.embed->pos,
-	model.embed->token,
+	model.embed->pos.param,
+	model.embed->token.param,
 }
 ,lm_norm
 {
@@ -485,8 +486,8 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 	ctrl,
 	opts,
 	accum,
-	model.decode->norm.bias,
-	model.decode->norm.weight,
+	model.decode->norm.bias.param,
+	model.decode->norm.weight.param,
 }
 ,lm_logit
 {
@@ -496,7 +497,7 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 	opts,
 	logit,
 	accum,
-	model.embed->token,
+	model.embed->token.param,
 }
 ,lm_logsm
 {
@@ -517,6 +518,32 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 	logsm,
 	logexp,
 	logit,
+}
+,lm_norm_backprop
+{
+	code,
+	"ircd_gpt_norm_prop",
+	ctrl,
+	opts,
+	model.decode->norm.bias.param,
+	model.decode->norm.bias.moment[0],
+	model.decode->norm.bias.moment[1],
+	model.decode->norm.weight.param,
+	model.decode->norm.weight.moment[0],
+	model.decode->norm.weight.moment[1],
+}
+,lm_embed_backprop
+{
+	code,
+	"ircd_gpt_lm_embed_prop",
+	ctrl,
+	opts,
+	model.embed->pos.param,
+	model.embed->pos.moment[0],
+	model.embed->pos.moment[1],
+	model.embed->token.param,
+	model.embed->token.moment[0],
+	model.embed->token.moment[1],
 }
 ,layer
 {
@@ -550,10 +577,10 @@ ircd::gpt::pipe::desc::layer::layer(pipe::desc &desc,
 	desc.opts,
 	desc.state,
 	desc.accum,
-	desc.model->decode->block[laynum].attn.norm.bias,
-	desc.model->decode->block[laynum].attn.norm.weight,
-	desc.model->decode->block[laynum].attn.fcon.bias,
-	desc.model->decode->block[laynum].attn.fcon.weight,
+	desc.model->decode->block[laynum].attn.norm.bias.param,
+	desc.model->decode->block[laynum].attn.norm.weight.param,
+	desc.model->decode->block[laynum].attn.fcon.bias.param,
+	desc.model->decode->block[laynum].attn.fcon.weight.param,
 }
 ,positive
 {
@@ -564,14 +591,64 @@ ircd::gpt::pipe::desc::layer::layer(pipe::desc &desc,
 	desc.accum,
 	desc.state,
 	desc.model->decode->block[laynum].attn.mask,
-	desc.model->decode->block[laynum].attn.proj.bias,
-	desc.model->decode->block[laynum].attn.proj.weight,
-	desc.model->decode->block[laynum].ffnn.norm.bias,
-	desc.model->decode->block[laynum].ffnn.norm.weight,
-	desc.model->decode->block[laynum].ffnn.fcon.bias,
-	desc.model->decode->block[laynum].ffnn.fcon.weight,
-	desc.model->decode->block[laynum].ffnn.proj.bias,
-	desc.model->decode->block[laynum].ffnn.proj.weight,
+	desc.model->decode->block[laynum].attn.proj.bias.param,
+	desc.model->decode->block[laynum].attn.proj.weight.param,
+	desc.model->decode->block[laynum].ffnn.norm.bias.param,
+	desc.model->decode->block[laynum].ffnn.norm.weight.param,
+	desc.model->decode->block[laynum].ffnn.fcon.bias.param,
+	desc.model->decode->block[laynum].ffnn.fcon.weight.param,
+	desc.model->decode->block[laynum].ffnn.proj.bias.param,
+	desc.model->decode->block[laynum].ffnn.proj.weight.param,
+}
+,backattn
+{
+	*desc.code,
+	"ircd_gpt_coil_prop_attn",
+	desc.ctrl,
+	desc.opts,
+	desc.model->decode->block[laynum].attn.norm.bias.param,
+	desc.model->decode->block[laynum].attn.norm.bias.moment[0],
+	desc.model->decode->block[laynum].attn.norm.bias.moment[1],
+	desc.model->decode->block[laynum].attn.norm.weight.param,
+	desc.model->decode->block[laynum].attn.norm.weight.moment[0],
+	desc.model->decode->block[laynum].attn.norm.weight.moment[1],
+	desc.model->decode->block[laynum].attn.fcon.bias.param,
+	desc.model->decode->block[laynum].attn.fcon.bias.moment[0],
+	desc.model->decode->block[laynum].attn.fcon.bias.moment[1],
+	desc.model->decode->block[laynum].attn.fcon.weight.param,
+	desc.model->decode->block[laynum].attn.fcon.weight.moment[0],
+	desc.model->decode->block[laynum].attn.fcon.weight.moment[1],
+	desc.model->decode->block[laynum].attn.proj.bias.param,
+	desc.model->decode->block[laynum].attn.proj.bias.moment[0],
+	desc.model->decode->block[laynum].attn.proj.bias.moment[1],
+	desc.model->decode->block[laynum].attn.proj.weight.param,
+	desc.model->decode->block[laynum].attn.proj.weight.moment[0],
+	desc.model->decode->block[laynum].attn.proj.weight.moment[1],
+}
+,backffnn
+{
+	*desc.code,
+	"ircd_gpt_coil_prop_ffnn",
+	desc.ctrl,
+	desc.opts,
+	desc.model->decode->block[laynum].ffnn.norm.bias.param,
+	desc.model->decode->block[laynum].ffnn.norm.bias.moment[0],
+	desc.model->decode->block[laynum].ffnn.norm.bias.moment[1],
+	desc.model->decode->block[laynum].ffnn.norm.weight.param,
+	desc.model->decode->block[laynum].ffnn.norm.weight.moment[0],
+	desc.model->decode->block[laynum].ffnn.norm.weight.moment[1],
+	desc.model->decode->block[laynum].ffnn.fcon.bias.param,
+	desc.model->decode->block[laynum].ffnn.fcon.bias.moment[0],
+	desc.model->decode->block[laynum].ffnn.fcon.bias.moment[1],
+	desc.model->decode->block[laynum].ffnn.fcon.weight.param,
+	desc.model->decode->block[laynum].ffnn.fcon.weight.moment[0],
+	desc.model->decode->block[laynum].ffnn.fcon.weight.moment[1],
+	desc.model->decode->block[laynum].ffnn.proj.bias.param,
+	desc.model->decode->block[laynum].ffnn.proj.bias.moment[0],
+	desc.model->decode->block[laynum].ffnn.proj.bias.moment[1],
+	desc.model->decode->block[laynum].ffnn.proj.weight.param,
+	desc.model->decode->block[laynum].ffnn.proj.weight.moment[0],
+	desc.model->decode->block[laynum].ffnn.proj.weight.moment[1],
 }
 {
 }

@@ -29,10 +29,15 @@ ircd_gpt_sgemv(__local float4 *const restrict out,
                const uint height,
                const uint i)
 {
-	float4 acc = bias[i];
+	const uint
+	lanes = 4;
+
+	float4
+	acc = bias[i];
+
 	for(uint j = 0; j < height; ++j)
-		for(uint k = 0; k < 4; ++k)
-			acc += in[j][k] * weight[width * (j * 4 + k) + i];
+		for(uint k = 0; k < lanes; ++k)
+			acc += in[j][k] * weight[width * (j * lanes + k) + i];
 
 	out[i] = acc;
 }
@@ -77,10 +82,10 @@ ircd_gpt_ffnn_fcon(__global const struct ircd_gpt_task *const ctrl,
 	width = opts->ffnn_width,
 	height = opts->ffnn_height;
 
-	for(uint i = 0; i < 4; ++i)
+	for(uint i = 0; i < opts->ffnn_mult; ++i)
 		ircd_gpt_sgemv(out->fcon, in->word, bias, weight, width, height, i * ln + li);
 
-	for(uint i = 0; i < 4; ++i)
+	for(uint i = 0; i < opts->ffnn_mult; ++i)
 		ircd_gpt_ffnn_gelu(out->fcon, out->fcon, i * ln + li);
 }
 
@@ -337,11 +342,11 @@ ircd_gpt_attn_fcon(__global const struct ircd_gpt_task *const ctrl,
 	barrier(CLK_LOCAL_MEM_FENCE);
 
 	// Fully connected
-	for(uint i = 0; i < 3; ++i)
+	for(uint i = 0; i < opts->attn_mult; ++i)
 		ircd_gpt_sgemv(token.fcon, tmp, fcon_bias, fcon_weight, width, height, i * ln + li);
 
 	// Export queries, keys, and values.
-	for(uint i = 0; i < 3; ++i)
+	for(uint i = 0; i < opts->attn_mult; ++i)
 		state[wi].proj[i][li] = token.proj[i][li];
 }
 
@@ -648,7 +653,273 @@ ircd_gpt_lm_select(__global struct ircd_gpt_task *const ctrl,
 		if(logsm[j] > logsm[idx[li]])
 			idx[li] = j;
 
-	ircd_simt_sort_idx16_flldr(idx, logsm, ln, li);
+	ircd_simt_sort_idx16_flldr(idx, logsm);
 	ircd_gpt_lm_result(ctrl, opts, li, idx, logsm, logexp, logit);
 	ircd_gpt_leave(ctrl, opts, li);
+}
+
+//
+// backpropagations
+//
+
+inline void
+ircd_gpt_prop_elem(__global const struct ircd_gpt_task *const ctrl,
+                   __constant const struct ircd_gpt_opts *const opts,
+                   __global float4 *const restrict param_,
+                   __global float4 *const restrict exp_avg_,
+                   __global float4 *const restrict exp_avg_sqr_)
+{
+	const uint
+	li = get_local_id(0),
+	step = ctrl->step;
+
+	const float4
+	param = param_[li],
+	grad = ctrl->loss_mean,
+	alpha[2] = { 1.0f - opts->beta[0], 1.0f - opts->beta[1], },
+	exp_avg = step? exp_avg_[li]: 0.0f,
+	exp_avg_sqr = step? exp_avg_sqr_[li]: 0.0f,
+	exp_avg_mul = exp_avg * opts->beta[0],
+	exp_avg_dot = exp_avg_mul + alpha[0] * grad,
+	exp_avg_sqr_mul = exp_avg_sqr * opts->beta[1],
+	exp_avg_sqr_dot = exp_avg_sqr_mul + alpha[1] * grad * grad,
+	denom = sqrt(exp_avg_sqr_dot) + opts->epsilon,
+	delta = opts->alpha * (exp_avg_dot / denom),
+	update = param - delta;
+
+	param_[li] = update;
+	exp_avg_[li] = exp_avg_dot;
+	exp_avg_sqr_[li] = exp_avg_sqr_dot;
+}
+
+__kernel void
+ircd_gpt_norm_prop(__global const struct ircd_gpt_task *const ctrl,
+                   __constant const struct ircd_gpt_opts *const opts,
+                   __global union ircd_gpt_tokenv *const restrict bias,
+                   __global union ircd_gpt_tokenv *const restrict bias_m0,
+                   __global union ircd_gpt_tokenv *const restrict bias_m1,
+                   __global union ircd_gpt_tokenv *const restrict weight,
+                   __global union ircd_gpt_tokenv *const restrict weight_m0,
+                   __global union ircd_gpt_tokenv *const restrict weight_m1)
+{
+	const uint
+	gi = get_global_id(0),
+	gn = get_global_size(0),
+	li = get_local_id(0),
+	ln = get_local_size(0),
+	wi = get_group_id(0),
+	wn = get_num_groups(0);
+
+	ircd_gpt_prop_elem
+	(
+		ctrl, opts,
+		bias->word,
+		bias_m0->word,
+		bias_m1->word
+	);
+
+	ircd_gpt_prop_elem
+	(
+		ctrl, opts,
+		weight->word,
+		weight_m0->word,
+		weight_m1->word
+	);
+}
+
+__kernel void
+ircd_gpt_coil_prop_attn(__global const struct ircd_gpt_task *const ctrl,
+                        __constant const struct ircd_gpt_opts *const opts,
+                        __global union ircd_gpt_tokenv *const restrict norm_bias,
+                        __global union ircd_gpt_tokenv *const restrict norm_bias_m0,
+                        __global union ircd_gpt_tokenv *const restrict norm_bias_m1,
+                        __global union ircd_gpt_tokenv *const restrict norm_weight,
+                        __global union ircd_gpt_tokenv *const restrict norm_weight_m0,
+                        __global union ircd_gpt_tokenv *const restrict norm_weight_m1,
+                        __global union ircd_gpt_attn_aperaturev *const restrict fcon_bias,
+                        __global union ircd_gpt_attn_aperaturev *const restrict fcon_bias_m0,
+                        __global union ircd_gpt_attn_aperaturev *const restrict fcon_bias_m1,
+                        __global union ircd_gpt_attn_aperaturev *const restrict fcon_weight,
+                        __global union ircd_gpt_attn_aperaturev *const restrict fcon_weight_m0,
+                        __global union ircd_gpt_attn_aperaturev *const restrict fcon_weight_m1,
+                        __global union ircd_gpt_tokenv *const restrict proj_bias,
+                        __global union ircd_gpt_tokenv *const restrict proj_bias_m0,
+                        __global union ircd_gpt_tokenv *const restrict proj_bias_m1,
+                        __global union ircd_gpt_tokenv *const restrict proj_weight,
+                        __global union ircd_gpt_tokenv *const restrict proj_weight_m0,
+                        __global union ircd_gpt_tokenv *const restrict proj_weight_m1)
+{
+	const uint
+	gi = get_global_id(0),
+	gn = get_global_size(0),
+	li = get_local_id(0),
+	ln = get_local_size(0),
+	wi = get_group_id(0),
+	wn = get_num_groups(0);
+
+	ircd_gpt_norm_prop
+	(
+		ctrl, opts,
+		norm_bias,
+		norm_bias_m0,
+		norm_bias_m1,
+		norm_weight,
+		norm_weight_m0,
+		norm_weight_m1
+	);
+
+	for(uint j = 0; j < 3; ++j)
+		ircd_gpt_prop_elem
+		(
+			ctrl, opts,
+			fcon_bias->proj[j],
+			fcon_bias_m0->proj[j],
+			fcon_bias_m1->proj[j]
+		);
+
+	for(uint i = 0; i < 768; ++i)
+		for(uint j = 0; j < 3; ++j)
+			ircd_gpt_prop_elem
+			(
+				ctrl, opts,
+				fcon_weight[i].proj[j],
+				fcon_weight_m0[i].proj[j],
+				fcon_weight_m1[i].proj[j]
+			);
+
+	ircd_gpt_prop_elem
+	(
+		ctrl, opts,
+		proj_bias->word,
+		proj_bias_m0->word,
+		proj_bias_m1->word
+	);
+
+	for(uint i = 0; i < 768; ++i)
+		ircd_gpt_prop_elem
+		(
+			ctrl, opts,
+			proj_weight[i].word,
+			proj_weight_m0[i].word,
+			proj_weight_m1[i].word
+		);
+}
+
+__kernel void
+ircd_gpt_coil_prop_ffnn(__global const struct ircd_gpt_task *const ctrl,
+                        __constant const struct ircd_gpt_opts *const opts,
+                        __global union ircd_gpt_tokenv *const restrict norm_bias,
+                        __global union ircd_gpt_tokenv *const restrict norm_bias_m0,
+                        __global union ircd_gpt_tokenv *const restrict norm_bias_m1,
+                        __global union ircd_gpt_tokenv *const restrict norm_weight,
+                        __global union ircd_gpt_tokenv *const restrict norm_weight_m0,
+                        __global union ircd_gpt_tokenv *const restrict norm_weight_m1,
+                        __global union ircd_gpt_ffnn_aperaturev *const restrict fcon_bias,
+                        __global union ircd_gpt_ffnn_aperaturev *const restrict fcon_bias_m0,
+                        __global union ircd_gpt_ffnn_aperaturev *const restrict fcon_bias_m1,
+                        __global union ircd_gpt_ffnn_aperaturev *const restrict fcon_weight,
+                        __global union ircd_gpt_ffnn_aperaturev *const restrict fcon_weight_m0,
+                        __global union ircd_gpt_ffnn_aperaturev *const restrict fcon_weight_m1,
+                        __global union ircd_gpt_tokenv *const restrict proj_bias,
+                        __global union ircd_gpt_tokenv *const restrict proj_bias_m0,
+                        __global union ircd_gpt_tokenv *const restrict proj_bias_m1,
+                        __global union ircd_gpt_tokenv *const restrict proj_weight,
+                        __global union ircd_gpt_tokenv *const restrict proj_weight_m0,
+                        __global union ircd_gpt_tokenv *const restrict proj_weight_m1)
+{
+	const uint
+	gi = get_global_id(0),
+	gn = get_global_size(0),
+	li = get_local_id(0),
+	ln = get_local_size(0),
+	wi = get_group_id(0),
+	wn = get_num_groups(0);
+
+	ircd_gpt_norm_prop
+	(
+		ctrl, opts,
+		norm_bias,
+		norm_bias_m0,
+		norm_bias_m1,
+		norm_weight,
+		norm_weight_m0,
+		norm_weight_m1
+	);
+
+	for(uint j = 0; j < 4; ++j)
+		ircd_gpt_prop_elem
+		(
+			ctrl, opts,
+			fcon_bias->proj[j],
+			fcon_bias_m0->proj[j],
+			fcon_bias_m1->proj[j]
+		);
+
+	for(uint i = 0; i < 768; ++i)
+		for(uint j = 0; j < 4; ++j)
+			ircd_gpt_prop_elem
+			(
+				ctrl, opts,
+				fcon_weight[i].proj[j],
+				fcon_weight_m0[i].proj[j],
+				fcon_weight_m1[i].proj[j]
+			);
+
+	ircd_gpt_prop_elem
+	(
+		ctrl, opts,
+		proj_bias->word,
+		proj_bias_m0->word,
+		proj_bias_m1->word
+	);
+
+	for(uint i = 0; i < 3072; ++i)
+		ircd_gpt_prop_elem
+		(
+			ctrl, opts,
+			proj_weight[i].word,
+			proj_weight_m0[i].word,
+			proj_weight_m1[i].word
+		);
+}
+
+__kernel void
+ircd_gpt_lm_embed_prop(__global const struct ircd_gpt_task *const ctrl,
+                       __constant const struct ircd_gpt_opts *const opts,
+                       __global union ircd_gpt_tokenv *const restrict pos,
+                       __global union ircd_gpt_tokenv *const restrict pos_m0,
+                       __global union ircd_gpt_tokenv *const restrict pos_m1,
+                       __global union ircd_gpt_tokenv *const restrict token,
+                       __global union ircd_gpt_tokenv *const restrict token_m0,
+                       __global union ircd_gpt_tokenv *const restrict token_m1)
+{
+	const uint
+	gi = get_global_id(0),
+	gn = get_global_size(0),
+	li = get_local_id(0),
+	ln = get_local_size(0),
+	wi = get_group_id(0),
+	wn = get_num_groups(0),
+	cn = opts->context_tokens / wn,
+	ci = cn * wi,
+	tn = opts->logits / wn,
+	ti = tn * wi;
+
+	for(uint i = ci; i < ci + cn; ++i)
+		ircd_gpt_prop_elem
+		(
+			ctrl, opts,
+			pos[i].word,
+			pos_m0[i].word,
+			pos_m1[i].word
+		);
+
+	for(uint i = ti; i < ti + tn; ++i)
+		ircd_gpt_prop_elem
+		(
+			ctrl, opts,
+			token[i].word,
+			token_m0[i].word,
+			token_m1[i].word
+		);
 }

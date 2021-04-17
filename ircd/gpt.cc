@@ -110,7 +110,7 @@ ircd::gpt::generate(const vector_view<u16> &out,
 		else
 			embed(data(dst), in[j], j, opts);
 
-		#if RB_DEBUG
+		#if 0 // RB_DEBUG
 		static char dbuf[512] {0};
 		char report[1536] {0};
 		char tmbuf[1][64] {{0}};
@@ -199,7 +199,7 @@ ircd::gpt::generate(const vector_view<u16> &out,
 		const size_t report_size = snprintf
 		(
 			report, sizeof(report),
-			"%4u:%-4u %4u:%-4u %1u%1u [ %4.1f%% %6.2f%% %5.2fL ] %5.1f%% %5.1f%% %4.1fL  %s %04x  %8s %8s | %8s",
+			"%4u:%-4u %4u:%-4u %1u%1u [ %4.1f%% %6.2f%% %5.2fL %5.2fL ] %5.1f%% %5.1f%% %4.1fL %4.1fL  %s %04x  %8s %8s | %8s",
 			j + in.size(),
 			ctrl.tokens,
 			ctrl.epoch,
@@ -209,9 +209,11 @@ ircd::gpt::generate(const vector_view<u16> &out,
 			ctrl.cert_mean < 100.0? ctrl.cert_mean: NAN,
 			ctrl.perp_mean < 100.0? ctrl.perp_mean: NAN,
 			ctrl.loss_mean < 100.0? ctrl.loss_mean: NAN,
+			ctrl.l2_loss_mean < 100.0? ctrl.l2_loss_mean: NAN,
 			ctrl.cert < 100.0? ctrl.cert: NAN,
 			ctrl.perp < 100.0? ctrl.perp: NAN,
 			ctrl.loss < 100.0? ctrl.loss: NAN,
+			ctrl.l2_loss < 100.0? ctrl.l2_loss: NAN,
 			vocab::debug(dbuf, out[j]).c_str(),
 			out[j],
 			pretty(tmbuf[0], milliseconds(last_time / bsz), 1).c_str(),

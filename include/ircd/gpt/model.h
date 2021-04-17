@@ -21,7 +21,7 @@ namespace ircd::gpt::model
 	struct decoder;
 
 	constexpr auto align {64};
-	extern const decoder *default_model;
+	extern decoder *default_model;
 	extern string_view default_dataset;
 	extern std::vector<json::object> default_data;
 }

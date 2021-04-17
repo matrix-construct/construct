@@ -33,7 +33,9 @@ struct ircd::gpt::pipe::desc
 	lm_norm,
 	lm_logit,
 	lm_logsm,
-	lm_select;
+	lm_select,
+	lm_norm_backprop,
+	lm_embed_backprop;
 
 	std::unique_ptr<struct desc::layer>
 	layer[12];
@@ -43,8 +45,11 @@ struct ircd::gpt::pipe::desc
 
 struct ircd::gpt::pipe::desc::layer
 {
-	cl::kern negative;
-	cl::kern positive;
+	cl::kern
+	negative,
+	positive,
+	backattn,
+	backffnn;
 
 	layer(pipe::desc &, const int);
 };

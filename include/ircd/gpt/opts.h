@@ -98,11 +98,29 @@ struct ircd_gpt_opts
 	#endif
 	;
 
+	/// Attention unit fcon width multiple
+	uint attn_mult
+	#ifdef __cplusplus
+	{
+		3U
+	}
+	#endif
+	;
+
+	/// MLP unit fcon width multiple
+	uint ffnn_mult
+	#ifdef __cplusplus
+	{
+		4U
+	}
+	#endif
+	;
+
 	/// Attention unit width multiple
 	uint attn_elems
 	#ifdef __cplusplus
 	{
-		embed_elems * 3
+		embed_elems * attn_mult
 	}
 	#endif
 	;
@@ -111,7 +129,16 @@ struct ircd_gpt_opts
 	uint ffnn_elems
 	#ifdef __cplusplus
 	{
-		embed_elems * 4
+		embed_elems * ffnn_mult
+	}
+	#endif
+	;
+
+	/// SIMD lane count
+	uint lanes
+	#ifdef __cplusplus
+	{
+		4U
 	}
 	#endif
 	;
@@ -119,7 +146,7 @@ struct ircd_gpt_opts
 	uint embed_width
 	#ifdef __cplusplus
 	{
-		embed_elems / 4
+		embed_elems / lanes
 	}
 	#endif
 	;
@@ -127,7 +154,7 @@ struct ircd_gpt_opts
 	uint attn_width
 	#ifdef __cplusplus
 	{
-		attn_elems / 4
+		attn_elems / lanes
 	}
 	#endif
 	;
@@ -135,7 +162,7 @@ struct ircd_gpt_opts
 	uint attn_height
 	#ifdef __cplusplus
 	{
-		embed_elems / 4
+		embed_elems / lanes
 	}
 	#endif
 	;
@@ -143,7 +170,7 @@ struct ircd_gpt_opts
 	uint ffnn_width
 	#ifdef __cplusplus
 	{
-		ffnn_elems / 4
+		ffnn_elems / lanes
 	}
 	#endif
 	;
@@ -151,7 +178,7 @@ struct ircd_gpt_opts
 	uint ffnn_height
 	#ifdef __cplusplus
 	{
-		embed_elems / 4
+		embed_elems / lanes
 	}
 	#endif
 	;
@@ -196,6 +223,31 @@ struct ircd_gpt_opts
 	#ifdef __cplusplus
 	{
 		198
+	}
+	#endif
+	;
+
+	float alpha
+	#ifdef __cplusplus
+	{
+		0.001
+	}
+	#endif
+	;
+
+	float beta[2]
+	#ifdef __cplusplus
+	{
+		0.9,    // Beta1
+		0.999,  // Beta2
+	}
+	#endif
+	;
+
+	float epsilon
+	#ifdef __cplusplus
+	{
+		0.000001
 	}
 	#endif
 	;

@@ -47,6 +47,10 @@ struct ircd_gpt_task
 	/// Several cycles may occur during each epoch.
 	ulong epoch;
 
+	/// Accumulates the training epoch count for the task. The counter is
+	/// incremented by one in device software for each backward propagation.
+	ulong step;
+
 	/// Accumulates the number of tokens produced by the task. Several tokens
 	/// may be produced each epoch, but currently only one token is produced
 	/// each cycle.
@@ -106,6 +110,18 @@ struct ircd_gpt_task
 
 	/// Certainty mean over context
 	float cert_mean;
+
+	/// Final loss
+	float l2_loss;
+
+	/// Final loss sum
+	float l2_loss_sum;
+
+	/// Final loss mean
+	float l2_loss_mean;
+
+	/// Perform backprop
+	bool prop;
 
 	/// The token buffer starts at offset 2048 and continues to the end of
 	/// the page; options specify the size of the tokens buffer in tokens.
