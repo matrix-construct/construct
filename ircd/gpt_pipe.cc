@@ -585,6 +585,19 @@ ircd::gpt::pipe::desc::layer::layer(pipe::desc &desc,
 // pipe::model::model
 //
 
+ircd::gpt::pipe::model::model(gpt::model::decoder &decoder,
+                              gpt::model::embed &embed)
+:decode
+{
+	std::make_unique<model::decoder>(decoder)
+}
+,embed
+{
+	std::make_unique<model::language>(embed)
+}
+{
+}
+
 ircd::gpt::pipe::model::model(const gpt::model::decoder &decoder,
                               const gpt::model::embed &embed)
 :decode
@@ -607,16 +620,57 @@ noexcept
 // pipe::model::language
 //
 
-ircd::gpt::pipe::model::language::language(const gpt::model::embed &embed)
-:pos
+ircd::gpt::pipe::model::language::language(gpt::model::embed &embed)
+:master
 {
-	sizeof(embed.pos),
-	const_buffer{embed.pos}
+	// params
+	{
+		sizeof(embed), mutable_buffer
+		{
+			reinterpret_cast<char *>(&embed),
+			sizeof(embed),
+		}
+	},
+
+	// first moment
+	{
+		sizeof(embed), mutable_buffer{},
+	},
+
+	// second moment
+	{
+		sizeof(embed), mutable_buffer{},
+	},
+}
+,pos
+{
+	master, 0, mutable_buffer{embed.pos}
 }
 ,token
 {
-	sizeof(embed.token),
-	const_buffer{embed.token}
+	master, sizeof(embed.pos), mutable_buffer{embed.token}
+}
+{
+}
+
+ircd::gpt::pipe::model::language::language(const gpt::model::embed &embed)
+:master
+{
+	{
+		sizeof(embed), const_buffer
+		{
+			reinterpret_cast<const char *>(&embed),
+			sizeof(embed),
+		}
+	},
+}
+,pos
+{
+	master, 0, const_buffer{embed.pos}
+}
+,token
+{
+	master, sizeof(embed.pos), const_buffer{embed.token}
 }
 {
 }
@@ -630,14 +684,66 @@ noexcept
 // pipe::model::decoder
 //
 
+ircd::gpt::pipe::model::decoder::decoder(gpt::model::decoder &decoder)
+:master
+{
+	// params
+	{
+		sizeof(gpt::model::block) * 12 + sizeof(gpt::model::norm), mutable_buffer
+		{
+			reinterpret_cast<char *>(decoder.layer),
+			sizeof(decoder.layer) + sizeof(decoder.f)
+		}
+	},
+
+	// first moment
+	{
+		sizeof(gpt::model::block) * 12 + sizeof(gpt::model::norm),
+		mutable_buffer{}
+	},
+
+	// second moment
+	{
+		sizeof(gpt::model::block) * 12 + sizeof(gpt::model::norm),
+		mutable_buffer{}
+	},
+}
+,block
+{
+	{ master, sizeof(gpt::model::block) * 0x00, decoder.layer[0x00], 0x00, },
+	{ master, sizeof(gpt::model::block) * 0x01, decoder.layer[0x01], 0x01, },
+	{ master, sizeof(gpt::model::block) * 0x02, decoder.layer[0x02], 0x02, },
+	{ master, sizeof(gpt::model::block) * 0x03, decoder.layer[0x03], 0x03, },
+	{ master, sizeof(gpt::model::block) * 0x04, decoder.layer[0x04], 0x04, },
+	{ master, sizeof(gpt::model::block) * 0x05, decoder.layer[0x05], 0x05, },
+	{ master, sizeof(gpt::model::block) * 0x06, decoder.layer[0x06], 0x06, },
+	{ master, sizeof(gpt::model::block) * 0x07, decoder.layer[0x07], 0x07, },
+	{ master, sizeof(gpt::model::block) * 0x08, decoder.layer[0x08], 0x08, },
+	{ master, sizeof(gpt::model::block) * 0x09, decoder.layer[0x09], 0x09, },
+	{ master, sizeof(gpt::model::block) * 0x0a, decoder.layer[0x0a], 0x0a, },
+	{ master, sizeof(gpt::model::block) * 0x0b, decoder.layer[0x0b], 0x0b, },
+}
+,norm
+{
+	master,
+	off_t(sizeof(gpt::model::block) * 12),
+	mutable_buffer{decoder.f.bias},
+	mutable_buffer{decoder.f.weight},
+}
+{
+}
+
 ircd::gpt::pipe::model::decoder::decoder(const gpt::model::decoder &decoder)
 :master
 {
-	sizeof(gpt::model::block) * 12 + sizeof(gpt::model::norm), const_buffer
+	// params
 	{
-		reinterpret_cast<const char *>(decoder.layer),
-		sizeof(decoder.layer) + sizeof(decoder.f)
-	}
+		sizeof(gpt::model::block) * 12 + sizeof(gpt::model::norm), const_buffer
+		{
+			reinterpret_cast<const char *>(decoder.layer),
+			sizeof(decoder.layer) + sizeof(decoder.f)
+		}
+	},
 }
 ,block
 {
@@ -673,13 +779,57 @@ noexcept
 // pipe::model::block
 //
 
+ircd::gpt::pipe::model::block::block(gpt::model::block &block,
+                                     const size_t layer)
+:master
+{
+	// params
+	{
+		sizeof(block), mutable_buffer
+		{
+			reinterpret_cast<char *>(&block), sizeof(block)
+		}
+	},
+
+	// first moment
+	{
+		sizeof(block),
+		mutable_buffer{}
+	},
+
+	// second moment
+	{
+		sizeof(block),
+		mutable_buffer{}
+	},
+}
+,attn
+{
+	master,
+	0,
+	block.ln1,
+	block.attn,
+}
+,ffnn
+{
+	master,
+	off_t(sizeof(block.ln1) + sizeof(block.attn)),
+	block.ln2,
+	block.ffnn,
+}
+{
+}
+
 ircd::gpt::pipe::model::block::block(const gpt::model::block &block,
                                      const size_t layer)
 :master
 {
-	sizeof(block), const_buffer
+	// params
 	{
-		reinterpret_cast<const char *>(&block), sizeof(block)
+		sizeof(block), const_buffer
+		{
+			reinterpret_cast<const char *>(&block), sizeof(block)
+		}
 	}
 }
 ,attn
@@ -692,14 +842,35 @@ ircd::gpt::pipe::model::block::block(const gpt::model::block &block,
 ,ffnn
 {
 	master,
-	sizeof(block.ln1) + sizeof(block.attn),
+	off_t(sizeof(block.ln1) + sizeof(block.attn)),
 	block.ln2,
 	block.ffnn,
 }
 {
 }
 
-ircd::gpt::pipe::model::block::block(cl::data &master,
+ircd::gpt::pipe::model::block::block(cl::data *const master,
+                                     const off_t offset,
+                                     gpt::model::block &block,
+                                     const size_t layer)
+:attn
+{
+	master,
+	offset,
+	block.ln1,
+	block.attn,
+}
+,ffnn
+{
+	master,
+	offset + off_t(sizeof(block.ln1) + sizeof(block.attn)),
+	block.ln2,
+	block.ffnn,
+}
+{
+}
+
+ircd::gpt::pipe::model::block::block(cl::data *const master,
                                      const off_t offset,
                                      const gpt::model::block &block,
                                      const size_t layer)
@@ -724,7 +895,45 @@ ircd::gpt::pipe::model::block::block(cl::data &master,
 // pipe::model::ffnn
 //
 
-ircd::gpt::pipe::model::ffnn::ffnn(cl::data &master,
+ircd::gpt::pipe::model::ffnn::ffnn(cl::data *const master,
+                                   const off_t offset,
+                                   gpt::model::norm &norm,
+                                   gpt::model::ffnn &ffnn)
+:norm
+{
+	master,
+	offset,
+	mutable_buffer{norm.bias},
+	mutable_buffer{norm.weight},
+}
+,fcon
+{
+	master,
+	offset + off_t(sizeof(norm)),
+	mutable_buffer{ffnn.fc_bias},
+	mutable_buffer{ffnn.fc_weight},
+}
+,proj
+{
+	master,
+	offset + off_t(sizeof(norm) + sizeof(ffnn.fc_bias) + sizeof(ffnn.fc_weight)),
+	mutable_buffer{ffnn.proj_bias},
+	mutable_buffer{ffnn.proj_weight},
+}
+{
+	always_assert
+	(
+		ircd::data(const_buffer{ffnn.proj_weight})
+		==
+		ircd::data(const_buffer{norm.bias}) +
+		sizeof(norm) +
+		sizeof(ffnn.fc_bias) +
+		sizeof(ffnn.fc_weight) +
+		ircd::size(const_buffer{ffnn.proj_bias})
+	);
+}
+
+ircd::gpt::pipe::model::ffnn::ffnn(cl::data *const master,
                                    const off_t offset,
                                    const gpt::model::norm &norm,
                                    const gpt::model::ffnn &ffnn)
@@ -766,7 +975,54 @@ ircd::gpt::pipe::model::ffnn::ffnn(cl::data &master,
 // pipe::model::attn
 //
 
-ircd::gpt::pipe::model::attn::attn(cl::data &master,
+ircd::gpt::pipe::model::attn::attn(cl::data *const master,
+                                   const off_t offset,
+                                   gpt::model::norm &norm,
+                                   gpt::model::attn &attn)
+:norm
+{
+	master,
+	offset,
+	mutable_buffer{norm.bias},
+	mutable_buffer{norm.weight},
+}
+,fcon
+{
+	master,
+	offset + off_t(sizeof(norm)),
+	mutable_buffer{attn.attn_bias},
+	mutable_buffer{attn.attn_weight},
+}
+,proj
+{
+	master,
+	offset + off_t(sizeof(norm) + sizeof(attn.attn_bias) + sizeof(attn.attn_weight) + sizeof(attn.bias)),
+	mutable_buffer{attn.proj_bias},
+	mutable_buffer{attn.proj_weight},
+}
+,mask
+{
+	master[0],
+	{
+		sizeof(attn.bias),
+		offset + off_t(sizeof(norm) + sizeof(attn.attn_bias) + sizeof(attn.attn_weight)),
+	},
+}
+{
+	always_assert
+	(
+		ircd::data(const_buffer{attn.proj_weight})
+		==
+		ircd::data(const_buffer{norm.bias}) +
+		sizeof(norm) +
+		sizeof(attn.bias) +
+		sizeof(attn.attn_bias) +
+		sizeof(attn.attn_weight) +
+		ircd::size(const_buffer{attn.proj_bias})
+	);
+}
+
+ircd::gpt::pipe::model::attn::attn(cl::data *const master,
                                    const off_t offset,
                                    const gpt::model::norm &norm,
                                    const gpt::model::attn &attn)
@@ -793,7 +1049,7 @@ ircd::gpt::pipe::model::attn::attn(cl::data &master,
 }
 ,mask
 {
-	master,
+	master[0],
 	{
 		sizeof(attn.bias),
 		offset + off_t(sizeof(norm) + sizeof(attn.attn_bias) + sizeof(attn.attn_weight)),
@@ -817,86 +1073,92 @@ ircd::gpt::pipe::model::attn::attn(cl::data &master,
 // pipe::model::tensor
 //
 
-ircd::gpt::pipe::model::tensor::tensor(const const_buffer &bias,
-                                       const const_buffer &weight)
+ircd::gpt::pipe::model::tensor::tensor(cl::data *const master,
+                                       const off_t offset,
+                                       const mutable_buffer &bias,
+                                       const mutable_buffer &weight)
 :bias
 {
-	ircd::size(bias),
+	master,
+	offset,
 	bias,
 }
 ,weight
 {
-	ircd::size(weight),
+	master,
+	off_t(offset + ircd::size(bias)),
 	weight,
 }
 {
 }
 
-ircd::gpt::pipe::model::tensor::tensor(cl::data &master,
+ircd::gpt::pipe::model::tensor::tensor(cl::data *const master,
                                        const off_t offset,
                                        const const_buffer &bias,
                                        const const_buffer &weight)
 :bias
 {
 	master,
-	{
-		ircd::size(bias),           // size
-		offset,                     // offset
-	},
+	offset,
+	bias,
 }
 ,weight
 {
 	master,
+	off_t(offset + ircd::size(bias)),
+	weight,
+}
+{
+}
+
+//
+// pipe::model::matrix
+//
+
+ircd::gpt::pipe::model::matrix::matrix(cl::data *const master,
+                                       const off_t offset,
+                                       const mutable_buffer &param)
+:param
+{
+	master[0],
 	{
-		ircd::size(weight),         // size
-		offset + ircd::size(bias),  // offset
-	}
+		ircd::size(param),
+		offset,
+	},
 }
+,moment
 {
-}
-
-//
-// gpt::task
-//
-
-ircd::gpt::task::task(const gpt::opts *const opts,
-                      struct ircd_gpt_task *const ctrl)
-:opts
-{
-	opts
-}
-,ctrl
-{
-	ctrl
-}
-{
-	memset(this->ctrl, 0x0, sizeof(ircd_gpt_task));
-
-    this->ctrl->rand[0] = this->opts->seed;
-    this->ctrl->rand[1] = this->opts->seed;
-    this->ctrl->rand[2] = -1UL;
-    this->ctrl->rand[3] = -1UL;
-}
-
-ircd::gpt::task::~task()
-noexcept
-{
-}
-
-//
-// hypercall
-//
-
-ircd::string_view
-ircd::gpt::reflect(const enum ircd_gpt_hypercall code)
-noexcept
-{
-	switch(code)
+	// first moment
 	{
-		case IRCD_GPT_ACCEPT:      return "ACCEPT";
-		case IRCD_GPT_ECOMPLETE:   return "ECOMPLETE";
-		case IRCD_GPT_ETOKENS:     return "ETOKENS";
-	}
+		master[1],
+		{
+			ircd::size(param),
+			offset,
+		},
+	},
 
-	return "??????";
+	// second moment
+	{
+		master[2],
+		{
+			ircd::size(param),
+			offset,
+		},
+	},
+}
+{
+}
+
+ircd::gpt::pipe::model::matrix::matrix(cl::data *const master,
+                                       const off_t offset,
+                                       const const_buffer &param)
+:param
+{
+	master[0],
+	{
+		ircd::size(param),          // size
+		offset,                     // offset
+	},
+}
+{
 }

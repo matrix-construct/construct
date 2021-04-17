@@ -628,3 +628,50 @@ ircd::gpt::gelu(f32x4 &out,
 {
 	out = 0.5 * in * (1.0 + tanh(in * f32(0.7978845608) * (1.0 + f32(0.044715) * in * in)));
 }
+
+
+//
+// gpt::task
+//
+
+ircd::gpt::task::task(const gpt::opts *const opts,
+                      struct ircd_gpt_task *const ctrl)
+:opts
+{
+	opts
+}
+,ctrl
+{
+	ctrl
+}
+{
+	memset(this->ctrl, 0x0, sizeof(ircd_gpt_task));
+
+	this->ctrl->rand[0] = this->opts->seed;
+	this->ctrl->rand[1] = this->opts->seed;
+	this->ctrl->rand[2] = -1UL;
+	this->ctrl->rand[3] = -1UL;
+}
+
+ircd::gpt::task::~task()
+noexcept
+{
+}
+
+//
+// hypercall
+//
+
+ircd::string_view
+ircd::gpt::reflect(const enum ircd_gpt_hypercall code)
+noexcept
+{
+	switch(code)
+	{
+		case IRCD_GPT_ACCEPT:      return "ACCEPT";
+		case IRCD_GPT_ECOMPLETE:   return "ECOMPLETE";
+		case IRCD_GPT_ETOKENS:     return "ETOKENS";
+	}
+
+	return "??????";
+}
