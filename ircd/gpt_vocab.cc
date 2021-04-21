@@ -266,7 +266,7 @@ ircd::gpt::vocab::tokenize_block(u16x16 &token,
 noexcept
 {
 	u8x16 pre_token[16];
-	const auto &[pre_tokens, consumed]
+	const auto [pre_tokens, consumed]
 	{
 		pre_tokenize(pre_token, in, in_mask)
 	};
@@ -276,6 +276,7 @@ noexcept
 		0, consumed
 	};
 
+	assert(consumed);
 	for(uint i(0); i < pre_tokens && ret[0] < 16; ++i)
 	{
 		// one token in hand is worth two in the bpe
@@ -303,6 +304,7 @@ noexcept
 		}
 	}
 
+	assert(ret[1]);
 	return ret;
 }
 
@@ -338,11 +340,11 @@ ircd::gpt::vocab::pre_tokenize(u8x16 (&token)[16],
 			ch[i]: charset[ch[i]];
 
 	u64x2 ret {0, 0};
-	for(uint i(0); ret[0] >= i && ret[1] < 16; ++i)
+	for(uint i(0); ret[0] < 16 && ret[1] < 16; ++i)
 	{
 		static const u32x16 lane0_mask
 		{
-			-1U
+			-1U, 0
 		};
 
 		// Create a mask from all non-leading characters of input tokens with
@@ -356,19 +358,19 @@ ircd::gpt::vocab::pre_tokenize(u8x16 (&token)[16],
 		// Get the number of codepoints of the first token from the cover.
 		const auto cp_num
 		{
-			std::min(simd::lzcnt(~cover_mask) / 32UL, 16UL)
+			std::min(simd::lzcnt(~cover_mask | ~ch_mask) / 32UL, 16UL)
 		};
 
 		// Input codepoint lengths
 		const u32x16 cp_len
 		(
-			utf8::length(ch & cover_mask)
+			utf8::length(ch) & cover_mask
 		);
 
 		// Output codepoint lengths
 		const u32x16 rcp_len
 		(
-			utf8::length(rch & cover_mask)
+			utf8::length(rch) & cover_mask
 		);
 
 		// Generate utf-8 codepoints
@@ -378,32 +380,21 @@ ircd::gpt::vocab::pre_tokenize(u8x16 (&token)[16],
 		);
 
 		u32x16 idx;
-		uint off(0); // result bytes of utf-8
-		for(uint j(0); j < cp_num; off += rcp_len[j++])
-			idx[j] = off;
-
-		uint len(0); // input bytes of utf-8
+		uint off(0), len(0);
 		for(uint j(0); j < cp_num; ++j)
+			idx[j] = off,
+			off += rcp_len[j],
 			len += cp_len[j];
 
-		// When the first token is too large, we truncate that token here and
-		// return, effectively splitting the token into multiple. If the token
-		// after the first is too large (input potentially spans into the next
-		// block), we kick it to the next iteration entirely.
-		assert(ret[1] <= 16);
-		const auto skip
-		{
-			boolmask<u64>(ret[1] + off >= 16 && i > 0)
-		};
+		// One token over the line...
+		if(ret[1] + off >= 16 && i > 0)
+			break;
 
 		// We have to return the proper number of bytes for what was truncated
 		// from the input, but the truncation is determined after a transform
 		// which may have a different size; this has to be offset back now.
-		if(!skip && ret[1] + off > 16)
-		{
-			assert(off >= len);
-			len -= (off - len);
-		}
+		if(ret[1] + off > 16)
+			len -= (ret[1] + off) - 16;
 
 		// Pack the utf-8 codepoints into the result token
 		token[i] = {0};
@@ -420,8 +411,9 @@ ircd::gpt::vocab::pre_tokenize(u8x16 (&token)[16],
 			tok_mask = shr<32>(tok_mask);
 		}
 
-		ret[0] += !skip && len;
-		ret[1] += ~skip & len;
+		ret[0] += 1;
+		ret[1] += len;
+		assert(len <= 16);
 	}
 
 	return ret;
@@ -610,6 +602,7 @@ ircd::gpt::vocab::unk_tokenize(u16x16 &token,
 		if(!slen)
 			token[num + tokens] = str[consumed];
 
+		assert(slen < 16);
 		consumed += std::max(slen, 1U);
 		tokens += 1U;
 	}
