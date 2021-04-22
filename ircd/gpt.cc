@@ -199,21 +199,21 @@ ircd::gpt::generate(const vector_view<u16> &out,
 		const size_t report_size = snprintf
 		(
 			report, sizeof(report),
-			"%4u:%-4u %4u:%-4u %1u%1u [ %4.1f%% %6.2f%% %5.2fL %5.2fL ] %5.1f%% %5.1f%% %4.1fL %4.1fL  %s %04x  %8s %8s | %8s",
+			"%4lu:%-4u %4lu:%-4lu %6.1f%% %5.1fP %6.3fL [%c%c%c] %5u %6.3fL %6.2fP  %5.1f%% %s %04x  %8s %8s | %8s",
 			j + in.size(),
 			ctrl.tokens,
 			ctrl.epoch,
 			ctrl.cycle,
-			accc[0] + accc[1] + accc[2],
-			errc[0] + errc[1] + errc[2],
-			ctrl.cert_mean < 100.0? ctrl.cert_mean: NAN,
-			ctrl.perp_mean < 100.0? ctrl.perp_mean: NAN,
-			ctrl.loss_mean < 100.0? ctrl.loss_mean: NAN,
-			ctrl.l2_loss_mean < 100.0? ctrl.l2_loss_mean: NAN,
-			ctrl.cert < 100.0? ctrl.cert: NAN,
-			ctrl.perp < 100.0? ctrl.perp: NAN,
-			ctrl.loss < 100.0? ctrl.loss: NAN,
-			ctrl.l2_loss < 100.0? ctrl.l2_loss: NAN,
+			std::clamp(ctrl.cert_mean * 100.0f, 0.0f, 100.0f),
+			std::clamp(ctrl.perp_mean, 0.0f, 100.0f),
+			std::clamp(ctrl.loss_mean, 0.0f, 99.99f),
+			opts.label == out[j]? '+': ' ',
+			accc[0] + accc[1] + accc[2] >= 3? 'A': ' ',
+			errc[0] + errc[1] + errc[2] >= 3? 'E': ' ',
+			opts.label,
+			std::clamp(ctrl.loss, 0.0f, 99.99f),
+			std::clamp(ctrl.perp, 0.0f, 100.0f),
+			std::clamp(ctrl.cert * 100.0f, 0.0f, 100.0f),
 			vocab::debug(dbuf, out[j]).c_str(),
 			out[j],
 			pretty(tmbuf[0], milliseconds(last_time / bsz), 1).c_str(),
@@ -230,7 +230,7 @@ ircd::gpt::generate(const vector_view<u16> &out,
 	}
 
 	ret = ctrl.tokens - in.size();
-	for(uint i(0); i < 3; ++i)
+	if ((false)) for(uint i(0); i < 3; ++i)
 		if(accc_thresh[i] && ctrl.accept_seq[i] >= accc_thresh[i])
 		{
 			ret -= (3 - accc_thresh[i]);

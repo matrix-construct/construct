@@ -190,7 +190,9 @@ ircd_gpt_attn_self(__global const struct ircd_gpt_task *const ctrl,
 		for(uint i = 0; i < wn; ++i)
 			sum += self[i][li];
 
-		const float lambda = 1.0f / sum;
+		const float
+		lambda = 1.0f / sum;
+
 		for(uint i = 0; i < wn; ++i)
 			self[i][li] *= lambda;
 	}
@@ -615,34 +617,32 @@ ircd_gpt_lm_result(__global struct ircd_gpt_task *const ctrl,
 	ctrl->tokens = tokens;
 	ctrl->token[dest] = token;
 
-	if(opts->top_k > 1)
-		return;
-
 	const ushort
-	next_select = select + 1,
-	next_token = idx[next_select];
+	ln = get_local_size(0),
+	next_select = (select + 1) % ln,
+	next_token = idx[next_select],
+	sum_sel = ctrl->epoch % 3;
 
 	const float
-	test_lsm = logexp[opts->label] * ctrl->samax_lambda,
+	test_lsm = logexp[opts->label],
 	loss = 0.0f - log(test_lsm * ctrl->samax_lambda),
-	perp = logsm[token] * 100.0f,
-	cert = ((logsm[token] - logsm[next_token]) / logsm[token]) * 100.0f,
-	loss_sum = ctrl->loss_sum + loss,
-	perp_sum = ctrl->perp_sum + perp,
-	cert_sum = ctrl->cert_sum + cert,
-	mean_div = ctrl->epoch + 1.0f,
-	loss_mean = loss_sum / mean_div,
-	perp_mean = perp_sum / mean_div,
-	cert_mean = cert_sum / mean_div;
+	perp = (1.0f - logsm[token]) * native_log2(opts->logits),
+	cert = (logsm[token] - logsm[next_token]) / logsm[token],
+	loss_sum = ctrl->loss_sum[0] + ctrl->loss_sum[1] + ctrl->loss_sum[2] + loss,
+	perp_sum = ctrl->perp_sum[0] + ctrl->perp_sum[1] + ctrl->perp_sum[2] + perp,
+	cert_sum = ctrl->cert_sum[0] + ctrl->cert_sum[1] + ctrl->cert_sum[2] + cert,
+	loss_mean = loss_sum / (ctrl->epoch + 1.0f),
+	perp_mean = perp_sum / (ctrl->epoch + 1.0f),
+	cert_mean = cert_sum / (ctrl->epoch + 1.0f);
 
 	ctrl->loss = loss;
-	ctrl->loss_sum = loss_sum;
+	ctrl->loss_sum[sum_sel] += loss;
 	ctrl->loss_mean = loss_mean;
 	ctrl->perp = perp;
-	ctrl->perp_sum = perp_sum;
+	ctrl->perp_sum[sum_sel] += perp;
 	ctrl->perp_mean = perp_mean;
 	ctrl->cert = cert;
-	ctrl->cert_sum = cert_sum;
+	ctrl->cert_sum[sum_sel] += cert;
 	ctrl->cert_mean = cert_mean;
 }
 

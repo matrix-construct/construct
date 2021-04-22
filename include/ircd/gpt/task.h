@@ -75,24 +75,6 @@ struct ircd_gpt_task
 	/// State counters for the accept/error sequence codes.
 	uint accept_seq[4], error_seq[4];
 
-	/// Loss for last token of last cycle
-	float loss;
-
-	/// Sum loss over all cycles
-	float loss_sum;
-
-	/// Average loss over all cycles
-	float loss_mean;
-
-	/// Perplexity score for last token of last cycle
-	float perp;
-
-	/// Perplexity sum over all cycles
-	float perp_sum;
-
-	/// Perplexity mean over context
-	float perp_mean;
-
 	/// Logit softmax mu
 	float samax_mu;
 
@@ -102,20 +84,35 @@ struct ircd_gpt_task
 	/// Logit softmax lambda
 	float samax_lambda;
 
+	/// Loss for last token of last cycle
+	float loss;
+
+	/// Sum loss over all cycles
+	float loss_sum[4];
+
+	/// Average loss over all cycles
+	float loss_mean;
+
+	/// Perplexity score for last token of last cycle
+	float perp;
+
+	/// Sum ppl over all cycles
+	float perp_sum[4];
+
+	/// Perplexity mean over context
+	float perp_mean;
+
 	/// Certainty difference score for last token of last cycle
 	float cert;
 
-	/// Certainty sum over all cycles
-	float cert_sum;
+	/// Sum certainty over all cycles
+	float cert_sum[4];
 
 	/// Certainty mean over context
 	float cert_mean;
 
 	/// Final loss
 	float l2_loss;
-
-	/// Final loss sum
-	float l2_loss_sum;
 
 	/// Final loss mean
 	float l2_loss_mean;
