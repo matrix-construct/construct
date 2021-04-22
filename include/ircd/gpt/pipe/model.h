@@ -93,6 +93,22 @@ struct ircd::gpt::pipe::model::block
 	block(gpt::model::block &, const size_t);
 };
 
+struct ircd::gpt::pipe::model::language
+{
+	cl::data
+	master[3];
+
+	matrix
+	pos,
+	token;
+
+	language(cl::data *, const off_t, const gpt::model::embed &);
+	language(cl::data *, const off_t, gpt::model::embed &);
+	language(const gpt::model::embed &);
+	language( gpt::model::embed &);
+	~language() noexcept;
+};
+
 struct ircd::gpt::pipe::model::decoder
 {
 	// Combined-layer memory roots
@@ -109,18 +125,4 @@ struct ircd::gpt::pipe::model::decoder
 	decoder(const gpt::model::decoder &);
 	decoder(gpt::model::decoder &);
 	~decoder() noexcept;
-};
-
-struct ircd::gpt::pipe::model::language
-{
-	cl::data
-	master[3];
-
-	matrix
-	pos,
-	token;
-
-	language(const gpt::model::embed &);
-	language(gpt::model::embed &);
-	~language() noexcept;
 };

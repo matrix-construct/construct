@@ -697,70 +697,6 @@ noexcept
 }
 
 //
-// pipe::model::language
-//
-
-ircd::gpt::pipe::model::language::language(gpt::model::embed &embed)
-:master
-{
-	// params
-	{
-		sizeof(embed), mutable_buffer
-		{
-			reinterpret_cast<char *>(&embed),
-			sizeof(embed),
-		}
-	},
-
-	// first moment
-	{
-		sizeof(embed), mutable_buffer{},
-	},
-
-	// second moment
-	{
-		sizeof(embed), mutable_buffer{},
-	},
-}
-,pos
-{
-	master, 0, mutable_buffer{embed.pos}
-}
-,token
-{
-	master, sizeof(embed.pos), mutable_buffer{embed.token}
-}
-{
-}
-
-ircd::gpt::pipe::model::language::language(const gpt::model::embed &embed)
-:master
-{
-	{
-		sizeof(embed), const_buffer
-		{
-			reinterpret_cast<const char *>(&embed),
-			sizeof(embed),
-		}
-	},
-}
-,pos
-{
-	master, 0, const_buffer{embed.pos}
-}
-,token
-{
-	master, sizeof(embed.pos), const_buffer{embed.token}
-}
-{
-}
-
-ircd::gpt::pipe::model::language::~language()
-noexcept
-{
-}
-
-//
 // pipe::model::decoder
 //
 
@@ -851,6 +787,98 @@ ircd::gpt::pipe::model::decoder::decoder(const gpt::model::decoder &decoder)
 }
 
 ircd::gpt::pipe::model::decoder::~decoder()
+noexcept
+{
+}
+
+//
+// pipe::model::language
+//
+
+ircd::gpt::pipe::model::language::language(gpt::model::embed &embed)
+:master
+{
+	// params
+	{
+		sizeof(embed), mutable_buffer
+		{
+			reinterpret_cast<char *>(&embed),
+			sizeof(embed),
+		}
+	},
+
+	// first moment
+	{
+		sizeof(embed), mutable_buffer{},
+	},
+
+	// second moment
+	{
+		sizeof(embed), mutable_buffer{},
+	},
+}
+,pos
+{
+	master, 0, mutable_buffer{embed.pos}
+}
+,token
+{
+	master, sizeof(embed.pos), mutable_buffer{embed.token}
+}
+{
+}
+
+ircd::gpt::pipe::model::language::language(const gpt::model::embed &embed)
+:master
+{
+	{
+		sizeof(embed), const_buffer
+		{
+			reinterpret_cast<const char *>(&embed),
+			sizeof(embed),
+		}
+	},
+}
+,pos
+{
+	master, 0, const_buffer{embed.pos}
+}
+,token
+{
+	master, sizeof(embed.pos), const_buffer{embed.token}
+}
+{
+}
+
+ircd::gpt::pipe::model::language::language(cl::data *const master,
+                                           const off_t offset,
+                                           gpt::model::embed &embed)
+:pos
+{
+	master, offset, mutable_buffer{embed.pos}
+}
+,token
+{
+	master, offset + off_t(sizeof(embed.pos)), mutable_buffer{embed.token}
+}
+{
+}
+
+ircd::gpt::pipe::model::language::language(cl::data *const master,
+                                           const off_t offset,
+                                           const gpt::model::embed &embed)
+:pos
+{
+	master, offset, const_buffer{embed.pos}
+}
+,token
+{
+	master, offset + off_t(sizeof(embed.pos)), const_buffer{embed.token}
+}
+{
+}
+
+ircd::gpt::pipe::model::language::~language()
 noexcept
 {
 }
