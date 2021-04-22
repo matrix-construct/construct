@@ -2795,6 +2795,7 @@ const
 	});
 }
 
+[[gnu::hot]]
 ircd::json::object::const_iterator
 ircd::json::object::begin()
 const try
@@ -2828,6 +2829,7 @@ catch(const expectation_failure<parse_error> &e)
 // object::const_iterator
 //
 
+[[gnu::hot]]
 ircd::json::object::const_iterator &
 ircd::json::object::const_iterator::operator++()
 {
@@ -3134,6 +3136,7 @@ const
 	return json::strung(*this);
 }
 
+[[gnu::hot]]
 ircd::json::array::const_iterator
 ircd::json::array::begin()
 const
@@ -3196,6 +3199,7 @@ const
 // array::const_iterator
 //
 
+[[gnu::hot]]
 ircd::json::array::const_iterator &
 ircd::json::array::const_iterator::operator++()
 {
