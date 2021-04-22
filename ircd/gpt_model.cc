@@ -161,7 +161,7 @@ ircd::gpt::model::init_from_cache(const string_view &cache_path)
 
 	const fs::fd fd
 	{
-		cache_path, std::ios::in | std::ios::out
+		cache_path, std::ios::in //| std::ios::out
 	};
 
 	fs::map::opts map_opts
@@ -171,6 +171,7 @@ ircd::gpt::model::init_from_cache(const string_view &cache_path)
 
 	map_opts.huge2mb = true;
 	map_opts.locked = false;
+	map_opts.shared = false;
 	default_model_shm = fs::map
 	{
 		fd, map_opts, sizeof(decoder)

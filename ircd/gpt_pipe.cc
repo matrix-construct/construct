@@ -260,6 +260,16 @@ ircd::gpt::pipe::exec::exec(task &task,
 	reinterpret_cast<const char *>(task.ctrl),
 	release? sizeof(struct ircd_gpt_task): 0
 }
+,send_coil
+{
+	reinterpret_cast<const char *>(gpt::model::default_model),
+	release && desc->model->invalid? (sizeof(gpt::model::block) * 12 + sizeof(gpt::model::norm)): 0
+}
+,send_head
+{
+	reinterpret_cast<const char *>(&gpt::model::default_model->word),
+	release && desc->model->invalid? sizeof(gpt::model::embed): 0
+}
 ,recv_ctrl
 {
 	reinterpret_cast<char *>(task.ctrl),
@@ -308,6 +318,14 @@ ircd::gpt::pipe::exec::exec(task &task,
 ,release_ctrl
 {
 	desc->ctrl, send_ctrl
+}
+,release_coil
+{
+	desc->model->decode->master[0], send_coil
+}
+,release_head
+{
+	desc->model->embed->master[0], send_head
 }
 ,lm_embed
 {
@@ -361,6 +379,8 @@ ircd::gpt::pipe::exec::exec(task &task,
 	desc->ctrl, recv_ctrl
 }
 {
+	if(release && desc->model->invalid)
+		desc->model->invalid = false;
 }
 
 ircd::gpt::pipe::exec::~exec()

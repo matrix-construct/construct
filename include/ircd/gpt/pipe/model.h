@@ -26,6 +26,7 @@ struct ircd::gpt::pipe::model
 
 	std::unique_ptr<model::decoder> decode;
 	std::unique_ptr<model::language> embed;
+	bool invalid {false};
 
 	model(const gpt::model::decoder &, const gpt::model::embed &);
 	model(gpt::model::decoder &, gpt::model::embed &);

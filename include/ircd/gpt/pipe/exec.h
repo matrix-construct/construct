@@ -29,7 +29,9 @@ struct ircd::gpt::pipe::exec
 
 	const_buffer
 	send_opts,         // Set when sending the options page.
-	send_ctrl;         // Set when sending the control page.
+	send_ctrl,         // Set when sending the control page.
+	send_coil,         // Set when sending the updated model.
+	send_head;         // Set when sending the updated model.
 
 	mutable_buffer
 	recv_ctrl;         // Set when receiving the control page.
@@ -46,6 +48,8 @@ struct ircd::gpt::pipe::exec
 	cl::exec
 	release_opts,      // Release the options page.
 	release_ctrl,      // Release the control page.
+	release_coil,      // Release updates to the model.
+	release_head,      // Release updates to the model.
 	lm_embed,          // Compute token and positional embeddings.
 	coil[12 * 2],      // Pass over all layers.
 	lm_norm,           // Final normalization.
