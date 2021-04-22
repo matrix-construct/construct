@@ -442,7 +442,8 @@ construct::console::cmd__watch()
 		handle_line(); try
 		{
 			const log::console_quiet quiet(false);
-			const ircd::ctx::uninterruptible ri(false);
+			ctx::interruptible(ctx::cur(), true);
+			ctx::interruption_point();
 			ctx::sleep(sleep_time);
 		}
 		catch(const ctx::interrupted &)
