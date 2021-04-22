@@ -277,8 +277,8 @@ ircd::gpt::pipe::exec::exec(task &task,
 }
 ,range_lm_embed
 {
-	{      1 * 192UL, 0, },
-	{          192UL, 0, },
+	{ std::min(tokens,  12UL) * 192UL, 0, },
+	{                           192UL, 0, },
 }
 ,range_negative
 {
@@ -303,8 +303,8 @@ ircd::gpt::pipe::exec::exec(task &task,
 }
 ,range_lm_logsm
 {
-	{   1 * 256UL, 0 },
-	{       256UL, 0 },
+	{  1 * 256UL, 0 },
+	{      256UL, 0 },
 }
 ,range_lm_select
 {
@@ -459,12 +459,12 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 }
 ,state
 {
-	96 * 3 * 768 * sizeof(float),
+	512 * 3 * 768 * sizeof(float),
 	mutable_buffer{}
 }
 ,accum
 {
-	96 * 768 * sizeof(float),
+	512 * 768 * sizeof(float),
 	mutable_buffer{}
 }
 ,logit
