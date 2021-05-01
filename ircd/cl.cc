@@ -316,10 +316,35 @@ ircd::cl::dump_device_info(const uint i,
 
 	char buf[12][192];
 	char pbuf[8][64];
+
+	const auto type
+	{
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_TYPE, buf[0])
+	};
+
+	const auto type_str
+	{
+		type & CL_DEVICE_TYPE_CPU?
+			"CPU"_sv:
+		type & CL_DEVICE_TYPE_GPU?
+			"GPU"_sv:
+		type & CL_DEVICE_TYPE_ACCELERATOR?
+			"APU"_sv:
+			"DEV"_sv
+	};
+
+	const fmt::bsprintf<32> head
+	{
+		"%s %u:%u",
+		type_str,
+		i,
+		j,
+	};
+
 	log::info
 	{
-		log, "OpenCL [%u][%u] %-3d :%s :%s :%s :%s",
-		i, j,
+		log, "%s %-3d :%s :%s :%s :%s",
+		string_view{head},
 		CL_TARGET_OPENCL_VERSION,
 		info(clGetDeviceInfo, dev, CL_DEVICE_VERSION, buf[0]),
 		info(clGetDeviceInfo, dev, CL_DEVICE_VENDOR, buf[1]),
@@ -334,8 +359,8 @@ ircd::cl::dump_device_info(const uint i,
 
 	log::info
 	{
-		log, "OpenCL [%u][%u] %u$mHz unit %u[%lu:%lu] work %u[%u:%u:%u]",
-		i, j,
+		log, "%s %u$mHz unit %u[%lu:%lu] dims %u[%u:%u:%u]",
+		string_view{head},
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_CLOCK_FREQUENCY, buf[0]),
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_COMPUTE_UNITS, buf[1]),
 		primary? query_warp_size(primary, dev): 0UL,
@@ -351,8 +376,8 @@ ircd::cl::dump_device_info(const uint i,
 
 	log::info
 	{
-		log, "OpenCL [%u][%u] %u$bit-%s %s align %s page %s alloc %s",
-		i, j,
+		log, "%s %u$bit-%s %s align %s page %s alloc %s",
+		string_view{head},
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_ADDRESS_BITS, buf[0]),
 		info<bool>(clGetDeviceInfo, dev, CL_DEVICE_ENDIAN_LITTLE, buf[1])?
 			"LE"_sv: "BE"_sv,
@@ -365,8 +390,8 @@ ircd::cl::dump_device_info(const uint i,
 
 	log::info
 	{
-		log, "OpenCL [%u][%u] global %s cache %s line %s type[%02x]; local %s type[%02x]; const %s",
-		i, j,
+		log, "%s global %s cache %s line %s type[%02x]; local %s type[%02x]; const %s",
+		string_view{head},
 		pretty(pbuf[0], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_SIZE, buf[0]))),
 		pretty(pbuf[1], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, buf[1]))),
 		pretty(pbuf[2], iec(info<uint>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, buf[2]))),
@@ -378,8 +403,8 @@ ircd::cl::dump_device_info(const uint i,
 
 	log::info
 	{
-		log, "OpenCL [%u][%u] char%u short%u half%u int%u float%u long%u double%u; argc:%u cargc:%u SPIR-V:%b",
-		i, j,
+		log, "%s char%u short%u half%u int%u float%u long%u double%u; argc:%u cargc:%u SPIR-V:%b",
+		string_view{head},
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR, buf[0]),
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT, buf[1]),
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF, buf[2]),
@@ -392,11 +417,11 @@ ircd::cl::dump_device_info(const uint i,
 		native_kernel,
 	};
 
-	log::info
+	log::logf
 	{
-		log, "OpenCL [%u][%u] :%s",
-		i,
-		j,
+		log, log::level::DEBUG,
+		"%s :%s",
+		string_view{head},
 		info(clGetDeviceInfo, dev, CL_DEVICE_EXTENSIONS, buf[0]),
 	};
 }
