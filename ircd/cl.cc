@@ -458,6 +458,9 @@ ircd::cl::query_warp_size(cl_context context,
 void
 ircd::cl::sync()
 {
+	if(unlikely(!primary))
+		return;
+
 	auto &q
 	{
 		queue[0][0]
