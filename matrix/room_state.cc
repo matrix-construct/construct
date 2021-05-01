@@ -980,14 +980,15 @@ ircd::m::room::state::rebuild::rebuild(const room::id &room_id)
 			++added;
 		}
 
-		log::logf
-		{
-			log, pass? log::level::DEBUG: log::level::DWARNING,
-			"%s in %s present state :%s",
-			string_view{event.event_id},
-			string_view{room_id},
-			pass? "PASS"_sv: what(fail),
-		};
+		if(unlikely(!pass))
+			log::logf
+			{
+				log, log::level::DWARNING,
+				"%s in %s present state :%s",
+				string_view{event.event_id},
+				string_view{room_id},
+				what(fail),
+			};
 
 		return true;
 	});
