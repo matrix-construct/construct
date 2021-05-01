@@ -17299,6 +17299,41 @@ console_cmd__app__signal(opt &out, const string_view &line)
 }
 
 //
+// cl
+//
+
+bool
+console_cmd__cl__info(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"platform", "device",
+	}};
+
+	const int platform
+	{
+		param.at("platform", -1)
+	};
+
+	const int device
+	{
+		param.at("device", -1)
+	};
+
+	if(platform >= 0 && device >= 0)
+		cl::log_dev_info(platform, device);
+	else if(platform >= 0)
+		cl::log_dev_info(platform);
+	else
+		cl::log_dev_info();
+
+	out
+	<< "OpenCL information written to logger."
+	<< std::endl;
+	return true;
+}
+
+//
 // gpt
 //
 

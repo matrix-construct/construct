@@ -21,7 +21,6 @@ namespace ircd::cl
 	template<class T = string_view, class F, class id0, class id1, class param> static T info(F&&, const id0 &, const id1 &, const param &, const mutable_buffer &);
 
 	static uint query_warp_size(cl_context, cl_device_id);
-	static void dump_device_info(const uint i, const uint j);
 }
 
 // Runtime state
@@ -234,9 +233,7 @@ ircd::cl::init::init()
 	throw_on_error(err);
 
 	// Dump device details to infolog
-	for(size_t i(0); i < platforms; ++i)
-		for(size_t j(0); j < devices[i]; ++j)
-			dump_device_info(i, j);
+	log_dev_info();
 
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -306,9 +303,35 @@ noexcept
 }
 
 void
-ircd::cl::dump_device_info(const uint i,
-                           const uint j)
+ircd::cl::log_dev_info()
 {
+	for(size_t i(0); i < platforms; ++i)
+		log_dev_info(i);
+}
+
+void
+ircd::cl::log_dev_info(const uint i)
+{
+	if(unlikely(i >= PLATFORM_MAX))
+		throw std::out_of_range
+		{
+			"Invalid platform identifier."
+		};
+
+	for(size_t j(0); j < devices[i]; ++j)
+		log_dev_info(i, j);
+}
+
+void
+ircd::cl::log_dev_info(const uint i,
+                       const uint j)
+{
+	if(unlikely(i >= PLATFORM_MAX || j >= DEVICE_MAX))
+		throw std::out_of_range
+		{
+			"Invalid platform or device identifier."
+		};
+
 	const auto &dev
 	{
 		device[i][j]

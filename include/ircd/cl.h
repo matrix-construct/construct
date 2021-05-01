@@ -35,6 +35,10 @@ namespace ircd::cl
 
 	string_view reflect_error(const int code) noexcept;
 
+	void log_dev_info(const uint platform_id, const uint device_id);
+	void log_dev_info(const uint platform_id);
+	void log_dev_info();
+
 	void flush();
 	void sync();
 }
