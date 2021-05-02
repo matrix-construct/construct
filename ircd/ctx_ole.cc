@@ -23,7 +23,7 @@ namespace ircd::ctx::ole
 
 	static offload::function pop();
 	static void push(offload::function &&);
-	static void worker_remove() noexcept;
+	static void worker_remove();
 	static void worker() noexcept;
 }
 
@@ -170,6 +170,12 @@ noexcept
 		continue;
 	}
 
+	worker_remove();
+}
+
+void
+ircd::ctx::ole::worker_remove()
+{
 	const std::lock_guard lock
 	{
 		mutex
