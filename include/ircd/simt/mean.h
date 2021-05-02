@@ -8,6 +8,10 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#pragma once
+#define HAVE_IRCD_SIMT_MEAN_H
+
+#ifdef __OPENCL_C_VERSION__
 /// Compute average of all elements in the input. The result is broadcast
 /// to all elements of the output.
 ///
@@ -31,3 +35,4 @@ ircd_simt_math_mean_f4lldr(__local float4 *const restrict out,
 
 	ircd_simt_broadcast_f4lldr(out);
 }
+#endif

@@ -8,6 +8,10 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#pragma once
+#define HAVE_IRCD_SIMT_REDUCE_ADD_H
+
+#ifdef __OPENCL_C_VERSION__
 /// Sum all elements in the buffer. All threads in the group participate;
 /// result is placed in index [0], the rest of the buffer is trashed.
 inline void
@@ -25,7 +29,9 @@ ircd_simt_reduce_add_f4lldr(__local float4 *const buf)
 			buf[li] += buf[li + stride];
 	}
 }
+#endif
 
+#ifdef __OPENCL_C_VERSION__
 /// Sum all elements in the buffer. All threads in the group participate;
 /// result is placed in index [0], the rest of the buffer is trashed.
 inline float
@@ -38,3 +44,4 @@ ircd_simt_reduce_add_f4(const float4 in)
 
 	return ret;
 }
+#endif

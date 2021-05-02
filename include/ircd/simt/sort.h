@@ -8,6 +8,10 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#pragma once
+#define HAVE_IRCD_SIMT_SORT_H
+
+#ifdef __OPENCL_C_VERSION__
 /// Sort indices in `idx` which point to values contained in `val`.
 inline void
 ircd_simt_sort_idx16_flldr(__local ushort *const idx,
@@ -31,3 +35,4 @@ ircd_simt_sort_idx16_flldr(__local ushort *const idx,
 		idx[li + stride] = ours;
 	}
 }
+#endif

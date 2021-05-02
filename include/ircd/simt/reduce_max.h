@@ -8,6 +8,10 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#pragma once
+#define HAVE_IRCD_SIMT_REDUCE_MAX_H
+
+#ifdef __OPENCL_C_VERSION__
 /// Find the greatest value in the buffer. All threads in the group participate;
 /// the greatest value is placed in index [0], the rest of the buffer is
 /// trashed.
@@ -27,3 +31,4 @@ ircd_simt_reduce_max_flldr(__local float *const buf)
 				buf[li] = buf[li + stride];
 	}
 }
+#endif

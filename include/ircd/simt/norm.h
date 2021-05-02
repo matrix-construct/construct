@@ -8,6 +8,10 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#pragma once
+#define HAVE_IRCD_SIMT_NORM_H
+
+#ifdef __OPENCL_C_VERSION__
 /// Normalize the input, placing the result in possibly overlapping output.
 /// This procedure requires an additional temporary buffer.
 inline void
@@ -33,3 +37,4 @@ ircd_simt_math_norm_f4lldr(__local float4 *const out,
 
 	out[li] = sub_mean / s;
 }
+#endif

@@ -8,6 +8,10 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#pragma once
+#define HAVE_IRCD_SIMT_RAND_H
+
+#ifdef __OPENCL_C_VERSION__
 /// Generate the next pseudo-random 64-bit sequence from the 256-bit state
 /// and update the state for the next call.
 inline ulong
@@ -27,7 +31,9 @@ ircd_simt_rand_xoshiro256p(ulong s[4])
 
 	return ret;
 }
+#endif
 
+#ifdef __OPENCL_C_VERSION__
 /// Generate the next pseudo-random 64-bit sequence from the 256-bit global
 /// state and update the state for the next call.
 inline ulong
@@ -43,3 +49,4 @@ ircd_simt_rand_xoshiro256pg(__global ulong s[4])
 
 	return ret;
 }
+#endif

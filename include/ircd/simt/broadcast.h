@@ -8,6 +8,10 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#pragma once
+#define HAVE_IRCD_SIMT_BROADCAST_H
+
+#ifdef __OPENCL_C_VERSION__
 /// Broadcast originating from the local leader (index [0]). All threads in the
 /// group participate.
 inline void
@@ -25,3 +29,4 @@ ircd_simt_broadcast_f4lldr(__local float4 *const buf)
 		barrier(CLK_LOCAL_MEM_FENCE);
 	}
 }
+#endif
