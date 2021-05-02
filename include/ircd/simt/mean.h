@@ -11,6 +11,16 @@
 #pragma once
 #define HAVE_IRCD_SIMT_MEAN_H
 
+/// Averaging state; this is for computing running averages
+/// XXX eventually
+struct ircd_math_mean
+{
+	float
+	last,     ///< Last addend.
+	mean,     ///< Computed mean.
+	sum[4];   ///< Summand spread. TODO XXX
+};
+
 #ifdef __OPENCL_C_VERSION__
 /// Compute average of all elements in the input. The result is broadcast
 /// to all elements of the output.

@@ -9,13 +9,17 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_SIMT_H
+#define HAVE_IRCD_SIMT_SAMAX_H
 
-#include "broadcast.h"
-#include "reduce_add.h"
-#include "reduce_max.h"
-#include "sort.h"
-#include "mean.h"
-#include "norm.h"
-#include "rand.h"
-#include "samax.h"
+/// Softargmax state.
+///
+/// In FP32 environments, naively implementing softmax as expressed in
+/// literature will overflow. Researchers have mitigated this at the cost
+/// of some extra state and passes.
+struct ircd_math_samax
+{
+	float
+	mu,
+	sum,
+	lambda;
+};

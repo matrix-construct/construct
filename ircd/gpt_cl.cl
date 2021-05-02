@@ -155,6 +155,39 @@ ircd_gpt_ffnn(__global const struct ircd_gpt_task *const ctrl,
 
 inline void
 __attribute__((always_inline))
+ircd_gpt_attn_self_samax(__global const struct ircd_gpt_task *const ctrl,
+                         __constant const struct ircd_gpt_opts *const opts,
+                         __local float self[][12])
+{
+	const uint
+	li = get_local_id(0),
+	wn = get_num_groups(0);
+
+	struct ircd_math_samax samax =
+	{
+		.mu = -10000.0f,
+		.sum = 0.0f,
+	};
+
+	for(uint i = 0; i < wn; ++i)
+		samax.mu = max(samax.mu, self[i][li]);
+
+	for(uint i = 0; i < wn; ++i)
+		self[i][li] = exp(self[i][li] - samax.mu);
+
+	__attribute__((opencl_unroll_hint))
+	for(uint i = 0; i < wn; ++i)
+		samax.sum += self[i][li];
+
+	samax.lambda = 1.0f / samax.sum;
+
+	__attribute__((opencl_unroll_hint))
+	for(uint i = 0; i < wn; ++i)
+		self[i][li] *= samax.lambda;
+}
+
+inline void
+__attribute__((always_inline))
 ircd_gpt_attn_self(__global const struct ircd_gpt_task *const ctrl,
                    __constant const struct ircd_gpt_opts *const opts,
                    __local union ircd_gpt_tokenv *const restrict out,
@@ -201,24 +234,7 @@ ircd_gpt_attn_self(__global const struct ircd_gpt_task *const ctrl,
 		}
 
 		// Three-piece softmax
-		float mu = -10000.0f;
-		for(uint i = 0; i < wn; ++i)
-			mu = max(mu, self[i][li]);
-
-		for(uint i = 0; i < wn; ++i)
-			self[i][li] = exp(self[i][li] - mu);
-
-		float sum = 0.0f;
-		__attribute__((opencl_unroll_hint))
-		for(uint i = 0; i < wn; ++i)
-			sum += self[i][li];
-
-		const float
-		lambda = 1.0f / sum;
-
-		__attribute__((opencl_unroll_hint))
-		for(uint i = 0; i < wn; ++i)
-			self[i][li] *= lambda;
+		ircd_gpt_attn_self_samax(ctrl, opts, self);
 	}
 
 	// Propagate to full width for value dot prod.
@@ -529,7 +545,7 @@ ircd_gpt_lm_logsm(__global struct ircd_gpt_task *const ctrl,
 	ircd_simt_reduce_max_flldr(share);
 
 	if(li == 0)
-		share4[li] = ctrl->samax_mu = share[li];
+		share4[li] = ctrl->samax.mu = share[li];
 
 	ircd_simt_broadcast_f4lldr(share4);
 
@@ -560,8 +576,8 @@ ircd_gpt_lm_logsm(__global struct ircd_gpt_task *const ctrl,
 		const float
 		sum = ircd_simt_reduce_add_f4(share4[li]);
 
-		share4[li][0] = ctrl->samax_sum = sum;
-		share4[li][1] = ctrl->samax_lambda = 1.0f / sum;
+		share4[li][0] = ctrl->samax.sum = sum;
+		share4[li][1] = ctrl->samax.lambda = 1.0f / sum;
 	}
 
 	ircd_simt_broadcast_f4lldr(share4);
@@ -658,25 +674,25 @@ ircd_gpt_lm_result(__global struct ircd_gpt_task *const ctrl,
 
 	const float
 	test_lsm = logexp[opts->label],
-	loss = 0.0f - log(test_lsm * ctrl->samax_lambda),
+	loss = 0.0f - log(test_lsm * ctrl->samax.lambda),
 	perp = (1.0f - logsm[token]) * native_log2(opts->logits),
 	cert = (logsm[token] - logsm[next_token]) / logsm[token],
-	loss_sum = ctrl->loss_sum[0] + ctrl->loss_sum[1] + ctrl->loss_sum[2] + loss,
-	perp_sum = ctrl->perp_sum[0] + ctrl->perp_sum[1] + ctrl->perp_sum[2] + perp,
-	cert_sum = ctrl->cert_sum[0] + ctrl->cert_sum[1] + ctrl->cert_sum[2] + cert,
-	loss_mean = loss_sum / (ctrl->epoch + 1.0f),
-	perp_mean = perp_sum / (ctrl->epoch + 1.0f),
-	cert_mean = cert_sum / (ctrl->epoch + 1.0f);
+	loss_sum = ctrl->loss.sum[0] + ctrl->loss.sum[1] + ctrl->loss.sum[2] + loss,
+	perp_sum = ctrl->perp.sum[0] + ctrl->perp.sum[1] + ctrl->perp.sum[2] + perp,
+	cert_sum = ctrl->cert.sum[0] + ctrl->cert.sum[1] + ctrl->cert.sum[2] + cert,
+	loss_mean = loss_sum / (ctrl->epic.epoch + 1.0f),
+	perp_mean = perp_sum / (ctrl->epic.epoch + 1.0f),
+	cert_mean = cert_sum / (ctrl->epic.epoch + 1.0f);
 
-	ctrl->loss = loss;
-	ctrl->loss_sum[sum_sel] += loss;
-	ctrl->loss_mean = loss_mean;
-	ctrl->perp = perp;
-	ctrl->perp_sum[sum_sel] += perp;
-	ctrl->perp_mean = perp_mean;
-	ctrl->cert = cert;
-	ctrl->cert_sum[sum_sel] += cert;
-	ctrl->cert_mean = cert_mean;
+	ctrl->loss.last = loss;
+	ctrl->loss.sum[sum_sel] += loss;
+	ctrl->loss.mean = loss_mean;
+	ctrl->perp.last = perp;
+	ctrl->perp.sum[sum_sel] += perp;
+	ctrl->perp.mean = perp_mean;
+	ctrl->cert.last = cert;
+	ctrl->cert.sum[sum_sel] += cert;
+	ctrl->cert.mean = cert_mean;
 }
 
 __kernel void
@@ -725,7 +741,7 @@ ircd_gpt_prop_elem(__global const struct ircd_gpt_task *const ctrl,
 
 	const float4
 	param = param_[li],
-	grad = ctrl->loss_mean,
+	grad = ctrl->loss.mean,
 	alpha[2] = { 1.0f - opts->beta[0], 1.0f - opts->beta[1], },
 	exp_avg = step? exp_avg_[li]: 0.0f,
 	exp_avg_sqr = step? exp_avg_sqr_[li]: 0.0f,
