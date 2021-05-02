@@ -35,6 +35,7 @@ struct ircd::ctx::pool
 	queue<closure> q;
 	std::vector<context> ctxs;
 
+  private:
 	void work();
 	void main() noexcept;
 

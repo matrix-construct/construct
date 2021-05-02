@@ -1565,16 +1565,15 @@ try
 		q.pop()
 	};
 
+	const scope_notify notify
+	{
+		q_max
+	};
+
 	const scope_count working
 	{
 		this->working
 	};
-
-	const unwind avail{[this]()
-	noexcept
-	{
-		q_max.notify();
-	}};
 
 	// Execute the user's function
 	func();
