@@ -47,6 +47,9 @@ namespace ircd::allocator
 	bool trim(const size_t &pad = 0) noexcept; // malloc_trim(3)
 
 	size_t incore(const const_buffer &);
+	size_t advise(const const_buffer &, const int &);
+	size_t prefetch(const const_buffer &);
+	size_t evict(const const_buffer &);
 
 	std::unique_ptr<char, decltype(&std::free)>
 	aligned_alloc(const size_t &align, const size_t &size);

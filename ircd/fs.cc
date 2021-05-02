@@ -1941,56 +1941,10 @@ namespace ircd::fs
 	static uint prot(const map::opts &);
 }
 
-#if defined(MADV_NORMAL) && defined(POSIX_MADV_NORMAL)
-	static_assert(MADV_NORMAL == POSIX_MADV_NORMAL);
-#endif
-
-#if defined(MADV_SEQUENTIAL) && defined(POSIX_MADV_SEQUENTIAL)
-	static_assert(MADV_SEQUENTIAL == POSIX_MADV_SEQUENTIAL);
-#endif
-
-#if defined(MADV_RANDOM) && defined(POSIX_MADV_RANDOM)
-	static_assert(MADV_RANDOM == POSIX_MADV_RANDOM);
-#endif
-
-#if defined(MADV_WILLNEED) && defined(POSIX_MADV_WILLNEED)
-	static_assert(MADV_WILLNEED == POSIX_MADV_WILLNEED);
-#endif
-
-#if defined(MADV_DONTNEED) && defined(POSIX_MADV_DONTNEED)
-	static_assert(MADV_DONTNEED == POSIX_MADV_DONTNEED);
-#endif
-
 size_t
 ircd::fs::evict(const map &map,
                 const size_t &len,
                 const opts &opts)
-{
-	#if defined(POSIX_MADV_DONTNEED)
-		return advise(map, POSIX_MADV_DONTNEED, len, opts);
-	#else
-		return 0;
-	#endif
-}
-
-size_t
-ircd::fs::prefetch(const map &map,
-                   const size_t &len,
-                   const opts &opts)
-{
-	#if defined(POSIX_MADV_WILLNEED)
-		return advise(map, POSIX_MADV_WILLNEED, len, opts);
-	#else
-		return 0;
-	#endif
-}
-
-#if defined(HAVE_MADVISE) && defined(__linux__)
-size_t
-ircd::fs::advise(const map &map,
-                 const int &advice,
-                 const size_t &len,
-                 const opts &opts)
 {
 	const size_t offset
 	{
@@ -2002,19 +1956,27 @@ ircd::fs::advise(const map &map,
 		map + offset, len
 	};
 
-	assert(aligned(data(buf), info::page_size));
-	switch(const auto res(::madvise(data(buf), size(buf), advice)); res)
-	{
-		case 0:
-			return size(buf);          // success
-
-		default:
-			throw_system_error(res);   // error
-	}
-
-	__builtin_unreachable();
+	return allocator::evict(buf);
 }
-#elif defined(HAVE_POSIX_MADVISE)
+
+size_t
+ircd::fs::prefetch(const map &map,
+                   const size_t &len,
+                   const opts &opts)
+{
+	const size_t offset
+	{
+		buffer::align(opts.offset, info::page_size)
+	};
+
+	const mutable_buffer buf
+	{
+		map + offset, len
+	};
+
+	return allocator::prefetch(buf);
+}
+
 size_t
 ircd::fs::advise(const map &map,
                  const int &advice,
@@ -2026,24 +1988,8 @@ ircd::fs::advise(const map &map,
 		map + opts.offset, len
 	};
 
-	const auto res
-	{
-		syscall(::posix_madvise, data(buf), size(buf), advice)
-	};
-
-	return size(buf);
+	return allocator::advise(buf, advice);
 }
-#else
-#warning "posix_madvise(2) not available for this compilation."
-size_t
-ircd::fs::advise(const map &map,
-                 const int &advice,
-                 const size_t &len,
-                 const opts &opts)
-{
-	return 0;
-}
-#endif
 
 //
 // map::map

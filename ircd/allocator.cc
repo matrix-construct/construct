@@ -24,6 +24,26 @@ namespace ircd::allocator
 	static void advise_hugepage(void *const &, const size_t &alignment, const size_t &size);
 }
 
+#if defined(MADV_NORMAL) && defined(POSIX_MADV_NORMAL)
+	static_assert(MADV_NORMAL == POSIX_MADV_NORMAL);
+#endif
+
+#if defined(MADV_SEQUENTIAL) && defined(POSIX_MADV_SEQUENTIAL)
+	static_assert(MADV_SEQUENTIAL == POSIX_MADV_SEQUENTIAL);
+#endif
+
+#if defined(MADV_RANDOM) && defined(POSIX_MADV_RANDOM)
+	static_assert(MADV_RANDOM == POSIX_MADV_RANDOM);
+#endif
+
+#if defined(MADV_WILLNEED) && defined(POSIX_MADV_WILLNEED)
+	static_assert(MADV_WILLNEED == POSIX_MADV_WILLNEED);
+#endif
+
+#if defined(MADV_DONTNEED) && defined(POSIX_MADV_DONTNEED)
+	static_assert(MADV_DONTNEED == POSIX_MADV_DONTNEED);
+#endif
+
 std::unique_ptr<char, decltype(&std::free)>
 ircd::allocator::aligned_alloc(const size_t &alignment_,
                                const size_t &size_)
@@ -112,6 +132,65 @@ catch(const std::exception &e)
 }
 #else
 {
+}
+#endif
+
+size_t
+ircd::allocator::evict(const const_buffer &buf)
+{
+	#if defined(POSIX_MADV_DONTNEED)
+		return advise(buf, POSIX_MADV_DONTNEED);
+	#else
+		return 0;
+	#endif
+}
+
+size_t
+ircd::allocator::prefetch(const const_buffer &buf)
+{
+	#if defined(POSIX_MADV_WILLNEED)
+		return advise(buf, POSIX_MADV_WILLNEED);
+	#else
+		return 0;
+	#endif
+}
+
+#if defined(HAVE_MADVISE)
+size_t
+ircd::allocator::advise(const const_buffer &buf,
+                        const int &advice)
+{
+	assert(aligned(data(buf), info::page_size));
+	switch(const auto r(::madvise(mutable_cast(data(buf)), size(buf), advice)); r)
+	{
+		case 0:
+			return size(buf);          // success
+
+		default:
+			throw_system_error(r);     // error
+	}
+
+	__builtin_unreachable();
+}
+#elif defined(HAVE_POSIX_MADVISE)
+size_t
+ircd::allocator::advise(const const_buffer &buf,
+                        const int &advice)
+{
+	const auto res
+	{
+		syscall(::posix_madvise, mutable_cast(data(buf)), size(buf), advice)
+	};
+
+	return size(buf);
+}
+#else
+#warning "posix_madvise(2) not available for this compilation."
+size_t
+ircd::allocator::advise(const const_buffer &buf,
+                        const int &advice)
+{
+	return 0;
 }
 #endif
 
