@@ -9,24 +9,22 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_GPT_GPT_H
+#define HAVE_IRCD_GPT_GATE_H
 
-/// Generative Pre-trained Transformer
+/// Task Gate Descriptor
 ///
-namespace ircd::gpt
+struct ircd_gpt_gate
 {
-	IRCD_EXCEPTION(ircd::error, error)
-
-	struct task;
-	struct gate;
-
-	extern log::log log;
+	ushort code[8];
 }
+__attribute__((aligned(16)));
 
-#include "hypercall.h"
-#include "vocab.h"
-#include "model.h"
-#include "token.h"
-#include "task/task.h"
-#include "pipe/pipe.h"
-#include "generate.h"
+#ifdef __cplusplus
+struct ircd::gpt::gate
+:ircd_gpt_gate
+{
+	gate()
+	:ircd_gpt_gate{0}
+	{}
+};
+#endif

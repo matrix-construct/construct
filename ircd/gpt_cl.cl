@@ -432,7 +432,7 @@ _ircd_gpt_lm_embed(__global const struct ircd_gpt_task *const ctrl,
                    const uint word_idx)
 {
 	const ushort
-	ring_idx = (ctrl->head + tok_idx) % opts->buffer_tokens,
+	ring_idx = (ctrl->tokens.head + tok_idx) % opts->buffer_tokens,
 	token = ctrl->token[ring_idx];
 
 	const float4
@@ -454,7 +454,7 @@ ircd_gpt_lm_embed(__global const struct ircd_gpt_task *const ctrl,
 	wi = get_group_id(0),
 	wn = get_num_groups(0);
 
-	for(uint i = 0; i < ctrl->tokens; ++i)
+	for(uint i = 0; i < ctrl->tokens.count; ++i)
 		if(i % wn == wi)
 			_ircd_gpt_lm_embed(ctrl, opts, accum, pos, vocab, i, i, li);
 }
@@ -492,7 +492,7 @@ ircd_gpt_lm_logit(__global const struct ircd_gpt_task *const ctrl,
 {
 	const uint
 	gi = get_global_id(0),
-	ti = ctrl->tokens - 1,
+	ti = ctrl->tokens.count - 1,
 	words = opts->embed_width;
 
 	float4 acc = 0.0f;
@@ -596,31 +596,16 @@ ircd_gpt_leave(__global struct ircd_gpt_task *const ctrl,
                __constant const struct ircd_gpt_opts *const opts,
                const uint li)
 {
-	// If the call value has been set to something other than default we
-	// do nothing else here.
-	if(ctrl->call != IRCD_GPT_ECOMPLETE)
-		return;
-
 	// No action for other threads right now
 	if(li != 0)
 		return;
 
-	// Run debug checks and assertions.
-	#ifdef RB_DEBUG
-	if(ctrl->call == IRCD_GPT_ECOMPLETE)
-		if(ctrl->tokens < 2)
-			ctrl->call = IRCD_GPT_ETOKENS;
-	#endif
-
 	// On the last cycle, with no prior call or error code set, indicate
 	// a nominal exit condition.
-	if(ctrl->cycle + 1 >= opts->limit)
-	{
-		ctrl->call = IRCD_GPT_ACCEPT;
-		ctrl->epoch += 1;
-	}
+	if(ctrl->epic.cycle + 1 >= opts->limit)
+		ctrl->epic.epoch += 1;
 
-	ctrl->cycle += 1;
+	ctrl->epic.cycle += 1;
 	ctrl->magic = 0xC7012C70U;
 }
 
@@ -634,10 +619,6 @@ ircd_gpt_lm_result(__global struct ircd_gpt_task *const ctrl,
                    __global const float *const restrict logexp,
                    __global const float *const restrict logit)
 {
-	// When the hypercall code is already set, bail here.
-	if(ctrl->call != IRCD_GPT_ECOMPLETE)
-		return;
-
 	// To read from cells other than idx[0] we need this barrier.
 	if(opts->top_k > 1)
 		barrier(CLK_LOCAL_MEM_FENCE);
@@ -647,7 +628,7 @@ ircd_gpt_lm_result(__global struct ircd_gpt_task *const ctrl,
 		return;
 
 	const bool
-	buffer_full = ctrl->tokens >= opts->buffer_tokens;
+	buffer_full = ctrl->tokens.count >= opts->buffer_tokens;
 
 	const ulong
 	rnd = opts->top_k > 1?
@@ -657,20 +638,20 @@ ircd_gpt_lm_result(__global struct ircd_gpt_task *const ctrl,
 	entro = max(opts->top_k, 1U),
 	select = rnd % entro,
 	token = idx[select],
-	dest = (ctrl->head + ctrl->tokens) % opts->buffer_tokens,
-	tokens = min(ctrl->tokens + 1, opts->buffer_tokens),
+	dest = (ctrl->tokens.head + ctrl->tokens.count) % opts->buffer_tokens,
+	tokens = min(ctrl->tokens.count + 1, opts->buffer_tokens),
 	head = buffer_full?
-		(ctrl->head + 1) % opts->buffer_tokens: ctrl->head;
+		(ctrl->tokens.head + 1) % opts->buffer_tokens: ctrl->tokens.head;
 
-	ctrl->head = head;
-	ctrl->tokens = tokens;
+	ctrl->tokens.head = head;
+	ctrl->tokens.count = tokens;
 	ctrl->token[dest] = token;
 
 	const ushort
 	ln = get_local_size(0),
 	next_select = (select + 1) % ln,
 	next_token = idx[next_select],
-	sum_sel = ctrl->epoch % 3;
+	sum_sel = ctrl->epic.epoch % 3;
 
 	const float
 	test_lsm = logexp[opts->label],
@@ -737,7 +718,7 @@ ircd_gpt_prop_elem(__global const struct ircd_gpt_task *const ctrl,
 {
 	const uint
 	li = get_local_id(0),
-	step = ctrl->step;
+	step = ctrl->epic.step;
 
 	const float4
 	param = param_[li],

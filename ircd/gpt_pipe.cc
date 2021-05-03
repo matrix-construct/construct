@@ -129,12 +129,11 @@ ircd::gpt::generate(task &task)
 		*task.ctrl
 	};
 
-	ctrl.cycle = 0;
-	ctrl.call = IRCD_GPT_ECOMPLETE;
-	ctrl.host_tsc = prof::cycles();
-	volatile const size_t tokens(ctrl.tokens);
-	volatile const auto epoch(ctrl.epoch);
-	volatile size_t cycle(ctrl.cycle);
+	ctrl.epic.cycle = 0;
+	ctrl.epic.host_tsc = prof::cycles();
+	volatile const size_t tokens(ctrl.tokens.count);
+	volatile const auto epoch(ctrl.epic.epoch);
+	volatile size_t cycle(ctrl.epic.cycle);
 
 	std::deque<pipe::exec> list;
 	for(; cycle < opts.limit; ++cycle)
@@ -151,8 +150,7 @@ ircd::gpt::generate(task &task)
 			task, tokens + cycle, rel, acq
 		);
 
-		// Conditions for a cl::flush here; this is not default but
-		// may be configured to improve some workloads.
+		// Conditions for a cl::flush here
 		const bool flush
 		{
 			// Flushing here is enabled by the configuration
@@ -194,18 +192,8 @@ ircd::gpt::generate(task &task)
 	list.clear();
 
 	assert(ctrl.magic == 0xC7012C70);
+	assert(ctrl.epic.cycle == cycle || ctx::interruption_requested());
 	this_ctx::interruption_point();
-
-	// Interp error codes
-	if(unlikely(ctrl.call <= 0))
-		throw error
-		{
-			"hyper (#%d) :%s",
-			abs(int(ctrl.call)),
-			reflect(ctrl.call),
-		};
-
-	assert(ctrl.cycle == cycle || ctx::interruption_requested());
 }
 
 void
