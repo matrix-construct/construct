@@ -29,6 +29,7 @@ namespace ircd::cl
 
 	extern const info::versions version_api;
 	extern info::versions version_abi;
+	extern conf::item<milliseconds> nice_rate;
 	extern conf::item<bool> profile_queue;
 	extern conf::item<bool> enable;
 	extern log::log log;
@@ -205,6 +206,12 @@ struct ircd::cl::exec::opts
 
 	/// For operations which have an offset (or two); otherwise ignored.
 	off_t offset[2] {0};
+
+	/// Tune the intensity of the execution. For headless deployments the
+	/// maximum intensity is advised. Lesser values are more intense. The
+	/// default of -1 is the maximum. The value of zero yields the ircd::ctx
+	/// after submission, but does not otherwise decrease the intensity.
+	int nice {-1};
 
 	/// Starts a new dependency chain; allowing empty deps without implicit
 	/// dependency on the last work item constructed on the ircd::ctx.

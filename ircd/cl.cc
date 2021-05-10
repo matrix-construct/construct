@@ -129,6 +129,13 @@ ircd::cl::profile_queue
 	{ "persist",   false                    },
 };
 
+decltype(ircd::cl::nice_rate)
+ircd::cl::nice_rate
+{
+	{ "name",      "ircd.cl.nice.rate"  },
+	{ "default",   1L                   },
+};
+
 decltype(ircd::cl::primary_stats)
 ircd::cl::primary_stats
 {
@@ -1032,6 +1039,12 @@ ircd::cl::handle_submitted(cl::exec *const &exec,
 
 	if(opts.sync)
 		cl::sync();
+
+	if(opts.nice == 0)
+		ctx::yield();
+
+	if(opts.nice > 0)
+		ctx::sleep(opts.nice * milliseconds(nice_rate));
 }
 
 ircd::vector_view<cl_event>
