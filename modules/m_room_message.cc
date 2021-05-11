@@ -12,12 +12,19 @@ namespace ircd::m
 {
 	static void room_message_notify(const event &, vm::eval &);
 	extern hookfn<vm::eval &> room_message_notify_hook;
+	extern log::log room_message_log;
 }
 
 ircd::mapi::header
 IRCD_MODULE
 {
 	"Matrix m.room.message"
+};
+
+decltype(ircd::m::room_message_log)
+ircd::m::room_message_log
+{
+	"m.message"
 };
 
 decltype(ircd::m::room_message_notify_hook)
@@ -51,7 +58,7 @@ ircd::m::room_message_notify(const event &event,
 
 	log::info
 	{
-		m::log, "%s said %s in %s %s :%s%s",
+		room_message_log, "%s said %s in %s %s :%s%s",
 		json::get<"sender"_>(event),
 		string_view{event.event_id},
 		json::get<"room_id"_>(event),
