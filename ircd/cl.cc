@@ -161,6 +161,31 @@ ircd::cl::primary_stats
 	{ { "name", "ircd.cl.exec.barrier.tasks"  } },
 };
 
+decltype(ircd::cl::envs)
+ircd::cl::envs
+{
+	{
+		{ "name",      "LP_NUM_THREADS" },
+		{ "default",   "0"              },
+	},
+	{
+		{ "name",      "MESA_NO_MINMAX_CACHE" },
+		{ "default",   "true"                 },
+	},
+	{
+		{ "name",      "MESA_GLSL_CACHE_DISABLE" },
+		{ "default",   "true"                    },
+	},
+	{
+		{ "name",      "AMD_DEBUG"           },
+		{ "default",   "nogfx,reserve_vmid"  },
+	},
+	{
+		{ "name",      "R600_DEBUG"  },
+		{ "default",   "forcedma"    },
+	},
+};
+
 //
 // init
 //
@@ -180,14 +205,18 @@ ircd::cl::init::init()
 	const ctx::posix::enable_pthread enable_pthread;
 
 	// Setup options
-	strlcpy{option[options++], "LP_NUM_THREADS=0"};
-	strlcpy{option[options++], "MESA_GLSL_CACHE_DISABLE=true"};
-	strlcpy{option[options++], "AMD_DEBUG=nogfx"};
-	assert(options <= OPTION_MAX);
+	for(const auto &item : envs)
+	{
+		assert(options < OPTION_MAX);
+		fmt::sprintf
+		{
+			option[options], "%s=%s",
+			item.name,
+			string_view{item},
+		};
 
-	// Configure options into the environment. TODO: XXX don't overwrite
-	while(options--)
-		sys::call(putenv, option[options]);
+		sys::call(putenv, option[options++]);
+	}
 
 	// Load the pipe.
 	assert(!linkage);
@@ -365,7 +394,7 @@ ircd::cl::log_dev_info(const uint i,
 
 	const fmt::bsprintf<32> head
 	{
-		"%s %u:%u",
+		"%s id:%u:%u",
 		type_str,
 		i,
 		j,
