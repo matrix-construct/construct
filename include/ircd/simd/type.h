@@ -103,14 +103,17 @@ namespace ircd
 	typedef uint64_t      u64;
 	typedef uint128_t     u128;
 	#if defined(HAVE___FP8)
+	#define HAVE_FP8
 	typedef __fp8         f8;
 	#endif
 	#if defined(HAVE__FLOAT16)
+	#define HAVE_FP16
 	typedef _Float16      f16;
 	#elif defined(HAVE___FP16)
+	#define HAVE_FP16
 	typedef __fp16        f16;
-	#else
-	#error "Missing half-precision floating point support."
+	#elif defined(__clang__)
+	#warning "Missing half-precision floating point support."
 	#endif
 	typedef float         f32;
 	typedef double        f64;
@@ -222,11 +225,13 @@ IRCD_SIMD_TYPEDEF(f32x16,   f32, 64)  // + [__0__|__1__|__2__|__3__|__4__|__5__|
 IRCD_SIMD_TYPEDEF(f32x8,    f32, 32)  // + [__0__|__1__|__2__|__3__|__4__|...
 IRCD_SIMD_TYPEDEF(f32x4,    f32, 16)  // + [__0__|__1__|__2__|__3__]
 
+#if defined(HAVE_FP16)
 IRCD_SIMD_TYPEDEF(f16x32,   f16, 64)  // - [_0_|_1_|_2_|_3_|_4_|_5_|_6_|_7_|_8_|_9_|_a_|_b_|...
 IRCD_SIMD_TYPEDEF(f16x16,   f16, 32)  // - [_0_|_1_|_2_|_3_|_4_|_5_|_6_|_7_|_8_|_9_|...
 IRCD_SIMD_TYPEDEF(f16x8,    f16, 16)  // - [_0_|_1_|_2_|_3_|_4_|_5_|_6_|_7_]
+#endif
 
-#if defined(HAVE___FP8)
+#if defined(HAVE_FP8)
 IRCD_SIMD_TYPEDEF(f8x64,    f8,  64)  // - [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|0|1|2|3|4|5|6|7|...
 IRCD_SIMD_TYPEDEF(f8x32,    f8,  32)  // - [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|0|1|2|3|4...
 IRCD_SIMD_TYPEDEF(f8x16,    f8,  16)  // + [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f]
