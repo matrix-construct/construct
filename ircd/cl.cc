@@ -117,7 +117,7 @@ decltype(ircd::cl::enable)
 ircd::cl::enable
 {
 	{ "name",      "ircd.cl.enable"  },
-	{ "default",   false             },
+	{ "default",   true              },
 	{ "persist",   false             },
 };
 
