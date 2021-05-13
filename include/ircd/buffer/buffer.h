@@ -295,18 +295,18 @@ ircd::buffer::operator+=(buffer<it> &buffer,
 template<class it>
 inline size_t
 __attribute__((always_inline))
-ircd::buffer::consume(buffer<it> &buffer,
+ircd::buffer::consume(buffer<it> &b,
                       const size_t &bytes)
 {
-	assert(!null(buffer));
-	assert(bytes <= size(buffer));
-	const size_t &advance
+	assert(!null(b));
+	assert(bytes <= size(b));
+	const auto &advance
 	{
-		std::min(bytes, size(buffer))
+		std::min(bytes, size(b))
 	};
 
-	get<0>(buffer) += advance;
-	assert(get<0>(buffer) <= get<1>(buffer));
+	std::get<0>(b) += advance;
+	assert(std::get<0>(b) <= std::get<1>(b));
 	return advance;
 }
 
