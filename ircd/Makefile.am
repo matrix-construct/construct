@@ -80,6 +80,22 @@ AM_LDFLAGS += -Wl,--enable-runtime-pseudo-reloc
 AM_LDFLAGS += -export-symbols-regex '*'
 endif
 
+ROCKSDB_SRC_CPPFLAGS =#
+ROCKSDB_SRC_CPPFLAGS += -isystem $(top_srcdir)/deps/rocksdb/include
+ROCKSDB_SRC_CPPFLAGS += -isystem $(top_srcdir)/deps/rocksdb
+
+GPT_FP_CXXFLAGS =#
+GPT_FP_CXXFLAGS += -fno-math-errno
+GPT_FP_CXXFLAGS += -fno-trapping-math
+GPT_FP_CXXFLAGS += -ffinite-math-only
+GPT_FP_CXXFLAGS += -fno-signed-zeros
+GPT_FP_CXXFLAGS += -fassociative-math
+GPT_FP_CXXFLAGS += -ffp-contract=fast
+GPT_FP_CXXFLAGS += -freciprocal-math
+if CLANG
+GPT_FP_CXXFLAGS += -fdenormal-fp-math=positive-zero
+endif
+
 libircddir = @libdir@
 libircd_LTLIBRARIES = libircd.la
 
@@ -222,7 +238,9 @@ libircd_la_SOURCES += gpt_pipe.cc
 libircd_la_SOURCES += gpt_model.cc
 libircd_la_SOURCES += gpt_vocab.cc
 if OPENCL
+if CLANG
 BUILT_SOURCES += gpt_cl.o
+endif
 endif
 libircd_la_SOURCES += openssl.cc
 libircd_la_SOURCES += rfc1459.cc
@@ -251,24 +269,6 @@ if JS
 libircd_la_SOURCES += js.cc
 endif
 libircd_la_SOURCES += ircd.cc
-
-#
-# Specific unit configurations
-#
-
-ROCKSDB_SRC_CPPFLAGS =#
-ROCKSDB_SRC_CPPFLAGS += -isystem $(top_srcdir)/deps/rocksdb/include
-ROCKSDB_SRC_CPPFLAGS += -isystem $(top_srcdir)/deps/rocksdb
-
-GPT_FP_CXXFLAGS =#
-GPT_FP_CXXFLAGS += -fno-math-errno
-GPT_FP_CXXFLAGS += -fno-trapping-math
-GPT_FP_CXXFLAGS += -ffinite-math-only
-GPT_FP_CXXFLAGS += -fno-signed-zeros
-GPT_FP_CXXFLAGS += -fdenormal-fp-math=positive-zero
-GPT_FP_CXXFLAGS += -fassociative-math
-GPT_FP_CXXFLAGS += -ffp-contract=fast
-GPT_FP_CXXFLAGS += -freciprocal-math
 
 #
 # Specific unit option composition
@@ -353,5 +353,7 @@ endif
 default.profdata:
 	-$(LLVM_PROFDATA) merge -output=default.profdata default.proftext
 
+if CLANG
 gpt_cl.o: gpt_cl.cl
 	$(CC) -std=CL1.1 $(AM_CPPFLAGS) $(CPPFLAGS) $(DEFS) -Xclang -finclude-default-header -include "ircd/config.h" -o $@ -c $^
+endif
