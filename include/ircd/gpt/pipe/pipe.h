@@ -22,6 +22,8 @@ namespace ircd::gpt::pipe
 	extern code *default_code;
 	extern desc *default_desc;
 
+	void generate(task &);
+
 	void init(), fini() noexcept;
 };
 

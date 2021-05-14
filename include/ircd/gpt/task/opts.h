@@ -26,10 +26,13 @@ struct ircd_gpt_opts
 
 	/// Reference to the model (currently not available in device software).
 	#ifndef __cplusplus
-	const intptr_t model;
+	const void *model;
 	#else
 	const ircd::gpt::model::decoder *model;
 	#endif
+
+	/// Seed for the task's PRNG.
+	ulong seed;
 
 	/// Limit number of output tokens. Default of -1 is unlimited; the number
 	/// of tokens generated will be limited by other factors.
@@ -81,17 +84,20 @@ struct ircd_gpt_opts
 	/// Number of possible target n-grams.
 	uint logits;
 
-	/// Seed for the task's PRNG.
-	ulong seed;
-
 	/// Training steps
-	ulong training_steps;
+	uint training_steps;
 
 	/// Validation steps
-	ulong validation_steps;
+	uint validation_steps;
+
+	/// Testing steps
+	uint testing_steps;
 
 	/// Target label
 	ushort label;
+
+	/// Bitbar toggling various debug modes
+	ushort debug;
 
 	/// Learning rate
 	float alpha;
@@ -115,7 +121,7 @@ __attribute__((aligned(4096)));
 #ifdef __cplusplus
 namespace ircd::gpt
 {
-	using opts = struct ircd_gpt_opts;
+	using opts = ::ircd_gpt_opts;
 }
 
 static_assert(sizeof(struct ircd_gpt_opts) == 4096);

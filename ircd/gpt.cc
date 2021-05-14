@@ -39,6 +39,8 @@ namespace ircd::gpt
 	static u16 argmax(const float *, const opts &);
 	static void embed(float *, const u16 token, const u16 position, const opts &);
 
+	static void generate_debug(task &, const uint &, const uint &);
+
 	static f32
 	logit alignas(64) [65536],
 	embeds alignas(64) [1024 * 768],
@@ -91,21 +93,76 @@ ircd::gpt::generate(const vector_view<u16> &out,
 	ctrl.tokens.count = 0;
 	ctrl.tokens.head = 0;
 
-	for(uint j(0); j < in.size(); ++j)
-		ctrl.token[ctrl.tokens.count++] = in[j];
-
+	uint j(0);
 	for(uint i(0); i < opts.gates; ++i)
-		for(uint k(0); k < 8; ++k)
+	{
+		const auto &gate
+		{
+			opts.gate[i]
+		};
+
+		while(j < in.size() && j < gate.offset && ctrl.tokens.count < opts.buffer_tokens)
+			ctrl.token[ctrl.tokens.count++] = in[j++];
+
+		for(uint k(0); k < 7; ++k)
 		{
 			if(ctrl.tokens.count >= opts.buffer_tokens)
 				break;
 
-			if(opts.gate[i].code[k] == 0)
+			if(gate.code[k] == 0)
 				break;
 
-			ctrl.token[ctrl.tokens.count] = opts.gate[i].code[k];
-			ctrl.tokens.count++;
+			ctrl.token[ctrl.tokens.count++] = gate.code[k];
 		}
+	}
+
+	while(j < in.size() && ctrl.tokens.count < opts.buffer_tokens)
+		ctrl.token[ctrl.tokens.count++] = in[j++];
+
+	const size_t in_size
+	{
+		ctrl.tokens.count
+	};
+
+	generate(task);
+
+	for(uint i(0); i < ctrl.tokens.count && ret < out.size() && !halt; ++i)
+	{
+		const auto j
+		{
+			(i + ctrl.tokens.head) % opts.buffer_tokens
+		};
+
+		const auto tok
+		{
+			ctrl.token[j]
+		};
+
+		if(j >= in_size)
+			out[ret++] = tok;
+
+		if(likely(~opts.debug & 0x01))
+			continue;
+
+		if(likely(~opts.debug & 0x02))
+			if(j < in_size)
+				continue;
+
+		generate_debug(task, j, in_size);
+	}
+
+	ctx::interruption_point();
+	return vector_view<u16>
+	{
+		out, ret
+	};
+}
+
+void
+ircd::gpt::generate(task &task)
+{
+	const auto &opts(*task.opts);
+	auto &ctrl(*task.ctrl);
 
 	const size_t in_size
 	{
@@ -153,11 +210,10 @@ ircd::gpt::generate(const vector_view<u16> &out,
 		ctrl.cert.last = ctrl.cert.mean;
 		ctrl.prop = false;
 		pipe::default_model->invalid = true;
-		return {};
+		return;
 	}
 
 	cycles = 0;
-	milliseconds last_time {0};
 	util::timer stopwatch;
 	{
 		const prof::scope_cycles task_cycles
@@ -165,66 +221,69 @@ ircd::gpt::generate(const vector_view<u16> &out,
 			cycles
 		};
 
-		generate(task);
+		pipe::generate(task);
 	}
-	last_time = stopwatch.at<milliseconds>();
+
+	const milliseconds last_time
+	{
+		stopwatch.at<milliseconds>()
+	};
+
 	ctrl.epic.elapsed += last_time.count();
+}
 
-	for(uint j(0); j < ctrl.tokens.count && ret < out.size() && !halt; ++j)
+void
+ircd::gpt::generate_debug(task &task,
+                          const uint &i,
+                          const uint &in_size)
+{
+	const auto &opts(*task.opts);
+	auto &ctrl(*task.ctrl);
+
+	const auto j
 	{
-		const auto tok
-		{
-			ctrl.token[j]
-		};
+		(i + ctrl.tokens.head) % opts.buffer_tokens
+	};
 
-		if(j >= in_size)
-			out[ret++] = tok;
-
-		if(j < in_size)
-			continue;
-
-		static char dbuf[512] {0};
-		char report[1536] {0};
-		char tmbuf[4][64] {0};
-		const size_t bsz(ctrl.tokens.count - in_size);
-		const size_t report_size = snprintf
-		(
-			report, sizeof(report),
-			"%-3u %4u:%-4u %4lu:%-4lu %6.1f%% %5.1fP %6.3fL [%c%c%c] %5u %6.3fL %6.2fP  %5.1f%% %s %04x  %8s %8s | %8s",
-			j,
-			ret - 1,
-			ctrl.tokens.count,
-			ctrl.epic.epoch,
-			ctrl.epic.cycle,
-			std::clamp(ctrl.cert.mean * 100.0f, 0.0f, 100.0f),
-			std::clamp(ctrl.perp.mean, 0.0f, 100.0f),
-			std::clamp(ctrl.loss.mean, 0.0f, 99.99f),
-			opts.label == tok? '+': ' ',
-			' ', // flag place
-			' ', // flag place
-			opts.label,
-			std::clamp(ctrl.loss.last, 0.0f, 99.99f),
-			std::clamp(ctrl.perp.last, 0.0f, 100.0f),
-			std::clamp(ctrl.cert.last * 100.0f, 0.0f, 100.0f),
-			vocab::debug(dbuf, tok).c_str(),
-			tok,
-			pretty(tmbuf[0], milliseconds(last_time / bsz), 1).c_str(),
-			pretty(tmbuf[1], si(cycles / bsz), 1).c_str(),
-			pretty(tmbuf[2], milliseconds(ctrl.epic.elapsed), 1).c_str()
-		);
-
-		log::logf
-		{
-			log, log::level::DEBUG,
-			"%s",
-			string_view{report, report_size}
-		};
-	}
-
-	ctx::interruption_point();
-	return vector_view<u16>
+	const auto tok
 	{
-		out, ret
+		ctrl.token[j]
+	};
+
+	static char dbuf[512];
+	static char report[1536];
+	static char tmbuf[4][64];
+	const size_t bsz(ctrl.tokens.count - in_size);
+	const size_t report_size = snprintf
+	(
+		report, sizeof(report),
+		"%-3u %-4u %4lu:%-4lu %6.1f%% %5.1fP %6.3fL [%c%c%c] %5u %6.3fL %6.2fP  %5.1f%% %s %04x  %8s %8s | %8s",
+		j,
+		ctrl.tokens.count,
+		ctrl.epic.epoch,
+		ctrl.epic.cycle,
+		std::clamp(ctrl.cert.mean * 100.0f, 0.0f, 100.0f),
+		std::clamp(ctrl.perp.mean, 0.0f, 100.0f),
+		std::clamp(ctrl.loss.mean, 0.0f, 99.99f),
+		opts.label == tok? '+': ' ',
+		' ', // flag place
+		' ', // flag place
+		opts.label,
+		std::clamp(ctrl.loss.last, 0.0f, 99.99f),
+		std::clamp(ctrl.perp.last, 0.0f, 100.0f),
+		std::clamp(ctrl.cert.last * 100.0f, 0.0f, 100.0f),
+		vocab::debug(dbuf, tok).c_str(),
+		tok,
+		pretty(tmbuf[0], milliseconds(0ms / bsz), 1).c_str(),
+		pretty(tmbuf[1], si(0UL / bsz), 1).c_str(),
+		pretty(tmbuf[2], milliseconds(ctrl.epic.elapsed), 1).c_str()
+	);
+
+	log::logf
+	{
+		log, log::level::DEBUG,
+		"%s",
+		string_view{report, report_size}
 	};
 }
 
@@ -849,7 +908,11 @@ ircd_gpt_opts::ircd_gpt_opts(const ircd::gpt::model::decoder *const model)
 noexcept
 :model
 {
-	model
+	model?: ircd::gpt::model::default_model
+}
+,seed
+{
+	1234567890UL
 }
 ,limit
 {
@@ -915,10 +978,6 @@ noexcept
 {
 	50257
 }
-,seed
-{
-	1234567890UL
-}
 ,training_steps
 {
 	250000
@@ -927,9 +986,17 @@ noexcept
 {
 	5000
 }
+,testing_steps
+{
+	5000
+}
 ,label
 {
 	198
+}
+,debug
+{
+	0x01
 }
 ,alpha
 {

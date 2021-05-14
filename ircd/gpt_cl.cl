@@ -600,8 +600,6 @@ ircd_gpt_leave(__global struct ircd_gpt_task *const ctrl,
 	if(li != 0)
 		return;
 
-	// On the last cycle, with no prior call or error code set, indicate
-	// a nominal exit condition.
 	if(ctrl->epic.cycle + 1 >= opts->limit)
 		ctrl->epic.epoch += 1;
 
@@ -620,8 +618,7 @@ ircd_gpt_lm_result(__global struct ircd_gpt_task *const ctrl,
                    __global const float *const restrict logit)
 {
 	// To read from cells other than idx[0] we need this barrier.
-	if(opts->top_k > 1)
-		barrier(CLK_LOCAL_MEM_FENCE);
+	barrier(CLK_LOCAL_MEM_FENCE);
 
 	// Mask for write-leader
 	if(li != 0)
@@ -661,9 +658,10 @@ ircd_gpt_lm_result(__global struct ircd_gpt_task *const ctrl,
 	loss_sum = ctrl->loss.sum[0] + ctrl->loss.sum[1] + ctrl->loss.sum[2] + loss,
 	perp_sum = ctrl->perp.sum[0] + ctrl->perp.sum[1] + ctrl->perp.sum[2] + perp,
 	cert_sum = ctrl->cert.sum[0] + ctrl->cert.sum[1] + ctrl->cert.sum[2] + cert,
-	loss_mean = loss_sum / (ctrl->epic.epoch + 1.0f),
-	perp_mean = perp_sum / (ctrl->epic.epoch + 1.0f),
-	cert_mean = cert_sum / (ctrl->epic.epoch + 1.0f);
+	mean_div = ctrl->epic.epoch + 1.0f,
+	loss_mean = loss_sum / mean_div,
+	perp_mean = perp_sum / mean_div,
+	cert_mean = cert_sum / mean_div;
 
 	ctrl->loss.last = loss;
 	ctrl->loss.sum[sum_sel] += loss;

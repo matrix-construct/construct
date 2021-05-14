@@ -15,7 +15,8 @@
 ///
 struct ircd_gpt_gate
 {
-	ushort code[8];
+	ushort offset;
+	ushort code[7];
 }
 __attribute__((aligned(16)));
 

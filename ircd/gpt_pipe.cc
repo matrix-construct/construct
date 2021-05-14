@@ -12,27 +12,19 @@ namespace ircd::gpt::pipe
 {
 	static void profile_dumplog(pipe::exec &);
 
-	static ircd::cl::exec::opts
-	negative_opts, positive_opts, selfattn_opts,
-	cathode_opts, anode_opts, lmhead_opts, lmamax_opts,
-	backprop_opts;
-
-	extern conf::item<size_t> flush_cycles;
 	extern conf::item<size_t> queue_cycles;
 	extern const ircd::run::changed handle_quit;
+
+	static ircd::cl::exec::opts
+	send_opts_opts, send_ctrl_opts, send_coil_opts, send_head_opts,
+	anode_opts, negative_opts, positive_opts, cathode_opts,
+	lmhead_opts, lmamax_opts, backprop_opts, recv_ctrl_opts;
 }
 
 decltype(ircd::gpt::pipe::queue_cycles)
 ircd::gpt::pipe::queue_cycles
 {
 	{ "name",     "ircd.gpt.pipe.queue" },
-	{ "default",  1L,                   },
-};
-
-decltype(ircd::gpt::pipe::flush_cycles)
-ircd::gpt::pipe::flush_cycles
-{
-	{ "name",     "ircd.gpt.pipe.flush" },
 	{ "default",  1L,                   },
 };
 
@@ -75,6 +67,13 @@ ircd::gpt::pipe::init()
 		*pipe::default_code, *pipe::default_model
 	};
 
+	//XXX
+	send_ctrl_opts.flush = true;
+	send_ctrl_opts.nice = 1;
+	lmamax_opts.flush = true;
+	lmamax_opts.nice = 2;
+	recv_ctrl_opts.flush = true;
+
 	log::debug
 	{
 		log, "Pipe initialized from model:%p data:%p code:%p desc:%p",
@@ -113,7 +112,7 @@ noexcept
 //
 
 void
-ircd::gpt::generate(task &task)
+ircd::gpt::pipe::generate(task &task)
 {
 	assert(pipe::default_model);
 
@@ -131,9 +130,10 @@ ircd::gpt::generate(task &task)
 
 	ctrl.epic.cycle = 0;
 	ctrl.epic.host_tsc = prof::cycles();
-	volatile const size_t tokens(ctrl.tokens.count);
-	volatile const auto epoch(ctrl.epic.epoch);
-	volatile size_t cycle(ctrl.epic.cycle);
+
+	const auto tokens(ctrl.tokens.count);
+	const auto epoch(ctrl.epic.epoch);
+	volatile auto cycle(ctrl.epic.cycle);
 
 	std::deque<pipe::exec> list;
 	for(; cycle < opts.limit; ++cycle)
@@ -149,23 +149,6 @@ ircd::gpt::generate(task &task)
 		(
 			task, tokens + cycle, rel, acq
 		);
-
-		// Conditions for a cl::flush here
-		const bool flush
-		{
-			// Flushing here is enabled by the configuration
-			pipe::flush_cycles
-
-			// Skip flushing on cycles already performing IO or waiting.
-			&& !acq && list.size() <= pipe::queue_cycles
-
-			// The configuration item can specify an interval greater than
-			// one between flushes.
-			&& cycle % pipe::flush_cycles == 0
-		};
-
-		if(flush)
-			cl::flush();
 
 		if(ctx::interruption_requested())
 			if(acq || termination(ctx::cur()))
@@ -301,19 +284,19 @@ ircd::gpt::pipe::exec::exec(task &task,
 }
 ,release_opts
 {
-	desc->opts, send_opts
+	desc->opts, send_opts, send_opts_opts,
 }
 ,release_ctrl
 {
-	desc->ctrl, send_ctrl
+	desc->ctrl, send_ctrl, send_ctrl_opts
 }
 ,release_coil
 {
-	desc->model->decode->master[0], send_coil
+	desc->model->decode->master[0], send_coil, send_coil_opts
 }
 ,release_head
 {
-	desc->model->embed->master[0], send_head
+	desc->model->embed->master[0], send_head, send_head_opts
 }
 ,lm_embed
 {
@@ -364,7 +347,7 @@ ircd::gpt::pipe::exec::exec(task &task,
 }
 ,acquire_ctrl
 {
-	desc->ctrl, recv_ctrl
+	desc->ctrl, recv_ctrl, recv_ctrl_opts
 }
 {
 	if(release && desc->model->invalid)
