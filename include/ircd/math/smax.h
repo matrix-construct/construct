@@ -95,7 +95,7 @@ ircd::math::smax(const vector_view<T> &__restrict__ out,
 	assert(exps.size() >= in.size());
 
 	for(uint i(0); i < size(in); ++i)
-		acc[i] = {0};
+		acc[i] = D{0};
 
 	for(uint i(0); i < size(in); ++i)
 		exps[i] = exp(lane_cast<D>(in[i]));
@@ -123,7 +123,7 @@ ircd::math::smax(const vector_view<T> &__restrict__ out,
 	assert(acc.size() >= in.size());
 
 	for(uint i(0); i < size(in); ++i)
-		acc[i] = {0};
+		acc[i] = D{0};
 
 	for(uint i(0); i < size(in); ++i)
 		out[i] = exp(in[i]);

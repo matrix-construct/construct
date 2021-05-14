@@ -397,7 +397,7 @@ ircd::gpt::vocab::pre_tokenize(u8x16 (&token)[16],
 			len -= (ret[1] + off - 1) - 16;
 
 		// Pack the utf-8 codepoints into the result token
-		token[i] = {0};
+		token[i] = u8x16{0};
 		for(uint j(0); j < cp_num; ++j)
 			for(uint k(0); k < rcp_len[j] && idx[j] + k < 16; ++k)
 				token[i][idx[j] + k] = rch8[j * 4 + k];
@@ -694,8 +694,8 @@ ircd::gpt::vocab::bpe_prepare(u8x16 (&out)[16][2],
 			if(idx[i] >= 16 || !in[idx[i]])
 				break;
 
-			out[i][0] = {0};
-			out[i][1] = {0};
+			out[i][0] = u8x16{0};
+			out[i][1] = u8x16{0};
 			for(uint k(0); k < 2; ++k)
 				for(uint j(0); j < cplen[i + k] && idx[i + k] + j < 16; ++j)
 					out[i][k][j] = in[idx[i + k] + j];
