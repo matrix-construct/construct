@@ -302,82 +302,102 @@ noexcept
 //
 
 ircd::u32x16
-ircd::utf8::decode(const u8x16 string)
+ircd::utf8::decode(const u8x16 in)
 noexcept
 {
-	const u32x16 in
-	(
-		simd::lane_cast<u32x16, u8x16>(string)
-	);
-
-	const u32x16 is_single
+	const u8x16 is_single
 	(
 		(in & 0x80) == 0
 	);
 
-	const u32x16 is_lead
+	const u8x16 is_lead
 	(
 		(in - 0xc2) <= 0x32
 	);
 
-	const u32x16 is_trail
+	const u8x16 is_trail
 	(
 		in >= 0x80 && in < 0xbf
 	);
 
-	const u32x16 expect_trail
+	const u8x16 is_head
+	(
+		is_lead | is_single
+	);
+
+	const u8x16 len_mask[3]
 	{
-		(((in >= 0xe0) & 1) + ((in >= 0xf0) & 1) + 1) & is_lead
+		in >= 0xc0, in >= 0xe0, in >= 0xf0,
 	};
 
-	const u32x16 expect_length
+	const u8x16 expect_trail
+	(
+		1 + (len_mask[0] & 1) + (len_mask[1] & 1) + (len_mask[2] & 1)
+	);
+
+	const u8x16 len
+	(
+		(is_single & 1) | (is_lead & expect_trail)
+	);
+
+	const u8x16 head
+	(
+		in & is_head
+	);
+
+	const u8x16 lead[]
 	{
-		expect_trail + 1
+		0x3f & in & is_trail,
+		0xff & head & is_single,
+		0x1f & head & len_mask[0] & ~len_mask[1],
+		0x0f & head & len_mask[1] & ~len_mask[2],
+		0x07 & head & len_mask[2],
 	};
 
-	const u32x16 shift[4]
+	u8x16 full;
+	for(uint i(0); i < 16; ++i)
+		full[i] = lead[len[i]][i];
+
+	u8x16 shift {len & is_head};
+	shift |= (shl<0x20>(len) == 4) & 0;
+	shift |= (shl<0x20>(len) == 3) & 0;
+	shift |= (shl<0x20>(len) == 2) & 0;
+	shift |= (shl<0x20>(len) == 1) & 0;
+	shift |= (shl<0x18>(len) == 4) & 1;
+	shift |= (shl<0x18>(len) == 3) & 0;
+	shift |= (shl<0x18>(len) == 2) & 0;
+	shift |= (shl<0x18>(len) == 1) & 0;
+	shift |= (shl<0x10>(len) == 4) & 2;
+	shift |= (shl<0x10>(len) == 3) & 1;
+	shift |= (shl<0x10>(len) == 2) & 0;
+	shift |= (shl<0x10>(len) == 1) & 0;
+	shift |= (shl<0x08>(len) == 4) & 3;
+	shift |= (shl<0x08>(len) == 3) & 2;
+	shift |= (shl<0x08>(len) == 2) & 1;
+	shift |= (shl<0x08>(len) == 1) & 0;
+	shift -= 1U;
+	shift &= 0x03U;
+	shift *= 6U;
+
+	const u32x16 val
 	{
-		in << 0,
-		in << 8,
-		in << 16,
-		in << 24,
+		lane_cast<u32x16>(full) << lane_cast<u32x16>(shift)
 	};
 
-	const u32x16 multibyte_packs
-	{
-		in[0x00] | shift[0x01][0x01] | shift[0x02][0x02] | shift[0x03][0x03],
-		in[0x01] | shift[0x01][0x02] | shift[0x02][0x03] | shift[0x03][0x04],
-		in[0x02] | shift[0x01][0x03] | shift[0x02][0x04] | shift[0x03][0x05],
-		in[0x03] | shift[0x01][0x04] | shift[0x02][0x05] | shift[0x03][0x06],
-		in[0x04] | shift[0x01][0x05] | shift[0x02][0x06] | shift[0x03][0x07],
-		in[0x05] | shift[0x01][0x06] | shift[0x02][0x07] | shift[0x03][0x08],
-		in[0x06] | shift[0x01][0x07] | shift[0x02][0x08] | shift[0x03][0x09],
-		in[0x07] | shift[0x01][0x08] | shift[0x02][0x09] | shift[0x03][0x0a],
-		in[0x08] | shift[0x01][0x09] | shift[0x02][0x0a] | shift[0x03][0x0b],
-		in[0x09] | shift[0x01][0x0a] | shift[0x02][0x0b] | shift[0x03][0x0c],
-		in[0x0a] | shift[0x01][0x0b] | shift[0x02][0x0c] | shift[0x03][0x0d],
-		in[0x0b] | shift[0x01][0x0c] | shift[0x02][0x0d] | shift[0x03][0x0e],
-		in[0x0c] | shift[0x01][0x0d] | shift[0x02][0x0e] | shift[0x03][0x0f],
-		in[0x0d] | shift[0x01][0x0e] | shift[0x02][0x0f] | shift[0x03][0x0f],
-		in[0x0e] | shift[0x01][0x0f] | shift[0x02][0x0f] | shift[0x03][0x0f],
-		in[0x0f] | shift[0x01][0x0f] | shift[0x02][0x0f] | shift[0x03][0x0f],
-	};
+	const u8x16 incr
+	(
+		(shift == 0) & 1U
+	);
 
-	const u32x16 multibyte
-	{
-		0
-		| (multibyte_packs & (expect_length == 1) & 0x000000ffU)
-		| (multibyte_packs & (expect_length == 2) & 0x0000ffffU)
-		| (multibyte_packs & (expect_length == 3) & 0x00ffffffU)
-		| (multibyte_packs & (expect_length == 4) & 0xffffffffU)
-	};
+	u8x16 idx {0};
+	for(uint i(1); i < 16; ++i)
+		idx[i] = idx[i - 1] + incr[i - 1];
 
-	const u32x16 integers
-	{
-		(in & is_single) | (multibyte & is_lead)
-	};
+	u32x16 ret {0};
+	for(uint i(0); i < 16; ++i)
+		ret[idx[i]] |= val[i];
 
-	return integers;
+	return ret;
 }
 
 namespace ircd::utf8
