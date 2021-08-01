@@ -269,13 +269,13 @@ ircd::m::dbs::event_state_key(const mutable_buffer &out_,
 	consume(out, copy(out, '\0'));
 	consume(out, copy(out, room_id));
 
-	if(depth < 0)
+	if(likely(depth < 0))
 		return {data(out_), data(out)};
 
 	consume(out, copy(out, '\0'));
 	consume(out, copy(out, byte_view<string_view>(depth)));
 
-	if(!event_idx)
+	if(likely(!event_idx))
 		return {data(out_), data(out)};
 
 	consume(out, copy(out, byte_view<string_view>(event_idx)));
