@@ -69,8 +69,7 @@ struct ircd::gpt::model::block
 
 	norm ln2;
 	model::ffnn ffnn;
-}
-__attribute__((packed));
+};
 
 /// Vocabulary embeddings
 struct ircd::gpt::model::embed
@@ -86,5 +85,4 @@ struct ircd::gpt::model::decoder
 
 	norm f;
 	embed word;
-}
-__attribute__((packed));
+};
