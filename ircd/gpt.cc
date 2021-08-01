@@ -805,8 +805,30 @@ ircd::gpt::adamw(task &task,
 		reinterpret_cast<f32x4 *>(m_[1]) + off,
 	};
 
-	for(uint i(0); i < num / 4; ++i)
-		off = adamw(p[0][i], p[1][i], p[2][i], grad, opts.alpha, opts.beta[0], opts.beta[1], ctrl.epic.step, off);
+	assert(num >= 4);
+	const uint n
+	{
+		uint(num) / 4
+	};
+
+	// Assume loop body always taken w/o soundness; otherwise extra branch.
+	assert(n > 0);
+	uint i(0); do
+	{
+		off = adamw
+		(
+			p[0][i],
+			p[1][i],
+			p[2][i],
+			grad,
+			opts.alpha,
+			opts.beta[0],
+			opts.beta[1],
+			ctrl.epic.step,
+			off
+		);
+	}
+	while(++i < n);
 
 	return off;
 }
