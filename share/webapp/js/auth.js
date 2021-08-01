@@ -21,7 +21,7 @@ mc.auth = async function(flows = {}, opts = {})
 {
 	let request = mc.m.login.get();
 	let login = await request.response;
-	Object.update(flows, login.flows);
+	Object.update(flows, maybe(() => login.flows));
 	for(let i in flows)
 	{
 		let flow = flows[i];
