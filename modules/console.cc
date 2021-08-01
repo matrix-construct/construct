@@ -13992,7 +13992,7 @@ console_cmd__users(opt &out, const string_view &line)
 		query
 	};
 
-	if(!query || query != "*")
+	if(!query)
 		opts.hostpart = my_host();
 
 	m::users::for_each(opts, [&out]
