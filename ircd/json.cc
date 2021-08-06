@@ -3566,7 +3566,7 @@ ircd::json::string_unescape_utf16(u8x16 &block,
 
 	const u32x4 encoded_sparse
 	{
-		utf8::encode(unicode)
+		utf8::encode_sparse(unicode)
 	};
 
 	const u8x16 encoded
@@ -3841,7 +3841,7 @@ ircd::json::string_stringify_utf16(u8x16 &block,
 
 	const u32x4 encoded_sparse
 	{
-		utf8::encode(unicode)
+		utf8::encode_sparse(unicode)
 	};
 
 	const u8x16 encoded

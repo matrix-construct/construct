@@ -402,24 +402,24 @@ noexcept
 
 namespace ircd::utf8
 {
-	template<class u32xN> static u32xN _encode(const u32xN codepoint) noexcept;
+	template<class u32xN> static u32xN _encode_sparse(const u32xN codepoint) noexcept;
 }
 
 template<>
 ircd::u32x4
-ircd::utf8::encode(const u32x4 codepoint)
+ircd::utf8::encode_sparse(const u32x4 codepoint)
 noexcept
 {
-	return _encode(codepoint);
+	return _encode_sparse(codepoint);
 }
 
 template<>
 ircd::u32x8
-ircd::utf8::encode(const u32x8 codepoint)
+ircd::utf8::encode_sparse(const u32x8 codepoint)
 noexcept
 #ifdef __AVX2__
 {
-	return _encode(codepoint);
+	return _encode_sparse(codepoint);
 }
 #else // This block is only effective for GCC. Clang performs this automatically.
 {
@@ -428,8 +428,8 @@ noexcept
 		for(size_t j(0); j < 4; ++j)
 			cp[i][j] = codepoint[i * 4 + j];
 
-	cp[0] = _encode(cp[0]);
-	cp[1] = _encode(cp[1]);
+	cp[0] = _encode_sparse(cp[0]);
+	cp[1] = _encode_sparse(cp[1]);
 
 	u32x8 ret;
 	for(size_t i(0); i < 2; ++i)
@@ -442,11 +442,11 @@ noexcept
 
 template<>
 ircd::u32x16
-ircd::utf8::encode(const u32x16 codepoint)
+ircd::utf8::encode_sparse(const u32x16 codepoint)
 noexcept
 #ifdef __AVX512F__
 {
-	return _encode(codepoint);
+	return _encode_sparse(codepoint);
 }
 #else // This block is only effective for GCC. Clang performs this automatically.
 {
@@ -455,8 +455,8 @@ noexcept
 		for(size_t j(0); j < 8; ++j)
 			cp[i][j] = codepoint[i * 8 + j];
 
-	cp[0] = encode(cp[0]);
-	cp[1] = encode(cp[1]);
+	cp[0] = encode_sparse(cp[0]);
+	cp[1] = encode_sparse(cp[1]);
 
 	u32x16 ret;
 	for(size_t i(0); i < 2; ++i)
@@ -472,7 +472,7 @@ noexcept
 /// compress the result down).
 template<class u32xN>
 inline u32xN
-ircd::utf8::_encode(const u32xN codepoint)
+ircd::utf8::_encode_sparse(const u32xN codepoint)
 noexcept
 {
 	const u32xN len

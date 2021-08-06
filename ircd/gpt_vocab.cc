@@ -376,7 +376,7 @@ ircd::gpt::vocab::pre_tokenize(u8x16 (&token)[16],
 		// Generate utf-8 codepoints
 		const u8x64 rch8
 		(
-			utf8::encode(rch & cover_mask)
+			utf8::encode_sparse(rch & cover_mask)
 		);
 
 		u32x16 idx;

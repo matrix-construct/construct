@@ -24,7 +24,7 @@ namespace ircd::utf8
 	template<class u32xN> u32xN length(const u32xN codepoints) noexcept;
 
 	// Encode char32_t codepoints into respective utf-8 encodings
-	template<class u32xN> u32xN encode(const u32xN codepoints) noexcept;
+	template<class u32xN> u32xN encode_sparse(const u32xN codepoints) noexcept;
 
 	// Decode utf-8 string into char32_t unicode codepoints
 	u32x16 decode(const u8x16 string) noexcept;
