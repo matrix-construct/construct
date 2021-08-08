@@ -130,6 +130,10 @@ github_handle__issue_comment(std::ostream &,
                              const json::object &content);
 
 static bool
+github_handle__commit_comment(std::ostream &,
+                              const json::object &content);
+
+static bool
 github_handle__issues(std::ostream &,
                       const json::object &content);
 
@@ -232,6 +236,8 @@ github_handle(client &client,
 			github_handle__issues(out, request.content):
 		type == "issue_comment"?
 			github_handle__issue_comment(out, request.content):
+		type == "commit_comment"?
+			github_handle__commit_comment(out, request.content):
 		type == "watch"?
 			github_handle__watch(out, request.content):
 		type == "star"?
@@ -1097,6 +1103,87 @@ github_handle__issue_comment(std::ostream &out,
 		<< "</font>"
 		<< "&nbsp;"
 		;
+
+	return true;
+}
+
+bool
+github_handle__commit_comment(std::ostream &out,
+                              const json::object &content)
+{
+	const json::object comment
+	{
+		content["comment"]
+	};
+
+	const json::string action
+	{
+		content["action"]
+	};
+
+	const json::string commit
+	{
+		comment["commit_id"]
+	};
+
+	const json::string assoc
+	{
+		comment["author_association"]
+	};
+
+	char assoc_buf[32];
+	if(assoc && assoc != "NONE")
+		out
+		<< " ["
+		<< tolower(assoc_buf, assoc)
+		<< "]"
+		;
+
+	out << " <b>";
+	switch(hash(action))
+	{
+		case "created"_:
+			out << "commented on";
+			break;
+
+		default:
+			out << action;
+			break;
+	}
+	out << "</b>";
+
+	out << " "
+	    << "<a href=\""
+	    << json::string(comment["html_url"])
+	    << "\">"
+	    << "<b><u>"
+	    << trunc(commit, 8)
+	    << "</u></b>"
+	    << "</a>"
+	    ;
+
+	if(action == "created")
+	{
+		out << " "
+		    << "<blockquote>"
+		    ;
+
+		const json::string body
+		{
+			comment["body"]
+		};
+
+		static const auto delim("\\r\\n");
+		ircd::tokens(body, delim, [&out]
+		(const string_view &line)
+		{
+			out << line << "<br />";
+		});
+
+		out << ""
+		    << "</blockquote>"
+		    ;
+	}
 
 	return true;
 }
