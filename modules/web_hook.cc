@@ -420,7 +420,7 @@ github_handle__gollum(std::ostream &out,
 			out
 			<< " "
 			<< "<blockquote>"
-			<< "<pre><code>"
+			<< "<pre>"
 			;
 
 			static const auto delim("\\r\\n");
@@ -433,7 +433,7 @@ github_handle__gollum(std::ostream &out,
 
 			out
 			<< ""
-			<< "</code></pre>"
+			<< "</pre>"
 			<< "</blockquote>"
 			;
 		}
@@ -706,9 +706,9 @@ github_handle__pull_request(std::ostream &out,
 
 	if(!empty(body))
 		out << ' '
-		    << "<pre><code>"
+		    << "<pre>"
 		    << body
-		    << "</code></pre>"
+		    << "</pre>"
 		    << ' '
 		    ;
 	else
@@ -889,7 +889,7 @@ github_handle__issues(std::ostream &out,
 	{
 		out << " "
 		    << "<blockquote>"
-		    << "<pre><code>"
+		    << "<pre>"
 		    ;
 
 		static const auto delim("\\r\\n");
@@ -901,7 +901,7 @@ github_handle__issues(std::ostream &out,
 		});
 
 		out << ""
-		    << "</code></pre>"
+		    << "</pre>"
 		    << "</blockquote>"
 		    ;
 	}
@@ -1072,7 +1072,7 @@ github_handle__issue_comment(std::ostream &out,
 	{
 		out << " "
 		    << "<blockquote>"
-		    << "<pre><code>"
+		    << "<pre>"
 		    ;
 
 		static const auto delim("\\r\\n");
@@ -1084,7 +1084,7 @@ github_handle__issue_comment(std::ostream &out,
 		});
 
 		out << ""
-		    << "</code></pre>"
+		    << "</pre>"
 		    << "</blockquote>"
 		    ;
 	}
