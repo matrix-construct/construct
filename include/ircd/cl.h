@@ -276,18 +276,8 @@ ircd::cl::kern::kern(code &c,
                      argv&&... a)
 :kern{c, name}
 {
-	constexpr uint argc
-	{
-		sizeof...(a)
-	};
-
-	data *const datas[argc]
-	{
-		std::addressof(a)...
-	};
-
-	for(uint i(0); i < argc; ++i)
-		this->arg(i, *datas[i]);
+	uint i(0);
+	(this->arg(i++, a), ...);
 }
 
 template<class T>
