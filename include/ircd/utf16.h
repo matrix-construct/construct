@@ -1,7 +1,7 @@
 // The Construct
 //
 // Copyright (C) The Construct Developers, Authors & Contributors
-// Copyright (C) 2016-2020 Jason Volk <jason@zemos.net>
+// Copyright (C) 2016-2021 Jason Volk <jason@zemos.net>
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -9,26 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_UTF_H
-
-/// Unicode Transformation Format
-namespace ircd::utf
-{
-	IRCD_EXCEPTION(ircd::error, error)
-}
-
-/// Unicode Transformation Format (8-bit)
-namespace ircd::utf8
-{
-	// Get the utf8-encoded length from char32_t (decoded) codepoints
-	template<class u32xN> u32xN length(const u32xN codepoints) noexcept;
-
-	// Encode char32_t codepoints into respective utf-8 encodings
-	template<class u32xN> u32xN encode_sparse(const u32xN codepoints) noexcept;
-
-	// Decode utf-8 string into char32_t unicode codepoints
-	u32x16 decode(const u8x16 string) noexcept;
-}
+#define HAVE_IRCD_UTF16_H
 
 /// Unicode Transformation Format (16-bit)
 namespace ircd::utf16

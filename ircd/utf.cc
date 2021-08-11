@@ -302,100 +302,115 @@ noexcept
 //
 
 ircd::u32x16
-ircd::utf8::decode(const u8x16 in)
+ircd::utf8::decode(const u8x16 string)
 noexcept
 {
-	const u8x16 is_single
+	const u32x16 codepoints
 	(
-		(in & 0x80) == 0
+		decode_sparse(string)
 	);
 
-	const u8x16 is_lead
+	const i32x16 zero_lane
 	(
-		(in - 0xc2) <= 0x32
+		codepoints == 0
 	);
 
-	const u8x16 is_trail
+	// Lanes separating sparsely decoded codepoints are zero.
+	const i8x16 skip_lane
 	(
-		in >= 0x80 && in < 0xbf
+		lane_cast<i8x16>(zero_lane)
 	);
 
-	const u8x16 is_head
+	// Actual NUL codepoints weren't altered by decode.
+	const i8x16 null_code
 	(
-		is_lead | is_single
+		string == 0
 	);
 
-	const u8x16 len_mask[3]
-	{
-		in >= 0xc0, in >= 0xe0, in >= 0xf0,
-	};
-
-	const u8x16 expect_trail
+	// The pack will eliminate zero-value lanes except for legitimate NULs.
+	const i8x16 pack_mask
 	(
-		1 + (len_mask[0] & 1) + (len_mask[1] & 1) + (len_mask[2] & 1)
+		~null_code ^ skip_lane
 	);
 
+	const u32x16 ret
+	(
+		simd::pack(codepoints, pack_mask)
+	);
+
+	return ret;
+}
+
+ircd::u32x16
+ircd::utf8::decode_sparse(const u8x16 string)
+noexcept
+{
 	const u8x16 len
 	(
-		(is_single & 1) | (is_lead & expect_trail)
+		length(string)
 	);
 
-	const u8x16 head
+	const u8x16 rem
 	(
-		in & is_head
+		len
+		| ((shl<0x18>(len) == 4) & 1)
+		| ((shl<0x10>(len) == 4) & 2)
+		| ((shl<0x10>(len) == 3) & 1)
+		| ((shl<0x08>(len) == 4) & 3)
+		| ((shl<0x08>(len) == 3) & 2)
+		| ((shl<0x08>(len) == 2) & 1)
 	);
 
-	const u8x16 lead[]
+	const u8x16 bank[]
 	{
-		0x3f & in & is_trail,
-		0xff & head & is_single,
-		0x1f & head & len_mask[0] & ~len_mask[1],
-		0x0f & head & len_mask[1] & ~len_mask[2],
-		0x07 & head & len_mask[2],
+		string & 0x3f,
+		string & 0xff,
+		string & 0x1f,
+		string & 0x0f,
+		string & 0x07,
 	};
 
-	u8x16 full;
-	for(uint i(0); i < 16; ++i)
-		full[i] = lead[len[i]][i];
-
-	u8x16 shift {len & is_head};
-	shift |= (shl<0x20>(len) == 4) & 0;
-	shift |= (shl<0x20>(len) == 3) & 0;
-	shift |= (shl<0x20>(len) == 2) & 0;
-	shift |= (shl<0x20>(len) == 1) & 0;
-	shift |= (shl<0x18>(len) == 4) & 1;
-	shift |= (shl<0x18>(len) == 3) & 0;
-	shift |= (shl<0x18>(len) == 2) & 0;
-	shift |= (shl<0x18>(len) == 1) & 0;
-	shift |= (shl<0x10>(len) == 4) & 2;
-	shift |= (shl<0x10>(len) == 3) & 1;
-	shift |= (shl<0x10>(len) == 2) & 0;
-	shift |= (shl<0x10>(len) == 1) & 0;
-	shift |= (shl<0x08>(len) == 4) & 3;
-	shift |= (shl<0x08>(len) == 3) & 2;
-	shift |= (shl<0x08>(len) == 2) & 1;
-	shift |= (shl<0x08>(len) == 1) & 0;
-	shift -= 1U;
-	shift &= 0x03U;
-	shift *= 6U;
-
-	const u32x16 val
-	{
-		lane_cast<u32x16>(full) << lane_cast<u32x16>(shift)
-	};
-
-	const u8x16 incr
+	const u8x16 select
 	(
-		(shift == 0) & 1U
+		0
+		| (bank[0] & (len == 0))
+		| (bank[1] & (len == 1))
+		| (bank[2] & (len == 2))
+		| (bank[3] & (len == 3))
+		| (bank[4] & (len == 4))
 	);
 
-	u8x16 idx {0};
-	for(uint i(1); i < 16; ++i)
-		idx[i] = idx[i - 1] + incr[i - 1];
+	const u8x16 byte[]
+	{
+		select & (rem == 1),
+		select & (rem == 2),
+		select & (rem == 3),
+		select & (rem == 4),
+	};
 
-	u32x16 ret {0};
-	for(uint i(0); i < 16; ++i)
-		ret[idx[i]] |= val[i];
+	const u8x16 move[]
+	{
+		shl<8 * 0>(byte[0]),
+		shl<8 * 1>(byte[1]),
+		shl<8 * 2>(byte[2]),
+		shl<8 * 3>(byte[3]),
+	};
+
+	const u32x16 pack[]
+	{
+		lane_cast<u32x16>(move[0]) << 0x00,
+		lane_cast<u32x16>(move[1]) << 0x06,
+		lane_cast<u32x16>(move[2]) << 0x0c,
+		lane_cast<u32x16>(move[3]) << 0x12,
+	};
+
+	const u32x16 ret
+	(
+		lane_cast<u32x16>(byte[0]) // pack[0] constrains clang opt
+		| pack[1]
+		| pack[2]
+		| pack[3]
+	);
 
 	return ret;
 }
