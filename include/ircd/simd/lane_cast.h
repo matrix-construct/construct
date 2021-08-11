@@ -15,27 +15,28 @@ namespace ircd::simd
 {
 	template<class R,
 	         class T>
-	R lane_cast(const T &);
+	R lane_cast(const T);
 }
 
 /// Convert each lane from a smaller type to a larger type
 template<class R,
          class T>
-inline R
-ircd::simd::lane_cast(const T &in)
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline R
+ircd::simd::lane_cast(const T in)
 {
+	#if __has_builtin(__builtin_convertvector)
+		return __builtin_convertvector(in, R);
+	#else
+		R ret;
+		for(size_t i(0); i < lanes<R>(); ++i)
+			ret[i] = in[i];
+
+		return ret;
+	#endif
+
 	static_assert
 	(
 		lanes<R>() == lanes<T>(), "Types must have matching number of lanes."
 	);
-
-	#if __has_builtin(__builtin_convertvector)
-		return __builtin_convertvector(in, R);
-	#endif
-
-	R ret;
-	for(size_t i(0); i < lanes<R>(); ++i)
-		ret[i] = in[i];
-
-	return ret;
 }
