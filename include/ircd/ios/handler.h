@@ -21,6 +21,8 @@ namespace ircd::ios
 	const string_view &name(const handler &);
 }
 
+/// Non-template base class for ios::handle; templated derivations of this
+/// class comprise the function object we're submitting to boost::asio.
 struct ircd::ios::handler
 {
 	static thread_local handler *current;
@@ -38,6 +40,9 @@ struct ircd::ios::handler
 	uint64_t ts {0}; // last tsc sample; for profiling each phase
 };
 
+/// Our function object type template. These should be rvalue-constructed in a
+/// callback argument to a boost::asio call. A reference to an ios::descriptor
+/// must be provided.
 template<class function>
 struct ircd::ios::handle
 :handler
@@ -54,6 +59,9 @@ struct ircd::ios::handle
 // ircd::ios::handle
 //
 
+/// Construction of the handle is considered the enquement. Construct in the
+/// callback argument to a boost::asio call; provide a reference to the
+/// appropriate callsite descriptor.
 template<class function>
 inline
 ircd::ios::handle<function>::handle(ios::descriptor &d,

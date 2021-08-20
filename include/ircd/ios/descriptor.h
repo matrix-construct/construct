@@ -19,6 +19,9 @@ namespace ircd::ios
 	const string_view &name(const descriptor &);
 }
 
+/// Each descriptor classifies and quantifies our operations through asio.
+/// Instances are usually static; all callback handlers are wrapped with an
+/// ios::handle and associated with an ios::descriptor instance.
 struct ircd::ios::descriptor
 :instance_list<descriptor>
 {
@@ -48,6 +51,7 @@ struct ircd::ios::descriptor
 	~descriptor() noexcept;
 };
 
+/// Statistics for the descriptor.
 struct ircd::ios::descriptor::stats
 {
 	using value_type = uint64_t;
