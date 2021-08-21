@@ -170,9 +170,53 @@ namespace std
 //
 // libircd API
 //
-// Some items imported into our namespace.
-//
 
+// Convenience short-hands for POD-types available in ircd::
+namespace ircd
+{
+	// 128-bit
+	using u128 = uint128_t;
+	using i128 = int128_t;
+	using f128 = long double;
+
+	// 64-bit
+	using u64 = uint64_t;
+	using i64 = int64_t;
+	using f64 = double;
+
+	// 32-bit
+	using u32 = uint32_t;
+	using i32 = int32_t;
+	using c32 = char32_t;
+	using f32 = float;
+
+	// 16-bit
+	using u16 = uint16_t;
+	using i16 = int16_t;
+	using c16 = char16_t;
+	#if defined(HAVE__FLOAT16)
+	#define HAVE_FP16
+	using f16 = _Float16;
+	#elif defined(HAVE___FP16)
+	#define HAVE_FP16
+	using f16 = __fp16;
+	#elif defined(__clang__)
+	#warning "Missing half-precision floating point support."
+	#endif
+
+	// 8-bit
+	using u8 = uint8_t;
+	using i8 = int8_t;
+	#ifdef HAVE_CHAR8_T
+	using c8 = char8_t;
+	#endif
+	#if defined(HAVE___FP8)
+	#define HAVE_FP8
+	using f8 = __fp8;
+	#endif
+}
+
+// Various standard library items imported into our namespace.
 namespace ircd
 {
 	using std::get;

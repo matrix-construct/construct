@@ -81,48 +81,7 @@ namespace ircd                                                \
     using simd::_T_;                                          \
 }
 
-//
-// scalar
-//
-
-namespace ircd
-{
-	#ifdef HAVE_CHAR8_T
-	typedef char8_t       c8;
-	#endif
-	typedef char16_t      c16;
-	typedef char32_t      c32;
-	typedef int8_t        i8;
-	typedef int16_t       i16;
-	typedef int32_t       i32;
-	typedef int64_t       i64;
-	typedef int128_t      i128;
-	typedef uint8_t       u8;
-	typedef uint16_t      u16;
-	typedef uint32_t      u32;
-	typedef uint64_t      u64;
-	typedef uint128_t     u128;
-	#if defined(HAVE___FP8)
-	#define HAVE_FP8
-	typedef __fp8         f8;
-	#endif
-	#if defined(HAVE__FLOAT16)
-	#define HAVE_FP16
-	typedef _Float16      f16;
-	#elif defined(HAVE___FP16)
-	#define HAVE_FP16
-	typedef __fp16        f16;
-	#elif defined(__clang__)
-	#warning "Missing half-precision floating point support."
-	#endif
-	typedef float         f32;
-	typedef double        f64;
-	typedef long double   f128;
-}
-
-//
 // vector
-//
 
 IRCD_SIMD_TYPEVEC(m512f, float,              64)
 IRCD_SIMD_TYPEVEC(m512d, double,             64)
@@ -139,9 +98,7 @@ IRCD_SIMD_TYPEVEC(m128d, double,             16)
 IRCD_SIMD_TYPEVEC(m128i, long long,          16)
 IRCD_SIMD_TYPEVEC(m128u, unsigned long long, 16)
 
-//
 // unsigned
-//
 
 IRCD_SIMD_TYPEUSE(u512x1, m512u, 64)  // [_______________________________0________________...
 IRCD_SIMD_TYPEUSE(u256x1, m256u, 32)  // [________________0________________|
@@ -163,9 +120,7 @@ IRCD_SIMD_TYPEDEF(u8x64,    u8,  64)  // [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|0|1|2|
 IRCD_SIMD_TYPEDEF(u8x32,    u8,  32)  // [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|0|1|2|3|4...
 IRCD_SIMD_TYPEDEF(u8x16,    u8,  16)  // [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f]
 
-//
 // signed
-//
 
 IRCD_SIMD_TYPEUSE(i512x1, m512i, 64)  // [_______________________________0________________...
 IRCD_SIMD_TYPEUSE(i256x1, m256i, 32)  // [________________0________________|
@@ -187,9 +142,7 @@ IRCD_SIMD_TYPEDEF(i8x64,    i8,  64)  // [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|0|1|2|
 IRCD_SIMD_TYPEDEF(i8x32,    i8,  32)  // [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|0|1|2|3|4...
 IRCD_SIMD_TYPEDEF(i8x16,    i8,  16)  // [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f]
 
-//
 // character
-//
 
 IRCD_SIMD_TYPEDEF(c32x16,   c32, 64)  // [__0__|__1__|__2__|__3__|__4__|__5__|__6__|__7__|...
 IRCD_SIMD_TYPEDEF(c32x8,    c32, 32)  // [__0__|__1__|__2__|__3__|__4__|...
@@ -205,9 +158,7 @@ IRCD_SIMD_TYPEDEF(c8x32,    c8,  32)  // [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|0|1|2|
 IRCD_SIMD_TYPEDEF(c8x16,    c8,  16)  // [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f]
 #endif
 
-//
 // floating point precision
-//
 
 IRCD_SIMD_TYPEUSE(f512x1, m512f, 64)  // [_______________________________0________________...
 IRCD_SIMD_TYPEUSE(f256x1, m256f, 32)  // [________________0________________|
