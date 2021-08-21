@@ -15,6 +15,7 @@
 #include "type.h"
 #include "unaligned.h"
 #include "traits.h"
+#include "lane_id.h"
 #include "cast.h"
 #include "lane_cast.h"
 #include "broad_cast.h"
