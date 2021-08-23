@@ -37,6 +37,7 @@
 #include "any.h"
 #include "all.h"
 #include "shuf.h"
+#include "pack.h"
 #include "stream.h"
 #include "for_each.h"
 #include "transform.h"
