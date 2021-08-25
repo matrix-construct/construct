@@ -17,10 +17,10 @@ namespace ircd::gpt::vocab
 	static uint bpe_postpare(u8x16 (&)[16], const u8x16 (&)[16][2], const uint);
 	static uint bpe_prepare(u8x16 (&)[16][2], const u8x16);
 	static uint bpe_tokenize(u8x16 (&)[16], const u8x16);
-	static std::array<u32x16, 3> pre_tokenize_split(const u8x16, const u8x16);
+	static std::array<u32x16, 3> pre_tokenize_split(const u8x16, const i8x16);
 	static u64x2 pre_tokenize(u8x16 (&)[16], const u8x16, const u8x16);
 	static u64x2 unk_tokenize(u16x16 &, const u8x16, u64);
-	static u64x2 tokenize_block(u16x16 &, const u8x16, const u8x16) noexcept;
+	static u64x2 tokenize_block(u16x16 &, const u8x16, const i8x16) noexcept;
 	static void init_tokens(), init_merges();
 
 	[[gnu::visibility("internal")]]
@@ -262,7 +262,7 @@ ircd::gpt::vocab::tokenize(const vector_view<u16> &out,
 ircd::u64x2
 ircd::gpt::vocab::tokenize_block(u16x16 &token,
                                  const u8x16 in,
-                                 const u8x16 in_mask)
+                                 const i8x16 in_mask)
 noexcept
 {
 	u8x16 pre_token[16];
@@ -421,38 +421,38 @@ ircd::gpt::vocab::pre_tokenize(u8x16 (&token)[16],
 
 std::array<ircd::u32x16, 3>
 ircd::gpt::vocab::pre_tokenize_split(const u8x16 in,
-                                     const u8x16 in_mask)
+                                     const i8x16 in_mask)
 {
-	const u8x16 is_ascii_ctrl
+	const i8x16 is_ascii_ctrl
 	(
 		in < 0x20
 	);
 
-	const u8x16 is_ascii_space
+	const i8x16 is_ascii_space
 	(
 		in == ' '
 	);
 
-	const u8x16 is_ascii_number
+	const i8x16 is_ascii_number
 	(
 		in >= '0' && in <= '9'
 	);
 
-	const u8x16 is_ascii_letter
-	(
-		(in >= 'a' && in <= 'z') ||
-		(in >= 'A' && in <= 'Z')
+	const i8x16 is_ascii_letter
+	(0
+		| (in >= 'a' && in <= 'z')
+		| (in >= 'A' && in <= 'Z')
 	);
 
-	const u8x16 is_ascii_punct
-	(
-		(in >= '!' && in <= '/') ||
-		(in >= ':' && in <= '@') ||
-		(in >= '[' && in <= '`') ||
-		(in >= '{' && in <= '~')
+	const i8x16 is_ascii_punct
+	(0
+		| (in >= '!' && in <= '/')
+		| (in >= ':' && in <= '@')
+		| (in >= '[' && in <= '`')
+		| (in >= '{' && in <= '~')
 	);
 
-	const u8x16 ascii_categorized
+	const i8x16 ascii_categorized
 	(0
 		| is_ascii_ctrl
 		| is_ascii_space
@@ -461,9 +461,14 @@ ircd::gpt::vocab::pre_tokenize_split(const u8x16 in,
 		| is_ascii_number
 	);
 
-	const u8x16 maybe_notascii
+	const i8x16 maybe_notascii
 	(
 		~ascii_categorized & in_mask
+	);
+
+	const i8x16 null_mask
+	(
+		in == 0 && in_mask != 0
 	);
 
 	const u32x16 ch
@@ -471,47 +476,53 @@ ircd::gpt::vocab::pre_tokenize_split(const u8x16 in,
 		utf8::decode(in)
 	);
 
-	const u32x16 ch_mask
+	const i32x16 ch_mask
+	(0
+		| (ch != 0)
+		| lane_cast<i32x16>(null_mask)
+	);
+
+	const u32x16 uc_ch
 	(
-		lane_cast<u32x16>(in_mask) != 0
+		ch & (lane_cast<i32x16>(maybe_notascii))
 	);
 
 	const u32x16 uc_cat
 	(
-		icu::category(ch & (lane_cast<u32x16>(maybe_notascii) != 0))
+		icu::category(uc_ch)
 	);
 
-	const u32x16 is_L
+	const i32x16 is_L
 	(0
 		| ((uc_cat & 0x0000003eU) != 0)
-		| (lane_cast<u32x16>(is_ascii_letter) != 0)
+		| (lane_cast<i32x16>(is_ascii_letter))
 	);
 
-	const u32x16 is_N
+	const i32x16 is_N
 	(0
 		| ((uc_cat & 0x00000e00U) != 0)
-		| (lane_cast<u32x16>(is_ascii_number) != 0)
+		| (lane_cast<i32x16>(is_ascii_number))
 	);
 
-	const u32x16 is_Z
+	const i32x16 is_Z
 	(0
 		| ((uc_cat & 0x00007000U) != 0)
-		| (lane_cast<u32x16>(is_ascii_space) != 0)
+		| (lane_cast<i32x16>(is_ascii_space))
 	);
 
-	const u32x16 is_C0
+	const i32x16 is_C0
 	(0
-		| (lane_cast<u32x16>(is_ascii_ctrl) != 0)
+		| (lane_cast<i32x16>(is_ascii_ctrl))
 	);
 
-	const u32x16 is_punct
+	const i32x16 is_punct
 	(0
-		| (lane_cast<u32x16>(is_ascii_punct) != 0)
+		| (lane_cast<i32x16>(is_ascii_punct))
 	);
 
 	// Decide characters which do not start a new token based on the
 	// preceding character.
-	const u32x16 is_trail
+	const i32x16 is_trail
 	(0
 		| (is_L & shl<32>(is_L))
 		| (is_N & shl<32>(is_N))
@@ -521,36 +532,36 @@ ircd::gpt::vocab::pre_tokenize_split(const u8x16 in,
 	);
 
 	// Decide characters which may start a token.
-	const u32x16 is_head
+	const i32x16 is_head
 	(
 		(~is_trail | is_C0) & ch_mask
 	);
 
 	// Decide if candidate token is preceded by a space.
-	const u32x16 leading_space
+	const i32x16 leading_space
 	(
 		is_head & shl<32>(is_Z)
 	);
 
 	// Mask if next char is also the same char.
-	const u32x16 is_rep
+	const i32x16 is_rep
 	(
 		is_head & (shl<32>(ch) == ch)
 	);
 
 	// Decide the starting character of each token.
-	const u32x16 tok_head
+	const i32x16 tok_head
 	(0
 		| (is_head & ~leading_space & ~is_rep)
 		| shr<32>(leading_space)
 	);
 
-	const u32x16 tok_trail
+	const i32x16 tok_trail
 	(
 		~tok_head
 	);
 
-	const u32x16 tok_mask
+	const i32x16 tok_mask
 	(
 		tok_trail
 	);
