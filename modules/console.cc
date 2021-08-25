@@ -17414,6 +17414,31 @@ console_cmd__gpt__token(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__gpt__tokenize(opt &out, const string_view &line)
+{
+	const auto text
+	{
+		line
+	};
+
+	u16 buf[1024];
+	const auto tokens
+	{
+		gpt::vocab::tokenize(buf, text)
+	};
+
+	uint i(0);
+	char dbuf[512];
+	for(const auto &token : tokens)
+		out
+		<< std::setw(3) << (i++) << ":  "
+		<< gpt::vocab::debug(dbuf, token)
+		<< std::endl;
+
+	return true;
+}
+
+bool
 console_cmd__gpt__data(opt &out, const string_view &line)
 {
 	const params param{line, " ",
