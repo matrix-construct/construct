@@ -678,9 +678,9 @@ ircd::gpt::vocab::bpe_prepare(u8x16 (&out)[16][2],
 		simd::strlen(in)
 	};
 
-	const u32x16 cplen
+	const u8x16 cplen
 	(
-		utf8::length(utf8::decode(in))
+		utf8::length(in)
 	);
 
 	u32x16 idx;
