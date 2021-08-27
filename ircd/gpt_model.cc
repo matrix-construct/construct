@@ -42,6 +42,11 @@ namespace ircd::gpt::model
 	manifest[],
 	manifest_h[];
 
+	extern conf::item<bool>
+	cache_locked,
+	cache_shared,
+	cache_hugepage;
+
 	extern conf::item<std::string>
 	path,
 	cache_path,
@@ -79,6 +84,27 @@ ircd::gpt::model::manifest
 	{ "ln_f.bias.json",     init_f_bias,    },
 	{ "wpe.weight.json",    init_wpe_weight },
 	{ "wte.weight.json",    init_wte_weight },
+};
+
+decltype(ircd::gpt::model::cache_locked)
+ircd::gpt::model::cache_locked
+{
+	{ "name",     "ircd.gpt.model.cache.locked" },
+	{ "default",  false                         },
+};
+
+decltype(ircd::gpt::model::cache_shared)
+ircd::gpt::model::cache_shared
+{
+	{ "name",     "ircd.gpt.model.cache.shared" },
+	{ "default",  false                         },
+};
+
+decltype(ircd::gpt::model::cache_hugepage)
+ircd::gpt::model::cache_hugepage
+{
+	{ "name",     "ircd.gpt.model.cache.hugepage" },
+	{ "default",  true                            },
 };
 
 decltype(ircd::gpt::model::cache_path)
@@ -169,9 +195,9 @@ ircd::gpt::model::init_from_cache(const string_view &cache_path)
 		std::ios::in | std::ios::out
 	};
 
-	map_opts.huge2mb = true;
-	map_opts.locked = false;
-	map_opts.shared = false;
+	map_opts.locked = bool(cache_locked);
+	map_opts.shared = bool(cache_shared);
+	map_opts.huge2mb = bool(cache_hugepage);
 	default_model_shm = fs::map
 	{
 		fd, map_opts, sizeof(decoder)
@@ -319,7 +345,7 @@ ircd::gpt::model::init_dataset(const string_view &path)
 	};
 
 	fs::map::opts map_opts;
-	map_opts.huge2mb = true;
+	map_opts.huge2mb = bool(cache_hugepage);
 	default_dataset_shm = fs::map
 	{
 		fd, map_opts, size
