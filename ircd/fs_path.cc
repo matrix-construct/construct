@@ -110,6 +110,24 @@ ircd::fs::base::etc
 	},
 };
 
+/// e.g. /include default=RB_INCLUDE_DIR
+/// env=$ircd_fs_base_include env=$INCLUDE_DIRECTORY
+decltype(ircd::fs::base::include)
+ircd::fs::base::include
+{
+	{ "name",        "ircd.fs.base.include"      },
+	{ "persist",     false                       },
+	{ "help",        "headers directory"         },
+	{
+		"default",
+		getenv("INCLUDE_DIRECTORY")?
+			getenv("INCLUDE_DIRECTORY"):
+		getenv("IRCD_INCLUDE_DIR")?
+			getenv("IRCD_INCLUDE_DIR"):
+			RB_INCLUDE_DIR
+	},
+};
+
 /// e.g. /usr/lib default=RB_LIB_DIR
 /// env=$ircd_fs_base_lib
 decltype(ircd::fs::base::lib)
