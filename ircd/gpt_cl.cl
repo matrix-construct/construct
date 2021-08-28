@@ -8,6 +8,9 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <ircd/simt/simt.h>
+#include <ircd/gpt/token.h>
+#include <ircd/gpt/task/task.h>
 
 inline void
 __attribute__((always_inline))

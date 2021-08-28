@@ -363,27 +363,42 @@ noexcept
 // code
 //
 
-decltype(ircd::gpt::pipe::code::compile_opts)
-ircd::gpt::pipe::code::compile_opts
+decltype(ircd::gpt::pipe::code::default_path)
+ircd::gpt::pipe::code::default_path
 {
-	" -cl-strict-aliasing"
-	" -cl-no-signed-zeros"
-	" -cl-finite-math-only"
-	" -cl-unsafe-math-optimizations"
-	" -cl-fast-relaxed-math"
-	" -cl-mad-enable"
-	" -cl-single-precision-constant"
-	//" -cl-fp32-correctly-rounded-divide-sqrt"
+	{ "name",     "ircd.gpt.pipe.code.path" },
+};
 
-	" -cl-kernel-arg-info"
+decltype(ircd::gpt::pipe::code::default_opts)
+ircd::gpt::pipe::code::default_opts
+{
+	{ "name",     "ircd.gpt.pipe.code.opts" },
+	{ "default",  string_view
+	{
+		" -cl-strict-aliasing"
+		" -cl-no-signed-zeros"
+		" -cl-finite-math-only"
+		" -cl-unsafe-math-optimizations"
+		" -cl-fast-relaxed-math"
+		" -cl-mad-enable"
+		" -cl-single-precision-constant"
+		//" -cl-fp32-correctly-rounded-divide-sqrt"
+
+		" -cl-kernel-arg-info"
+	}}
 };
 
 ircd::gpt::pipe::code::code()
 :cl::code{[]
 {
+	const string_view code_path
+	{
+		default_path
+	};
+
 	const fs::fd fd
 	{
-
+		code_path
 	};
 
 	const std::string read
@@ -401,9 +416,19 @@ ircd::gpt::pipe::code::code()
 		&bin, 1
 	);
 
+	const auto opts
+	{
+		fmt::snstringf
+		{
+			4096, "%s -I%s",
+			string_view{default_opts},
+			string_view{fs::base::include},
+		}
+	};
+
 	return cl::code
 	{
-		bins, compile_opts
+		bins, opts
 	};
 }()}
 {

@@ -15,7 +15,8 @@
 struct ircd::gpt::pipe::code
 :cl::code
 {
-	static const string_view compile_opts;
+	static conf::item<std::string> default_path;
+	static conf::item<std::string> default_opts;
 
 	code();
 	~code() noexcept;
