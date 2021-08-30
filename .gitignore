@@ -5,6 +5,7 @@ Makefile
 *.so
 *.lo
 *.la
+*.bc
 *.orig
 *.log
 *.sw?
