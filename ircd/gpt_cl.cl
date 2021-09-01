@@ -25,6 +25,7 @@ ircd_gpt_norm_fmad(__local float4 *const out,
 
 /// Gaussian Error Linear Unit
 inline void
+__attribute__((always_inline))
 ircd_gpt_ffnn_gelu(__local float4 *const out,
                    __local const float4 *const in_,
                    const uint i)
@@ -50,6 +51,7 @@ ircd_gpt_ffnn_gelu(__local float4 *const out,
 
 // Matrix * Vector Multiply/Accumulate
 inline void
+__attribute__((flatten, always_inline))
 ircd_gpt_sgemv(__local float4 *const restrict out,
                __local const float4 *const restrict in,
                __global const float4 *const restrict bias,
@@ -93,7 +95,7 @@ ircd_gpt_sgemv(__local float4 *const restrict out,
 }
 
 inline void
-__attribute__((always_inline))
+__attribute__((flatten, always_inline))
 ircd_gpt_ffnn_fcon(__global const struct ircd_gpt_task *const ctrl,
                    __constant const struct ircd_gpt_opts *const opts,
                    __local union ircd_gpt_ffnn_aperaturev *const restrict out,
@@ -115,7 +117,7 @@ ircd_gpt_ffnn_fcon(__global const struct ircd_gpt_task *const ctrl,
 }
 
 inline void
-__attribute__((always_inline))
+__attribute__((flatten, always_inline))
 ircd_gpt_ffnn(__global const struct ircd_gpt_task *const ctrl,
               __constant const struct ircd_gpt_opts *const opts,
               __local union ircd_gpt_tokenv *const restrict token,
@@ -157,7 +159,7 @@ ircd_gpt_ffnn(__global const struct ircd_gpt_task *const ctrl,
 }
 
 inline void
-__attribute__((always_inline))
+__attribute__((flatten, always_inline))
 ircd_gpt_attn_self_samax(__global const struct ircd_gpt_task *const ctrl,
                          __constant const struct ircd_gpt_opts *const opts,
                          __local float self[][12])
@@ -190,7 +192,7 @@ ircd_gpt_attn_self_samax(__global const struct ircd_gpt_task *const ctrl,
 }
 
 inline void
-__attribute__((always_inline))
+__attribute__((flatten, always_inline))
 ircd_gpt_attn_self(__global const struct ircd_gpt_task *const ctrl,
                    __constant const struct ircd_gpt_opts *const opts,
                    __local union ircd_gpt_tokenv *const restrict out,
@@ -258,7 +260,7 @@ ircd_gpt_attn_self(__global const struct ircd_gpt_task *const ctrl,
 }
 
 inline void
-__attribute__((always_inline))
+__attribute__((flatten, always_inline))
 ircd_gpt_attn_proj(__global const struct ircd_gpt_task *const ctrl,
                    __constant const struct ircd_gpt_opts *const opts,
                    __local union ircd_gpt_tokenv *const out,
@@ -281,6 +283,7 @@ ircd_gpt_attn_proj(__global const struct ircd_gpt_task *const ctrl,
 }
 
 __kernel void
+__attribute__((flatten))
 ircd_gpt_coil(__global const struct ircd_gpt_task *const ctrl,
               __constant const struct ircd_gpt_opts *const opts,
               __global union ircd_gpt_tokenv *const restrict accum,
@@ -377,6 +380,7 @@ ircd_gpt_coil(__global const struct ircd_gpt_task *const ctrl,
 }
 
 __kernel void
+__attribute__((flatten))
 ircd_gpt_attn_fcon(__global const struct ircd_gpt_task *const ctrl,
                    __constant const struct ircd_gpt_opts *const opts,
                    __global union ircd_gpt_attn_aperaturev *const restrict state,
@@ -425,6 +429,7 @@ ircd_gpt_attn_fcon(__global const struct ircd_gpt_task *const ctrl,
 //
 
 inline void
+__attribute__((always_inline))
 _ircd_gpt_lm_embed(__global const struct ircd_gpt_task *const ctrl,
                    __constant const struct ircd_gpt_opts *const opts,
                    __global union ircd_gpt_tokenv *const restrict out,
@@ -446,6 +451,7 @@ _ircd_gpt_lm_embed(__global const struct ircd_gpt_task *const ctrl,
 }
 
 __kernel void
+__attribute__((flatten))
 ircd_gpt_lm_embed(__global const struct ircd_gpt_task *const ctrl,
                   __constant const struct ircd_gpt_opts *const opts,
                   __global union ircd_gpt_tokenv *const restrict accum,
@@ -463,6 +469,7 @@ ircd_gpt_lm_embed(__global const struct ircd_gpt_task *const ctrl,
 }
 
 __kernel void
+__attribute__((flatten))
 ircd_gpt_lm_norm(__global const struct ircd_gpt_task *const ctrl,
                  __constant const struct ircd_gpt_opts *const opts,
                  __global union ircd_gpt_tokenv *const restrict accum,
@@ -487,6 +494,7 @@ ircd_gpt_lm_norm(__global const struct ircd_gpt_task *const ctrl,
 }
 
 __kernel void
+__attribute__((flatten))
 ircd_gpt_lm_logit(__global const struct ircd_gpt_task *const ctrl,
                   __constant const struct ircd_gpt_opts *const opts,
                   __global float *const restrict logit,
@@ -519,6 +527,7 @@ ircd_gpt_lm_logit(__global const struct ircd_gpt_task *const ctrl,
 }
 
 __kernel void
+__attribute__((flatten))
 ircd_gpt_lm_logsm(__global struct ircd_gpt_task *const ctrl,
                   __constant const struct ircd_gpt_opts *const opts,
                   __global float4 *const restrict logsm,
@@ -678,6 +687,7 @@ ircd_gpt_lm_result(__global struct ircd_gpt_task *const ctrl,
 }
 
 __kernel void
+__attribute__((flatten))
 ircd_gpt_lm_select(__global struct ircd_gpt_task *const ctrl,
                    __constant const struct ircd_gpt_opts *const opts,
                    __global const float *const restrict logsm,
@@ -711,6 +721,7 @@ ircd_gpt_lm_select(__global struct ircd_gpt_task *const ctrl,
 //
 
 inline void
+__attribute__((always_inline))
 ircd_gpt_prop_elem(__global const struct ircd_gpt_task *const ctrl,
                    __constant const struct ircd_gpt_opts *const opts,
                    __global float4 *const restrict param_,
@@ -741,6 +752,7 @@ ircd_gpt_prop_elem(__global const struct ircd_gpt_task *const ctrl,
 }
 
 __kernel void
+__attribute__((flatten))
 ircd_gpt_norm_prop(__global const struct ircd_gpt_task *const ctrl,
                    __constant const struct ircd_gpt_opts *const opts,
                    __global union ircd_gpt_tokenv *const restrict bias,
@@ -776,6 +788,7 @@ ircd_gpt_norm_prop(__global const struct ircd_gpt_task *const ctrl,
 }
 
 __kernel void
+__attribute__((flatten))
 ircd_gpt_coil_prop_attn(__global const struct ircd_gpt_task *const ctrl,
                         __constant const struct ircd_gpt_opts *const opts,
                         __global union ircd_gpt_tokenv *const restrict norm_bias,
@@ -854,6 +867,7 @@ ircd_gpt_coil_prop_attn(__global const struct ircd_gpt_task *const ctrl,
 }
 
 __kernel void
+__attribute__((flatten))
 ircd_gpt_coil_prop_ffnn(__global const struct ircd_gpt_task *const ctrl,
                         __constant const struct ircd_gpt_opts *const opts,
                         __global union ircd_gpt_tokenv *const restrict norm_bias,
@@ -932,6 +946,7 @@ ircd_gpt_coil_prop_ffnn(__global const struct ircd_gpt_task *const ctrl,
 }
 
 __kernel void
+__attribute__((flatten))
 ircd_gpt_lm_embed_prop(__global const struct ircd_gpt_task *const ctrl,
                        __constant const struct ircd_gpt_opts *const opts,
                        __global union ircd_gpt_tokenv *const restrict pos,
