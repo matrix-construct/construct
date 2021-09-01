@@ -1447,7 +1447,11 @@ void
 ircd::cl::build_handle(cl_program program,
                        void *const priv)
 {
-	ircd::always_assert(false);
+	log::debug
+	{
+		log, "program(%p) :Successfully built.",
+		(const void *)program,
+	};
 }
 
 void
