@@ -414,6 +414,9 @@ ircd::mapi::metablock::metablock(const string_view &description,
 ircd::mapi::header::~header()
 noexcept
 {
+	delete meta;
+	meta = nullptr;
+
 	static_destruction = true;
 }
 
