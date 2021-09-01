@@ -37,6 +37,25 @@ ircd::net::dns::service_names
 	{ { 8448, "tcp" },  "matrix" },
 };
 
+void
+ircd::net::dns::init::service_init()
+{
+	static const int stay_open {true};
+
+	#ifdef HAVE_NETDB_H
+	::setservent(stay_open);
+	#endif
+}
+
+void
+ircd::net::dns::init::service_fini()
+noexcept
+{
+	#ifdef HAVE_NETDB_H
+	::endservent();
+	#endif
+}
+
 uint16_t
 ircd::net::dns::service_port(const string_view &name,
                              const string_view &prot)

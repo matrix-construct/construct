@@ -103,5 +103,7 @@ struct ircd::net::dns::opts
 /// (internal)
 struct ircd::net::dns::init
 {
+	static void service_init(), service_fini() noexcept;
+
 	init(), ~init() noexcept;
 };
