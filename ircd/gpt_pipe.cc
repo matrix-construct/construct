@@ -224,12 +224,12 @@ ircd::gpt::pipe::exec::exec(task &task,
 ,send_opts
 {
 	reinterpret_cast<const char *>(task.opts),
-	release? sizeof(struct ircd_gpt_opts): 0
+	release? sizeof(gpt::opts): 0
 }
 ,send_ctrl
 {
 	reinterpret_cast<const char *>(task.ctrl),
-	release? sizeof(struct ircd_gpt_task): 0
+	release? sizeof(gpt::ctrl): 0
 }
 ,send_coil
 {
@@ -244,7 +244,7 @@ ircd::gpt::pipe::exec::exec(task &task,
 ,recv_ctrl
 {
 	reinterpret_cast<char *>(task.ctrl),
-	acquire? sizeof(struct ircd_gpt_task): 0
+	acquire? sizeof(gpt::ctrl): 0
 }
 ,range_lm_embed
 {
@@ -480,12 +480,12 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 }
 ,ctrl
 {
-	sizeof(struct ircd_gpt_task),
+	sizeof(gpt::ctrl),
 	mutable_buffer{}
 }
 ,opts
 {
-	sizeof(struct ircd_gpt_opts),
+	sizeof(gpt::opts),
 	const_buffer{}
 }
 ,lm_embed

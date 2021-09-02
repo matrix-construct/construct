@@ -29,14 +29,12 @@ struct ircd::gpt::task
 	const gpt::opts *opts {nullptr};
 
 	/// Reference to control pages.
-	struct ircd_gpt_task *ctrl {nullptr};
+	gpt::ctrl *ctrl {nullptr};
 
 	/// Current task status.
 	enum status status {'\0'};
 
-	task(const gpt::opts *       = nullptr,
-	     struct ircd_gpt_task *  = nullptr);
-
+	task(const gpt::opts * = nullptr, gpt::ctrl * = nullptr);
 	~task() noexcept;
 };
 
@@ -50,7 +48,7 @@ enum ircd::gpt::task::status
 	ERROR     = 'E',  ///< Execution did not complete successfully.
 };
 
-static_assert(sizeof(struct ircd_gpt_task) == 4096);
-static_assert(offsetof(struct ircd_gpt_task, token) == 2048);
-static_assert(std::is_standard_layout<struct ircd_gpt_task>::value);
+static_assert(sizeof(struct ircd_gpt_ctrl) == 4096);
+static_assert(offsetof(struct ircd_gpt_ctrl, token) == 2048);
+static_assert(std::is_standard_layout<struct ircd_gpt_ctrl>::value);
 #endif

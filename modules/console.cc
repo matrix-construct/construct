@@ -17359,7 +17359,7 @@ console_cmd__gpt__raw(opt &out, const string_view &line)
 	opts.limit = param.at<uint>("limit");
 	opts.top_k = 3;
 
-	struct ircd_gpt_task ctrl;
+	gpt::ctrl ctrl;
 	gpt::task task
 	{
 		&opts, &ctrl

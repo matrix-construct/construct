@@ -237,9 +237,10 @@ libircd_la_SOURCES += gpt.cc
 libircd_la_SOURCES += gpt_pipe.cc
 libircd_la_SOURCES += gpt_model.cc
 libircd_la_SOURCES += gpt_vocab.cc
+libircd_la_SOURCES += gpt_cpu.cc
 if OPENCL
 if CLANG
-BUILT_SOURCES += gpt_cl.o
+BUILT_SOURCES += gpt_gpu.o
 endif
 endif
 libircd_la_SOURCES += openssl.cc
@@ -354,6 +355,6 @@ default.profdata:
 	-$(LLVM_PROFDATA) merge -output=default.profdata default.proftext
 
 if CLANG
-gpt_cl.o: gpt_cl.cl
+gpt_gpu.o: gpt_gpu.cl
 	$(CC) -std=CL1.1 $(AM_CPPFLAGS) $(CPPFLAGS) $(DEFS) -Xclang -finclude-default-header -include "ircd/config.h" -o $@ -c $^
 endif

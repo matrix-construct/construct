@@ -18,7 +18,7 @@
 /// the mutable state component for an execution; for the immutable component
 /// also shared with device software see opts.h.
 ///
-struct ircd_gpt_task
+struct ircd_gpt_ctrl
 {
 	/// Epoch counting & interrupt control block.
 	struct ircd_gpt_task_epic epic;
@@ -56,3 +56,10 @@ struct ircd_gpt_task
 	ushort token[] __attribute__((aligned(2048)));
 }
 __attribute__((aligned(4096)));
+
+#ifdef __cplusplus
+namespace ircd::gpt
+{
+	using ctrl = struct ircd_gpt_ctrl;
+}
+#endif
