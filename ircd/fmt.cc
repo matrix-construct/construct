@@ -1085,7 +1085,7 @@ const
 bool
 ircd::fmt::float_specifier::operator()(char *&out,
                                        const size_t &max,
-                                       const spec &s,
+                                       const spec &spec,
                                        const arg &val)
 const
 {
@@ -1098,7 +1098,7 @@ const
 	}};
 
 	thread_local uint _precision_;
-	_precision_ = s.precision;
+	_precision_ = spec.precision;
 
 	const auto closure([&](const double &floating)
 	{
@@ -1127,19 +1127,52 @@ const
 				,"floating point real"
 			};
 
+			_r1_type width;
+			_r2_type pad;
+			karma::rule<char *, double(ushort, char)> aligned_left
+			{
+				karma::left_align(width, pad)[rule]
+				,"left aligned"
+			};
+
+			karma::rule<char *, double(ushort, char)> aligned_right
+			{
+				karma::right_align(width, pad)[rule]
+				,"right aligned"
+			};
+
+			karma::rule<char *, double(ushort, char)> aligned_center
+			{
+				karma::center(width, pad)[rule]
+				,"center aligned"
+			};
+
 			generator(): generator::base_type{rule} {}
 		}
 		static const generator;
 
+		static const auto ep
+		{
+			eps[throw_illegal]
+		};
+
+		bool ret;
 		mutable_buffer buf
 		{
 			out, max
 		};
 
-		const auto ret
+		if(!spec.width)
+			ret = fmt::generate(buf, generator | ep, floating);
+
+		else if(spec.sign == '-')
 		{
-			fmt::generate(buf, generator | eps[throw_illegal], floating)
-		};
+			const auto &g(generator.aligned_left(spec.width, spec.pad));
+			ret = fmt::generate(buf, g | ep, floating);
+		} else {
+			const auto &g(generator.aligned_right(spec.width, spec.pad));
+			ret = fmt::generate(buf, g | ep, floating);
+		}
 
 		out = data(buf);
 		return ret;
