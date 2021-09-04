@@ -35,7 +35,7 @@ namespace ircd
 {
 	void debugtrap() noexcept;
 	template<class expr> void always_assert(expr&&) noexcept;
-	[[gnu::cold]] void print_assertion(const char *const &, const char *const &, const unsigned &, const char *const &) noexcept;
+	[[gnu::cold]] void print_assertion(const char *, const char *, const unsigned, const char *) noexcept;
 }
 
 /// Override the standard assert behavior to take one of several different
@@ -76,10 +76,10 @@ extern "C" // for clang
 {
 	extern inline void
 	__attribute__((cold, flatten, always_inline, gnu_inline, artificial))
-	__assert_fail(const char *__assertion,
-	              const char *__file,
+	__assert_fail(const char *const __assertion,
+	              const char *const __file,
 	              unsigned int __line,
-	              const char *__function)
+	              const char *const __function)
 	{
 		#if defined(__SSE2__) && defined(__clang__)
 			asm volatile ("lfence");

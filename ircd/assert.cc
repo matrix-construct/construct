@@ -71,10 +71,10 @@ __assert_fail(const char *__assertion,
 #endif
 
 void
-ircd::print_assertion(const char *const &__assertion,
-                      const char *const &__file,
-                      const unsigned &__line,
-                      const char *const &__function)
+ircd::print_assertion(const char *const __assertion,
+                      const char *const __file,
+                      const unsigned __line,
+                      const char *const __function)
 noexcept
 {
 	if(strcmp(__assertion, "critical") == 0)
