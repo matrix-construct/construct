@@ -194,7 +194,7 @@ void
 ircd::magic::set_flags(const magic_t &cookie,
                        const int &flags)
 {
-	if(magic_setflags(cookie, flags) == -1)
+	if(unlikely(magic_setflags(cookie, flags) == -1))
 		throw_on_error(cookie);
 }
 
@@ -206,7 +206,7 @@ ircd::magic::throw_on_error(const magic_t &cookie)
 		::magic_error(cookie)
 	};
 
-	if(errstr)
+	if(unlikely(errstr))
 		throw error
 		{
 			"%s", errstr

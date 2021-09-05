@@ -562,7 +562,7 @@ void
 ircd::magick::callpf(function&& f,
                      args&&... a)
 {
-	if(!call<MagickPassFail>(f, std::forward<args>(a)...))
+	if(unlikely(!call<MagickPassFail>(f, std::forward<args>(a)...)))
 		throw error{};
 }
 
