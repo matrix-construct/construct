@@ -12,6 +12,50 @@
 #define HAVE_IRCD_SIMT_SORT_H
 
 #ifdef __OPENCL_C_VERSION__
+
+inline bool
+ircd_simt_sort_idx16_cmpxchg(__local ushort *const idx,
+                             __global const float *const val,
+                             const uint ai,
+                             const uint bi,
+                             const bool parity)
+{
+	const ushort
+	a = idx[ai],
+	b = idx[bi];
+
+	const bool
+	lt = val[a] < val[b],
+	swap = (lt && !parity) || (!lt && parity);
+
+	if(swap)
+	{
+		idx[ai] = b;
+		idx[bi] = a;
+	}
+
+	return swap;
+}
+
+inline bool
+ircd_simt_sort_idx16_trick(__local ushort *const idx,
+                           __global const float *const val,
+                           const uint li,
+                           const uint stride,
+                           const bool parity)
+{
+	const bool
+	active = (li % (stride << 1)) < stride;
+
+	if(!active)
+		return false;
+
+	const uint
+	oi = li + stride;
+
+	return ircd_simt_sort_idx16_cmpxchg(idx, val, li, oi, parity);
+}
+
 /// Sort indices in `idx` which point to values contained in `val`.
 inline void
 ircd_simt_sort_idx16_flldr(__local ushort *const idx,
@@ -21,18 +65,20 @@ ircd_simt_sort_idx16_flldr(__local ushort *const idx,
 	li = get_local_id(0),
 	ln = get_local_size(0);
 
-	for(uint stride = ln >> 1; stride > 0; stride >>= 1)
+	for(uint up = 1; up < ln; up <<= 1)
 	{
+		const bool
+		parity = li % (up << 2) > up;
+
 		barrier(CLK_LOCAL_MEM_FENCE);
-		if(li >= stride || val[idx[li]] >= val[idx[li + stride]])
-			continue;
+		ircd_simt_sort_idx16_trick(idx, val, li, up, parity);
 
-		const ushort
-		ours = idx[li],
-		theirs = idx[li + stride];
-
-		idx[li] = theirs;
-		idx[li + stride] = ours;
+		for(uint down = up >> 1; down > 0; down >>= 1)
+		{
+			barrier(CLK_LOCAL_MEM_FENCE);
+			ircd_simt_sort_idx16_trick(idx, val, li, down, parity);
+		}
 	}
 }
+
 #endif
