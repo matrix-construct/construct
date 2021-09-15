@@ -185,14 +185,21 @@ ircd::gpt::model::init_from_cache(const string_view &cache_path)
 			sizeof(model::decoder),
 		};
 
+	const auto mode
+	{
+		cache_shared?
+			std::ios::in | std::ios::out:
+			std::ios::in
+	};
+
 	const fs::fd fd
 	{
-		cache_path, std::ios::in //| std::ios::out
+		cache_path, mode
 	};
 
 	fs::map::opts map_opts
 	{
-		std::ios::in | std::ios::out
+		mode
 	};
 
 	map_opts.locked = bool(cache_locked);
