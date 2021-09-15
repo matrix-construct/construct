@@ -76,6 +76,7 @@ struct ircd::cl::data
   public:
 	uint flags() const;
 	size_t size() const;
+	off_t offset() const;
 	char *ptr() const; // host only
 
 	data(const size_t, const mutable_buffer &, const bool wonly = false); // device rw

@@ -1697,6 +1697,16 @@ const
 	return info<char *>(clGetMemObjectInfo, cl_mem(mutable_cast(handle)), CL_MEM_SIZE, buf);
 }
 
+off_t
+ircd::cl::data::offset()
+const
+{
+	assert(handle);
+
+	char buf[sizeof(off_t)] {0};
+	return info<off_t>(clGetMemObjectInfo, cl_mem(mutable_cast(handle)), CL_MEM_OFFSET, buf);
+}
+
 size_t
 ircd::cl::data::size()
 const
