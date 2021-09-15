@@ -224,6 +224,13 @@ ircd::db::database::cache final
 	#ifdef IRCD_DB_HAS_CACHE_GETCHARGE
 	size_t GetCharge(Handle *) const noexcept override;
 	#endif
+	#ifdef IRCD_DB_HAS_CACHE_GETDELETER
+	DeleterFn GetDeleter(Handle *) const noexcept override;
+	#endif
+	#ifdef IRCD_DB_HAS_CACHE_APPLYTOALL
+	using callbackstd = std::function<void (const Slice &, void *, size_t, DeleterFn)>;
+	void ApplyToAllEntries(const callbackstd &, const ApplyToAllEntriesOptions &) noexcept override;
+	#endif
 
 	cache(database *const &,
 	      std::shared_ptr<struct database::stats>,

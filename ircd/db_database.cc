@@ -3241,6 +3241,27 @@ const noexcept
 }
 #endif
 
+#ifdef IRCD_DB_HAS_CACHE_GETDELETER
+rocksdb::Cache::DeleterFn
+ircd::db::database::cache::GetDeleter(Handle *const h)
+const noexcept
+{
+	assert(bool(c));
+	return c->GetDeleter(h);
+}
+#endif
+
+#ifdef IRCD_DB_HAS_CACHE_APPLYTOALL
+void
+ircd::db::database::cache::ApplyToAllEntries(const callbackstd &cb,
+                                             const ApplyToAllEntriesOptions &opts)
+noexcept
+{
+	assert(bool(c));
+	return c->ApplyToAllEntries(cb, opts);
+}
+#endif
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // database::compaction_filter
