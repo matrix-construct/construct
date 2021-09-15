@@ -476,12 +476,18 @@ ircd::cl::log_dev_info(const uint i,
 		native_kernel,
 	};
 
+	char extensions_buf[2048];
+	const string_view extensions
+	{
+		info(clGetDeviceInfo, dev, CL_DEVICE_EXTENSIONS, extensions_buf)
+	};
+
 	log::logf
 	{
 		log, log::level::DEBUG,
 		"%s :%s",
 		string_view{head},
-		info(clGetDeviceInfo, dev, CL_DEVICE_EXTENSIONS, buf[0]),
+		extensions,
 	};
 }
 
