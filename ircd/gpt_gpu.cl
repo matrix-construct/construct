@@ -197,8 +197,7 @@ ircd_gpt_attn_self(__global const struct ircd_gpt_ctrl *const ctrl,
                    __constant const struct ircd_gpt_opts *const opts,
                    __local union ircd_gpt_tokenv *const restrict out,
                    __local float self[][12],
-                   __global const struct ircd_gpt_attn_qkvv *const restrict token,
-                   __global const struct ircd_gpt_attn_mask *const restrict mask)   // [1024][1024],
+                   __global const struct ircd_gpt_attn_qkvv *const restrict token)
 {
 	const uint
 	gi = get_global_id(0),
@@ -215,7 +214,8 @@ ircd_gpt_attn_self(__global const struct ircd_gpt_ctrl *const ctrl,
 	{
 		for(uint i = 0; i < wn; ++i)
 		{
-			if(!mask[wi].token[i])
+			// Left-attention mask
+			if(wi < i)
 			{
 				self[i][li] = -10000.0f;
 				continue;
@@ -288,7 +288,6 @@ ircd_gpt_coil(__global const struct ircd_gpt_ctrl *const ctrl,
               __constant const struct ircd_gpt_opts *const opts,
               __global union ircd_gpt_tokenv *const restrict accum,
               __global const struct ircd_gpt_attn_qkvv *const restrict state,
-              __global const struct ircd_gpt_attn_mask *const restrict mask,   // [1024][1024],
               __global const float4 *const restrict attn_proj_bias,
               __global const float4 *const restrict attn_proj_weight,
               __global const float4 *const restrict ffnn_norm_bias,
@@ -324,8 +323,7 @@ ircd_gpt_coil(__global const struct ircd_gpt_ctrl *const ctrl,
 		opts,
 		&buf1,
 		buf.attn_self,
-		state,
-		mask
+		state
 	);
 
 	barrier(CLK_LOCAL_MEM_FENCE);

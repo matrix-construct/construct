@@ -28,7 +28,7 @@ namespace ircd::gpt
 	static void norm(f32x4 *, const f32x4 *, const f32x4 *, const f32x4 *, const f32);
 	static void vals(float (&)[12][1024][64], const float (&)[12][1024][1024], const float (&)[3][1024][12][64], const size_t);
 	static void pare(float (&)[12][1024][1024], const float (&)[3][1024][12][64], const size_t);
-	static void mask(float (&)[12][1024][1024], const float (&)[12][1024][1024], const bool (&)[1024][1024], const size_t);
+	static void mask(float (&)[12][1024][1024], const float (&)[12][1024][1024], const size_t);
 	static void smax(float (&)[12][1024][1024], const float (&)[12][1024][1024], const size_t);
 	static void attn(float (&)[3][1024][12][64], const float *const, const size_t, const model::decoder &, const uint layer);
 	static void ffnn(float *, const float *, const model::decoder &, const uint layer);
@@ -173,7 +173,7 @@ ircd::gpt::coil(float *__restrict__ accum,
 
 		attn(qkv, accum, tokens, decoder, i);
 		pare(state, qkv, tokens);
-		mask(state, state, layer.attn.bias, tokens);
+		mask(state, state, tokens);
 		smax(state, state, tokens);
 		vals(attns, state, qkv, tokens);
 
@@ -287,7 +287,6 @@ ircd::gpt::pare(float (&__restrict__ out)[12][1024][1024],
 void
 ircd::gpt::mask(float (&__restrict__ out)[12][1024][1024],
                 const float (&__restrict__ in)[12][1024][1024],
-                const bool (&__restrict__ bias)[1024][1024],
                 const size_t num)
 {
 	static const float masked
@@ -299,7 +298,7 @@ ircd::gpt::mask(float (&__restrict__ out)[12][1024][1024],
 	for(uint j(0); j < 12; ++j)
 		for(uint k(0); k < num; ++k)
 			for(uint l(0); l < num; ++l)
-				out[j][k][l] = bias[k][l]? in[j][k][l]: masked;
+				out[j][k][l] = (k < l)? in[j][k][l]: masked;
 }
 
 void

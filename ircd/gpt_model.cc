@@ -29,8 +29,7 @@ namespace ircd::gpt::model
 	init_h_attn_attn_weight(decoder &, const string_view &, const size_t &, const json::array &),
 	init_h_attn_attn_bias(decoder &, const string_view &, const size_t &, const json::array &),
 	init_h_attn_proj_weight(decoder &, const string_view &, const size_t &, const json::array &),
-	init_h_attn_proj_bias(decoder &, const string_view &, const size_t &, const json::array &),
-	init_h_attn_bias(decoder &, const string_view &, const size_t &, const json::array &);
+	init_h_attn_proj_bias(decoder &, const string_view &, const size_t &, const json::array &);
 
 	static bool init_dataset(const string_view &);
 	static bool init_from_cache(const string_view &);
@@ -74,7 +73,6 @@ ircd::gpt::model::manifest_h
 	{ "h.%u.attn.c_attn.bias.json",       init_h_attn_attn_bias,    },
 	{ "h.%u.attn.c_proj.weight.json",     init_h_attn_proj_weight,  },
 	{ "h.%u.attn.c_proj.bias.json",       init_h_attn_proj_bias     },
-	{ "h.%u.attn.bias.json",              init_h_attn_bias,         },
 };
 
 decltype(ircd::gpt::model::manifest)
@@ -243,7 +241,7 @@ ircd::gpt::model::init_from_json(const string_view &cache_path,
 	// Load the transformer files by layer
 	const size_t layers {12};
 	for(size_t i(0); i < layers; ++i)
-		for(size_t j(0); j < 13; ++j)
+		for(size_t j(0); j < 12; ++j)
 			init_from_json_handle(*decoder, manifest_h[j], i);
 
 	const const_buffer src
@@ -644,36 +642,4 @@ ircd::gpt::model::init_h_attn_proj_bias(decoder &d,
 		d.layer[layer].attn.proj_bias[i++] = lex_cast<float>(elem);
 
 	always_assert(i == sizeof(d.layer[layer].attn.proj_bias) / sizeof(float));
-}
-
-void
-ircd::gpt::model::init_h_attn_bias(decoder &d,
-                                   const string_view &name,
-                                   const size_t &layer,
-                                   const json::array &mat)
-{
-	for(const json::array dim0 : mat)
-	{
-		for(const json::array dim1 : dim0)
-		{
-			size_t k(0);
-			for(const json::array dim2 : dim1)
-			{
-				size_t l(0);
-				for(const auto &elem : dim2)
-				{
-					always_assert(elem == "1.0" || elem == "0.0");
-					d.layer[layer].attn.bias[k][l++] = startswith(elem, '1');
-				}
-
-				++k;
-			}
-
-			always_assert
-			(
-				k == sizeof(d.layer[layer].attn.bias)
-				/ sizeof(d.layer[layer].attn.bias[0])
-			);
-		}
-	}
 }

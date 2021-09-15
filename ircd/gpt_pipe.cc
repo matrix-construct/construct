@@ -609,7 +609,6 @@ ircd::gpt::pipe::desc::layer::layer(pipe::desc &desc,
 	desc.opts,
 	desc.accum,
 	desc.state,
-	desc.model->decode->block[laynum].attn.mask,
 	desc.model->decode->block[laynum].attn.proj.bias.param,
 	desc.model->decode->block[laynum].attn.proj.weight.param,
 	desc.model->decode->block[laynum].ffnn.norm.bias.param,
@@ -1120,17 +1119,9 @@ ircd::gpt::pipe::model::attn::attn(cl::data *const master,
 ,proj
 {
 	master,
-	offset + off_t(sizeof(norm) + sizeof(attn.attn_bias) + sizeof(attn.attn_weight) + sizeof(attn.bias)),
+	offset + off_t(sizeof(norm) + sizeof(attn.attn_bias) + sizeof(attn.attn_weight)),
 	mutable_buffer{attn.proj_bias},
 	mutable_buffer{attn.proj_weight},
-}
-,mask
-{
-	master[0],
-	{
-		sizeof(attn.bias),
-		offset + off_t(sizeof(norm) + sizeof(attn.attn_bias) + sizeof(attn.attn_weight)),
-	},
 }
 {
 	always_assert
@@ -1139,7 +1130,6 @@ ircd::gpt::pipe::model::attn::attn(cl::data *const master,
 		==
 		ircd::data(const_buffer{norm.bias}) +
 		sizeof(norm) +
-		sizeof(attn.bias) +
 		sizeof(attn.attn_bias) +
 		sizeof(attn.attn_weight) +
 		ircd::size(const_buffer{attn.proj_bias})
@@ -1167,17 +1157,9 @@ ircd::gpt::pipe::model::attn::attn(cl::data *const master,
 ,proj
 {
 	master,
-	offset + off_t(sizeof(norm) + sizeof(attn.attn_bias) + sizeof(attn.attn_weight) + sizeof(attn.bias)),
+	offset + off_t(sizeof(norm) + sizeof(attn.attn_bias) + sizeof(attn.attn_weight)),
 	const_buffer{attn.proj_bias},
 	const_buffer{attn.proj_weight},
-}
-,mask
-{
-	master[0],
-	{
-		sizeof(attn.bias),
-		offset + off_t(sizeof(norm) + sizeof(attn.attn_bias) + sizeof(attn.attn_weight)),
-	},
 }
 {
 	always_assert
@@ -1186,7 +1168,6 @@ ircd::gpt::pipe::model::attn::attn(cl::data *const master,
 		==
 		ircd::data(const_buffer{norm.bias}) +
 		sizeof(norm) +
-		sizeof(attn.bias) +
 		sizeof(attn.attn_bias) +
 		sizeof(attn.attn_weight) +
 		ircd::size(const_buffer{attn.proj_bias})

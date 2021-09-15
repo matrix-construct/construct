@@ -33,9 +33,6 @@ struct ircd::gpt::model::attn
 	attn_bias    alignas(align) [2304],
 	attn_weight  alignas(align) [768][2304];
 
-	bool
-	bias         alignas(align) [1024][1024];
-
 	float
 	proj_bias    alignas(align) [768],
 	proj_weight  alignas(align) [768][768];

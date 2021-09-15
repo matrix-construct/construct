@@ -60,9 +60,6 @@ struct ircd::gpt::pipe::model::attn
 	fcon,
 	proj;
 
-	cl::data
-	mask;
-
 	attn(cl::data *, const off_t, const gpt::model::norm &, const gpt::model::attn &);
 	attn(cl::data *, const off_t, gpt::model::norm &, gpt::model::attn &);
 };

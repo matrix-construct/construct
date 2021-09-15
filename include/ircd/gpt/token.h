@@ -11,12 +11,6 @@
 #pragma once
 #define HAVE_IRCD_GPT_TOKEN_H
 
-struct ircd_gpt_attn_mask
-{
-	bool
-	token[1024];
-};
-
 union ircd_gpt_token
 {
 	float
