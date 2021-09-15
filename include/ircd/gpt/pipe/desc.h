@@ -20,6 +20,7 @@ struct ircd::gpt::pipe::desc
 	pipe::code *code;
 
 	cl::data
+	master,
 	state,         // qry/key/val projection (tokens * embed * 3 * float)
 	accum,         // accumulator (tokens * embed * float)
 	logit,         // result logit vector (50257 * float)

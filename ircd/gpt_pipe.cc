@@ -453,30 +453,55 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 {
 	&code
 }
+,master
+{
+	0
+	+ 512 * 3 * 768 * sizeof(float)
+	+ 512 * 768 * sizeof(float)
+	+ 65536 * sizeof(float)
+	+ 65536 * sizeof(float)
+	+ 65536 * sizeof(float)
+	,mutable_buffer{}
+}
 ,state
 {
-	512 * 3 * 768 * sizeof(float),
-	mutable_buffer{}
+	master,
+	{
+		512 * 3 * 768 * sizeof(float),
+		off_t(0),
+	},
 }
 ,accum
 {
-	512 * 768 * sizeof(float),
-	mutable_buffer{}
+	master,
+	{
+		512 * 768 * sizeof(float),
+		state.offset() + off_t(state.size()),
+	},
 }
 ,logit
 {
-	65536 * sizeof(float),
-	mutable_buffer{}
+	master,
+	{
+		65536 * sizeof(float),
+		accum.offset() + off_t(accum.size()),
+	},
 }
 ,logexp
 {
-	65536 * sizeof(float),
-	mutable_buffer{}
+	master,
+	{
+		65536 * sizeof(float),
+		logit.offset() + off_t(logit.size()),
+	},
 }
 ,logsm
 {
-	65536 * sizeof(float),
-	mutable_buffer{}
+	master,
+	{
+		65536 * sizeof(float),
+		logexp.offset() + off_t(logexp.size()),
+	},
 }
 ,ctrl
 {
