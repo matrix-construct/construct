@@ -699,10 +699,16 @@ try
 
 	const size_t size
 	{
-		opts.size?:
-			std::min(dst.size(), src.size())
+		opts.size == -1UL?
+			std::min(dst.size(), src.size()):
+			opts.size
 	};
 
+	if(!size)
+		return;
+
+	assert(src.handle);
+	assert(dst.handle);
 	assert(!this->handle);
 	call
 	(
@@ -743,9 +749,11 @@ try
 		queue[0][0]
 	};
 
-	const auto size
+	const size_t size
 	{
-		opts.size?: ircd::size(buf)
+		opts.size == -1UL?
+			ircd::size(buf):
+			opts.size
 	};
 
 	if(!size)
@@ -800,9 +808,11 @@ try
 		queue[0][0]
 	};
 
-	const auto size
+	const size_t size
 	{
-		opts.size?: ircd::size(buf)
+		opts.size == -1UL?
+			ircd::size(buf):
+			opts.size
 	};
 
 	if(!size)
@@ -861,9 +871,13 @@ try
 	const auto size
 	{
 		slice.first?:
-		opts.size?:
-			data.size()
+		opts.size == -1UL?
+			data.size():
+			opts.size
 	};
+
+	if(!size)
+		return;
 
 	const auto offset
 	{
@@ -971,9 +985,13 @@ try
 	const auto size
 	{
 		slice.first?:
-		opts.size?:
-			data.size()
+		opts.size == -1UL?
+			data.size():
+			opts.size
 	};
+
+	if(!size)
+		return;
 
 	const auto offset
 	{
@@ -1636,6 +1654,9 @@ ircd::cl::data::data(data &master,
 	cl_buffer_region region {0};
 	region.origin = slice.second;
 	region.size = slice.first;
+
+	if(!region.size)
+		return;
 
 	int err {CL_SUCCESS};
 	constexpr auto type {CL_BUFFER_CREATE_TYPE_REGION};

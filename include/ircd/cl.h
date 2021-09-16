@@ -204,7 +204,7 @@ struct ircd::cl::exec::opts
 
 	/// For operations which have a size; otherwise ignored, or serves as
 	/// sentinel for automatic size.
-	size_t size {0};
+	size_t size {-1UL};
 
 	/// For operations which have an offset (or two); otherwise ignored.
 	off_t offset[2] {0};
