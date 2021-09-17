@@ -132,12 +132,9 @@ ircd_gpt_ffnn(__global const struct ircd_gpt_ctrl *const ctrl,
               __global const float4 *const restrict proj_weight)
 {
 	const uint
-	gi = get_global_id(0),
-	gn = get_global_size(0),
 	li = get_local_id(0),
 	ln = get_local_size(0),
-	wi = get_group_id(0),
-	wn = get_num_groups(0),
+	wi = get_global_offset(0) / ln + get_group_id(0),
 	width = opts->ffnn_width,
 	height = opts->ffnn_height;
 
@@ -269,12 +266,8 @@ ircd_gpt_attn_proj(__global const struct ircd_gpt_ctrl *const ctrl,
                    __global const float4 *const restrict weight)
 {
 	const uint
-	gi = get_global_id(0),
-	gn = get_global_size(0),
-	li = get_local_id(0),
 	ln = get_local_size(0),
-	wi = get_group_id(0),
-	wn = get_num_groups(0),
+	wi = get_global_offset(0) / ln + get_group_id(0),
 	width = opts->attn_height,  // same
 	height = opts->attn_height;
 
@@ -300,7 +293,7 @@ ircd_gpt_coil(__global const struct ircd_gpt_ctrl *const ctrl,
 	const uint
 	li = get_local_id(0),
 	ln = get_local_size(0),
-	wi = get_group_id(0);
+	wi = get_global_offset(0) / ln + get_group_id(0);
 
 	__local union ircd_gpt_tokenv
 	buf1, buf0;
@@ -389,12 +382,9 @@ ircd_gpt_attn_fcon(__global const struct ircd_gpt_ctrl *const ctrl,
                    __global const float4 *const restrict fcon_weight)
 {
 	const uint
-	gi = get_global_id(0),
-	gn = get_global_size(0),
 	li = get_local_id(0),
 	ln = get_local_size(0),
-	wi = get_group_id(0),
-	wn = get_num_groups(0),
+	wi = get_global_offset(0) / ln + get_group_id(0),
 	width = opts->attn_width,
 	height = opts->attn_height,
 	tiles = opts->attn_mult;
@@ -458,8 +448,8 @@ ircd_gpt_lm_embed(__global const struct ircd_gpt_ctrl *const ctrl,
 {
 	const uint
 	li = get_local_id(0),
-	wi = get_group_id(0),
-	wn = get_num_groups(0);
+	ln = get_local_size(0),
+	wi = get_global_offset(0) / ln + get_group_id(0);
 
 	for(uint i = 0; i < ctrl->tokens.count; ++i)
 		if(i % wn == wi)
@@ -533,7 +523,6 @@ ircd_gpt_lm_logsm(__global struct ircd_gpt_ctrl *const ctrl,
                   __global const float4 *const restrict logit)
 {
 	const uint
-	gi = get_global_id(0),
 	li = get_local_id(0),
 	ln = get_local_size(0),
 	logits = opts->logits,
@@ -693,12 +682,8 @@ ircd_gpt_lm_select(__global struct ircd_gpt_ctrl *const ctrl,
                    __global const float *const restrict logit)
 {
 	const uint
-	gi = get_global_id(0),
-	gn = get_global_size(0),
 	li = get_local_id(0),
 	ln = get_local_size(0),
-	wi = get_group_id(0),
-	wn = get_num_groups(0),
 	tn = opts->logits / ln,
 	ti = tn * li;
 
@@ -760,14 +745,6 @@ ircd_gpt_norm_prop(__global const struct ircd_gpt_ctrl *const ctrl,
                    __global union ircd_gpt_tokenv *const restrict weight_m0,
                    __global union ircd_gpt_tokenv *const restrict weight_m1)
 {
-	const uint
-	gi = get_global_id(0),
-	gn = get_global_size(0),
-	li = get_local_id(0),
-	ln = get_local_size(0),
-	wi = get_group_id(0),
-	wn = get_num_groups(0);
-
 	ircd_gpt_prop_elem
 	(
 		ctrl, opts,
@@ -808,14 +785,6 @@ ircd_gpt_coil_prop_attn(__global const struct ircd_gpt_ctrl *const ctrl,
                         __global union ircd_gpt_tokenv *const restrict proj_weight_m0,
                         __global union ircd_gpt_tokenv *const restrict proj_weight_m1)
 {
-	const uint
-	gi = get_global_id(0),
-	gn = get_global_size(0),
-	li = get_local_id(0),
-	ln = get_local_size(0),
-	wi = get_group_id(0),
-	wn = get_num_groups(0);
-
 	ircd_gpt_norm_prop
 	(
 		ctrl, opts,
@@ -887,14 +856,6 @@ ircd_gpt_coil_prop_ffnn(__global const struct ircd_gpt_ctrl *const ctrl,
                         __global union ircd_gpt_tokenv *const restrict proj_weight_m0,
                         __global union ircd_gpt_tokenv *const restrict proj_weight_m1)
 {
-	const uint
-	gi = get_global_id(0),
-	gn = get_global_size(0),
-	li = get_local_id(0),
-	ln = get_local_size(0),
-	wi = get_group_id(0),
-	wn = get_num_groups(0);
-
 	ircd_gpt_norm_prop
 	(
 		ctrl, opts,
@@ -955,12 +916,10 @@ ircd_gpt_lm_embed_prop(__global const struct ircd_gpt_ctrl *const ctrl,
                        __global union ircd_gpt_tokenv *const restrict token_m1)
 {
 	const uint
-	gi = get_global_id(0),
 	gn = get_global_size(0),
-	li = get_local_id(0),
 	ln = get_local_size(0),
-	wi = get_group_id(0),
-	wn = get_num_groups(0),
+	wi = get_global_offset(0) / ln + get_group_id(0),
+	wn = ctrl->tokens.count,
 	cn = opts->context_tokens / wn,
 	ci = cn * wi,
 	tn = opts->logits / wn,
