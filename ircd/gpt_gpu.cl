@@ -630,12 +630,20 @@ ircd_gpt_lm_result(__global struct ircd_gpt_ctrl *const ctrl,
 	buffer_full = ctrl->tokens.count >= opts->buffer_tokens;
 
 	const ulong
-	rnd = opts->top_k > 1?
-		ircd_simt_rand_xoshiro256pg(ctrl->rand): 1UL;
+	rnd = ircd_simt_rand_xoshiro256pg(ctrl->rand),
+	ent_k = max(opts->top_k, 1U),
+	ent_p = max(1U, min(opts->top_p, 100U));
+
+	const float
+	thresh = (rnd % ent_p) / 100.0f;
+
+	ushort select = 0;
+	float smacc = 0.0f;
+	for(; select < opts->top_k; ++select)
+		if((smacc += logsm[idx[select]]) > thresh)
+			break;
 
 	const ushort
-	entro = max(opts->top_k, 1U),
-	select = rnd % entro,
 	token = idx[select],
 	dest = (ctrl->tokens.head + ctrl->tokens.count) % opts->buffer_tokens,
 	tokens = min(ctrl->tokens.count + 1, opts->buffer_tokens),

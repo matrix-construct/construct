@@ -274,7 +274,7 @@ ircd::gpt::task::task(const gpt::opts *const opts,
 
 	this->ctrl->rand[0] = this->opts->seed;
 	this->ctrl->rand[1] = this->opts->seed;
-	this->ctrl->rand[2] = -1UL;
+	this->ctrl->rand[2] = 65537;
 	this->ctrl->rand[3] = -1UL;
 }
 
@@ -304,6 +304,10 @@ noexcept
 ,top_k
 {
 	2U
+}
+,top_p
+{
+	90U
 }
 ,context_tokens
 {

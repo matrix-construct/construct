@@ -42,6 +42,9 @@ struct ircd_gpt_opts
 	/// deterministically selects the top logit.
 	uint top_k;
 
+	/// Flip a random coin between 0 and top_p ( = 90 = 0.9) for logit select.
+	uint top_p;
+
 	/// Specifies the token context size in tokens.
 	uint context_tokens;
 
