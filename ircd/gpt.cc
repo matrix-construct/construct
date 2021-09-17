@@ -317,6 +317,10 @@ noexcept
 {
 	768U
 }
+,attn_rank
+{
+	12U
+}
 ,attn_mult
 {
 	3U

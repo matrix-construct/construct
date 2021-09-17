@@ -51,6 +51,9 @@ struct ircd_gpt_opts
 	/// Embedding vector elements
 	uint embed_elems;
 
+	/// Cross-attention dimension
+	uint attn_rank;
+
 	/// Attention unit fcon width multiple
 	uint attn_mult;
 

@@ -37,6 +37,8 @@ struct ircd::gpt::pipe::exec
 	recv_ctrl;         // Set when receiving the control page.
 
 	cl::kern::range
+	range_full,
+	range_last,
 	range_lm_embed,    // Dimension range of the lm_embed kernel.
 	range_negative,    // Dimension range of a layer kernel.
 	range_positive,    // Dimension range of a layer kernel.

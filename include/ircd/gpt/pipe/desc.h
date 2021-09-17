@@ -20,14 +20,14 @@ struct ircd::gpt::pipe::desc
 	pipe::code *code;
 
 	cl::data
-	master,
-	state,         // qry/key/val projection (tokens * embed * 3 * float)
-	accum,         // accumulator (tokens * embed * float)
-	logit,         // result logit vector (50257 * float)
-	logexp,        // outputs distribution (50257 * float)
-	logsm,         // outputs distribution (50257 * float)
-	ctrl,          // control page
-	opts;          // options page
+	state,         // [root] projection (layers * tokens * embed * 3 * float)
+	master,        // [root] single allocation for additional buffers:
+	accum,         // [-sub] accumulator (tokens * embed * float)
+	logit,         // [-sub] result logit vector (50257 * float)
+	logexp,        // [-sub] outputs distribution (50257 * float)
+	logsm,         // [-sub] outputs distribution (50257 * float)
+	ctrl,          // [root] control page
+	opts;          // [root] options page
 
 	cl::kern
 	lm_embed,
@@ -46,6 +46,9 @@ struct ircd::gpt::pipe::desc
 
 struct ircd::gpt::pipe::desc::layer
 {
+	cl::data
+	state;         // [-sub] qry/key/val projection (tokens * embed * 3 * float)
+
 	cl::kern
 	negative,
 	positive,

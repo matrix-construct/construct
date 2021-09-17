@@ -159,11 +159,13 @@ inline void
 __attribute__((flatten, always_inline))
 ircd_gpt_attn_self_samax(__global const struct ircd_gpt_ctrl *const ctrl,
                          __constant const struct ircd_gpt_opts *const opts,
-                         __local float self[][12])
+                         __local float self[][12],
+                         const uint wn)
 {
 	const uint
+	gn = get_global_size(0),
 	li = get_local_id(0),
-	wn = get_num_groups(0);
+	ln = get_local_size(0);
 
 	struct ircd_math_samax samax =
 	{
@@ -201,14 +203,16 @@ ircd_gpt_attn_self(__global const struct ircd_gpt_ctrl *const ctrl,
 	gn = get_global_size(0),
 	li = get_local_id(0),
 	ln = get_local_size(0),
-	wi = get_group_id(0),
-	wn = get_num_groups(0),
-	ti = li % 12,
-	ki = li / 12;
+	wi = get_global_offset(0) / ln + get_group_id(0),
+	wn = ctrl->tokens.count,
+	ti = li % opts->attn_rank,
+	ki = li / opts->attn_rank,
+	kn = ln / opts->attn_rank;
 
 	// Low-rank mask
-	if(li < 12)
+	if(li < opts->attn_rank)
 	{
+		// For each token
 		for(uint i = 0; i < wn; ++i)
 		{
 			// Left-attention mask
@@ -219,7 +223,8 @@ ircd_gpt_attn_self(__global const struct ircd_gpt_ctrl *const ctrl,
 			}
 
 			float4 acc = 0.0f;
-			for(uint k = 0; k < 64/4; ++k)
+			__attribute__((opencl_unroll_hint))
+			for(uint k = 0; k < kn; ++k)
 			{
 				float4
 				qry = token[wi].qry.attn[li][k],
@@ -236,7 +241,7 @@ ircd_gpt_attn_self(__global const struct ircd_gpt_ctrl *const ctrl,
 		}
 
 		// Three-piece softmax
-		ircd_gpt_attn_self_samax(ctrl, opts, self);
+		ircd_gpt_attn_self_samax(ctrl, opts, self, wn);
 	}
 
 	// Propagate to full width for value dot prod.
@@ -244,7 +249,7 @@ ircd_gpt_attn_self(__global const struct ircd_gpt_ctrl *const ctrl,
 
 	float4 acc = 0.0f;
 	__attribute__((opencl_unroll_hint))
-	for(uint i = 0; i < wn; ++i)
+	for(uint i = 0; i < wi; ++i)
 	{
 		const float4
 		attn = self[i][ti],
@@ -420,7 +425,7 @@ inline void
 __attribute__((always_inline))
 _ircd_gpt_lm_embed(__global const struct ircd_gpt_ctrl *const ctrl,
                    __constant const struct ircd_gpt_opts *const opts,
-                   __global union ircd_gpt_tokenv *const restrict out,
+                   __global union ircd_gpt_tokenv *const restrict accum,
                    __global const union ircd_gpt_tokenv *const restrict pos,
                    __global const union ircd_gpt_tokenv *const restrict vocab,
                    const uint out_idx,
@@ -435,7 +440,7 @@ _ircd_gpt_lm_embed(__global const struct ircd_gpt_ctrl *const ctrl,
 	wte = vocab[token].word[word_idx],
 	wpe = pos[tok_idx].word[word_idx];
 
-	out[out_idx].word[word_idx] = wte + wpe;
+	accum[out_idx].word[word_idx] = wte + wpe;
 }
 
 __kernel void
@@ -451,9 +456,7 @@ ircd_gpt_lm_embed(__global const struct ircd_gpt_ctrl *const ctrl,
 	ln = get_local_size(0),
 	wi = get_global_offset(0) / ln + get_group_id(0);
 
-	for(uint i = 0; i < ctrl->tokens.count; ++i)
-		if(i % wn == wi)
-			_ircd_gpt_lm_embed(ctrl, opts, accum, pos, vocab, i, i, li);
+	_ircd_gpt_lm_embed(ctrl, opts, accum, pos, vocab, wi, wi, li);
 }
 
 __kernel void

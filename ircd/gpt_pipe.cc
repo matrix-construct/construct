@@ -224,48 +224,70 @@ ircd::gpt::pipe::exec::exec(task &task,
 ,send_opts
 {
 	reinterpret_cast<const char *>(task.opts),
-	release? sizeof(gpt::opts): 0
+	release?
+		sizeof(gpt::opts):
+		0
 }
 ,send_ctrl
 {
 	reinterpret_cast<const char *>(task.ctrl),
-	release? sizeof(gpt::ctrl): 0
+	release?
+		sizeof(gpt::ctrl):
+		0
 }
 ,send_coil
 {
 	reinterpret_cast<const char *>(gpt::model::default_model),
-	release && desc->model->invalid? (sizeof(gpt::model::block) * 12 + sizeof(gpt::model::norm)): 0
+	release && desc->model->invalid?
+		(sizeof(gpt::model::block) * 12 + sizeof(gpt::model::norm)):
+		0
 }
 ,send_head
 {
 	reinterpret_cast<const char *>(&gpt::model::default_model->word),
-	release && desc->model->invalid? sizeof(gpt::model::embed): 0
+	release && desc->model->invalid?
+		sizeof(gpt::model::embed):
+		0
 }
 ,recv_ctrl
 {
 	reinterpret_cast<char *>(task.ctrl),
-	acquire? sizeof(gpt::ctrl): 0
+	acquire?
+		sizeof(gpt::ctrl):
+		0
 }
-,range_lm_embed
-{
-	{ std::min(tokens,  12UL) * 192UL, 0, },
-	{                           192UL, 0, },
-}
-,range_negative
+,range_full
 {
 	{ tokens * 192UL, 0, },
 	{          192UL, 0, },
 }
-,range_positive
-{
-	{ tokens * 192UL, 0, },
-	{          192UL, 0, },
-}
-,range_lm_norm
+,range_last
 {
 	{            1 * 192UL, 0 },
 	{                192UL, 0 },
 	{ (tokens - 1) * 192UL, 0 },
+}
+,range_lm_embed
+{
+	release?
+		range_full:
+		range_last
+}
+,range_negative
+{
+	release?
+		range_full:
+		range_last
+}
+,range_positive
+{
+	release?
+		range_full:
+		range_last
+}
+,range_lm_norm
+{
+	range_last
 }
 ,range_lm_logit
 {
@@ -453,30 +475,27 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 {
 	&code
 }
+,state
+{
+	0
+	+ 12 * 512 * 3 * 768 * sizeof(float),
+	mutable_buffer{},
+}
 ,master
 {
 	0
-	+ 512 * 3 * 768 * sizeof(float)
 	+ 512 * 768 * sizeof(float)
 	+ 65536 * sizeof(float)
 	+ 65536 * sizeof(float)
 	+ 65536 * sizeof(float)
 	,mutable_buffer{}
 }
-,state
-{
-	master,
-	{
-		512 * 3 * 768 * sizeof(float),
-		off_t(0),
-	},
-}
 ,accum
 {
 	master,
 	{
 		512 * 768 * sizeof(float),
-		state.offset() + off_t(state.size()),
+		off_t(0),
 	},
 }
 ,logit
@@ -613,13 +632,21 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 
 ircd::gpt::pipe::desc::layer::layer(pipe::desc &desc,
                                     const int laynum)
-:negative
+:state
+{
+	desc.state,
+	{
+		512 * 3 * 768 * sizeof(float),
+		laynum * 512 * 3 * 768 * sizeof(float),
+	}
+}
+,negative
 {
 	*desc.code,
 	"ircd_gpt_attn_fcon",
 	desc.ctrl,
 	desc.opts,
-	desc.state,
+	state,
 	desc.accum,
 	desc.model->decode->block[laynum].attn.norm.bias.param,
 	desc.model->decode->block[laynum].attn.norm.weight.param,
@@ -633,7 +660,7 @@ ircd::gpt::pipe::desc::layer::layer(pipe::desc &desc,
 	desc.ctrl,
 	desc.opts,
 	desc.accum,
-	desc.state,
+	state,
 	desc.model->decode->block[laynum].attn.proj.bias.param,
 	desc.model->decode->block[laynum].attn.proj.weight.param,
 	desc.model->decode->block[laynum].ffnn.norm.bias.param,
