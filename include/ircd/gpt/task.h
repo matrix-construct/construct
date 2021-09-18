@@ -11,12 +11,6 @@
 #pragma once
 #define HAVE_IRCD_GPT_TASK_H
 
-#include "epic.h"
-#include "tokens.h"
-#include "gate.h"
-#include "opts.h"
-#include "ctrl.h"
-
 #ifdef __cplusplus
 /// Task Context
 ///
