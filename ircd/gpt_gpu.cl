@@ -595,38 +595,75 @@ ircd_gpt_lm_logsm(__global struct ircd_gpt_ctrl *const ctrl,
 
 inline void
 __attribute__((always_inline))
-ircd_gpt_leave(__global struct ircd_gpt_ctrl *const ctrl,
-               __constant const struct ircd_gpt_opts *const opts,
-               const uint li)
+ircd_gpt_lm_result_top(__global struct ircd_gpt_ctrl *const ctrl,
+                       __constant const struct ircd_gpt_opts *const opts,
+                       __local const ushort *const restrict idx,
+                       __global const float *const restrict logsm,
+                       __global const float *const restrict logexp,
+                       __global const float *const restrict logit,
+                       const uint i)
 {
-	// No action for other threads right now
-	if(li != 0)
-		return;
+	const ushort
+	token = idx[i];
 
-	if(ctrl->epic.cycle + 1 >= opts->limit)
-		ctrl->epic.epoch += 1;
+	const float
+	samax = logsm[token];
 
-	ctrl->epic.cycle += 1;
-	ctrl->magic = 0xC7012C70U;
+	ctrl->top[i].token = token;
+	ctrl->top[i].samax = samax;
 }
 
 inline void
 __attribute__((always_inline))
-ircd_gpt_lm_result(__global struct ircd_gpt_ctrl *const ctrl,
-                   __constant const struct ircd_gpt_opts *const opts,
-                   const uint li,
-                   __local const ushort *const restrict idx,
-                   __global const float *const restrict logsm,
-                   __global const float *const restrict logexp,
-                   __global const float *const restrict logit)
+ircd_gpt_lm_result_label(__global struct ircd_gpt_ctrl *const ctrl,
+                         __constant const struct ircd_gpt_opts *const opts,
+                         __local const ushort *const restrict idx,
+                         __global const float *const restrict logsm,
+                         __global const float *const restrict logexp,
+                         __global const float *const restrict logit,
+                         const uint i)
 {
-	// To read from cells other than idx[0] we need this barrier.
-	barrier(CLK_LOCAL_MEM_FENCE);
+	__global struct ircd_gpt_ctrl_label
+	*const label = ctrl->label + i;
 
-	// Mask for write-leader
-	if(li != 0)
-		return;
+	const ushort
+	token = label->token,
+	sum_sel = ctrl->epic.cycle % 3;
 
+	const float
+	samax = logsm[token],
+	mean_div = ctrl->epic.cycle + 1.0f;
+
+	const float
+	loss = 0.0f - log(samax),
+	loss_sum = label->loss.sum[0] + label->loss.sum[1] + label->loss.sum[2] + loss,
+	loss_mean = loss_sum / mean_div;
+
+	const float
+	perp = (1.0f - samax) * native_log2(opts->logits),
+	perp_sum = label->perp.sum[0] + label->perp.sum[1] + label->perp.sum[2] + perp,
+	perp_mean = perp_sum / mean_div;
+
+	label->samax = samax;
+
+	label->loss.last = loss;
+	label->loss.sum[sum_sel] += loss;
+	label->loss.mean = loss_mean;
+
+	label->perp.last = perp;
+	label->perp.sum[sum_sel] += perp;
+	label->perp.mean = perp_mean;
+}
+
+inline void
+__attribute__((always_inline))
+ircd_gpt_lm_result_select(__global struct ircd_gpt_ctrl *const ctrl,
+                          __constant const struct ircd_gpt_opts *const opts,
+                          __local const ushort *const restrict idx,
+                          __global const float *const restrict logsm,
+                          __global const float *const restrict logexp,
+                          __global const float *const restrict logit)
+{
 	const bool
 	buffer_full = ctrl->tokens.count >= opts->buffer_tokens;
 
@@ -654,35 +691,19 @@ ircd_gpt_lm_result(__global struct ircd_gpt_ctrl *const ctrl,
 	ctrl->tokens.head = head;
 	ctrl->tokens.count = tokens;
 	ctrl->token[dest] = token;
+}
 
-	const ushort
-	ln = get_local_size(0),
-	next_select = (select + 1) % ln,
-	next_token = idx[next_select],
-	sum_sel = ctrl->epic.epoch % 3;
+inline void
+__attribute__((always_inline))
+ircd_gpt_leave(__global struct ircd_gpt_ctrl *const ctrl,
+               __constant const struct ircd_gpt_opts *const opts,
+               const uint li)
+{
+	if(ctrl->epic.cycle + 1 >= opts->limit)
+		ctrl->epic.epoch += 1;
 
-	const float
-	test_lsm = logexp[opts->label],
-	loss = 0.0f - log(test_lsm * ctrl->samax.lambda),
-	perp = (1.0f - logsm[token]) * native_log2(opts->logits),
-	cert = (logsm[token] - logsm[next_token]) / logsm[token],
-	loss_sum = ctrl->loss.sum[0] + ctrl->loss.sum[1] + ctrl->loss.sum[2] + loss,
-	perp_sum = ctrl->perp.sum[0] + ctrl->perp.sum[1] + ctrl->perp.sum[2] + perp,
-	cert_sum = ctrl->cert.sum[0] + ctrl->cert.sum[1] + ctrl->cert.sum[2] + cert,
-	mean_div = ctrl->epic.epoch + 1.0f,
-	loss_mean = loss_sum / mean_div,
-	perp_mean = perp_sum / mean_div,
-	cert_mean = cert_sum / mean_div;
-
-	ctrl->loss.last = loss;
-	ctrl->loss.sum[sum_sel] += loss;
-	ctrl->loss.mean = loss_mean;
-	ctrl->perp.last = perp;
-	ctrl->perp.sum[sum_sel] += perp;
-	ctrl->perp.mean = perp_mean;
-	ctrl->cert.last = cert;
-	ctrl->cert.sum[sum_sel] += cert;
-	ctrl->cert.mean = cert_mean;
+	ctrl->epic.cycle += 1;
+	ctrl->magic = 0xC7012C70U;
 }
 
 __kernel void
@@ -707,7 +728,23 @@ ircd_gpt_lm_select(__global struct ircd_gpt_ctrl *const ctrl,
 			idx[li] = j;
 
 	ircd_simt_sort_idx16_flldr(idx, logsm);
-	ircd_gpt_lm_result(ctrl, opts, li, idx, logsm, logexp, logit);
+
+	if(li < opts->top_n)
+		ircd_gpt_lm_result_top(ctrl, opts, idx, logsm, logexp, logit, li);
+
+	if(li < opts->labels)
+		ircd_gpt_lm_result_label(ctrl, opts, idx, logsm, logexp, logit, li);
+
+	// Writes to `idx` from the sort are still pending across threads.
+	barrier(CLK_LOCAL_MEM_FENCE);
+
+	// Mask for write-leader
+	if(li == 0)
+		ircd_gpt_lm_result_select(ctrl, opts, idx, logsm, logexp, logit);
+
+	if(li != 0)
+		return;
+
 	ircd_gpt_leave(ctrl, opts, li);
 }
 
@@ -729,7 +766,7 @@ ircd_gpt_prop_elem(__global const struct ircd_gpt_ctrl *const ctrl,
 
 	const float4
 	param = param_[li],
-	grad = ctrl->loss.mean,
+	grad = ctrl->label[0].loss.mean,
 	alpha[2] = { 1.0f - opts->beta[0], 1.0f - opts->beta[1], },
 	exp_avg = step? exp_avg_[li]: 0.0f,
 	exp_avg_sqr = step? exp_avg_sqr_[li]: 0.0f,

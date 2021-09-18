@@ -135,7 +135,7 @@ ircd::gpt::generate(task &task)
 			cycles
 		};
 
-		backprop(task, ctrl.loss.mean, *model::default_model, momentum);
+		backprop(task, ctrl.label[0].loss.mean, *model::default_model, momentum);
 	}
 
 	if(ctrl.prop)
@@ -143,17 +143,15 @@ ircd::gpt::generate(task &task)
 		log::debug
 		{
 			log, "Backpropagation of %2.6f in %lu cycles.",
-			ctrl.loss.mean,
+			ctrl.label[0].loss.mean,
 			cycles,
 		};
 
 		ctrl.epic.epoch = 0;
-		ctrl.loss.mean = 0;
-		ctrl.loss.last = ctrl.loss.mean;
-		ctrl.perp.mean = 0;
-		ctrl.perp.last = ctrl.perp.mean;
-		ctrl.cert.mean = 0;
-		ctrl.cert.last = ctrl.cert.mean;
+		ctrl.label[0].loss.mean = 0;
+		ctrl.label[0].loss.last = ctrl.label[0].loss.mean;
+		ctrl.label[0].perp.mean = 0;
+		ctrl.label[0].perp.last = ctrl.label[0].perp.mean;
 		ctrl.prop = false;
 		pipe::default_model->invalid = true;
 		return;
@@ -208,16 +206,16 @@ ircd::gpt::generate_debug(task &task,
 		ctrl.tokens.count,
 		ctrl.epic.epoch,
 		ctrl.epic.cycle,
-		std::clamp(ctrl.cert.mean * 100.0f, 0.0f, 100.0f),
-		std::clamp(ctrl.perp.mean, 0.0f, 100.0f),
-		std::clamp(ctrl.loss.mean, 0.0f, 99.99f),
-		opts.label == tok? '+': ' ',
+		0.0f, // cert
+		std::clamp(ctrl.label[0].perp.mean, 0.0f, 100.0f),
+		std::clamp(ctrl.label[0].loss.mean, 0.0f, 99.99f),
+		ctrl.label[0].token == tok? '+': ' ',
 		' ', // flag place
 		' ', // flag place
-		opts.label,
-		std::clamp(ctrl.loss.last, 0.0f, 99.99f),
-		std::clamp(ctrl.perp.last, 0.0f, 100.0f),
-		std::clamp(ctrl.cert.last * 100.0f, 0.0f, 100.0f),
+		ctrl.label[0].token,
+		std::clamp(ctrl.label[0].loss.last, 0.0f, 99.99f),
+		std::clamp(ctrl.label[0].perp.last, 0.0f, 100.0f),
+		0.0f, // cert
 		vocab::debug(dbuf, tok).c_str(),
 		tok,
 		pretty(tmbuf[0], milliseconds(0ms / bsz), 1).c_str(),
@@ -286,6 +284,18 @@ noexcept
 ,top_p
 {
 	90U
+}
+,top_n
+{
+	16
+}
+,labels
+{
+	0
+}
+,debug
+{
+	0x01
 }
 ,context_tokens
 {
@@ -358,14 +368,6 @@ noexcept
 ,testing_steps
 {
 	5000
-}
-,label
-{
-	198
-}
-,debug
-{
-	0x01
 }
 ,alpha
 {

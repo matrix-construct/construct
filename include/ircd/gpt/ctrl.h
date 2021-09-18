@@ -60,6 +60,41 @@ struct ircd_gpt_ctrl_tokens
 	ulong witnessed;
 };
 
+/// Target label register (abridged)
+///
+struct ircd_gpt_ctrl_logit
+{
+	/// Vocabulary token.
+	ushort token;
+
+	/// Padding #0.
+	ushort _pad0;
+
+	/// Result logit softmax probability.
+	float samax;
+};
+
+/// Target label register (full)
+///
+struct ircd_gpt_ctrl_label
+{
+	/// Vocabulary token.
+	ushort token;
+
+	/// Padding #0.
+	ushort _pad0;
+
+	/// Result logit softmax probability.
+	float samax;
+
+	/// Loss state
+	struct ircd_math_mean loss;
+
+	/// Perplexity state
+	struct ircd_math_mean perp;
+}
+__attribute__((aligned(64)));
+
 /// Task Control Page
 ///
 /// The control block is shared with our device software. Execution state is
@@ -76,24 +111,22 @@ struct ircd_gpt_ctrl
 	/// buffer; the buffer with the tokens themselves is elsewhere.
 	struct ircd_gpt_ctrl_tokens tokens;
 
-	/// Logit softmax state
+	/// Top result summary from the softed result logit softmax vector. This
+	/// is updated each cycle by device software with extended statistics on
+	/// the top N results.
+	struct ircd_gpt_ctrl_logit top[16];
+
+	/// Target label control block. Results for each target are registered
+	/// and state is updated each cycle.
+	struct ircd_gpt_ctrl_label label[4];
+
+	/// Result logit vector softmax internal state.
 	struct ircd_math_samax samax;
 
-	/// Target label loss state
-	struct ircd_math_mean loss;
-
-	/// Target label perplexity score state
-	struct ircd_math_mean perp;
-
-	/// Target label certainty difference state
-	struct ircd_math_mean cert;
-
-	/// PRNG xoshiro256 state. This is the de facto random seed which can be
-	/// set before cycle entry by the host. It is updated by device software
-	/// when used.
+	/// PRNG xoshiro256 internal state (note: see opts.h to seed the prng).
 	ulong rand[4];
 
-	/// Perform backprop
+	/// Perform backprop TODO: XXX
 	bool prop;
 
 	/// Header magic 0xC7012C70

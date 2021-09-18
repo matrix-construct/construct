@@ -45,6 +45,15 @@ struct ircd_gpt_opts
 	/// Flip a random coin between 0 and top_p ( = 90 = 0.9) for logit select.
 	uint top_p;
 
+	/// Registers the top n result logits in the ctrl block each cycle.
+	uint top_n;
+
+	/// Number of target labels to register results for in the ctrl block.
+	uint labels;
+
+	/// Bitbar toggling various debug modes
+	uint debug;
+
 	/// Specifies the token context size in tokens.
 	uint context_tokens;
 
@@ -98,12 +107,6 @@ struct ircd_gpt_opts
 
 	/// Testing steps
 	uint testing_steps;
-
-	/// Target label
-	ushort label;
-
-	/// Bitbar toggling various debug modes
-	ushort debug;
 
 	/// Learning rate
 	float alpha;
