@@ -113,14 +113,6 @@ struct ircd_gpt_opts
 
 	/// Denorm smoothing
 	float epsilon;
-
-	/// Number of gate descriptors attached to this page.
-	uint gates;
-
-	/// The gate descriptor table starts at offset 2048 and continues to the
-	/// end of the page. For more descriptors additional pages must be
-	/// attached.
-	struct ircd_gpt_gate gate[] __attribute__((aligned(2048)));
 }
 __attribute__((aligned(4096)));
 

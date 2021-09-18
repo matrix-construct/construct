@@ -62,28 +62,6 @@ ircd::gpt::generate(const vector_view<u16> &out,
 	ctrl.tokens.head = 0;
 
 	uint j(0);
-	for(uint i(0); i < opts.gates; ++i)
-	{
-		const auto &gate
-		{
-			opts.gate[i]
-		};
-
-		while(j < in.size() && j < gate.offset && ctrl.tokens.count < opts.buffer_tokens)
-			ctrl.token[ctrl.tokens.count++] = in[j++];
-
-		for(uint k(0); k < 7; ++k)
-		{
-			if(ctrl.tokens.count >= opts.buffer_tokens)
-				break;
-
-			if(gate.code[k] == 0)
-				break;
-
-			ctrl.token[ctrl.tokens.count++] = gate.code[k];
-		}
-	}
-
 	while(j < in.size() && ctrl.tokens.count < opts.buffer_tokens)
 		ctrl.token[ctrl.tokens.count++] = in[j++];
 
@@ -401,10 +379,6 @@ noexcept
 ,epsilon
 {
 	0.000001
-}
-,gates
-{
-	0
 }
 {
 }

@@ -18,16 +18,13 @@ namespace ircd::gpt
 	IRCD_EXCEPTION(ircd::error, error)
 
 	struct task;
-	struct gate;
 
 	extern log::log log;
 }
 
-#include "hypercall.h"
 #include "vocab.h"
 #include "model.h"
 #include "token.h"
-#include "gate.h"
 #include "opts.h"
 #include "ctrl.h"
 #include "task.h"

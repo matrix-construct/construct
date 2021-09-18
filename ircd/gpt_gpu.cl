@@ -10,7 +10,8 @@
 
 #include <ircd/simt/simt.h>
 #include <ircd/gpt/token.h>
-#include <ircd/gpt/task/task.h>
+#include <ircd/gpt/opts.h>
+#include <ircd/gpt/ctrl.h>
 
 inline void
 __attribute__((always_inline))
