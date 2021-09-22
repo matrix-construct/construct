@@ -41,6 +41,9 @@ namespace ircd::cl
 	void log_dev_info(const uint platform_id);
 	void log_dev_info();
 
+	void log_platform_info(const uint platform_id);
+	void log_platform_info();
+
 	void flush();
 	void sync();
 }

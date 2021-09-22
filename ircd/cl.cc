@@ -229,19 +229,8 @@ ircd::cl::init::init()
 	// Get the platforms.
 	call(clGetPlatformIDs, PLATFORM_MAX, platform, &platforms);
 
-	char buf[4][128];
-	for(size_t i(0); i < platforms; ++i)
-		log::logf
-		{
-			log, log::level::DEBUG,
-			"OpenCL [%u][*] %-3d :%s :%s :%s :%s",
-			i,
-			CL_TARGET_OPENCL_VERSION,
-			info(clGetPlatformInfo, platform[i], CL_PLATFORM_VERSION, buf[0]),
-			info(clGetPlatformInfo, platform[i], CL_PLATFORM_VENDOR, buf[1]),
-			info(clGetPlatformInfo, platform[i], CL_PLATFORM_NAME, buf[2]),
-			info(clGetPlatformInfo, platform[i], CL_PLATFORM_EXTENSIONS, buf[3]),
-		};
+	// Report the platforms.
+	log_platform_info();
 
 	size_t devices_total(0);
 	for(size_t i(0); i < platforms; ++i)
@@ -336,6 +325,31 @@ noexcept
 	}
 
 	dlclose(linkage);
+}
+
+void
+ircd::cl::log_platform_info()
+{
+	for(size_t i(0); i < platforms; ++i)
+		log_platform_info(i);
+}
+
+void
+ircd::cl::log_platform_info(const uint i)
+{
+	char buf[3][64];
+	char extbuf[320];
+	log::logf
+	{
+		log, log::level::DEBUG,
+		"OpenCL [%u][*] %-3d :%s :%s :%s :%s",
+		i,
+		CL_TARGET_OPENCL_VERSION,
+		info(clGetPlatformInfo, platform[i], CL_PLATFORM_VERSION, buf[0]),
+		info(clGetPlatformInfo, platform[i], CL_PLATFORM_VENDOR, buf[1]),
+		info(clGetPlatformInfo, platform[i], CL_PLATFORM_NAME, buf[2]),
+		info(clGetPlatformInfo, platform[i], CL_PLATFORM_EXTENSIONS, extbuf),
+	};
 }
 
 void
