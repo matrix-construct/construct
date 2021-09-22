@@ -51,10 +51,13 @@ struct ircd::cl::work
 {
 	void *handle {nullptr};
 	ctx::ctx *context {ctx::current};
+	void *object {nullptr};
 
 	static void init(), fini() noexcept;
 
   public:
+	int type() const;
+	const char *name() const;
 	std::array<uint64_t, 4> profile() const;
 
 	void wait(const uint = 0);
@@ -118,6 +121,9 @@ struct ircd::cl::kern
 	void *handle {nullptr};
 
   public:
+	const char *name() const;
+	uint argc() const;
+
 	std::array<size_t, 3> compile_group_size(void *dev = nullptr) const;
 	size_t preferred_group_size_multiple(void *dev = nullptr) const;
 	size_t group_size(void *dev = nullptr) const;

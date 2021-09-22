@@ -643,6 +643,9 @@ try
 		make_deps(this, opts)
 	};
 
+	assert(!this->object);
+	this->object = &kern;
+
 	assert(!this->handle);
 	call
 	(
@@ -692,11 +695,8 @@ try
 		queue[0][0]
 	};
 
-	const auto deps
-	{
-		make_deps(this, opts)
-	};
-
+	assert(src.handle);
+	assert(dst.handle);
 	const size_t size
 	{
 		opts.size == -1UL?
@@ -707,8 +707,14 @@ try
 	if(!size)
 		return;
 
-	assert(src.handle);
-	assert(dst.handle);
+	assert(!this->object);
+	this->object = &dst;
+
+	const auto deps
+	{
+		make_deps(this, opts)
+	};
+
 	assert(!this->handle);
 	call
 	(
@@ -758,6 +764,9 @@ try
 
 	if(!size)
 		return;
+
+	assert(!this->object);
+	this->object = &data;
 
 	const auto deps
 	{
@@ -817,6 +826,9 @@ try
 
 	if(!size)
 		return;
+
+	assert(!this->object);
+	this->object = &data;
 
 	const auto deps
 	{
@@ -887,6 +899,9 @@ try
 
 	assert(size_t(size) <= data.size());
 	assert(size_t(offset) <= data.size());
+
+	assert(!this->object);
+	this->object = &data;
 
 	const auto deps
 	{
@@ -1001,6 +1016,9 @@ try
 
 	assert(size_t(size) <= data.size());
 	assert(size_t(offset) <= data.size());
+
+	assert(!this->object);
+	this->object = &data;
 
 	const auto deps
 	{
@@ -1297,6 +1315,32 @@ const
 	const auto handle(cl_kernel(this->handle));
 	constexpr auto flag(CL_KERNEL_PRIVATE_MEM_SIZE);
 	return info<ulong>(clGetKernelWorkGroupInfo, handle, cl_device_id(dev), flag, buf);
+}
+
+uint
+ircd::cl::kern::argc()
+const
+{
+	const auto handle
+	{
+		cl_kernel(this->handle)
+	};
+
+	char buf[sizeof(uint)];
+	return info<uint>(clGetKernelInfo, handle, CL_KERNEL_NUM_ARGS, buf);
+}
+
+const char *
+ircd::cl::kern::name()
+const
+{
+	const auto handle
+	{
+		cl_kernel(this->handle)
+	};
+
+	char buf[sizeof(const char *)];
+	return info<const char *>(clGetKernelInfo, handle, CL_KERNEL_FUNCTION_NAME, buf);
 }
 
 //
@@ -1892,6 +1936,57 @@ const
 		info<size_t>(clGetEventProfilingInfo, handle, CL_PROFILING_COMMAND_START, buf[2]),
 		info<size_t>(clGetEventProfilingInfo, handle, CL_PROFILING_COMMAND_END, buf[3]),
 	};
+}
+
+const char *
+ircd::cl::work::name()
+const
+{
+	switch(const auto type(this->type()); type)
+	{
+		default:
+			return nullptr;
+
+		case CL_COMMAND_READ_BUFFER:
+		case CL_COMMAND_WRITE_BUFFER:
+		case CL_COMMAND_COPY_BUFFER:
+		case CL_COMMAND_MAP_BUFFER:
+		case CL_COMMAND_UNMAP_MEM_OBJECT:
+		{
+			const auto data
+			{
+				reinterpret_cast<const cl::data *>(object)
+			};
+
+			return nullptr; //TODO: XXX
+		}
+
+		case CL_COMMAND_NDRANGE_KERNEL:
+		{
+			const auto kern
+			{
+				reinterpret_cast<const cl::kern *>(object)
+			};
+
+			return kern->name();
+		}
+	};
+}
+
+int
+ircd::cl::work::type()
+const
+{
+	const auto handle
+	{
+		cl_event(this->handle)
+	};
+
+	if(!handle)
+		return 0;
+
+	char buf[4];
+	return info<int>(clGetEventInfo, handle, CL_EVENT_COMMAND_TYPE, buf);
 }
 
 int
