@@ -2007,28 +2007,6 @@ catch(const std::exception &e)
 	throw;
 }
 
-std::array<uint64_t, 4>
-ircd::cl::work::profile()
-const
-{
-	const auto handle
-	{
-		cl_event(this->handle)
-	};
-
-	if(!profile_queue || !handle)
-		return {0};
-
-	char buf[4][8];
-	return std::array<uint64_t, 4>
-	{
-		info<size_t>(clGetEventProfilingInfo, handle, CL_PROFILING_COMMAND_QUEUED, buf[0]),
-		info<size_t>(clGetEventProfilingInfo, handle, CL_PROFILING_COMMAND_SUBMIT, buf[1]),
-		info<size_t>(clGetEventProfilingInfo, handle, CL_PROFILING_COMMAND_START, buf[2]),
-		info<size_t>(clGetEventProfilingInfo, handle, CL_PROFILING_COMMAND_END, buf[3]),
-	};
-}
-
 const char *
 ircd::cl::work::name()
 const
@@ -2079,6 +2057,37 @@ const
 	char buf[4];
 	return info<int>(clGetEventInfo, handle, CL_EVENT_COMMAND_TYPE, buf);
 }
+
+//
+// cl::work::prof
+//
+
+ircd::cl::work::prof::prof(const cl::work &w)
+{
+	const auto h
+	{
+		cl_event(w.handle)
+	};
+
+	if(!profile_queue || !h)
+	{
+		for(uint i(0); i < this->size(); ++i)
+			(*this)[i] = 0ns;
+
+		return;
+	}
+
+	char b[5][8];
+	(*this)[0] = info<nanoseconds>(clGetEventProfilingInfo, h, CL_PROFILING_COMMAND_QUEUED, b[0]);
+	(*this)[1] = info<nanoseconds>(clGetEventProfilingInfo, h, CL_PROFILING_COMMAND_SUBMIT, b[1]);
+	(*this)[2] = info<nanoseconds>(clGetEventProfilingInfo, h, CL_PROFILING_COMMAND_START, b[2]);
+	(*this)[3] = info<nanoseconds>(clGetEventProfilingInfo, h, CL_PROFILING_COMMAND_END, b[3]);
+	(*this)[4] = info<nanoseconds>(clGetEventProfilingInfo, h, CL_PROFILING_COMMAND_COMPLETE, b[4]);
+}
+
+//
+// cl::work (internal)
+//
 
 int
 ircd::cl::wait_event(work &work,

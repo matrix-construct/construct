@@ -52,6 +52,8 @@ namespace ircd::cl
 struct ircd::cl::work
 :instance_list<cl::work>
 {
+	struct prof;
+
 	void *handle {nullptr};
 	ctx::ctx *context {ctx::current};
 	void *object {nullptr};
@@ -61,7 +63,6 @@ struct ircd::cl::work
   public:
 	int type() const;
 	const char *name() const;
-	std::array<uint64_t, 4> profile() const;
 
 	void wait(const uint = 0);
 
@@ -72,6 +73,28 @@ struct ircd::cl::work
 	work &operator=(work &&) noexcept;
 	work &operator=(const work &) = delete;
 	~work() noexcept;
+};
+
+/// Queue profiling convenience
+struct ircd::cl::work::prof
+:std::array<nanoseconds, 5>
+{
+	enum phase :int;
+
+	prof(const cl::work &);
+	prof() = default;
+};
+
+/// cl_profiling_info wrapper
+enum ircd::cl::work::prof::phase
+:int
+{
+	QUEUE,
+	SUBMIT,
+	START,
+	END,
+	COMPLETE,
+	_NUM_
 };
 
 /// cl_mem wrapping
