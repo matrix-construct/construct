@@ -10,6 +10,7 @@
 
 #include <dlfcn.h>
 #include <CL/cl.h>
+#include <CL/cl_ext.h>
 
 // Util
 namespace ircd::cl
@@ -47,6 +48,12 @@ namespace ircd::cl
 
 	static cl_device_id
 	device[PLATFORM_MAX][DEVICE_MAX];
+
+	static struct version
+	{
+		int major, minor;
+	}
+	api[PLATFORM_MAX][DEVICE_MAX];
 
 	static cl_context
 	primary;
@@ -223,15 +230,54 @@ ircd::cl::init::init()
 	if(!(linkage = dlopen("libOpenCL.so", RTLD_LAZY | RTLD_GLOBAL)))
 		return;
 
+	// Get the platforms.
+	init_platforms();
+
+	// Report the platforms.
+	log_platform_info();
+
+	// Get the devices.
+	init_devices();
+
+	// Report the devices.
+	log_dev_info();
+
+	// Various other inits.
+	init_pipes();
+}
+
+ircd::cl::init::~init()
+noexcept
+{
+	if(!linkage)
+		return;
+
+	const ctx::posix::enable_pthread enable_pthread;
+	log::debug
+	{
+		log, "Shutting down OpenCL...",
+	};
+
+	fini_pipes();
+	dlclose(linkage);
+}
+
+size_t
+ircd::cl::init::init_platforms()
+{
 	// OpenCL sez platform=null is implementation defined.
 	info(clGetPlatformInfo, nullptr, CL_PLATFORM_VERSION, version_abi.string);
 
 	// Get the platforms.
 	call(clGetPlatformIDs, PLATFORM_MAX, platform, &platforms);
 
-	// Report the platforms.
-	log_platform_info();
+	return platforms;
+}
 
+size_t
+ircd::cl::init::init_devices()
+{
+	// Get the devices.
 	size_t devices_total(0);
 	for(size_t i(0); i < platforms; ++i)
 	{
@@ -244,6 +290,31 @@ ircd::cl::init::init()
 		devices_total += devices[i];
 	}
 
+	// Gather the API versions for the devices.
+	for(size_t i(0); i < platforms; ++i)
+		for(size_t j(0); j < devices[i]; ++j)
+		{
+			// OpenCL sez:
+			// OpenCL<space><major_version.minor_version><space><vendor-specific information>
+			string_view ver; char buf[32];
+			ver = info(clGetDeviceInfo, device[i][j], CL_DEVICE_VERSION, buf);
+			ver = lstrip(ver, "OpenCL ");
+			ver = split(ver, ' ').first;
+			const auto &[major, minor]
+			{
+				split(ver, '.')
+			};
+
+			api[i][j].major = lex_cast<uint>(major);
+			api[i][j].minor = lex_cast<uint>(minor);
+		}
+
+	return devices_total;
+}
+
+size_t
+ircd::cl::init::init_pipes()
+{
 	// Gather all devices we'll use.
 	size_t _devs {0};
 	cl_device_id _dev[DEVICE_MAX];
@@ -256,9 +327,6 @@ ircd::cl::init::init()
 	cl_context_properties ctxprop {0};
 	primary = clCreateContext(&ctxprop, _devs, _dev, handle_notify, nullptr, &err);
 	throw_on_error(err);
-
-	// Dump device details to infolog
-	log_dev_info();
 
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -287,28 +355,18 @@ ircd::cl::init::init()
 			throw_on_error(err);
 		}
 
-	#pragma GCC diagnostic pop
-
 	// For any inits in the work subsystem.
 	work::init();
+
+	#pragma GCC diagnostic pop
+	return _devs;
 }
 
-ircd::cl::init::~init()
-noexcept
+void
+ircd::cl::init::fini_pipes()
 {
-	if(!linkage)
-		return;
-
-	const ctx::posix::enable_pthread enable_pthread;
 	if(primary)
-	{
-		log::debug
-		{
-			log, "Shutting down OpenCL...",
-		};
-
 		work::fini();
-	}
 
 	for(size_t i(0); i < PLATFORM_MAX; ++i)
 		for(size_t j(0); j < DEVICE_MAX; ++j)
@@ -323,8 +381,6 @@ noexcept
 		call(clReleaseContext, primary);
 		primary = nullptr;
 	}
-
-	dlclose(linkage);
 }
 
 void

@@ -246,8 +246,14 @@ struct ircd::cl::exec::opts
 	bool sync {false};
 };
 
-struct ircd::cl::init
+class ircd::cl::init
 {
+	size_t init_platforms();
+	size_t init_devices();
+	size_t init_pipes();
+	void fini_pipes();
+
+  public:
 	init();
 	~init() noexcept;
 };
