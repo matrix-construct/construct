@@ -505,29 +505,50 @@ ircd::cl::log_dev_info(const uint i,
 
 	log::info
 	{
-		log, "%s %u$bit-%s %s align %s page %s alloc %s",
+		log, "%s %u$bit-%s %s line %s align %s page %s alloc %s",
 		string_view{head},
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_ADDRESS_BITS, buf[0]),
 		info<bool>(clGetDeviceInfo, dev, CL_DEVICE_ENDIAN_LITTLE, buf[1])?
 			"LE"_sv: "BE"_sv,
 		info<bool>(clGetDeviceInfo, dev, CL_DEVICE_ERROR_CORRECTION_SUPPORT, buf[2])?
 			"ECC"_sv: "non-ECC"_sv,
-		pretty(pbuf[0], iec(info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE, buf[3]))),
-		pretty(pbuf[1], iec(info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MEM_BASE_ADDR_ALIGN, buf[4]))),
-		pretty(pbuf[2], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_MAX_MEM_ALLOC_SIZE, buf[5]))),
+		pretty(pbuf[0], iec(info<uint>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, buf[3]))),
+		pretty(pbuf[1], iec(info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE, buf[4]))),
+		pretty(pbuf[2], iec(info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MEM_BASE_ADDR_ALIGN, buf[5]))),
+		pretty(pbuf[3], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_MAX_MEM_ALLOC_SIZE, buf[6]))),
+	};
+
+	const auto global_chans
+	{
+		api[i][j].major > 1 || (api[i][j].major == 1 && api[i][j].minor >= 2)?
+			info<uint>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_CHANNELS_AMD, buf[4]): 0
+	};
+
+	const auto global_banks
+	{
+		api[i][j].major > 1 || (api[i][j].major == 1 && api[i][j].minor >= 2)?
+			info<uint>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_CHANNEL_BANKS_AMD, buf[3]): 0
+	};
+
+	const auto local_banks
+	{
+		api[i][j].major > 1 || (api[i][j].major == 1 && api[i][j].minor >= 2)?
+			info<uint>(clGetDeviceInfo, dev, CL_DEVICE_LOCAL_MEM_BANKS_AMD, buf[7]): 0
 	};
 
 	log::info
 	{
-		log, "%s global %s cache %s line %s type[%02x]; local %s type[%02x]; const %s",
+		log, "%s global %s cache %s type[%02x] banks %u chans %u; local %s type[%02x] banks %u; const %s",
 		string_view{head},
 		pretty(pbuf[0], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_SIZE, buf[0]))),
 		pretty(pbuf[1], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, buf[1]))),
-		pretty(pbuf[2], iec(info<uint>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, buf[2]))),
-		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_CACHE_TYPE, buf[3]),
-		pretty(pbuf[3], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_LOCAL_MEM_SIZE, buf[4]))),
-		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_LOCAL_MEM_TYPE, buf[5]),
-		pretty(pbuf[4], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE, buf[6]))),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_CACHE_TYPE, buf[2]),
+		global_banks,
+		global_chans,
+		pretty(pbuf[2], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_LOCAL_MEM_SIZE, buf[5]))),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_LOCAL_MEM_TYPE, buf[6]),
+		local_banks,
+		pretty(pbuf[3], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE, buf[8]))),
 	};
 
 	log::info
