@@ -1421,8 +1421,8 @@ const
 	return info<uint>(clGetKernelInfo, handle, CL_KERNEL_NUM_ARGS, buf);
 }
 
-const char *
-ircd::cl::kern::name()
+ircd::string_view
+ircd::cl::kern::name(const mutable_buffer &buf)
 const
 {
 	const auto handle
@@ -1430,8 +1430,9 @@ const
 		cl_kernel(this->handle)
 	};
 
-	char buf[sizeof(const char *)];
-	return info<const char *>(clGetKernelInfo, handle, CL_KERNEL_FUNCTION_NAME, buf);
+	return handle?
+		info(clGetKernelInfo, handle, CL_KERNEL_FUNCTION_NAME, buf):
+		string_view{};
 }
 
 //
@@ -2007,8 +2008,8 @@ catch(const std::exception &e)
 	throw;
 }
 
-const char *
-ircd::cl::work::name()
+ircd::string_view
+ircd::cl::work::name(const mutable_buffer &buf)
 const
 {
 	switch(const auto type(this->type()); type)
@@ -2027,7 +2028,7 @@ const
 				reinterpret_cast<const cl::data *>(object)
 			};
 
-			return nullptr; //TODO: XXX
+			return data? nullptr: nullptr; //TODO: XXX
 		}
 
 		case CL_COMMAND_NDRANGE_KERNEL:
@@ -2037,7 +2038,7 @@ const
 				reinterpret_cast<const cl::kern *>(object)
 			};
 
-			return kern->name();
+			return kern? kern->name(buf): nullptr;
 		}
 	};
 }

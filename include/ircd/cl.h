@@ -62,7 +62,7 @@ struct ircd::cl::work
 
   public:
 	int type() const;
-	const char *name() const;
+	string_view name(const mutable_buffer &) const;
 
 	void wait(const uint = 0);
 
@@ -147,7 +147,7 @@ struct ircd::cl::kern
 	void *handle {nullptr};
 
   public:
-	const char *name() const;
+	string_view name(const mutable_buffer &) const;
 	uint argc() const;
 
 	std::array<size_t, 3> compile_group_size(void *dev = nullptr) const;
