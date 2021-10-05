@@ -179,10 +179,10 @@ ircd::gpt::vocab::debug(const mutable_buffer &out,
 	thread_local char strbuf[2][512];
 	return string_view{fmt::sprintf
 	{
-		out, "%5u  %s  [%32s]",
+		out, "%5u  [%32s]  %s",
 		idx,
-		simd::print_mem(strbuf[0], token[idx]),
-		simd::print_chr(strbuf[1], token[idx]),
+		simd::print_chr(strbuf[0], token[idx]),
+		simd::print_mem(strbuf[1], token[idx]),
 	}};
 }
 
