@@ -50,3 +50,21 @@ ircd_simt_rand_xoshiro256pg(__global ulong s[4])
 	return ret;
 }
 #endif
+
+#ifdef __OPENCL_C_VERSION__
+/// Generate the next pseudo-random 64-bit sequence from the 256-bit local
+/// state and update the state for the next call.
+inline ulong
+ircd_simt_rand_xoshiro256pl(__local ulong s[4])
+{
+	ulong _s[4], ret;
+	for(uint i = 0; i < 4; i++)
+		_s[i] = s[i];
+
+	ret = ircd_simt_rand_xoshiro256p(_s);
+	for(uint i = 0; i < 4; i++)
+		s[i] = _s[i];
+
+	return ret;
+}
+#endif
