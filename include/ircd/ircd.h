@@ -110,6 +110,7 @@
 #include "net/net.h"
 #include "server/server.h"
 #include "png.h"
+#include "beep.h"
 #include "magick.h"
 #include "resource/resource.h"
 #include "client.h"

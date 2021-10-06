@@ -229,6 +229,7 @@ endif
 if IMAGEMAGICK
 libircd_la_SOURCES += magick.cc
 endif
+libircd_la_SOURCES += beep.cc
 libircd_la_SOURCES += png.cc
 if OPENCL
 libircd_la_SOURCES += cl.cc

@@ -619,6 +619,33 @@ console_cmd__sync(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__beep(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"frequency", "duration"
+	}};
+
+	const auto tone
+	{
+		param.at("frequency", 2600.0f)
+	};
+
+	const auto duration
+	{
+		param.at("duration", 250ms)
+	};
+
+	beep beep
+	{
+		tone
+	};
+
+	ctx::sleep(duration);
+	return true;
+}
+
 //
 // log
 //
