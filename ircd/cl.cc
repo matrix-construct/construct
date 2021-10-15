@@ -2143,13 +2143,15 @@ ircd::cl::wait_event_offload(work &work,
 	{
 		offload_opts, [&c]
 		{
+			assert(c.status != CL_COMPLETE);
 			call(clWaitForEvents, 1UL, &c.event);
+			c.status = CL_COMPLETE;
 		}
 	};
 
-	char buf[4];
+	//char buf[4];
 	//c.status = info<int>(clGetEventInfo, c.event, CL_EVENT_COMMAND_EXECUTION_STATUS, buf);
-	c.status = CL_COMPLETE;
+
 	assert(c.status == CL_COMPLETE);
 	return c.status;
 }
