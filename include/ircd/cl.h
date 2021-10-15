@@ -23,6 +23,7 @@ namespace ircd::cl
 
 	IRCD_EXCEPTION(ircd::error, error)
 	IRCD_EXCEPTION(error, opencl_error)
+	IRCD_EXCEPTION(error, unavailable)
 
 	using read_closure = std::function<void (const_buffer)>;
 	using write_closure = std::function<void (mutable_buffer)>;
@@ -67,7 +68,7 @@ struct ircd::cl::work
 	void wait(const uint = 0);
 
 	explicit work(void *const &handle); // note: RetainEvent()
-	work() noexcept;
+	work();
 	work(work &&) noexcept;
 	work(const work &) = delete;
 	work &operator=(work &&) noexcept;

@@ -1938,8 +1938,14 @@ noexcept
 //
 
 ircd::cl::work::work()
-noexcept
 {
+	if(unlikely(!cl::linkage || run::level != run::level::RUN))
+		throw unavailable
+		{
+			"Unable to submit work items at this time."
+		};
+
+	assert(cl::linkage);
 	assert(ircd::run::level == run::level::RUN);
 }
 
