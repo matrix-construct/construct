@@ -58,6 +58,7 @@ struct ircd::cl::work
 	void *handle {nullptr};
 	ctx::ctx *context {ctx::current};
 	void *object {nullptr};
+	uint64_t ts {ircd::cycles()};
 
 	static void init(), fini() noexcept;
 

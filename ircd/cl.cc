@@ -655,6 +655,7 @@ namespace ircd::cl
 	static const size_t _deps_list_max {32};
 	static thread_local cl_event _deps_list[_deps_list_max];
 
+	static void check_submit_blocking(cl::exec *const &, const exec::opts &);
 	static void handle_submitted(cl::exec *const &, const exec::opts &);
 	static vector_view<cl_event> make_deps_default(cl::work *const &, const exec::opts &);
 	static vector_view<cl_event> make_deps(cl::work *const &, const exec::opts &);
@@ -1057,6 +1058,7 @@ try
 		assert(this->handle);
 		call(clReleaseEvent, cl_event(this->handle));
 		this->handle = nullptr;
+		this->work::ts = ircd::cycles();
 	}};
 
 	// Wait for the mapping to complete before presenting the buffer.
@@ -1171,6 +1173,7 @@ try
 		assert(this->handle);
 		call(clReleaseEvent, cl_event(this->handle));
 		this->handle = nullptr;
+		this->work::ts = ircd::cycles();
 	}};
 
 	wait();
@@ -1202,11 +1205,46 @@ ircd::cl::handle_submitted(cl::exec *const &exec,
 	if(opts.sync)
 		cl::sync();
 
+	if(likely(!opts.blocking))
+		check_submit_blocking(exec, opts);
+
 	if(opts.nice == 0)
 		ctx::yield();
 
 	if(opts.nice > 0)
 		ctx::sleep(opts.nice * milliseconds(nice_rate));
+}
+
+void
+ircd::cl::check_submit_blocking(cl::exec *const &exec,
+                                const exec::opts &opts)
+{
+	const auto threshold
+	{
+		268'435'456
+	};
+
+	const auto submit_cycles
+	{
+		prof::cycles() - exec->ts
+	};
+
+	if(likely(submit_cycles < threshold))
+		return;
+
+	char nbuf[64];
+	const auto name
+	{
+		exec->name(nbuf)
+	};
+
+	char pbuf[32];
+	log::dwarning
+	{
+		log, "clEnqueue() kernel '%s' blocking the host for %s cycles on submit.",
+		name?: "<unamed or data transfer kernel>"_sv,
+		pretty(pbuf, si(submit_cycles), 1),
+	};
 }
 
 ircd::vector_view<cl_event>
