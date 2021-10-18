@@ -488,12 +488,13 @@ ircd::cl::log_dev_info(const uint i,
 
 	log::info
 	{
-		log, "%s %u$mHz unit %u[%lu:%lu] dims %u[%u:%u:%u]",
+		log, "%s %u$mHz unit %u[%lu:%lu]%d dims %u[%u:%u:%u]",
 		string_view{head},
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_CLOCK_FREQUENCY, buf[0]),
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_COMPUTE_UNITS, buf[1]),
 		primary? query_warp_size(primary, dev): 0UL,
-		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_WORK_GROUP_SIZE, buf[3]),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_WORK_GROUP_SIZE, buf[2]),
+		info<int>(clGetDeviceInfo, dev, CL_DEVICE_PARTITION_PROPERTIES, buf[3]),
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, buf[4]),
 		wid[0], wid[1], wid[2],
 	};
