@@ -359,7 +359,10 @@ endif
 
 if CLANG
 if OPENCL
-gpt_gpu.o: gpt_gpu.cl
-	$(CC) -std=CL1.1 $(AM_CPPFLAGS) $(CPPFLAGS) $(DEFS) -Xclang -finclude-default-header -include "ircd/config.h" -o $@ -c $^
+gpt_gpu.ll: gpt_gpu.cl
+	$(CC) -S -emit-llvm -std=CL1.1 $(AM_CPPFLAGS) $(CPPFLAGS) $(DEFS) -Xclang -finclude-default-header -include "ircd/config.h" -o $@ -c $^
+
+gpt_gpu.o: gpt_gpu.ll
+	$(CC) -std=CL1.1 -o $@ -c $^
 endif
 endif
