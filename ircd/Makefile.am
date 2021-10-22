@@ -352,10 +352,14 @@ endif
 #
 
 # LLVM PGO text to binary for -fprofile-use
+if CLANG
 default.profdata:
 	-$(LLVM_PROFDATA) merge -output=default.profdata default.proftext
+endif
 
 if CLANG
+if OPENCL
 gpt_gpu.o: gpt_gpu.cl
 	$(CC) -std=CL1.1 $(AM_CPPFLAGS) $(CPPFLAGS) $(DEFS) -Xclang -finclude-default-header -include "ircd/config.h" -o $@ -c $^
+endif
 endif
