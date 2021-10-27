@@ -143,6 +143,13 @@ ircd::cl::nice_rate
 	{ "default",   1L                   },
 };
 
+decltype(ircd::cl::watchdog_tsc)
+ircd::cl::watchdog_tsc
+{
+	{ "name",      "ircd.cl.watchdog.tsc"  },
+	{ "default",   268'435'456L            },
+};
+
 decltype(ircd::cl::primary_stats)
 ircd::cl::primary_stats
 {
@@ -1216,14 +1223,18 @@ ircd::cl::handle_submitted(cl::exec *const &exec,
 		ctx::sleep(opts.nice * milliseconds(nice_rate));
 }
 
+/// Checks if the OpenCL runtime blocked this thread to sound the alarms.
 void
 ircd::cl::check_submit_blocking(cl::exec *const &exec,
                                 const exec::opts &opts)
 {
-	const auto threshold
+	const uint64_t &threshold
 	{
-		268'435'456
+		watchdog_tsc
 	};
+
+	if(!threshold)
+		return;
 
 	const auto submit_cycles
 	{
