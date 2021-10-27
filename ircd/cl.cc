@@ -733,6 +733,14 @@ try
 	if(!dim)
 		return;
 
+	if(unlikely(run::level != run::level::RUN))
+		throw unavailable
+		{
+			"Unable to submit work items in runlevel %s",
+			reflect(run::level),
+		};
+
+	assert(run::level == run::level::RUN);
 	auto &q
 	{
 		queue[0][0]
@@ -912,11 +920,6 @@ ircd::cl::exec::exec(data &data,
                      const opts &opts)
 try
 {
-	auto &q
-	{
-		queue[0][0]
-	};
-
 	const size_t size
 	{
 		opts.size == -1UL?
@@ -926,6 +929,19 @@ try
 
 	if(!size)
 		return;
+
+	if(unlikely(run::level != run::level::RUN))
+		throw unavailable
+		{
+			"Unable to write to device in runlevel %s",
+			reflect(run::level),
+		};
+
+	assert(run::level == run::level::RUN);
+	auto &q
+	{
+		queue[0][0]
+	};
 
 	assert(!this->object);
 	this->object = &data;
@@ -975,11 +991,6 @@ ircd::cl::exec::exec(data &data,
                      const opts &opts)
 try
 {
-	auto &q
-	{
-		queue[0][0]
-	};
-
 	const auto size
 	{
 		slice.first?:
@@ -999,6 +1010,10 @@ try
 
 	assert(size_t(size) <= data.size());
 	assert(size_t(offset) <= data.size());
+	auto &q
+	{
+		queue[0][0]
+	};
 
 	assert(!this->object);
 	this->object = &data;
@@ -1093,11 +1108,6 @@ ircd::cl::exec::exec(data &data,
                      const opts &opts)
 try
 {
-	auto &q
-	{
-		queue[0][0]
-	};
-
 	const auto size
 	{
 		slice.first?:
@@ -1109,6 +1119,14 @@ try
 	if(!size)
 		return;
 
+	if(unlikely(run::level != run::level::RUN))
+		throw unavailable
+		{
+			"Unable to write to device in runlevel %s",
+			reflect(run::level),
+		};
+
+	assert(run::level == run::level::RUN);
 	const auto offset
 	{
 		slice.second?:
@@ -1117,6 +1135,10 @@ try
 
 	assert(size_t(size) <= data.size());
 	assert(size_t(offset) <= data.size());
+	auto &q
+	{
+		queue[0][0]
+	};
 
 	assert(!this->object);
 	this->object = &data;
@@ -1205,6 +1227,8 @@ void
 ircd::cl::handle_submitted(cl::exec *const &exec,
                            const exec::opts &opts)
 {
+	assert(run::level == run::level::RUN || run::level == run::level::QUIT);
+
 	primary_stats.exec_tasks += 1;
 
 	if(opts.flush)
@@ -1989,14 +2013,13 @@ noexcept
 
 ircd::cl::work::work()
 {
-	if(unlikely(!cl::linkage || run::level != run::level::RUN))
+	if(unlikely(!cl::linkage))
 		throw unavailable
 		{
-			"Unable to submit work items at this time."
+			"OpenCL runtime is not available."
 		};
 
 	assert(cl::linkage);
-	assert(ircd::run::level == run::level::RUN);
 }
 
 ircd::cl::work::work(void *const &handle)
