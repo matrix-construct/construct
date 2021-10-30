@@ -130,6 +130,14 @@ struct ircd::cl::code
 	void *handle {nullptr};
 
   public:
+	long status() const;
+	size_t devs() const;
+	size_t bins(const vector_view<size_t> &) const;
+	size_t bins_size() const;
+
+	vector_view<const mutable_buffer> bin(vector_view<mutable_buffer>) const;
+	string_view src(const mutable_buffer &) const;
+
 	void build(const string_view &opts = {});
 
 	explicit code(const vector_view<const const_buffer> &bins, const string_view &opts = {});

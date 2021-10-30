@@ -1513,6 +1513,17 @@ const
 // code
 //
 
+namespace ircd::cl
+{
+	static void build_handle_error_log_line(const string_view &line);
+	static void build_handle_error(code &, const opencl_error &);
+	static void build_handle(cl_program program, void *priv);
+}
+
+//
+// code::code
+//
+
 ircd::cl::code::code(const string_view &src,
                      const string_view &build_opts)
 :code
@@ -1636,19 +1647,20 @@ catch(const std::exception &e)
 	return;
 }
 
-namespace ircd::cl
-{
-	static void build_handle_error_log_line(const string_view &line);
-	static void build_handle_error(code &, const opencl_error &);
-	static void build_handle(cl_program program, void *priv);
-}
-
 void
 ircd::cl::code::build(const string_view &opts)
 try
 {
-	const uint num_devices {0};
-	const cl_device_id *const device_list {nullptr};
+	const uint num_devices
+	{
+		1 //TODO: XXX
+	};
+
+	const cl_device_id *const device_list
+	{
+		device[0] //TODO: XXX
+	};
+
 	call
 	(
 		clBuildProgram,
@@ -1657,7 +1669,7 @@ try
 		device_list,
 		opts.c_str(),
 		cl::build_handle,
-		nullptr
+		this
 	);
 }
 catch(const opencl_error &e)
@@ -1677,14 +1689,174 @@ catch(const std::exception &e)
 	throw;
 }
 
+ircd::string_view
+ircd::cl::code::src(const mutable_buffer &buf)
+const
+{
+	const auto &handle
+	{
+		cl_program(this->handle)
+	};
+
+	return info(clGetProgramInfo, handle, CL_PROGRAM_SOURCE, buf);
+}
+
+ircd::vector_view<const ircd::mutable_buffer>
+ircd::cl::code::bin(vector_view<mutable_buffer> buf)
+const
+{
+	const auto &handle
+	{
+		cl_program(this->handle)
+	};
+
+	const auto devs
+	{
+		this->devs()
+	};
+
+	assert(devs <= ircd::size(buf));
+	const auto count
+	{
+		std::min(devs, ircd::size(buf))
+	};
+
+	size_t bin_sz[count];
+	const auto bins
+	{
+		this->bins({bin_sz, count})
+	};
+
+	assert(bins <= count);
+	const auto num
+	{
+		std::min(bins, count)
+	};
+
+	for(size_t i(0); i < num; ++i)
+		buf[i] = mutable_buffer
+		{
+			buf[i], bin_sz[i]
+		};
+
+	uintptr_t ptr[num];
+	for(size_t i(0); i < num; ++i)
+		ptr[i] = uintptr_t(ircd::data(buf[i]));
+
+	info(clGetProgramInfo, handle, CL_PROGRAM_BINARIES, mutable_buffer
+	{
+		reinterpret_cast<char *>(ptr), sizeof(uintptr_t) * num
+	});
+
+	return buf;
+}
+
+size_t
+ircd::cl::code::bins_size()
+const
+{
+	const auto devs
+	{
+		this->devs()
+	};
+
+	size_t bin_sz[devs];
+	const auto bins
+	{
+		this->bins({bin_sz, devs})
+	};
+
+	assert(bins <= devs);
+	const auto ret
+	{
+		std::accumulate(bin_sz, bin_sz + bins, 0UL)
+	};
+
+	return ret;
+}
+
+size_t
+ircd::cl::code::bins(const vector_view<size_t> &buf)
+const
+{
+	const auto &handle
+	{
+		cl_program(this->handle)
+	};
+
+	const auto count
+	{
+		devs()
+	};
+
+	assert(count <= size(buf));
+	info(clGetProgramInfo, handle, CL_PROGRAM_BINARY_SIZES, mutable_buffer
+	{
+		reinterpret_cast<char *>(ircd::data(buf)), ircd::size(buf) * sizeof(size_t)
+	});
+
+	return count;
+}
+
+size_t
+ircd::cl::code::devs()
+const
+{
+	char buf[sizeof(uint)];
+	const auto &handle
+	{
+		cl_program(this->handle)
+	};
+
+	return info<uint>(clGetProgramInfo, handle, CL_PROGRAM_NUM_DEVICES, buf);
+}
+
+long
+ircd::cl::code::status()
+const
+{
+	const auto &handle
+	{
+		cl_program(this->handle)
+	};
+
+	cl_build_status buf;
+	const mutable_buffer mb
+	{
+		reinterpret_cast<char *>(&buf), sizeof(buf)
+	};
+
+	const auto &dev
+	{
+		device[0][0], //TODO: XXX
+	};
+
+	const auto ret
+	{
+		info<cl_build_status>(clGetProgramBuildInfo, handle, dev, CL_PROGRAM_BUILD_STATUS, mb)
+	};
+
+	return ret;
+}
+
 void
 ircd::cl::build_handle(cl_program program,
                        void *const priv)
 {
-	log::debug
+	cl::code *const &code
 	{
-		log, "program(%p) :Successfully built.",
+		reinterpret_cast<cl::code *>(priv)
+	};
+
+	assert(code);
+	char pbuf[1][48];
+	log::logf
+	{
+		log, log::level::DEBUG,
+		"program(%p) devs:%zu binsz:%s :Build complete.",
 		(const void *)program,
+		code->devs(),
+		pretty(pbuf[0], si(code->bins_size())),
 	};
 }
 
@@ -1700,7 +1872,7 @@ ircd::cl::build_handle_error(code &code,
 			(
 				clGetProgramBuildInfo,
 				cl_program(code.handle),
-				device[0][0],
+				device[0][0], //TODO: XXX
 				CL_PROGRAM_BUILD_LOG,
 				ircd::size(buf),
 				ircd::data(buf),
