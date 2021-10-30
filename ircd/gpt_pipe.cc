@@ -1319,3 +1319,217 @@ ircd::gpt::pipe::model::matrix::matrix(cl::data *const master,
 }
 {
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// pipe::code
+//
+
+decltype(ircd::gpt::pipe::code::default_path)
+ircd::gpt::pipe::code::default_path
+{
+	{ "name", "ircd.gpt.pipe.code.path" },
+};
+
+decltype(ircd::gpt::pipe::code::cache_path)
+ircd::gpt::pipe::code::cache_path
+{
+	{ "name", "ircd.gpt.pipe.code.cache.path" },
+};
+
+decltype(ircd::gpt::pipe::code::default_opts)
+ircd::gpt::pipe::code::default_opts
+{
+	{ "name",     "ircd.gpt.pipe.code.opts" },
+	{ "default",  string_view
+	{
+		" -cl-strict-aliasing"
+		" -cl-no-signed-zeros"
+		" -cl-finite-math-only"
+		" -cl-unsafe-math-optimizations"
+		" -cl-fast-relaxed-math"
+		" -cl-mad-enable"
+		" -cl-single-precision-constant"
+		//" -cl-fp32-correctly-rounded-divide-sqrt"
+
+		" -cl-kernel-arg-info"
+
+		" -O3"
+	}}
+};
+
+ircd::gpt::pipe::code::code()
+:cl::code{[]
+{
+	const auto opts
+	{
+		fmt::snstringf
+		{
+			4096, "%s -I%s",
+			string_view{default_opts},
+			string_view{fs::base::include},
+		}
+	};
+
+	const auto cache_path
+	{
+		make_cache_path(fs::path_scratch)
+	};
+
+	if(cache_path)
+		if(fs::is_reg(cache_path))
+			return from_cache(opts, cache_path);
+
+	return from_source(opts);
+}()}
+{
+	put_cache();
+}
+
+ircd::gpt::pipe::code::~code()
+noexcept
+{
+}
+
+bool
+ircd::gpt::pipe::code::put_cache()
+{
+	const auto cache_path
+	{
+		make_cache_path(fs::path_scratch)
+	};
+
+	if(!cache_path)
+		return false;
+
+	if(fs::is_reg(cache_path))
+		return false;
+
+	set_cache(cache_path);
+	return true;
+}
+
+void
+ircd::gpt::pipe::code::set_cache(const string_view &path)
+{
+	const unique_mutable_buffer cache_buf
+	{
+		this->bins_size()
+	};
+
+	mutable_buffer _cache_bufs[1]
+	{
+		cache_buf
+	};
+
+	const auto cache_bufs
+	{
+		this->bin(_cache_bufs)
+	};
+
+	const fs::fd fd
+	{
+		path, std::ios::out
+	};
+
+	const auto written
+	{
+		fs::write(fd, cache_bufs[0])
+	};
+
+	assert(!empty(written));
+}
+
+ircd::cl::code
+ircd::gpt::pipe::code::from_source(const string_view &opts)
+{
+	const string_view code_path
+	{
+		default_path
+	};
+
+	const fs::fd fd
+	{
+		code_path
+	};
+
+	const std::string read
+	{
+		fs::read(fd)
+	};
+
+	const string_view src
+	{
+		read
+	};
+
+	const vector_view<const string_view> srcs
+	(
+		&src, 1
+	);
+
+	return cl::code
+	{
+		srcs, opts
+	};
+}
+
+ircd::cl::code
+ircd::gpt::pipe::code::from_cache(const string_view &opts,
+                                  const string_view &cache_path)
+{
+	const fs::fd fd
+	{
+		cache_path
+	};
+
+	const std::string read
+	{
+		fs::read(fd)
+	};
+
+	const const_buffer bin
+	{
+		read
+	};
+
+	const vector_view<const const_buffer> bins
+	(
+		&bin, 1
+	);
+
+	return cl::code
+	{
+		bins, opts
+	};
+}
+
+ircd::string_view
+ircd::gpt::pipe::code::make_cache_path(const mutable_buffer &buf)
+{
+	if(!cache_path)
+		return {};
+
+	const string_view &src_path
+	{
+		default_path
+	};
+
+	const string_view &src_fname
+	{
+		fs::filename(fs::path_scratch, src_path)
+	};
+
+	const string_view &cache_fname
+	{
+		fs::extension(fs::name_scratch, src_fname, ".nir")
+	};
+
+	const string_view parts[]
+	{
+		string_view{cache_path},
+		string_view{cache_fname}
+	};
+
+	return fs::path(buf, fs::path_views{parts});
+}
