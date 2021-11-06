@@ -59,12 +59,10 @@ ircd_simt_sort_idx16_trick(__local ushort *const idx,
 /// Sort indices in `idx` which point to values contained in `val`.
 inline void
 ircd_simt_sort_idx16_flldr(__local ushort *const idx,
-                           __global const float *const val)
+                           __global const float *const val,
+                           const uint ln,
+                           const uint li)
 {
-	const uint
-	li = get_local_id(0),
-	ln = get_local_size(0);
-
 	for(uint up = 1; up < ln; up <<= 1)
 	{
 		const bool

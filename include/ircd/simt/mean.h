@@ -31,18 +31,16 @@ struct ircd_math_mean
 ///
 inline void
 ircd_simt_math_mean_f4lldr(__local float4 *const restrict out,
-                           __local const float4 *const restrict in)
+                           __local const float4 *const restrict in,
+                           const uint ln,
+                           const uint li)
 {
-	const uint
-	li = get_local_id(0),
-	ln = get_local_size(0);
-
 	out[li] = in[li];
-	ircd_simt_reduce_add_f4lldr(out);
+	ircd_simt_reduce_add_f4lldr(out, ln, li);
 
 	if(li == 0)
 		out[li] = ircd_simt_reduce_add_f4(out[li]) / (ln * 4);
 
-	ircd_simt_broadcast_f4lldr(out);
+	ircd_simt_broadcast_f4lldr(out, ln, li);
 }
 #endif

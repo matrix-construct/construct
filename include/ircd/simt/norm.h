@@ -17,19 +17,17 @@
 inline void
 ircd_simt_math_norm_f4lldr(__local float4 *const out,
                            __local const float4 *const in,
-                           __local float4 *const restrict tmp)
+                           __local float4 *const restrict tmp,
+                           const uint ln,
+                           const uint li)
 {
-	const uint
-	li = get_local_id(0),
-	ln = get_local_size(0);
-
-	ircd_simt_math_mean_f4lldr(tmp, in);
+	ircd_simt_math_mean_f4lldr(tmp, in, ln, li);
 
 	const float4
 	sub_mean = in[li] - tmp[li];
 
 	tmp[li] = pow(sub_mean, 2);
-	ircd_simt_math_mean_f4lldr(out, tmp);
+	ircd_simt_math_mean_f4lldr(out, tmp, ln, li);
 
 	const float4
 	epsilon = 0.00001f,

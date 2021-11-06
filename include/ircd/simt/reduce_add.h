@@ -15,12 +15,10 @@
 /// Sum all elements in the buffer. All threads in the group participate;
 /// result is placed in index [0], the rest of the buffer is trashed.
 inline void
-ircd_simt_reduce_add_f4lldr(__local float4 *const buf)
+ircd_simt_reduce_add_f4lldr(__local float4 *const buf,
+                            const uint ln,
+                            const uint li)
 {
-	const uint
-	li = get_local_id(0),
-	ln = get_local_size(0);
-
 	for(uint stride = ln >> 1; stride > 0; stride >>= 1)
 	{
 		barrier(CLK_LOCAL_MEM_FENCE);
