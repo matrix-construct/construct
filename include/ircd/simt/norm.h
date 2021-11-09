@@ -11,7 +11,7 @@
 #pragma once
 #define HAVE_IRCD_SIMT_NORM_H
 
-#ifdef __OPENCL_C_VERSION__
+#ifdef __OPENCL_VERSION__
 /// Normalize the input, placing the result in possibly overlapping output.
 /// This procedure requires an additional temporary buffer.
 inline void

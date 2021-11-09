@@ -21,7 +21,7 @@ struct ircd_math_mean
 	sum[4];   ///< Summand spread. TODO XXX
 };
 
-#ifdef __OPENCL_C_VERSION__
+#ifdef __OPENCL_VERSION__
 /// Compute average of all elements in the input. The result is broadcast
 /// to all elements of the output.
 ///

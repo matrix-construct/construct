@@ -11,7 +11,7 @@
 #pragma once
 #define HAVE_IRCD_SIMT_BROADCAST_H
 
-#ifdef __OPENCL_C_VERSION__
+#ifdef __OPENCL_VERSION__
 /// Broadcast originating from the local leader (index [0]). All threads in the
 /// group participate.
 inline void

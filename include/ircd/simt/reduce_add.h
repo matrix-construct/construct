@@ -11,7 +11,7 @@
 #pragma once
 #define HAVE_IRCD_SIMT_REDUCE_ADD_H
 
-#ifdef __OPENCL_C_VERSION__
+#ifdef __OPENCL_VERSION__
 /// Sum all elements in the buffer. All threads in the group participate;
 /// result is placed in index [0], the rest of the buffer is trashed.
 inline void
@@ -29,7 +29,7 @@ ircd_simt_reduce_add_f4lldr(__local float4 *const buf,
 }
 #endif
 
-#ifdef __OPENCL_C_VERSION__
+#ifdef __OPENCL_VERSION__
 /// Sum all elements in the buffer. All threads in the group participate;
 /// result is placed in index [0], the rest of the buffer is trashed.
 inline float

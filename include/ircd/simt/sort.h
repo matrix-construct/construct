@@ -11,8 +11,7 @@
 #pragma once
 #define HAVE_IRCD_SIMT_SORT_H
 
-#ifdef __OPENCL_C_VERSION__
-
+#ifdef __OPENCL_VERSION__
 inline bool
 ircd_simt_sort_idx16_cmpxchg(__local ushort *const idx,
                              __global const float *const val,
@@ -36,7 +35,9 @@ ircd_simt_sort_idx16_cmpxchg(__local ushort *const idx,
 
 	return swap;
 }
+#endif
 
+#ifdef __OPENCL_VERSION__
 inline bool
 ircd_simt_sort_idx16_trick(__local ushort *const idx,
                            __global const float *const val,
@@ -55,7 +56,9 @@ ircd_simt_sort_idx16_trick(__local ushort *const idx,
 
 	return ircd_simt_sort_idx16_cmpxchg(idx, val, li, oi, parity);
 }
+#endif
 
+#ifdef __OPENCL_VERSION__
 /// Sort indices in `idx` which point to values contained in `val`.
 inline void
 ircd_simt_sort_idx16_flldr(__local ushort *const idx,
@@ -78,5 +81,4 @@ ircd_simt_sort_idx16_flldr(__local ushort *const idx,
 		}
 	}
 }
-
 #endif

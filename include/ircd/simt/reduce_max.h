@@ -11,7 +11,7 @@
 #pragma once
 #define HAVE_IRCD_SIMT_REDUCE_MAX_H
 
-#ifdef __OPENCL_C_VERSION__
+#ifdef __OPENCL_VERSION__
 /// Find the greatest value in the buffer. All threads in the group participate;
 /// the greatest value is placed in index [0], the rest of the buffer is
 /// trashed.
