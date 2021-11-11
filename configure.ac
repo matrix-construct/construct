@@ -536,49 +536,61 @@ dnl AC_SUBST(EXTRA_LDFLAGS, "$EXTRA_LDFLAGS")
 dnl AC_SUBST(EXTRA_LIBS, "$EXTRA_LIBS")
 
 dnl
-dnl Gold linker
+dnl Features
 dnl
 
-dnl Sorry there is no way to disable gold right now. You can try the
-dnl binutils-gold package if your binutils package doesn't ship with it
-dnl by default these days. Not sure if this is a problem with musl; please
-dnl report any issues so we can weigh the need to change course here.
-dnl
-ld_gold="yes"
-
-AM_CONDITIONAL([LD_GOLD], [[[[ $ld_gold = "yes" ]]]])
-
-AM_COND_IF([LD_GOLD],
+AM_COND_IF([GCC],
 [
-	AM_COND_IF([GCC],
-	[
-		RB_VAR_PREPEND([LDFLAGS], ["-Wl,-fuse-ld=gold"])
-		RB_VAR_PREPEND([LDFLAGS], ["-Wl,--gdb-index"])
-	])
-
-	AM_COND_IF([CLANG],
-	[
-		RB_VAR_PREPEND([LDFLAGS], ["-fuse-ld=gold"])
-		RB_VAR_PREPEND([LDFLAGS], ["-Wc,-fuse-ld=gold"])
-	])
-
-	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--warn-common"])
-	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--warn-execstack"])
-	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--detect-odr-violations"])
-	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--rosegment"])
-dnl	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--icf=all"])
-	RB_VAR_PREPEND([LDFLAGS], ["-Wl,-z,noexecstack"])
-	RB_VAR_PREPEND([LDFLAGS], ["-Wl,-z,combreloc"])
-	RB_VAR_PREPEND([LDFLAGS], ["-Wl,-z,text-unlikely-segment"])
-], [
-	AC_MSG_ERROR([Sorry, disabling the gold linker is not supported at this time.])
+dnl	RB_VAR_PREPEND([CXXFLAGS], ["-fmodules-ts"])
 ])
 
-dnl Note compact mode options available in both GOLD and LLD
-AM_COND_IF([COMPACT],
+AM_COND_IF([CLANG],
 [
-	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--strip-all"])
-	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--gc-sections"])
+dnl	RB_VAR_PREPEND([CXXFLAGS], ["-fmodules"])
+])
+
+AM_COND_IF([CLANG],
+[
+	RB_VAR_PREPEND([CXXFLAGS], ["-fblocks"])
+	RB_VAR_PREPEND([CXXFLAGS], ["-fasm-blocks"])
+])
+
+AM_COND_IF([CLANG11],
+[
+	RB_VAR_PREPEND([CXXFLAGS], ["-fenable-matrix"])
+])
+
+dnl
+dnl Misc
+dnl
+
+dnl This disables thread-safety for static variable initialization
+dnl (specifically local static variables inside functions) which reduces
+dnl generated code size and complexity. This is alright since construct is
+dnl primarily single threaded. Even if other threads are spawned for special
+dnl tasks we consider the likelyhood of a static initialization race to either
+dnl be sufficiently low or simply immaterial for our uses of them.
+dnl
+RB_VAR_PREPEND([CXXFLAGS], ["-fno-threadsafe-statics"])
+
+dnl Exception safety at instruction boundary rather than function boundary
+dnl This option is needed to enable noexcept(false) i.e to throw from a
+dnl destructor; without this noexcept(false) still terminates.
+RB_VAR_PREPEND([CXXFLAGS], ["-fasynchronous-unwind-tables"])
+
+dnl  -fvisibility-inlines-hidden - for optimization; note the address of inline
+dnl  functions won't be the same between translation units
+RB_VAR_PREPEND([CXXFLAGS], ["-fvisibility-inlines-hidden"])
+
+dnl see gcc(1)
+AM_COND_IF([GCC],
+[
+	RB_VAR_PREPEND([CXXFLAGS], ["-fnothrow-opt"])
+])
+
+AM_COND_IF([GCC],
+[
+	RB_VAR_PREPEND([CXXFLAGS], ["-flax-vector-conversions"])
 ])
 
 dnl
@@ -649,19 +661,6 @@ dnl
 
 AM_COND_IF([DEBUG],
 [
-	AM_COND_IF([GCC],
-	[
-		RB_VAR_PREPEND([CXXFLAGS], ["-fmax-errors=2"])
-	])
-
-	AM_COND_IF([CLANG],
-	[
-		RB_VAR_PREPEND([CXXFLAGS], ["-ferror-limit=2"])
-	])
-])
-
-AM_COND_IF([DEBUG],
-[
 	RB_VAR_PREPEND([CXXFLAGS], ["-g"])
 	RB_VAR_PREPEND([CXXFLAGS], ["-ggdb"])
 	AM_COND_IF([GCC],
@@ -680,6 +679,8 @@ AM_COND_IF([DEBUG],
 	])
 ])
 
+RB_VAR_PREPEND([CXXFLAGS], ["-fverbose-asm"])
+
 dnl  Creates an ELF section in the output which contains a list of
 dnl  the command line arguments used for compilation.
 AM_COND_IF([GCC],
@@ -690,7 +691,26 @@ AM_COND_IF([GCC],
 AM_COND_IF([CLANG],
 [
 	RB_VAR_PREPEND([CXXFLAGS], ["-grecord-gcc-switches"])
+	RB_VAR_PREPEND([CXXFLAGS], ["-fno-discard-value-names"])
+	RB_VAR_PREPEND([CXXFLAGS], ["-fident"])
 ])
+
+AM_COND_IF([DEBUG],
+[
+	AM_COND_IF([GCC],
+	[
+		RB_VAR_PREPEND([CXXFLAGS], ["-fmax-errors=2"])
+	])
+
+	AM_COND_IF([CLANG],
+	[
+		RB_VAR_PREPEND([CXXFLAGS], ["-ferror-limit=2"])
+	])
+])
+
+dnl
+dnl Runtime intrumentation
+dnl
 
 AM_COND_IF([GCC],
 [
@@ -713,56 +733,6 @@ AM_COND_IF([GCC],
 AM_COND_IF([GCC],
 [
 	RB_VAR_PREPEND([CXXFLAGS], ["-fvtable-verify=none"])
-])
-
-dnl Not useful without GCC support...
-dnl AM_COND_IF([CLANG],
-dnl [
-dnl 	RB_VAR_PREPEND([CXXFLAGS], ["-fasm-blocks"])
-dnl ])
-
-AM_COND_IF([GCC],
-[
-	RB_VAR_PREPEND([CXXFLAGS], ["-fverbose-asm"])
-])
-
-dnl
-dnl Misc
-dnl
-
-dnl Exception safety at instruction boundary rather than function boundary
-dnl This option is needed to enable noexcept(false) i.e to throw from a
-dnl destructor; without this noexcept(false) still terminates.
-RB_VAR_PREPEND([CXXFLAGS], ["-fasynchronous-unwind-tables"])
-
-dnl  -fvisibility-inlines-hidden - for optimization; note the address of inline
-dnl  functions won't be the same between translation units
-RB_VAR_PREPEND([CXXFLAGS], ["-fvisibility-inlines-hidden"])
-
-dnl see gcc(1)
-AM_COND_IF([GCC],
-[
-	RB_VAR_PREPEND([CXXFLAGS], ["-fnothrow-opt"])
-])
-
-dnl This disables thread-safety for static variable initialization
-dnl (specifically local static variables inside functions) which reduces
-dnl generated code size and complexity. This is alright since construct is
-dnl primarily single threaded. Even if other threads are spawned for special
-dnl tasks we consider the likelyhood of a static initialization race to either
-dnl be sufficiently low or simply immaterial for our uses of them.
-dnl
-RB_VAR_PREPEND([CXXFLAGS], ["-fno-threadsafe-statics"])
-
-AM_COND_IF([GCC],
-[
-	RB_VAR_PREPEND([CXXFLAGS], ["-flax-vector-conversions"])
-])
-
-dnl Enables matrix_type attribute for vectors of vectors etc
-AM_COND_IF([CLANG11],
-[
-	RB_VAR_PREPEND([CXXFLAGS], ["-fenable-matrix"])
 ])
 
 dnl
@@ -943,6 +913,51 @@ RB_VAR_PREPEND([CPPFLAGS], ["$CWARNS"])
 dnl mirror the base CFLAGS and CXXFLAGS up to this point
 CFLAGS="$CXXFLAGS"
 
+dnl
+dnl Gold linker
+dnl
+
+dnl Sorry there is no way to disable gold right now. You can try the
+dnl binutils-gold package if your binutils package doesn't ship with it
+dnl by default these days. Not sure if this is a problem with musl; please
+dnl report any issues so we can weigh the need to change course here.
+dnl
+ld_gold="yes"
+
+AM_CONDITIONAL([LD_GOLD], [[[[ $ld_gold = "yes" ]]]])
+
+AM_COND_IF([LD_GOLD],
+[
+	AM_COND_IF([GCC],
+	[
+		RB_VAR_PREPEND([LDFLAGS], ["-Wl,-fuse-ld=gold"])
+		RB_VAR_PREPEND([LDFLAGS], ["-Wl,--gdb-index"])
+	])
+
+	AM_COND_IF([CLANG],
+	[
+		RB_VAR_PREPEND([LDFLAGS], ["-fuse-ld=gold"])
+		RB_VAR_PREPEND([LDFLAGS], ["-Wc,-fuse-ld=gold"])
+	])
+
+	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--warn-common"])
+	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--warn-execstack"])
+	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--detect-odr-violations"])
+	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--rosegment"])
+dnl	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--icf=all"])
+	RB_VAR_PREPEND([LDFLAGS], ["-Wl,-z,noexecstack"])
+	RB_VAR_PREPEND([LDFLAGS], ["-Wl,-z,combreloc"])
+	RB_VAR_PREPEND([LDFLAGS], ["-Wl,-z,text-unlikely-segment"])
+], [
+	AC_MSG_ERROR([Sorry, disabling the gold linker is not supported at this time.])
+])
+
+dnl Note compact mode options available in both GOLD and LLD
+AM_COND_IF([COMPACT],
+[
+	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--strip-all"])
+	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--gc-sections"])
+])
 
 dnl ***************************************************************************
 dnl
