@@ -16,6 +16,7 @@ struct ircd::db::database::sst
 	struct info;
 	struct dump;
 
+	[[deprecated]]
 	static void tool(const vector_view<const string_view> &args);
 };
 

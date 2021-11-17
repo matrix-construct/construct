@@ -4645,19 +4645,6 @@ _print_sst_info_full(opt &out,
 }
 
 bool
-console_cmd__db__sst(opt &out, const string_view &line)
-{
-	string_view buf[16];
-	const vector_view<const string_view> args
-	{
-		buf, tokens(line, " ", buf)
-	};
-
-	db::database::sst::tool(args);
-	return true;
-}
-
-bool
 console_cmd__db__sst__dump(opt &out, const string_view &line)
 {
 	const params param{line, " ",
