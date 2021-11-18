@@ -13,10 +13,6 @@
 
 /// Userspace Contexts: cooperative threading from stackful coroutines.
 ///
-/// This is the public interface to the userspace context system. No 3rd party
-/// symbols are included from here. This file is included automatically in stdinc.h
-/// and you do not have to include it manually.
-///
 /// There are two primary objects at work in the context system:
 ///
 /// `struct context` <ircd/ctx/context.h>
