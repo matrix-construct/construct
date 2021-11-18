@@ -50,6 +50,7 @@
 #include <rocksdb/filter_policy.h>
 #include <rocksdb/table.h>
 #include <rocksdb/sst_file_manager.h>
+#include <rocksdb/sst_file_reader.h>
 #include <rocksdb/sst_dump_tool.h>
 #include <rocksdb/compaction_filter.h>
 #include <rocksdb/wal_filter.h>

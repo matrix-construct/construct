@@ -4712,6 +4712,76 @@ console_cmd__db__sst__dump(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__db__sst__scan(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"dbname", "path",
+	}};
+
+	const auto dbname
+	{
+		param.at("dbname")
+	};
+
+	const auto path
+	{
+		param.at("path")
+	};
+
+	auto &database
+	{
+		db::database::get(dbname)
+	};
+
+	db::database::sst::scan
+	{
+		database, path
+	};
+
+	out << "Completed without error." << std::endl;
+	return true;
+}
+
+bool
+console_cmd__db__sst__scan__count(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"dbname", "path",
+	}};
+
+	const auto dbname
+	{
+		param.at("dbname")
+	};
+
+	const auto path
+	{
+		param.at("path")
+	};
+
+	auto &database
+	{
+		db::database::get(dbname)
+	};
+
+	size_t i(0);
+	db::database::sst::scan
+	{
+		database, path, [&out, &i]
+		(const auto &key, const auto &val)
+		{
+			++i;
+			return true;
+		}
+	};
+
+	out << "Found " << i << " entries." << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__wal(opt &out, const string_view &line)
 try
 {

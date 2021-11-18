@@ -3615,7 +3615,98 @@ ircd::db::database::sst::tool(const vector_view<const string_view> &args)
 }
 
 //
-// sst::dump::dump
+// sst::scan
+//
+
+ircd::db::database::sst::scan::scan(database &d,
+                                    const string_view &fpath)
+{
+	const auto &opts
+	{
+		d.d->GetOptions()
+	};
+
+	rocksdb::SstFileReader reader
+	{
+		opts
+	};
+
+	const string_view path_parts[]
+	{
+		fs::base::db, db::name(d), fpath
+	};
+
+	const auto path
+	{
+		fs::path_string(path_parts)
+	};
+
+	throw_on_error
+	{
+		reader.Open(path)
+	};
+
+	db::gopts gopts;
+	throw_on_error
+	{
+		reader.VerifyChecksum(make_opts(gopts))
+	};
+}
+
+ircd::db::database::sst::scan::scan(database &d,
+                                    const string_view &fpath,
+                                    const closure &call)
+{
+	const auto &opts
+	{
+		d.d->GetOptions()
+	};
+
+	rocksdb::SstFileReader reader
+	{
+		opts
+	};
+
+	const string_view path_parts[]
+	{
+		fs::base::db, db::name(d), fpath
+	};
+
+	const auto path
+	{
+		fs::path_string(path_parts)
+	};
+
+	throw_on_error
+	{
+		reader.Open(path)
+	};
+
+	db::gopts gopts;
+	std::unique_ptr<rocksdb::Iterator> it
+	{
+		reader.NewIterator(make_opts(gopts))
+	};
+
+	for(it->SeekToFirst(); db::valid(*it); it->Next())
+	{
+		const auto &key
+		{
+			slice(it->key())
+		};
+
+		const auto &val
+		{
+			slice(it->value())
+		};
+
+		if(!call(key, val))
+			break;
+	}
+}
+
+//
+// sst::dump
 //
 
 ircd::db::database::sst::dump::dump(db::column column,

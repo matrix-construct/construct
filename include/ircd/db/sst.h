@@ -15,6 +15,7 @@ struct ircd::db::database::sst
 {
 	struct info;
 	struct dump;
+	struct scan;
 
 	[[deprecated]]
 	static void tool(const vector_view<const string_view> &args);
@@ -96,4 +97,12 @@ struct ircd::db::database::sst::dump
 	dump(db::column, const key_range & = {}, const string_view &path = {});
 	dump(dump &&) = delete;
 	dump(const dump &) = delete;
+};
+
+struct ircd::db::database::sst::scan
+{
+	using closure = std::function<bool (const string_view &, const string_view &)>;
+
+	scan(db::database &, const string_view &path, const closure &);
+	scan(db::database &, const string_view &path); // VerifyChecksum
 };
