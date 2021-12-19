@@ -343,8 +343,9 @@ const
 
 namespace ircd::conf
 {
-	static void call_env(item<void> &) noexcept;
-	static void call_init(item<void> &) noexcept;
+	static string_view make_env_name(const mutable_buffer &, const item<void> &);
+	static void set_from_env(item<void> &) noexcept;
+	static void set_from_closure(item<void> &) noexcept;
 }
 
 void
@@ -353,16 +354,16 @@ ircd::conf::item<void>::call_init()
 	// The conf item's default value specified by the constructor is its
 	// current value at this point; now we make callbacks to allow that value
 	// to be replaced with a better one (i.e reading a saved value from DB).
-	conf::call_init(*this);
+	conf::set_from_closure(*this);
 
 	// Environmental variables now get the final say; this allows any
 	// misconfiguration to be overridden by env vars. The variable name is
 	// the conf item name with any '.' replaced to '_', case is preserved.
-	conf::call_env(*this);
+	conf::set_from_env(*this);
 }
 
 void
-ircd::conf::call_init(item<void> &item)
+ircd::conf::set_from_closure(item<void> &item)
 noexcept try
 {
 	on_init(item);
@@ -378,20 +379,18 @@ catch(const std::exception &e)
 }
 
 void
-ircd::conf::call_env(item<void> &item)
+ircd::conf::set_from_env(item<void> &item)
 noexcept try
 {
-	assert(size(item.name) <= conf::NAME_MAX_LEN);
-	thread_local char key[conf::NAME_MAX_LEN];
-	const string_view name
+	thread_local char buf[conf::NAME_MAX_LEN];
+	const string_view key
 	{
-		key,
-		std::replace_copy(begin(item.name), end(item.name), key, '.', '_')
+		make_env_name(buf, item)
 	};
 
 	const string_view val
 	{
-		util::getenv(name)
+		util::getenv(key)
 	};
 
 	if(!empty(val))
@@ -405,6 +404,14 @@ catch(const std::exception &e)
 		item.name,
 		e.what()
 	};
+}
+
+ircd::string_view
+ircd::conf::make_env_name(const mutable_buffer &buf,
+                          const item<void> &item)
+{
+	assert(size(item.name) <= conf::NAME_MAX_LEN);
+	return replace(buf, item.name, '.', '_');
 }
 
 //
