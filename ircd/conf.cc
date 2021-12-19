@@ -343,7 +343,10 @@ const
 
 namespace ircd::conf
 {
+	static string_view make_env_name(const mutable_buffer &, const item<void> &, const string_view &);
 	static string_view make_env_name(const mutable_buffer &, const item<void> &);
+	static void prepend_from_env(item<void> &) noexcept;
+	static void append_from_env(item<void> &) noexcept;
 	static void set_from_env(item<void> &) noexcept;
 	static void set_from_closure(item<void> &) noexcept;
 }
@@ -356,9 +359,17 @@ ircd::conf::item<void>::call_init()
 	// to be replaced with a better one (i.e reading a saved value from DB).
 	conf::set_from_closure(*this);
 
-	// Environmental variables now get the final say; this allows any
+	// Environment variables now get the final say; this allows any
 	// misconfiguration to be overridden by env vars. The variable name is
 	// the conf item name with any '.' replaced to '_', case is preserved.
+
+	// Prepend to item's current value from env.
+	conf::prepend_from_env(*this);
+
+	// Append to item's current value from env.
+	conf::append_from_env(*this);
+
+	// Overwrite item's value if env is set.
 	conf::set_from_env(*this);
 }
 
@@ -379,30 +390,123 @@ catch(const std::exception &e)
 }
 
 void
-ircd::conf::set_from_env(item<void> &item)
+ircd::conf::prepend_from_env(item<void> &item)
 noexcept try
 {
 	thread_local char buf[conf::NAME_MAX_LEN];
-	const string_view key
+	const auto key
 	{
-		make_env_name(buf, item)
+		make_env_name(buf, item, "PREPEND")
 	};
 
-	const string_view val
+	const auto env
 	{
 		util::getenv(key)
 	};
 
-	if(!empty(val))
-		item.set(val);
+	if(empty(env))
+		return;
+
+	auto val
+	{
+		item.get()
+	};
+
+	val = std::string{env} + val;
+	item.set(val);
 }
 catch(const std::exception &e)
 {
 	log::error
 	{
-		"conf item[%s] environmental variable :%s",
+		"conf item[%s] prepending from environment variable :%s",
 		item.name,
 		e.what()
+	};
+}
+
+void
+ircd::conf::append_from_env(item<void> &item)
+noexcept try
+{
+	thread_local char buf[conf::NAME_MAX_LEN];
+	const auto key
+	{
+		make_env_name(buf, item, "APPEND")
+	};
+
+	const auto env
+	{
+		util::getenv(key)
+	};
+
+	if(empty(env))
+		return;
+
+	auto val
+	{
+		item.get()
+	};
+
+	val += env;
+	item.set(val);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"conf item[%s] appending from environment variable :%s",
+		item.name,
+		e.what()
+	};
+}
+
+void
+ircd::conf::set_from_env(item<void> &item)
+noexcept try
+{
+	thread_local char buf[conf::NAME_MAX_LEN];
+	const auto key
+	{
+		make_env_name(buf, item)
+	};
+
+	const auto val
+	{
+		util::getenv(key)
+	};
+
+	if(empty(val) && !null(val))
+		return;
+
+	item.set(val);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"conf item[%s] setting from environment variable :%s",
+		item.name,
+		e.what()
+	};
+}
+
+ircd::string_view
+ircd::conf::make_env_name(const mutable_buffer &buf,
+                          const item<void> &item,
+                          const string_view &feature)
+{
+	thread_local char tmp[conf::NAME_MAX_LEN];
+	const auto name
+	{
+		make_env_name(tmp, item)
+	};
+
+	return fmt::sprintf
+	{
+		buf, "%s__%s",
+		name,
+		feature,
 	};
 }
 
