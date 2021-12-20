@@ -1,6 +1,6 @@
 AC_PREREQ([2.63])
 AUTOMAKE_OPTIONS = 1.11
-AC_INIT([construct], [1])
+AC_INIT([construct],[1])
 
 AC_GNU_SOURCE
 AC_USE_SYSTEM_EXTENSIONS
@@ -2281,21 +2281,23 @@ PKG_CHECK_MODULES(MesaOpenCL, [MesaOpenCL],
 	])
 ])
 
-AC_MSG_CHECKING(whether to enable use of any found OpenCL)
+AC_MSG_CHECKING(whether to disable use of any found OpenCL)
 AC_ARG_ENABLE(opencl, RB_HELP_STRING([--disable-opencl], [Disable OpenCL support]),
 [
 	AC_MSG_RESULT([$enableval])
 	enable_opencl=$enableval
 ], [
-	AC_MSG_RESULT([yes])
+	AC_MSG_RESULT([no])
 	enable_opencl="yes"
 ])
 
+AC_MSG_CHECKING(whether to enable use of any found OpenCL)
 AM_CONDITIONAL([OPENCL], [test "x$have_opencl" = "xyes" && test "x$enable_opencl" = "xyes" ])
 AM_CONDITIONAL([MESA_OPENCL], [test "x$have_mesa_opencl" = "xyes"])
 
 AM_COND_IF([OPENCL],
 [
+	AC_MSG_RESULT([yes])
 	IRCD_DEFINE(USE_OPENCL, [1], [OpenCL support is available and enabled])
 	OPENCL_LIBS+="-lOpenCL"
 
@@ -2672,7 +2674,7 @@ AC_ARG_WITH(mxid-maxlen,
 RB_HELP_STRING([--with-mxid-maxlen=LENGTH],[Set the upper-bound mxid length to LENGTH (default 255, max 511)]),
 [
   if ! expr "$withval" + 0 >/dev/null 2>&1; then
-	AC_ERROR([MXID_MAXLEN must be a numeric value])
+	AC_MSG_ERROR(MXID_MAXLEN must be a numeric value)
   fi
   if test $withval -gt 511; then
 	MXID_MAXLEN=511
@@ -2811,18 +2813,19 @@ echo
 echo "Using bundled Boost ............... $with_included_boost"
 echo "Using bundled RocksDB ............. $with_included_rocksdb"
 echo
-echo "Install Prefix .................... $prefix"
-echo "Binary directory .................. $bindir"
-echo "Config directory .................. $sysconfdir"
-echo "Include directory ................. $includedir"
-echo "Library directory ................. $libdir"
-echo "Modules directory ................. $moduledir"
-echo "Shared dataroot directory ......... $datarootdir"
-echo "Shared data directory ............. $datadir"
-echo "Webapp directory .................. $webappdir"
-echo "Runtime state directory ........... $runstatedir"
+echo "Install prefix .................... $prefix"
+echo "Binary prefix  .................... $bindir"
+echo "Config prefix ..................... $sysconfdir"
+echo "Include prefix .................... $includedir"
+echo "Library prefix .................... $libdir"
+echo "Shared prefix ..................... $datarootdir"
+echo
+echo "Runstate directory ................ $runstatedir"
 echo "Database directory ................ $dbdir"
 echo "Logging directory ................. $logdir"
+echo "Modules directory ................. $moduledir"
+echo "Shared directory .................. $datadir"
+echo "Webapp directory .................. $webappdir"
 echo
 echo "Matrix ID (mxid) length ........... $MXID_MAXLEN"
 echo "Logging level ..................... $LOG_LEVEL"
