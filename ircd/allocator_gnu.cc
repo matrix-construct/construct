@@ -14,6 +14,11 @@
 	#define IRCD_ALLOCATOR_USE_GNU
 #endif
 
+// In case these declarations are missing in <malloc.h>
+extern "C" void *(*__malloc_hook)(size_t, const void *);
+extern "C" void *(*__realloc_hook)(void *, size_t, const void *);
+extern "C" void (*__free_hook)(void *, const void *);
+
 namespace ircd::allocator
 {
 	void *(*their_malloc_hook)(size_t, const void *);
