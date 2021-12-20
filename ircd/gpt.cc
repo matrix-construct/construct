@@ -245,13 +245,13 @@ ircd::gpt::task::task(const gpt::opts *const opts,
 {
 	ctrl
 }
+,frame
 {
-	memset(this->ctrl, 0x0, sizeof(gpt::ctrl));
-
-	this->ctrl->rand[0] = this->opts->seed;
-	this->ctrl->rand[1] = this->opts->seed;
-	this->ctrl->rand[2] = 65537;
-	this->ctrl->rand[3] = -1UL;
+	new gpt::ctrl[opts->frames]
+}
+{
+	memset(ctrl, 0x0, sizeof(gpt::ctrl));
+	seed(*this, this->opts->seed);
 }
 
 ircd::gpt::task::~task()
