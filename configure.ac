@@ -2194,7 +2194,7 @@ RB_HELP_STRING([--with-llvm-includes=[[[DIR]]]], [Path to libllvm include direct
 [
 	LLVM_CPPFLAGS="-isystem $withval"
 ], [
-	LLVM_CPPFLAGS="-isystem /usr/lib/llvm-9/include"
+	LLVM_CPPFLAGS="-isystem /usr/lib/llvm-${CXX_EPOCH}/include"
 ])
 
 AC_ARG_WITH(llvm-libs,
@@ -2202,7 +2202,7 @@ RB_HELP_STRING([--with-llvm-libs=[[[DIR]]]], [Path to libllvm library directory]
 [
 	LLVM_LDFLAGS="-L$withval"
 ], [
-	LLVM_LDFLAGS="-L/usr/lib/llvm-9/lib"
+	LLVM_LDFLAGS="-L/usr/lib/llvm-${CXX_EPOCH}/lib"
 ])
 
 PKG_CHECK_MODULES(LLVM, [LLVM],
@@ -2218,15 +2218,6 @@ PKG_CHECK_MODULES(LLVM, [LLVM],
 		have_libllvm="no"
 		AC_MSG_WARN([Unable to find LLVM compiler infrastructure library on this system.])
 	])
-])
-
-AC_MSG_CHECKING(whether to enable experimental libllvm module)
-AC_ARG_ENABLE(devllvm, RB_HELP_STRING([--enable-devllvm], [Enable experimental LLVM module development]),
-[
-	AC_MSG_RESULT([yes])
-], [
-	AC_MSG_RESULT([no])
-	have_libllvm="no"
 ])
 
 AM_CONDITIONAL([LLVM], [test "x$have_libllvm" = "xyes" ])
