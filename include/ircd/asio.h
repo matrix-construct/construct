@@ -56,7 +56,10 @@ namespace boost
 // abstract executor (recent versions) or the derived instance (old versions).
 namespace ircd::ios
 {
-	#if BOOST_VERSION >= 107000
+	extern asio::executor user, main;
+	extern std::optional<asio::io_context::strand> primary;
+
+	#if BOOST_VERSION >= 107000 && BOOST_VERSION < 107400
 	asio::executor &get() noexcept;
 	#else
 	asio::io_context &get() noexcept;
@@ -74,7 +77,7 @@ namespace ircd::ios
 // Network system headers depending on boost.
 #include <ircd/net/asio.h>
 
-#if BOOST_VERSION >= 107000
+#if BOOST_VERSION >= 107000 && BOOST_VERSION < 107400
 inline boost::asio::executor &
 ircd::ios::get()
 noexcept

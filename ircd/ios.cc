@@ -27,11 +27,15 @@ decltype(ircd::ios::is_main_thread)
 thread_local
 ircd::ios::is_main_thread;
 
-/// The embedder/executable's (library user) asio::executor provided on init.
+/// The embedder/executable's (library user) provided executor handle.
 decltype(ircd::ios::user)
 ircd::ios::user;
 
-/// Our library-specific/isolate executor.
+/// Our library's execution strand instance.
+decltype(ircd::ios::primary)
+ircd::ios::primary;
+
+/// Our library-specific/isolate executor handle.
 decltype(ircd::ios::main)
 ircd::ios::main;
 
@@ -64,17 +68,20 @@ ircd::ios::init(asio::executor &&user)
 	// Set the thread-local bit to true; all other threads will see false.
 	is_main_thread = true;
 
-	// Set a reference to the user's ios_service
-	ios::user = std::move(user);
+	// Save a reference handle to the user's executor.
+	ios::user = user;
 
-	// (simple passthru for now)
-	ios::main = ios::user;
+	// Create our strand instance.
+	ios::primary.emplace(static_cast<asio::io_context &>(user.context()));
+
+	// Set the reference handle to our executor.
+	ios::main = *ios::primary;
 }
 
 void
 ircd::ios::forking()
 {
-	#if BOOST_VERSION >= 107000
+	#if BOOST_VERSION >= 107000 && BOOST_VERSION < 107400
 		get().context().notify_fork(asio::execution_context::fork_prepare);
 	#else
 		get().notify_fork(asio::execution_context::fork_prepare);
@@ -84,7 +91,7 @@ ircd::ios::forking()
 void
 ircd::ios::forked_child()
 {
-	#if BOOST_VERSION >= 107000
+	#if BOOST_VERSION >= 107000 && BOOST_VERSION < 107400
 		get().context().notify_fork(asio::execution_context::fork_child);
 	#else
 		get().notify_fork(asio::execution_context::fork_child);
@@ -94,7 +101,7 @@ ircd::ios::forked_child()
 void
 ircd::ios::forked_parent()
 {
-	#if BOOST_VERSION >= 107000
+	#if BOOST_VERSION >= 107000 && BOOST_VERSION < 107400
 		get().context().notify_fork(asio::execution_context::fork_parent);
 	#else
 		get().notify_fork(asio::execution_context::fork_parent);
