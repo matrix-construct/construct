@@ -22,8 +22,10 @@
 // being a fraction of the generated code and the rest is invocation related
 // overhead. By force-flattening here we can allow each entry-point into
 // spirit to compose rules at once and eliminate the wrapping complex.
+#if RB_CXX_EPOCH <= 12 // NOTE: disabled for crashing clang-13.
 #pragma clang attribute push ([[gnu::always_inline]], apply_to = function)
 #pragma clang attribute push ([[gnu::flatten]], apply_to = function)
+#endif
 
 #include <boost/config.hpp>
 #include <boost/function.hpp>
@@ -44,5 +46,7 @@
 #include "char.h"
 #pragma GCC visibility pop
 
+#if RB_CXX_EPOCH <= 12
 #pragma clang attribute pop
 #pragma clang attribute pop
+#endif
