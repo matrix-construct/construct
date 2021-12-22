@@ -75,6 +75,14 @@ ircd::ctx::posix::ctxs;
 // pthread supplement
 //
 
+static const char *const
+ircd_pthread_paths[]
+{
+	"libpthread.so.0",
+	"libpthread.so",
+	nullptr
+};
+
 IRCD_WRAP(pthread_create, "__wrap_pthread_create",
 (
 	pthread_t *const thread,
@@ -97,10 +105,11 @@ IRCD_WRAP(pthread_create, "__wrap_pthread_create",
 			mutex
 		};
 
-		if(!ircd::ctx::posix::real_pthread)
+		auto p(ircd_pthread_paths[0]);
+		while(p && !ircd::ctx::posix::real_pthread)
 			ircd::ctx::posix::real_pthread = //.reset
 			(
-				dlopen("libpthread.so", RTLD_LOCAL | RTLD_LAZY)
+				dlopen(p++, RTLD_LOCAL | RTLD_LAZY)
 			);
 	}
 
