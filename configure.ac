@@ -106,6 +106,7 @@ AM_CONDITIONAL([CLANG9],   [[[[ $CXX = clang* ]] && [[ $CXX_EPOCH -ge 9 ]]]])
 AM_CONDITIONAL([CLANG10],  [[[[ $CXX = clang* ]] && [[ $CXX_EPOCH -ge 10 ]]]])
 AM_CONDITIONAL([CLANG11],  [[[[ $CXX = clang* ]] && [[ $CXX_EPOCH -ge 11 ]]]])
 AM_CONDITIONAL([CLANG12],  [[[[ $CXX = clang* ]] && [[ $CXX_EPOCH -ge 12 ]]]])
+AM_CONDITIONAL([CLANG13],  [[[[ $CXX = clang* ]] && [[ $CXX_EPOCH -ge 13 ]]]])
 
 dnl
 dnl Coarse operating system test macros
@@ -433,6 +434,7 @@ dnl	])
 AM_CONDITIONAL([PROFILE], [[[[ "$profiling" = "yes" ]]]])
 
 dnl Provide the correct target to the Makefiles
+AM_COND_IF(CLANG13, [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-13) ])
 AM_COND_IF(CLANG12, [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-12) ])
 AM_COND_IF(CLANG11, [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-11) ])
 AM_COND_IF(CLANG10, [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-10) ])
