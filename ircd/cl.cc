@@ -136,6 +136,14 @@ ircd::cl::profile_queue
 	{ "persist",   false                    },
 };
 
+decltype(ircd::cl::path)
+ircd::cl::path
+{
+	{ "name",      "ircd.cl.path"  },
+	{ "default",   "libOpenCL.so"  },
+	{ "persist",   false           },
+};
+
 decltype(ircd::cl::nice_rate)
 ircd::cl::nice_rate
 {
@@ -148,31 +156,6 @@ ircd::cl::watchdog_tsc
 {
 	{ "name",      "ircd.cl.watchdog.tsc"  },
 	{ "default",   268'435'456L            },
-};
-
-decltype(ircd::cl::primary_stats)
-ircd::cl::primary_stats
-{
-	{ { "name", "ircd.cl.sync.count"          } },
-	{ { "name", "ircd.cl.flush.count"         } },
-	{ { "name", "ircd.cl.alloc.count"         } },
-	{ { "name", "ircd.cl.alloc.bytes"         } },
-	{ { "name", "ircd.cl.dealloc.count"       } },
-	{ { "name", "ircd.cl.dealloc.bytes"       } },
-	{ { "name", "ircd.cl.work.waits"          } },
-	{ { "name", "ircd.cl.work.waits.async"    } },
-	{ { "name", "ircd.cl.work.errors"         } },
-	{ { "name", "ircd.cl.exec.tasks"          } },
-	{ { "name", "ircd.cl.exec.kern.tasks"     } },
-	{ { "name", "ircd.cl.exec.kern.threads"   } },
-	{ { "name", "ircd.cl.exec.kern.groups"    } },
-	{ { "name", "ircd.cl.exec.write.tasks"    } },
-	{ { "name", "ircd.cl.exec.write.bytes"    } },
-	{ { "name", "ircd.cl.exec.read.tasks"     } },
-	{ { "name", "ircd.cl.exec.read.bytes"     } },
-	{ { "name", "ircd.cl.exec.copy.tasks"     } },
-	{ { "name", "ircd.cl.exec.copy.bytes"     } },
-	{ { "name", "ircd.cl.exec.barrier.tasks"  } },
 };
 
 decltype(ircd::cl::envs)
@@ -200,6 +183,31 @@ ircd::cl::envs
 	},
 };
 
+decltype(ircd::cl::primary_stats)
+ircd::cl::primary_stats
+{
+	{ { "name", "ircd.cl.sync.count"          } },
+	{ { "name", "ircd.cl.flush.count"         } },
+	{ { "name", "ircd.cl.alloc.count"         } },
+	{ { "name", "ircd.cl.alloc.bytes"         } },
+	{ { "name", "ircd.cl.dealloc.count"       } },
+	{ { "name", "ircd.cl.dealloc.bytes"       } },
+	{ { "name", "ircd.cl.work.waits"          } },
+	{ { "name", "ircd.cl.work.waits.async"    } },
+	{ { "name", "ircd.cl.work.errors"         } },
+	{ { "name", "ircd.cl.exec.tasks"          } },
+	{ { "name", "ircd.cl.exec.kern.tasks"     } },
+	{ { "name", "ircd.cl.exec.kern.threads"   } },
+	{ { "name", "ircd.cl.exec.kern.groups"    } },
+	{ { "name", "ircd.cl.exec.write.tasks"    } },
+	{ { "name", "ircd.cl.exec.write.bytes"    } },
+	{ { "name", "ircd.cl.exec.read.tasks"     } },
+	{ { "name", "ircd.cl.exec.read.bytes"     } },
+	{ { "name", "ircd.cl.exec.copy.tasks"     } },
+	{ { "name", "ircd.cl.exec.copy.bytes"     } },
+	{ { "name", "ircd.cl.exec.barrier.tasks"  } },
+};
+
 //
 // init
 //
@@ -216,7 +224,13 @@ ircd::cl::init::init()
 		return;
 	}
 
-	const ctx::posix::enable_pthread enable_pthread;
+	const std::string &path
+	{
+		cl::path
+	};
+
+	if(path.empty())
+		return;
 
 	// Setup options
 	for(const auto &item : envs)
@@ -232,9 +246,11 @@ ircd::cl::init::init()
 		sys::call(putenv, option[options++]);
 	}
 
+	const ctx::posix::enable_pthread enable_pthread;
+
 	// Load the pipe.
 	assert(!linkage);
-	if(!(linkage = dlopen("libOpenCL.so", RTLD_LAZY | RTLD_GLOBAL)))
+	if(!(linkage = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL)))
 		return;
 
 	// Get the platforms.

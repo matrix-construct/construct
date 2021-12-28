@@ -30,9 +30,10 @@ namespace ircd::cl
 
 	extern const info::versions version_api;
 	extern info::versions version_abi;
+	extern conf::item<std::string> envs[];
+	extern conf::item<std::string> path;
 	extern conf::item<milliseconds> nice_rate;
 	extern conf::item<uint64_t> watchdog_tsc;
-	extern conf::item<std::string> envs[];
 	extern conf::item<bool> profile_queue;
 	extern conf::item<bool> enable;
 	extern log::log log;
