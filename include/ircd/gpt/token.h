@@ -51,11 +51,9 @@ struct ircd_gpt_attn_qkvv
 union ircd_gpt_attn_aperature
 {
 	float
-	word[768],
 	fcon[2304],
 	proj[3][768],
-	qkv[3][12][64],
-	attn[12][64];
+	qkv[3][12][64];
 
 	union ircd_gpt_token
 	token[3];
@@ -65,13 +63,33 @@ union ircd_gpt_attn_aperature
 union ircd_gpt_attn_aperaturev
 {
 	float4
-	word[768/4],
 	fcon[2304/4],
 	proj[3][768/4],
-	qkv[3][12][64/4],
-	attn[12][64/4];
+	qkv[3][12][64/4];
 
-	union ircd_gpt_tokenv
+	union ircd_gpt_token_f32x4
+	token[3];
+};
+
+union ircd_gpt_attn_aperature_f32x8
+{
+	float8
+	fcon[2304/8],
+	proj[3][768/8],
+	qkv[3][12][64/8];
+
+	union ircd_gpt_token_f32x8
+	token[3];
+};
+
+union ircd_gpt_attn_aperature_f32x16
+{
+	float16
+	fcon[2304/16],
+	proj[3][768/16],
+	qkv[3][12][64/16];
+
+	union ircd_gpt_token_f32x16
 	token[3];
 };
 #endif
@@ -79,7 +97,6 @@ union ircd_gpt_attn_aperaturev
 union ircd_gpt_ffnn_aperature
 {
 	float
-	word[768],
 	fcon[3072],
 	proj[4][768];
 
@@ -91,11 +108,30 @@ union ircd_gpt_ffnn_aperature
 union ircd_gpt_ffnn_aperaturev
 {
 	float4
-	word[768/4],
 	fcon[3072/4],
 	proj[4][768/4];
 
-	union ircd_gpt_tokenv
+	union ircd_gpt_token_f32x4
+	token[4];
+};
+
+union ircd_gpt_ffnn_aperature_f32x8
+{
+	float8
+	fcon[3072/8],
+	proj[4][768/8];
+
+	union ircd_gpt_token_f32x4
+	token[4];
+};
+
+union ircd_gpt_ffnn_aperature_f32x16
+{
+	float16
+	fcon[3072/16],
+	proj[4][768/16];
+
+	union ircd_gpt_token_f32x4
 	token[4];
 };
 #endif
