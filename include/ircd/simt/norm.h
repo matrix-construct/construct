@@ -21,17 +21,18 @@ ircd_simt_math_norm_f4lldr(__local float4 *const out,
                            const uint ln,
                            const uint li)
 {
-	ircd_simt_math_mean_f4lldr(tmp, in, ln, li);
+	tmp[li] = in[li];
+	ircd_simt_math_mean_f4lldr(tmp, ln, li);
 
 	const float4
 	sub_mean = in[li] - tmp[li];
 
 	tmp[li] = pow(sub_mean, 2);
-	ircd_simt_math_mean_f4lldr(out, tmp, ln, li);
+	ircd_simt_math_mean_f4lldr(tmp, ln, li);
 
 	const float4
 	epsilon = 0.00001f,
-	s = sqrt(out[li] + epsilon);
+	s = sqrt(tmp[li] + epsilon);
 
 	out[li] = sub_mean / s;
 }

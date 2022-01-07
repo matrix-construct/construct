@@ -30,17 +30,21 @@ struct ircd_math_mean
 /// ln = local group size
 ///
 inline void
-ircd_simt_math_mean_f4lldr(__local float4 *const restrict out,
-                           __local const float4 *const restrict in,
+ircd_simt_math_mean_f4lldr(__local float4 *const buf,
                            const uint ln,
                            const uint li)
 {
-	out[li] = in[li];
-	ircd_simt_reduce_add_f4lldr(out, ln, li);
+	ircd_simt_reduce_add_f4lldr(buf, ln, li);
 
 	if(li == 0)
-		out[li] = ircd_simt_reduce_add_f4(out[li]) / (ln * 4);
+	{
+		const float
+		sum = ircd_simt_reduce_add_f4(buf[li]),
+		res = sum / (ln * 4);
 
-	ircd_simt_broadcast_f4lldr(out, ln, li);
+		buf[li] = res;
+	}
+
+	ircd_simt_broadcast_f4lldr(buf, ln, li);
 }
 #endif
