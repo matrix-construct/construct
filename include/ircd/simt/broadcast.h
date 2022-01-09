@@ -19,12 +19,9 @@ ircd_simt_broadcast_f4lldr(__local float4 *const buf,
                            const uint ln,
                            const uint li)
 {
-	for(uint stride = 1; stride < ln; stride <<= 1)
-	{
-		if(li < stride)
-			buf[li + stride] = buf[li];
+	barrier(CLK_LOCAL_MEM_FENCE);
 
-		barrier(CLK_LOCAL_MEM_FENCE);
-	}
+	if(li > 0)
+		buf[li] = buf[0];
 }
 #endif
