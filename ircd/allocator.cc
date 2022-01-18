@@ -135,6 +135,36 @@ catch(const std::exception &e)
 }
 #endif
 
+void
+ircd::allocator::readonly(const mutable_buffer &buf,
+                          const bool enable)
+{
+	const int prot
+	{
+		enable?
+			PROT_READ:
+			PROT_READ|PROT_WRITE
+	};
+
+	void *const ptr(mutable_cast(data(buf)));
+	sys::call(::mprotect, ptr, size(buf), prot);
+}
+
+void
+ircd::allocator::protect(const const_buffer &buf,
+                         const bool enable)
+{
+	const int prot
+	{
+		enable?
+			PROT_NONE:
+			PROT_READ|PROT_WRITE
+	};
+
+	void *const ptr(mutable_cast(data(buf)));
+	sys::call(::mprotect, ptr, size(buf), prot);
+}
+
 size_t
 ircd::allocator::evict(const const_buffer &buf)
 {

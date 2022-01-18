@@ -51,6 +51,9 @@ namespace ircd::allocator
 	size_t prefetch(const const_buffer &);
 	size_t evict(const const_buffer &);
 
+	void protect(const const_buffer &, const bool = true);
+	void readonly(const mutable_buffer &, const bool = true);
+
 	std::unique_ptr<char, decltype(&std::free)>
 	aligned_alloc(const size_t &align, const size_t &size);
 }
