@@ -333,6 +333,10 @@ noexcept
 {
 	4U
 }
+,layers
+{
+	12
+}
 ,embed_width
 {
 	embed_elems / lanes

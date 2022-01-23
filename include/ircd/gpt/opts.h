@@ -60,6 +60,12 @@ struct ircd_gpt_opts
 	/// Specifies the token buffer size in tokens.
 	uint buffer_tokens;
 
+	/// Decoding layers.
+	uint layers;
+
+	/// SIMD lane count.
+	uint lanes;
+
 	/// Embedding vector elements
 	uint embed_elems;
 
