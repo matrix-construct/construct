@@ -99,8 +99,8 @@ namespace ircd
 	string_view token_first(const string_view &str, const char &sep);
 	string_view token_first(const string_view &str, const string_view &sep);
 
-	string_view tokens_after(const string_view &str, const char &sep, const size_t &at = 0);
-	string_view tokens_after(const string_view &str, const string_view &sep, const size_t &at = 0);
+	string_view tokens_after(const string_view &str, const char &sep, const ssize_t &at = 0);
+	string_view tokens_after(const string_view &str, const string_view &sep, const ssize_t &at = 0);
 
 	string_view tokens_before(const string_view &str, const char &sep, const size_t &at = 0);
 	string_view tokens_before(const string_view &str, const string_view &sep, const size_t &at = 0);

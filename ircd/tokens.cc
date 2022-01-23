@@ -76,7 +76,7 @@ ircd::tokens_before(const string_view &str,
 ircd::string_view
 ircd::tokens_after(const string_view &str,
                    const char &sep,
-                   const size_t &i)
+                   const ssize_t &i)
 {
 	assert(sep != '\0');
 	const char _sep[2]
@@ -90,7 +90,7 @@ ircd::tokens_after(const string_view &str,
 ircd::string_view
 ircd::tokens_after(const string_view &str,
                    const string_view &sep,
-                   const size_t &i)
+                   const ssize_t &i)
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
@@ -103,7 +103,7 @@ ircd::tokens_after(const string_view &str,
 	};
 
 	auto it(begin(view));
-	for(size_t j(0); it != end(view); ++it, j++)
+	for(ssize_t j(0); it != end(view); ++it, j++)
 		if(j > i)
 			return string_view
 			{
