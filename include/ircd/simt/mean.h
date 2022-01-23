@@ -40,7 +40,8 @@ ircd_simt_math_mean_f4lldr(__local float4 *const buf,
 	{
 		const float
 		sum = ircd_simt_reduce_add_f4(buf[li]),
-		res = sum / (ln * 4);
+		div = ln * 4,
+		res = sum / div;
 
 		buf[li] = res;
 	}

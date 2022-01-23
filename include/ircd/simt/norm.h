@@ -32,7 +32,7 @@ ircd_simt_math_norm_f4lldr(__local float4 *const out,
 
 	const float4
 	epsilon = 0.00001f,
-	s = sqrt(tmp[li] + epsilon);
+	s = native_sqrt(tmp[li] + epsilon);
 
 	out[li] = sub_mean / s;
 }
