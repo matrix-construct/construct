@@ -30,3 +30,23 @@ ircd_simt_reduce_max_flldr(__local float *const buf,
 	}
 }
 #endif
+
+#ifdef __OPENCL_VERSION__
+inline void
+ircd_simt_reduce_max_illdr(__local int *const buf,
+                           const uint ln,
+                           const uint li)
+{
+	buf[li] = atomic_max(buf, buf[li]);
+}
+#endif
+
+#ifdef __OPENCL_VERSION__
+inline void
+ircd_simt_reduce_max_ulldr(__local uint *const buf,
+                           const uint ln,
+                           const uint li)
+{
+	buf[li] = atomic_max(buf, buf[li]);
+}
+#endif
