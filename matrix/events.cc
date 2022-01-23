@@ -433,11 +433,11 @@ ircd::m::events::refs::for_each(const range &range,
 		dbs::event_refs
 	};
 
-    db::gopts gopts
-    {
-        db::get::NO_CACHE,
-        db::get::NO_CHECKSUM
-    };
+	db::gopts gopts
+	{
+		db::get::NO_CACHE,
+		db::get::NO_CHECKSUM
+	};
 	gopts.readahead = size_t(readahead);
 
 	const auto start
