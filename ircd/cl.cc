@@ -623,6 +623,9 @@ ircd::cl::query_warp_size(cl_context context,
 		"__kernel void ircd_test() {}"
 	};
 
+	code.compile();
+	code.link();
+
 	cl::kern kern
 	{
 		code, "ircd_test"
@@ -1540,25 +1543,23 @@ namespace ircd::cl
 // code::code
 //
 
-ircd::cl::code::code(const string_view &src,
-                     const string_view &build_opts)
+ircd::cl::code::code(const string_view &src)
 :code
 {
 	vector_view<const string_view>(&src, 1),
-	build_opts
 }
 {
 }
 
-ircd::cl::code::code(const vector_view<const string_view> &srcs,
-                     const string_view &build_opts)
+ircd::cl::code::code(const vector_view<const string_view> &srcs)
 {
 	static const size_t iov_max
 	{
 		64 //TODO: ???
 	};
 
-	if(unlikely(srcs.size() > iov_max))
+	const auto count(srcs.size());
+	if(unlikely(count > iov_max))
 		throw error
 		{
 			"Maximum number of sources exceeded: lim:%zu got:%zu",
@@ -1566,45 +1567,42 @@ ircd::cl::code::code(const vector_view<const string_view> &srcs,
 			srcs.size(),
 		};
 
-	const size_t count
-	{
-		std::min(srcs.size(), iov_max)
-	};
-
 	size_t len[count];
 	const char *src[count];
 	for(size_t i(0); i < count; ++i)
 		src[i] = ircd::data(srcs[i]),
 		len[i] = ircd::size(srcs[i]);
 
+	char pbuf[1][48];
+	log::logf
+	{
+		log, log::level::DEBUG,
+		"code(%p) creating %s srcs:%zu",
+		this,
+		pretty(pbuf[0], si(std::accumulate(len, len + count, 0))),
+		count,
+	};
+
 	int err {CL_SUCCESS};
 	handle = clCreateProgramWithSource(primary, count, src, len, &err);
 	throw_on_error(err);
-
-	if(!null(build_opts))
-		build(build_opts);
 }
 
-ircd::cl::code::code(const vector_view<const const_buffer> &bins,
-                     const string_view &build_opts)
+ircd::cl::code::code(const vector_view<const const_buffer> &bins)
 {
 	static const size_t iov_max
 	{
 		64 //TODO: ???
 	};
 
-	if(unlikely(bins.size() > iov_max))
+	const auto count(bins.size());
+	if(unlikely(count > iov_max))
 		throw error
 		{
 			"Maximum number of binaries exceeded: lim:%zu got:%zu",
 			iov_max,
-			bins.size(),
+			count,
 		};
-
-	const size_t count
-	{
-		std::min(bins.size(), iov_max)
-	};
 
 	size_t len[iov_max + 1] {0};
 	const uint8_t *bin[iov_max + 1] {nullptr};
@@ -1618,15 +1616,26 @@ ircd::cl::code::code(const vector_view<const const_buffer> &bins,
 		for(size_t j(0); j < devices[i]; ++j)
 			dev[devs++] = device[i][j];
 
+	char pbuf[1][48];
+	log::logf
+	{
+		log, log::level::DEBUG,
+		"code(%p) loading %s bins:%zu devs:%zu",
+		this,
+		pretty(pbuf[0], si(std::accumulate(len, len + count, 0))),
+		count,
+		devs,
+	};
+
+	assert(len);
+	assert(devs);
+
 	int err {CL_SUCCESS};
 	int binerr[iov_max + 1] {CL_SUCCESS};
 	handle = clCreateProgramWithBinary(primary, devs, dev, len, bin, binerr, &err);
 	throw_on_error(err);
 	for(size_t i(0); i < count; ++i)
 		throw_on_error(binerr[i]);
-
-	if(!null(build_opts))
-		build(build_opts);
 }
 
 ircd::cl::code::code(code &&o)
@@ -1667,14 +1676,20 @@ void
 ircd::cl::code::build(const string_view &opts)
 try
 {
-	const uint num_devices
-	{
-		1 //TODO: XXX
-	};
-
-	const cl_device_id *const device_list
+	const uint num_devices {1};
+	const cl_device_id *device_list
 	{
 		device[0] //TODO: XXX
+	};
+
+	log::logf
+	{
+		log, log::level::DEBUG,
+		"code(%p) building devs:%zu %c%s",
+		this,
+		num_devices,
+		opts? ':': ' ',
+		opts,
 	};
 
 	call
@@ -1698,6 +1713,139 @@ catch(const std::exception &e)
 	log::error
 	{
 		log, "code(%p) :Failed to build :%s",
+		this,
+		e.what(),
+	};
+
+	throw;
+}
+
+void
+ircd::cl::code::link(const string_view &opts)
+try
+{
+	const uint num_devices {1};
+	const cl_device_id *device_list
+	{
+		device[0] //TODO: XXX
+	};
+
+	const uint num_progs {1};
+	const cl_program progs[]
+	{
+		cl_program(handle)
+	};
+
+	log::logf
+	{
+		log, log::level::DEBUG,
+		"code(%p) linking devs:%zu progs:%zu %c%s",
+		this,
+		num_devices,
+		num_progs,
+		opts? ':': ' ',
+		opts,
+	};
+
+	int err
+	{
+		CL_COMPILER_NOT_AVAILABLE
+	};
+
+	#ifdef CL_VERSION_1_2
+	handle = clLinkProgram
+	(
+		primary,
+		num_devices,
+		device_list,
+		opts.c_str(),
+		num_progs,
+		progs,
+		cl::build_handle,
+		this,
+		&err
+	);
+	#endif
+
+	throw_on_error(err);
+}
+catch(const opencl_error &e)
+{
+	build_handle_error(*this, e);
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "code(%p) :Failed to link :%s",
+		this,
+		e.what(),
+	};
+
+	throw;
+}
+
+void
+ircd::cl::code::compile(const string_view &opts)
+try
+{
+	const uint num_devices {1};
+	const cl_device_id *device_list
+	{
+		device[0] //TODO: XXX
+	};
+
+	const uint num_headers {0};
+	const cl_program *header_progs
+	{
+		nullptr
+	};
+
+	const char *header_names[]
+	{
+		nullptr
+	};
+
+	log::logf
+	{
+		log, log::level::DEBUG,
+		"code(%p) compiling devs:%zu headers:%zu %c%s",
+		this,
+		num_devices,
+		num_headers,
+		opts? ':': ' ',
+		opts,
+	};
+
+	#ifdef CL_VERSION_1_2
+	call
+	(
+		clCompileProgram,
+		cl_program(handle),
+		num_devices,
+		device_list,
+		opts.c_str(),
+		num_headers,
+		header_progs,
+		nullptr, //header_names, // clover api bug?
+		cl::build_handle,
+		this
+	);
+	#else
+	throw_on_error(CL_COMPILER_NOT_AVAILABLE);
+	#endif
+}
+catch(const opencl_error &e)
+{
+	build_handle_error(*this, e);
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "code(%p) :Failed to compile :%s",
 		this,
 		e.what(),
 	};

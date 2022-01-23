@@ -139,11 +139,13 @@ struct ircd::cl::code
 	vector_view<const mutable_buffer> bin(vector_view<mutable_buffer>) const;
 	string_view src(const mutable_buffer &) const;
 
+	void compile(const string_view &opts = {});
+	void link(const string_view &opts = {});
 	void build(const string_view &opts = {});
 
-	explicit code(const vector_view<const const_buffer> &bins, const string_view &opts = {});
-	code(const vector_view<const string_view> &srcs, const string_view &opts = {});
-	code(const string_view &src, const string_view &opts = {});
+	explicit code(const vector_view<const const_buffer> &bins);
+	code(const vector_view<const string_view> &srcs);
+	code(const string_view &src);
 	code() = default;
 	code(code &&) noexcept;
 	code &operator=(const code &) = delete;
