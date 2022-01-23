@@ -32,6 +32,48 @@ ircd_simt_reduce_add_f4lldr(__local float4 *const buf,
 #ifdef __OPENCL_VERSION__
 /// Sum all elements in the buffer. All threads in the group participate;
 /// result is placed in index [0], the rest of the buffer is trashed.
+inline void
+ircd_simt_reduce_add_flldr(__local float *const buf,
+                           const uint ln,
+                           const uint li)
+{
+	for(uint stride = ln >> 1; stride > 0; stride >>= 1)
+	{
+		barrier(CLK_LOCAL_MEM_FENCE);
+
+		if(li < stride)
+			buf[li] += buf[li + stride];
+	}
+}
+#endif
+
+#ifdef __OPENCL_VERSION__
+/// Sum all elements in the buffer. All threads in the group participate;
+/// result is placed in index [0], the rest of the buffer is trashed.
+inline void
+ircd_simt_reduce_add_illdr(__local int *const buf,
+                           const uint ln,
+                           const uint li)
+{
+	if(li > 0)
+		atomic_add(buf + 0, buf[li]);
+}
+#endif
+
+#ifdef __OPENCL_VERSION__
+/// Sum all elements in the buffer. All threads in the group participate;
+/// result is placed in index [0], the rest of the buffer is trashed.
+inline void
+ircd_simt_reduce_add_ulldr(__local uint *const buf,
+                           const uint ln,
+                           const uint li)
+{
+	if(li > 0)
+		atomic_add(buf + 0, buf[li]);
+}
+#endif
+
+#ifdef __OPENCL_VERSION__
 inline float
 __attribute__((always_inline))
 ircd_simt_reduce_add_f4(const float4 in)

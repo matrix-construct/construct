@@ -25,3 +25,18 @@ ircd_simt_broadcast_f4lldr(__local float4 *const buf,
 		buf[li] = buf[0];
 }
 #endif
+
+#ifdef __OPENCL_VERSION__
+/// Broadcast originating from the local leader (index [0]). All threads in the
+/// group participate.
+inline void
+ircd_simt_broadcast_flldr(__local float *const buf,
+                          const uint ln,
+                          const uint li)
+{
+	barrier(CLK_LOCAL_MEM_FENCE);
+
+	if(li > 0)
+		buf[li] = buf[0];
+}
+#endif
