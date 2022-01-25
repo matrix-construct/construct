@@ -24,7 +24,6 @@ struct ircd::gpt::pipe::desc
 	master,        // [root] single allocation for additional buffers:
 	accum,         // [-sub] accumulator (tokens * embed * float)
 	logit,         // [-sub] result logit vector (50257 * float)
-	logexp,        // [-sub] outputs distribution (50257 * float)
 	logsm,         // [-sub] outputs distribution (50257 * float)
 	ctrl,          // [root] control page
 	opts;          // [root] options page

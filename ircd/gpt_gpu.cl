@@ -620,7 +620,6 @@ ircd_gpt_lm_result_top(__global struct ircd_gpt_ctrl *const ctrl,
                        __constant const struct ircd_gpt_opts *const opts,
                        __local const ushort *const restrict idx,
                        __global const float *const restrict logsm,
-                       __global const float *const restrict logexp,
                        __global const float *const restrict logit,
                        const uint i)
 {
@@ -640,7 +639,6 @@ ircd_gpt_lm_result_label(__global struct ircd_gpt_ctrl *const ctrl,
                          __constant const struct ircd_gpt_opts *const opts,
                          __local const ushort *const restrict idx,
                          __global const float *const restrict logsm,
-                         __global const float *const restrict logexp,
                          __global const float *const restrict logit,
                          const uint i)
 {
@@ -732,7 +730,6 @@ __attribute__((flatten))
 ircd_gpt_lm_select(__global struct ircd_gpt_ctrl *const ctrl,
                    __constant const struct ircd_gpt_opts *const opts,
                    __global const float *const restrict logsm,
-                   __global const float *const restrict logexp,
                    __global const float *const restrict logit)
 {
 	const uint

@@ -506,20 +506,12 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 		accum.offset() + off_t(accum.size()),
 	},
 }
-,logexp
-{
-	master,
-	{
-		65536 * sizeof(float),
-		logit.offset() + off_t(logit.size()),
-	},
-}
 ,logsm
 {
 	master,
 	{
 		65536 * sizeof(float),
-		logexp.offset() + off_t(logexp.size()),
+		logit.offset() + off_t(logit.size()),
 	},
 }
 ,ctrl
@@ -569,7 +561,6 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 	ctrl,
 	opts,
 	logsm,
-	logexp,
 	logit,
 }
 ,lm_select
@@ -579,7 +570,6 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 	ctrl,
 	opts,
 	logsm,
-	logexp,
 	logit,
 }
 ,lm_norm_backprop
