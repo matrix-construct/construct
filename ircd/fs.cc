@@ -1942,6 +1942,52 @@ namespace ircd::fs
 }
 
 size_t
+ircd::fs::sync(const map &map,
+               const size_t &len,
+               const opts &opts)
+{
+	const bool invalidate
+	{
+		false // XXX
+	};
+
+	const size_t offset
+	{
+		buffer::align(opts.offset, info::page_size)
+	};
+
+	const mutable_buffer buf
+	{
+		map + offset, len
+	};
+
+	return allocator::sync(buf, invalidate);
+}
+
+size_t
+ircd::fs::flush(const map &map,
+                const size_t &len,
+                const opts &opts)
+{
+	const bool invalidate
+	{
+		false // XXX
+	};
+
+	const size_t offset
+	{
+		buffer::align(opts.offset, info::page_size)
+	};
+
+	const mutable_buffer buf
+	{
+		map + offset, len
+	};
+
+	return allocator::flush(buf, invalidate);
+}
+
+size_t
 ircd::fs::evict(const map &map,
                 const size_t &len,
                 const opts &opts)

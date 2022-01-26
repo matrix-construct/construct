@@ -18,6 +18,8 @@ namespace ircd::fs
 	size_t advise(const map &, const int &, const size_t &, const opts & = opts_default);
 	size_t prefetch(const map &, const size_t &size, const opts & = opts_default);
 	size_t evict(const map &, const size_t &size, const opts & = opts_default);
+	size_t flush(const map &, const size_t &size, const opts & = opts_default);
+	size_t sync(const map &, const size_t &size, const opts & = opts_default);
 }
 
 /// Interface to map file into memory.
