@@ -166,6 +166,46 @@ ircd::allocator::protect(const const_buffer &buf,
 }
 
 size_t
+ircd::allocator::sync(const const_buffer &buf,
+                      const bool invd)
+{
+	assert(aligned(data(buf), info::page_size));
+	const prof::syscall_usage_warning message
+	{
+		"msync(2) MS_SYNC MS_INVALIDATE:%b", invd
+	};
+
+	#if defined(HAVE_MSYNC)
+		int flags {MS_SYNC};
+		flags |= invd? MS_INVALIDATE: 0;
+		sys::call(::msync, mutable_cast(data(buf)), size(buf), flags);
+		return size(buf);
+	#else
+		return 0;
+	#endif
+}
+
+size_t
+ircd::allocator::flush(const const_buffer &buf,
+                       const bool invd)
+{
+	assert(aligned(data(buf), info::page_size));
+	const prof::syscall_usage_warning message
+	{
+		"msync(2) MS_ASYNC MS_INVALIDATE:%b", invd
+	};
+
+	#if defined(HAVE_MSYNC)
+		int flags {MS_ASYNC};
+		flags |= invd? MS_INVALIDATE: 0;
+		sys::call(::msync, mutable_cast(data(buf)), size(buf), flags);
+		return size(buf);
+	#else
+		return 0;
+	#endif
+}
+
+size_t
 ircd::allocator::evict(const const_buffer &buf)
 {
 	#if defined(POSIX_MADV_DONTNEED)

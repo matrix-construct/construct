@@ -1188,6 +1188,7 @@ AC_CHECK_FUNCS([          \
 	mlock                 \
 	mlock2                \
 	mmap                  \
+	msync                 \
 	posix_fadvise         \
 	posix_madvise         \
 	preadv2               \
