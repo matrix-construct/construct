@@ -57,11 +57,19 @@ template<template<class, class...>
 struct ircd::util::closure<F, bool, A...>
 :F<bool (A...)>
 {
-	using proto_type = bool (A...);
-	using func_type = F<proto_type>;
+	using proto_bool_type = bool (A...);
+	using proto_void_type = void (A...);
+
+	using func_bool_type = F<proto_bool_type>;
+	using func_void_type = F<proto_void_type>;
 
 	template<class lambda>
-	closure(lambda &&o) noexcept;
+	closure(lambda &&o,
+	        typename std::enable_if<!std::is_constructible<func_bool_type, lambda>::value, int>::type = 0) noexcept;
+
+	template<class lambda>
+	closure(lambda &&o,
+	        typename std::enable_if<std::is_constructible<func_bool_type, lambda>::value, int>::type = 0) noexcept;
 };
 
 template<template<class, class...>
@@ -70,14 +78,35 @@ template<template<class, class...>
 template<class lambda>
 [[gnu::always_inline]]
 inline
-ircd::util::closure<F, bool, A...>::closure(lambda &&o)
+ircd::util::closure<F, bool, A...>::closure(lambda &&o,
+                                            typename std::enable_if<!std::is_constructible<func_bool_type, lambda>::value, int>::type)
 noexcept
 :F<bool (A...)>
 {
 	[o(std::move(o))](A&&... a)
 	{
+		static_assert
+		(
+			std::is_same<void, decltype(o(std::forward<A>(a)...))>()
+		);
+
 		o(std::forward<A>(a)...);
 		return true;
 	}
+}
+{}
+
+template<template<class, class...>
+         class F,
+         class... A>
+template<class lambda>
+[[gnu::always_inline]]
+inline
+ircd::util::closure<F, bool, A...>::closure(lambda &&o,
+                                            typename std::enable_if<std::is_constructible<func_bool_type, lambda>::value, int>::type)
+noexcept
+:F<bool (A...)>
+{
+	std::forward<lambda>(o)
 }
 {}
