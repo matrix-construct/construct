@@ -176,6 +176,7 @@ ircd::tokens(A&& allocator,
 	(const string_view &token)
 	{
 		ret.emplace(ret.end(), token);
+		return true;
 	});
 
 	return ret;
@@ -208,6 +209,7 @@ ircd::tokens(A&& allocator,
 	(const string_view &token)
 	{
 		ret.emplace(ret.end(), token);
+		return true;
 	});
 
 	return ret;
