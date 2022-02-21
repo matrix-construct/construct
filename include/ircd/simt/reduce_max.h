@@ -28,6 +28,10 @@ ircd_simt_reduce_max_flldr(__local float *const buf,
 			if(buf[li] < buf[li + stride])
 				buf[li] = buf[li + stride];
 	}
+
+	if(!ircd_math_is_pow2(ln) && li == 0)
+		if(buf[li] < buf[li + 2])
+			buf[li] = buf[li + 2];
 }
 #endif
 

@@ -12,6 +12,14 @@
 #define HAVE_IRCD_SIMT_REDUCE_ADD_H
 
 #ifdef __OPENCL_VERSION__
+inline bool
+ircd_math_is_pow2(const uint val)
+{
+	return val > 0 && (val & (val - 1)) == 0;
+}
+#endif
+
+#ifdef __OPENCL_VERSION__
 /// Sum all elements in the buffer. All threads in the group participate;
 /// result is placed in index [0], the rest of the buffer is trashed.
 inline void
@@ -26,6 +34,9 @@ ircd_simt_reduce_add_f4lldr(__local float4 *const buf,
 		if(li < stride)
 			buf[li] += buf[li + stride];
 	}
+
+	if(!ircd_math_is_pow2(ln) && li == 0)
+		buf[li] += buf[li + 2];
 }
 #endif
 
@@ -44,6 +55,9 @@ ircd_simt_reduce_add_flldr(__local float *const buf,
 		if(li < stride)
 			buf[li] += buf[li + stride];
 	}
+
+	if(!ircd_math_is_pow2(ln) && li == 0)
+		buf[li] += buf[li + 2];
 }
 #endif
 
