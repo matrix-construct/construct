@@ -138,6 +138,7 @@ catch(const std::exception &e)
 void
 ircd::allocator::readonly(const mutable_buffer &buf,
                           const bool enable)
+#if defined(HAVE_MPROTECT)
 {
 	const int prot
 	{
@@ -149,7 +150,13 @@ ircd::allocator::readonly(const mutable_buffer &buf,
 	void *const ptr(mutable_cast(data(buf)));
 	sys::call(::mprotect, ptr, size(buf), prot);
 }
+#else
+{
+	#warning "mprotect(2) not available for this compilation."
+}
+#endif
 
+#if defined(HAVE_MPROTECT)
 void
 ircd::allocator::protect(const const_buffer &buf,
                          const bool enable)
@@ -164,6 +171,11 @@ ircd::allocator::protect(const const_buffer &buf,
 	void *const ptr(mutable_cast(data(buf)));
 	sys::call(::mprotect, ptr, size(buf), prot);
 }
+#else
+{
+	#warning "mprotect(2) not available for this compilation."
+}
+#endif
 
 size_t
 ircd::allocator::sync(const const_buffer &buf,
