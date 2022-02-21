@@ -53,6 +53,7 @@ namespace ircd::allocator
 	size_t flush(const const_buffer &, const bool invd = false);
 	size_t sync(const const_buffer &, const bool invd = false);
 
+	void lock(const const_buffer &, const bool = true);
 	void protect(const const_buffer &, const bool = true);
 	void readonly(const mutable_buffer &, const bool = true);
 

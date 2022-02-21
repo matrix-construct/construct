@@ -177,6 +177,25 @@ ircd::allocator::protect(const const_buffer &buf,
 }
 #endif
 
+void
+ircd::allocator::lock(const const_buffer &buf,
+                      const bool enable)
+#if defined(HAVE_MLOCK2) && defined(MLOCK_ONFAULT)
+{
+	int flags {0};
+	flags |= MLOCK_ONFAULT;
+
+	if(enable)
+		syscall(::mlock2, data(buf), size(buf), flags);
+	else
+		syscall(::munlock, data(buf), size(buf));
+}
+#else
+{
+	#warning "mlock2(2) not available for this compilation."
+}
+#endif
+
 size_t
 ircd::allocator::sync(const const_buffer &buf,
                       const bool invd)
