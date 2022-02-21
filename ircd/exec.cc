@@ -232,10 +232,10 @@ ircd::exec::write(const const_buffers &bufs)
 	{
 		continuation::asio_predicate, interruption, [&pipe, &bufs, &ret]
 		(auto &yield)
-        {
+		{
 			ret = pipe.async_write_some(bufs, yield);
-        }
-    };
+		}
+	};
 
 	return ret;
 }
@@ -263,10 +263,10 @@ ircd::exec::read(const mutable_buffers &bufs)
 	{
 		continuation::asio_predicate, interruption, [&pipe, &bufs, &ret, &ec]
 		(auto &yield)
-        {
+		{
 			ret = pipe.async_read_some(bufs, yield[ec]);
-        }
-    };
+		}
+	};
 
 	if(ec)
 	{

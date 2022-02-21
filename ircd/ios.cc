@@ -136,8 +136,8 @@ ircd::ios::empt::freq_help
 	opportunity to first make a non-blocking poll to gather more events from
 	the kernel even when one or more tasks are already queued, this setting
 	allows more such tasks to first be executed and reduce syscall overhead
-	ncluding a large numbers of unnecessary calls as would be the case
-	otherwise.
+	including a large number of unnecessary calls as would be the case by
+	default without this.
 
 	When the frequency is set to 1, the above-described default behavior is
 	unaltered. When greater than 1, voluntary non-blocking polls are only made
