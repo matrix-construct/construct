@@ -59,9 +59,10 @@ namespace ircd::buffer
 	extern const ilist<mutable_buffer> null_buffers;
 
 	// Alignment constant expressions
-	constexpr bool aligned(const uintptr_t &, size_t alignment);
-	constexpr size_t padding(const size_t &size, size_t alignment);
-	constexpr size_t pad_to(const size_t &size, const size_t &alignment);
+	constexpr bool padded(const size_t, size_t alignment);
+	constexpr bool aligned(const uintptr_t, size_t alignment);
+	constexpr size_t padding(const size_t size, size_t alignment);
+	constexpr size_t pad_to(const size_t size, const size_t alignment);
 	constexpr uintptr_t align(uintptr_t, size_t alignment);
 	constexpr uintptr_t align_up(uintptr_t, size_t alignment);
 
@@ -445,14 +446,14 @@ ircd::buffer::align(uintptr_t ptr,
 }
 
 constexpr size_t
-ircd::buffer::pad_to(const size_t &size,
-                     const size_t &alignment)
+ircd::buffer::pad_to(const size_t size,
+                     const size_t alignment)
 {
 	return size + padding(size, alignment);
 }
 
 constexpr size_t
-ircd::buffer::padding(const size_t &size,
+ircd::buffer::padding(const size_t size,
                       size_t alignment)
 {
 	alignment = std::max(alignment, 1UL);
@@ -460,9 +461,17 @@ ircd::buffer::padding(const size_t &size,
 }
 
 constexpr bool
-ircd::buffer::aligned(const uintptr_t &ptr,
+ircd::buffer::aligned(const uintptr_t ptr,
                       size_t alignment)
 {
 	alignment = std::max(alignment, 1UL);
 	return ptr % alignment == 0;
+}
+
+constexpr bool
+ircd::buffer::padded(const size_t size,
+                     size_t alignment)
+{
+	alignment = std::max(alignment, 1UL);
+	return size % alignment == 0;
 }
