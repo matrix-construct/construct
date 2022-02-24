@@ -31,7 +31,6 @@ struct construct::console
 
 	void show_message() const;
 	void on_runlevel(const enum ircd::run::level &);
-	bool wait_running() const;
 	bool next_command();
 	bool esc_handle_bra();
 	bool esc_handle();

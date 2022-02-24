@@ -146,14 +146,8 @@ construct::console::main()
 		construct::console = nullptr;
 	}};
 
-	if(!wait_running())
-		return;
-
-	ircd::module module
-	{
-		"console"
-	};
-
+	ircd::run::barrier<ircd::ctx::terminated>{};
+	ircd::module module{"console"};
 	this->module = &module;
 	loop();
 }
@@ -546,20 +540,6 @@ construct::console::on_runlevel(const enum ircd::run::level &runlevel)
 		default:
 			break;
 	}
-}
-
-bool
-construct::console::wait_running()
-const
-{
-	ircd::run::changed::dock.wait([]
-	{
-		return ircd::run::level == ircd::run::level::RUN ||
-		       ircd::run::level == ircd::run::level::QUIT ||
-		       ircd::run::level == ircd::run::level::HALT;
-	});
-
-	return ircd::run::level == ircd::run::level::RUN;
 }
 
 void
