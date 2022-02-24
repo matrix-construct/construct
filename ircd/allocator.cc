@@ -300,12 +300,12 @@ ircd::allocator::incore(const const_buffer &buf)
 {
 	const auto base
 	{
-		buffer::align(begin(buf), info::page_size)
+		align(begin(buf), info::page_size)
 	};
 
 	const auto top
 	{
-		buffer::align_up(end(buf), info::page_size)
+		align_up(end(buf), info::page_size)
 	};
 
 	assert(base <= data(buf));

@@ -828,7 +828,7 @@ ircd::fs::incore(const fd &fd,
                  const read_opts &opts)
 {
 	fs::map::opts map_opts;
-	map_opts.offset = buffer::align(opts.offset, info::page_size);
+	map_opts.offset = align(opts.offset, info::page_size);
 	map_opts.blocking = false;
 	const size_t &map_size
 	{
@@ -1953,7 +1953,7 @@ ircd::fs::sync(const map &map,
 
 	const size_t offset
 	{
-		buffer::align(opts.offset, info::page_size)
+		align(opts.offset, info::page_size)
 	};
 
 	const mutable_buffer buf
@@ -1976,7 +1976,7 @@ ircd::fs::flush(const map &map,
 
 	const size_t offset
 	{
-		buffer::align(opts.offset, info::page_size)
+		align(opts.offset, info::page_size)
 	};
 
 	const mutable_buffer buf
@@ -1994,7 +1994,7 @@ ircd::fs::evict(const map &map,
 {
 	const size_t offset
 	{
-		buffer::align(opts.offset, info::page_size)
+		align(opts.offset, info::page_size)
 	};
 
 	const mutable_buffer buf
@@ -2012,7 +2012,7 @@ ircd::fs::prefetch(const map &map,
 {
 	const size_t offset
 	{
-		buffer::align(opts.offset, info::page_size)
+		align(opts.offset, info::page_size)
 	};
 
 	const mutable_buffer buf

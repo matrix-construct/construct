@@ -42,6 +42,7 @@
 
 #include "util/assume.h"
 #include "util/mask.h"
+#include "util/align.h"
 #include "string_view.h"
 #include "vector_view.h"
 #include "byte_view.h"
