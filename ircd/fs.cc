@@ -2047,25 +2047,51 @@ ircd::fs::map::default_opts;
 ircd::fs::map::map(const fd &fd,
                    const opts &opts,
                    const size_t &size)
+#if defined(HAVE_MMAP)
 {
 	const auto map_size
 	{
 		size?: fs::size(fd)
 	};
 
-	#ifdef HAVE_MMAP
-	void *const &ptr
+	void *ptr
 	{
-		::mmap(nullptr, map_size, prot(opts), flags(opts), int(fd), opts.offset)
+		::mmap
+		(
+			nullptr,
+			map_size,
+			prot(opts),
+			flags(opts),
+			int(fd),
+			opts.offset
+		)
 	};
-	#else
-	#error "Missing ::mmap(2) on this platform."
-	#endif
 
 	if(unlikely(ptr == MAP_FAILED))
 		throw_system_error(errno);
 
-	static_cast<mutable_buffer &>(*this) = mutable_buffer
+	#if defined(HAVE_MREMAP)
+	if(opts.alignment && !aligned(ptr, opts.alignment))
+	{
+		assert(opts.alignment > 1);
+		assert(opts.alignment > info::page_size);
+		ptr = ::mremap
+		(
+			ptr,
+			map_size,
+			map_size,
+			MREMAP_FIXED | MREMAP_MAYMOVE,
+			align_up(ptr, opts.alignment) + pad_to(map_size, opts.alignment)
+		);
+
+		if(unlikely(ptr == MAP_FAILED))
+			throw_system_error(errno);
+	}
+	#endif
+
+	assert(aligned(ptr, opts.alignment));
+	assert(padded(map_size, opts.alignment));
+	static_cast<mutable_buffer &>(*this) =
 	{
 		reinterpret_cast<char *>(ptr),
 		map_size
@@ -2084,6 +2110,9 @@ ircd::fs::map::map(const fd &fd,
 	if(advise)
 		fs::advise(*this, advise, map_size);
 }
+#else
+	#error "Missing mmap(2) on this platform."
+#endif
 
 ircd::fs::map::~map()
 noexcept try

@@ -46,6 +46,7 @@ struct ircd::fs::map
 struct ircd::fs::map::opts
 :fd::opts
 {
+	uint alignment {0};
 	bool execute {false};
 	bool shared {false};
 	bool reserve {false};
