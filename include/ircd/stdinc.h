@@ -89,6 +89,7 @@ extern "C"
 #include <RB_INC_STRING_VIEW
 
 // Numerics
+#include <RB_INC_CFLOAT
 #include <RB_INC_CFENV
 #include <RB_INC_CMATH
 #include <RB_INC_NUMERIC
