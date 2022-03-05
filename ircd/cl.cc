@@ -291,7 +291,8 @@ size_t
 ircd::cl::init::init_platforms()
 {
 	// OpenCL sez platform=null is implementation defined.
-	info(clGetPlatformInfo, nullptr, CL_PLATFORM_VERSION, version_abi.string);
+	constexpr auto ignore(CL_INVALID_PLATFORM);
+	info<string_view, ignore>(clGetPlatformInfo, nullptr, CL_PLATFORM_VERSION, version_abi.string);
 
 	// Get the platforms.
 	call(clGetPlatformIDs, PLATFORM_MAX, platform, &platforms);
@@ -506,13 +507,15 @@ ircd::cl::log_dev_info(const uint i,
 
 	log::info
 	{
-		log, "%s %-3d :%s :%s :%s :%s",
+		log, "%s OpenCL cl:%03d clc:%03u dev:%03u :%s :%s :%s :%s",
 		string_view{head},
 		CL_TARGET_OPENCL_VERSION,
-		info(clGetDeviceInfo, dev, CL_DEVICE_VERSION, buf[0]),
-		info(clGetDeviceInfo, dev, CL_DEVICE_VENDOR, buf[1]),
-		info(clGetDeviceInfo, dev, CL_DEVICE_NAME, buf[2]),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_OPENCL_C_NUMERIC_VERSION_KHR, buf[0]),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NUMERIC_VERSION, buf[1]),
+		info(clGetDeviceInfo, dev, CL_DEVICE_VERSION, buf[2]),
 		info(clGetDeviceInfo, dev, CL_DRIVER_VERSION, buf[3]),
+		info(clGetDeviceInfo, dev, CL_DEVICE_VENDOR, buf[4]),
+		info(clGetDeviceInfo, dev, CL_DEVICE_NAME, buf[5]),
 	};
 
 	const auto wid
@@ -533,11 +536,6 @@ ircd::cl::log_dev_info(const uint i,
 		wid[0], wid[1], wid[2],
 	};
 
-	const bool native_kernel
-	(
-		info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_EXECUTION_CAPABILITIES, buf[0]) & CL_EXEC_NATIVE_KERNEL
-	);
-
 	log::info
 	{
 		log, "%s %u$bit-%s %s line %s align %s page %s alloc %s",
@@ -553,24 +551,6 @@ ircd::cl::log_dev_info(const uint i,
 		pretty(pbuf[3], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_MAX_MEM_ALLOC_SIZE, buf[6]))),
 	};
 
-	const auto global_chans
-	{
-		api[i][j].major > 1 || (api[i][j].major == 1 && api[i][j].minor >= 2)?
-			info<uint>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_CHANNELS_AMD, buf[4]): 0
-	};
-
-	const auto global_banks
-	{
-		api[i][j].major > 1 || (api[i][j].major == 1 && api[i][j].minor >= 2)?
-			info<uint>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_CHANNEL_BANKS_AMD, buf[3]): 0
-	};
-
-	const auto local_banks
-	{
-		api[i][j].major > 1 || (api[i][j].major == 1 && api[i][j].minor >= 2)?
-			info<uint>(clGetDeviceInfo, dev, CL_DEVICE_LOCAL_MEM_BANKS_AMD, buf[7]): 0
-	};
-
 	log::info
 	{
 		log, "%s global %s cache %s type[%02x] banks %u chans %u; local %s type[%02x] banks %u; const %s",
@@ -578,17 +558,18 @@ ircd::cl::log_dev_info(const uint i,
 		pretty(pbuf[0], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_SIZE, buf[0]))),
 		pretty(pbuf[1], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, buf[1]))),
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_CACHE_TYPE, buf[2]),
-		global_banks,
-		global_chans,
+		info<uint, CL_INVALID_VALUE>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_CHANNEL_BANKS_AMD, buf[3], 0U),
+		info<uint, CL_INVALID_VALUE>(clGetDeviceInfo, dev, CL_DEVICE_GLOBAL_MEM_CHANNELS_AMD, buf[4], 0U),
 		pretty(pbuf[2], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_LOCAL_MEM_SIZE, buf[5]))),
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_LOCAL_MEM_TYPE, buf[6]),
-		local_banks,
+		info<uint, CL_INVALID_VALUE>(clGetDeviceInfo, dev, CL_DEVICE_LOCAL_MEM_BANKS_AMD, buf[7], 0U),
 		pretty(pbuf[3], iec(info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE, buf[8]))),
 	};
 
-	log::info
+	log::logf
 	{
-		log, "%s char%u short%u half%u int%u float%u long%u double%u; argc:%u cargc:%u SPIR-V:%b",
+		log, log::level::DEBUG,
+		"%s char%u short%u half%u int%u float%u long%u double%u; argc:%u cargc:%u",
 		string_view{head},
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR, buf[0]),
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT, buf[1]),
@@ -599,7 +580,29 @@ ircd::cl::log_dev_info(const uint i,
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NATIVE_VECTOR_WIDTH_DOUBLE, buf[6]),
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_PARAMETER_SIZE, buf[7]),
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_CONSTANT_ARGS, buf[8]),
+	};
+
+	const bool native_kernel
+	(
+		CL_EXEC_NATIVE_KERNEL
+		& info<ulong>(clGetDeviceInfo, dev, CL_DEVICE_EXECUTION_CAPABILITIES, buf[0])
+	);
+
+	const auto il_version
+	(
+		native_kernel?
+			info<uint>(clGetDeviceInfo, dev, CL_DEVICE_IL_VERSION, buf[1]): 0
+	);
+
+	log::logf
+	{
+		log, log::level::DEBUG,
+		"%s SPIR-V:%b:%u printf:%lu :%s",
+		string_view{head},
 		native_kernel,
+		il_version,
+		info<size_t>(clGetDeviceInfo, dev, CL_DEVICE_PRINTF_BUFFER_SIZE, buf[2]),
+		info(clGetDeviceInfo, dev, CL_DEVICE_OPENCL_C_VERSION, buf[3])
 	};
 
 	char extensions_buf[2048];
