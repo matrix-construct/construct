@@ -17,9 +17,9 @@ namespace ircd::cl
 {
 	static bool is_error(const int &code) noexcept;
 	static int throw_on_error(const int &code);
-	template<class func, class... args> static int call(func&&, args&&...);
-	template<class T = string_view, class F, class id, class param> static T info(F&&, const id &, const param &, const mutable_buffer &);
-	template<class T = string_view, class F, class id0, class id1, class param> static T info(F&&, const id0 &, const id1 &, const param &, const mutable_buffer &);
+	template<int maybe = CL_SUCCESS, class func, class... args> static int call(func&&, args&&...);
+	template<class T = string_view, int maybe = CL_SUCCESS, class F, class id, class param> static T info(F&&, const id &, const param &, const mutable_buffer &, T default_ = {});
+	template<class T = string_view, int maybe = CL_SUCCESS, class F, class id0, class id1, class param> static T info(F&&, const id0 &, const id1 &, const param &, const mutable_buffer &, T default_ = {});
 
 	static uint query_warp_size(cl_context, cl_device_id);
 }
@@ -2648,29 +2648,42 @@ noexcept
 //
 
 template<class T,
+         int maybe,
          class F,
-         class id,
+         class id0,
          class param>
 T
 ircd::cl::info(F&& func,
-               const id &i,
+               const id0 &i0,
                const param &p,
-               const mutable_buffer &out)
+               const mutable_buffer &out,
+               T default_)
 {
 	using ircd::data;
 	using ircd::size;
 
 	size_t len {0};
-	call(std::forward<F>(func), i, p, size(out), data(out), &len);
-	const string_view str
+	const auto code
 	{
-		data(out), len
+		call<maybe>(std::forward<F>(func), i0, p, size(out), data(out), &len)
 	};
 
-	return byte_view<T>(str);
+	assert(code == CL_SUCCESS || code == maybe);
+	if constexpr(maybe != CL_SUCCESS)
+		if(code == maybe)
+			return default_;
+
+	return byte_view<T>
+	{
+		string_view
+		{
+			data(out), len
+		}
+	};
 }
 
 template<class T,
+         int maybe,
          class F,
          class id0,
          class id1,
@@ -2680,22 +2693,34 @@ ircd::cl::info(F&& func,
                const id0 &i0,
                const id1 &i1,
                const param &p,
-               const mutable_buffer &out)
+               const mutable_buffer &out,
+               T default_)
 {
 	using ircd::data;
 	using ircd::size;
 
 	size_t len {0};
-	call(std::forward<F>(func), i0, i1, p, size(out), data(out), &len);
-	const string_view str
+	const auto code
 	{
-		data(out), len
+		call<maybe>(std::forward<F>(func), i0, i1, p, size(out), data(out), &len)
 	};
 
-	return byte_view<T>(str);
+	assert(code == CL_SUCCESS || code == maybe);
+	if constexpr(maybe != CL_SUCCESS)
+		if(code == maybe)
+			return default_;
+
+	return byte_view<T>
+	{
+		string_view
+		{
+			data(out), len
+		}
+	};
 }
 
-template<class func,
+template<int maybe,
+         class func,
          class... args>
 int
 ircd::cl::call(func&& f,
@@ -2705,6 +2730,10 @@ ircd::cl::call(func&& f,
 	{
 		f(std::forward<args>(a)...)
 	};
+
+	if constexpr(maybe != CL_SUCCESS)
+		if(ret == maybe)
+			return ret;
 
 	return throw_on_error(ret);
 }
