@@ -1313,7 +1313,7 @@ ircd::cl::check_submit_blocking(cl::exec *const &exec,
 	log::dwarning
 	{
 		log, "clEnqueue() kernel '%s' blocking the host for %s cycles on submit.",
-		name?: "<unamed or data transfer kernel>"_sv,
+		name?: "<unnamed kernel or unknown command type>"_sv,
 		pretty(pbuf, si(submit_cycles), 1),
 	};
 }
@@ -2448,20 +2448,11 @@ const
 		default:
 			return nullptr;
 
-		case CL_COMMAND_READ_BUFFER:
-		case CL_COMMAND_WRITE_BUFFER:
-		case CL_COMMAND_COPY_BUFFER:
-		case CL_COMMAND_MAP_BUFFER:
-		case CL_COMMAND_UNMAP_MEM_OBJECT:
-		{
-			const auto data
-			{
-				reinterpret_cast<const cl::data *>(object)
-			};
-
-			return data? nullptr: nullptr; //TODO: XXX
-		}
-
+		case CL_COMMAND_READ_BUFFER:          return "READ_BUFFER";
+		case CL_COMMAND_WRITE_BUFFER:         return "WRITE_BUFFER";
+		case CL_COMMAND_COPY_BUFFER:          return "COPY_BUFFER";
+		case CL_COMMAND_MAP_BUFFER:           return "MAP_BUFFER";
+		case CL_COMMAND_UNMAP_MEM_OBJECT:     return "UNMAP_MEM_OBJECT";
 		case CL_COMMAND_NDRANGE_KERNEL:
 		{
 			const auto kern
@@ -2469,7 +2460,7 @@ const
 				reinterpret_cast<const cl::kern *>(object)
 			};
 
-			return kern? kern->name(buf): nullptr;
+			return kern? kern->name(buf): "NDRANGE_KERNEL";
 		}
 	};
 }
