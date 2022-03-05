@@ -82,6 +82,7 @@ struct ircd::cl::stats
 	work_waits,
 	work_waits_async,
 	work_errors,
+	work_completes,
 	exec_tasks,
 	exec_kern_tasks,
 	exec_kern_threads,
@@ -195,6 +196,7 @@ ircd::cl::primary_stats
 	{ { "name", "ircd.cl.work.waits"          } },
 	{ { "name", "ircd.cl.work.waits.async"    } },
 	{ { "name", "ircd.cl.work.errors"         } },
+	{ { "name", "ircd.cl.work.completes"      } },
 	{ { "name", "ircd.cl.exec.tasks"          } },
 	{ { "name", "ircd.cl.exec.kern.tasks"     } },
 	{ { "name", "ircd.cl.exec.kern.threads"   } },
@@ -2532,6 +2534,12 @@ ircd::cl::wait_event(work &work,
 		ret < 0
 	};
 
+	const bool is_complete
+	{
+		ret == CL_COMPLETE
+	};
+
+	primary_stats.work_completes += is_complete;
 	primary_stats.work_errors += is_err;
 	primary_stats.work_waits += 1;
 	return ret;
