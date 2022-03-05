@@ -42,6 +42,7 @@ ircd::info::credits
 	nullptr
 };
 
+[[gnu::cold]]
 void
 ircd::info::dump()
 {
@@ -49,6 +50,7 @@ ircd::info::dump()
 	dump_lib_info();
 	dump_sys_info();
 	dump_cpu_info();
+	fpe::debug_info();
 }
 
 //

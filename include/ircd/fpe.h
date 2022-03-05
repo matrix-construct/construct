@@ -28,6 +28,8 @@ namespace ircd::fpe
 
 	void set_round(const std::float_round_style &style);
 	std::fexcept_t set_excepts(const ushort &flag);
+
+	void debug_info();
 }
 
 /// scope_round

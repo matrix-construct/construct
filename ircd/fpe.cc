@@ -12,6 +12,62 @@
 #pragma STDC FENV_ACCESS on
 #endif
 
+[[gnu::cold]]
+void
+ircd::fpe::debug_info()
+{
+	log::logf
+	{
+		log::star, log::DEBUG,
+		"FLT RAD=%d DIG=%-2d MANT=%-3d EPS=%-7lf MIN=%-8lf MAX=%-7lf"
+		" EXPMIN=%-7d EXPMAX=%-6d EXP10MIN=%-6d EXP10MAX=%-5d",
+		FLT_RADIX,
+		FLT_DIG,
+		FLT_MANT_DIG,
+		FLT_EPSILON,
+		FLT_MIN,
+		FLT_MAX,
+		FLT_MIN_EXP,
+		FLT_MAX_EXP,
+		FLT_MIN_10_EXP,
+		FLT_MAX_10_EXP,
+	};
+
+	log::logf
+	{
+		log::star, log::DEBUG,
+		"DBL RAD=%d DIG=%-2d MANT=%-3d EPS=%-7lf MIN=%-8lf MAX=%-7lf"
+		" EXPMIN=%-7d EXPMAX=%-6d EXP10MIN=%-6d EXP10MAX=%-5d",
+		FLT_RADIX,
+		DBL_DIG,
+		DBL_MANT_DIG,
+		DBL_EPSILON,
+		DBL_MIN,
+		DBL_MAX,
+		DBL_MIN_EXP,
+		DBL_MAX_EXP,
+		DBL_MIN_10_EXP,
+		DBL_MAX_10_EXP,
+	};
+
+	log::logf
+	{
+		log::star, log::DEBUG,
+		"LDB RAD=%d DIG=%-2d MANT=%-3d EPS=%-7lf MIN=%-8lf MAX=%-7lf"
+		" EXPMIN=%-7d EXPMAX=%-6d EXP10MIN=%-6d EXP10MAX=%-5d",
+		FLT_RADIX,
+		LDBL_DIG,
+		LDBL_MANT_DIG,
+		LDBL_EPSILON,
+		LDBL_MIN,
+		LDBL_MAX,
+		LDBL_MIN_EXP,
+		LDBL_MAX_EXP,
+		LDBL_MIN_10_EXP,
+		LDBL_MAX_10_EXP,
+	};
+}
+
 void
 ircd::fpe::_throw_errors(const ushort &flags)
 {
