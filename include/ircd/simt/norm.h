@@ -25,15 +25,17 @@ ircd_simt_math_norm_f4lldr(__local float4 *const out,
 	ircd_simt_math_mean_f4lldr(tmp, ln, li);
 
 	const float4
-	sub_mean = in[li] - tmp[li];
+	sub_mean = in[li] - tmp[li],
+	sub_mean_sqr = pow(sub_mean, 2);
 
-	tmp[li] = pow(sub_mean, 2);
-	ircd_simt_math_mean_f4lldr(tmp, ln, li);
+	out[li] = sub_mean_sqr;
+	ircd_simt_math_mean_f4lldr(out, ln, li);
 
 	const float4
-	epsilon = 0.00001f,
-	s = native_sqrt(tmp[li] + epsilon);
+	epsilon = FLT_EPSILON,
+	s = native_sqrt(out[li] + epsilon),
+	res = sub_mean / s;
 
-	out[li] = sub_mean / s;
+	out[li] = res;
 }
 #endif

@@ -66,6 +66,7 @@ ircd_simt_sort_idx16_flldr(__local ushort *const idx,
                            const uint ln,
                            const uint li)
 {
+	#pragma clang loop unroll(disable)
 	for(uint up = 1; up < ln; up <<= 1)
 	{
 		const bool
