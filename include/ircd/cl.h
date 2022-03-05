@@ -289,8 +289,10 @@ class ircd::cl::init
 {
 	size_t init_platforms();
 	size_t init_devices();
-	size_t init_pipes();
-	void fini_pipes();
+	size_t init_ctxs();
+	bool init_libs();
+	void fini_ctxs();
+	void fini_libs();
 
   public:
 	init();

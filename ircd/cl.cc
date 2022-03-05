@@ -226,13 +226,56 @@ ircd::cl::init::init()
 		return;
 	}
 
+	const ctx::posix::enable_pthread enable_pthread;
+
+	// Link the libraries.
+	if(!init_libs())
+		return;
+
+	// Get the platforms.
+	if(!init_platforms())
+		return;
+
+	// Report the platforms.
+	log_platform_info();
+
+	// Get the devices.
+	if(!init_devices())
+		return;
+
+	// Report the devices.
+	log_dev_info();
+
+	// Various other inits.
+	init_ctxs();
+}
+
+ircd::cl::init::~init()
+noexcept
+{
+	if(!linkage)
+		return;
+
+	log::debug
+	{
+		log, "Shutting down OpenCL...",
+	};
+
+	const ctx::posix::enable_pthread enable_pthread;
+	fini_ctxs();
+	fini_libs();
+}
+
+bool
+ircd::cl::init::init_libs()
+{
 	const std::string &path
 	{
 		cl::path
 	};
 
 	if(path.empty())
-		return;
+		return false;
 
 	// Setup options
 	for(const auto &item : envs)
@@ -248,43 +291,19 @@ ircd::cl::init::init()
 		sys::call(putenv, option[options++]);
 	}
 
-	const ctx::posix::enable_pthread enable_pthread;
-
 	// Load the pipe.
 	assert(!linkage);
-	if(!(linkage = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL)))
-		return;
+	if(!(linkage = dlopen(path.c_str(), RTLD_NOW | RTLD_GLOBAL)))
+		return false;
 
-	// Get the platforms.
-	init_platforms();
-
-	// Report the platforms.
-	log_platform_info();
-
-	// Get the devices.
-	init_devices();
-
-	// Report the devices.
-	log_dev_info();
-
-	// Various other inits.
-	init_pipes();
+	return true;
 }
 
-ircd::cl::init::~init()
-noexcept
+void
+ircd::cl::init::fini_libs()
 {
-	if(!linkage)
-		return;
-
-	const ctx::posix::enable_pthread enable_pthread;
-	log::debug
-	{
-		log, "Shutting down OpenCL...",
-	};
-
-	fini_pipes();
-	dlclose(linkage);
+	if(likely(linkage))
+		dlclose(linkage);
 }
 
 size_t
@@ -348,7 +367,7 @@ ircd::cl::init::init_devices()
 }
 
 size_t
-ircd::cl::init::init_pipes()
+ircd::cl::init::init_ctxs()
 {
 	// Gather all devices we'll use.
 	size_t _devs {0};
@@ -398,7 +417,7 @@ ircd::cl::init::init_pipes()
 }
 
 void
-ircd::cl::init::fini_pipes()
+ircd::cl::init::fini_ctxs()
 {
 	if(primary)
 		work::fini();
