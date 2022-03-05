@@ -210,11 +210,11 @@ struct ircd::cl::exec
 
 	static const opts opts_default;
 
+	// View buffer in the GTT which the device will read (synchronous closure).
+	exec(data &, const pair<size_t, off_t> &, const write_closure & = nullptr, const opts & = opts_default);
+
 	// View data written by the device to the GTT (synchronous closure).
 	exec(data &, const pair<size_t, off_t> &, const read_closure &, const opts & = opts_default);
-
-	// View buffer in the GTT which the device will read (synchronous closure).
-	exec(data &, const pair<size_t, off_t> &, const write_closure &, const opts & = opts_default);
 
 	// Copy data from the buffer to the GTT for use by the device.
 	exec(data &, const const_buffer &, const opts & = opts_default);

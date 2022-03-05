@@ -1119,10 +1119,11 @@ try
 
 	// Wait for the mapping to complete before presenting the buffer.
 	wait();
-	closure(const_buffer
-	{
-		reinterpret_cast<const char *>(ptr), size
-	});
+	if(likely(closure))
+		closure(const_buffer
+		{
+			reinterpret_cast<const char *>(ptr), size
+		});
 }
 catch(const std::exception &e)
 {
@@ -1182,7 +1183,7 @@ try
 	};
 
 	cl_map_flags flags {0};
-	flags |= CL_MAP_WRITE;
+	flags |= opts.duplex || opts.blocking? CL_MAP_WRITE: CL_MAP_WRITE_INVALIDATE_REGION;
 	flags |= opts.duplex? CL_MAP_READ: 0;
 
 	int err {CL_SUCCESS};
@@ -1240,10 +1241,11 @@ try
 	}};
 
 	wait();
-	closure(mutable_buffer
-	{
-		reinterpret_cast<char *>(ptr), size
-	});
+	if(closure)
+		closure(mutable_buffer
+		{
+			reinterpret_cast<char *>(ptr), size
+		});
 }
 catch(const std::exception &e)
 {
