@@ -317,11 +317,11 @@ ircd::cl::init::init_devices()
 
 	// Gather the API versions for the devices.
 	for(size_t i(0); i < platforms; ++i)
-		for(size_t j(0); j < devices[i]; ++j)
+		for(size_t j(0); j < devices[i]; ++j) try
 		{
 			// OpenCL sez:
 			// OpenCL<space><major_version.minor_version><space><vendor-specific information>
-			string_view ver; char buf[32];
+			string_view ver; char buf[256];
 			ver = info(clGetDeviceInfo, device[i][j], CL_DEVICE_VERSION, buf);
 			ver = lstrip(ver, "OpenCL ");
 			ver = split(ver, ' ').first;
@@ -332,6 +332,15 @@ ircd::cl::init::init_devices()
 
 			api[i][j].major = lex_cast<uint>(major);
 			api[i][j].minor = lex_cast<uint>(minor);
+		}
+		catch(const error &e)
+		{
+			log::error
+			{
+				log, "OpenCL [%u][%u] CL_DEVICE_VERSION :%s",
+				i, j,
+				e.what(),
+			};
 		}
 
 	return devices_total;
