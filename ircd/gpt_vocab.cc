@@ -394,7 +394,7 @@ ircd::gpt::vocab::pre_tokenize(u8x16 (&token)[16],
 		// from the input, but the truncation is determined after a transform
 		// which may have a different size; this has to be offset back now.
 		if(ret[1] + off > 16)
-			len -= (ret[1] + off) - 16;
+			len = 16;
 
 		// Pack the utf-8 codepoints into the result token
 		token[i] = u8x16{0};
