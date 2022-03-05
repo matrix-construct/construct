@@ -2107,59 +2107,46 @@ ircd::cl::build_handle_error_log_line(const string_view &line)
 // data
 //
 
-ircd::cl::data::data(const size_t size_,
-                     const mutable_buffer &buf,
-                     const bool wonly)
+decltype(ircd::cl::data::use_host_ptr)
+ircd::cl::data::use_host_ptr
 {
-	const auto ptr
-	{
-		ircd::size(buf)? ircd::data(buf): nullptr
-	};
+	{ "name",     "ircd.cl.data.use_host_ptr"           },
+	{ "default",  false                                 },
+	{ "help",     "Non-buggy platforms can try `true`." },
+};
 
-	const auto size
-	{
-		ircd::size(buf)?: size_
-	};
+decltype(ircd::cl::data::gart_page_size)
+ircd::cl::data::gart_page_size
+{
+	{ "name",     "ircd.cl.data.gart.page_size"           },
+	{ "default",  4096                                    },
+	{ "help",     "Override (un)detected gart page size." },
+};
 
+ircd::cl::data::data(const size_t size,
+                     const bool host_read,
+                     const bool host_write)
+{
 	if(!size)
 		return;
 
 	cl_mem_flags flags {0};
-	flags |= wonly? CL_MEM_WRITE_ONLY: CL_MEM_READ_WRITE;
-	flags |= ircd::size(buf)? CL_MEM_COPY_HOST_PTR: 0;
+	flags |= CL_MEM_READ_WRITE;
+	flags |= host_read && !host_write? CL_MEM_HOST_READ_ONLY: 0;
+	flags |= !host_read && host_write? CL_MEM_HOST_WRITE_ONLY: 0;
+	flags |= !host_read && !host_write? CL_MEM_HOST_NO_ACCESS: 0;
 
 	int err {CL_SUCCESS};
-	handle = clCreateBuffer(primary, flags, size, ptr, &err);
+	handle = clCreateBuffer
+	(
+		primary,
+		flags,
+		size,
+		nullptr,
+		&err
+	);
+
 	throw_on_error(err);
-
-	primary_stats.alloc_count += 1;
-	primary_stats.alloc_bytes += size;
-}
-
-ircd::cl::data::data(const size_t size_,
-                     const const_buffer &buf)
-{
-	const auto &ptr
-	{
-		ircd::size(buf)? ircd::data(buf): nullptr
-	};
-
-	const auto &size
-	{
-		ircd::size(buf)?: size_
-	};
-
-	if(!size)
-		return;
-
-	cl_mem_flags flags {0};
-	flags |= CL_MEM_READ_ONLY;
-	flags |= ircd::size(buf)? CL_MEM_COPY_HOST_PTR: 0;
-
-	int err {CL_SUCCESS};
-	handle = clCreateBuffer(primary, flags, size, mutable_cast(ptr), &err);
-	throw_on_error(err);
-
 	primary_stats.alloc_count += 1;
 	primary_stats.alloc_bytes += size;
 }
@@ -2167,62 +2154,112 @@ ircd::cl::data::data(const size_t size_,
 ircd::cl::data::data(const mutable_buffer &buf,
                      const bool wonly)
 {
+	const auto &ptr
+	{
+		ircd::data(buf)
+	};
+
 	const auto &size
 	{
-		ircd::size(buf)
+		ptr?
+			ircd::size(buf):
+			size_t(std::get<1>(buf))
 	};
 
 	if(!size)
 		return;
 
 	cl_mem_flags flags {0};
-	flags |= CL_MEM_USE_HOST_PTR;
 	flags |= wonly? CL_MEM_WRITE_ONLY: CL_MEM_READ_WRITE;
+	flags |= ptr && use_host_ptr? CL_MEM_USE_HOST_PTR: 0;
+
+	assert(!ptr || aligned(buf, size_t(gart_page_size)));
+	assert(padded(size, size_t(gart_page_size)));
 
 	int err {CL_SUCCESS};
-	handle = clCreateBuffer(primary, flags, size, ircd::data(buf), &err);
+	handle = clCreateBuffer
+	(
+		primary,
+		flags,
+		size,
+		use_host_ptr? ptr: nullptr,
+		&err
+	);
+
 	throw_on_error(err);
+	primary_stats.alloc_count += 1;
+	primary_stats.alloc_bytes += size;
 }
 
 ircd::cl::data::data(const const_buffer &buf)
 {
 	const auto &ptr
 	{
-		mutable_cast(ircd::data(buf))
+		ircd::data(buf)
 	};
 
 	const auto &size
 	{
-		ircd::size(buf)
+		ptr?
+			ircd::size(buf):
+			size_t(std::get<1>(buf))
 	};
 
 	if(!size)
 		return;
 
 	cl_mem_flags flags {0};
-	flags |= CL_MEM_USE_HOST_PTR;
 	flags |= CL_MEM_READ_ONLY;
+	flags |= ptr && use_host_ptr? CL_MEM_USE_HOST_PTR: 0;
+
+	assert(!ptr || aligned(buf, size_t(gart_page_size)));
+	assert(padded(size, size_t(gart_page_size)));
 
 	int err {CL_SUCCESS};
-	handle = clCreateBuffer(primary, flags, size, ptr, &err);
+	handle = clCreateBuffer
+	(
+		primary,
+		flags,
+		size,
+		use_host_ptr? mutable_cast(ptr): nullptr,
+		&err
+	);
+
 	throw_on_error(err);
+	primary_stats.alloc_count += 1;
+	primary_stats.alloc_bytes += size;
 }
 
 ircd::cl::data::data(data &master,
                      const pair<size_t, off_t> &slice)
 {
-	cl_mem_flags flags {0};
+	constexpr auto type
+	{
+		CL_BUFFER_CREATE_TYPE_REGION
+	};
+
+	if(!master.handle)
+		return;
 
 	cl_buffer_region region {0};
 	region.origin = slice.second;
 	region.size = slice.first;
-
 	if(!region.size)
 		return;
 
+	assert(aligned(region.origin, size_t(gart_page_size)));
+	assert(padded(region.size, size_t(gart_page_size)));
+
 	int err {CL_SUCCESS};
-	constexpr auto type {CL_BUFFER_CREATE_TYPE_REGION};
-	handle = clCreateSubBuffer(cl_mem(master.handle), flags, type, &region, &err);
+	handle = clCreateSubBuffer
+	(
+		cl_mem(master.handle),
+		cl_mem_flags{0},
+		type,
+		&region,
+		&err
+	);
+
 	throw_on_error(err);
 }
 

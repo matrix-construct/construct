@@ -104,6 +104,9 @@ enum ircd::cl::work::prof::phase
 /// cl_mem wrapping
 struct ircd::cl::data
 {
+	static conf::item<bool> use_host_ptr;
+	static conf::item<size_t> gart_page_size;
+
 	void *handle {nullptr};
 
   public:
@@ -112,9 +115,8 @@ struct ircd::cl::data
 	off_t offset() const;
 	char *ptr() const; // host only
 
-	data(const size_t, const mutable_buffer &, const bool wonly = false); // device rw
-	data(const size_t, const const_buffer &); // device ro
-	data(const mutable_buffer &, const bool wonly = false); // host rw
+	data(const size_t, const bool host_rd = false, const bool host_wr = false);
+	data(const mutable_buffer &, const bool dev_wonly = false); // host rw
 	data(const const_buffer &); // host ro
 	data(data &, const pair<size_t, off_t> &); // subbuffer
 	data(const data &) = delete;
