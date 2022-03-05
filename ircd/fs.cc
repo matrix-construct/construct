@@ -2049,6 +2049,7 @@ ircd::fs::map::map(const fd &fd,
                    const size_t &size)
 #if defined(HAVE_MMAP)
 {
+	assert(size || int(fd) > -1);
 	const auto map_size
 	{
 		size?: fs::size(fd)
@@ -2061,7 +2062,7 @@ ircd::fs::map::map(const fd &fd,
 			nullptr,
 			map_size,
 			prot(opts),
-			flags(opts),
+			flags(opts) | (int(fd) == -1? MAP_ANONYMOUS : 0),
 			int(fd),
 			opts.offset
 		)
