@@ -2410,13 +2410,15 @@ ircd::cl::work::wait(const uint desired)
 try
 {
 	static_assert(CL_COMPLETE == 0);
-	assert(handle);
+	constexpr auto execution_status
+	{
+		CL_EVENT_COMMAND_EXECUTION_STATUS
+	};
 
 	char buf[4];
-	int status
-	{
-		info<int>(clGetEventInfo, cl_event(handle), CL_EVENT_COMMAND_EXECUTION_STATUS, buf)
-	};
+	int status {0};
+	if(likely(handle))
+		status = info<int>(clGetEventInfo, cl_event(handle), execution_status, buf);
 
 	if(status > int(desired))
 		status = wait_event(*this, status, desired);
