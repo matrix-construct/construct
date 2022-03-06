@@ -188,10 +188,10 @@ struct ircd::cl::kern
 /// NDRangeKernel dimension range selector
 struct ircd::cl::kern::range
 {
-	std::array<size_t, 5>
-	global { 0, 0, 0, 0, 0 },
-	local  { 0, 0, 0, 0, 0 },
-	offset { 0, 0, 0, 0, 0 };
+	std::array<size_t, 3>
+	global { 0, 0, 0 },
+	local  { 0, 0, 0 },
+	offset { 0, 0, 0 };
 };
 
 /// Construction enqueues the task; destruction waits for completion.
