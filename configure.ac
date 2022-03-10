@@ -107,6 +107,7 @@ AM_CONDITIONAL([CLANG10],  [[[[ $CXX = clang* ]] && [[ $CXX_EPOCH -ge 10 ]]]])
 AM_CONDITIONAL([CLANG11],  [[[[ $CXX = clang* ]] && [[ $CXX_EPOCH -ge 11 ]]]])
 AM_CONDITIONAL([CLANG12],  [[[[ $CXX = clang* ]] && [[ $CXX_EPOCH -ge 12 ]]]])
 AM_CONDITIONAL([CLANG13],  [[[[ $CXX = clang* ]] && [[ $CXX_EPOCH -ge 13 ]]]])
+AM_CONDITIONAL([CLANG14],  [[[[ $CXX = clang* ]] && [[ $CXX_EPOCH -ge 14 ]]]])
 
 dnl
 dnl Coarse operating system test macros
@@ -434,6 +435,7 @@ dnl	])
 AM_CONDITIONAL([PROFILE], [[[[ "$profiling" = "yes" ]]]])
 
 dnl Provide the correct target to the Makefiles
+AM_COND_IF(CLANG14, [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-14) ])
 AM_COND_IF(CLANG13, [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-13) ])
 AM_COND_IF(CLANG12, [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-12) ])
 AM_COND_IF(CLANG11, [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-11) ])
@@ -661,23 +663,39 @@ dnl
 dnl Compiler intrumentation
 dnl
 
+dnl XXX workaround for valgrind; remove once valgrind is updated
 AM_COND_IF([DEBUG],
 [
-	RB_VAR_PREPEND([CXXFLAGS], ["-g"])
-	RB_VAR_PREPEND([CXXFLAGS], ["-ggdb"])
-	AM_COND_IF([GCC],
+	AM_COND_IF([CLANG14],
 	[
-		RB_VAR_PREPEND([CXXFLAGS], ["-fvar-tracking"])
-		RB_VAR_PREPEND([CXXFLAGS], ["-fvar-tracking-assignments"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-gdwarf-4"])
 	])
+])
+
+dnl Enable debugging symbols.
+AM_COND_IF([DEBUG],
+[
+	RB_VAR_PREPEND([CXXFLAGS], ["-ggdb"])
+	RB_VAR_PREPEND([CXXFLAGS], ["-g"])
 ], [
+	dnl Note debug symbols are still included in release-mode by default
+	dnl unless compact-mode is specified.
 	AM_COND_IF([COMPACT],
 	[
 
 	], [
 		dnl Note these flags are unreliable with LTO
-		RB_VAR_PREPEND([CXXFLAGS], ["-g"])
 		RB_VAR_PREPEND([CXXFLAGS], ["-ggdb"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-g"])
+	])
+])
+
+AM_COND_IF([DEBUG],
+[
+	AM_COND_IF([GCC],
+	[
+		RB_VAR_PREPEND([CXXFLAGS], ["-fvar-tracking-assignments"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-fvar-tracking"])
 	])
 ])
 
