@@ -102,7 +102,7 @@
 #include "fs/fs.h"
 #include "ios/ios.h"
 #include "ctx/ctx.h"
-#include "cl.h"
+#include "cl/cl.h"
 #include "gpt/gpt.h"
 #include "exec.h"
 #include "db/db.h"

@@ -137,14 +137,6 @@ ircd::cl::profile_queue
 	{ "persist",   false                    },
 };
 
-decltype(ircd::cl::path)
-ircd::cl::path
-{
-	{ "name",      "ircd.cl.path"  },
-	{ "default",   "libOpenCL.so"  },
-	{ "persist",   false           },
-};
-
 decltype(ircd::cl::nice_rate)
 ircd::cl::nice_rate
 {
@@ -157,6 +149,14 @@ ircd::cl::watchdog_tsc
 {
 	{ "name",      "ircd.cl.watchdog.tsc"  },
 	{ "default",   268'435'456L            },
+};
+
+decltype(ircd::cl::path)
+ircd::cl::path
+{
+	{ "name",      "ircd.cl.path"  },
+	{ "default",   "libOpenCL.so"  },
+	{ "persist",   false           },
 };
 
 decltype(ircd::cl::envs)
