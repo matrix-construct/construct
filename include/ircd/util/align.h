@@ -24,6 +24,7 @@ inline namespace util
 
 	// Alignment inline tools
 	bool aligned(const void *const &, const size_t &alignment);
+	bool aligned(const volatile void *const &, const size_t &alignment);
 	template<class T = char> const T *align(const void *const &, const size_t &alignment);
 	template<class T = char> T *align(void *const &, const size_t &alignment);
 	template<class T = char> const T *align_up(const void *const &, const size_t &alignment);
@@ -81,6 +82,14 @@ ircd::util::align_up(const void *const &ptr,
 [[gnu::always_inline]]
 inline bool
 ircd::util::aligned(const void *const &ptr,
+                    const size_t &alignment)
+{
+	return aligned(uintptr_t(ptr), alignment);
+}
+
+[[gnu::always_inline]]
+inline bool
+ircd::util::aligned(const volatile void *const &ptr,
                     const size_t &alignment)
 {
 	return aligned(uintptr_t(ptr), alignment);
