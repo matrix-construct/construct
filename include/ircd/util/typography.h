@@ -163,6 +163,28 @@ mutable_cast(T *const t)
 }
 
 //
+// Convenience involatile cast template
+//
+
+template<class T>
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline typename std::remove_volatile<T>::type &
+involatile_cast(T &t)
+{
+	using type = typename std::remove_volatile<T>::type;
+	return const_cast<type &>(t);
+}
+
+template<class T>
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline typename std::remove_volatile<T>::type *
+involatile_cast(T *const t)
+{
+	using type = typename std::remove_volatile<T>::type;
+	return const_cast<type *>(t);
+}
+
+//
 // Test if type is shared_from_this
 //
 
