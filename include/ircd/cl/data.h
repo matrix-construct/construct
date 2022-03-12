@@ -24,6 +24,8 @@ struct ircd::cl::data
 	size_t size() const;
 	off_t offset() const;
 	char *ptr() const; // host only
+	size_t maps() const;
+	size_t refs() const;
 
 	data(const size_t, const bool host_rd = false, const bool host_wr = false);
 	data(const mutable_buffer &, const bool dev_wonly = false); // host rw

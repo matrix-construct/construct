@@ -2326,6 +2326,26 @@ catch(const std::exception &e)
 	return;
 }
 
+size_t
+ircd::cl::data::refs()
+const
+{
+	assert(handle);
+
+	char buf[sizeof(size_t)] {0};
+	return info<uint>(clGetMemObjectInfo, cl_mem(mutable_cast(handle)), CL_MEM_REFERENCE_COUNT, buf);
+}
+
+size_t
+ircd::cl::data::maps()
+const
+{
+	assert(handle);
+
+	char buf[sizeof(size_t)] {0};
+	return info<uint>(clGetMemObjectInfo, cl_mem(mutable_cast(handle)), CL_MEM_MAP_COUNT, buf);
+}
+
 char *
 ircd::cl::data::ptr()
 const
