@@ -2333,7 +2333,7 @@ const
 	assert(handle);
 
 	char buf[sizeof(void *)] {0};
-	return info<char *>(clGetMemObjectInfo, cl_mem(mutable_cast(handle)), CL_MEM_SIZE, buf);
+	return info<char *>(clGetMemObjectInfo, cl_mem(mutable_cast(handle)), CL_MEM_HOST_PTR, buf);
 }
 
 off_t
