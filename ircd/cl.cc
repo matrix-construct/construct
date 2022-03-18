@@ -544,7 +544,7 @@ ircd::cl::log_dev_info(const uint i,
 
 	log::info
 	{
-		log, "%s %u$mHz unit %u[%lu:%lu]%d dims %u[%u:%u:%u]",
+		log, "%s %u$mHz unit %u$x[%lu:%lu]%d %u$d[%u$x%u$x%u]",
 		string_view{head},
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_CLOCK_FREQUENCY, buf[0]),
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_COMPUTE_UNITS, buf[1]),
