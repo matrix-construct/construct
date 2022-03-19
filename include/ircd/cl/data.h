@@ -14,7 +14,6 @@
 /// cl_mem wrapping
 struct ircd::cl::data
 {
-	static conf::item<bool> use_host_ptr;
 	static conf::item<size_t> gart_page_size;
 
 	void *handle {nullptr};

@@ -2126,14 +2126,6 @@ ircd::cl::build_handle_error_log_line(const string_view &line)
 // data
 //
 
-decltype(ircd::cl::data::use_host_ptr)
-ircd::cl::data::use_host_ptr
-{
-	{ "name",     "ircd.cl.data.use_host_ptr"           },
-	{ "default",  false                                 },
-	{ "help",     "Non-buggy platforms can try `true`." },
-};
-
 decltype(ircd::cl::data::gart_page_size)
 ircd::cl::data::gart_page_size
 {
@@ -2180,17 +2172,15 @@ ircd::cl::data::data(const mutable_buffer &buf,
 
 	const auto &size
 	{
-		ptr?
-			ircd::size(buf):
-			size_t(std::get<1>(buf))
+		ircd::size(buf)
 	};
 
 	if(!size)
 		return;
 
 	cl_mem_flags flags {0};
+	flags |= CL_MEM_USE_HOST_PTR;
 	flags |= wonly? CL_MEM_WRITE_ONLY: CL_MEM_READ_WRITE;
-	flags |= ptr && use_host_ptr? CL_MEM_USE_HOST_PTR: 0;
 
 	assert(!ptr || aligned(buf, size_t(gart_page_size)));
 	assert(padded(size, size_t(gart_page_size)));
@@ -2201,7 +2191,7 @@ ircd::cl::data::data(const mutable_buffer &buf,
 		primary,
 		flags,
 		size,
-		use_host_ptr? ptr: nullptr,
+		ptr,
 		&err
 	);
 
@@ -2219,17 +2209,15 @@ ircd::cl::data::data(const const_buffer &buf)
 
 	const auto &size
 	{
-		ptr?
-			ircd::size(buf):
-			size_t(std::get<1>(buf))
+		ircd::size(buf)
 	};
 
 	if(!size)
 		return;
 
 	cl_mem_flags flags {0};
+	flags |= CL_MEM_USE_HOST_PTR;
 	flags |= CL_MEM_READ_ONLY;
-	flags |= ptr && use_host_ptr? CL_MEM_USE_HOST_PTR: 0;
 
 	assert(!ptr || aligned(buf, size_t(gart_page_size)));
 	assert(padded(size, size_t(gart_page_size)));
@@ -2240,7 +2228,7 @@ ircd::cl::data::data(const const_buffer &buf)
 		primary,
 		flags,
 		size,
-		use_host_ptr? mutable_cast(ptr): nullptr,
+		mutable_cast(ptr),
 		&err
 	);
 
