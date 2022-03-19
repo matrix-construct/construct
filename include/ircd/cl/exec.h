@@ -29,17 +29,8 @@ struct ircd::cl::exec
 
 	static const opts opts_default;
 
-	// View buffer in the GTT which the device will read (synchronous closure).
-	exec(data &, const pair<size_t, off_t> &, const write_closure & = nullptr, const opts & = opts_default);
-
-	// View data written by the device to the GTT (synchronous closure).
-	exec(data &, const pair<size_t, off_t> &, const read_closure &, const opts & = opts_default);
-
-	// Copy data from the buffer to the GTT for use by the device.
-	exec(data &, const const_buffer &, const opts & = opts_default);
-
 	// Copy data written by the device to the GTT into our buffer.
-	exec(data &, const mutable_buffer &, const opts & = opts_default);
+	exec(data &, const std::memory_order, const opts & = opts_default);
 
 	// Copy data directly between buffers.
 	exec(data &, const data &, const opts & = opts_default);
@@ -83,11 +74,6 @@ struct ircd::cl::exec::opts
 	/// Starts a new dependency chain; allowing empty deps without implicit
 	/// dependency on the last work item constructed on the ircd::ctx.
 	bool indep {false};
-
-	/// For operations which plan to both read and write to the GTT, set to
-	/// true and execute the write_closure; otherwise ignored. Can be used
-	/// to de-optimize the write_closure, which is unidirectional by default.
-	bool duplex {false};
 
 	/// For operations that have an optional blocking behavior; otherwise
 	/// ignored. Note that this is a thread-level blocking mechanism and

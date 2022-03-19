@@ -17,14 +17,17 @@ struct ircd::cl::data
 	static conf::item<size_t> gart_page_size;
 
 	void *handle {nullptr};
+	void *mapped {nullptr};
 
   public:
 	uint flags() const;
 	size_t size() const;
 	off_t offset() const;
-	char *ptr() const; // host only
-	size_t maps() const;
 	size_t refs() const;
+	char *ptr() const;
+
+	operator const_buffer() const;
+	operator mutable_buffer() const;
 
 	data(const size_t, const bool host_rd = false, const bool host_wr = false);
 	data(const mutable_buffer &, const bool dev_wonly = false); // host rw

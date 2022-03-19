@@ -906,82 +906,10 @@ catch(const std::exception &e)
 }
 
 ircd::cl::exec::exec(data &data,
-                     const mutable_buffer &buf,
+                     const std::memory_order order,
                      const opts &opts)
 try
 {
-	auto &q
-	{
-		queue[0][0]
-	};
-
-	const size_t size
-	{
-		opts.size == -1UL?
-			ircd::size(buf):
-			opts.size
-	};
-
-	if(!size)
-		return;
-
-	assert(!this->object);
-	this->object = &data;
-
-	const auto deps
-	{
-		make_deps(this, opts)
-	};
-
-	assert(!this->handle);
-	call
-	(
-		clEnqueueReadBuffer,
-		q,
-		cl_mem(data.handle),
-		opts.blocking,
-		opts.offset[0],
-		size,
-		ircd::data(buf),
-		deps.size(),
-		deps.size()? deps.data(): nullptr,
-		reinterpret_cast<cl_event *>(&this->handle)
-	);
-
-	primary_stats.exec_read_bytes += size;
-	primary_stats.exec_read_tasks += 1;
-	handle_submitted(this, opts);
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		log, "Exec Read data:%p cl_mem:%p buf:%p,%zu :%s",
-		&data,
-		data.handle,
-		ircd::data(buf),
-		ircd::size(buf),
-		e.what(),
-	};
-
-	throw;
-}
-
-ircd::cl::exec::exec(data &data,
-                     const const_buffer &buf,
-                     const opts &opts)
-try
-{
-	const size_t size
-	{
-		opts.size == -1UL?
-			ircd::size(buf):
-			opts.size
-	};
-
-	if(!size)
-		return;
-
 	if(unlikely(run::level != run::level::RUN))
 		throw unavailable
 		{
@@ -990,281 +918,116 @@ try
 		};
 
 	assert(run::level == run::level::RUN);
-	auto &q
+	const auto max_size
 	{
-		queue[0][0]
-	};
-
-	assert(!this->object);
-	this->object = &data;
-
-	const auto deps
-	{
-		make_deps(this, opts)
-	};
-
-	assert(!this->handle);
-	call
-	(
-		clEnqueueWriteBuffer,
-		q,
-		cl_mem(data.handle),
-		opts.blocking,
-		opts.offset[0],
-		size,
-		mutable_cast(ircd::data(buf)),
-		deps.size(),
-		deps.size()? deps.data(): nullptr,
-		reinterpret_cast<cl_event *>(&this->handle)
-	);
-
-	primary_stats.exec_write_bytes += size;
-	primary_stats.exec_write_tasks += 1;
-	handle_submitted(this, opts);
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		log, "Exec Write data:%p cl_mem:%p buf:%p,%zu :%s",
-		&data,
-		data.handle,
-		ircd::data(buf),
-		ircd::size(buf),
-		e.what(),
-	};
-
-	throw;
-}
-
-ircd::cl::exec::exec(data &data,
-                     const pair<size_t, off_t> &slice,
-                     const read_closure &closure,
-                     const opts &opts)
-try
-{
-	const auto size
-	{
-		slice.first?:
 		opts.size == -1UL?
 			data.size():
 			opts.size
 	};
 
-	if(!size)
-		return;
-
-	const auto offset
-	{
-		slice.second?:
-			opts.offset[0]
-	};
-
-	assert(size_t(size) <= data.size());
-	assert(size_t(offset) <= data.size());
-	auto &q
-	{
-		queue[0][0]
-	};
-
-	assert(!this->object);
-	this->object = &data;
-
-	const auto deps
-	{
-		make_deps(this, opts)
-	};
-
-	cl_map_flags flags {0};
-	flags |= CL_MAP_READ;
-
-	int err {CL_SUCCESS};
-	assert(!this->handle);
-	void *const ptr
-	{
-		clEnqueueMapBuffer
-		(
-			q,
-			cl_mem(data.handle),
-			opts.blocking,
-			flags,
-			offset,
-			size,
-			deps.size(),
-			deps.size()? deps.data(): nullptr,
-			reinterpret_cast<cl_event *>(&this->handle),
-			&err
-		)
-	};
-
-	throw_on_error(err);
-	primary_stats.exec_read_bytes += size;
-	primary_stats.exec_read_tasks += 1;
-	handle_submitted(this, opts);
-	assert(this->handle);
-	assert(ptr);
-
-	// Perform the unmapping on unwind. This is after the mapping event
-	// completed and the closure was called below. The unmapping event will
-	// replace the event handle for this exec instance until its actual dtor;
-	// thus the lifetime of the exec we are constructing actually represents
-	// the unmapping event.
-	const unwind unmap{[this, &data, &q, &ptr, &opts]
-	{
-		assert(!this->handle);
-		call
-		(
-			clEnqueueUnmapMemObject,
-			q,
-			cl_mem(data.handle),
-			ptr,
-			0, // deps
-			nullptr, // depslist
-			reinterpret_cast<cl_event *>(&this->handle)
-		);
-
-		handle_submitted(this, opts);
-	}};
-
-	// After the closure is called below, or throws, or if wait() throws,
-	// we free the completed map event here to allow for the unmap event.
-	const unwind rehandle{[this]
-	{
-		assert(this->handle);
-		call(clReleaseEvent, cl_event(this->handle));
-		this->handle = nullptr;
-		this->work::ts = ircd::cycles();
-	}};
-
-	// Wait for the mapping to complete before presenting the buffer.
-	wait();
-	if(likely(closure))
-		closure(const_buffer
-		{
-			reinterpret_cast<const char *>(ptr), size
-		});
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		log, "Exec Read Closure :%s",
-		e.what(),
-	};
-
-	throw;
-}
-
-ircd::cl::exec::exec(data &data,
-                     const pair<size_t, off_t> &slice,
-                     const write_closure &closure,
-                     const opts &opts)
-try
-{
 	const auto size
 	{
-		slice.first?:
-		opts.size == -1UL?
-			data.size():
-			opts.size
-	};
-
-	if(!size)
-		return;
-
-	if(unlikely(run::level != run::level::RUN))
-		throw unavailable
-		{
-			"Unable to write to device in runlevel %s",
-			reflect(run::level),
-		};
-
-	assert(run::level == run::level::RUN);
-	const auto offset
-	{
-		slice.second?:
-			opts.offset[0]
+		size_t(opts.offset[0]) < max_size?
+			max_size - opts.offset[0]:
+			0UL
 	};
 
 	assert(size_t(size) <= data.size());
-	assert(size_t(offset) <= data.size());
+	assert(size_t(opts.offset[0]) <= data.size());
+	if(!size)
+		return;
+
+	bool read {false}, write {false}, invalidate {false};
+	bool blocking {opts.blocking};
+	switch(order)
+	{
+		case std::memory_order_relaxed:
+			return;
+
+		case std::memory_order_consume:
+			read = true;
+			break;
+
+		case std::memory_order_acquire:
+			read = true;
+			write = true;
+			break;
+
+		case std::memory_order_acq_rel:
+			read = true;
+			write = true;
+			break;
+
+		case std::memory_order_seq_cst:
+			read = true;
+			write = true;
+			blocking = true;
+			break;
+
+		case std::memory_order_release:
+			break;
+	}
+
+	const cl_map_flags flags
+	{
+		(boolmask<cl_map_flags>(read) & CL_MAP_READ) |
+		(boolmask<cl_map_flags>(write) & CL_MAP_WRITE) |
+		(boolmask<cl_map_flags>(invalidate) & CL_MAP_WRITE_INVALIDATE_REGION)
+	};
+
+	if(!flags && !data.mapped)
+		return;
+
 	auto &q
 	{
 		queue[0][0]
 	};
-
-	assert(!this->object);
-	this->object = &data;
 
 	const auto deps
 	{
 		make_deps(this, opts)
 	};
 
-	cl_map_flags flags {0};
-	flags |= opts.duplex || opts.blocking? CL_MAP_WRITE: CL_MAP_WRITE_INVALIDATE_REGION;
-	flags |= opts.duplex? CL_MAP_READ: 0;
+	assert(!this->object);
+	this->object = &data;
 
 	int err {CL_SUCCESS};
 	assert(!this->handle);
-	void *const ptr
-	{
-		clEnqueueMapBuffer
+	assert(flags || data.mapped);
+	if(flags)
+		data.mapped = clEnqueueMapBuffer
 		(
 			q,
 			cl_mem(data.handle),
-			opts.blocking,
+			blocking,
 			flags,
-			offset,
+			opts.offset[0],
 			size,
 			deps.size(),
 			deps.size()? deps.data(): nullptr,
 			reinterpret_cast<cl_event *>(&this->handle),
 			&err
-		)
-	};
-
-	throw_on_error(err);
-	// Account for read operation only when caller maps read/write.
-	primary_stats.exec_read_bytes += opts.duplex? size: 0UL;
-	primary_stats.exec_read_tasks += opts.duplex;
-	handle_submitted(this, opts);
-	assert(this->handle);
-	assert(ptr);
-
-	const unwind unmap{[this, &data, &q, &ptr, &opts, &size]
-	{
-		assert(!this->handle);
+		);
+	else
 		call
 		(
 			clEnqueueUnmapMemObject,
 			q,
 			cl_mem(data.handle),
-			ptr,
+			std::exchange(data.mapped, nullptr),
 			0, // deps
 			nullptr, // depslist
 			reinterpret_cast<cl_event *>(&this->handle)
 		);
 
-		primary_stats.exec_write_bytes += size;
-		primary_stats.exec_write_tasks += 1;
-		handle_submitted(this, opts);
-	}};
-
-	const unwind rehandle{[this]
-	{
-		assert(this->handle);
-		call(clReleaseEvent, cl_event(this->handle));
-		this->handle = nullptr;
-		this->work::ts = ircd::cycles();
-	}};
-
-	wait();
-	if(closure)
-		closure(mutable_buffer
-		{
-			reinterpret_cast<char *>(ptr), size
-		});
+	throw_on_error(err);
+	primary_stats.exec_read_bytes += read? size: 0;
+	primary_stats.exec_read_tasks += read;
+	primary_stats.exec_write_bytes += write || invalidate? size: 0;
+	primary_stats.exec_write_tasks += write || invalidate;
+	handle_submitted(this, opts);
+	assert(data.mapped || !flags);
+	assert(this->handle);
 }
 catch(const std::exception &e)
 {
@@ -2314,24 +2077,18 @@ catch(const std::exception &e)
 	return;
 }
 
-size_t
-ircd::cl::data::refs()
+ircd::cl::data::operator
+mutable_buffer()
 const
 {
-	assert(handle);
-
-	char buf[sizeof(size_t)] {0};
-	return info<uint>(clGetMemObjectInfo, cl_mem(mutable_cast(handle)), CL_MEM_REFERENCE_COUNT, buf);
+	return { ptr(), size() };
 }
 
-size_t
-ircd::cl::data::maps()
+ircd::cl::data::operator
+const_buffer()
 const
 {
-	assert(handle);
-
-	char buf[sizeof(size_t)] {0};
-	return info<uint>(clGetMemObjectInfo, cl_mem(mutable_cast(handle)), CL_MEM_MAP_COUNT, buf);
+	return { ptr(), size() };
 }
 
 char *
@@ -2341,7 +2098,24 @@ const
 	assert(handle);
 
 	char buf[sizeof(void *)] {0};
-	return info<char *>(clGetMemObjectInfo, cl_mem(mutable_cast(handle)), CL_MEM_HOST_PTR, buf);
+	const auto ret
+	{
+		this->mapped?
+			static_cast<char *>(this->mapped):
+			info<char *>(clGetMemObjectInfo, cl_mem(mutable_cast(handle)), CL_MEM_HOST_PTR, buf)
+	};
+
+	return ret;
+}
+
+size_t
+ircd::cl::data::refs()
+const
+{
+	assert(handle);
+
+	char buf[sizeof(size_t)] {0};
+	return info<uint>(clGetMemObjectInfo, cl_mem(mutable_cast(handle)), CL_MEM_REFERENCE_COUNT, buf);
 }
 
 off_t
