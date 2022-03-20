@@ -185,6 +185,10 @@ ircd::allocator::lock(const const_buffer &buf,
 	int flags {0};
 	flags |= MLOCK_ONFAULT;
 
+	// can't mlock w/ valgrind
+	if(unlikely(vg::active))
+		return;
+
 	if(enable)
 		syscall(::mlock2, data(buf), size(buf), flags);
 	else
