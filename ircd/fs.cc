@@ -208,8 +208,9 @@ decltype(ircd::fs::support::rwh_write_life)
 ircd::fs::support::rwh_write_life
 {
 	#if defined(HAVE_FCNTL_H) && defined(F_SET_FILE_RW_HINT)
-		info::kernel_version[0] > 4 ||
-		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 13)
+		(info::kernel_version[0] > 4 ||
+		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 13))
+		&& !vg::active // not yet supported by valgrind
 	#else
 		false
 	#endif
