@@ -240,7 +240,7 @@ try
 }
 ,modules
 {
-	begin(matrix::module_names), end(matrix::module_names)
+	begin(m::module_names), end(m::module_names)
 }
 {
 	if(ircd::mods::autoload)

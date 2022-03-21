@@ -39,15 +39,14 @@ namespace ircd::m
 
 	IRCD_OVERLOAD(generate)
 
+	extern struct log::log log;
+
 	extern const uint16_t canon_port;
 	extern const string_view canon_service;
 
-	extern struct log::log log;
-}
-
-namespace ircd
-{
 	using m::matrix;
+	extern const std::vector<string_view> module_names;
+	extern const std::vector<string_view> module_names_optional;
 }
 
 #include "name.h"

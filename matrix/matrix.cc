@@ -42,8 +42,8 @@ ircd::m::canon_service
 /// This is an ordered list for loading and unloading modules. This is not the
 /// solution I really want at all so consider it temporary. Modules are loaded
 /// in the order of the lines and unloaded in reverse order.
-decltype(ircd::m::matrix::module_names)
-ircd::m::matrix::module_names
+decltype(ircd::m::module_names)
+ircd::m::module_names
 {
 	"well_known",
 	"web_root",
@@ -183,8 +183,8 @@ ircd::m::matrix::module_names
 
 /// This is a list of modules that are considered "optional" and any loading
 /// error for them will not propagate and interrupt m::init.
-decltype(ircd::m::matrix::module_names_optional)
-ircd::m::matrix::module_names_optional
+decltype(ircd::m::module_names_optional)
+ircd::m::module_names_optional
 {
 	"web_hook",
 };
