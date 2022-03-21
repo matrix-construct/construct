@@ -12,23 +12,36 @@
 #include "construct.h"
 #include "homeserver.h"
 
-construct::homeserver::homeserver(ircd::matrix &matrix,
-                                  struct ircd::m::homeserver::opts opts)
+namespace fs = ircd::fs;
+using ircd::string_view;
+
+construct::homeserver::homeserver(struct ircd::m::homeserver::opts opts)
 try
-:matrix
-{
-	matrix
-}
-,opts
+:opts
 {
 	std::move(opts)
 }
+,module_path
+{
+	fs::path_string(fs::path_views{fs::base::lib, "libircd_matrix"}),
+}
+,module
+{
+	string_view{module_path[0]},
+}
+,init
+{
+	module[0], "ircd::m::homeserver::init",
+}
+,fini
+{
+	module[0], "ircd::m::homeserver::fini",
+}
 ,hs
 {
-	matrix.init(&this->opts),
-	[&matrix](ircd::m::homeserver *const hs)
+	this->init(&this->opts), [this](ircd::m::homeserver *const hs)
 	{
-		matrix.fini(hs);
+		this->fini(hs);
 	}
 }
 {

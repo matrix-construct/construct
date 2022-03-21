@@ -34,7 +34,6 @@ namespace ircd::m
 /// Matrix Protocol System
 namespace ircd::m
 {
-	struct matrix;
 	struct homeserver;
 
 	IRCD_OVERLOAD(generate)
@@ -44,7 +43,6 @@ namespace ircd::m
 	extern const uint16_t canon_port;
 	extern const string_view canon_service;
 
-	using m::matrix;
 	extern const std::vector<string_view> module_names;
 	extern const std::vector<string_view> module_names_optional;
 }
@@ -100,34 +98,3 @@ namespace ircd::m
 #include "burst.h"
 #include "resource.h"
 #include "homeserver.h"
-
-struct ircd::m::matrix
-{
-	static const std::vector<string_view> module_names;
-	static const std::vector<string_view> module_names_optional;
-
-	std::string module_path
-	{
-		fs::path_string(fs::path_views
-		{
-			fs::base::lib, "libircd_matrix"
-		})
-	};
-
-	ircd::module module
-	{
-		module_path
-	};
-
-	using init_proto = m::homeserver *(const struct m::homeserver::opts *);
-	mods::import<init_proto> init
-	{
-		module, "ircd::m::homeserver::init"
-	};
-
-	using fini_proto = void (m::homeserver *);
-	mods::import<fini_proto> fini
-	{
-		module, "ircd::m::homeserver::fini"
-	};
-};

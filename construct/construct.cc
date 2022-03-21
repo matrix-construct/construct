@@ -197,13 +197,10 @@ noexcept try
 	{
 		[&opts](const ircd::main_continuation &main)
 		{
-			// Load the matrix module
-			ircd::matrix matrix;
-
 			// Construct the homeserver.
 			construct::homeserver homeserver
 			{
-				matrix, opts
+				opts
 			};
 
 			// Bail for debug/testing purposes.

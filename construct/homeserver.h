@@ -10,11 +10,17 @@
 
 struct construct::homeserver
 {
-	ircd::matrix &matrix;
+	using init_proto = ircd::m::homeserver *(const struct ircd::m::homeserver::opts *);
+	using fini_proto = void (ircd::m::homeserver *);
+
 	struct ircd::m::homeserver::opts opts;
+	std::string module_path[1];
+	ircd::module module[1];
+	ircd::mods::import<init_proto> init;
+	ircd::mods::import<fini_proto> fini;
 	ircd::custom_ptr<ircd::m::homeserver> hs;
 
   public:
-	homeserver(ircd::matrix &, struct ircd::m::homeserver::opts);
+	homeserver(struct ircd::m::homeserver::opts);
 	~homeserver() noexcept;
 };
