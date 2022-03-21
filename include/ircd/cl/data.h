@@ -40,3 +40,45 @@ struct ircd::cl::data
 	data &operator=(data &&) noexcept;
 	~data() noexcept;
 };
+
+inline
+ircd::cl::data::data(data &&o)
+noexcept
+:handle{std::move(o.handle)}
+,mapped{std::move(o.mapped)}
+{
+	o.handle = nullptr;
+	o.mapped = nullptr;
+}
+
+inline ircd::cl::data &
+ircd::cl::data::operator=(data &&o)
+noexcept
+{
+	this->~data();
+	handle = std::move(o.handle);
+	mapped = std::move(o.mapped);
+	o.handle = nullptr;
+	o.mapped = nullptr;
+	return *this;
+}
+
+inline ircd::cl::data::operator
+mutable_buffer()
+const
+{
+	return
+	{
+		ptr(), size()
+	};
+}
+
+inline ircd::cl::data::operator
+const_buffer()
+const
+{
+	return
+	{
+		ptr(), size()
+	};
+}

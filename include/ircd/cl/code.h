@@ -38,3 +38,21 @@ struct ircd::cl::code
 	code &operator=(code &&) noexcept;
 	~code() noexcept;
 };
+
+inline
+ircd::cl::code::code(code &&o)
+noexcept
+:handle{std::move(o.handle)}
+{
+	o.handle = nullptr;
+}
+
+inline ircd::cl::code &
+ircd::cl::code::operator=(code &&o)
+noexcept
+{
+	this->~code();
+	handle = std::move(o.handle);
+	o.handle = nullptr;
+	return *this;
+}

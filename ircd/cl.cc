@@ -1197,23 +1197,6 @@ catch(const std::exception &e)
 	throw;
 }
 
-ircd::cl::kern::kern(kern &&o)
-noexcept
-:handle{std::move(o.handle)}
-{
-	o.handle = nullptr;
-}
-
-ircd::cl::kern &
-ircd::cl::kern::operator=(kern &&o)
-noexcept
-{
-	this->~kern();
-	handle = std::move(o.handle);
-	o.handle = nullptr;
-	return *this;
-}
-
 ircd::cl::kern::~kern()
 noexcept try
 {
@@ -1435,23 +1418,6 @@ ircd::cl::code::code(const vector_view<const const_buffer> &bins)
 	throw_on_error(err);
 	for(size_t i(0); i < count; ++i)
 		throw_on_error(binerr[i]);
-}
-
-ircd::cl::code::code(code &&o)
-noexcept
-:handle{std::move(o.handle)}
-{
-	o.handle = nullptr;
-}
-
-ircd::cl::code &
-ircd::cl::code::operator=(code &&o)
-noexcept
-{
-	this->~code();
-	handle = std::move(o.handle);
-	o.handle = nullptr;
-	return *this;
 }
 
 ircd::cl::code::~code()
@@ -2034,26 +2000,11 @@ ircd::cl::data::data(data &master,
 	throw_on_error(err);
 }
 
-ircd::cl::data::data(data &&o)
-noexcept
-:handle{std::move(o.handle)}
-{
-	o.handle = nullptr;
-}
-
-ircd::cl::data &
-ircd::cl::data::operator=(data &&o)
-noexcept
-{
-	this->~data();
-	handle = std::move(o.handle);
-	o.handle = nullptr;
-	return *this;
-}
-
 ircd::cl::data::~data()
 noexcept try
 {
+	assert(handle || !mapped);
+
 	if(likely(handle))
 	{
 		const auto size
@@ -2076,20 +2027,6 @@ catch(const std::exception &e)
 	};
 
 	return;
-}
-
-ircd::cl::data::operator
-mutable_buffer()
-const
-{
-	return { ptr(), size() };
-}
-
-ircd::cl::data::operator
-const_buffer()
-const
-{
-	return { ptr(), size() };
 }
 
 char *

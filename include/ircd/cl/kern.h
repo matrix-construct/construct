@@ -61,6 +61,24 @@ ircd::cl::kern::kern(code &c,
 	(this->arg(i++, a), ...);
 }
 
+inline
+ircd::cl::kern::kern(kern &&o)
+noexcept
+:handle{std::move(o.handle)}
+{
+	o.handle = nullptr;
+}
+
+inline ircd::cl::kern &
+ircd::cl::kern::operator=(kern &&o)
+noexcept
+{
+	this->~kern();
+	handle = std::move(o.handle);
+	o.handle = nullptr;
+	return *this;
+}
+
 template<class T>
 inline void
 ircd::cl::kern::arg(const int pos,
