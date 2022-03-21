@@ -111,6 +111,8 @@ const char *const usererrstr
 ***
 )"};
 
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+
 [[noreturn]] static void do_restart(char *const *const &argv, char *const *const &envp);
 static void smoketest_handler(const enum ircd::run::level &);
 static bool startup_checks();
