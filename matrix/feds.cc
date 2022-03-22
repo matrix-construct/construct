@@ -39,7 +39,7 @@ namespace ircd::m::feds
 struct ircd::m::feds::request_base
 {
 	const feds::opts *opts {nullptr};
-	char origin[256];
+	char origin[event::ORIGIN_MAX_SIZE];
 
 	request_base(const feds::opts &opts)
 	:opts{&opts}

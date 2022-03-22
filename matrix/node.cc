@@ -61,7 +61,7 @@ ircd::m::node::room::room(const m::node &node)
 	assert(!empty(this->node.node_id));
 
 	// for compatibility with hashing legacy node_id's
-	char buf[256 + 16];
+	char buf[event::id::buf::SIZE + 16];
 	mutable_buffer mb{buf};
 	consume(mb, copy(mb, "::"_sv));
 	consume(mb, copy(mb, this->node.node_id));
