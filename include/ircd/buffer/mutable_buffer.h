@@ -19,7 +19,7 @@ struct ircd::buffer::mutable_buffer
 {
 	// The definition for this is somewhere in one of the .cc files.
 	/// Conversion offered for the analogous asio buffer.
-	operator boost::asio::mutable_buffer() const;
+	operator boost::asio::mutable_buffer() const noexcept;
 
 	/// Allows boost::spirit to append to the buffer; this means the size() of
 	/// this buffer becomes a consumption counter and the real size of the buffer

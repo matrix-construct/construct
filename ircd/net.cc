@@ -3189,7 +3189,7 @@ ircd::buffer::null_buffers
 
 ircd::buffer::mutable_buffer::operator
 boost::asio::mutable_buffer()
-const
+const noexcept
 {
 	return boost::asio::mutable_buffer
 	{
@@ -3199,7 +3199,7 @@ const
 
 ircd::buffer::const_buffer::operator
 boost::asio::const_buffer()
-const
+const noexcept
 {
 	return boost::asio::const_buffer
 	{

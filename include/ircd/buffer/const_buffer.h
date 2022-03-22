@@ -15,7 +15,7 @@ struct ircd::buffer::const_buffer
 :buffer<const char *>
 {
 	// Definition for this is somewhere in the .cc files where boost is incl.
-	operator boost::asio::const_buffer() const;
+	operator boost::asio::const_buffer() const noexcept;
 
 	// For boost::spirit conceptual compliance; illegal/noop
 	void insert(const char *const &, const char &);
