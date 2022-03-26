@@ -51,9 +51,10 @@ ircd::buffer::unique_buffer<buffer_type>::unique_buffer(const const_buffer &src)
 
 	assert(this->begin() != nullptr);
 	assert(size(src) == size(*this));
+	const auto ptr(std::get<0>(*this));
 	const mutable_buffer dst
 	{
-		const_cast<char *>(this->begin()), size(src)
+		const_cast<char *>(ptr), size(src)
 	};
 
 	copy(dst, src);
@@ -99,7 +100,8 @@ inline
 ircd::buffer::unique_buffer<buffer_type>::~unique_buffer()
 noexcept
 {
-	std::free(const_cast<char *>(this->begin()));
+	const auto ptr(std::get<0>(*this));
+	std::free(const_cast<char *>(ptr));
 }
 
 template<class buffer_type>
