@@ -135,7 +135,6 @@ libircd_la_LIBADD = \
 	@SNAPPY_LIBS@ \
 	@LZ4_LIBS@ \
 	@Z_LIBS@ \
-	@MALLOC_LIBS@ \
 	$(EXTRA_LIBS) \
 	###
 

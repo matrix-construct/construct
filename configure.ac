@@ -2185,7 +2185,6 @@ dnl
 AC_SUBST(MALLOC_CPPFLAGS)
 AC_SUBST(MALLOC_CXXFLAGS)
 AC_SUBST(MALLOC_LDFLAGS)
-AC_SUBST(MALLOC_LIBS)
 alloc_lib="standard"
 
 dnl ALLOC_LIBS true unless --disable-alloc-libs configured
@@ -2194,7 +2193,7 @@ AM_COND_IF([MALLOC_LIBS],
 	AM_COND_IF([JEMALLOC],
 	[
 		alloc_lib="jemalloc"
-		MALLOC_LIBS+=" -ljemalloc"
+		RB_VAR_PREPEND([LIBS], ["-ljemalloc"])
 		AC_DEFINE(IRCD_ALLOCATOR_USE_JEMALLOC, 1, [Use jemalloc as the allocator])
 	], [
 		AC_DEFINE(IRCD_ALLOCATOR_USE_DEFAULT, 1, [Use the default allocator])

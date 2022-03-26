@@ -50,7 +50,6 @@ construct_LDFLAGS = \
 	@BOOST_LDFLAGS@ \
 	@SSL_LDFLAGS@ \
 	@CRYPTO_LDFLAGS@ \
-	@MALLOC_LDFLAGS@ \
 	###
 
 construct_LDADD = \
@@ -58,7 +57,6 @@ construct_LDADD = \
 	@BOOST_LIBS@ \
 	@SSL_LIBS@ \
 	@CRYPTO_LIBS@ \
-	@MALLOC_LIBS@ \
 	$(EXTRA_LIBS) \
 	###
 

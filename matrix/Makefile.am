@@ -33,10 +33,6 @@ AM_LDFLAGS = \
 	$(EXTRA_LDFLAGS) \
 	###
 
-AM_LIBS = \
-	-lircd \
-	###
-
 if GCC
 AM_CXXFLAGS += -ftls-model=local-dynamic
 endif
