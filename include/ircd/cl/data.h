@@ -20,6 +20,8 @@ struct ircd::cl::data
 	void *mapped {nullptr};
 
   public:
+	explicit operator bool() const;
+
 	uint flags() const;
 	size_t size() const;
 	off_t offset() const;
@@ -81,4 +83,11 @@ const
 	{
 		ptr(), size()
 	};
+}
+
+inline ircd::cl::data::operator
+bool()
+const
+{
+	return handle;
 }

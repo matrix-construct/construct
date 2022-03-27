@@ -17,6 +17,8 @@ struct ircd::cl::code
 	void *handle {nullptr};
 
   public:
+	explicit operator bool() const;
+
 	long status() const;
 	size_t devs() const;
 	size_t bins(const vector_view<size_t> &) const;
@@ -55,4 +57,10 @@ noexcept
 	handle = std::move(o.handle);
 	o.handle = nullptr;
 	return *this;
+}
+
+inline ircd::cl::code::operator
+bool() const
+{
+	return handle;
 }

@@ -19,6 +19,8 @@ struct ircd::cl::kern
 	void *handle {nullptr};
 
   public:
+	explicit operator bool() const;
+
 	string_view name(const mutable_buffer &) const;
 	uint argc() const;
 
@@ -89,4 +91,11 @@ ircd::cl::kern::arg(const int pos,
 	{
 		reinterpret_cast<const char *>(&val), sizeof(T)
 	});
+}
+
+inline ircd::cl::kern::operator
+bool()
+const
+{
+	return handle;
 }

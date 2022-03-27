@@ -25,6 +25,8 @@ struct ircd::cl::work
 	static void init(), fini() noexcept;
 
   public:
+	explicit operator bool() const;
+
 	int type() const;
 	string_view name(const mutable_buffer &) const;
 
@@ -88,4 +90,11 @@ noexcept
 	other.context = nullptr;
 
 	return *this;
+}
+
+inline ircd::cl::work::operator
+bool()
+const
+{
+	return handle;
 }
