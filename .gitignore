@@ -6,6 +6,7 @@ Makefile
 *.lo
 *.la
 *.bc
+*.bc.cc
 *.ll
 *.spv
 *.orig
