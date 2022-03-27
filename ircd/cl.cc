@@ -654,7 +654,7 @@ ircd::cl::query_warp_size(cl_context context,
 
 	cl::code code
 	{
-		"__kernel void ircd_test() {}"
+		"__kernel void ircd_test() {}"_sv
 	};
 
 	code.compile();
@@ -1418,6 +1418,30 @@ ircd::cl::code::code(const vector_view<const const_buffer> &bins)
 	throw_on_error(err);
 	for(size_t i(0); i < count; ++i)
 		throw_on_error(binerr[i]);
+}
+
+ircd::cl::code::code(const const_buffer &bc)
+{
+	char pbuf[1][48];
+	log::logf
+	{
+		log, log::level::DEBUG,
+		"code(%p) loading %s bitcode:%p",
+		this,
+		pretty(pbuf[0], si(ircd::size(bc))),
+		ircd::data(bc),
+	};
+
+	int err {CL_SUCCESS};
+	handle = clCreateProgramWithIL
+	(
+		primary,
+		ircd::data(bc),
+		ircd::size(bc),
+		&err
+	);
+
+	throw_on_error(err);
 }
 
 ircd::cl::code::~code()

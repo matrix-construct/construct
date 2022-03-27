@@ -31,6 +31,7 @@ struct ircd::cl::code
 	void link(const string_view &opts = {});
 	void build(const string_view &opts = {});
 
+	explicit code(const const_buffer &bc);
 	explicit code(const vector_view<const const_buffer> &bins);
 	code(const vector_view<const string_view> &srcs);
 	code(const string_view &src);
