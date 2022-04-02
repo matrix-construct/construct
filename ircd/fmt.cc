@@ -1119,6 +1119,13 @@ const
 				{
 					return _precision_ > 0;
 				}
+
+				static int floatfield(const double &)
+				{
+					return _precision_ > 0?
+						fmtflags::fixed:
+						fmtflags::scientific;
+				}
 			};
 
 			karma::rule<char *, double()> rule
