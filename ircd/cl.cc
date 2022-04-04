@@ -182,6 +182,10 @@ ircd::cl::envs
 		{ "name",      "R600_DEBUG"  },
 		{ "default",   "forcedma"    },
 	},
+	{
+		{ "name",      "RADEON_THREAD" },
+		{ "default",   "false"         },
+	},
 };
 
 decltype(ircd::cl::primary_stats)
