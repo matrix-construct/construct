@@ -167,16 +167,23 @@ void
 construct::handle_interrupt()
 try
 {
-	if(ircd::run::level != ircd::run::level::RUN)
+	// The console owns the keyboard and ctrl-c whenever active.
+	if(console::active())
 	{
-		ircd::quit();
+		console::interrupt();
 		return;
 	}
 
-	if(!console::active())
+	// Interrupt/ctrl-c opens the console
+	if(ircd::run::level == ircd::run::level::RUN)
+	{
 		console::spawn();
-	else
-		console::interrupt();
+		return;
+	}
+
+	// Interrupt/ctrl-c can be used to initiate a clean shutdown from any
+	// point in any transitional runlevel.
+	ircd::quit();
 }
 catch(const std::exception &e)
 {
