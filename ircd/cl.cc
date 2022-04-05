@@ -2376,9 +2376,6 @@ ircd::cl::wait_event_offload(work &work,
 		}
 	};
 
-	//char buf[4];
-	//c.status = info<int>(clGetEventInfo, c.event, CL_EVENT_COMMAND_EXECUTION_STATUS, buf);
-
 	assert(c.status == CL_COMPLETE);
 	return c.status;
 }
