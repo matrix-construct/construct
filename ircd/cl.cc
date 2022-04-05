@@ -958,15 +958,14 @@ try
 			write = true;
 			break;
 
-		case std::memory_order_acq_rel:
-			read = true;
-			write = true;
-			break;
-
 		case std::memory_order_seq_cst:
 			read = true;
 			write = true;
 			blocking = true;
+			break;
+
+		case std::memory_order_acq_rel:
+			invalidate = true;
 			break;
 
 		case std::memory_order_release:
@@ -983,6 +982,10 @@ try
 	if(!flags && !data.mapped)
 		return;
 
+	assert(flags || data.mapped);
+	assert(!this->object);
+	this->object = &data;
+
 	auto &q
 	{
 		queue[0][0]
@@ -993,12 +996,8 @@ try
 		make_deps(this, opts)
 	};
 
-	assert(!this->object);
-	this->object = &data;
-
 	int err {CL_SUCCESS};
 	assert(!this->handle);
-	assert(flags || data.mapped);
 	if(flags)
 		data.mapped = clEnqueueMapBuffer
 		(
