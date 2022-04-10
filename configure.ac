@@ -290,6 +290,8 @@ if test "$lto" = "yes"; then
 		lto="no"
 		AC_MSG_RESULT([no, optimizations disabled])
 	])
+else
+	AC_MSG_RESULT([no])
 fi
 
 AM_CONDITIONAL([LTO], [[[[ "$LTO" = "1" ]]]])
@@ -2248,6 +2250,54 @@ AM_CONDITIONAL([LLVM], [test "x$have_libllvm" = "xyes" ])
 
 dnl
 dnl
+dnl LibDRM
+dnl
+dnl
+
+AC_SUBST(DRM_CPPFLAGS, [])
+AC_SUBST(DRM_LDFLAGS, [])
+AC_SUBST(DRM_LIBS, [])
+
+AC_ARG_WITH(drm-includes,
+RB_HELP_STRING([--with-drm-includes=[[[DIR]]]], [Path to DRM include directory]),
+[
+	drm_incdir="$withval"
+	DRM_CPPFLAGS="-isystem $withval"
+], [])
+
+AC_ARG_WITH(drm-libs,
+RB_HELP_STRING([--with-drm-libs=[[[DIR]]]], [Path to DRM library directory]),
+[
+	drm_libdir="$withval"
+	DRM_LDFLAGS="-L$withval"
+], [])
+
+RB_CHK_SYSHEADER([xf86drm.h], [XF86DRM_H])
+RB_CHK_SYSHEADER([drm/drm.h], [DRM_DRM_H])
+PKG_CHECK_MODULES(libdrm, [DRM],
+[
+	have_drm="yes"
+], [
+	AC_CHECK_LIB(drm, drmOpen,
+	[
+		have_drm="yes"
+	], 	[
+		have_drm="no"
+	])
+])
+
+AC_MSG_CHECKING(whether to enable use of any found DRM)
+AM_CONDITIONAL([DRM], [test "x$have_drm" = "xyes"])
+
+AM_COND_IF([DRM],
+[
+	AC_MSG_RESULT([yes])
+	IRCD_DEFINE(USE_DRM, [1], [DRM support is available and enabled])
+	DRM_LIBS+="-ldrm"
+])
+
+dnl
+dnl
 dnl OpenCL
 dnl
 dnl
@@ -2818,6 +2868,7 @@ echo "Sodium support .................... $have_sodium"
 echo "GNU MP support .................... $have_gmp"
 echo "PBC support ....................... $have_pbc"
 echo "LLVM library support .............. $have_libllvm"
+echo "DRM support ....................... $have_drm"
 echo "ARM NN support .................... $have_armnn"
 echo "OpenCL support .................... $have_opencl"
 echo "MesaOpenCL support ................ $have_mesa_opencl"
