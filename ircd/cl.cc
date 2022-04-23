@@ -915,14 +915,14 @@ ircd::cl::exec::exec(data &data,
                      const opts &opts)
 try
 {
-	if(unlikely(run::level != run::level::RUN))
+	if(unlikely(run::level < run::level::RUN))
 		throw unavailable
 		{
 			"Unable to write to device in runlevel %s",
 			reflect(run::level),
 		};
 
-	assert(run::level == run::level::RUN);
+	assert(run::level >= run::level::RUN);
 	const auto max_size
 	{
 		opts.size == -1UL?
