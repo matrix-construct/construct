@@ -37,8 +37,9 @@ struct ircd::cl::code
 	code(const string_view &src);
 	code() = default;
 	code(code &&) noexcept;
-	code &operator=(const code &) = delete;
+	code(const code &) = delete;
 	code &operator=(code &&) noexcept;
+	code &operator=(const code &) = delete;
 	~code() noexcept;
 };
 
@@ -61,7 +62,8 @@ noexcept
 }
 
 inline ircd::cl::code::operator
-bool() const
+bool()
+const
 {
 	return handle;
 }

@@ -1368,6 +1368,8 @@ ircd::cl::code::code(const vector_view<const string_view> &srcs)
 		count,
 	};
 
+	assert(!handle);
+
 	int err {CL_SUCCESS};
 	handle = clCreateProgramWithSource(primary, count, src, len, &err);
 	throw_on_error(err);
@@ -1414,6 +1416,7 @@ ircd::cl::code::code(const vector_view<const const_buffer> &bins)
 
 	assert(len);
 	assert(devs);
+	assert(!handle);
 
 	int err {CL_SUCCESS};
 	int binerr[iov_max + 1] {CL_SUCCESS};
@@ -1434,6 +1437,8 @@ ircd::cl::code::code(const const_buffer &bc)
 		pretty(pbuf[0], si(ircd::size(bc))),
 		ircd::data(bc),
 	};
+
+	assert(!handle);
 
 	int err {CL_SUCCESS};
 	handle = clCreateProgramWithIL
