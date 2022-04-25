@@ -1527,10 +1527,11 @@ try
 		device[0] //TODO: XXX
 	};
 
+	assert(this->handle);
 	const uint num_progs {1};
 	const cl_program progs[]
 	{
-		cl_program(handle)
+		cl_program(this->handle)
 	};
 
 	log::logf
@@ -1550,21 +1551,26 @@ try
 	};
 
 	#ifdef CL_VERSION_1_2
-	handle = clLinkProgram
-	(
-		primary,
-		num_devices,
-		device_list,
-		opts.c_str(),
-		num_progs,
-		progs,
-		cl::build_handle,
-		this,
-		&err
-	);
-	#endif
+	void *handle
+	{
+		clLinkProgram
+		(
+			primary,
+			num_devices,
+			device_list,
+			opts.c_str(),
+			num_progs,
+			progs,
+			cl::build_handle,
+			this,
+			&err
+		)
+	};
 
 	throw_on_error(err);
+	std::swap(handle, this->handle);
+	call(clReleaseProgram, cl_program(handle));
+	#endif
 }
 catch(const opencl_error &e)
 {
