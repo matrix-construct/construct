@@ -314,7 +314,18 @@ noexcept
 ircd::ios::descriptor::~descriptor()
 noexcept
 {
-	assert(!stats || stats->queued == 0);
+	if(likely(stats) && unlikely(stats->queued))
+		log::dwarning
+		{
+			log, "descriptor(%p) '%s' still has %zu queued for execution.",
+			this,
+			name,
+			size_t(stats->queued),
+		};
+
+	// This doesn't leak if the queued object also destructs and the other
+	// assertions hold; the developer warning above should be sufficient.
+	//assert(!stats || stats->queued == 0);
 	assert(!stats || stats->allocs == stats->frees);
 	assert(!stats || stats->alloc_bytes == stats->free_bytes);
 }
