@@ -121,8 +121,36 @@ ircd::simd::u512x1_lane_id
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// simd/debug.h
+// simd/print.h
 //
+
+bool
+ircd::simd::print::output(const mutable_buffer &buf,
+                          const string_view &str,
+                          const bool lf)
+{
+	const auto term
+	{
+		std::min(str.size(), size(buf) - 1)
+	};
+
+	assert(buf[term] == 0x0);
+	buf[term] = lf? '\n': buf[term];
+	const auto len
+	{
+		size(str) + lf
+	};
+
+	size_t wrote {0}, last {0}; do
+	{
+		last = ::fwrite(data(str) + wrote, 1, len - wrote, ::stdout);
+		wrote += last;
+	}
+	while(wrote < len && last > 0); // ensure last!=0 or break for error.
+
+	assert(wrote <= len);
+	return wrote == len;
+}
 
 //
 // Stringify into native integer (register) hex format value for each lane.
