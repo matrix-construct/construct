@@ -49,7 +49,7 @@ namespace ircd::simd
 	/// One of the other functions in this suite must be selected by this
 	/// template to generate the desired string.
 	template<class T,
-	         class F>
+	         class F = decltype(print_mem<T>)>
 	bool
 	print(const T,
 	      F&& printer      = print_mem<T>,
