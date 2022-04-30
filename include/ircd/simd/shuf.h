@@ -44,7 +44,10 @@ noexcept
 		std::is_integral<lane_type<U>>()
 	);
 
-	lane_type<T> out alignas(alignof(T)) [lanes<T>()];
+	lane_type<T> out alignas(alignof(T)) [lanes<T>()]
+	{
+		0
+	};
 
 	for(uint i(0); i < lanes<T>(); ++i)
 		out[dst[i]] = in[src[i]];
