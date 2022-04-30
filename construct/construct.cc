@@ -49,6 +49,7 @@ bool matrix {true}; // matrix server by default.
 bool defaults;
 const char *bootstrap;
 const char *diagnostic;
+bool nobanner;
 
 lgetopt opts[]
 {
@@ -85,6 +86,7 @@ lgetopt opts[]
 	{ "defaults",   &defaults,      lgetopt::BOOL,    "Use configuration defaults without database load for this execution" },
 	{ "bootstrap",  &bootstrap,     lgetopt::STRING,  "Bootstrap fresh database from event vector" },
 	{ "diagnostic", &diagnostic,    lgetopt::STRING,  "Specify a diagnostic type in conjunction with other commands" },
+	{ "nobanner",   &nobanner,      lgetopt::BOOL,    "Terminal log enabled only in runlevel RUN" },
 	{ nullptr,      nullptr,        lgetopt::STRING,  nullptr },
 };
 
@@ -115,6 +117,7 @@ const char *const usererrstr
 
 [[noreturn]] static void do_restart(char *const *const &argv, char *const *const &envp);
 static void smoketest_handler(const enum ircd::run::level &);
+static void nobanner_handler(const enum ircd::run::level &);
 static bool startup_checks();
 static void applyargs();
 static void enable_coredumps();
@@ -212,12 +215,11 @@ noexcept try
 		}
 	};
 
-	// The smoketest uses this ircd::run::level callback to set a flag when
-	// each ircd::run::level is reached. All flags must be set to pass. The
-	// smoketest is inert unless the -smoketest program option is used.
-	const ircd::run::changed smoketester
+	// These callbacks are invoked at each ircd::run::level transition.
+	const ircd::run::changed runlevel_changed[]
 	{
-		smoketest_handler
+		{ smoketest_handler  },
+		{ nobanner_handler   },
 	};
 
 	// This is the sole io_context for Construct, and the ios.run() below is the
@@ -430,6 +432,9 @@ do_restart(char *const *const &_argv,
 	__builtin_unreachable();
 }
 
+/// The smoketest uses this ircd::run::level callback to set a flag when
+/// each ircd::run::level is reached. All flags must be set to pass. The
+/// smoketest is inert unless the -smoketest program option is used.
 void
 smoketest_handler(const enum ircd::run::level &level)
 {
@@ -455,6 +460,25 @@ smoketest_handler(const enum ircd::run::level &level)
 	{
 		descriptor, ircd::ios::defer, ircd::quit
 	};
+}
+
+/// Allows log messages only during ircd::run::level::RUN.
+void
+nobanner_handler(const enum ircd::run::level &level)
+{
+	if(nobanner) switch(level)
+	{
+		case ircd::run::level::RUN:
+			ircd::log::console_enable();
+			break;
+
+		case ircd::run::level::QUIT:
+			ircd::log::console_disable();
+			break;
+
+		default:
+			break;
+	}
 }
 
 /// These operations are safe to call before ircd::init() and anytime after
@@ -549,7 +573,7 @@ applyargs()
 	if(soft_assert)
 		ircd::soft_assert.set("true");
 
-	if(quietmode)
+	if(quietmode || nobanner)
 		ircd::log::console_disable();
 }
 
