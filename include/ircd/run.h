@@ -83,12 +83,14 @@ enum class ircd::run::level
 struct ircd::run::changed
 :instance_list<ircd::run::changed>
 {
-	static ctx::dock dock;
+	using handler_proto = void (const enum level &);
 
 	static const enum level single_sentinel
 	{
 		std::numeric_limits<std::underlying_type<enum level>::type>::max()
 	};
+
+	static ctx::dock dock;
 
 	enum level single
 	{
@@ -96,7 +98,7 @@ struct ircd::run::changed
 	};
 
 	std::function<void ()> handler_one;
-	std::function<void (const enum level &)> handler
+	std::function<handler_proto> handler
 	{
 		[this](const auto &level)
 		{
