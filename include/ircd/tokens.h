@@ -18,14 +18,14 @@ namespace ircd
 	// to allocate and copy the token with null termination.
 	using token_view = closure_bool<std::function, const string_view &>;
 
-	bool tokens(const string_view &str, const char &sep, const token_view &);
+	bool tokens(const string_view &str, const char sep, const token_view &);
 	bool tokens(const string_view &str, const string_view &sep, const token_view &);
 
-	size_t tokens(const string_view &str, const char &sep, const size_t &limit, const token_view &);
-	size_t tokens(const string_view &str, const string_view &sep, const size_t &limit, const token_view &);
+	size_t tokens(const string_view &str, const char sep, const size_t limit, const token_view &);
+	size_t tokens(const string_view &str, const string_view &sep, const size_t limit, const token_view &);
 
 	// Copies tokens into your buffer and null terminates strtok() style. Returns BYTES of buf consumed.
-	size_t tokens(const string_view &str, const char &sep, const mutable_buffer &buf, const token_view &);
+	size_t tokens(const string_view &str, const char sep, const mutable_buffer &buf, const token_view &);
 	size_t tokens(const string_view &str, const string_view &sep, const mutable_buffer &buf, const token_view &);
 
 	// Receive token view into iterator range
@@ -81,29 +81,29 @@ namespace ircd
 // Tools
 namespace ircd
 {
-	size_t token_count(const string_view &str, const char &sep);
+	size_t token_count(const string_view &str, const char sep);
 	size_t token_count(const string_view &str, const string_view &sep);
 
-	bool token_exists(const string_view &str, const char &sep, const string_view &token);
+	bool token_exists(const string_view &str, const char sep, const string_view &token);
 	bool token_exists(const string_view &str, const string_view &sep, const string_view &token);
 
-	string_view token(const string_view &str, const char &sep, const size_t &at);
-	string_view token(const string_view &str, const string_view &sep, const size_t &at);
+	string_view token(const string_view &str, const char sep, const size_t at);
+	string_view token(const string_view &str, const string_view &sep, const size_t at);
 
-	string_view token(const string_view &str, const char &sep, const size_t &at, const string_view &def);
-	string_view token(const string_view &str, const string_view &sep, const size_t &at, const string_view &def);
+	string_view token(const string_view &str, const char sep, const size_t at, const string_view &def);
+	string_view token(const string_view &str, const string_view &sep, const size_t at, const string_view &def);
 
-	string_view token_last(const string_view &str, const char &sep);
+	string_view token_last(const string_view &str, const char sep);
 	string_view token_last(const string_view &str, const string_view &sep);
 
-	string_view token_first(const string_view &str, const char &sep);
+	string_view token_first(const string_view &str, const char sep);
 	string_view token_first(const string_view &str, const string_view &sep);
 
-	string_view tokens_after(const string_view &str, const char &sep, const ssize_t &at = 0);
-	string_view tokens_after(const string_view &str, const string_view &sep, const ssize_t &at = 0);
+	string_view tokens_after(const string_view &str, const char sep, const ssize_t at = 0);
+	string_view tokens_after(const string_view &str, const string_view &sep, const ssize_t at = 0);
 
-	string_view tokens_before(const string_view &str, const char &sep, const size_t &at = 0);
-	string_view tokens_before(const string_view &str, const string_view &sep, const size_t &at = 0);
+	string_view tokens_before(const string_view &str, const char sep, const size_t at = 0);
+	string_view tokens_before(const string_view &str, const string_view &sep, const size_t at = 0);
 }
 
 template<size_t N,

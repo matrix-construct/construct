@@ -19,7 +19,7 @@ namespace ircd
 struct [[gnu::visibility("internal")]]
 ircd::string_separator
 {
-	string_view delim;
+	const string_view &delim;
 
 	template<class iterator,
 	         class token>
@@ -33,7 +33,7 @@ ircd::string_separator
 struct [[gnu::visibility("internal")]]
 ircd::char_separator
 {
-	char delim;
+	const char &delim;
 
 	template<class iterator,
 	         class token>
@@ -50,8 +50,8 @@ ircd::char_separator
 
 ircd::string_view
 ircd::tokens_before(const string_view &str,
-                    const char &sep,
-                    const size_t &i)
+                    const char sep,
+                    const size_t i)
 {
 	assert(sep != '\0');
 	const char _sep[2]
@@ -65,7 +65,7 @@ ircd::tokens_before(const string_view &str,
 ircd::string_view
 ircd::tokens_before(const string_view &str,
                     const string_view &sep,
-                    const size_t &i)
+                    const size_t i)
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
@@ -90,8 +90,8 @@ ircd::tokens_before(const string_view &str,
 
 ircd::string_view
 ircd::tokens_after(const string_view &str,
-                   const char &sep,
-                   const ssize_t &i)
+                   const char sep,
+                   const ssize_t i)
 {
 	assert(sep != '\0');
 	const char _sep[2]
@@ -105,7 +105,7 @@ ircd::tokens_after(const string_view &str,
 ircd::string_view
 ircd::tokens_after(const string_view &str,
                    const string_view &sep,
-                   const ssize_t &i)
+                   const ssize_t i)
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
@@ -130,7 +130,7 @@ ircd::tokens_after(const string_view &str,
 
 ircd::string_view
 ircd::token_first(const string_view &str,
-                  const char &sep)
+                  const char sep)
 {
 	assert(sep != '\0');
 	const char _sep[2]
@@ -150,7 +150,7 @@ ircd::token_first(const string_view &str,
 
 ircd::string_view
 ircd::token_last(const string_view &str,
-                 const char &sep)
+                 const char sep)
 {
 	assert(sep != '\0');
 	const char _sep[2]
@@ -188,8 +188,8 @@ ircd::token_last(const string_view &str,
 
 ircd::string_view
 ircd::token(const string_view &str,
-            const char &sep,
-            const size_t &i,
+            const char sep,
+            const size_t i,
             const string_view &def)
 try
 {
@@ -203,7 +203,7 @@ catch(const std::out_of_range &)
 ircd::string_view
 ircd::token(const string_view &str,
             const string_view &sep,
-            const size_t &i,
+            const size_t i,
             const string_view &def)
 try
 {
@@ -216,8 +216,8 @@ catch(const std::out_of_range &)
 
 ircd::string_view
 ircd::token(const string_view &str,
-            const char &sep,
-            const size_t &i)
+            const char sep,
+            const size_t i)
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
@@ -235,7 +235,7 @@ ircd::token(const string_view &str,
 ircd::string_view
 ircd::token(const string_view &str,
             const string_view &sep,
-            const size_t &i)
+            const size_t i)
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
@@ -252,7 +252,7 @@ ircd::token(const string_view &str,
 
 bool
 ircd::token_exists(const string_view &str,
-                   const char &sep,
+                   const char sep,
                    const string_view &tok)
 {
 	using type = string_view;
@@ -288,7 +288,7 @@ ircd::token_exists(const string_view &str,
 
 size_t
 ircd::token_count(const string_view &str,
-                  const char &sep)
+                  const char sep)
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
@@ -322,7 +322,7 @@ ircd::token_count(const string_view &str,
 
 size_t
 ircd::tokens(const string_view &str,
-             const char &sep_,
+             const char sep_,
              const mutable_buffer &buf,
              const token_view &closure)
 {
@@ -366,8 +366,8 @@ ircd::tokens(const string_view &str,
 
 size_t
 ircd::tokens(const string_view &str,
-             const char &sep,
-             const size_t &limit,
+             const char sep,
+             const size_t limit,
              const token_view &closure)
 {
 	using type = string_view;
@@ -391,7 +391,7 @@ ircd::tokens(const string_view &str,
 size_t
 ircd::tokens(const string_view &str,
              const string_view &sep,
-             const size_t &limit,
+             const size_t limit,
              const token_view &closure)
 {
 	using type = string_view;
@@ -414,7 +414,7 @@ ircd::tokens(const string_view &str,
 
 bool
 ircd::tokens(const string_view &str,
-             const char &sep,
+             const char sep,
              const token_view &closure)
 {
 	using type = string_view;
