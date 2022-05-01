@@ -246,11 +246,11 @@ ircd::cl::init::init()
 	if(!init_devices())
 		return;
 
-	// Report the devices.
-	log_dev_info();
-
 	// Various other inits.
 	init_ctxs();
+
+	// Report the devices.
+	log_dev_info();
 }
 
 ircd::cl::init::~init()
@@ -658,6 +658,7 @@ ircd::cl::log_dev_info(const uint i,
 uint
 ircd::cl::query_warp_size(cl_context context,
                           cl_device_id device)
+try
 {
 	//TODO: XXX
 	assert(primary);
@@ -677,6 +678,27 @@ ircd::cl::query_warp_size(cl_context context,
 	};
 
 	return kern.preferred_group_size_multiple(device);
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const ctx::terminated &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::logf
+	{
+		log, log::level::DWARNING,
+		"context(%p): device(%p): Failed to query warp size :%s",
+		static_cast<const void *>(context),
+		static_cast<const void *>(device),
+		e.what(),
+	};
+
+	return 0;
 }
 
 ircd::string_view
