@@ -13,6 +13,7 @@
 namespace ircd
 {
 	struct string_separator;
+	struct char_separator;
 };
 
 struct [[gnu::visibility("internal")]]
@@ -27,6 +28,20 @@ ircd::string_separator
 
 	string_separator(const string_view &delim) noexcept;
 	~string_separator() noexcept;
+};
+
+struct [[gnu::visibility("internal")]]
+ircd::char_separator
+{
+	char delim;
+
+	template<class iterator,
+	         class token>
+	bool operator()(iterator &next, iterator end, token &ret) const noexcept;
+	void reset() noexcept;
+
+	char_separator(const char &delim) noexcept;
+	~char_separator() noexcept;
 };
 
 //
@@ -206,15 +221,9 @@ ircd::token(const string_view &str,
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
-	using delim = boost::char_separator<char>;
+	using delim = char_separator;
 
-	assert(sep != '\0');
-	const char _sep[2]
-	{
-		sep, '\0'
-	};
-
-	const delim d{_sep};
+	const delim d{sep};
 	const boost::tokenizer<delim, iter, type> view
 	{
 		str, d
@@ -248,15 +257,9 @@ ircd::token_exists(const string_view &str,
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
-	using delim = boost::char_separator<char>;
+	using delim = char_separator;
 
-	assert(sep != '\0');
-	const char _sep[2]
-	{
-		sep, '\0'
-	};
-
-	const delim d{_sep};
+	const delim d{sep};
 	const boost::tokenizer<delim, iter, type> view
 	{
 		str, d
@@ -289,15 +292,9 @@ ircd::token_count(const string_view &str,
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
-	using delim = boost::char_separator<char>;
+	using delim = char_separator;
 
-	assert(sep != '\0');
-	const char _sep[2]
-	{
-		sep, '\0'
-	};
-
-	const delim d{_sep};
+	const delim d{sep};
 	const boost::tokenizer<delim, iter, type> view
 	{
 		str, d
@@ -325,17 +322,22 @@ ircd::token_count(const string_view &str,
 
 size_t
 ircd::tokens(const string_view &str,
-             const char &sep,
+             const char &sep_,
              const mutable_buffer &buf,
              const token_view &closure)
 {
-	assert(sep != '\0');
+	assert(sep_ != '\0');
 	const char _sep[2]
 	{
-		sep, '\0'
+		sep_, '\0'
 	};
 
-	return tokens(str, _sep, buf, closure);
+	const string_view sep
+	{
+		_sep
+	};
+
+	return tokens(str, sep, buf, closure);
 }
 
 size_t
@@ -370,15 +372,9 @@ ircd::tokens(const string_view &str,
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
-	using delim = boost::char_separator<char>;
+	using delim = char_separator;
 
-	assert(sep != '\0');
-	const char _sep[2]
-	{
-		sep, '\0'
-	};
-
-	const delim d{_sep};
+	const delim d{sep};
 	const boost::tokenizer<delim, iter, type> view
 	{
 		str, d
@@ -423,15 +419,9 @@ ircd::tokens(const string_view &str,
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
-	using delim = boost::char_separator<char>;
+	using delim = char_separator;
 
-	assert(sep != '\0');
-	const char _sep[2]
-	{
-		sep, '\0'
-	};
-
-	const delim d{_sep};
+	const delim d{sep};
 	const boost::tokenizer<delim, iter, type> view
 	{
 		str, d
@@ -497,6 +487,59 @@ bool
 ircd::string_separator::operator()(iterator &start,
                                    iterator stop,
                                    token &ret)
+const noexcept
+{
+	do
+	{
+		if(start == stop)
+			return false;
+
+		const string_view input
+		{
+			start, stop
+		};
+
+		string_view remain;
+		std::tie(ret, remain) = ircd::split(input, delim);
+		start = remain?
+			begin(remain):
+			stop;
+	}
+	while(!ret);
+	return true;
+}
+
+//
+// char_separator
+//
+
+ircd::char_separator::char_separator(const char &delim)
+noexcept
+:delim
+{
+	delim
+}
+{
+}
+
+ircd::char_separator::~char_separator()
+noexcept
+{
+}
+
+void
+ircd::char_separator::reset()
+noexcept
+{
+	//TODO: ???
+}
+
+template<class iterator,
+         class token>
+bool
+ircd::char_separator::operator()(iterator &start,
+                                 iterator stop,
+                                 token &ret)
 const noexcept
 {
 	do
