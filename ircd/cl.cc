@@ -21,6 +21,7 @@ namespace ircd::cl
 	template<class T = string_view, int maybe = CL_SUCCESS, class F, class id, class param> static T info(F&&, const id &, const param &, const mutable_buffer &, T default_ = {});
 	template<class T = string_view, int maybe = CL_SUCCESS, class F, class id0, class id1, class param> static T info(F&&, const id0 &, const id1 &, const param &, const mutable_buffer &, T default_ = {});
 
+	static string_view version_str(const mutable_buffer &, const cl_version);
 	static uint query_warp_size(cl_context, cl_device_id);
 }
 
@@ -529,13 +530,19 @@ ircd::cl::log_dev_info(const uint i,
 		j,
 	};
 
+	const uint numeric_ver[]
+	{
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NUMERIC_VERSION, buf[0]),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_OPENCL_C_NUMERIC_VERSION_KHR, buf[1]),
+	};
+
 	log::info
 	{
-		log, "%s OpenCL cl:%03d clc:%03u dev:%03u :%s :%s :%s :%s",
+		log, "%s cl:%03u clc:%s dev:%s :%s :%s :%s :%s",
 		string_view{head},
 		CL_TARGET_OPENCL_VERSION,
-		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_OPENCL_C_NUMERIC_VERSION_KHR, buf[0]),
-		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NUMERIC_VERSION, buf[1]),
+		version_str(buf[0], numeric_ver[0]),
+		version_str(buf[1], numeric_ver[1]),
 		info(clGetDeviceInfo, dev, CL_DEVICE_VERSION, buf[2]),
 		info(clGetDeviceInfo, dev, CL_DRIVER_VERSION, buf[3]),
 		info(clGetDeviceInfo, dev, CL_DEVICE_VENDOR, buf[4]),
@@ -670,6 +677,19 @@ ircd::cl::query_warp_size(cl_context context,
 	};
 
 	return kern.preferred_group_size_multiple(device);
+}
+
+ircd::string_view
+ircd::cl::version_str(const mutable_buffer &buf,
+                      const cl_version val)
+{
+	return fmt::sprintf
+	{
+		buf, "%u.%u.%u",
+		CL_VERSION_MAJOR(val),
+		CL_VERSION_MINOR(val),
+		CL_VERSION_PATCH(val),
+	};
 }
 
 //
