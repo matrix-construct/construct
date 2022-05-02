@@ -243,6 +243,7 @@ noexcept try
 	// without having to send a ctrl-c for it, that is provided here. This does
 	// not actually take effect until it's processed in the ios.run() below.
 	if(cmdline || !execute.empty())
+		construct::console::interactive_when_done = cmdline,
 		construct::console::spawn();
 
 	// If the user wants to immediately process console commands

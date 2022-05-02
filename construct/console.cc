@@ -74,6 +74,9 @@ construct::console::queue;
 decltype(construct::console::quit_when_done)
 construct::console::quit_when_done;
 
+decltype(construct::console::interactive_when_done)
+construct::console::interactive_when_done;
+
 bool
 construct::console::spawn()
 {
@@ -195,10 +198,13 @@ construct::console::handle_queued()
 		if(!next_command())
 			break;
 
-	if(!quit_when_done)
+	if(run::level != run::level::RUN)
 		return true;
 
-	if(run::level != run::level::RUN)
+	if(interactive_when_done)
+		return false;
+
+	if(!quit_when_done)
 		return true;
 
 	static ircd::ios::descriptor descriptor

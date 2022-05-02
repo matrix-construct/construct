@@ -20,6 +20,7 @@ struct construct::console
 	static std::once_flag seen_message;
 	static std::deque<std::string> queue;
 	static bool quit_when_done;
+	static bool interactive_when_done;
 
 	std::string line;
 	std::string record_path;
