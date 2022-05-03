@@ -39,6 +39,18 @@
 #endif
 
 //
+// Assume
+//
+
+#ifndef assume
+    #if __has_builtin(__builtin_assume)
+        #define assume(x) assert(x); __builtin_assume(x);
+    #else
+        #define assume(x) assert(x);
+    #endif
+#endif
+
+//
 // 128 bit integer support
 //
 
