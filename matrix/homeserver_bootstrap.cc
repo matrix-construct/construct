@@ -202,6 +202,7 @@ try
 	fs::map::opts map_opts(fileopts);
 	map_opts.sequential = true;
 	map_opts.huge2mb = true;
+	map_opts.huge1gb = true;
 	const fs::map map
 	{
 		file, map_opts
@@ -317,8 +318,6 @@ try
 
 		count += i;
 
-		auto opts(map_opts);
-		opts.offset = ebytes[0];
 		const size_t incore
 		{
 			ebytes[1] > ebytes[0]?
@@ -327,7 +326,9 @@ try
 		};
 
 		// advise dontneed
-		ebytes[0] += evict(map, incore, opts);
+		if(likely(!validate_json_only))
+			ebytes[0] += evict(map, incore, ebytes[0]);
+
 		if(count % (batch_max * 256) != 0)
 			continue;
 
@@ -338,7 +339,7 @@ try
 
 		const auto elapsed
 		{
-			stopwatch.at<seconds>().count()
+			stopwatch.at<milliseconds>().count()
 		};
 
 		log::info
@@ -349,12 +350,14 @@ try
 			eval.faulted,
 			pretty(pbuf[0], iec(ebytes[1])),
 			stopwatch.pretty(pbuf[1]),
-			(count / std::max(elapsed, 1L)),
-			pretty(pbuf[2], iec(ebytes[1] / std::max(elapsed, 1L)), 1),
-			pretty(pbuf[3], iec(db_bytes / std::max(elapsed, 1L)), 1),
+			(count / std::max(elapsed, 1L)) * 1000,
+			pretty(pbuf[2], iec((ebytes[1] / std::max(elapsed, 1L)) * 1000), 1),
+			pretty(pbuf[3], iec((db_bytes / std::max(elapsed, 1L)) * 1000), 1),
 		};
 
-		ctx::yield();
+		if(likely(!validate_json_only))
+			ctx::yield();
+
 		ctx::interruption_point();
 	}
 	catch(const json::parse_error &e)
