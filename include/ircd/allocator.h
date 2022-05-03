@@ -22,6 +22,7 @@ namespace ircd::allocator
 	struct state;
 	struct scope;
 	struct profile;
+	struct aligned_alloc;
 	template<class T = void> struct callback;
 	template<class T = char> struct dynamic;
 	template<class T = char, size_t = 512> struct fixed;
@@ -57,8 +58,8 @@ namespace ircd::allocator
 	void protect(const const_buffer &, const bool = true);
 	void readonly(const mutable_buffer &, const bool = true);
 
-	std::unique_ptr<char, decltype(&std::free)>
-	aligned_alloc(const size_t &align, const size_t &size);
+	[[using gnu: malloc, alloc_align(1), alloc_size(2), returns_nonnull, warn_unused_result]]
+	char *allocate(const size_t align, const size_t size);
 }
 
 /// jemalloc specific suite; note that some of the primary ircd::allocator
@@ -73,6 +74,18 @@ namespace ircd
 	using allocator::aligned_alloc;
 	using allocator::incore;
 }
+
+struct ircd::allocator::aligned_alloc
+:std::unique_ptr<char, decltype(&std::free)>
+{
+	aligned_alloc(const size_t &align, const size_t &size)
+	:std::unique_ptr<char, decltype(&std::free)>
+	{
+		allocate(align?: sizeof(void *), pad_to(size, align?: sizeof(void *))),
+		&std::free
+	}
+	{}
+};
 
 /// Profiling counters. The purpose of this device is to gauge whether unwanted
 /// or non-obvious allocations are taking place for a specific section. This

@@ -44,28 +44,14 @@ namespace ircd::allocator
 	static_assert(MADV_DONTNEED == POSIX_MADV_DONTNEED);
 #endif
 
-std::unique_ptr<char, decltype(&std::free)>
-ircd::allocator::aligned_alloc(const size_t &alignment_,
-                               const size_t &size_)
+[[gnu::hot]]
+char *
+ircd::allocator::allocate(const size_t alignment,
+                          const size_t size)
 {
-	constexpr auto align_default
-	{
-		sizeof(void *)
-	};
-
-	const auto alignment
-	{
-		alignment_?: align_default
-	};
-
-	const auto size
-	{
-		pad_to(size_, alignment)
-	};
-
-	assert(size % alignment == 0);
-	assert(size < size_ + alignment);
-	assert(alignment % sizeof(void *) == 0);
+	assume(alignment > 0);
+	assume(size % alignment == 0);
+	assume(alignment % sizeof(void *) == 0);
 
 	void *ret;
 	switch(int errc(::posix_memalign(&ret, alignment, size)); errc)
@@ -95,10 +81,7 @@ ircd::allocator::aligned_alloc(const size_t &alignment_,
 	this_thread.alloc_count++;
 	#endif
 
-	return
-	{
-		reinterpret_cast<char *>(ret), &std::free
-	};
+	return reinterpret_cast<char *>(ret);
 }
 
 void

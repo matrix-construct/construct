@@ -14,8 +14,8 @@
 // Fwd decl; circ dep.
 namespace ircd::allocator
 {
-	std::unique_ptr<char, decltype(&std::free)>
-	aligned_alloc(const size_t &align, const size_t &size);
+	[[using gnu: malloc, alloc_align(1), alloc_size(2), returns_nonnull, warn_unused_result]]
+	char *allocate(const size_t align, const size_t size);
 }
 
 /// Like unique_ptr, this template holds ownership of an allocated buffer
@@ -42,9 +42,9 @@ struct ircd::buffer::unique_buffer
 template<class buffer_type>
 inline
 ircd::buffer::unique_buffer<buffer_type>::unique_buffer(const const_buffer &src)
-:buffer_type
+:unique_buffer
 {
-	allocator::aligned_alloc(0, ircd::buffer::size(src)).release(), ircd::buffer::size(src)
+	ircd::buffer::size(src)
 }
 {
 	using ircd::buffer::size;
@@ -63,10 +63,11 @@ ircd::buffer::unique_buffer<buffer_type>::unique_buffer(const const_buffer &src)
 template<class buffer_type>
 inline
 ircd::buffer::unique_buffer<buffer_type>::unique_buffer(const size_t &size,
-                                                        const size_t &align)
+                                                        const size_t &a)
 :buffer_type
 {
-	allocator::aligned_alloc(align, size).release(), size
+	allocator::allocate(a?: sizeof(void *), pad_to(size, a?: sizeof(void *))),
+	size
 }
 {}
 
