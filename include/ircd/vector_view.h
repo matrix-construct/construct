@@ -136,7 +136,11 @@ struct ircd::vector_view
 	{}
 
 	vector_view() noexcept = default;
+
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wdeprecated-copy"
 	vector_view &operator=(const vector_view &) noexcept = default;
+	#pragma GCC diagnostic pop
 };
 
 template<class T>
