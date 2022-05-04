@@ -952,7 +952,7 @@ namespace ircd::fs
 	static int flags(const read_opts &opts);
 	static size_t _read_preadv2(const fd &, const const_iovec_view &, const read_opts &);
 	static size_t _read_preadv(const fd &, const const_iovec_view &, const read_opts &);
-	static size_t read(const fd &, const const_iovec_view &, const read_opts &);
+	static size_t _read(const fd &, const const_iovec_view &, const read_opts &);
 }
 
 /// Read from file descriptor fd into buffers. The number of bytes read into
@@ -995,7 +995,7 @@ ircd::fs::read(const fd &fd,
 
 		const size_t last
 		{
-			read(fd, iov, opts)
+			_read(fd, iov, opts)
 		};
 
 		if(!opts_.blocking && !last)
@@ -1017,16 +1017,10 @@ ircd::fs::read(const fd &fd,
 }
 #pragma GCC diagnostic pop
 
-/// Lowest-level'ish read() call. This call only conducts a single operation
-/// (no looping) and can return a partial read(). It does have branches
-/// for various read_opts. The arguments involve `struct ::iovec` which
-/// we do not expose to the ircd.h API; thus this function is internal to
-/// ircd::fs. There is no reason to use this function in lieu of the public
-/// fs::read() suite.
 size_t
-ircd::fs::read(const fd &fd,
-               const const_iovec_view &iov,
-               const read_opts &opts)
+ircd::fs::_read(const fd &fd,
+                const const_iovec_view &iov,
+                const read_opts &opts)
 {
 	assert(opts.op == op::READ);
 
@@ -1349,7 +1343,7 @@ namespace ircd::fs
 	static int flags(const write_opts &opts);
 	static size_t _write_pwritev2(const fd &, const const_iovec_view &, const write_opts &);
 	static size_t _write_pwritev(const fd &, const const_iovec_view &, const write_opts &);
-	static size_t write(const fd &, const const_iovec_view &, const write_opts &);
+	static size_t _write(const fd &, const const_iovec_view &, const write_opts &);
 }
 
 #pragma GCC diagnostic push
@@ -1381,7 +1375,7 @@ ircd::fs::write(const fd &fd,
 
 		const size_t last
 		{
-			write(fd, iov, opts)
+			_write(fd, iov, opts)
 		};
 
 		opts.offset += last;
@@ -1398,16 +1392,10 @@ ircd::fs::write(const fd &fd,
 }
 #pragma GCC diagnostic pop
 
-/// Lowest-level'ish write() call. This call only conducts a single operation
-/// (no looping) and can return early with a partial write(). It does have
-/// branches for various write_opts. The arguments involve `struct ::iovec`
-/// which we do not expose to the ircd.h API; thus this function is internal to
-/// ircd::fs. There is no reason to use this function in lieu of the public
-/// fs::read() suite.
 size_t
-ircd::fs::write(const fd &fd,
-                const const_iovec_view &iov,
-                const write_opts &opts)
+ircd::fs::_write(const fd &fd,
+                 const const_iovec_view &iov,
+                 const write_opts &opts)
 {
 	assert(opts.op == op::WRITE);
 
