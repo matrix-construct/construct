@@ -2166,6 +2166,17 @@ const
 	return info<uint>(clGetMemObjectInfo, cl_mem(mutable_cast(handle)), CL_MEM_FLAGS, buf);
 }
 
+void *
+ircd::cl::data::master()
+const
+{
+	assert(handle);
+
+	char buf[sizeof(void *)] {0};
+	constexpr auto qtype(CL_MEM_ASSOCIATED_MEMOBJECT);
+	return info<cl_mem>(clGetMemObjectInfo, cl_mem(mutable_cast(handle)), qtype, buf);
+}
+
 //
 // cl::work (event)
 //

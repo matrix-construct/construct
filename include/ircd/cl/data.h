@@ -22,6 +22,7 @@ struct ircd::cl::data
   public:
 	explicit operator bool() const;
 
+	void *master() const;
 	uint flags() const;
 	size_t size() const;
 	off_t offset() const;
