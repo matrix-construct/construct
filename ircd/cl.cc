@@ -2059,18 +2059,25 @@ ircd::cl::data::data(data &master,
 		return;
 
 	cl_buffer_region region {0};
-	region.origin = slice.second;
 	region.size = slice.first;
+	region.origin = master.offset() + slice.second;
+
 	if(!region.size)
 		return;
 
+	const auto root
+	{
+		master.master()?: master.handle
+	};
+
 	assert(aligned(region.origin, size_t(gart_page_size)));
 	assert(padded(region.size, size_t(gart_page_size)));
+	assert(root);
 
 	int err {CL_SUCCESS};
 	handle = clCreateSubBuffer
 	(
-		cl_mem(master.handle),
+		cl_mem(root),
 		cl_mem_flags{0},
 		type,
 		&region,
