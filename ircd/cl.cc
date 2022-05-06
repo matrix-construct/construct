@@ -1219,16 +1219,17 @@ try
 
 	char buf[1][16];
 	char pbuf[2][48];
-	log::debug
-	{
-		log, "kernel stack %s local %s group:%zu pref:%zu comp:%zu:%zu:%zu :%s",
-		pretty(pbuf[0], iec(stack_mem_size())),
-		pretty(pbuf[1], iec(local_mem_size())),
-		group_size(),
-		preferred_group_size_multiple(),
-		cgs[0], cgs[1], cgs[2],
-		name,
-	};
+	if constexpr((false))
+		log::debug
+		{
+			log, "kernel stack %s local %s group:%zu pref:%zu comp:%zu:%zu:%zu :%s",
+			pretty(pbuf[0], iec(stack_mem_size())),
+			pretty(pbuf[1], iec(local_mem_size())),
+			group_size(),
+			preferred_group_size_multiple(),
+			cgs[0], cgs[1], cgs[2],
+			name,
+		};
 }
 catch(const std::exception &e)
 {
