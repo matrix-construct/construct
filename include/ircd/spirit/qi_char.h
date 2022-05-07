@@ -1,7 +1,7 @@
 // The Construct
 //
 // Copyright (C) The Construct Developers, Authors & Contributors
-// Copyright (C) 2016-2020 Jason Volk <jason@zemos.net>
+// Copyright (C) 2016-2022 Jason Volk <jason@zemos.net>
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -9,7 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_SPIRIT_CHAR_H
+#define HAVE_IRCD_SPIRIT_QI_CHAR_H
 
 #if defined(__clang__)
 template<class Derived>

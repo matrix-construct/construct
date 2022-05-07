@@ -23,6 +23,7 @@ namespace spirit
 __attribute__((visibility("internal")))
 {
 	namespace phx = boost::phoenix;
+	namespace proto = boost::proto;
 	namespace fusion = boost::fusion;
 	namespace spirit = boost::spirit;
 	namespace ascii = spirit::ascii;
