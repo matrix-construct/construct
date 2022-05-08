@@ -2,11 +2,15 @@ tags
 Makefile
 *~
 *.o
+*.s
+*.i
+*.ii
 *.so
 *.lo
 *.la
 *.bc
 *.bc.cc
+*.spv.cc
 *.ll
 *.spv
 *.orig
