@@ -167,9 +167,10 @@ ircd::gpt::pipe::code::from_bitcode(const string_view &link_opts)
 	};
 
 	char pbuf[1][48];
-	log::debug
+	log::logf
 	{
-		log, "bitcode %p %s link_opts:%zu attempting...",
+		log, log::level::DEBUG,
+		"bitcode %p %s link_opts:%zu attempting...",
 		data(bitcode),
 		pretty(pbuf[0], si(size(bitcode))),
 		size(link_opts),
@@ -220,9 +221,10 @@ ircd::gpt::pipe::code::from_source(const string_view &comp_opts,
 	);
 
 	char pbuf[1][48];
-	log::debug
+	log::logf
 	{
-		log, "source code `%s' %s comp_opts:%zu link_opts:%zu attempting...",
+		log, log::level::DEBUG,
+		"source code `%s' %s comp_opts:%zu link_opts:%zu attempting...",
 		code_path,
 		pretty(pbuf[0], si(size(read))),
 		size(comp_opts),
@@ -274,9 +276,10 @@ ircd::gpt::pipe::code::from_cache()
 	);
 
 	char pbuf[1][48];
-	log::debug
+	log::logf
 	{
-		log, "cached nir `%s' %s attempting...",
+		log, log::level::DEBUG,
+		"cached nir `%s' %s attempting...",
 		cache_path,
 		pretty(pbuf[0], si(size(read))),
 	};
