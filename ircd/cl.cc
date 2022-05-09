@@ -1580,10 +1580,11 @@ try
 	log::logf
 	{
 		log, log::level::DEBUG,
-		"code(%p) linking devs:%zu progs:%zu %c%s",
+		"code(%p) linking devs:%zu progs:%zu opts:%zu$B %c%s",
 		this,
 		num_devices,
 		num_progs,
+		ircd::size(opts),
 		opts? ':': ' ',
 		opts,
 	};
@@ -1609,11 +1610,11 @@ try
 			&err
 		)
 	};
+	#endif
 
 	throw_on_error(err);
 	std::swap(handle, this->handle);
 	call(clReleaseProgram, cl_program(handle));
-	#endif
 }
 catch(const opencl_error &e)
 {
