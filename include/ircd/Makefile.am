@@ -62,13 +62,13 @@ matrix.pic.h.gch: ircd.h matrix.h m/*.h m/*/*.h
 	cp matrix.h matrix.pic.h
 	$(CXX) $(AM_CXXFLAGS) $(CXXFLAGS) -fPIC -o matrix.pic.h.gch $(DEFS) $(AM_CPPFLAGS) $(CPPFLAGS) -DPIC matrix.pic.h
 
-spirit.h.gch: ircd.h
+spirit.h.gch: ircd.h spirit.h spirit/*.h
 	$(CXX) $(AM_CXXFLAGS) $(CXXFLAGS) -fPIC -o spirit.h.gch $(DEFS) $(AM_CPPFLAGS) $(CPPFLAGS) -DPIC spirit.h
 
 spirit.h.gch: \
 	AM_CXXFLAGS += @BOOST_CPPFLAGS@ $(LOWMEM_FLAGS)
 
-asio.h.gch: ircd.h
+asio.h.gch: ircd.h asio.h net/asio.h ctx/continuation.h
 	$(CXX) $(AM_CXXFLAGS) $(CXXFLAGS) -fPIC -o asio.h.gch $(DEFS) $(AM_CPPFLAGS) $(CPPFLAGS) -DPIC asio.h
 
 asio.h.gch: \
