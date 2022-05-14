@@ -35,6 +35,10 @@ __attribute__((visibility("internal")))
 	         class gen,
 	         class... attr>
 	bool parse(const char *&start, const char *const &stop, gen&&, attr&&...);
+
+	template<class gen,
+	         class... attr>
+	bool parse(std::nothrow_t, const char *&start, const char *const &stop, gen&&, attr&&...) noexcept;
 }}
 
 namespace boost {
@@ -145,6 +149,32 @@ struct ircd::spirit::substring_view
 	{}
 };
 
+/// Execute the parse. The start pointer is advanced upon successful execution.
+/// Failures must not throw: If the grammar contains any epsilon expressions or
+/// callbacks which throw it is UB. This overload exists to force suppression
+/// of EH from the base of a complex/opaque rule tree.
+template<class gen,
+         class... attr>
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline bool
+ircd::spirit::parse(std::nothrow_t,
+                    const char *&start,
+                    const char *const &stop,
+                    gen&& g,
+                    attr&&... a)
+noexcept try
+{
+	return ircd::spirit::parse(start, stop, std::forward<gen>(g), std::forward<attr>(a)...);
+}
+catch(...)
+{
+	assert(false);
+	__builtin_unreachable();
+}
+
+/// Execute the parse. The start pointer is advanced upon successful execution.
+/// Failures may throw depending on the grammar. Boost's expectation_failure is
+/// translated into our expectation_failure describing the failure.
 template<class parent_error,
          size_t error_show_max,
          class gen,
@@ -157,7 +187,7 @@ ircd::spirit::parse(const char *&start,
                     attr&&... a)
 try
 {
-	return qi::parse(start, stop, std::forward<gen>(g), std::forward<attr>(a)...);
+	return ircd::spirit::parse(start, stop, std::forward<gen>(g), std::forward<attr>(a)...);
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
@@ -167,6 +197,8 @@ catch(const qi::expectation_failure<const char *> &e)
 	};
 }
 
+/// Low-level qi::parse entry point. Throws boost's qi::expectation_failure;
+/// Try not to allow this exception to escape the calling unit.
 template<class gen,
          class... attr>
 [[using gnu: always_inline, gnu_inline, artificial]]
