@@ -8,6 +8,9 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#pragma once
+#define HAVE_IRCD_SPIRIT_CHAR_H
+
 #if defined(__clang__)
 template<class Derived>
 struct [[clang::internal_linkage, gnu::visibility("internal")]]

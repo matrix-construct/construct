@@ -42,9 +42,11 @@ __attribute__((visibility("internal")))
 	using spirit::inf;
 
 	using qi::locals;
-	using qi::_a;
 	using qi::_a_type;
 	using qi::_r1_type;
+	using qi::attr_cast;
+	using qi::attr;
+	using qi::_a;
 	using qi::raw;
 	using qi::omit;
 	using qi::matches;
@@ -52,8 +54,6 @@ __attribute__((visibility("internal")))
 	using qi::eoi;
 	using qi::eps;
 	using qi::expect;
-	using qi::attr;
-	using qi::attr_cast;
 	using qi::repeat;
 	using qi::lit;
 	using qi::char_;
@@ -84,16 +84,24 @@ __attribute__((visibility("internal")))
 	using qi::little_bin_double;
 	using spirit::repository::qi::seek;
 
+	using karma::attr_cast;
 	using karma::lit;
 	using karma::char_;
 	using karma::long_;
 	using karma::double_;
 	using karma::bool_;
 	using karma::eps;
-	using karma::attr_cast;
 	using karma::maxwidth;
 	using karma::buffer;
 	using karma::skip;
+
+	namespace local
+	{
+		using qi::_0;
+		using qi::_1;
+		using qi::_2;
+		using qi::_3;
+	}
 
 	template<size_t idx,
 	         class semantic_context>
@@ -105,14 +113,6 @@ __attribute__((visibility("internal")))
 	auto &
 	local_at(semantic_context&&);
 }}
-
-namespace ircd::spirit::local
-{
-	using qi::_0;
-	using qi::_1;
-	using qi::_2;
-	using qi::_3;
-}
 
 template<size_t idx,
          class semantic_context>

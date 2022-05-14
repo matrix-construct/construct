@@ -12,6 +12,7 @@
 // Portability Macros & Developer Tools
 //
 
+#pragma once
 #define HAVE_IRCD_PORTABLE_H
 
 //

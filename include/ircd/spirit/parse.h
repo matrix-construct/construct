@@ -11,6 +11,10 @@
 #pragma once
 #define HAVE_IRCD_SPIRIT_PARSE_H
 
+// This file is not part of the IRCd standard include list (stdinc.h) because
+// it involves extremely expensive boost headers for creating formal spirit
+// grammars. This file is automatically included in the spirit.h group.
+
 namespace ircd {
 namespace spirit
 __attribute__((visibility("internal")))
