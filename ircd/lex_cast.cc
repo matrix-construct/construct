@@ -20,13 +20,11 @@ namespace ircd::lex
 
 	template<class T,
 	         class... A>
-	using rule_to = spirit::qi::rule<const char *, T, A...>
-	__attribute__((visibility("internal")));
+	using rule_to = spirit::qi::rule<const char *, T, A...>;
 
 	template<class T,
 	         class... A>
-	using rule_from = spirit::karma::rule<char *, T, A...>
-	__attribute__((visibility("internal")));
+	using rule_from = spirit::karma::rule<char *, T, A...>;
 
 	template<class T,
 	         class rule,
@@ -45,23 +43,15 @@ namespace ircd::lex
 	template<class T,
 	         const rule_from<T()> &r>
 	static string_view cast(const mutable_buffer &, T);
+}
 
-	#pragma GCC visibility push(internal)
-	extern const rule_to<bool> to_bool;
-	extern const rule_to<int8_t> to_int8_t;
-	extern const rule_to<uint8_t> to_uint8_t;
-	extern const rule_to<short> to_short;
-	extern const rule_to<ushort> to_ushort;
-	extern const rule_to<int> to_int;
-	extern const rule_to<uint> to_uint;
-	extern const rule_to<long> to_long;
-	extern const rule_to<ulong> to_ulong;
-	extern const rule_to<float> to_float;
-	extern const rule_to<double> to_double;
-	extern const rule_to<long double> to_long_double;
-	#pragma GCC visibility pop
+//TODO: XXX try removing once karma rules are optimized for globals
+#define RULE_INIT_PRIO \
+	__attribute__((init_priority(65535))), apply_to=variable(is_global)
 
-	#pragma GCC visibility push(internal)
+#pragma GCC visibility push(internal)
+namespace ircd::lex
+{
 	extern const rule_from<bool()> from_bool;
 	extern const rule_from<int8_t()> from_int8_t;
 	extern const rule_from<uint8_t()> from_uint8_t;
@@ -74,8 +64,23 @@ namespace ircd::lex
 	extern const rule_from<float()> from_float;
 	extern const rule_from<double()> from_double;
 	extern const rule_from<long double()> from_long_double;
-	#pragma GCC visibility pop
+
+	#pragma clang attribute push(RULE_INIT_PRIO)
+	extern const rule_to<bool> to_bool, is_bool;
+	extern const rule_to<int8_t> to_int8_t, is_int8_t;
+	extern const rule_to<uint8_t> to_uint8_t, is_uint8_t;
+	extern const rule_to<short> to_short, is_short;
+	extern const rule_to<ushort> to_ushort, is_ushort;
+	extern const rule_to<int> to_int, is_int;
+	extern const rule_to<uint> to_uint, is_uint;
+	extern const rule_to<long> to_long, is_long;
+	extern const rule_to<ulong> to_ulong, is_ulong;
+	extern const rule_to<float> to_float, is_float;
+	extern const rule_to<double> to_double, is_double;
+	extern const rule_to<long double> to_long_double, is_long_double;
+	#pragma clang attribute pop
 }
+#pragma GCC visibility pop
 
 static_assert
 (
@@ -143,12 +148,10 @@ ircd::lex::cast(const string_view &s)
 try
 {
 	T ret;
-	const char
-	*start(begin(s)),
-	*const stop(end(s));
+	const char *start(begin(s)), *const stop(end(s));
 	const bool pass
 	{
-		ircd::parse(start, stop, spirit::expect[rule], ret)
+		ircd::parse(start, stop, rule, ret)
 	};
 
 	assert(pass);
@@ -167,10 +170,8 @@ inline bool
 ircd::lex::test(const string_view &s)
 noexcept
 {
-	const char
-	*start(begin(s)),
-	*const stop(end(s));
-	return ircd::parse(start, stop, &rule);
+	const char *start(begin(s)), *const stop(end(s));
+	return ircd::parse(std::nothrow, start, stop, rule);
 }
 
 template<class T,
@@ -193,17 +194,24 @@ ircd::lex::throw_error(const rule &r,
 // bool
 //
 
-decltype(ircd::lex::to_bool)
-ircd::lex::to_bool
-{
-	spirit::qi::bool_
-	,"boolean"
-};
-
 decltype(ircd::lex::from_bool)
 ircd::lex::from_bool
 {
 	spirit::karma::bool_
+	,"boolean"
+};
+
+decltype(ircd::lex::to_bool)
+ircd::lex::to_bool
+{
+	spirit::expect[spirit::qi::bool_]
+	,"boolean"
+};
+
+decltype(ircd::lex::is_bool)
+ircd::lex::is_bool
+{
+	&spirit::qi::bool_
 	,"boolean"
 };
 
@@ -217,33 +225,58 @@ ircd::lex_cast(bool i,
 template<> bool
 ircd::lex_cast(const string_view &s)
 {
-	return s == "true"? true:
-	       s == "false"? false:
-	       lex::cast<bool, lex::to_bool>(s);
+	const bool literal[2]
+	{
+		s == "true",
+		s == "false",
+	};
+
+	// Handle the common cases early in this frame before call.
+	if(likely(literal[0] | literal[1]))
+		return literal[0];
+
+	return lex::cast<bool, lex::to_bool>(s);
 }
 
 template<> bool
 ircd::lex_castable<bool>(const string_view &s)
 noexcept
 {
-	return lex::test<bool, lex::to_bool>(s);
+	const bool literal[2]
+	{
+		s == "true",
+		s == "false",
+	};
+
+	// Handle the common cases early in this frame before call.
+	if(likely(literal[0] | literal[1]))
+		return true;
+
+	return lex::test<bool, lex::is_bool>(s);
 }
 
 //
 // int8_t
 //
 
-decltype(ircd::lex::to_int8_t)
-ircd::lex::to_int8_t
-{
-	spirit::qi::short_
-	,"signed byte"
-};
-
 decltype(ircd::lex::from_int8_t)
 ircd::lex::from_int8_t
 {
 	spirit::karma::short_
+	,"signed byte"
+};
+
+decltype(ircd::lex::to_int8_t)
+ircd::lex::to_int8_t
+{
+	spirit::expect[spirit::qi::short_]
+	,"signed byte"
+};
+
+decltype(ircd::lex::is_int8_t)
+ircd::lex::is_int8_t
+{
+	&spirit::qi::short_
 	,"signed byte"
 };
 
@@ -264,24 +297,31 @@ template<> bool
 ircd::lex_castable<int8_t>(const string_view &s)
 noexcept
 {
-	return lex::test<int8_t, lex::to_int8_t>(s);
+	return lex::test<int8_t, lex::is_int8_t>(s);
 }
 
 //
 // uint8_t
 //
 
-decltype(ircd::lex::to_uint8_t)
-ircd::lex::to_uint8_t
-{
-	spirit::qi::ushort_
-	,"unsigned byte"
-};
-
 decltype(ircd::lex::from_uint8_t)
 ircd::lex::from_uint8_t
 {
 	spirit::karma::ushort_
+	,"unsigned byte"
+};
+
+decltype(ircd::lex::to_uint8_t)
+ircd::lex::to_uint8_t
+{
+	spirit::expect[spirit::qi::ushort_]
+	,"unsigned byte"
+};
+
+decltype(ircd::lex::is_uint8_t)
+ircd::lex::is_uint8_t
+{
+	&spirit::qi::ushort_
 	,"unsigned byte"
 };
 
@@ -302,24 +342,31 @@ template<> bool
 ircd::lex_castable<uint8_t>(const string_view &s)
 noexcept
 {
-	return lex::test<uint8_t, lex::to_uint8_t>(s);
+	return lex::test<uint8_t, lex::is_uint8_t>(s);
 }
 
 //
 // short
 //
 
-decltype(ircd::lex::to_short)
-ircd::lex::to_short
-{
-	spirit::qi::short_
-	,"signed short integer"
-};
-
 decltype(ircd::lex::from_short)
 ircd::lex::from_short
 {
 	spirit::karma::short_
+	,"signed short integer"
+};
+
+decltype(ircd::lex::to_short)
+ircd::lex::to_short
+{
+	spirit::expect[spirit::qi::short_]
+	,"signed short integer"
+};
+
+decltype(ircd::lex::is_short)
+ircd::lex::is_short
+{
+	&spirit::qi::short_
 	,"signed short integer"
 };
 
@@ -340,24 +387,31 @@ template<> bool
 ircd::lex_castable<short>(const string_view &s)
 noexcept
 {
-	return lex::test<short, lex::to_short>(s);
+	return lex::test<short, lex::is_short>(s);
 }
 
 //
 // ushort
 //
 
-decltype(ircd::lex::to_ushort)
-ircd::lex::to_ushort
-{
-	spirit::qi::ushort_
-	,"unsigned short integer"
-};
-
 decltype(ircd::lex::from_ushort)
 ircd::lex::from_ushort
 {
 	spirit::karma::ushort_
+	,"unsigned short integer"
+};
+
+decltype(ircd::lex::to_ushort)
+ircd::lex::to_ushort
+{
+	spirit::expect[spirit::qi::ushort_]
+	,"unsigned short integer"
+};
+
+decltype(ircd::lex::is_ushort)
+ircd::lex::is_ushort
+{
+	&spirit::qi::ushort_
 	,"unsigned short integer"
 };
 
@@ -378,24 +432,31 @@ template<> bool
 ircd::lex_castable<ushort>(const string_view &s)
 noexcept
 {
-	return lex::test<ushort, lex::to_ushort>(s);
+	return lex::test<ushort, lex::is_ushort>(s);
 }
 
 //
 // signed
 //
 
-decltype(ircd::lex::to_int)
-ircd::lex::to_int
-{
-	spirit::qi::int_
-	,"signed integer"
-};
-
 decltype(ircd::lex::from_int)
 ircd::lex::from_int
 {
 	spirit::karma::int_
+	,"signed integer"
+};
+
+decltype(ircd::lex::to_int)
+ircd::lex::to_int
+{
+	spirit::expect[spirit::qi::int_]
+	,"signed integer"
+};
+
+decltype(ircd::lex::is_int)
+ircd::lex::is_int
+{
+	&spirit::qi::int_
 	,"signed integer"
 };
 
@@ -416,24 +477,31 @@ template<> bool
 ircd::lex_castable<int>(const string_view &s)
 noexcept
 {
-	return lex::test<int, lex::to_int>(s);
+	return lex::test<int, lex::is_int>(s);
 }
 
 //
 // unsigned
 //
 
-decltype(ircd::lex::to_uint)
-ircd::lex::to_uint
-{
-	spirit::qi::uint_
-	,"unsigned integer"
-};
-
 decltype(ircd::lex::from_uint)
 ircd::lex::from_uint
 {
 	spirit::karma::uint_
+	,"unsigned integer"
+};
+
+decltype(ircd::lex::to_uint)
+ircd::lex::to_uint
+{
+	spirit::expect[spirit::qi::uint_]
+	,"unsigned integer"
+};
+
+decltype(ircd::lex::is_uint)
+ircd::lex::is_uint
+{
+	&spirit::qi::uint_
 	,"unsigned integer"
 };
 
@@ -454,24 +522,31 @@ template<> bool
 ircd::lex_castable<uint>(const string_view &s)
 noexcept
 {
-	return lex::test<uint, lex::to_uint>(s);
+	return lex::test<uint, lex::is_uint>(s);
 }
 
 //
 // long
 //
 
-decltype(ircd::lex::to_long)
-ircd::lex::to_long
-{
-	spirit::qi::long_
-	,"long integer"
-};
-
 decltype(ircd::lex::from_long)
 ircd::lex::from_long
 {
 	spirit::karma::long_
+	,"long integer"
+};
+
+decltype(ircd::lex::to_long)
+ircd::lex::to_long
+{
+	spirit::expect[spirit::qi::long_]
+	,"long integer"
+};
+
+decltype(ircd::lex::is_long)
+ircd::lex::is_long
+{
+	&spirit::qi::long_
 	,"long integer"
 };
 
@@ -492,24 +567,31 @@ template<> bool
 ircd::lex_castable<long>(const string_view &s)
 noexcept
 {
-	return lex::test<long, lex::to_long>(s);
+	return lex::test<long, lex::is_long>(s);
 }
 
 //
 // ulong
 //
 
-decltype(ircd::lex::to_ulong)
-ircd::lex::to_ulong
-{
-	spirit::qi::ulong_
-	,"long unsigned integer"
-};
-
 decltype(ircd::lex::from_ulong)
 ircd::lex::from_ulong
 {
 	spirit::karma::ulong_
+	,"long unsigned integer"
+};
+
+decltype(ircd::lex::to_ulong)
+ircd::lex::to_ulong
+{
+	spirit::expect[spirit::qi::ulong_]
+	,"long unsigned integer"
+};
+
+decltype(ircd::lex::is_ulong)
+ircd::lex::is_ulong
+{
+	&spirit::qi::ulong_
 	,"long unsigned integer"
 };
 
@@ -530,7 +612,7 @@ template<> bool
 ircd::lex_castable<ulong>(const string_view &s)
 noexcept
 {
-	return lex::test<ulong, lex::to_ulong>(s);
+	return lex::test<ulong, lex::is_ulong>(s);
 }
 
 //
@@ -554,17 +636,24 @@ ircd::lex::from_float_policy
 
 };
 
-decltype(ircd::lex::to_float)
-ircd::lex::to_float
-{
-	spirit::qi::real_parser<float, to_float_policy>{}
-	,"single floating point precision"
-};
-
 decltype(ircd::lex::from_float)
 ircd::lex::from_float
 {
 	spirit::karma::real_generator<float, from_float_policy>{}
+	,"single floating point precision"
+};
+
+decltype(ircd::lex::to_float)
+ircd::lex::to_float
+{
+	spirit::expect[spirit::qi::real_parser<float, to_float_policy>{}]
+	,"single floating point precision"
+};
+
+decltype(ircd::lex::is_float)
+ircd::lex::is_float
+{
+	&spirit::qi::real_parser<float, to_float_policy>{}
 	,"single floating point precision"
 };
 
@@ -585,7 +674,7 @@ template<> bool
 ircd::lex_castable<float>(const string_view &s)
 noexcept
 {
-	return lex::test<float, lex::to_float>(s);
+	return lex::test<float, lex::is_float>(s);
 }
 
 //
@@ -609,17 +698,24 @@ ircd::lex::from_double_policy
 
 };
 
-decltype(ircd::lex::to_double)
-ircd::lex::to_double
-{
-	spirit::qi::real_parser<double, to_double_policy>{}
-	,"double floating point precision"
-};
-
 decltype(ircd::lex::from_double)
 ircd::lex::from_double
 {
 	spirit::karma::real_generator<double, from_double_policy>{}
+	,"double floating point precision"
+};
+
+decltype(ircd::lex::to_double)
+ircd::lex::to_double
+{
+	spirit::expect[spirit::qi::real_parser<double, to_double_policy>{}]
+	,"double floating point precision"
+};
+
+decltype(ircd::lex::is_double)
+ircd::lex::is_double
+{
+	&spirit::qi::real_parser<double, to_double_policy>{}
 	,"double floating point precision"
 };
 
@@ -640,7 +736,7 @@ template<> bool
 ircd::lex_castable<double>(const string_view &s)
 noexcept
 {
-	return lex::test<double, lex::to_double>(s);
+	return lex::test<double, lex::is_double>(s);
 }
 
 //
@@ -664,17 +760,24 @@ ircd::lex::from_long_double_policy
 
 };
 
-decltype(ircd::lex::to_long_double)
-ircd::lex::to_long_double
-{
-	spirit::qi::real_parser<long double, to_long_double_policy>{}
-	,"long double floating point precision"
-};
-
 decltype(ircd::lex::from_long_double)
 ircd::lex::from_long_double
 {
 	spirit::karma::real_generator<long double, from_long_double_policy>{}
+	,"long double floating point precision"
+};
+
+decltype(ircd::lex::to_long_double)
+ircd::lex::to_long_double
+{
+	spirit::expect[spirit::qi::real_parser<long double, to_long_double_policy>{}]
+	,"long double floating point precision"
+};
+
+decltype(ircd::lex::is_long_double)
+ircd::lex::is_long_double
+{
+	&spirit::qi::real_parser<long double, to_long_double_policy>{}
 	,"long double floating point precision"
 };
 
@@ -695,7 +798,7 @@ template<> bool
 ircd::lex_castable<long double>(const string_view &s)
 noexcept
 {
-	return lex::test<long double, lex::to_long_double>(s);
+	return lex::test<long double, lex::is_long_double>(s);
 }
 
 //
@@ -722,7 +825,7 @@ template<> bool
 ircd::lex_castable<ircd::seconds>(const string_view &s)
 noexcept
 {
-	return lex::test<time_t, lex::to_long>(s);
+	return lex::test<time_t, lex::is_long>(s);
 }
 
 //
@@ -749,7 +852,7 @@ template<> bool
 ircd::lex_castable<ircd::milliseconds>(const string_view &s)
 noexcept
 {
-	return lex::test<time_t, lex::to_long>(s);
+	return lex::test<time_t, lex::is_long>(s);
 }
 
 //
@@ -776,7 +879,7 @@ template<> bool
 ircd::lex_castable<ircd::microseconds>(const string_view &s)
 noexcept
 {
-	return lex::test<time_t, lex::to_long>(s);
+	return lex::test<time_t, lex::is_long>(s);
 }
 
 //
@@ -803,5 +906,5 @@ template<> bool
 ircd::lex_castable<ircd::nanoseconds>(const string_view &s)
 noexcept
 {
-	return lex::test<time_t, lex::to_long>(s);
+	return lex::test<time_t, lex::is_long>(s);
 }
