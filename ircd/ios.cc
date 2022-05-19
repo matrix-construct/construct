@@ -344,11 +344,15 @@ ircd::string_view
 ircd::ios::stats_name(const descriptor &d,
                       const string_view &key)
 {
-	return fmt::sprintf
+	return string_view
 	{
-		stats_name_buf, "ircd.ios.%s.%s",
-		d.name,
-		key,
+		stats_name_buf, ::snprintf
+		(
+			stats_name_buf, sizeof(stats_name_buf),
+			"ircd.ios.%s.%s",
+			d.name.c_str(),
+			key.c_str()
+		)
 	};
 }
 

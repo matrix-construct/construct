@@ -496,17 +496,20 @@ ircd::conf::make_env_name(const mutable_buffer &buf,
                           const item<void> &item,
                           const string_view &feature)
 {
-	thread_local char tmp[conf::NAME_MAX_LEN];
+	char tmp[conf::NAME_MAX_LEN] {0};
 	const auto name
 	{
 		make_env_name(tmp, item)
 	};
 
-	return fmt::sprintf
+	return string_view
 	{
-		buf, "%s__%s",
-		name,
-		feature,
+		data(buf), ::snprintf
+		(
+			data(buf), size(buf), "%s__%s",
+			name.c_str(),
+			feature.c_str()
+		)
 	};
 }
 
