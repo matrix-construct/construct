@@ -423,7 +423,6 @@ ircd::rfc3986::uri::uri(const string_view &input)
 
 struct [[gnu::visibility("internal")]]
 ircd::rfc3986::decoder
-:qi::grammar<const char *, mutable_buffer>
 {
 	template<class R = unused_type,
 	         class... S>
@@ -462,16 +461,9 @@ ircd::rfc3986::decoder
 
 	rule<mutable_buffer> decode_safe
 	{
-		rule<mutable_buffer>{}
+		*(unreserved_char | decode_char[_pass = ((local::_1 > 0x1F) | (local::_1 < 0x00))])
 		,"url safe decode"
 	};
-
-	decoder()
-	:decoder::base_type{decode_safe}
-	{
-		//TODO: XXX this never reports failure to throw; it just stops parsing
-		decode_safe %= *(unreserved_char | decode_char[_pass = ((local::_1 > 0x1F) | (local::_1 < 0x00))]);
-	}
 }
 const ircd::rfc3986::decoder;
 

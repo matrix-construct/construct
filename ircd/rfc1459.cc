@@ -67,7 +67,6 @@ BOOST_FUSION_ADAPT_STRUCT
 template<class it>
 struct [[gnu::visibility("internal")]]
 ircd::rfc1459::parse::grammar
-:qi::grammar<it, unused_type>
 {
 	qi::rule<it> space;
 	qi::rule<it> colon;
@@ -120,11 +119,7 @@ const ircd::rfc1459::parse::capstan;
 template<class it>
 ircd::rfc1459::parse::grammar<it>::grammar()
 noexcept
-:qi::grammar<it, unused_type>::base_type
-{
-	qi::rule<it>{}
-}
-,space // A single space character
+:space // A single space character
 {
 	/* TODO: RFC says:
 	 *   1) <SPACE> is consists only of SPACE character(s) (0x20).
@@ -435,7 +430,7 @@ ircd::rfc1459::line::line(const char *&start,
                           const char *const &stop)
 try
 {
-	ircd::parse(start, stop, parse::head, *this);
+	ircd::parse(start, stop, parse::head.line, *this);
 }
 catch(const qi::expectation_failure<const char *> &e)
 {

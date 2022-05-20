@@ -41,7 +41,6 @@ BOOST_FUSION_ADAPT_STRUCT
 #pragma GCC diagnostic ignored "-Wuninitialized"
 struct [[gnu::visibility("internal")]]
 ircd::json::parser
-:qi::grammar<const char *, unused_type>
 {
 	using it = const char *;
 
@@ -231,20 +230,6 @@ ircd::json::parser
 	template<class gen,
 	         class... attr>
 	bool operator()(const char *const &start, const char *const &stop, gen&&, attr&&...) const;
-
-	parser() noexcept
-	:parser::base_type{rule<>{}} // required by spirit
-	{
-		// synthesized repropagation of recursive rules
-		value %= (&quote >> string)
-		| (&object_begin >> object(depth + 1))
-		| (&array_begin >> array(depth + 1))
-		| (&number_begin >> number)
-		| lit_true
-		| lit_false
-		| lit_null
-		;
-	}
 }
 const ircd::json::parser;
 #pragma GCC diagnostic pop

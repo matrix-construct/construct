@@ -9,7 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 namespace ircd { namespace fmt
-__attribute__((visibility("hidden")))
+__attribute__((visibility("internal")))
 {
 	using namespace ircd::spirit;
 
@@ -54,12 +54,11 @@ struct ircd::fmt::spec
 	ushort width {0};
 	ushort precision {0};
 	string_view name;
-
-	spec() = default;
 };
 
 /// Reflects the fmt::spec struct to allow the spirit::qi grammar to directly
 /// fill in the spec struct.
+#pragma GCC visibility push(internal)
 BOOST_FUSION_ADAPT_STRUCT
 (
 	ircd::fmt::spec,
@@ -69,6 +68,7 @@ BOOST_FUSION_ADAPT_STRUCT
 	( decltype(ircd::fmt::spec::precision),  precision  )
 	( decltype(ircd::fmt::spec::name),       name       )
 )
+#pragma GCC visibility pop
 
 /// A format specifier handler module. This allows a new "%foo" to be defined
 /// with custom handling by overriding. This abstraction is inserted into a
@@ -92,9 +92,9 @@ ircd::fmt::specifiers;
 
 /// The format string parser grammar.
 struct ircd::fmt::parser
-:qi::grammar<const char *, fmt::spec>
 {
-	template<class R = unused_type> using rule = qi::rule<const char *, R>;
+	template<class R = unused_type>
+	using rule = qi::rule<const char *, R>;
 
 	const rule<> specsym
 	{
@@ -114,27 +114,17 @@ struct ircd::fmt::parser
 		,"specifier name"
 	};
 
-	rule<fmt::spec> spec;
-
-	parser()
-	:parser::base_type{spec}
+	const rule<fmt::spec> spec
 	{
-		static const auto is_valid([]
-		(const auto &str, auto &, auto &valid)
-		{
-			valid = is_specifier(str);
-		});
-
-		spec %= specsym
-		     >> !specsym
-		     >> -(char_('+') | char_('-'))
-		     >> (-char_('0') | attr(' '))
-		     >> -ushort_
-		     >> -(lit('.') >> ushort_)
-		     >> name[is_valid]
-		     >> -specterm
-		     ;
-	}
+		(specsym >> !specsym)
+		>> -(char_('+') | char_('-'))
+		>> (-char_('0') | attr(' '))
+		>> -ushort_
+		>> -(lit('.') >> ushort_)
+		>> name
+		>> -specterm,
+		"specifier"
+	};
 }
 const ircd::fmt::parser;
 
@@ -398,7 +388,8 @@ ircd::fmt::snprintf::argument(const arg &val)
 	fmt::spec spec;
 	auto &start(begin(this->fmt));
 	const auto stop(end(this->fmt));
-	if(ircd::parse<invalid_format>(start, stop, parser, spec))
+	const auto &grammar(parser.spec);
+	if(ircd::parse<invalid_format>(start, stop, grammar.alias(), spec))
 		handle_specifier(this->out, idx++, spec, val);
 
 	string_view fmt
@@ -494,6 +485,7 @@ ircd::fmt::handle_specifier(mutable_buffer &out,
                             const arg &val)
 try
 {
+	assert(spec.name);
 	const auto &type(get<1>(val));
 	const auto &handler(*specifiers.at(spec.name));
 

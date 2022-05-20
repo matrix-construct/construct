@@ -16,7 +16,6 @@ namespace ircd::m
 }
 
 struct __attribute__((visibility("hidden"))) ircd::m::id::input
-:qi::grammar<const char *, unused_type>
 {
 	using id = m::id;
 	using it = const char *;
@@ -155,21 +154,14 @@ struct __attribute__((visibility("hidden"))) ircd::m::id::input
 		| event_id_v3
 		,"mxid"
 	};
-
-	input()
-	:input::base_type{rule<>{}}
-	{}
 };
 
 struct __attribute__((visibility("hidden"))) ircd::m::id::output
-:karma::grammar<char *, unused_type>
 {
 	using it = char *;
 	template<class T = unused_type> using rule = karma::rule<it, T>;
 
-	output()
-	:output::base_type{rule<>{}}
-	{}
+	output() = default;
 };
 
 struct __attribute__((visibility("hidden"))) ircd::m::id::parser

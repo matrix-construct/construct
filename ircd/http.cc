@@ -114,7 +114,6 @@ ircd::http::reason
 };
 
 struct ircd::http::grammar
-:qi::grammar<const char *, unused_type>
 {
 	using it = const char *;
 
@@ -210,10 +209,6 @@ struct ircd::http::grammar
 		response_line >> *ws >> CRLF >> -headers >> CRLF
 		,"response"
 	};
-
-	grammar()
-	:qi::grammar<const char *, unused_type>{rule<>{}}
-	{}
 };
 
 struct ircd::http::parser
@@ -852,7 +847,7 @@ ircd::http::line::terminator
 ircd::http::line::line(parse::capstan &pc)
 :string_view{[&pc]
 {
-	static const auto grammar
+	static const auto &grammar
 	{
 		parser.line
 	};
