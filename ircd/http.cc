@@ -480,7 +480,7 @@ ircd::http::response::response(window_buffer &out,
 	if(write_date_header)
 		writeline(out, [](const mutable_buffer &out) -> size_t
 		{
-			thread_local char date_buf[96];
+			char date_buf[96];
 			return fmt::sprintf
 			{
 				out, "Date: %s", timef(date_buf, ircd::localtime)
