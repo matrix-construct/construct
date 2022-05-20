@@ -137,16 +137,20 @@ boost::spirit::qi::make_primitive<ircd::spirit::tag::custom2, modifiers>
 struct ircd::spirit::substring_view
 :ircd::string_view
 {
-	using _iterator = boost::spirit::karma::detail::indirect_iterator<const char *>;
+	using _iterator = const char *;
 	using _iterator_range = boost::iterator_range<_iterator>;
+	using _indirect_iterator = karma::detail::indirect_iterator<_iterator>;
+	using _indirect_iterator_range = boost::iterator_range<_indirect_iterator>;
+
+	explicit substring_view(const _iterator_range &range)
+	:ircd::string_view(std::addressof(*range.begin()), std::addressof(*range.end()))
+	{}
+
+	explicit substring_view(const _indirect_iterator_range &range)
+	:ircd::string_view(std::addressof(*range.begin()), std::addressof(*range.end()))
+	{}
 
 	using ircd::string_view::string_view;
-	explicit substring_view(const _iterator_range &range)
-	:ircd::string_view
-	{
-		std::addressof(*range.begin()), std::addressof(*range.end())
-	}
-	{}
 };
 
 /// Execute the parse. The start pointer is advanced upon successful execution.
