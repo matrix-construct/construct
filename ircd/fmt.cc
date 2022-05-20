@@ -16,18 +16,6 @@ __attribute__((visibility("internal")))
 	struct spec;
 	struct specifier;
 	struct parser extern const parser;
-
-	constexpr char SPECIFIER
-	{
-		'%'
-	};
-
-	constexpr char SPECIFIER_TERMINATOR
-	{
-		'$'
-	};
-
-	extern std::map<string_view, specifier *, std::less<>> specifiers;
 	struct bool_specifier extern const bool_specifier;
 	struct char_specifier extern const char_specifier;
 	struct signed_specifier extern const signed_specifier;
@@ -38,11 +26,21 @@ __attribute__((visibility("internal")))
 	struct pointer_specifier extern const pointer_specifier;
 	struct string_specifier extern const string_specifier;
 
-	bool is_specifier(const string_view &name);
+	constexpr char SPECIFIER {'%'};
+	constexpr char SPECIFIER_TERMINATOR {'$'};
+
+	template<class generator>
+	bool generate_string(char *&out, const size_t &max, generator&&, const arg &val);
+
+	template<class gen,
+	         class... attr>
+	bool generate(mutable_buffer &, gen&&, attr&&...);
+
+	template<class T,
+	         class lambda>
+	bool visit_type(const arg &val, lambda&& closure);
+
 	void handle_specifier(mutable_buffer &out, const uint &idx, const spec &, const arg &);
-	template<class generator> bool generate_string(char *&out, const size_t &max, generator&&, const arg &val);
-	template<class T, class lambda> bool visit_type(const arg &val, lambda&& closure);
-	template<class gen, class... attr> bool generate(mutable_buffer &, gen&&, attr&&...);
 }}
 
 /// Structural representation of a format specifier. The parse of each
@@ -69,26 +67,6 @@ BOOST_FUSION_ADAPT_STRUCT
 	( decltype(ircd::fmt::spec::name),       name       )
 )
 #pragma GCC visibility pop
-
-/// A format specifier handler module. This allows a new "%foo" to be defined
-/// with custom handling by overriding. This abstraction is inserted into a
-/// mapping key'ed by the supplied names leading to an instance of this.
-///
-class ircd::fmt::specifier
-{
-	std::set<std::string> names;
-
-  public:
-	virtual bool operator()(char *&out, const size_t &max, const spec &, const arg &) const = 0;
-
-	specifier(const std::initializer_list<std::string> &names);
-	specifier(const std::string &name);
-	virtual ~specifier() noexcept;
-};
-
-/// Linkage for the lookup mapping of registered format specifiers.
-decltype(ircd::fmt::specifiers)
-ircd::fmt::specifiers;
 
 /// The format string parser grammar.
 struct ircd::fmt::parser
@@ -127,6 +105,30 @@ struct ircd::fmt::parser
 	};
 }
 const ircd::fmt::parser;
+
+/// A format specifier handler module. This allows a new "%foo" to be defined
+/// with custom handling by overriding. This abstraction is inserted into a
+/// mapping key'ed by the supplied names leading to an instance of this.
+///
+class ircd::fmt::specifier
+{
+	static std::map<string_view, const specifier *, std::less<>> registry;
+
+	std::set<std::string> names;
+
+  public:
+	virtual bool operator()(char *&out, const size_t &max, const spec &, const arg &) const = 0;
+
+	specifier(const std::initializer_list<std::string> &names);
+	specifier(const std::string &name);
+	virtual ~specifier() noexcept;
+
+	static bool exists(const string_view &name);
+	static const specifier &at(const string_view &name);
+};
+
+decltype(ircd::fmt::specifier::registry)
+ircd::fmt::specifier::registry;
 
 struct ircd::fmt::string_specifier
 :specifier
@@ -326,6 +328,10 @@ const ircd::fmt::pointer_specifier
 	"p"s
 };
 
+//
+// snprintf::snprintf
+//
+
 ircd::fmt::snprintf::snprintf(internal_t,
                               const mutable_buffer &out,
                               const string_view &fmt,
@@ -446,6 +452,10 @@ const
 	return empty(fmt) || !remaining();
 }
 
+//
+// fmt::specifier
+//
+
 ircd::fmt::specifier::specifier(const std::string &name)
 :specifier{{name}}
 {
@@ -455,28 +465,38 @@ ircd::fmt::specifier::specifier(const std::initializer_list<std::string> &names)
 :names{names}
 {
 	for(const auto &name : this->names)
-		if(is_specifier(name))
+		if(exists(name))
 			throw error
 			{
 				"Specifier '%s' already registered\n", name
 			};
 
 	for(const auto &name : this->names)
-		specifiers.emplace(name, this);
+		registry.emplace(name, this);
 }
 
 ircd::fmt::specifier::~specifier()
 noexcept
 {
 	for(const auto &name : names)
-		specifiers.erase(name);
+		registry.erase(name);
 }
 
 bool
-ircd::fmt::is_specifier(const string_view &name)
+ircd::fmt::specifier::exists(const string_view &name)
 {
-	return specifiers.count(name);
+	return registry.count(name);
 }
+
+const ircd::fmt::specifier &
+ircd::fmt::specifier::at(const string_view &name)
+{
+	return *registry.at(name);
+}
+
+//
+// Utils
+//
 
 void
 ircd::fmt::handle_specifier(mutable_buffer &out,
@@ -485,10 +505,6 @@ ircd::fmt::handle_specifier(mutable_buffer &out,
                             const arg &val)
 try
 {
-	assert(spec.name);
-	const auto &type(get<1>(val));
-	const auto &handler(*specifiers.at(spec.name));
-
 	auto &outp(std::get<0>(out));
 	assert(size(out));
 	const size_t max
@@ -496,6 +512,9 @@ try
 		size(out) - 1 // Leave room for null byte for later.
 	};
 
+	assert(spec.name);
+	const auto &type(get<1>(val));
+	const auto &handler(specifier::at(spec.name));
 	if(unlikely(!handler(outp, max, spec, val)))
 		throw invalid_type
 		{
@@ -551,6 +570,10 @@ ircd::fmt::generate(mutable_buffer &out,
 
 	return ircd::generate<truncation>(out, std::forward<gen>(g), std::forward<attr>(a)...);
 }
+
+//
+// Handlers
+//
 
 bool
 ircd::fmt::pointer_specifier::operator()(char *&out,
