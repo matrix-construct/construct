@@ -816,15 +816,15 @@ try
 		std::max(size_t(linear_buffer_size), size_t(128_KiB))
 	};
 
-	window_buffer wb{buf};
+	window_buffer window{buf};
 	const auto &[last, completed]
 	{
-		linear_proffer(data, wb)
+		linear_proffer(data, window)
 	};
 
 	const json::vector vector
 	{
-		wb.completed()
+		window.completed()
 	};
 
 	const auto next
@@ -895,10 +895,10 @@ catch(const std::exception &e)
 /// to our client in the event iteration.
 std::pair<ircd::m::event::idx, bool>
 ircd::m::sync::linear_proffer(data &data,
-                              window_buffer &wb)
+                              window_buffer &window)
 {
 	event::idx ret(0);
-	const auto closure{[&data, &wb, &ret]
+	const auto closure{[&data, &window, &ret]
 	(const m::event::idx &event_idx, const m::event &event)
 	{
 		assert(event_idx <= m::vm::sequence::retired);
@@ -912,7 +912,7 @@ ircd::m::sync::linear_proffer(data &data,
 			data.event_idx, event_idx
 		};
 
-		wb([&data, &ret, &event_idx]
+		window([&data, &ret, &event_idx]
 		(const mutable_buffer &buf)
 		{
 			const auto consumed
@@ -931,7 +931,7 @@ ircd::m::sync::linear_proffer(data &data,
 			// The buffer must have at least this much more space
 			// to continue with the iteration. Otherwise if the next
 			// worst-case event does not fit, bad things.
-			wb.remaining() >= 68_KiB
+			window.remaining() >= 68_KiB
 
 			// When the handler reports this special-case we have
 			// to stop at this iteration.

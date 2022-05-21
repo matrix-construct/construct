@@ -109,14 +109,14 @@ request_url(const string_view &urle)
 			"Required elements are missing from the supplied URL."
 		};
 
-	window_buffer wb
+	window_buffer window
 	{
 		buf + size(url)
 	};
 
 	http::request
 	{
-		wb, host(remote), "GET", uri.path, 0, {},
+		window, host(remote), "GET", uri.path, 0, {},
 		{
 			{ "User-Agent", info::user_agent },
 		}
@@ -124,7 +124,7 @@ request_url(const string_view &urle)
 
 	const const_buffer out_head
 	{
-		wb.completed()
+		window.completed()
 	};
 
 	const mutable_buffer in_head

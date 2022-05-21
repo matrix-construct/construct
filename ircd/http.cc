@@ -920,11 +920,11 @@ const
 		return {};
 
 	size_t ret(0);
-	window_buffer wb(buf);
-	for_each(key, [&out, &max, &ret, &wb]
+	window_buffer window(buf);
+	for_each(key, [&out, &max, &ret, &window]
 	(const auto &query)
 	{
-		wb([&out, &max, &ret, &query]
+		window([&out, &max, &ret, &query]
 		(const mutable_buffer &buf)
 		{
 			assert(ret < max);
@@ -1074,9 +1074,9 @@ ircd::const_buffer
 ircd::http::writechunk(const mutable_buffer &buf,
                        const uint32_t &chunk_size)
 {
-	window_buffer wb{buf};
-	writechunk(wb, chunk_size);
-	return wb.completed();
+	window_buffer window{buf};
+	writechunk(window, chunk_size);
+	return window.completed();
 }
 
 void

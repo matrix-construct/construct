@@ -16448,17 +16448,17 @@ console_cmd__mc__versions(opt &out, const string_view &line)
 		16_KiB
 	};
 
-	window_buffer wb{buf};
+	window_buffer window{buf};
 	http::request
 	{
-		wb, host(remote), "GET", "/_matrix/client/versions"
+		window, host(remote), "GET", "/_matrix/client/versions"
 	};
 
 	server::request request
 	{
 		remote,
-		server::out  { wb.completed()     },
-		server::in   { mutable_buffer{wb} },
+		server::out  { window.completed()     },
+		server::in   { mutable_buffer{window} },
 	};
 
 	const auto code
@@ -16509,8 +16509,8 @@ console_cmd__mc__register(opt &out, const string_view &line)
 		16_KiB
 	};
 
-	window_buffer wb{buf};
-	wb([&](mutable_buffer buf)
+	window_buffer window{buf};
+	window([&](mutable_buffer buf)
 	{
 		return json::stringify(buf, json::members
 		{
@@ -16525,23 +16525,23 @@ console_cmd__mc__register(opt &out, const string_view &line)
 
 	const string_view &content
 	{
-		wb.completed()
+		window.completed()
 	};
 
-	wb = mutable_buffer{wb};
+	window = mutable_buffer{window};
 	http::request
 	{
-		wb, host(remote), "POST", uri, size(content), "application/json"
+		window, host(remote), "POST", uri, size(content), "application/json"
 	};
 
 	server::out sout
 	{
-		wb.completed(), content
+		window.completed(), content
 	};
 
 	server::in sin
 	{
-		mutable_buffer{wb}
+		mutable_buffer{window}
 	};
 
 	server::request request
@@ -16589,8 +16589,8 @@ console_cmd__mc__register__available(opt &out, const string_view &line)
 		16_KiB
 	};
 
-	window_buffer wb{buf};
-	wb([&user_id](const mutable_buffer &buf)
+	window_buffer window{buf};
+	window([&user_id](const mutable_buffer &buf)
 	{
 		char urlencbuf[256];
 		return fmt::sprintf
@@ -16600,15 +16600,15 @@ console_cmd__mc__register__available(opt &out, const string_view &line)
 		};
 	});
 
-	const string_view uri{wb.completed()};
-	wb = mutable_buffer{wb};
+	const string_view uri{window.completed()};
+	window = mutable_buffer{window};
 	http::request
 	{
-		wb, host(remote), "GET", uri
+		window, host(remote), "GET", uri
 	};
 
-	server::out sout{wb.completed()};
-	server::in sin{mutable_buffer{wb}};
+	server::out sout{window.completed()};
+	server::in sin{mutable_buffer{window}};
 	server::request request
 	{
 		remote, std::move(sout), std::move(sin)

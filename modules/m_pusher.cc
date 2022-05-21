@@ -340,12 +340,12 @@ ircd::m::push::notify_http(const m::user &user,
 		std::make_unique<request>()
 	};
 
-	window_buffer wb{req->buf};
+	window_buffer window{req->buf};
 	mutable_buffer buf{req->buf};
 	req->event_idx = event.event_idx;
 
 	// Target URL copied to request and verified on assignment
-	wb([&req, &pusher](const mutable_buffer &buf)
+	window([&req, &pusher](const mutable_buffer &buf)
 	{
 		const json::object data
 		{
@@ -360,11 +360,11 @@ ircd::m::push::notify_http(const m::user &user,
 		req->url = url;
 		return url;
 	});
-	consume(buf, wb.consumed());
-	wb = window_buffer(wb.remains());
+	consume(buf, window.consumed());
+	window = window_buffer(window.remains());
 
 	// Compose request content
-	wb([&](const mutable_buffer &buf)
+	window([&](const mutable_buffer &buf)
 	{
 		json::stack out{buf};
 		{
@@ -375,8 +375,8 @@ ircd::m::push::notify_http(const m::user &user,
 		req->content = out.completed();
 		return string_view{req->content};
 	});
-	consume(buf, wb.consumed());
-	wb = window_buffer(wb.remains());
+	consume(buf, window.consumed());
+	window = window_buffer(window.remains());
 
 	const net::hostport target
 	{
@@ -386,7 +386,7 @@ ircd::m::push::notify_http(const m::user &user,
 	// Compose request head
 	http::request
 	{
-		wb,
+		window,
 		host(target),
 		"POST",
 		req->url.path,
@@ -396,8 +396,8 @@ ircd::m::push::notify_http(const m::user &user,
 
 	// Outputs
 	server::out out;
-	out.head = wb.completed();
-	consume(buf, wb.consumed());
+	out.head = window.completed();
+	consume(buf, window.consumed());
 	out.content = req->content;
 
 	// Inputs to remaining buffer

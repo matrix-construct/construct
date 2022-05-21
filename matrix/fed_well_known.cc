@@ -560,18 +560,18 @@ ircd::m::fed::well_known::submit(request &req)
 		{ "User-Agent", info::user_agent },
 	};
 
-	window_buffer wb
+	window_buffer window
 	{
 		req.buf
 	};
 
 	http::request
 	{
-		wb, host(target), "GET", req.uri.path, 0, {}, headers
+		window, host(target), "GET", req.uri.path, 0, {}, headers
 	};
 
 	server::out out;
-	out.head = wb.completed();
+	out.head = window.completed();
 
 	// Remaining space in buffer is used for received head; note that below
 	// we specify this same buffer for in.content, but that's a trick

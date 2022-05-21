@@ -84,10 +84,10 @@ ircd::string_view
 ircd::fpe::reflect(const mutable_buffer &buf,
                    const ushort &flags)
 {
-	window_buffer wb{buf};
-	const auto append{[&wb](const auto &flag)
+	window_buffer window{buf};
+	const auto append{[&window](const auto &flag)
 	{
-		wb([&flag](const mutable_buffer &buf)
+		window([&flag](const mutable_buffer &buf)
 		{
 			return strlcpy(buf, reflect(flag));
 		});
@@ -97,7 +97,7 @@ ircd::fpe::reflect(const mutable_buffer &buf,
 		if(flags & (1 << i))
 			append(1 << i);
 
-	return wb.completed();
+	return window.completed();
 }
 
 ircd::string_view

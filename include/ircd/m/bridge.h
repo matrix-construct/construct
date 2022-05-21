@@ -35,7 +35,7 @@ struct ircd::m::bridge::query
 	rfc3986::uri base_url;
 	unique_mutable_buffer buf;
 	string_view uri;
-	window_buffer wb;
+	window_buffer window;
 	http::request hypertext;
 	server::request::opts sopts;
 	server::request request;

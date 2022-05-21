@@ -145,13 +145,13 @@ ircd::m::bridge::query::query(const config &config,
 {
 	uri
 }
-,wb
+,window
 {
 	buf
 }
 ,hypertext
 {
-	wb,
+	window,
 	base_url.remote,
 	"GET",
 	uri,
@@ -162,9 +162,22 @@ ircd::m::bridge::query::query(const config &config,
 }
 ,request
 {
-	net::hostport  { base_url.remote                                          },
-	server::out    { wb.completed(),  {}                                      },
-	server::in     { wb.remains(),    !empty(in_body)? in_body: wb.remains()  },
+	net::hostport
+	{
+		base_url.remote
+	},
+	server::out
+	{
+		window.completed(),
+		{}
+	},
+	server::in
+	{
+		window.remains(),
+		empty(in_body)?
+			window.remains():
+			in_body
+	},
 	&sopts,
 }
 ,code
