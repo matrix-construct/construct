@@ -802,6 +802,60 @@ noexcept
 }
 
 //
+// hours
+//
+
+template<> ircd::string_view
+ircd::lex_cast(hours i,
+               const mutable_buffer &buf)
+{
+	return lex::cast<time_t, lex::from_long>(buf, i.count());
+}
+
+template<> ircd::hours
+ircd::lex_cast(const string_view &s)
+{
+	return std::chrono::duration<time_t, std::ratio<3600L, 1L>>
+	(
+		lex::cast<time_t, lex::to_long>(s)
+	);
+}
+
+template<> bool
+ircd::lex_castable<ircd::hours>(const string_view &s)
+noexcept
+{
+	return lex::test<time_t, lex::is_long>(s);
+}
+
+//
+// minutes
+//
+
+template<> ircd::string_view
+ircd::lex_cast(minutes i,
+               const mutable_buffer &buf)
+{
+	return lex::cast<time_t, lex::from_long>(buf, i.count());
+}
+
+template<> ircd::minutes
+ircd::lex_cast(const string_view &s)
+{
+	return std::chrono::duration<time_t, std::ratio<60L, 1L>>
+	(
+		lex::cast<time_t, lex::to_long>(s)
+	);
+}
+
+template<> bool
+ircd::lex_castable<ircd::minutes>(const string_view &s)
+noexcept
+{
+	return lex::test<time_t, lex::is_long>(s);
+}
+
+//
 // seconds
 //
 

@@ -60,6 +60,8 @@ namespace ircd
 	template<> bool lex_castable<uint8_t>(const string_view &) noexcept;
 	template<> bool lex_castable<int8_t>(const string_view &) noexcept;
 	template<> bool lex_castable<bool>(const string_view &) noexcept;
+	template<> bool lex_castable<hours>(const string_view &) noexcept;
+	template<> bool lex_castable<minutes>(const string_view &) noexcept;
 	template<> bool lex_castable<seconds>(const string_view &) noexcept;
 	template<> bool lex_castable<milliseconds>(const string_view &) noexcept;
 	template<> bool lex_castable<microseconds>(const string_view &) noexcept;
@@ -81,6 +83,8 @@ namespace ircd
 	template<> uint8_t lex_cast(const string_view &);
 	template<> int8_t lex_cast(const string_view &);
 	template<> bool lex_cast(const string_view &);
+	template<> hours lex_cast(const string_view &);
+	template<> minutes lex_cast(const string_view &);
 	template<> seconds lex_cast(const string_view &);
 	template<> milliseconds lex_cast(const string_view &);
 	template<> microseconds lex_cast(const string_view &);
@@ -89,6 +93,8 @@ namespace ircd
 	template<> string_view lex_cast(const std::string &, const mutable_buffer &buf);
 	template<> string_view lex_cast(const std::string_view &, const mutable_buffer &buf);
 	template<> string_view lex_cast(const string_view &, const mutable_buffer &buf);
+	template<> string_view lex_cast(hours, const mutable_buffer &buf);
+	template<> string_view lex_cast(minutes, const mutable_buffer &buf);
 	template<> string_view lex_cast(seconds, const mutable_buffer &buf);
 	template<> string_view lex_cast(milliseconds, const mutable_buffer &buf);
 	template<> string_view lex_cast(microseconds, const mutable_buffer &buf);
