@@ -2076,9 +2076,6 @@ ircd::json::_prev(chase &c)
 // json/iov.h
 //
 
-decltype(ircd::json::iov::max_size)
-ircd::json::iov::max_size;
-
 std::ostream &
 ircd::json::operator<<(std::ostream &s, const iov &iov)
 {

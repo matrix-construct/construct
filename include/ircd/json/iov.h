@@ -55,7 +55,7 @@ struct ircd::json::iov
 	IRCD_EXCEPTION(error, exists);
 	IRCD_EXCEPTION(error, oversize);
 
-	static constexpr const size_t max_size
+	static constexpr const size_t &max_size
 	{
 		1024
 	};
