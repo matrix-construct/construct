@@ -2863,6 +2863,7 @@ noexcept
 	};
 }
 
+[[gnu::cold]]
 void
 ircd::db::database::events::OnBackgroundError(rocksdb::BackgroundErrorReason reason,
                                               rocksdb::Status *const status)

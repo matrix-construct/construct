@@ -78,6 +78,7 @@ ircd::ios::init(asio::executor &&user)
 	ios::main = *ios::primary;
 }
 
+[[gnu::cold]]
 void
 ircd::ios::forking()
 {
@@ -88,6 +89,7 @@ ircd::ios::forking()
 	#endif
 }
 
+[[gnu::cold]]
 void
 ircd::ios::forked_child()
 {
@@ -98,6 +100,7 @@ ircd::ios::forked_child()
 	#endif
 }
 
+[[gnu::cold]]
 void
 ircd::ios::forked_parent()
 {

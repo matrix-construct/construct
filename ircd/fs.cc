@@ -60,6 +60,7 @@ ircd::fs::init::init()
 	init_dump_info();
 }
 
+[[gnu::cold]]
 ircd::fs::init::~init()
 noexcept
 {
@@ -1646,7 +1647,6 @@ ircd::fs::aio::system;
 //
 
 #ifndef IRCD_USE_AIO
-[[gnu::weak]]
 ircd::fs::aio::init::init()
 {
 	assert(!system);
@@ -1654,7 +1654,7 @@ ircd::fs::aio::init::init()
 #endif
 
 #ifndef IRCD_USE_AIO
-[[gnu::weak]]
+[[using gnu: weak, cold]]
 ircd::fs::aio::init::~init()
 noexcept
 {

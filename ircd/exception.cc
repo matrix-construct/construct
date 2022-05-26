@@ -8,13 +8,15 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-[[noreturn]] static void
+[[noreturn, gnu::cold]]
+static void
 ircd_terminate_handler()
 noexcept
 {
 	std::abort();
 }
 
+[[gnu::cold]]
 void
 ircd::_aborting_()
 noexcept
@@ -22,6 +24,7 @@ noexcept
 	std::set_terminate(&ircd_terminate_handler);
 }
 
+[[gnu::cold]]
 void
 ircd::panicking(const std::exception_ptr &eptr)
 noexcept
@@ -35,6 +38,7 @@ noexcept
 /// Called by the constructor of a panic exception when thown. We immediately
 /// log a critical message, which is actually what triggers a termination when
 /// assertions are enabled (!NDEBUG) otherwise a no-op.
+[[gnu::cold]]
 void
 ircd::panicking(const std::exception &e)
 noexcept
@@ -282,7 +286,7 @@ const noexcept
 // terminate
 //
 
-[[noreturn]]
+[[noreturn, gnu::cold]]
 ircd::terminate::terminate(std::exception_ptr eptr)
 noexcept
 {
@@ -292,7 +296,7 @@ noexcept
 	__builtin_unreachable();
 }
 
-[[noreturn]]
+[[noreturn, gnu::cold]]
 ircd::terminate::terminate(const std::exception &e)
 noexcept
 :terminate
@@ -303,7 +307,7 @@ noexcept
 	__builtin_unreachable();
 }
 
-[[noreturn]]
+[[noreturn, gnu::cold]]
 ircd::terminate::terminate()
 noexcept
 :terminate
@@ -314,7 +318,7 @@ noexcept
 	__builtin_unreachable();
 }
 
-[[noreturn]]
+[[noreturn, gnu::cold]]
 ircd::terminate::~terminate()
 noexcept
 {

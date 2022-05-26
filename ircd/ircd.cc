@@ -246,6 +246,7 @@ catch(const std::exception &e)
 /// the run() will then return immediately after IRCd posts its transition to
 /// the HALT state.
 ///
+[[gnu::cold]]
 bool
 ircd::quit()
 noexcept

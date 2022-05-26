@@ -127,6 +127,7 @@ ircd::client::init::init()
 	spawn();
 }
 
+[[gnu::cold]]
 ircd::client::init::~init()
 noexcept
 {

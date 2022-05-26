@@ -138,6 +138,7 @@ catch(const std::exception &e)
 	throw;
 }
 
+[[gnu::cold]]
 ircd::db::init::~init()
 noexcept
 {
@@ -1426,7 +1427,7 @@ ircd::db::txn::at(const op &op,
                   const delta_closure &closure)
 const
 {
-	if(!get(op, col, closure))
+	if(unlikely(!get(op, col, closure)))
 		throw not_found
 		{
 			"db::txn::at(%s, %s): no matching delta in transaction",
@@ -1476,7 +1477,7 @@ ircd::db::txn::at(const op &op,
                   const value_closure &closure)
 const
 {
-	if(!get(op, col, key, closure))
+	if(unlikely(!get(op, col, key, closure)))
 		throw not_found
 		{
 			"db::txn::at(%s, %s, %s): no matching delta in transaction",

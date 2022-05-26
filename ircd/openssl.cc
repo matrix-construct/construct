@@ -1705,6 +1705,7 @@ ircd::openssl::init::init()
 */
 }
 
+[[gnu::cold]]
 ircd::openssl::init::~init()
 noexcept
 {

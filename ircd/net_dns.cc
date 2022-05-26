@@ -42,6 +42,7 @@ ircd::net::dns::init::init()
     };
 }
 
+[[gnu::cold]]
 ircd::net::dns::init::~init()
 noexcept
 {

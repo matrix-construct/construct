@@ -248,6 +248,7 @@ ircd::magick::init::init()
 	};
 }
 
+[[gnu::cold]]
 ircd::magick::init::~init()
 noexcept
 {

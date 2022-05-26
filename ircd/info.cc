@@ -42,7 +42,6 @@ ircd::info::credits
 	nullptr
 };
 
-[[gnu::cold]]
 void
 ircd::info::dump()
 {

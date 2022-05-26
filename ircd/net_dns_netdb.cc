@@ -47,6 +47,7 @@ ircd::net::dns::init::service_init()
 	#endif
 }
 
+[[gnu::cold]]
 void
 ircd::net::dns::init::service_fini()
 noexcept

@@ -40,6 +40,7 @@ ircd::ctx::ole::init::init()
 	termination = false;
 }
 
+[[gnu::cold]]
 ircd::ctx::ole::init::~init()
 noexcept
 {

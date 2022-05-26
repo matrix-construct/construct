@@ -126,7 +126,7 @@ noexcept
 		children.size(),
 	};
 
-	if(!mapi::static_destruction)
+	if(unlikely(!mapi::static_destruction))
 	{
 		handle_stuck(mod);
 		return false;
@@ -154,6 +154,7 @@ noexcept
 	return true;
 }
 
+[[gnu::cold]]
 void
 ircd::mods::handle_stuck(mod &mod)
 {
@@ -182,6 +183,7 @@ ircd::mods::handle_stuck(mod &mod)
 	};
 }
 
+[[gnu::cold]]
 void
 ircd::mods::handle_ebadf(const string_view &what)
 {

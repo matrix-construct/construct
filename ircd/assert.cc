@@ -15,6 +15,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunreachable-code"
 #endif __clang__
+[[gnu::cold]]
 void
 __assert_fail(const char *__assertion,
               const char *__file,
@@ -70,6 +71,7 @@ __assert_fail(const char *__assertion,
 #endif __clang__
 #endif
 
+[[gnu::cold]]
 void
 ircd::print_assertion(const char *const __assertion,
                       const char *const __file,

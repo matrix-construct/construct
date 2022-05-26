@@ -12,7 +12,6 @@
 #pragma STDC FENV_ACCESS on
 #endif
 
-[[gnu::cold]]
 void
 ircd::fpe::debug_info()
 {
@@ -68,6 +67,7 @@ ircd::fpe::debug_info()
 	};
 }
 
+[[gnu::cold]]
 void
 ircd::fpe::_throw_errors(const ushort &flags)
 {

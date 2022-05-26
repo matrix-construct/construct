@@ -550,6 +550,7 @@ ircd::rfc1035::valid_label(std::nothrow_t,
 	return rfc3986::valid_hostname(std::nothrow, label);
 }
 
+[[gnu::cold]]
 std::string
 ircd::rfc1035::header::debug()
 const

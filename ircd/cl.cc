@@ -253,6 +253,7 @@ ircd::cl::init::init()
 	log_dev_info();
 }
 
+[[gnu::cold]]
 ircd::cl::init::~init()
 noexcept
 {

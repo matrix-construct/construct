@@ -60,6 +60,7 @@ noexcept
 {
 }
 
+[[gnu::cold]]
 ircd::server::init::~init()
 noexcept
 {

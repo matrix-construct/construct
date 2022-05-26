@@ -30,7 +30,7 @@ struct name                                                                   \
 :parent                                                                       \
 {                                                                             \
     template<class... args>                                                   \
-    [[gnu::noinline]]                                                         \
+    [[gnu::noinline, gnu::cold]]                                              \
     name(const string_view &fmt, args&&... ap) noexcept                       \
     :parent{generate_skip}                                                    \
     {                                                                         \
@@ -39,7 +39,7 @@ struct name                                                                   \
     }                                                                         \
                                                                               \
     template<class... args>                                                   \
-    [[gnu::noinline]]                                                         \
+    [[gnu::noinline, gnu::cold]]                                              \
     name(const string_view &fmt = " ") noexcept                               \
     :parent{generate_skip}                                                    \
     {                                                                         \

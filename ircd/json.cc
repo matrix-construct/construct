@@ -595,7 +595,7 @@ noexcept
 	};
 }
 
-[[gnu::noinline]]
+[[gnu::noinline, gnu::cold, noreturn]]
 void
 ircd::json::parser::throws_exceeded()
 {
@@ -626,7 +626,7 @@ ircd::json::replace(const object &s,
 		}
 	};
 
-	if(!empty(s) && type(s) != type::OBJECT)
+	if(unlikely(!empty(s) && type(s) != type::OBJECT))
 		throw type_error
 		{
 			"Cannot replace member into JSON of type %s",
@@ -652,7 +652,7 @@ ircd::json::strung
 ircd::json::replace(const object &s,
                     const json::member &m_)
 {
-	if(!empty(s) && type(s) != type::OBJECT)
+	if(unlikely(!empty(s) && type(s) != type::OBJECT))
 		throw type_error
 		{
 			"Cannot replace member into JSON of type %s",
@@ -676,7 +676,7 @@ ircd::json::strung
 ircd::json::insert(const object &s,
                    const json::member &m)
 {
-	if(!empty(s) && type(s) != type::OBJECT)
+	if(unlikely(!empty(s) && type(s) != type::OBJECT))
 		throw type_error
 		{
 			"Cannot insert member into JSON of type %s",
@@ -702,7 +702,7 @@ ircd::json::remove(const object &s,
 	if(empty(s))
 		return s;
 
-	if(type(s) != type::OBJECT)
+	if(unlikely(type(s) != type::OBJECT))
 		throw type_error
 		{
 			"Cannot remove object member '%s' from JSON of type %s",
@@ -729,7 +729,7 @@ ircd::json::remove(const object &s,
 	if(empty(s))
 		return s;
 
-	if(type(s) != type::ARRAY)
+	if(unlikely(type(s) != type::ARRAY))
 		throw type_error
 		{
 			"Cannot remove array element [%zu] from JSON of type %s",

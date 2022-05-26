@@ -126,6 +126,7 @@ ircd::fs::aio::init::init()
 	);
 }
 
+[[gnu::cold]]
 ircd::fs::aio::init::~init()
 noexcept
 {

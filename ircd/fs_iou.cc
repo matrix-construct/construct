@@ -51,6 +51,7 @@ ircd::fs::iou::init::init()
 	);
 }
 
+[[gnu::cold]]
 ircd::fs::iou::init::~init()
 noexcept
 {

@@ -884,6 +884,7 @@ noexcept
 #endif
 
 #ifndef NDEBUG
+[[gnu::cold]]
 void
 ircd::ctx::assert_critical()
 {

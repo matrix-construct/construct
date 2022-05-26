@@ -75,6 +75,7 @@ ircd::net::init::init()
 }
 
 /// Network subsystem shutdown
+[[gnu::cold]]
 ircd::net::init::~init()
 noexcept
 {
