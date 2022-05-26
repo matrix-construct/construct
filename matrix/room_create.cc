@@ -117,7 +117,7 @@ try
 				if(preset != "trusted_private_chat")
 					return;
 
-				for(const json::string &user_id : json::get<"invite"_>(c))
+				for(const json::string user_id : json::get<"invite"_>(c))
 					if(valid(id::USER, user_id))
 						json::stack::member
 						{
