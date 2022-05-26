@@ -5295,7 +5295,7 @@ ircd::db::make_opts(const gopts &opts)
 	ret.iter_start_seqnum = opts.seqnum;
 
 	ret.verify_checksums = bool(read_checksum);
-	if(test(opts, get::CHECKSUM) & !test(opts, get::NO_CHECKSUM))
+	if(test(opts, get::CHECKSUM) && !test(opts, get::NO_CHECKSUM))
 		ret.verify_checksums = true;
 
 	if(test(opts, get::NO_SNAPSHOT))
