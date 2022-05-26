@@ -59,6 +59,11 @@ namespace ircd::server
 	peer &get(const net::hostport &);      // creates the peer if not found.
 	bool prelink(const net::hostport &);   // creates and links if not errant.
 	bool errclear(const net::hostport &);  // clear cached error.
+
+	// manual control panel
+	void interrupt();
+	void close();
+	void wait();
 }
 
 /// Subsystem initialization / destruction from ircd::main
@@ -66,11 +71,6 @@ namespace ircd::server
 struct [[gnu::visibility("hidden")]]
 ircd::server::init
 {
-	// manual control panel
-	static void interrupt();
-	static void close();
-	static void wait();
-
 	init() noexcept;
 	~init() noexcept;
 };

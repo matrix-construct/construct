@@ -5349,6 +5349,12 @@ ircd::db::make_opts(const sopts &opts)
 //
 //
 
+void
+ircd::db::chdir()
+{
+	init::directory();
+}
+
 std::vector<std::string>
 ircd::db::available()
 {

@@ -107,7 +107,7 @@ ircd::m::dbs::init::init(const string_view &servername,
 	fs::base::db.set(our_dbpath);
 
 	// Recall the db directory init manually with the now-updated basepath
-	db::init::directory();
+	db::chdir();
 
 	// Open the events database
 	static const string_view &dbname{"events"};

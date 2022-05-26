@@ -305,13 +305,13 @@ ircd::m::homeserver::~homeserver()
 noexcept try
 {
 	///TODO: XXX primary
-	server::init::interrupt();
+	server::interrupt();
 	client::terminate_all();         //TODO: XXX
-	server::init::close();
+	server::close();
 	client::close_all();
 	m::init::backfill::fini();
 	client::wait_all();
-	server::init::wait();
+	server::wait();
 	m::sync::pool.join();
 
 	if(!ircd::maintenance && _vm)

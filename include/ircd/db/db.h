@@ -75,6 +75,9 @@ namespace ircd::db
 
 	// Paths of available databases.
 	std::vector<std::string> available();
+
+	//XXX should remove
+	void chdir();
 }
 
 namespace ircd

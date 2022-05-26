@@ -73,7 +73,7 @@ noexcept
 }
 
 void
-ircd::server::init::wait()
+ircd::server::wait()
 {
 	static const auto finished
 	{
@@ -106,7 +106,7 @@ ircd::server::init::wait()
 }
 
 void
-ircd::server::init::close()
+ircd::server::close()
 {
 	log::debug
 	{
@@ -121,7 +121,7 @@ ircd::server::init::close()
 }
 
 void
-ircd::server::init::interrupt()
+ircd::server::interrupt()
 {
 	log::debug
 	{
