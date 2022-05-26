@@ -129,7 +129,7 @@ struct ircd::net::socket
 };
 
 template<class... args>
-auto
+inline auto
 ircd::net::socket::operator()(args&&... a)
 {
 	return this->wait(std::forward<args>(a)...);

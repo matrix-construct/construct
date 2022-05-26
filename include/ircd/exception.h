@@ -220,7 +220,7 @@ namespace ircd
 
 template<class E,
          class... args>
-std::exception_ptr
+inline std::exception_ptr
 ircd::make_exception_ptr(args&&... a)
 try
 {
@@ -232,14 +232,14 @@ catch(const E &)
 };
 
 template<class... args>
-void
+inline void
 ircd::throw_system_error(args&&... a)
 {
 	throw make_system_error(std::forward<args>(a)...);
 }
 
 template<class... args>
-std::exception_ptr
+inline std::exception_ptr
 ircd::make_system_eptr(args&&... a)
 {
 	return std::make_exception_ptr(make_system_error(std::forward<args>(a)...));

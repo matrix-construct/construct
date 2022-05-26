@@ -46,7 +46,8 @@ namespace ircd
 /// own after receiving an interruption without help from this action. Common
 /// use for this is with yields to asio.
 ///
-struct ircd::ctx::continuation
+struct [[gnu::visibility("hidden")]]
+ircd::ctx::continuation
 {
 	static const predicate asio_predicate;
 	static const predicate true_predicate;

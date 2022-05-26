@@ -49,7 +49,8 @@ struct ircd::ctx::ole::opts
 	int8_t prio {0};
 };
 
-struct ircd::ctx::ole::init
+struct [[gnu::visibility("hidden")]]
+ircd::ctx::ole::init
 {
 	init();
 	~init() noexcept;

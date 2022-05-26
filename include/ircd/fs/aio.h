@@ -84,7 +84,8 @@ struct ircd::fs::aio::stats
 	stats();
 };
 
-struct ircd::fs::aio::init
+struct [[gnu::visibility("hidden")]]
+ircd::fs::aio::init
 {
 	init();
 	~init() noexcept;

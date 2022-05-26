@@ -83,7 +83,8 @@ namespace ircd
 }
 
 /// Database subsystem initialization and destruction
-struct ircd::db::init
+struct [[gnu::visibility("hidden")]]
+ircd::db::init
 {
 	static const std::string direct_io_test_file_path;
 

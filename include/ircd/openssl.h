@@ -212,7 +212,8 @@ class ircd::openssl::bignum
 	~bignum() noexcept;
 };
 
-struct ircd::openssl::init
+struct [[gnu::visibility("hidden")]]
+ircd::openssl::init
 {
 	init();
 	~init() noexcept;

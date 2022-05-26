@@ -73,7 +73,8 @@ namespace ircd
 	using net::socket;
 }
 
-struct ircd::net::init
+struct [[gnu::visibility("hidden")]]
+ircd::net::init
 {
 	init();
 	~init() noexcept;

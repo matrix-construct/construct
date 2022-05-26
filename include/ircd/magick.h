@@ -27,12 +27,6 @@ namespace ircd::magick
 	extern const info::versions version_api, version_abi;
 }
 
-struct ircd::magick::init
-{
-	init();
-	~init() noexcept;
-};
-
 /// Composite thumbnailer to resize close to the requested dimension but
 /// preserving original aspect ratio; then crop to requested dimension.
 struct ircd::magick::thumbcrop
@@ -109,6 +103,13 @@ struct ircd::magick::job
 	uint64_t errors {0};       // exception/error count
 	string_view description;   // only valid for current job duration
 	std::exception_ptr eptr;   // apropos exception reference
+};
+
+struct [[gnu::visibility("hidden")]]
+ircd::magick::init
+{
+	init();
+	~init() noexcept;
 };
 
 // inline stubs when magick disabled/unavailable.

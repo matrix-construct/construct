@@ -12,17 +12,17 @@
 #define HAVE_FS_IOU_H
 #include <linux/io_uring.h>
 
+#pragma GCC visibility push(hidden)
 namespace ircd::fs::iou
 {
-	struct system;
-	struct request;
-
 	size_t write(const fd &, const const_iovec_view &, const write_opts &);
 	size_t read(const fd &, const const_iovec_view &, const read_opts &);
 	void fsync(const fd &, const sync_opts &);
 }
+#pragma GCC visibility pop
 
-struct ircd::fs::iou::system
+struct [[gnu::visibility("hidden")]]
+ircd::fs::iou::system
 {
 	ctx::dock dock;
 

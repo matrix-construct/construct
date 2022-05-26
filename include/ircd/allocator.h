@@ -275,14 +275,14 @@ struct ircd::allocator::callback<T>::allocator
 };
 
 template<class T>
-typename ircd::allocator::callback<T>::allocator
+inline typename ircd::allocator::callback<T>::allocator
 ircd::allocator::callback<T>::operator()()
 {
 	return ircd::allocator::callback<T>::allocator(*this);
 }
 
 template<class T>
-ircd::allocator::callback<T>::operator
+inline ircd::allocator::callback<T>::operator
 allocator()
 {
 	return ircd::allocator::callback<T>::allocator(*this);
@@ -423,7 +423,7 @@ struct ircd::allocator::fixed<T, SIZE>::allocator
 
 template<class T,
          size_t SIZE>
-typename ircd::allocator::fixed<T, SIZE>::allocator
+inline typename ircd::allocator::fixed<T, SIZE>::allocator
 ircd::allocator::fixed<T, SIZE>::operator()()
 {
 	return ircd::allocator::fixed<T, SIZE>::allocator(*this);
@@ -431,7 +431,7 @@ ircd::allocator::fixed<T, SIZE>::operator()()
 
 template<class T,
          size_t SIZE>
-ircd::allocator::fixed<T, SIZE>::operator
+inline ircd::allocator::fixed<T, SIZE>::operator
 allocator()
 {
 	return ircd::allocator::fixed<T, SIZE>::allocator(*this);
@@ -541,14 +541,14 @@ struct ircd::allocator::dynamic<T>::allocator
 };
 
 template<class T>
-typename ircd::allocator::dynamic<T>::allocator
+inline typename ircd::allocator::dynamic<T>::allocator
 ircd::allocator::dynamic<T>::operator()()
 {
 	return ircd::allocator::dynamic<T>::allocator(*this);
 }
 
 template<class T>
-ircd::allocator::dynamic<T>::operator
+inline ircd::allocator::dynamic<T>::operator
 allocator()
 {
 	return ircd::allocator::dynamic<T>::allocator(*this);
@@ -771,7 +771,7 @@ struct ircd::allocator::twolevel<T, L0_SIZE>::allocator
 
 template<class T,
          size_t L0_SIZE>
-typename ircd::allocator::twolevel<T, L0_SIZE>::allocator
+inline typename ircd::allocator::twolevel<T, L0_SIZE>::allocator
 ircd::allocator::twolevel<T, L0_SIZE>::operator()()
 {
 	return ircd::allocator::twolevel<T, L0_SIZE>::allocator(*this);
@@ -779,7 +779,7 @@ ircd::allocator::twolevel<T, L0_SIZE>::operator()()
 
 template<class T,
          size_t L0_SIZE>
-ircd::allocator::twolevel<T, L0_SIZE>::operator
+inline ircd::allocator::twolevel<T, L0_SIZE>::operator
 allocator()
 {
 	return ircd::allocator::twolevel<T, L0_SIZE>::allocator(*this);

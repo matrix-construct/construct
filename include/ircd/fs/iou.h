@@ -89,7 +89,8 @@ enum ircd::fs::iou::state
 
 /// Internal use; this is simply declared here for when internal headers are
 /// not available for this build so a weak no-op definition can be defined.
-struct ircd::fs::iou::init
+struct [[gnu::visibility("hidden")]]
+ircd::fs::iou::init
 {
 	init();
 	~init() noexcept;

@@ -78,7 +78,8 @@ namespace ircd::fs
 }
 
 /// Filesystem interface init / fini held by ircd::main().
-struct ircd::fs::init
+struct [[gnu::visibility("hidden")]]
+ircd::fs::init
 {
 	iou::init _iou_;
 	aio::init _aio_;

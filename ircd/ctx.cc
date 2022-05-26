@@ -64,7 +64,7 @@ ircd::ctx::ctx::ios_handler
 };
 
 /// Points to the next context to spawn (internal use)
-[[gnu::visibility("internal")]]
+[[gnu::visibility("hidden")]]
 decltype(ircd::ctx::ctx::spawning)
 ircd::ctx::ctx::spawning;
 
@@ -74,6 +74,7 @@ decltype(ircd::ctx::ctx::adjoindre)
 ircd::ctx::ctx::adjoindre;
 
 /// Internal context struct ctor
+[[gnu::visibility("hidden")]]
 ircd::ctx::ctx::ctx(const string_view &name,
                     const ircd::ctx::stack &stack,
                     const context::flags &flags)
@@ -93,6 +94,7 @@ ircd::ctx::ctx::ctx(const string_view &name,
 	strlcpy(this->name, name);
 }
 
+[[gnu::visibility("hidden")]]
 ircd::ctx::ctx::~ctx()
 noexcept
 {
@@ -100,6 +102,7 @@ noexcept
 }
 
 /// Internal wrapper for asio::spawn; never call directly.
+[[gnu::visibility("hidden")]]
 void
 IRCD_CTX_STACK_PROTECT
 ircd::ctx::ctx::spawn(context::function func)
@@ -160,6 +163,7 @@ ircd::ctx::ctx::spawn(context::function func)
 ///
 /// This function is the first thing executed on the new context's stack
 /// and calls the user's function.
+[[gnu::visibility("hidden")]]
 void
 IRCD_CTX_STACK_PROTECT
 ircd::ctx::ctx::operator()(boost::asio::yield_context yc,
@@ -232,6 +236,7 @@ catch(const std::exception &e)
 ///
 /// This currently doesn't work yet because the suspension state of this
 /// context has to be ready to be jumped to and that isn't implemented yet.
+[[gnu::visibility("hidden")]]
 void
 IRCD_CTX_STACK_PROTECT
 ircd::ctx::ctx::jump()
@@ -265,7 +270,7 @@ ircd::ctx::ctx::jump()
 /// considered handled an another attempt to `wait()` can be made. Returns true
 /// if the context suspended and was notified. When a context wakes up the
 /// note counter is reset.
-[[gnu::hot]]
+[[gnu::visibility("hidden"), gnu::hot]]
 bool
 IRCD_CTX_STACK_PROTECT
 ircd::ctx::ctx::wait()
@@ -320,6 +325,7 @@ ircd::ctx::ctx::wait()
 ///
 /// Returns true if this note was the first note received by this context
 /// while it's been suspended or false if it's already been notified.
+[[gnu::visibility("hidden"), gnu::hot]]
 bool
 ircd::ctx::ctx::note()
 noexcept
@@ -334,6 +340,7 @@ noexcept
 }
 
 /// Wakes a context without a note (internal)
+[[gnu::visibility("hidden"), gnu::hot]]
 bool
 ircd::ctx::ctx::wake()
 noexcept try
@@ -370,7 +377,7 @@ catch(const std::exception &e)
 
 /// Throws if this context has been flagged for interruption and clears
 /// the flag.
-[[gnu::hot]]
+[[gnu::visibility("hidden"), gnu::hot]]
 void
 ircd::ctx::ctx::interruption_point()
 {
@@ -390,7 +397,7 @@ ircd::ctx::ctx::interruption_point()
 /// Returns true if this context has been flagged for termination. Does not
 /// clear the flag. Sets the NOINTERRUPT flag so the context cannot be further
 // interrupted which simplifies the termination process.
-[[gnu::hot]]
+[[gnu::visibility("hidden"), gnu::hot]]
 bool
 ircd::ctx::ctx::termination_point(std::nothrow_t)
 noexcept
@@ -407,7 +414,7 @@ noexcept
 
 /// Returns true if this context has been flagged for interruption and
 /// clears the flag.
-[[gnu::hot]]
+[[gnu::visibility("hidden"), gnu::hot]]
 bool
 ircd::ctx::ctx::interruption_point(std::nothrow_t)
 noexcept
@@ -424,7 +431,7 @@ noexcept
 
 /// True if this context has been flagged for interruption or termination
 /// and interrupts are not blocked.
-[[gnu::hot]]
+[[gnu::visibility("hidden"), gnu::hot]]
 bool
 ircd::ctx::ctx::interruption()
 const noexcept
@@ -447,7 +454,7 @@ const noexcept
 	return true;
 }
 
-[[gnu::hot]]
+[[gnu::visibility("hidden"), gnu::hot]]
 bool
 ircd::ctx::ctx::started()
 const noexcept
@@ -455,7 +462,7 @@ const noexcept
 	return stack.base != 0;
 }
 
-[[gnu::hot]]
+[[gnu::visibility("hidden"), gnu::hot]]
 bool
 ircd::ctx::ctx::finished()
 const noexcept
@@ -825,6 +832,7 @@ ircd::ctx::this_ctx::wait()
 	c.wait(); // now you're yielding with portals
 }
 
+[[gnu::hot, gnu::noinline]]
 size_t
 ircd::ctx::this_ctx::stack_at_here()
 {
@@ -834,6 +842,7 @@ ircd::ctx::this_ctx::stack_at_here()
 
 /// Throws interrupted if the currently running context was interrupted
 /// and clears the interrupt flag.
+[[gnu::hot]]
 void
 ircd::ctx::this_ctx::interruption_point()
 {

@@ -116,7 +116,8 @@ struct ircd::client::settings
 	static ircd::conf::item<size_t> max_client_per_peer;
 };
 
-struct ircd::client::init
+struct [[gnu::visibility("hidden")]]
+ircd::client::init
 {
 	init();
 	~init() noexcept;

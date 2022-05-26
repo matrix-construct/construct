@@ -22,20 +22,20 @@
 /// The resolution is very low at 10ms but it is not expensive to use.
 //#define RB_DEBUG_FS_AIO_SUBMIT_BLOCKING
 
+#pragma GCC visibility push(hidden)
 namespace ircd::fs::aio
 {
-	struct system;
-	struct request;
-
 	size_t write(const fd &, const const_iovec_view &, const write_opts &);
 	size_t read(const vector_view<read_op> &);
 	size_t read(const fd &, const const_iovec_view &, const read_opts &);
 	size_t fsync(const fd &, const sync_opts &);
 }
+#pragma GCC visibility pop
 
 /// AIO context instance from the system. Right now this is a singleton with
 /// an extern instance pointer at fs::aio::context maintained by fs::aio::init.
-struct ircd::fs::aio::system
+struct [[gnu::visibility("hidden")]]
+ircd::fs::aio::system
 {
 	struct aio_context;
 
@@ -100,7 +100,8 @@ struct ircd::fs::aio::system
 	~system() noexcept;
 };
 
-struct ircd::fs::aio::system::aio_context
+struct [[gnu::visibility("internal")]]
+ircd::fs::aio::system::aio_context
 {
 	static constexpr uint MAGIC {0xA10A10A1};
 
@@ -117,7 +118,8 @@ struct ircd::fs::aio::system::aio_context
 // 128 bytes + ring size
 
 /// Generic request control block.
-struct ircd::fs::aio::request
+struct [[gnu::visibility("hidden")]]
+ircd::fs::aio::request
 :iocb
 {
 	struct read;
@@ -152,7 +154,8 @@ struct ircd::fs::aio::request
 };
 
 /// Read request control block
-struct ircd::fs::aio::request::read
+struct [[gnu::visibility("hidden")]]
+ircd::fs::aio::request::read
 :request
 {
 	read(ctx::dock &, const int &fd, const read_opts &, const const_iovec_view &);
@@ -160,7 +163,8 @@ struct ircd::fs::aio::request::read
 };
 
 /// Write request control block
-struct ircd::fs::aio::request::write
+struct [[gnu::visibility("hidden")]]
+ircd::fs::aio::request::write
 :request
 {
 	write(ctx::dock &, const int &fd, const write_opts &, const const_iovec_view &);
@@ -168,7 +172,8 @@ struct ircd::fs::aio::request::write
 };
 
 /// fsync request control block
-struct ircd::fs::aio::request::fsync
+struct [[gnu::visibility("hidden")]]
+ircd::fs::aio::request::fsync
 :request
 {
 	fsync(ctx::dock &, const int &fd, const sync_opts &);

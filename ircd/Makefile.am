@@ -24,6 +24,10 @@ AM_CPPFLAGS = \
 AM_LDFLAGS = \
 	-version-info 3:2:0 \
 	-Wl,--no-undefined-version \
+	-Wl,--icf=all \
+	-Wl,--no-text-reorder \
+	-Wl,--sort-section=name \
+	-Wl,--sort-common=descending \
 	-Wl,--weak-unresolved-symbols \
 	-Wl,--unresolved-symbols=ignore-in-shared-libs \
 	-Wl,--wrap=pthread_create \

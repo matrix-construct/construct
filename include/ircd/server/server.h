@@ -63,7 +63,8 @@ namespace ircd::server
 
 /// Subsystem initialization / destruction from ircd::main
 ///
-struct ircd::server::init
+struct [[gnu::visibility("hidden")]]
+ircd::server::init
 {
 	// manual control panel
 	static void interrupt();

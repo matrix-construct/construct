@@ -28,7 +28,8 @@ namespace ircd::magic
 	extern const info::versions version_api, version_abi;
 }
 
-struct ircd::magic::init
+struct [[gnu::visibility("hidden")]]
+ircd::magic::init
 {
 	init();
 	~init() noexcept;

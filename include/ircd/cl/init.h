@@ -24,7 +24,8 @@ namespace ircd::cl
 	void log_platform_info();
 }
 
-class ircd::cl::init
+class [[gnu::visibility("hidden")]]
+ircd::cl::init
 {
 	size_t init_platforms();
 	size_t init_devices();
