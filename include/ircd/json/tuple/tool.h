@@ -46,7 +46,7 @@ serialized(const tuple<T...> &t)
 }
 
 template<class... T>
-size_t
+inline size_t
 serialized(const tuple<T...> *const &b,
            const tuple<T...> *const &e)
 {
@@ -84,10 +84,10 @@ stringify(mutable_buffer &buf,
 }
 
 template<class... T>
-string_view
+inline string_view
 stringify(mutable_buffer &buf,
           const tuple<T...> *b,
-          const tuple<T...> *e)
+          const tuple<T...> *const &e)
 {
 	const auto start(begin(buf));
 	consume(buf, copy(buf, '['));
@@ -105,7 +105,7 @@ stringify(mutable_buffer &buf,
 }
 
 template<class... T>
-std::ostream &
+inline std::ostream &
 operator<<(std::ostream &s, const tuple<T...> &t)
 {
     s << json::strung(t);

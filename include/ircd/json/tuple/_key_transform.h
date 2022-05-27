@@ -37,7 +37,7 @@ _key_transform(it_a it,
                const it_b &end,
                closure&& lambda)
 {
-	if(it != end)
+	if(likely(it != end))
 	{
 		*it = lambda(key<tuple, i>());
 		++it;
@@ -63,7 +63,7 @@ _key_transform(it_a it,
 template<class it_a,
          class it_b,
          class... T>
-auto
+constexpr auto
 _key_transform(const tuple<T...> &tuple,
                it_a it,
                const it_b &end)

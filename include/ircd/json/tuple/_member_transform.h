@@ -18,7 +18,7 @@ template<class it_a,
          class it_b,
          class closure,
          class... T>
-auto
+inline auto
 _member_transform_if(const tuple<T...> &tuple,
                      it_a it,
                      const it_b end,
@@ -30,7 +30,7 @@ _member_transform_if(const tuple<T...> &tuple,
 		if(it == end)
 			return false;
 
-		if(lambda(*it, key, val))
+		if(likely(lambda(*it, key, val)))
 			++it;
 
 		return true;
@@ -43,7 +43,7 @@ template<class it_a,
          class it_b,
          class closure,
          class... T>
-auto
+inline auto
 _member_transform(const tuple<T...> &tuple,
                   it_a it,
                   const it_b end,
@@ -60,7 +60,7 @@ _member_transform(const tuple<T...> &tuple,
 template<class it_a,
          class it_b,
          class... T>
-auto
+inline auto
 _member_transform(const tuple<T...> &tuple,
                   it_a it,
                   const it_b end)
