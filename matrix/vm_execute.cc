@@ -22,8 +22,6 @@ namespace ircd::m::vm
 	static fault execute_pdu(eval &, const event &);
 	static fault execute_du(eval &, const event &);
 	static fault execute(eval &, const event &);
-	static fault inject3(eval &, json::iov &, const json::iov &);
-	static fault inject1(eval &, json::iov &, const json::iov &);
 	static void fini();
 	static void init();
 
