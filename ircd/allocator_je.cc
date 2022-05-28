@@ -16,9 +16,11 @@
 
 namespace ircd::allocator::je
 {
-	static std::function<void (std::ostream &, const string_view &)> stats_callback;
+	using callback_prototype = void (std::ostream &, const string_view &);
+
 	static void stats_handler(void *, const char *) noexcept;
 
+	static std::function<callback_prototype> stats_callback;
 	extern info::versions malloc_version_api;
 	extern info::versions malloc_version_abi;
 }
@@ -57,7 +59,10 @@ ircd::allocator::je::malloc_version_abi
 		#ifdef IRCD_ALLOCATOR_JEMALLOC
 		const string_view val
 		{
-			*reinterpret_cast<const char *const *>(data(allocator::get("version", buf)))
+			*reinterpret_cast<const char *const *>
+			(
+				data(allocator::get("version", buf))
+			)
 		};
 
 		if(!val)
@@ -94,7 +99,7 @@ ircd::string_view
 ircd::allocator::get(const string_view &key_,
                      const mutable_buffer &buf)
 {
-	thread_local char key[128];
+	char key[128];
 	strlcpy(key, key_);
 
 	size_t len(size(buf));
@@ -112,11 +117,11 @@ ircd::allocator::set(const string_view &key_,
                      const string_view &val,
                      const mutable_buffer &cur)
 {
-	thread_local char key[128];
+	char key[128];
 	strlcpy(key, key_);
 
 	size_t curlen(size(cur));
-	syscall(::mallctl, key, data(cur), &curlen, const_cast<char *>(data(val)), size(val));
+	syscall(::mallctl, key, data(cur), &curlen, mutable_cast(data(val)), size(val));
 	return string_view
 	{
 		data(cur), std::min(curlen, size(cur))
@@ -156,7 +161,7 @@ ircd::allocator::info(const mutable_buffer &buf,
 		out << msg;
 	};
 
-	thread_local char opts_buf[64];
+	char opts_buf[64];
 	const char *const opts
 	{
 		opts_?
