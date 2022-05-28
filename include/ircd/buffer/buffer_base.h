@@ -76,26 +76,29 @@ ircd::buffer::buffer<it>::buffer(const it &start,
 
 template<class it>
 inline __attribute__((always_inline))
-ircd::buffer::buffer<it>::operator string_view()
-const
-{
-	return { reinterpret_cast<const char *>(data(*this)), size(*this) };
-}
-
-template<class it>
-__attribute__((always_inline))
 ircd::buffer::buffer<it>::operator std::string()
 const
 {
-	return { reinterpret_cast<const char *>(data(*this)), size(*this) };
+	return std::string(static_cast<std::string_view>(*this));
 }
 
 template<class it>
-__attribute__((always_inline))
+inline __attribute__((always_inline))
 ircd::buffer::buffer<it>::operator std::string_view()
 const
 {
-	return { reinterpret_cast<const char *>(data(*this)), size(*this) };
+	return static_cast<ircd::string_view>(*this);
+}
+
+template<class it>
+inline __attribute__((always_inline))
+ircd::buffer::buffer<it>::operator string_view()
+const
+{
+	return string_view
+	{
+		const_cast<const char *>(data(*this)), size(*this)
+	};
 }
 
 template<class it>
