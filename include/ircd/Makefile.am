@@ -110,6 +110,6 @@ install: install-mkdirs
 	@for i in $(srcdir)/*; do \
 		if [[ "$$i" != "./Makefile"* ]] && [[ "$$i" != *.h.gch ]]; then \
 			echo "installing $$i to $(DESTDIR)$(includedir)"; \
-			cp -r $$i $(DESTDIR)$(includedir); \
+			cp -u -r $$i $(DESTDIR)$(includedir); \
 		fi \
 	done
