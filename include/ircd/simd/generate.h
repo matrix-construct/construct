@@ -213,7 +213,7 @@ noexcept
 	// primary broadband loop
 	while(count[0] + sizeof(block_t) <= max[0])
 	{
-		static const u64x2 produce
+		const u64x2 produce
 		{
 			sizeof(block_t), 0
 		};
@@ -278,7 +278,7 @@ noexcept
 	// primary broadband loop
 	while(count[0] < max[0])
 	{
-		static const u64x2 produce
+		const u64x2 produce
 		{
 			sizeof(block_t), 0
 		};

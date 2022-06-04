@@ -142,7 +142,7 @@ noexcept
 	// primary broadband loop
 	while(count[1] + sizeof(block_t) <= max[1] && count[0] + sizeof(block_t) <= max[0])
 	{
-		static const auto mask
+		const auto mask
 		{
 			mask_full<block_t>()
 		};

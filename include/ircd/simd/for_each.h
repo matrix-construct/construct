@@ -147,7 +147,7 @@ noexcept
 	// primary broadband loop
 	while(consume[1] && count[1] + sizeof(block_t) <= max[1])
 	{
-		static const auto mask
+		const auto mask
 		{
 			mask_full<block_t>()
 		};
@@ -223,14 +223,14 @@ noexcept
 	// primary broadband loop
 	while(count[1] + sizeof(block_t) <= max[1])
 	{
-		static const u64x2 consume
-		{
-			0, sizeof(block_t)
-		};
-
-		static const auto mask
+		const auto mask
 		{
 			mask_full<block_t>()
+		};
+
+		const u64x2 consume
+		{
+			0, sizeof(block_t)
 		};
 
 		const auto si
@@ -295,14 +295,14 @@ noexcept
 	// primary broadband loop
 	while(count[1] < max[1])
 	{
-		static const u64x2 consume
-		{
-			0, sizeof(block_t)
-		};
-
-		static const auto mask
+		const auto mask
 		{
 			mask_full<block_t>()
+		};
+
+		const u64x2 consume
+		{
+			0, sizeof(block_t)
 		};
 
 		const auto si
