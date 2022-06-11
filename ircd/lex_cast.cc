@@ -45,10 +45,6 @@ namespace ircd::lex
 	static string_view cast(const mutable_buffer &, T);
 }
 
-//TODO: XXX try removing once karma rules are optimized for globals
-#define RULE_INIT_PRIO \
-	__attribute__((init_priority(65535))), apply_to=variable(is_global)
-
 #pragma GCC visibility push(internal)
 namespace ircd::lex
 {
@@ -65,7 +61,6 @@ namespace ircd::lex
 	extern const rule_from<double()> from_double;
 	extern const rule_from<long double()> from_long_double;
 
-	#pragma clang attribute push(RULE_INIT_PRIO)
 	extern const rule_to<bool> to_bool, is_bool;
 	extern const rule_to<int8_t> to_int8_t, is_int8_t;
 	extern const rule_to<uint8_t> to_uint8_t, is_uint8_t;
@@ -78,7 +73,6 @@ namespace ircd::lex
 	extern const rule_to<float> to_float, is_float;
 	extern const rule_to<double> to_double, is_double;
 	extern const rule_to<long double> to_long_double, is_long_double;
-	#pragma clang attribute pop
 }
 #pragma GCC visibility pop
 

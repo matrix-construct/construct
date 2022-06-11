@@ -245,6 +245,7 @@ ircd::rfc1459::gen::grammar
 	grammar() noexcept;
 };
 
+/*
 struct [[gnu::visibility("internal")]]
 ircd::rfc1459::gen::carriage
 :gen::grammar<karma::ostream_iterator<char>>
@@ -284,6 +285,7 @@ ircd::rfc1459::gen::generate_prefix
 	generate_prefix() = default;
 }
 const ircd::rfc1459::gen::generate_prefix;
+*/
 
 template<class it>
 ircd::rfc1459::gen::grammar<it>::grammar()
@@ -392,7 +394,7 @@ std::ostream &
 ircd::rfc1459::operator<<(std::ostream &s, const parv &parv)
 {
 	using karma::delimit;
-
+/*
 	ssize_t i(0);
 	karma::ostream_iterator<char> osi(s);
 	for(; i < ssize_t(parv.size()) - 1; ++i)
@@ -402,27 +404,29 @@ ircd::rfc1459::operator<<(std::ostream &s, const parv &parv)
 	if(!parv.empty())
 		if(!karma::generate(osi, gen::generate_trailing, parv.at(parv.size() - 1)))
 			throw syntax_error("Invalid trailing parameter");
-
+*/
 	return s;
 }
 
 std::ostream &
 ircd::rfc1459::operator<<(std::ostream &s, const cmd &cmd)
 {
+/*
 	karma::ostream_iterator<char> osi(s);
 	if(!karma::generate(osi, gen::generate_command, cmd))
 		throw syntax_error("Bad command or numeric name");
-
+*/
 	return s;
 }
 
 std::ostream &
 ircd::rfc1459::operator<<(std::ostream &s, const pfx &pfx)
 {
+/*
 	karma::ostream_iterator<char> osi(s);
 	if(!karma::generate(osi, gen::generate_prefix, pfx))
 		throw syntax_error("Invalid prefix");
-
+*/
 	return s;
 }
 
