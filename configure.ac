@@ -680,17 +680,6 @@ AM_COND_IF([DEBUG],
 [
 	RB_VAR_PREPEND([CXXFLAGS], ["-ggdb"])
 	RB_VAR_PREPEND([CXXFLAGS], ["-g"])
-], [
-	dnl Note debug symbols are still included in release-mode by default
-	dnl unless compact-mode is specified.
-	AM_COND_IF([COMPACT],
-	[
-
-	], [
-		dnl Note these flags are unreliable with LTO
-		RB_VAR_PREPEND([CXXFLAGS], ["-ggdb"])
-		RB_VAR_PREPEND([CXXFLAGS], ["-g"])
-	])
 ])
 
 AM_COND_IF([DEBUG],
