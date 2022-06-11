@@ -24,6 +24,7 @@
 #include <ircd/spirit/boost.h>
 #include <ircd/spirit/spirit.h>
 #include <ircd/spirit/expectation_failure.h>
+#include <ircd/spirit/custom_parser.h>
 #include <ircd/spirit/parse.h>
 #include <ircd/spirit/generate.h>
 

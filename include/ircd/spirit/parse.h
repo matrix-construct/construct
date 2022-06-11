@@ -21,11 +21,6 @@ __attribute__((visibility("internal")))
 {
 	struct substring_view;
 
-	template<size_t id> struct custom_parser;
-	BOOST_SPIRIT_TERMINAL(custom0);
-	BOOST_SPIRIT_TERMINAL(custom1);
-	BOOST_SPIRIT_TERMINAL(custom2);
-
 	template<class rule,
 	         class... attr>
 	bool parse(const char *&start, const char *const &stop, rule&&, attr&&...);
@@ -41,100 +36,8 @@ __attribute__((visibility("internal")))
 	bool parse(std::nothrow_t, const char *&start, const char *const &stop, rule&&, attr&&...) noexcept;
 }}
 
-namespace boost {
-namespace spirit
-__attribute__((visibility("internal")))
-{
-	namespace qi
-	{
-		template<class modifiers>
-		struct make_primitive<ircd::spirit::tag::custom0, modifiers>;
-
-		template<class modifiers>
-		struct make_primitive<ircd::spirit::tag::custom1, modifiers>;
-
-		template<class modifiers>
-		struct make_primitive<ircd::spirit::tag::custom2, modifiers>;
-	}
-
-	template<>
-	struct use_terminal<qi::domain, ircd::spirit::tag::custom0>
-	:mpl::true_
-	{};
-
-	template<>
-	struct use_terminal<qi::domain, ircd::spirit::tag::custom1>
-	:mpl::true_
-	{};
-
-	template<>
-	struct use_terminal<qi::domain, ircd::spirit::tag::custom2>
-	:mpl::true_
-	{};
-}}
-
-template<size_t id>
-struct [[gnu::visibility("internal")]]
-ircd::spirit::custom_parser
-:qi::primitive_parser<custom_parser<id>>
-{
-	template<class context,
-	         class iterator>
-	struct attribute
-	{
-		using type = iterator;
-	};
-
-	template<class context>
-	boost::spirit::info what(context &) const
-	{
-		return boost::spirit::info("custom");
-	}
-
-	template<class iterator,
-	         class context,
-	         class skipper,
-	         class attr>
-	bool parse(iterator &, const iterator &, context &, const skipper &, attr &) const;
-};
-
-template<class modifiers>
-struct [[gnu::visibility("internal")]]
-boost::spirit::qi::make_primitive<ircd::spirit::tag::custom0, modifiers>
-{
-	using result_type = ircd::spirit::custom_parser<0>;
-
-	result_type operator()(unused_type, unused_type) const
-	{
-		return result_type{};
-	}
-};
-
-template<class modifiers>
-struct [[gnu::visibility("internal")]]
-boost::spirit::qi::make_primitive<ircd::spirit::tag::custom1, modifiers>
-{
-	using result_type = ircd::spirit::custom_parser<1>;
-
-	result_type operator()(unused_type, unused_type) const
-	{
-		return result_type{};
-	}
-};
-
-template<class modifiers>
-struct [[gnu::visibility("internal")]]
-boost::spirit::qi::make_primitive<ircd::spirit::tag::custom2, modifiers>
-{
-	using result_type = ircd::spirit::custom_parser<2>;
-
-	result_type operator()(unused_type, unused_type) const
-	{
-		return result_type{};
-	}
-};
-
-struct ircd::spirit::substring_view
+struct [[clang::internal_linkage]]
+ircd::spirit::substring_view
 :ircd::string_view
 {
 	using _iterator = const char *;
