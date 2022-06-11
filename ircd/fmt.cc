@@ -15,7 +15,6 @@ __attribute__((visibility("internal")))
 
 	struct spec;
 	struct specifier;
-	struct parser extern const parser;
 	struct bool_specifier extern const bool_specifier;
 	struct char_specifier extern const char_specifier;
 	struct signed_specifier extern const signed_specifier;
@@ -68,25 +67,26 @@ BOOST_FUSION_ADAPT_STRUCT
 )
 #pragma GCC visibility pop
 
+#pragma GCC visibility push(internal)
 /// The format string parser grammar.
-struct ircd::fmt::parser
+namespace ircd::fmt::parser
 {
 	template<class R = unused_type>
 	using rule = qi::rule<const char *, R>;
 
-	const rule<> specsym
+	const expr specsym
 	{
 		lit(SPECIFIER)
 		,"format specifier"
 	};
 
-	const rule<> specterm
+	const expr specterm
 	{
 		lit(SPECIFIER_TERMINATOR)
 		,"specifier termination"
 	};
 
-	const rule<string_view> name
+	const expr name
 	{
 		raw[repeat(1,14)[char_("A-Za-z")]]
 		,"specifier name"
@@ -104,7 +104,7 @@ struct ircd::fmt::parser
 		"specifier"
 	};
 }
-const ircd::fmt::parser;
+#pragma GCC visibility pop
 
 /// A format specifier handler module. This allows a new "%foo" to be defined
 /// with custom handling by overriding. This abstraction is inserted into a
@@ -393,9 +393,8 @@ ircd::fmt::snprintf::argument(const arg &val)
 	// waiting to be parsed now.
 	fmt::spec spec;
 	auto &start(begin(this->fmt));
-	const auto stop(end(this->fmt));
-	const auto &grammar(parser.spec);
-	if(ircd::parse<invalid_format>(start, stop, grammar.alias(), spec))
+	const auto &stop(end(this->fmt));
+	if(ircd::parse<invalid_format>(start, stop, parser::spec, spec))
 		handle_specifier(this->out, idx++, spec, val);
 
 	string_view fmt
