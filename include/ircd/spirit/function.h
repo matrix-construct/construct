@@ -49,7 +49,7 @@ namespace boost::spirit::qi
 namespace boost::spirit::karma
 {
 	#if defined(__clang__)
-		using std::function;
+		using ircd::spirit::function;
 	#else
 		using std::function;
 	#endif
