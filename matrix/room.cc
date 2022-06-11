@@ -206,7 +206,7 @@ ircd::m::send(const room &room,
 {
 	const size_t contents_count
 	{
-		std::min(contents.size(), json::object::max_sorted_members)
+		std::min(uint(contents.size()), json::object::max_sorted_members)
 	};
 
 	json::iov _content;
@@ -227,7 +227,7 @@ ircd::m::send(const room &room,
 {
 	const size_t contents_count
 	{
-		std::min(contents.size(), json::object::max_sorted_members)
+		std::min(uint(contents.size()), json::object::max_sorted_members)
 	};
 
 	json::iov _content;
@@ -265,7 +265,7 @@ ircd::m::send(const room &room,
 {
 	const size_t contents_count
 	{
-		std::min(contents.size(), json::object::max_sorted_members)
+		std::min(uint(contents.size()), json::object::max_sorted_members)
 	};
 
 	json::iov _content;
@@ -285,7 +285,7 @@ ircd::m::send(const room &room,
 {
 	const size_t contents_count
 	{
-		std::min(contents.size(), json::object::max_sorted_members)
+		std::min(uint(contents.size()), json::object::max_sorted_members)
 	};
 
 	json::iov _content;

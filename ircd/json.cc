@@ -2526,18 +2526,6 @@ ircd::json::vector::const_iterator::operator++()
 // json/object.h
 //
 
-decltype(ircd::json::object::max_recursion_depth)
-ircd::json::object::max_recursion_depth
-{
-	96
-};
-
-decltype(ircd::json::object::max_sorted_members)
-ircd::json::object::max_sorted_members
-{
-	iov::max_size
-};
-
 namespace ircd::json
 {
 	[[gnu::visibility("internal")]]
@@ -2948,12 +2936,6 @@ namespace ircd::json
 	array_next_parse,
 	array_begin_parse;
 }
-
-decltype(ircd::json::array::max_recursion_depth)
-ircd::json::array::max_recursion_depth
-{
-	96
-};
 
 decltype(ircd::json::array_value)
 ircd::json::array_value
@@ -4109,9 +4091,6 @@ ircd::json::lookup_ctrl_tab_len(const u8x16 in)
 //
 // json/value.h
 //
-
-decltype(ircd::json::value::max_string_size)
-ircd::json::value::max_string_size;
 
 std::ostream &
 ircd::json::operator<<(std::ostream &s, const value &v)
