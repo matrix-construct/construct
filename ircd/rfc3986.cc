@@ -398,20 +398,24 @@ BOOST_FUSION_ADAPT_STRUCT
 )
 #pragma GCC visibility pop
 
-ircd::rfc3986::uri::uri(const string_view &input)
+decltype(ircd::rfc3986::parser::uri_parse)
+ircd::rfc3986::parser::uri_parse
 {
-	static const parser::rule<rfc3986::uri> rule
-	{
+	expect
+	[
 		raw[parser::scheme] >> lit("://")
 		>> -raw[parser::userinfo >> lit('@')]
 		>> raw[parser::remote]
 		>> raw[parser::path_abempty]
 		>> -raw[lit('?') >> parser::query]
 		>> -raw[lit('#') >> parser::fragment]
-	};
+	]
+};
 
+ircd::rfc3986::uri::uri(const string_view &input)
+{
 	const char *start(begin(input)), *const stop(end(input));
-	qi::parse(start, stop, eps > rule, *this);
+	ircd::parse(start, stop, parser::uri_parse, *this);
 
 	//TODO: XXX Can this go?
 	this->user = rstrip(this->user, '@');

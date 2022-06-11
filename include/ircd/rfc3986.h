@@ -146,6 +146,8 @@ namespace ircd::rfc3986::parser
 	extern const rule<> absolute_uri;
 	extern const rule<> uri;
 	extern const rule<> uri_ref;     // uri | relative_ref
+
+	extern const rule<rfc3986::uri> uri_parse;
 }
 #pragma GCC visibility pop
 
