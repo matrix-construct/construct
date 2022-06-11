@@ -82,13 +82,13 @@ boost::spirit::qi::literal_char<boost::spirit::char_encoding::standard, true, fa
 	};
 
   private:
-	char_type ch;
+	const char_type ch alignas(16);
 
   public:
 	template<class CharParam,
 	         class Context>
 	[[gnu::hot]]
-	bool test(CharParam ch, Context &) const
+	bool test(const CharParam ch, Context &) const
 	{
 		static_assert(std::is_same<CharParam, char_type>::value);
 
@@ -96,7 +96,7 @@ boost::spirit::qi::literal_char<boost::spirit::char_encoding::standard, true, fa
 		ircd::always_assert(traits::ischar<CharParam, char_encoding>::call(ch));
 		#endif
 
-		return this->ch == char_type(ch);
+		return this->ch == ch;
 	}
 
 	template<class Context>
@@ -108,9 +108,67 @@ boost::spirit::qi::literal_char<boost::spirit::char_encoding::standard, true, fa
 		};
 	}
 
-	template<class Char>
-	literal_char(Char ch)
-	:ch(static_cast<char_type>(ch))
+	constexpr
+	literal_char(const char ch)
+	:ch(ch)
 	{}
+};
+#endif
+
+#if defined(__clang__)
+template<>
+struct [[clang::internal_linkage, gnu::visibility("internal")]]
+boost::spirit::qi::char_range<boost::spirit::char_encoding::standard, false>
+:char_parser
+<
+	char_range<char_encoding::standard, false>,
+    typename char_encoding::standard::char_type
+>
+{
+	using CharEncoding = boost::spirit::char_encoding::standard;
+	using char_type = typename CharEncoding::char_type;
+	using char_encoding = CharEncoding;
+
+  private:
+	const char_type from alignas(16);
+	const char_type to alignas(16);
+
+  public:
+	template<class CharParam,
+	         class Context>
+	[[gnu::hot]]
+	bool test(const CharParam ch_, Context &) const
+	{
+		using ischar = typename traits::ischar<CharParam, char_encoding>;
+		using ircd::boolmask;
+
+		#ifndef NDEBUG
+		ircd::always_assert(ischar::call(ch_));
+		#endif
+
+		const char_type ch(ch_);
+		const char_type res[2]
+		{
+			boolmask<char_type>(ch >= from),
+			boolmask<char_type>(ch <= to),
+		};
+
+		return res[0] & res[1];
+	}
+
+	template<class Context>
+	info what(Context &) const
+	{
+		return info {"char-range"};
+	}
+
+	constexpr
+	char_range(const char_type from,
+	           const char_type to)
+	:from{from}
+	,to{to}
+	{
+		assert(from <= to);
+	}
 };
 #endif
