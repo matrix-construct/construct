@@ -8,6 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#pragma GCC visibility push(internal)
 namespace ircd::rfc3986
 {
 	using namespace ircd::spirit;
@@ -15,6 +16,7 @@ namespace ircd::rfc3986
 	struct encoder extern const encoder;
 	struct decoder extern const decoder;
 }
+#pragma GCC visibility pop
 
 namespace ircd::rfc3986::parser
 {
@@ -484,7 +486,7 @@ try
 
 	const bool ok
 	{
-		qi::parse(start, stop, decoder.decode_unsafe, mb)
+		ircd::parse(start, stop, decoder.decode_unsafe, mb)
 	};
 
 	assert(size(mb) <= size(url));
@@ -515,7 +517,7 @@ try
 
 	const bool ok
 	{
-		qi::parse(start, stop, decoder.decode_safe, mb)
+		ircd::parse(start, stop, decoder.decode_safe, mb)
 	};
 
 	assert(size(mb) <= size(url));
@@ -617,16 +619,16 @@ ircd::rfc3986::encode(const mutable_buffer &buf_,
 // general interface
 //
 
+#pragma GCC visibility push(internal)
+#pragma clang attribute push(__attribute__((internal_linkage)), apply_to=any(function,variable,record))
 namespace ircd::rfc3986
 {
-	[[gnu::visibility("internal")]]
 	extern const parser::rule<string_view>
 	host_literal,
 	host_non_literal,
 	host_alternative,
 	host_parse;
 
-	[[gnu::visibility("internal")]]
 	extern const parser::rule<uint16_t>
 	port_parse;
 }
@@ -664,33 +666,26 @@ ircd::rfc3986::port_parse
 	,"port"
 };
 
+#pragma clang attribute pop
+#pragma GCC visibility pop
+
 ircd::string_view
 ircd::rfc3986::host(const string_view &str)
-try
 {
 	string_view ret;
 	const char *start(str.data()), *const stop(start + str.size());
-	qi::parse(start, stop, host_parse, ret);
+	ircd::parse<error>(start, stop, host_parse, ret);
 	assert(!ret.empty());
 	return ret;
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	throw expectation_failure<error>{e};
 }
 
 uint16_t
 ircd::rfc3986::port(const string_view &str)
-try
 {
-	uint16_t ret(0);
+	uint16_t ret;
 	const char *start(str.data()), *const stop(start + str.size());
-	qi::parse(start, stop, port_parse, ret);
+	ircd::parse<error>(start, stop, port_parse, ret);
 	return ret;
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	throw expectation_failure<error>{e};
 }
 
 //
@@ -804,7 +799,7 @@ ircd::rfc3986::valid(std::nothrow_t,
 	};
 
 	const char *start(str.data()), *const stop(start + str.size());
-	return qi::parse(start, stop, only_rule);
+	return ircd::parse(std::nothrow, start, stop, only_rule);
 }
 
 void
@@ -814,11 +809,11 @@ try
 {
 	const parser::rule<> only_rule
 	{
-		rule >> eoi
+		eps > (rule >> eoi)
 	};
 
 	const char *start(str.data()), *const stop(start + str.size());
-	qi::parse(start, stop, eps > only_rule);
+	ircd::parse(start, stop, only_rule);
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
