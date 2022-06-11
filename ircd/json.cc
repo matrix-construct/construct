@@ -610,6 +610,13 @@ ircd::json::parser::throws_exceeded()
 // json/tool.h
 //
 
+namespace ircd::json
+{
+	static thread_local std::array<member, iov::max_size> member_buffer;
+	static thread_local std::array<object::member, iov::max_size> object_member_buffer;
+	static thread_local std::array<string_view, iov::max_size> value_buffer;
+}
+
 ircd::json::strung
 ircd::json::replace(const object &s,
                     const json::members &r)
@@ -634,7 +641,7 @@ ircd::json::replace(const object &s,
 		};
 
 	size_t mctr {0};
-	thread_local std::array<member, iov::max_size> mb;
+	auto &mb(member_buffer);
 	for(const object::member &m : object{s})
 		if(!in(r, m))
 			mb.at(mctr++) = member{m};
@@ -660,7 +667,7 @@ ircd::json::replace(const object &s,
 		};
 
 	size_t mctr {0};
-	thread_local std::array<member, iov::max_size> mb;
+	auto &mb(member_buffer);
 	for(const object::member &m : object{s})
 		if(m.first != string_view{m_.first})
 			mb.at(mctr++) = member{m};
@@ -684,7 +691,7 @@ ircd::json::insert(const object &s,
 		};
 
 	size_t mctr {0};
-	thread_local std::array<member, iov::max_size> mb;
+	auto &mb(member_buffer);
 	for(const object::member &m : object{s})
 		mb.at(mctr++) = member{m};
 
@@ -711,7 +718,7 @@ ircd::json::remove(const object &s,
 		};
 
 	size_t mctr {0};
-	thread_local std::array<object::member, iov::max_size> mb;
+	auto &mb(object_member_buffer);
 	for(const object::member &m : object{s})
 		if(m.first != key)
 			mb.at(mctr++) = m;
@@ -738,7 +745,7 @@ ircd::json::remove(const object &s,
 		};
 
 	size_t mctr{0}, i{0};
-	thread_local std::array<string_view, iov::max_size> mb;
+	auto &mb(value_buffer);
 	for(const string_view &m : array{s})
 		if(i++ != idx)
 			mb.at(mctr++) = m;
@@ -2061,6 +2068,11 @@ ircd::json::_prev(chase &c)
 // json/iov.h
 //
 
+namespace ircd::json
+{
+	static thread_local const member *member_pointer_buffer[iov::max_size];
+}
+
 std::ostream &
 ircd::json::operator<<(std::ostream &s, const iov &iov)
 {
@@ -2097,8 +2109,8 @@ ircd::json::stringify(mutable_buffer &buf,
 		}
 	};
 
-	thread_local const member *m[iov::max_size];
 	const ctx::critical_assertion ca;
+	auto &m(member_pointer_buffer);
 	if(unlikely(size_t(iov.size()) > iov.max_size))
 		throw iov::oversize
 		{
@@ -3193,15 +3205,21 @@ ircd::json::stringify(mutable_buffer &buf,
 	return stringify(buf, &m, &m + 1);
 }
 
-ircd::string_view
-ircd::json::stringify(mutable_buffer &buf,
-                      const member *const &b,
-                      const member *const &e)
+namespace ircd::json
 {
 	using member_array = std::array<const member *, object::max_sorted_members>;
 	using member_arrays = std::array<member_array, object::max_recursion_depth>;
 	static_assert(sizeof(member_arrays) == 768_KiB);
 
+	static thread_local member_arrays member_array_buffer;
+	static thread_local size_t member_array_counter;
+}
+
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const member *const &b,
+                      const member *const &e)
+{
 	static const auto less_member
 	{
 		[](const member *const &a, const member *const &b)
@@ -3231,8 +3249,10 @@ ircd::json::stringify(mutable_buffer &buf,
 			object::max_sorted_members,
 		};
 
-	thread_local member_arrays ma;
-	thread_local size_t mctr;
+	const ctx::critical_assertion ca;
+	auto &mctr(member_array_counter);
+	auto &ma(member_array_buffer);
+
 	const size_t mc{mctr};
 	const scope_count _mc{mctr};
 	assert(mc < ma.size());
@@ -4262,18 +4282,12 @@ ircd::json::serialized(const value &v)
 
 		case NUMBER:
 		{
-			thread_local char test_buffer[256];
-			mutable_buffer buf{test_buffer};
-
 			if(v.serial)
-				//printer(buf, printer.number, string_view{v});
 				return size(strip(string_view{v}, ' '));
 			else if(v.floats)
 				return size(lex_cast(v.floating));
 			else
 				return size(lex_cast(v.integer));
-
-			return begin(buf) - test_buffer;
 		}
 
 		case STRING:
