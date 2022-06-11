@@ -696,16 +696,16 @@ bool
 ircd::rfc3986::valid_remote(std::nothrow_t,
                             const string_view &str)
 {
-	if(str.size() > DOMAIN_MAX + 6)
-		return false;
+	if(likely(str.size() <= DOMAIN_MAX + 6))
+		return valid(std::nothrow, parser::remote, str);
 
-	return valid(std::nothrow, parser::remote, str);
+	return false;
 }
 
 void
 ircd::rfc3986::valid_remote(const string_view &str)
 {
-	if(str.size() > DOMAIN_MAX + 6)
+	if(unlikely(str.size() > DOMAIN_MAX + 6))
 		throw error
 		{
 			"String length %zu exceeds maximum of %zu characters",
@@ -720,16 +720,16 @@ bool
 ircd::rfc3986::valid_domain(std::nothrow_t,
                            const string_view &str)
 {
-	if(str.size() > DOMAIN_MAX)
-		return false;
+	if(likely(str.size() <= DOMAIN_MAX))
+		return valid(std::nothrow, parser::domain, str);
 
-	return valid(std::nothrow, parser::domain, str);
+	return false;
 }
 
 void
 ircd::rfc3986::valid_domain(const string_view &str)
 {
-	if(str.size() > DOMAIN_MAX)
+	if(unlikely(str.size() > DOMAIN_MAX))
 		throw error
 		{
 			"String length %zu exceeds maximum of %zu characters",
@@ -744,16 +744,16 @@ bool
 ircd::rfc3986::valid_host(std::nothrow_t,
                           const string_view &str)
 {
-	if(str.size() > DOMAIN_MAX)
-		return false;
+	if(likely(str.size() <= DOMAIN_MAX))
+		return valid(std::nothrow, parser::host, str);
 
-	return valid(std::nothrow, parser::host, str);
+	return false;
 }
 
 void
 ircd::rfc3986::valid_host(const string_view &str)
 {
-	if(str.size() > DOMAIN_MAX)
+	if(unlikely(str.size() > DOMAIN_MAX))
 		throw error
 		{
 			"String length %zu exceeds maximum of %zu characters",
@@ -768,16 +768,16 @@ bool
 ircd::rfc3986::valid_hostname(std::nothrow_t,
                               const string_view &str)
 {
-	if(str.size() > HOSTNAME_MAX)
-		return false;
+	if(likely(str.size() <= HOSTNAME_MAX))
+		return valid(std::nothrow, parser::hostname, str);
 
-	return valid(std::nothrow, parser::hostname, str);
+	return false;
 }
 
 void
 ircd::rfc3986::valid_hostname(const string_view &str)
 {
-	if(str.size() > HOSTNAME_MAX)
+	if(unlikely(str.size() > HOSTNAME_MAX))
 		throw error
 		{
 			"String length %zu exceeds maximum of %zu characters",
