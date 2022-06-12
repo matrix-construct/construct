@@ -19,8 +19,6 @@ namespace ircd {
 namespace spirit
 __attribute__((visibility("internal")))
 {
-	struct substring_view;
-
 	template<class rule,
 	         class... attr>
 	bool parse(const char *&start, const char *const &stop, rule&&, attr&&...);
@@ -35,26 +33,6 @@ __attribute__((visibility("internal")))
 	         class... attr>
 	bool parse(std::nothrow_t, const char *&start, const char *const &stop, rule&&, attr&&...) noexcept;
 }}
-
-struct [[clang::internal_linkage]]
-ircd::spirit::substring_view
-:ircd::string_view
-{
-	using _iterator = const char *;
-	using _iterator_range = boost::iterator_range<_iterator>;
-	using _indirect_iterator = karma::detail::indirect_iterator<_iterator>;
-	using _indirect_iterator_range = boost::iterator_range<_indirect_iterator>;
-
-	explicit substring_view(const _iterator_range &range)
-	:ircd::string_view(std::addressof(*range.begin()), std::addressof(*range.end()))
-	{}
-
-	explicit substring_view(const _indirect_iterator_range &range)
-	:ircd::string_view(std::addressof(*range.begin()), std::addressof(*range.end()))
-	{}
-
-	using ircd::string_view::string_view;
-};
 
 /// Execute the parse. The start pointer is advanced upon successful execution.
 /// Failures must not throw: If the grammar contains any epsilon expressions or
