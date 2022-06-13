@@ -1402,7 +1402,8 @@ noexcept
 		case category::ERROR:     return "ERROR";
 		case category::SERVER:    return "SERVER";
 		case category::INTERNAL:  return "INTERNAL";
-		default:
-		case category::UNKNOWN:   return "UNKNOWN";
+		case category::UNKNOWN:   break;
 	}
+
+	return "UNKNOWN";
 }
