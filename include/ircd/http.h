@@ -137,7 +137,7 @@ struct ircd::http::error
 	~error() noexcept;
 };
 
-/// Represents a single \r\n delimited line used in HTTP.
+/// Represents a single \\r\\n delimited line used in HTTP.
 ///
 /// This object is just a string_view of that line. The actual data backing
 /// that view is the responsibility of the user. This object is constructed

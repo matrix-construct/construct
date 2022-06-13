@@ -135,7 +135,7 @@ enum ircd::m::id::sigil
 ///
 /// Users within Matrix are uniquely identified by their Matrix user ID. The
 /// user ID is namespaced to the homeserver which allocated the account and
-/// has the form: `@localpart:domain` The localpart of a user ID is an opaque
+/// has the form: `\@localpart:domain` The localpart of a user ID is an opaque
 /// identifier for that user. It MUST NOT be empty, and MUST contain only the
 /// characters a-z, 0-9, ., _, =, -, and /. The domain of a user ID is the
 /// server name of the homeserver which allocated the account. The length of

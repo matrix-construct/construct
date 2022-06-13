@@ -60,7 +60,7 @@ struct ircd::m::homeserver
 	/// Database
 	std::shared_ptr<dbs::init> database;
 
-	/// An inscription of @ircd:network.name to root various references to
+	/// An inscription of `\@ircd:network.name` to root various references to
 	/// a user representing the server.
 	m::user::id::buf self;
 
@@ -137,7 +137,7 @@ struct ircd::m::homeserver::conf
 
 struct ircd::m::homeserver::opts
 {
-	/// Network name. This is the mxid hostpart (i.e @user:origin).
+	/// Network name. This is the mxid hostpart (i.e `\@user:origin`).
 	string_view origin;
 
 	/// This server's name. This is the unique domain-name of this server
