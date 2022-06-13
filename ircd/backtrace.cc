@@ -57,7 +57,7 @@ ircd_backtrace_allow_libc_fix()
 
 namespace ircd
 {
-	thread_local std::array<const void *, 512> backtrace_buffer;
+	static thread_local std::array<const void *, 512> backtrace_buffer;
 }
 
 ircd::backtrace::backtrace()

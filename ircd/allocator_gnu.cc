@@ -21,17 +21,17 @@ extern "C" void (*__free_hook)(void *, const void *);
 
 namespace ircd::allocator
 {
-	void *(*their_malloc_hook)(size_t, const void *);
+	static void *(*their_malloc_hook)(size_t, const void *);
 	[[gnu::weak]] void *malloc_hook(size_t, const void *);
 	static void install_malloc_hook();
 	static void uninstall_malloc_hook();
 
-	void *(*their_realloc_hook)(void *, size_t, const void *);
+	static void *(*their_realloc_hook)(void *, size_t, const void *);
 	[[gnu::weak]] void *realloc_hook(void *, size_t, const void *);
 	static void install_realloc_hook();
 	static void uninstall_realloc_hook();
 
-	void (*their_free_hook)(void *, const void *);
+	static void (*their_free_hook)(void *, const void *);
 	[[gnu::weak]] void free_hook(void *, const void *);
 	static void install_free_hook();
 	static void uninstall_free_hook();

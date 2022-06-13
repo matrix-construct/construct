@@ -99,7 +99,7 @@ static_assert
 
 namespace ircd::http2
 {
-	thread_local char error_fmt_buf[512];
+	static thread_local char error_fmt_buf[512];
 }
 
 ircd::http2::error::error()

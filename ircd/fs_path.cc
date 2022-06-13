@@ -42,8 +42,8 @@ ircd::fs::PATH_MAX_LEN
 // Convenience scratch buffers for path making.
 namespace ircd::fs
 {
-	thread_local char _name_scratch[2][NAME_MAX_LEN];
-	thread_local char _path_scratch[2][PATH_MAX_LEN];
+	static thread_local char _name_scratch[2][NAME_MAX_LEN];
+	static thread_local char _path_scratch[2][PATH_MAX_LEN];
 }
 
 // External mutable_buffer to the scratch
@@ -440,8 +440,8 @@ ircd::fs::pathconf(const string_view &path,
 namespace ircd::fs
 {
 	static const size_t _PATH_CSTR_BUFS {4};
-	thread_local char _path_cstr[_PATH_CSTR_BUFS][PATH_MAX_LEN];
-	thread_local size_t _path_cstr_pos;
+	static thread_local char _path_cstr[_PATH_CSTR_BUFS][PATH_MAX_LEN];
+	static thread_local size_t _path_cstr_pos;
 }
 
 const char *

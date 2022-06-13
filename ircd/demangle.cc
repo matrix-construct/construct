@@ -10,15 +10,19 @@
 
 #include <cxxabi.h>
 
-thread_local char
-outbuf[8192];
+namespace ircd
+{
+	static thread_local char
+	demangle_outbuf[8192],
+	demangle_symbuf[8192];
+}
 
 std::string
 ircd::demangle(const char *const &symbol)
 {
 	const string_view demangled
 	{
-		demangle(outbuf, symbol)
+		demangle(demangle_outbuf, symbol)
 	};
 
 	return std::string(demangled);
@@ -29,7 +33,7 @@ ircd::demangle(const string_view &symbol)
 {
 	const string_view demangled
 	{
-		demangle(outbuf, symbol)
+		demangle(demangle_outbuf, symbol)
 	};
 
 	return std::string(demangled);
@@ -40,10 +44,9 @@ ircd::demangle(const mutable_buffer &out,
                const string_view &symbol_)
 {
 	assert(size(symbol_) < 4096);
-	thread_local char symbuf[8192];
 	const string_view symbol
 	{
-		symbuf, strlcpy(symbuf, symbol_)
+		demangle_symbuf, strlcpy(demangle_symbuf, symbol_)
 	};
 
 	return demangle(out, symbol.data());

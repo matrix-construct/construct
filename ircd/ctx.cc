@@ -1633,7 +1633,7 @@ ircd::ctx::debug_stats(const pool &pool)
 
 namespace ircd::ctx::prof
 {
-	thread_local ticker _total;                // Totals kept for all contexts.
+	static thread_local ticker _total;           ///< Totals kept for all contexts.
 
 	static void check_stack();
 	static void check_slice();

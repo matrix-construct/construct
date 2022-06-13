@@ -13,8 +13,7 @@ namespace ircd::b58
 	[[gnu::visibility("internal")]]
 	extern const string_view dict;
 
-	[[gnu::visibility("internal")]]
-	thread_local char conv_tmp_buf[64_KiB];
+	static thread_local char conv_tmp_buf[64_KiB];
 }
 
 decltype(ircd::b58::dict)
