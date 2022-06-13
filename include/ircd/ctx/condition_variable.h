@@ -147,7 +147,7 @@ ircd::ctx::condition_variable::wait_for(lock &l,
 		{
 			const unlock_guard<lock> ul{l};
 			expired = ircd::ctx::wait<std::nothrow_t>(dur) <= zero;
-		};
+		}
 
 		if(pred())
 			return true;
@@ -212,7 +212,7 @@ ircd::ctx::condition_variable::wait_until(lock &l,
 		{
 			const unlock_guard<lock> ul{l};
 			expired = ircd::ctx::wait_until<std::nothrow_t>(tp);
-		};
+		}
 
 		if(pred())
 			return true;
