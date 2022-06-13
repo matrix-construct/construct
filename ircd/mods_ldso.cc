@@ -217,7 +217,7 @@ ircd::mods::ldso::for_each(const link_closure &closure)
 {
 	auto *map
 	{
-		reinterpret_cast<struct link_map *>(::dlopen(NULL, RTLD_NOLOAD|RTLD_LAZY))
+		reinterpret_cast<struct link_map *>(::dlopen(nullptr, RTLD_NOLOAD|RTLD_LAZY))
 	};
 
 	if(unlikely(!map))
@@ -322,8 +322,12 @@ extern "C" void
 _dl_exception_free(struct dl_exception *)
 __attribute__ ((nonnull(1)));
 
+[[noreturn]]
 extern "C" void
-__attribute__((noreturn))
+_dl_signal_exception(int, struct dl_exception *, const char *);
+
+[[noreturn]]
+extern "C" void
 _dl_signal_exception(int errcode,
                      struct dl_exception *e,
                      const char *occasion)
