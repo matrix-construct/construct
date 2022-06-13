@@ -135,6 +135,7 @@ libircd_la_LIBADD = \
 	@SODIUM_LIBS@ \
 	@MAGIC_LIBS@ \
 	@IMAGEMAGICK_LIBS@ \
+	@PNG_LIBS@ \
 	@ZSTD_LIBS@ \
 	@SNAPPY_LIBS@ \
 	@LZ4_LIBS@ \
