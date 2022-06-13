@@ -3605,7 +3605,10 @@ ircd::db::database::sst::tool(const vector_view<const string_view> &args)
 	rocksdb::SSTDumpTool tool;
 	const int ret
 	{
-		tool.Run(i, argv)
+		//tool.Run(i, argv)
+		// facebook/rocksdb edf74d1cb1 changed the prototype of this call so
+		// the linkage differs between versions. Disabling for now.
+		-1
 	};
 
 	if(ret != 0)
