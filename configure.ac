@@ -1994,6 +1994,7 @@ RB_HELP_STRING([--with-included-pbc], [Use the libpbc sources from included subm
 		AC_MSG_ERROR([Failed to build Pairing-Based Cryptography library included submodule])
 	])
 ], [
+	AC_MSG_RESULT([no])
 	with_included_pbc="no"
 	PKG_CHECK_MODULES(pbc, [pbc],
 	[
