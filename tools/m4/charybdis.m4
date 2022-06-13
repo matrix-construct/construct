@@ -30,13 +30,13 @@ AC_DEFUN([AC_SUBST_DIR], [
 ])
 
 dnl CHARYBDIS_C_GCC_TRY_FLAGS(<warnings>,<cachevar>)
-AC_DEFUN([CHARYBDIS_C_GCC_TRY_FLAGS],[
- AC_MSG_CHECKING([GCC flag(s) $1])
+AC_DEFUN([RB_MAYBE_CXXFLAG],[
+ AC_MSG_CHECKING([flag $1])
  if test "${GCC-no}" = yes
  then
   AC_CACHE_VAL($2,[
    oldcflags="${CXXFLAGS-}"
-   CXXFLAGS="${CXXFLAGS-} ${CWARNS} $1 -Werror"
+   CXXFLAGS="${CXXFLAGS-} ${CWARNS} $1"
    AC_TRY_COMPILE([
 #include <string.h>
 #include <stdio.h>
