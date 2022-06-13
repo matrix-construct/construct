@@ -225,7 +225,7 @@ ircd::util::si(const uint64_t &value)
 
 	auto pos(0);
 	long double v(value);
-	for(; v > 1000.0; v /= 1000.0, ++pos);
+	for(; v > 1000.0L; v /= 1000.0L, ++pos);
 	return
 	{
 		value, v, unit.at(pos)
@@ -242,7 +242,7 @@ ircd::util::iec(const uint64_t &value)
 
 	auto pos(0);
 	long double v(value);
-	for(; v > 1024.0; v /= 1024.0, ++pos);
+	for(; v > 1024.0L; v /= 1024.0L, ++pos);
 	return
 	{
 		value, v, unit.at(pos)
