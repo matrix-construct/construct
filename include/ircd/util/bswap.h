@@ -14,8 +14,8 @@
 namespace ircd {
 inline namespace util
 {
-	template<class T> T &bswap(T *const &);
-	template<class T> T bswap(T);
+	template<class T> T &bswap(T *) noexcept;
+	template<class T> T bswap(T) noexcept;
 
 	// Host <-> network endian
 	template<class T> T &hton(T *const &);
@@ -85,21 +85,21 @@ ircd::util::htons(const uint16_t &a)
 }
 
 template<class T>
-T
+inline T
 ircd::util::hton(T a)
 {
 	return hton<T>(&a);
 }
 
 template<class T>
-T
+inline T
 ircd::util::ntoh(T a)
 {
 	return ntoh<T>(&a);
 }
 
 template<class T>
-T &
+inline T &
 ircd::util::hton(T *const &a)
 {
 	#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
@@ -111,7 +111,7 @@ ircd::util::hton(T *const &a)
 }
 
 template<class T>
-T &
+inline T &
 ircd::util::ntoh(T *const &a)
 {
 	#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
@@ -124,21 +124,23 @@ ircd::util::ntoh(T *const &a)
 
 /// Reverse endian of T returning value copy
 template<class T>
-T
+inline T
 ircd::util::bswap(T ret)
+noexcept
 {
 	return bswap(&ret);
 }
 
 /// Reverse endian of data pointed to; return reference
 template<class T>
-T &
-ircd::util::bswap(T *const &val)
+inline T &
+ircd::util::bswap(T *const val)
+noexcept
 {
 	assert(val != nullptr);
-	const auto &ptr
+	const auto ptr
 	{
-		reinterpret_cast<uint8_t *const &>(val)
+		reinterpret_cast<uint8_t *>(val)
 	};
 
 	std::reverse(ptr, ptr + sizeof(T));
