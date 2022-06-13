@@ -865,8 +865,8 @@ ircd::openssl::DH_DEFAULT_GEN
 
 void
 ircd::openssl::gendh(const string_view &dhfile,
-                     const uint &bits,
-                     const uint &gen)
+                     const size_t &bits,
+                     const size_t &gen)
 {
 	bio::write_file(dhfile, [&bits, &gen]
 	(const mutable_buffer &buf)
@@ -877,8 +877,8 @@ ircd::openssl::gendh(const string_view &dhfile,
 
 ircd::string_view
 ircd::openssl::gendh(const mutable_buffer &buf,
-                     const uint &bits,
-                     const uint &gen)
+                     const size_t &bits,
+                     const size_t &gen)
 {
 	const custom_ptr<DH> dh
 	{
@@ -895,8 +895,8 @@ ircd::openssl::gendh(const mutable_buffer &buf,
 
 DH &
 ircd::openssl::gendh(DH &dh,
-                     const uint &bits,
-                     const uint &gen)
+                     const size_t &bits,
+                     const size_t &gen)
 {
 	#ifdef IRCD_OPENSSL_API_1_1_X
 	const custom_ptr<BN_GENCB> gencb

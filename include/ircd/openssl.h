@@ -90,9 +90,9 @@ namespace ircd::openssl
 	extern const size_t DH_DEFAULT_GEN;
 	extern const size_t DH_DEFAULT_BITS;
 	extern const string_view rfc3526_dh_params_pem;
-	DH &gendh(DH &, const uint &bits = DH_DEFAULT_BITS, const uint &gen = DH_DEFAULT_GEN);
-	string_view gendh(const mutable_buffer &, const uint &bits = DH_DEFAULT_BITS, const uint &gen = DH_DEFAULT_GEN);
-	void gendh(const string_view &dhfile, const uint &bits = DH_DEFAULT_BITS, const uint &gen = DH_DEFAULT_GEN);
+	DH &gendh(DH &, const size_t &bits = DH_DEFAULT_BITS, const size_t &gen = DH_DEFAULT_GEN);
+	string_view gendh(const mutable_buffer &, const size_t &bits = DH_DEFAULT_BITS, const size_t &gen = DH_DEFAULT_GEN);
+	void gendh(const string_view &dhfile, const size_t &bits = DH_DEFAULT_BITS, const size_t &gen = DH_DEFAULT_GEN);
 
 	// X.509 suite
 	const_buffer i2d(const mutable_buffer &out, const X509 &);
