@@ -112,7 +112,7 @@ final
 	sha1(const mutable_buffer &, const const_buffer &); // note: finalizes
 	sha1(const const_buffer &); // note: finalizes
 	sha1();
-	~sha1() noexcept;
+	~sha1() noexcept override;
 };
 
 /// SHA-256 hashing device.
@@ -141,7 +141,7 @@ final
 	sha256(const mutable_buffer &, const const_buffer &); // note: finalizes
 	sha256(const const_buffer &); // note: finalizes
 	sha256();
-	~sha256() noexcept;
+	~sha256() noexcept override;
 };
 
 /// RIPEMD160 hashing device.
@@ -170,7 +170,7 @@ final
 	ripemd160(const mutable_buffer &, const const_buffer &); // note: finalizes
 	ripemd160(const const_buffer &); // note: finalizes
 	ripemd160();
-	~ripemd160() noexcept;
+	~ripemd160() noexcept override;
 };
 
 /// Automatic gratification from hash::digest()

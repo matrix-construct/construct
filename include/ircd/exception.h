@@ -101,7 +101,7 @@ struct ircd::exception
 	exception(const exception &) = delete;
 	exception &operator=(exception &&) = delete;
 	exception &operator=(const exception &) = delete;
-	~exception() noexcept;
+	~exception() noexcept override;
 };
 
 /// Exception generator convenience macro

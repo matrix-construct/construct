@@ -134,7 +134,7 @@ struct ircd::http::error
 	error(const enum code &, std::string content = {}, std::string headers = {});
 	error(const enum code &, std::string content, const vector_view<const header> &);
 	template<class... args> error(const string_view &fmt, const enum code &, args&&...);
-	~error() noexcept;
+	~error() noexcept override;
 };
 
 /// Represents a single \\r\\n delimited line used in HTTP.
