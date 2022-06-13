@@ -98,7 +98,7 @@ ircd::buffer::unique_buffer<buffer_type>::operator=(unique_buffer &&other)
 
 template<class buffer_type>
 inline
-ircd::buffer::unique_buffer<buffer_type>::~unique_buffer()
+ircd::buffer::unique_buffer<buffer_type>::~unique_buffer<buffer_type>()
 noexcept
 {
 	const auto ptr(std::get<0>(*this));

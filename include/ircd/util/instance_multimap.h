@@ -120,7 +120,7 @@ ircd::util::instance_multimap<K, T, C>::operator=(const instance_multimap &other
 template<class K,
          class T,
          class C>
-ircd::util::instance_multimap<K, T, C>::~instance_multimap()
+ircd::util::instance_multimap<K, T, C>::~instance_multimap<K, T, C>()
 noexcept
 {
 	if(it != end(map))

@@ -120,7 +120,7 @@ noexcept
 
 template<class mutex>
 inline
-ircd::ctx::upgrade_lock<mutex>::~upgrade_lock()
+ircd::ctx::upgrade_lock<mutex>::~upgrade_lock<mutex>()
 noexcept
 {
 	if(owns_lock())

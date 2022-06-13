@@ -45,7 +45,7 @@ ircd::ctx::concurrent<value>::concurrent(pool &p,
 {}
 
 template<class value>
-ircd::ctx::concurrent<value>::~concurrent()
+ircd::ctx::concurrent<value>::~concurrent<value>()
 noexcept
 {
 	const uninterruptible::nothrow ui;
