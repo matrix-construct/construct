@@ -867,7 +867,6 @@ AM_COND_IF([DEBUG],
 	AM_COND_IF([CLANG],
 	[
 		RB_MAYBE_CXXFLAG([-Wno-unknown-attributes], charybdis_cv_c_gcc_w_unknown_attributes)
-		RB_MAYBE_CXXFLAG([-Wno-profile-instr-unprofiled], charybdis_cv_c_gcc_w_profile_instr_unprofiled)
 	])
 
 	AM_COND_IF([GCC],
@@ -908,6 +907,7 @@ AM_COND_IF([CLANG],
 	RB_MAYBE_CXXFLAG([-Wno-mismatched-tags], charybdis_cv_c_gcc_w_mismatched_tags)
 	RB_MAYBE_CXXFLAG([-Wno-format-security], charybdis_cv_c_gcc_w_format_security)
 	RB_MAYBE_CXXFLAG([-Wno-unknown-warning-option], charybdis_cv_c_gcc_w_unknown_warning_option)
+	RB_MAYBE_CXXFLAG([-Wno-profile-instr-unprofiled], charybdis_cv_c_gcc_w_profile_instr_unprofiled)
 ])
 
 dnl Warning discovery section
