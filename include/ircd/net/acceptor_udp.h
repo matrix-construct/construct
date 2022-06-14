@@ -16,7 +16,8 @@
 // is part of the <ircd/asio.h> stack which can be included in your
 // definition file if you need low level access to this acceptor API.
 
-struct ircd::net::acceptor_udp
+struct [[gnu::visibility("protected")]]
+ircd::net::acceptor_udp
 {
 	using error_code = boost::system::error_code;
 	using datagram = listener_udp::datagram;

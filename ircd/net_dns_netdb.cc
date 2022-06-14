@@ -22,6 +22,7 @@ namespace ircd::net::dns
 /// Custom internal database. This translates a service name and protocol
 /// into a port number. Note that a query to this table will only be made
 /// after the system query does not return results (or cannot be made).
+[[gnu::visibility("internal")]]
 decltype(ircd::net::dns::service_ports)
 ircd::net::dns::service_ports
 {
@@ -31,6 +32,7 @@ ircd::net::dns::service_ports
 /// Custom internal database. This translates a service port and protocol
 /// into a service name. Note that a query to this table will only be made
 /// after the system query does not return results (or cannot be made).
+[[gnu::visibility("internal")]]
 decltype(ircd::net::dns::service_names)
 ircd::net::dns::service_names
 {

@@ -56,6 +56,7 @@ ircd::boost_version_abi
 	"boost", info::versions::ABI //TODO: get this
 };
 
+[[gnu::visibility("hidden")]]
 void
 ircd::ios::init(asio::executor &&user)
 {
@@ -78,7 +79,7 @@ ircd::ios::init(asio::executor &&user)
 	ios::main = *ios::primary;
 }
 
-[[gnu::cold]]
+[[using gnu: cold, visibility("hidden")]]
 void
 ircd::ios::forking()
 {
@@ -89,7 +90,7 @@ ircd::ios::forking()
 	#endif
 }
 
-[[gnu::cold]]
+[[using gnu: cold, visibility("hidden")]]
 void
 ircd::ios::forked_child()
 {
@@ -100,7 +101,7 @@ ircd::ios::forked_child()
 	#endif
 }
 
-[[gnu::cold]]
+[[using gnu: cold, visibility("hidden")]]
 void
 ircd::ios::forked_parent()
 {

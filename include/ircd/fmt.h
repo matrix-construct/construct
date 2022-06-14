@@ -56,15 +56,15 @@ class ircd::fmt::snprintf
 	const_buffer fmt;                            // Current running position in the fmtstr.
 	short idx;                                   // Keeps count of the args for better err msgs
 
-  protected:
-	bool finished() const;
-	size_t remaining() const;
+	bool finished() const noexcept;
+	size_t remaining() const noexcept;
 	size_t consumed() const                      { return out.consumed();                          }
 	string_view completed() const                { return out.completed();                         }
 
 	void append(const string_view &);
 	void argument(const arg &);
 
+  protected:
 	IRCD_OVERLOAD(internal)
 	snprintf(internal_t, const mutable_buffer &, const string_view &, const va_rtti &);
 

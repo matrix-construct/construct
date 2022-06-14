@@ -12,6 +12,7 @@
 #include <RB_INC_VALGRIND_MEMCHECK_H
 #include <RB_INC_VALGRIND_CALLGRIND_H
 
+[[gnu::visibility("protected")]]
 void
 ircd::vg::set_noaccess(const const_buffer &buf)
 noexcept
@@ -21,6 +22,7 @@ noexcept
 	#endif
 }
 
+[[gnu::visibility("protected")]]
 void
 ircd::vg::set_undefined(const const_buffer &buf)
 noexcept
@@ -30,6 +32,7 @@ noexcept
 	#endif
 }
 
+[[gnu::visibility("protected")]]
 void
 ircd::vg::set_defined(const const_buffer &buf)
 noexcept
@@ -39,6 +42,7 @@ noexcept
 	#endif
 }
 
+[[gnu::visibility("protected")]]
 bool
 ircd::vg::defined(const const_buffer &buf)
 noexcept
@@ -50,6 +54,7 @@ noexcept
 	#endif
 }
 
+[[gnu::visibility("protected")]]
 size_t
 ircd::vg::errors()
 noexcept
@@ -75,6 +80,7 @@ ircd::vg::active{[]() -> bool
 // vg::stack
 //
 
+[[gnu::visibility("protected")]]
 void
 ircd::vg::stack::del(const uint &id)
 noexcept
@@ -84,6 +90,7 @@ noexcept
 	#endif
 }
 
+[[gnu::visibility("protected")]]
 uint
 ircd::vg::stack::add(const mutable_buffer &buf)
 noexcept
@@ -105,6 +112,7 @@ namespace ircd::prof::vg
 	static bool _enabled;
 }
 
+[[gnu::visibility("protected")]]
 void
 ircd::prof::vg::stop()
 noexcept
@@ -116,6 +124,7 @@ noexcept
 	#endif
 }
 
+[[gnu::visibility("protected")]]
 void
 ircd::prof::vg::start()
 noexcept
@@ -127,6 +136,7 @@ noexcept
 	#endif
 }
 
+[[gnu::visibility("protected")]]
 void
 ircd::prof::vg::reset()
 {
@@ -135,6 +145,7 @@ ircd::prof::vg::reset()
 	#endif
 }
 
+[[gnu::visibility("protected")]]
 void
 ircd::prof::vg::toggle()
 {
@@ -143,6 +154,7 @@ ircd::prof::vg::toggle()
 	#endif
 }
 
+[[gnu::visibility("protected")]]
 void
 ircd::prof::vg::dump(const char *const reason)
 {
@@ -151,6 +163,7 @@ ircd::prof::vg::dump(const char *const reason)
 	#endif
 }
 
+[[gnu::visibility("protected")]]
 bool
 ircd::prof::vg::enabled()
 {

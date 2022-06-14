@@ -71,7 +71,6 @@ struct ircd::rfc3986::uri
 	uri() = default;
 };
 
-#pragma GCC visibility push(default)
 // Exposition of individual grammatical elements. Due to the diverse and
 // foundational applications of this unit, we offer a public list of references
 // to individual rules in the grammar; many of these are directly specified in
@@ -81,6 +80,7 @@ struct ircd::rfc3986::uri
 // which take a reference to any apropos rule. To avoid exposure of
 // boost::spirit in project headers these types are carefully crafted thin forward
 // declarations, so spirit itself is not included here.
+#pragma GCC visibility push(default)
 namespace ircd::rfc3986::parser
 {
 	using it = const char *;

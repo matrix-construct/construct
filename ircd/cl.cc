@@ -2224,11 +2224,13 @@ ircd::cl::offload_opts
 	"cl"
 };
 
+[[gnu::visibility("hidden")]]
 void
 ircd::cl::work::init()
 {
 }
 
+[[using gnu: cold, visibility("hidden")]]
 void
 ircd::cl::work::fini()
 noexcept

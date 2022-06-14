@@ -26,7 +26,8 @@ namespace ircd::net
 
 /// Internal socket interface
 ///
-struct ircd::net::socket
+struct [[gnu::visibility("protected")]]
+ircd::net::socket
 :std::enable_shared_from_this<ircd::net::socket>
 {
 	struct io;

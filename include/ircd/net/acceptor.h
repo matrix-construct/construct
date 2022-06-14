@@ -17,7 +17,8 @@
 // definition file if you need low level access to this acceptor API.
 
 /// Implementation to net::listener. See listener.h for additional interface.
-struct ircd::net::acceptor
+struct [[gnu::visibility("protected")]]
+ircd::net::acceptor
 :std::enable_shared_from_this<struct ircd::net::acceptor>
 {
 	using error_code = boost::system::error_code;

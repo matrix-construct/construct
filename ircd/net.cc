@@ -1215,6 +1215,7 @@ ircd::net::ssl_cipher_blacklist
 	{ "default",  string_view{}                   },
 };
 
+[[gnu::visibility("hidden")]]
 boost::asio::ssl::context
 ircd::net::sslv23_client
 {
@@ -1222,12 +1223,10 @@ ircd::net::sslv23_client
 };
 
 decltype(ircd::net::socket::count)
-ircd::net::socket::count
-{};
+ircd::net::socket::count;
 
 decltype(ircd::net::socket::instances)
-ircd::net::socket::instances
-{};
+ircd::net::socket::instances;
 
 decltype(ircd::net::socket::desc_connect)
 ircd::net::socket::desc_connect
@@ -2698,6 +2697,7 @@ ircd::net::string(const mutable_buffer &buf,
 	};
 }
 
+[[gnu::visibility("protected")]]
 ircd::net::ipport
 ircd::net::make_ipport(const boost::asio::ip::udp::endpoint &ep)
 {
@@ -2707,6 +2707,7 @@ ircd::net::make_ipport(const boost::asio::ip::udp::endpoint &ep)
 	};
 }
 
+[[gnu::visibility("protected")]]
 ircd::net::ipport
 ircd::net::make_ipport(const boost::asio::ip::tcp::endpoint &ep)
 {
@@ -2716,6 +2717,7 @@ ircd::net::make_ipport(const boost::asio::ip::tcp::endpoint &ep)
 	};
 }
 
+[[gnu::visibility("protected")]]
 boost::asio::ip::udp::endpoint
 ircd::net::make_endpoint_udp(const ipport &ipport)
 {
@@ -2725,6 +2727,7 @@ ircd::net::make_endpoint_udp(const ipport &ipport)
 	};
 }
 
+[[gnu::visibility("protected")]]
 boost::asio::ip::tcp::endpoint
 ircd::net::make_endpoint(const ipport &ipport)
 {
@@ -2757,6 +2760,7 @@ const
 // net/ipaddr.h
 //
 
+[[gnu::visibility("protected")]]
 boost::asio::ip::address
 ircd::net::make_address(const ipaddr &ipaddr)
 {
@@ -2765,6 +2769,7 @@ ircd::net::make_address(const ipaddr &ipaddr)
 		ip::address(make_address(ipaddr.v6));
 }
 
+[[gnu::visibility("protected")]]
 boost::asio::ip::address
 ircd::net::make_address(const string_view &ip)
 try
@@ -2781,12 +2786,14 @@ catch(const boost::system::system_error &e)
 	throw_system_error(e);
 }
 
+[[gnu::visibility("protected")]]
 boost::asio::ip::address_v4
 ircd::net::make_address(const uint32_t &ip)
 {
 	return ip::address_v4{ip};
 }
 
+[[gnu::visibility("protected")]]
 boost::asio::ip::address_v6
 ircd::net::make_address(const uint128_t &ip)
 {
@@ -2906,6 +2913,7 @@ ircd::net::ipaddr::ipaddr(const uint128_t &ip)
 {
 }
 
+[[gnu::visibility("protected")]]
 ircd::net::ipaddr::ipaddr(const asio::ip::address &address)
 {
 	const auto address_
@@ -3080,12 +3088,14 @@ ircd::net::string(const mutable_buffer &buf,
 // net/asio.h
 //
 
+[[gnu::visibility("protected")]]
 std::string
 ircd::net::string(const ip::tcp::endpoint &ep)
 {
 	return string(make_ipport(ep));
 }
 
+[[gnu::visibility("protected")]]
 ircd::string_view
 ircd::net::string(const mutable_buffer &buf,
                   const ip::tcp::endpoint &ep)
@@ -3093,24 +3103,28 @@ ircd::net::string(const mutable_buffer &buf,
 	return string(buf, make_ipport(ep));
 }
 
+[[gnu::visibility("protected")]]
 std::string
 ircd::net::host(const ip::tcp::endpoint &ep)
 {
 	return string(addr(ep));
 }
 
+[[gnu::visibility("protected")]]
 boost::asio::ip::address
 ircd::net::addr(const ip::tcp::endpoint &ep)
 {
 	return ep.address();
 }
 
+[[gnu::visibility("protected")]]
 uint16_t
 ircd::net::port(const ip::tcp::endpoint &ep)
 {
 	return ep.port();
 }
 
+[[gnu::visibility("protected")]]
 std::string
 ircd::net::string(const ip::address &addr)
 {
@@ -3120,6 +3134,7 @@ ircd::net::string(const ip::address &addr)
 			string(addr.to_v6());
 }
 
+[[gnu::visibility("protected")]]
 std::string
 ircd::net::string(const ip::address_v4 &addr)
 {
@@ -3130,12 +3145,14 @@ ircd::net::string(const ip::address_v4 &addr)
 	});
 }
 
+[[gnu::visibility("protected")]]
 std::string
 ircd::net::string(const ip::address_v6 &addr)
 {
 	return addr.to_string();
 }
 
+[[gnu::visibility("protected")]]
 ircd::string_view
 ircd::net::string(const mutable_buffer &out,
                   const ip::address &addr)
@@ -3146,6 +3163,7 @@ ircd::net::string(const mutable_buffer &out,
 			string(out, addr.to_v6());
 }
 
+[[gnu::visibility("protected")]]
 ircd::string_view
 ircd::net::string(const mutable_buffer &out,
                   const ip::address_v4 &addr)
@@ -3161,6 +3179,7 @@ ircd::net::string(const mutable_buffer &out,
 	};
 }
 
+[[gnu::visibility("protected")]]
 ircd::string_view
 ircd::net::string(const mutable_buffer &out,
                   const ip::address_v6 &addr)
@@ -3188,6 +3207,7 @@ ircd::buffer::null_buffers
 	null_buffer
 }};
 
+[[gnu::visibility("protected")]]
 ircd::buffer::mutable_buffer::operator
 boost::asio::mutable_buffer()
 const noexcept
@@ -3198,6 +3218,7 @@ const noexcept
 	};
 }
 
+[[gnu::visibility("protected")]]
 ircd::buffer::const_buffer::operator
 boost::asio::const_buffer()
 const noexcept

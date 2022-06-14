@@ -121,6 +121,7 @@ ircd::log::hook;
 // init
 //
 
+[[gnu::visibility("hidden")]]
 void
 ircd::log::init()
 {
@@ -145,6 +146,7 @@ ircd::log::init()
 	ircd::log::ready = true;
 }
 
+[[using gnu: cold, visibility("hidden")]]
 void
 ircd::log::fini()
 {

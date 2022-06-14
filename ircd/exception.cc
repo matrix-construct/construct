@@ -246,11 +246,13 @@ noexcept
 //
 
 // Out-of-line placement
+[[gnu::visibility("protected")]]
 ircd::exception::~exception()
 noexcept
 {
 }
 
+[[gnu::visibility("protected")]]
 ssize_t
 ircd::exception::generate(const string_view &fmt,
                           const va_rtti &ap)
@@ -259,6 +261,7 @@ noexcept
 	return fmt::vsnprintf(buf, sizeof(buf), fmt, ap);
 }
 
+[[gnu::visibility("protected")]]
 ssize_t
 ircd::exception::generate(const char *const &name,
                           const string_view &fmt,
@@ -275,6 +278,7 @@ noexcept
 	return size;
 }
 
+[[gnu::visibility("protected")]]
 const char *
 ircd::exception::what()
 const noexcept

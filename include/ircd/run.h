@@ -136,7 +136,8 @@ struct ircd::run::changed
 /// otherwise an exception is thrown.
 ///
 template<class E>
-struct ircd::run::barrier
+struct [[gnu::visibility("internal")]]
+ircd::run::barrier
 {
 	template<class... args>
 	barrier(args&&... a)

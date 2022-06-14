@@ -8,8 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-namespace ircd { namespace fmt
-__attribute__((visibility("internal")))
+namespace ircd::fmt
 {
 	using namespace ircd::spirit;
 
@@ -29,22 +28,23 @@ __attribute__((visibility("internal")))
 	constexpr char SPECIFIER_TERMINATOR {'$'};
 
 	template<class generator>
-	bool generate_string(char *&out, const size_t &max, generator&&, const arg &val);
+	static bool generate_string(char *&out, const size_t &max, generator&&, const arg &val);
 
 	template<class gen,
 	         class... attr>
-	bool generate(mutable_buffer &, gen&&, attr&&...);
+	static bool generate(mutable_buffer &, gen&&, attr&&...);
 
 	template<class T,
 	         class lambda>
-	bool visit_type(const arg &val, lambda&& closure);
+	static bool visit_type(const arg &val, lambda&& closure);
 
-	void handle_specifier(mutable_buffer &out, const uint &idx, const spec &, const arg &);
-}}
+	static void handle_specifier(mutable_buffer &out, const uint &idx, const spec &, const arg &);
+}
 
 /// Structural representation of a format specifier. The parse of each
 /// specifier in the format string creates one of these.
-struct ircd::fmt::spec
+struct [[gnu::visibility("internal")]]
+ircd::fmt::spec
 {
 	char sign {'+'};
 	char pad {' '};
@@ -67,12 +67,15 @@ BOOST_FUSION_ADAPT_STRUCT
 )
 #pragma GCC visibility pop
 
-#pragma GCC visibility push(internal)
 /// The format string parser grammar.
 namespace ircd::fmt::parser
 {
 	template<class R = unused_type>
-	using rule = qi::rule<const char *, R>;
+	struct [[gnu::visibility("internal")]] rule
+	:qi::rule<const char *, R>
+	{
+		using qi::rule<const char *, R>::rule;
+	};
 
 	const expr specsym
 	{
@@ -104,13 +107,13 @@ namespace ircd::fmt::parser
 		"specifier"
 	};
 }
-#pragma GCC visibility pop
 
 /// A format specifier handler module. This allows a new "%foo" to be defined
 /// with custom handling by overriding. This abstraction is inserted into a
 /// mapping key'ed by the supplied names leading to an instance of this.
 ///
-class ircd::fmt::specifier
+class [[gnu::visibility("hidden")]]
+ircd::fmt::specifier
 {
 	static std::map<string_view, const specifier *, std::less<>> registry;
 
@@ -130,7 +133,8 @@ class ircd::fmt::specifier
 decltype(ircd::fmt::specifier::registry)
 ircd::fmt::specifier::registry;
 
-struct ircd::fmt::string_specifier
+struct [[gnu::visibility("hidden")]]
+ircd::fmt::string_specifier
 :specifier
 {
 	static const std::tuple
@@ -156,7 +160,8 @@ const ircd::fmt::string_specifier
 decltype(ircd::fmt::string_specifier::types)
 ircd::fmt::string_specifier::types;
 
-struct ircd::fmt::bool_specifier
+struct [[gnu::visibility("hidden")]]
+ircd::fmt::bool_specifier
 :specifier
 {
 	static const std::tuple
@@ -181,7 +186,8 @@ const ircd::fmt::bool_specifier
 decltype(ircd::fmt::bool_specifier::types)
 ircd::fmt::bool_specifier::types;
 
-struct ircd::fmt::signed_specifier
+struct [[gnu::visibility("hidden")]]
+ircd::fmt::signed_specifier
 :specifier
 {
 	static const std::tuple
@@ -206,7 +212,8 @@ const ircd::fmt::signed_specifier
 decltype(ircd::fmt::signed_specifier::types)
 ircd::fmt::signed_specifier::types;
 
-struct ircd::fmt::unsigned_specifier
+struct [[gnu::visibility("hidden")]]
+ircd::fmt::unsigned_specifier
 :specifier
 {
 	static const std::tuple
@@ -228,7 +235,8 @@ const ircd::fmt::unsigned_specifier
 	{ "u"s, "lu"s, "zu"s }
 };
 
-struct ircd::fmt::hex_lowercase_specifier
+struct [[gnu::visibility("hidden")]]
+ircd::fmt::hex_lowercase_specifier
 :specifier
 {
 	static const std::tuple
@@ -253,7 +261,8 @@ const ircd::fmt::hex_lowercase_specifier
 decltype(ircd::fmt::hex_lowercase_specifier::types)
 ircd::fmt::hex_lowercase_specifier::types;
 
-struct ircd::fmt::hex_uppercase_specifier
+struct [[gnu::visibility("hidden")]]
+ircd::fmt::hex_uppercase_specifier
 :specifier
 {
 	static const std::tuple
@@ -281,7 +290,8 @@ ircd::fmt::hex_uppercase_specifier::types;
 decltype(ircd::fmt::unsigned_specifier::types)
 ircd::fmt::unsigned_specifier::types;
 
-struct ircd::fmt::float_specifier
+struct [[gnu::visibility("hidden")]]
+ircd::fmt::float_specifier
 :specifier
 {
 	static const std::tuple
@@ -306,7 +316,8 @@ const ircd::fmt::float_specifier
 decltype(ircd::fmt::float_specifier::types)
 ircd::fmt::float_specifier::types;
 
-struct ircd::fmt::char_specifier
+struct [[gnu::visibility("hidden")]]
+ircd::fmt::char_specifier
 :specifier
 {
 	bool operator()(char *&out, const size_t &max, const spec &, const arg &val) const override;
@@ -317,7 +328,8 @@ const ircd::fmt::char_specifier
 	"c"s
 };
 
-struct ircd::fmt::pointer_specifier
+struct [[gnu::visibility("hidden")]]
+ircd::fmt::pointer_specifier
 :specifier
 {
 	bool operator()(char *&out, const size_t &max, const spec &, const arg &val) const override;
@@ -332,6 +344,7 @@ const ircd::fmt::pointer_specifier
 // snprintf::snprintf
 //
 
+[[gnu::visibility("protected")]]
 ircd::fmt::snprintf::snprintf(internal_t,
                               const mutable_buffer &out,
                               const string_view &fmt,
@@ -386,6 +399,7 @@ catch(const std::out_of_range &e)
 	};
 }
 
+[[gnu::visibility("hidden")]]
 void
 ircd::fmt::snprintf::argument(const arg &val)
 {
@@ -426,6 +440,7 @@ ircd::fmt::snprintf::argument(const arg &val)
 	consume(this->fmt, size(leg));
 }
 
+[[gnu::visibility("hidden")]]
 void
 ircd::fmt::snprintf::append(const string_view &src)
 {
@@ -435,18 +450,20 @@ ircd::fmt::snprintf::append(const string_view &src)
 	});
 }
 
+[[gnu::visibility("hidden")]]
 size_t
 ircd::fmt::snprintf::remaining()
-const
+const noexcept
 {
 	return out.remaining()?
 		out.remaining() - 1:
 		0;
 }
 
+[[gnu::visibility("hidden")]]
 bool
 ircd::fmt::snprintf::finished()
-const
+const noexcept
 {
 	return empty(fmt) || !remaining();
 }

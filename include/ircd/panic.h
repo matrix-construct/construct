@@ -26,7 +26,7 @@ namespace ircd
 /// the triggering callsite should be eliminated. Nevertheless it throws
 /// normally in release mode for recovering at an exception handler.
 #define IRCD_PANICKING(parent, name)                                          \
-struct name                                                                   \
+struct [[gnu::visibility("protected")]] name                                  \
 :parent                                                                       \
 {                                                                             \
     template<class... args>                                                   \

@@ -12,6 +12,7 @@
 #pragma STDC FENV_ACCESS on
 #endif
 
+[[gnu::visibility("protected")]]
 void
 ircd::fpe::debug_info()
 {

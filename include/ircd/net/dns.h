@@ -101,9 +101,14 @@ struct ircd::net::dns::opts
 };
 
 /// (internal)
-struct ircd::net::dns::init
+class [[gnu::visibility("hidden")]]
+ircd::net::dns::init
 {
-	static void service_init(), service_fini() noexcept;
+	static void
+	service_init(),
+	service_fini() noexcept;
 
-	init(), ~init() noexcept;
+  public:
+	init();
+	~init() noexcept;
 };

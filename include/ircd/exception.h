@@ -136,7 +136,7 @@ struct ircd::exception
 /// Remember: the order of the catch blocks is important.
 ///
 #define IRCD_EXCEPTION(parent, name)                                          \
-struct name                                                                   \
+struct [[gnu::visibility("protected")]] name                                  \
 :parent                                                                       \
 {                                                                             \
     template<class... args>                                                   \
@@ -180,7 +180,7 @@ struct name                                                                   \
 
 /// Hides the name of the exception when generating a string
 #define IRCD_EXCEPTION_HIDENAME(parent, name)                                 \
-struct name                                                                   \
+struct [[gnu::visibility("protected")]] name                                  \
 :parent                                                                       \
 {                                                                             \
     template<class... args>                                                   \
