@@ -282,7 +282,7 @@ try
 
 	static const size_t batch_max {64};
 	std::vector<m::event> vec(batch_max);
-	size_t count {0}, ebytes[2] {0, 1}, accept {0};
+	size_t count {0}, ebytes[3] {0, 1, 0}, accept {0};
 	vm::eval eval
 	{
 		vmopts
@@ -344,13 +344,14 @@ try
 
 		log::info
 		{
-			log, "Bootstrap sequence:%zu accepts:%zu faults:%zu %s in %s | %zu event/s; input %s/s; output %s/s",
+			log, "Bootstrap %3.2lf%% %s in %s | seq:%zu accept:%zu fault:%zu | %zu event/s; input %s/s; output %s/s",
+			(ebytes[1] / double(size(string_view(events)))) * 100.0,
+			pretty(pbuf[0], iec(ebytes[1])),
+			stopwatch.pretty(pbuf[1]),
 			vm::sequence::retired,
 			eval.accepted,
 			eval.faulted,
-			pretty(pbuf[0], iec(ebytes[1])),
-			stopwatch.pretty(pbuf[1]),
-			(count / std::max(elapsed, 1L)) * 1000,
+			size_t(count / double(std::max(elapsed / 1000L, 1000L))),
 			pretty(pbuf[2], iec((ebytes[1] / std::max(elapsed, 1L)) * 1000), 1),
 			pretty(pbuf[3], iec((db_bytes / std::max(elapsed, 1L)) * 1000), 1),
 		};
