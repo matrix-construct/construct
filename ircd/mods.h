@@ -8,18 +8,15 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <boost/filesystem.hpp>
+#include <boost/dll.hpp>
+#include <ircd/mods/mapi.h>  // Module's internal API
+
+namespace filesystem = boost::filesystem;
+namespace load_mode = boost::dll::load_mode;
 namespace ircd::mods
 {
 	struct mod;
-
-	template<class R, class F> R info(const string_view &, F&& closure);
-
-	void handle_ebadf(const string_view &what);
-	void handle_stuck(mod &);
-	bool unload(mod &) noexcept;
-
-	extern const std::string prefix;
-	extern const std::string suffix;
 }
 
 /// Internal module representation. This object closely wraps the dlopen()
@@ -33,7 +30,8 @@ namespace ircd::mods
 /// It is a critical error if static initialization and destruction is not
 /// congruent with the lifetime of this instance.
 ///
-struct ircd::mods::mod
+struct [[gnu::visibility("hidden")]]
+ircd::mods::mod
 :std::enable_shared_from_this<mod>
 {
 	static std::forward_list<mod *> loading; // State of current dlopen() recursion.

@@ -8,14 +8,18 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <boost/filesystem.hpp>
-#include <boost/dll.hpp>
-
-namespace filesystem = boost::filesystem;
-namespace load_mode = boost::dll::load_mode;
-
-#include <ircd/mods/mapi.h>  // Module's internal API
 #include "mods.h"
+
+namespace ircd::mods
+{
+	template<class R,
+	         class F>
+	static R info(const string_view &, F&& closure);
+
+	static void handle_ebadf(const string_view &what);
+	static void handle_stuck(mod &);
+	static bool unload(mod &) noexcept;
+}
 
 ircd::log::log
 ircd::mods::log
@@ -39,21 +43,14 @@ ircd::mods::autoload
 	{ "persist",  false                 },
 };
 
-//
-// mods::mod
-//
-
 decltype(ircd::mods::mod::loading)
-ircd::mods::mod::loading
-{};
+ircd::mods::mod::loading;
 
 decltype(ircd::mods::mod::unloading)
-ircd::mods::mod::unloading
-{};
+ircd::mods::mod::unloading;
 
 decltype(ircd::mods::mod::loaded)
-ircd::mods::mod::loaded
-{};
+ircd::mods::mod::loaded;
 
 const char *const
 ircd::mapi::import_section_names[]
@@ -1156,6 +1153,12 @@ catch(const boost::system::system_error &e)
 //
 // mods/paths.h
 //
+
+namespace ircd::mods
+{
+	[[gnu::visibility("internal")]]
+	extern const std::string prefix, suffix;
+}
 
 decltype(ircd::mods::prefix)
 ircd::mods::prefix
