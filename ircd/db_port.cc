@@ -26,15 +26,18 @@ noexcept
 {
 	memset(this, 0x0, sizeof(pthread_mutex_t));
 
-	#ifdef RB_DEBUG_DB_PORT_
-	if(unlikely(!ctx::current))
-		return;
-
-	log::debug
+	if constexpr(RB_DEBUG_DB_PORT > 1)
 	{
-		db::log, "mutex %lu %p CTOR", ctx::id(), this
-	};
-	#endif
+		if(unlikely(!ctx::current))
+			return;
+
+		log::debug
+		{
+			db::log, "mutex %lu %p CTOR",
+			ctx::id(),
+			this
+		};
+	}
 }
 
 rocksdb::port::Mutex::Mutex(bool adaptive)
@@ -46,15 +49,18 @@ noexcept
 rocksdb::port::Mutex::~Mutex()
 noexcept
 {
-	#ifdef RB_DEBUG_DB_PORT_
-	if(unlikely(!ctx::current))
-		return;
-
-	log::debug
+	if constexpr(RB_DEBUG_DB_PORT > 1)
 	{
-		db::log, "mutex %lu %p DTOR", ctx::id(), this
-	};
-	#endif
+		if(unlikely(!ctx::current))
+			return;
+
+		log::debug
+		{
+			db::log, "mutex %lu %p DTOR",
+			ctx::id(),
+			this
+		};
+	}
 }
 
 void
@@ -64,12 +70,13 @@ noexcept
 	if(unlikely(!ctx::current))
 		return;
 
-	#ifdef RB_DEBUG_DB_PORT
-	log::debug
-	{
-		db::log, "mutex %lu %p LOCK", ctx::id(), this
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_PORT)
+		log::debug
+		{
+			db::log, "mutex %lu %p LOCK",
+			ctx::id(),
+			this
+		};
 
 	assert_main_thread();
 	const ctx::uninterruptible::nothrow ui;
@@ -83,12 +90,13 @@ noexcept
 	if(unlikely(!ctx::current))
 		return;
 
-	#ifdef RB_DEBUG_DB_PORT
-	log::debug
-	{
-		db::log, "mutex %lu %p UNLOCK", ctx::id(), this
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_PORT)
+		log::debug
+		{
+			db::log, "mutex %lu %p UNLOCK",
+			ctx::id(),
+			this
+		};
 
 	assert_main_thread();
 	assert(mu.locked());
@@ -119,29 +127,35 @@ noexcept
 {
 	memset(this, 0x0, sizeof(pthread_rwlock_t));
 
-	#ifdef RB_DEBUG_DB_PORT_
-	if(unlikely(!ctx::current))
-		return;
-
-	log::debug
+	if constexpr(RB_DEBUG_DB_PORT > 1)
 	{
-		db::log, "shared_mutex %lu %p CTOR", ctx::id(), this
-	};
-	#endif
+		if(unlikely(!ctx::current))
+			return;
+
+		log::debug
+		{
+			db::log, "shared_mutex %lu %p CTOR",
+			ctx::id(),
+			this
+		};
+	}
 }
 
 rocksdb::port::RWMutex::~RWMutex()
 noexcept
 {
-	#ifdef RB_DEBUG_DB_PORT_
-	if(unlikely(!ctx::current))
-		return;
-
-	log::debug
+	if constexpr(RB_DEBUG_DB_PORT > 1)
 	{
-		db::log, "shared_mutex %lu %p DTOR", ctx::id(), this
-	};
-	#endif
+		if(unlikely(!ctx::current))
+			return;
+
+		log::debug
+		{
+			db::log, "shared_mutex %lu %p DTOR",
+			ctx::id(),
+			this
+		};
+	}
 }
 
 void
@@ -151,12 +165,13 @@ noexcept
 	if(unlikely(!ctx::current))
 		return;
 
-	#ifdef RB_DEBUG_DB_PORT
-	log::debug
-	{
-		db::log, "shared_mutex %lu %p LOCK SHARED", ctx::id(), this
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_PORT)
+		log::debug
+		{
+			db::log, "shared_mutex %lu %p LOCK SHARED",
+			ctx::id(),
+			this
+		};
 
 	assert_main_thread();
 	const ctx::uninterruptible::nothrow ui;
@@ -170,12 +185,13 @@ noexcept
 	if(unlikely(!ctx::current))
 		return;
 
-	#ifdef RB_DEBUG_DB_PORT
-	log::debug
-	{
-		db::log, "shared_mutex %lu %p LOCK", ctx::id(), this
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_PORT)
+		log::debug
+		{
+			db::log, "shared_mutex %lu %p LOCK",
+			ctx::id(),
+			this
+		};
 
 	assert_main_thread();
 	const ctx::uninterruptible::nothrow ui;
@@ -189,12 +205,13 @@ noexcept
 	if(unlikely(!ctx::current))
 		return;
 
-	#ifdef RB_DEBUG_DB_PORT
-	log::debug
-	{
-		db::log, "shared_mutex %lu %p UNLOCK SHARED", ctx::id(), this
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_PORT)
+		log::debug
+		{
+			db::log, "shared_mutex %lu %p UNLOCK SHARED",
+			ctx::id(),
+			this
+		};
 
 	assert_main_thread();
 	const ctx::uninterruptible::nothrow ui;
@@ -208,12 +225,13 @@ noexcept
 	if(unlikely(!ctx::current))
 		return;
 
-	#ifdef RB_DEBUG_DB_PORT
-	log::debug
-	{
-		db::log, "shared_mutex %lu %p UNLOCK", ctx::id(), this
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_PORT)
+		log::debug
+		{
+			db::log, "shared_mutex %lu %p UNLOCK",
+			ctx::id(),
+			this
+		};
 
 	assert_main_thread();
 	const ctx::uninterruptible::nothrow ui;
@@ -237,29 +255,37 @@ noexcept
 	memset(this, 0x0, sizeof(pthread_cond_t) + sizeof(Mutex *));
 	this->mu = mu;
 
-	#ifdef RB_DEBUG_DB_PORT_
-	if(unlikely(!ctx::current))
-		return;
-
-	log::debug
+	if constexpr(RB_DEBUG_DB_PORT > 1)
 	{
-		db::log, "cond %lu %p %p CTOR", ctx::id(), this, mu
-	};
-	#endif
+		if(unlikely(!ctx::current))
+			return;
+
+		log::debug
+		{
+			db::log, "cond %lu %p %p CTOR",
+			ctx::id(),
+			this,
+			mu
+		};
+	}
 }
 
 rocksdb::port::CondVar::~CondVar()
 noexcept
 {
-	#ifdef RB_DEBUG_DB_PORT_
-	if(unlikely(!ctx::current))
-		return;
-
-	log::debug
+	if constexpr(RB_DEBUG_DB_PORT > 1)
 	{
-		db::log, "cond %lu %p %p DTOR", ctx::id(), this, mu
-	};
-	#endif
+		if(unlikely(!ctx::current))
+			return;
+
+		log::debug
+		{
+			db::log, "cond %lu %p %p DTOR",
+			ctx::id(),
+			this,
+			mu
+		};
+	}
 }
 
 void
@@ -268,12 +294,14 @@ noexcept
 {
 	assert(ctx::current);
 
-	#ifdef RB_DEBUG_DB_PORT
-	log::debug
-	{
-		db::log, "cond %lu %p %p WAIT", ctx::id(), this, mu
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_PORT)
+		log::debug
+		{
+			db::log, "cond %lu %p %p WAIT",
+			ctx::id(),
+			this,
+			mu
+		};
 
 	assert(mu);
 	assert_main_thread();
@@ -289,12 +317,15 @@ noexcept
 {
 	assert(ctx::current);
 
-	#ifdef RB_DEBUG_DB_PORT
-	log::debug
-	{
-		db::log, "cond %lu %p %p WAIT_UNTIL %lu", ctx::id(), this, mu, abs_time_us
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_PORT)
+		log::debug
+		{
+			db::log, "cond %lu %p %p WAIT_UNTIL %lu",
+			ctx::id(),
+			this,
+			mu,
+			abs_time_us
+		};
 
 	assert(mu);
 	assert_main_thread();
@@ -309,12 +340,14 @@ void
 rocksdb::port::CondVar::Signal()
 noexcept
 {
-	#ifdef RB_DEBUG_DB_PORT
-	log::debug
-	{
-		db::log, "cond %lu %p %p NOTIFY", ctx::id(), this, mu
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_PORT)
+		log::debug
+		{
+			db::log, "cond %lu %p %p NOTIFY",
+			ctx::id(),
+			this,
+			mu
+		};
 
 	assert_main_thread();
 	cv.notify_one();
@@ -324,12 +357,14 @@ void
 rocksdb::port::CondVar::SignalAll()
 noexcept
 {
-	#ifdef RB_DEBUG_DB_PORT
-	log::debug
-	{
-		db::log, "cond %lu %p %p BROADCAST", ctx::id(), this, mu
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_PORT)
+		log::debug
+		{
+			db::log, "cond %lu %p %p BROADCAST",
+			ctx::id(),
+			this,
+			mu
+		};
 
 	assert_main_thread();
 	cv.notify_all();

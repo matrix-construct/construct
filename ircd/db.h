@@ -25,12 +25,12 @@
 //#define RB_DEBUG_DB_SEEK_ROW
 //#define IRCD_DB_DEBUG_PREFETCH
 
-/// Uncomment or -D this #define to enable extensive log messages for the
+/// Set this #define to 1 or 2 to enable extensive log messages for the
 /// experimental db environment-port implementation. This is only useful
 /// for developers working on the port impl and want to debug all locking
 /// and unlocking etc.
 ///
-//#define RB_DEBUG_DB_PORT
+#define RB_DEBUG_DB_PORT 0
 
 #include <rocksdb/version.h>
 #include <rocksdb/status.h>
