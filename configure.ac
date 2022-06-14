@@ -21,6 +21,8 @@ AC_PATH_PROG(RM, rm)
 AC_PATH_PROG(CP, cp)
 AC_PATH_PROG(MV, mv)
 AC_PATH_PROG(LN, ln)
+AC_PATH_PROG(LDGOLD, ld.gold)
+AC_PATH_PROG(LDLLD, ld.lld)
 AC_PATH_PROG(LD, ld.gold)
 AC_PATH_PROG(XXD, xxd)
 AC_PATH_PROG(TOUCH, touch)
@@ -973,20 +975,39 @@ RB_VAR_PREPEND([CPPFLAGS], ["$CWARNS"])
 dnl mirror the base CFLAGS and CXXFLAGS up to this point
 CFLAGS="$CXXFLAGS"
 
+
+dnl ***************************************************************************
 dnl
-dnl Gold linker
+dnl Linker flags
 dnl
 
-dnl Sorry there is no way to disable gold right now. You can try the
-dnl binutils-gold package if your binutils package doesn't ship with it
-dnl by default these days. Not sure if this is a problem with musl; please
-dnl report any issues so we can weigh the need to change course here.
-dnl
-ld_gold="yes"
+AM_COND_IF([CLANG],
+[
+	AM_CONDITIONAL([LLD], [test "" != ""])
+dnl	AM_CONDITIONAL([LLD], [test "$LDLLD" != ""])
+	AM_CONDITIONAL([GOLD], [test "$LDGOLD" != ""])
+], [
+	AM_CONDITIONAL([LLD], [test "" != ""])
+	AM_CONDITIONAL([GOLD], [test "$LDGOLD" != ""])
+])
 
-AM_CONDITIONAL([LD_GOLD], [[[[ $ld_gold = "yes" ]]]])
+AM_COND_IF_NAND([LLD], [GOLD],
+[
+	AC_MSG_ERROR([Sorry, ld.gold required at this time.])
+])
 
-AM_COND_IF([LD_GOLD],
+AM_COND_IF([LLD],
+[
+	AC_SUBST(LD, "$LDLLD")
+])
+
+AM_COND_IF([LLD],
+[
+	RB_VAR_PREPEND([LDFLAGS], ["-fuse-ld=lld"])
+	RB_VAR_PREPEND([LDFLAGS], ["-Wc,-fuse-ld=lld"])
+])
+
+AM_COND_IF([GOLD],
 [
 	AM_COND_IF([GCC],
 	[
@@ -1008,8 +1029,6 @@ dnl	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--icf=all"])
 	RB_VAR_PREPEND([LDFLAGS], ["-Wl,-z,noexecstack"])
 	RB_VAR_PREPEND([LDFLAGS], ["-Wl,-z,combreloc"])
 	RB_VAR_PREPEND([LDFLAGS], ["-Wl,-z,text-unlikely-segment"])
-], [
-	AC_MSG_ERROR([Sorry, disabling the gold linker is not supported at this time.])
 ])
 
 dnl Note compact mode options available in both GOLD and LLD
@@ -1018,6 +1037,7 @@ AM_COND_IF([COMPACT],
 	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--strip-all"])
 	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--gc-sections"])
 ])
+
 
 dnl ***************************************************************************
 dnl

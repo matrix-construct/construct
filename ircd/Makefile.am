@@ -25,10 +25,7 @@ AM_LDFLAGS = \
 	-version-info 3:2:0 \
 	-Wl,--no-undefined-version \
 	-Wl,--icf=all \
-	-Wl,--no-text-reorder \
 	-Wl,--sort-section=name \
-	-Wl,--sort-common=descending \
-	-Wl,--weak-unresolved-symbols \
 	-Wl,--unresolved-symbols=ignore-in-shared-libs \
 	-Wl,--wrap=pthread_create \
 	-Wl,--wrap=pthread_join \
@@ -77,6 +74,12 @@ AM_LDFLAGS += -Wl,-fprofile-generate
 #AM_LDFLAGS += -Wl,-fprofile-instr-generate
 #AM_LDFLAGS += -Wl,-fcoverage-mapping
 endif
+endif
+
+if GOLD
+AM_LDFLAGS += -Wl,--no-text-reorder
+AM_LDFLAGS += -Wl,--weak-unresolved-symbols
+AM_LDFLAGS += -Wl,--sort-common=descending
 endif
 
 if MINGW
