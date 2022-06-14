@@ -446,7 +446,7 @@ noexcept
 	cp[0] = _encode_sparse(cp[0]);
 	cp[1] = _encode_sparse(cp[1]);
 
-	u32x8 ret;
+	u32x8 ret {0};
 	for(size_t i(0); i < 2; ++i)
 		for(size_t j(0); j < 4; ++j)
 			ret[i * 4 + j] = cp[i][j];
@@ -473,7 +473,7 @@ noexcept
 	cp[0] = encode_sparse(cp[0]);
 	cp[1] = encode_sparse(cp[1]);
 
-	u32x16 ret;
+	u32x16 ret {0};
 	for(size_t i(0); i < 2; ++i)
 		for(size_t j(0); j < 8; ++j)
 			ret[i * 8 + j] = cp[i][j];
@@ -556,7 +556,7 @@ noexcept
 	cp[0] = _length(cp[0]);
 	cp[1] = _length(cp[1]);
 
-	u32x8 ret;
+	u32x8 ret {0};
 	for(size_t i(0); i < 2; ++i)
 		for(size_t j(0); j < 4; ++j)
 			ret[i * 4 + j] = cp[i][j];
@@ -583,7 +583,7 @@ noexcept
 	cp[0] = length(cp[0]);
 	cp[1] = length(cp[1]);
 
-	u32x16 ret;
+	u32x16 ret {0};
 	for(size_t i(0); i < 2; ++i)
 		for(size_t j(0); j < 8; ++j)
 			ret[i * 8 + j] = cp[i][j];

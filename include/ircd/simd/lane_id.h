@@ -38,7 +38,7 @@ template<class T>
 constexpr T
 ircd::simd::lane_id()
 {
-	T ret;
+	T ret {0};
 	for(uint i(0); i < lanes<T>(); ++i)
 		ret[i] = i;
 
