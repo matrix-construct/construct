@@ -24,10 +24,8 @@
 // this becomes the single leading precompiled header.
 #include <ircd/ircd.h>
 
-#define BOOST_COROUTINES_NO_DEPRECATION_WARNING
-#pragma GCC visibility push(default)
-
 // Boost preambles
+#define BOOST_COROUTINES_NO_DEPRECATION_WARNING
 #include <boost/version.hpp>
 #include <boost/config.hpp>
 
@@ -40,17 +38,35 @@ namespace boost
 }
 #endif
 
-// Needed for consistent interop with std::system_error
-#include <boost/system/system_error.hpp>
+#include <RB_INC_SIGNAL_H
+#include <RB_INC_SYS_MMAN_H
+#include <RB_INC_SYS_EVENT_H
+#include <RB_INC_SYS_EPOLL_H
+#include <RB_INC_SYS_TIMERFD_H
+#include <RB_INC_SYS_EVENTFD_H
 
-// Boost ASIO stack
+#pragma GCC visibility push(internal)
+#include <boost/throw_exception.hpp>
+#pragma GCC visibility pop
+
+#include <boost/system/system_error.hpp>
+#include <boost/date_time/posix_time/ptime.hpp>
+#include <boost/asio/detail/config.hpp>
+#include <boost/asio/detail/socket_types.hpp>
+#include <boost/asio/ssl/detail/openssl_types.hpp>
+#include <boost/coroutine/coroutine.hpp>
+
+#if defined(BOOST_ASIO_HAS_EPOLL) || defined(BOOST_ASIO_HAS_KQUEUE)
+#pragma GCC visibility push(protected)
+#endif
 #include <boost/asio.hpp>
-#include <boost/asio/ssl.hpp>
+#include <boost/asio/io_service.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/asio/io_service.hpp>
-
+#include <boost/asio/ssl.hpp>
+#if defined(BOOST_ASIO_HAS_EPOLL) || defined(BOOST_ASIO_HAS_KQUEUE)
 #pragma GCC visibility pop
+#endif
 
 // Boost version dependent behavior for getting the io_service/io_context
 // abstract executor (recent versions) or the derived instance (old versions).
