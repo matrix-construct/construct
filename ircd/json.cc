@@ -3708,8 +3708,17 @@ ircd::json::string_stringify(u8x16 &block,
 	// Control character case
 	if(is_ctrl[0])
 	{
-		const u8 idx{block[0]};
-		block = *reinterpret_cast<const u128x1 *>(ctrl_tab + idx);
+		static const auto tab
+		{
+			reinterpret_cast<const u128x1 *>(ctrl_tab)
+		};
+
+		const u8 idx
+		{
+			block[0]
+		};
+
+		block = tab[idx];
 		return u64x2
 		{
 			u64(ctrl_tab_len[idx]), 1
@@ -4097,7 +4106,7 @@ ircd::json::lookup_ctrl_tab_len(const u8x16 in)
 		{ in[k++], in[k++], in[k++], in[k++] },
 	};
 
-	u8x16 ret;
+	u8x16 ret{0};
 	i32x4 res[4];
 	for(k = 0, i = 0; i < 4; ++i)
 		for(j = 0; j < 4; ++j)
