@@ -784,11 +784,6 @@ dnl
 STACK_USAGE_WARNING=16384
 FRAME_SIZE_WARNING=8192
 CWARNS=""
-AC_MSG_CHECKING(whether to disable warnings)
-AC_ARG_ENABLE(warnings,
-RB_HELP_STRING([--disable-warnings], [Disable all sorts of warnings like a rockstar]),
-[],
-[
 
 RB_MAYBE_CXXFLAG([-Wall], charybdis_cv_c_gcc_w_all)
 RB_MAYBE_CXXFLAG([-Wextra], charybdis_cv_c_gcc_w_extra)
@@ -878,12 +873,6 @@ AM_COND_IF([DEBUG],
 	])
 ])
 
-AM_COND_IF_NOT([UNTUNED],
-[
-	dnl When tuning for a specific target ignore the ABI compat warnings
-	RB_MAYBE_CXXFLAG([-Wno-psabi], charybdis_cv_c_gcc_w_psabi)
-])
-
 dnl
 dnl List of compiler-specific / incompatible warning options
 dnl
@@ -910,11 +899,72 @@ AM_COND_IF([GCC],
 
 AM_COND_IF([CLANG],
 [
+	RB_MAYBE_CXXFLAG([-Wundefined-reinterpret-cast], charybdis_cv_c_gcc_w_undefined_reinterpret_cast)
+	RB_MAYBE_CXXFLAG([-Wconditional-uninitialized], charybdis_cv_c_gcc_w_conditional_uninitialized)
+
 	RB_MAYBE_CXXFLAG([-Wno-mismatched-tags], charybdis_cv_c_gcc_w_mismatched_tags)
 	RB_MAYBE_CXXFLAG([-Wno-format-security], charybdis_cv_c_gcc_w_format_security)
 	RB_MAYBE_CXXFLAG([-Wno-unknown-warning-option], charybdis_cv_c_gcc_w_unknown_warning_option)
 ])
 
+dnl Warning discovery section
+AC_MSG_CHECKING(whether to enable warning discovery)
+AC_ARG_ENABLE(every-warning,
+RB_HELP_STRING([--enable-every-warning], [Enable warning discovery (-Weverything)]),
+[
+	RB_MAYBE_CXXFLAG([-Weverything], charybdis_cv_c_gcc_w_everything)
+
+	dnl Ignored a priori
+	RB_MAYBE_CXXFLAG([-Wno-c++98-compat], charybdis_cv_c_gcc_w_no_cxx98_compat)
+	RB_MAYBE_CXXFLAG([-Wno-c++98-compat-pedantic], charybdis_cv_c_gcc_w_no_cxx98_compat_pedantic)
+	RB_MAYBE_CXXFLAG([-Wno-c++98-compat-extra-semi], charybdis_cv_c_gcc_w_no_cxx98_compat_extra_semi)
+	RB_MAYBE_CXXFLAG([-Wno-pre-c++14-compat], charybdis_cv_c_gcc_w_no_pre_cxx14_compat)
+	RB_MAYBE_CXXFLAG([-Wno-pre-c++17-compat], charybdis_cv_c_gcc_w_no_pre_cxx17_compat)
+
+	dnl Ignored by design
+	RB_MAYBE_CXXFLAG([-Wno-comma], charybdis_cv_c_gcc_w_no_comma)
+	RB_MAYBE_CXXFLAG([-Wno-shadow], charybdis_cv_c_gcc_w_no_shadow)
+	RB_MAYBE_CXXFLAG([-Wno-shadow-field], charybdis_cv_c_gcc_w_no_shadow_field)
+	RB_MAYBE_CXXFLAG([-Wno-shadow-field-in-constructor], charybdis_cv_c_gcc_w_no_shadow_field_in_constructor)
+	RB_MAYBE_CXXFLAG([-Wno-shadow-uncaptured-local], charybdis_cv_c_gcc_w_no_shadow_uncaptured_local)
+	RB_MAYBE_CXXFLAG([-Wno-gnu-conditional-omitted-operand], charybdis_cv_c_gcc_w_no_gnu_conditional_omitted_operand)
+	RB_MAYBE_CXXFLAG([-Wno-ctad-maybe-unsupported], charybdis_cv_c_gcc_w_no_ctad_maybe_unsupported)
+	RB_MAYBE_CXXFLAG([-Wno-disabled-macro-expansion], charybdis_cv_c_gcc_w_no_disabled_macro_expansion)
+
+	dnl Ignored for now
+	RB_MAYBE_CXXFLAG([-Wno-padded], charybdis_cv_c_gcc_w_no_padded)
+	RB_MAYBE_CXXFLAG([-Wno-sign-conversion], charybdis_cv_c_gcc_w_no_sign_conversion)
+	RB_MAYBE_CXXFLAG([-Wno-unused-exception-parameter], charybdis_cv_c_gcc_w_no_unused_exception_parameter)
+	RB_MAYBE_CXXFLAG([-Wno-extra-semi], charybdis_cv_c_gcc_w_no_extra_semi)
+	RB_MAYBE_CXXFLAG([-Wno-extra-semi-stmt], charybdis_cv_c_gcc_w_no_extra_semi_stmt)
+	RB_MAYBE_CXXFLAG([-Wno-weak-vtables], charybdis_cv_c_gcc_w_no_weak_vtables)
+	RB_MAYBE_CXXFLAG([-Wno-global-constructors], charybdis_cv_c_gcc_w_no_global_constructors)
+
+	dnl Ignored with issue low priority
+	RB_MAYBE_CXXFLAG([-Wno-old-style-cast], charybdis_cv_c_gcc_w_no_old_style_cast)
+	RB_MAYBE_CXXFLAG([-Wno-float-conversion], charybdis_cv_c_gcc_w_no_implicit_int_conversion)
+	RB_MAYBE_CXXFLAG([-Wno-implicit-int-conversion], charybdis_cv_c_gcc_w_no_implicit_int_conversion)
+
+	dnl Ignored with issue high priority
+	RB_MAYBE_CXXFLAG([-Wno-reserved-identifier], charybdis_cv_c_gcc_w_no_reserved_identifier)
+	RB_MAYBE_CXXFLAG([-Wno-reserved-macro-identifier], charybdis_cv_c_gcc_w_no_reserved_macro_identifier)
+])
+
+AM_COND_IF_NOT([UNTUNED],
+[
+	dnl When tuning for a specific target ignore the ABI compat warnings
+	RB_MAYBE_CXXFLAG([-Wno-psabi], charybdis_cv_c_gcc_w_psabi)
+])
+
+dnl Truncate warning flags if disabled
+AC_MSG_CHECKING(whether to disable warnings)
+AC_ARG_ENABLE(warnings,
+RB_HELP_STRING([--disable-warnings], [Disable all sorts of warnings like a rockstar]),
+[
+	AC_MSG_RESULT([yes])
+	CWARNS=""
+], [
+	AC_MSG_RESULT([no])
 ])
 
 dnl assume the warning flags
