@@ -2064,7 +2064,7 @@ console_cmd__ios__latency(opt &out, const string_view &line)
 bool
 console_cmd__aio(opt &out, const string_view &line)
 {
-	if(!fs::aio::system)
+	if(!fs::aio::enable)
 		throw error
 		{
 			"AIO is not available."
