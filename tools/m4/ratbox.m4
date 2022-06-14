@@ -30,3 +30,16 @@ AC_DEFUN([CPPDEFINE],
 AC_DEFUN([RB_HELP_STRING], [AS_HELP_STRING([$1], [$2], 40, 200)])
 
 AC_DEFUN([RB_VAR_PREPEND], [AS_VAR_SET([$1], ["$2 ${$1}"])])
+
+AC_DEFUN([AM_COND_IF_NOT],
+[
+	AM_COND_IF([$1], [], [$2])
+])
+
+AC_DEFUN([AM_COND_IF_NAND],
+[
+	AM_COND_IF([$1], [],
+	[
+		AM_COND_IF([$2], [], [$3])
+	])
+])
