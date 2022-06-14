@@ -29,6 +29,7 @@ AC_PATH_PROG(TOUCH, touch)
 
 AC_SUBST(CFLAGS, "-pipe $CFLAGS")
 AC_SUBST(CXXFLAGS, "-pipe $CXXFLAGS")
+AC_SUBST(CCASFLAGS, "$CCASFLAGS")
 
 LT_INIT([dlopen shared disable-static])
 LT_LANG([C++])
