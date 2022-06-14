@@ -48,8 +48,7 @@ ircd::client::settings::pool_size
 
 /// Linkage for the default settings
 decltype(ircd::client::settings)
-ircd::client::settings
-{};
+ircd::client::settings;
 
 //
 // client::conf conf::item's
@@ -78,8 +77,7 @@ ircd::client::conf::header_max_size_default
 
 /// Linkage for the default conf
 decltype(ircd::client::default_conf)
-ircd::client::default_conf
-{};
+ircd::client::default_conf;
 
 decltype(ircd::client::log)
 ircd::client::log
@@ -109,8 +107,7 @@ decltype(ircd::client::dock)
 ircd::client::dock;
 
 decltype(ircd::client::ctr)
-ircd::client::ctr
-{};
+ircd::client::ctr;
 
 // Linkage for the container of all active clients for iteration purposes.
 template<>
@@ -147,6 +144,22 @@ noexcept
 
 //
 // util
+//
+
+const ircd::ipport &
+ircd::local(const client &client)
+{
+	return client.local;
+}
+
+const ircd::ipport &
+ircd::remote(const client &client)
+{
+	return client.it->first;
+}
+
+//
+// tool
 //
 
 void
@@ -282,7 +295,7 @@ ircd::client::count(const net::ipport &remote)
 }
 
 ircd::parse::read_closure
-ircd::read_closure(client &client)
+ircd::client::read_closure(client &client)
 {
 	// Returns a function the parser can call when it wants more data
 	return [&client](char *&start, char *const &stop)
@@ -296,9 +309,9 @@ ircd::read_closure(client &client)
 }
 
 char *
-ircd::read(client &client,
-           char *&start,
-           char *const &stop)
+ircd::client::read(client &client,
+                   char *&start,
+                   char *const &stop)
 {
 	assert(client.sock);
 	auto &sock(*client.sock);
@@ -312,18 +325,6 @@ ircd::read(client &client,
 	return base;
 }
 
-const ircd::ipport &
-ircd::local(const client &client)
-{
-	return client.local;
-}
-
-const ircd::ipport &
-ircd::remote(const client &client)
-{
-	return client.it->first;
-}
-
 //
 // async loop
 //
@@ -335,9 +336,6 @@ namespace ircd
 	static bool handle_ec_short_read(client &);
 	static bool handle_ec_eof(client &);
 	static bool handle_ec(client &, const error_code &);
-
-	static void handle_client_requests(std::shared_ptr<client>);
-	static void handle_client_ready(std::shared_ptr<client>, const error_code &ec);
 }
 
 /// This function is the basis for the client's request loop. We still use
@@ -374,7 +372,7 @@ ircd::client::async()
 
 	auto handler
 	{
-		std::bind(ircd::handle_client_ready, shared_from(*this), ph::_1)
+		std::bind(client::handle_ready, shared_from(*this), ph::_1)
 	};
 
 	// Re-purpose the request time counter into an async timer by marking it.
@@ -393,25 +391,25 @@ ircd::client::async()
 /// request pool, which may not be available immediately so this handler might
 /// be queued for some time after this call returns.
 void
-ircd::handle_client_ready(std::shared_ptr<client> client,
-                          const error_code &ec)
+ircd::client::handle_ready(std::shared_ptr<client> client,
+                           const error_code &ec)
 {
 	if(!handle_ec(*client, ec))
 		return;
 
 	auto handler
 	{
-		std::bind(ircd::handle_client_requests, std::move(client))
+		std::bind(client::handle_requests, std::move(client))
 	};
 
-	if(client::pool.avail() == 0)
+	if(pool.avail() == 0)
 		log::dwarning
 		{
-			client::log, "Client context pool exhausted. %zu requests queued.",
-			client::pool.queued()
+			log, "Client context pool exhausted. %zu requests queued.",
+			pool.queued()
 		};
 
-	client::pool(std::move(handler));
+	pool(std::move(handler));
 }
 
 /// A request context has been dispatched and is now handling this client.
@@ -420,7 +418,7 @@ ircd::handle_client_ready(std::shared_ptr<client> client,
 /// client will release this ctx and its stack and fall back to async mode
 /// or die.
 void
-ircd::handle_client_requests(std::shared_ptr<client> client)
+ircd::client::handle_requests(std::shared_ptr<client> client)
 try
 {
 	// The ircd::ctx now handling this request is referenced and accessible
@@ -435,15 +433,15 @@ try
 		assert(client->reqctx);
 		assert(client->reqctx == ctx::current);
 		client->reqctx = nullptr;
-		if(client::pool.avail() <= 1)
-			client::dock.notify_all();
+		if(pool.avail() <= 1)
+			dock.notify_all();
 	}};
 
 	#ifdef RB_DEBUG
-	timer timer;
+	util::timer timer;
 	log::debug
 	{
-		client::log, "%s enter",
+		log, "%s enter",
 		client->loghead()
 	};
 	#endif
@@ -458,7 +456,7 @@ try
 	char buf[64];
 	log::debug
 	{
-		client::log, "%s leave %s",
+		log, "%s leave %s",
 		client->loghead(),
 		pretty(buf, timer.at<microseconds>(), true)
 	};
@@ -470,7 +468,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		client::log, "%s fault :%s",
+		log, "%s fault :%s",
 		client->loghead(),
 		e.what()
 	};

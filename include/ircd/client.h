@@ -17,10 +17,6 @@ namespace ircd
 
 	const ipport &remote(const client &);
 	const ipport &local(const client &);
-
-	//TODO: want to upgrade
-	char *read(client &, char *&start, char *const &stop);
-	parse::read_closure read_closure(client &);
 }
 
 /// Remote party connecting to our daemon to make requests.
@@ -40,14 +36,6 @@ struct ircd::client
 	static ctx::pool pool;
 	static ctx::dock dock;
 	static uint64_t ctr;              // monotonic
-
-	static void create(net::listener &, const std::shared_ptr<socket> &);
-	static size_t count(const net::ipport &remote); // cmp is by IP only, not port
-	static void terminate_all();
-	static void interrupt_all();
-	static void close_all();
-	static void wait_all();
-	static void spawn();
 
 	struct conf *conf {&default_conf};
 	unique_buffer<mutable_buffer> head_buffer;
@@ -69,18 +57,33 @@ struct ircd::client
 	void close(const net::close_opts &, net::close_callback);
 	ctx::future<void> close(const net::close_opts & = {});
 
+  private:
 	void discard_unconsumed(const http::request::head &);
 	bool resource_request(const http::request::head &);
 	bool handle_request(parse::capstan &pc);
 	bool main();
+
+	static char *read(client &, char *&start, char *const &stop); //TODO: XXX
+	static parse::read_closure read_closure(client &); //TODO: XXX
+	static void handle_requests(std::shared_ptr<client>);
+	static void handle_ready(std::shared_ptr<client>, const error_code &ec);
 	bool async();
 
+  public:
 	client(std::shared_ptr<socket>);
 	client(client &&) = delete;
 	client(const client &) = delete;
 	client &operator=(client &&) = delete;
 	client &operator=(const client &) = delete;
 	~client() noexcept;
+
+	static void create(net::listener &, const std::shared_ptr<socket> &);
+	static size_t count(const net::ipport &remote); // cmp is by IP only, not port
+	static void terminate_all();
+	static void interrupt_all();
+	static void close_all();
+	static void wait_all();
+	static void spawn();
 
 	friend const ipport &remote(const client &);
 	friend const ipport &local(const client &);
@@ -89,9 +92,11 @@ struct ircd::client
 /// Confs can be attached to individual clients to change their behavior
 struct ircd::client::conf
 {
-	static ircd::conf::item<seconds> async_timeout_default;
-	static ircd::conf::item<seconds> request_timeout_default;
-	static ircd::conf::item<size_t> header_max_size_default;
+	template<class T> using item = ircd::conf::item<T>;
+
+	static item<seconds> async_timeout_default;
+	static item<seconds> request_timeout_default;
+	static item<size_t> header_max_size_default;
 
 	/// Default time limit for how long a client connection can be in "async mode"
 	/// (or idle mode) after which it is disconnected.
@@ -110,10 +115,12 @@ struct ircd::client::conf
 /// Settings apply to all clients and cannot be configured per-client
 struct ircd::client::settings
 {
-	static ircd::conf::item<size_t> stack_size;
-	static ircd::conf::item<size_t> pool_size;
-	static ircd::conf::item<size_t> max_client;
-	static ircd::conf::item<size_t> max_client_per_peer;
+	template<class T> using item = ircd::conf::item<T>;
+
+	static item<size_t> stack_size;
+	static item<size_t> pool_size;
+	static item<size_t> max_client;
+	static item<size_t> max_client_per_peer;
 };
 
 struct [[gnu::visibility("hidden")]]
