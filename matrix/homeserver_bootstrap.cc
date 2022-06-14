@@ -400,14 +400,18 @@ catch(const std::exception &e)
 {
 	throw ircd::error
 	{
-		ircd::error::hide_name, "%s", e.what(),
+		"bootstrap %s :terminated without completion :%s",
+		server_name(homeserver),
+		e.what(),
 	};
 }
 catch(const ctx::terminated &)
 {
-	throw ircd::error
+	log::critical
 	{
-		"bootstrap %s :terminated without completion",
+		log, "bootstrap %s :terminated without completion.",
 		server_name(homeserver),
 	};
+
+	throw;
 }
