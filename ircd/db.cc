@@ -95,6 +95,7 @@ ircd::db::request_pool_opts
 /// The number of workers in this pool should upper bound at the
 /// number of concurrent AIO requests which are effective on this
 /// system. This is a static pool shared by all databases.
+[[clang::always_destroy]]
 decltype(ircd::db::request)
 ircd::db::request
 {
@@ -281,6 +282,7 @@ catch(const std::exception &e)
 	};
 }
 
+[[clang::always_destroy]]
 decltype(ircd::db::compressions)
 ircd::db::compressions;
 

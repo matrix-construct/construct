@@ -16,9 +16,9 @@ namespace ircd::ctx::ole
 
 	static std::mutex mutex;
 	static std::condition_variable cond;
-	static std::deque<offload::function> queue;
+	extern std::deque<offload::function> queue;
 	static ssize_t working;
-	static std::vector<std::thread> threads;
+	extern std::vector<std::thread> threads;
 	static bool termination alignas(64);
 
 	static offload::function pop();
@@ -33,6 +33,14 @@ ircd::ctx::ole::thread_max
 	{ "name",     "ircd.ctx.ole.thread.max"  },
 	{ "default",  int64_t(1)                 },
 };
+
+[[gnu::visibility("internal"), clang::always_destroy]]
+decltype(ircd::ctx::ole::queue)
+ircd::ctx::ole::queue;
+
+[[gnu::visibility("internal"), clang::always_destroy]]
+decltype(ircd::ctx::ole::threads)
+ircd::ctx::ole::threads;
 
 ircd::ctx::ole::init::init()
 {

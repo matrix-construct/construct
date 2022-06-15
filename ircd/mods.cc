@@ -1172,9 +1172,9 @@ ircd::mods::suffix
 	boost::dll::shared_library::suffix().string()
 };
 
+[[clang::always_destroy]]
 decltype(ircd::mods::paths)
-ircd::mods::paths
-{};
+ircd::mods::paths;
 
 //
 // util

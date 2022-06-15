@@ -573,6 +573,7 @@ const
 	return ss.str();
 }
 
+[[clang::always_destroy]]
 decltype(ircd::rfc1035::rcode)
 ircd::rfc1035::rcode
 {
@@ -603,6 +604,7 @@ ircd::rfc1035::rcode
 	"BADCOOKIE Bad/missing Server Cookie [RFC7873]",                 // 24
 };
 
+[[clang::always_destroy]]
 decltype(ircd::rfc1035::qtype)
 ircd::rfc1035::qtype
 {
@@ -692,6 +694,7 @@ ircd::rfc1035::qtype
 	{ "TA",          32768 },  // DNSSEC Trust Authorities [Sam_Weiler][http://cameo.library.cmu.edu/]
 };
 
+[[clang::always_destroy]]
 decltype(ircd::rfc1035::rqtype)
 ircd::rfc1035::rqtype{[]
 {

@@ -674,12 +674,14 @@ ircd::fs::aio::system::eventfd_flags
 	EFD_CLOEXEC | EFD_NONBLOCK
 };
 
+[[clang::always_destroy]]
 decltype(ircd::fs::aio::system::chase_descriptor)
 ircd::fs::aio::system::chase_descriptor
 {
 	"ircd.fs.aio.chase"
 };
 
+[[clang::always_destroy]]
 decltype(ircd::fs::aio::system::handle_descriptor)
 ircd::fs::aio::system::handle_descriptor
 {

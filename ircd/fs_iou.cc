@@ -512,6 +512,7 @@ catch(...)
 	throw;
 }
 
+[[clang::always_destroy]]
 decltype(ircd::fs::iou::system::handle_descriptor)
 ircd::fs::iou::system::handle_descriptor
 {

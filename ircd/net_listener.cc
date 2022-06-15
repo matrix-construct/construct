@@ -226,12 +226,14 @@ ircd::net::acceptor::log
 	"net.listen"
 };
 
+[[clang::always_destroy]]
 decltype(ircd::net::acceptor::accept_desc)
 ircd::net::acceptor::accept_desc
 {
 	"ircd.net.acceptor.accept"
 };
 
+[[clang::always_destroy]]
 decltype(ircd::net::acceptor::handshake_desc)
 ircd::net::acceptor::handshake_desc
 {

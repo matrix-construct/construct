@@ -1194,6 +1194,7 @@ ircd::net::scope_timeout::release()
 // net/socket.h
 //
 
+[[clang::always_destroy]]
 decltype(ircd::net::ssl_curve_list)
 ircd::net::ssl_curve_list
 {
@@ -1201,6 +1202,7 @@ ircd::net::ssl_curve_list
 	{ "default",  string_view{}             },
 };
 
+[[clang::always_destroy]]
 decltype(ircd::net::ssl_cipher_list)
 ircd::net::ssl_cipher_list
 {
@@ -1208,6 +1210,7 @@ ircd::net::ssl_cipher_list
 	{ "default",  string_view{}              },
 };
 
+[[clang::always_destroy]]
 decltype(ircd::net::ssl_cipher_blacklist)
 ircd::net::ssl_cipher_blacklist
 {
@@ -1215,6 +1218,7 @@ ircd::net::ssl_cipher_blacklist
 	{ "default",  string_view{}                   },
 };
 
+[[clang::always_destroy]]
 [[gnu::visibility("hidden")]]
 boost::asio::ssl::context
 ircd::net::sslv23_client
@@ -1228,30 +1232,35 @@ ircd::net::socket::count;
 decltype(ircd::net::socket::instances)
 ircd::net::socket::instances;
 
+[[clang::always_destroy]]
 decltype(ircd::net::socket::desc_connect)
 ircd::net::socket::desc_connect
 {
 	"ircd.net.socket.connect"
 };
 
+[[clang::always_destroy]]
 decltype(ircd::net::socket::desc_handshake)
 ircd::net::socket::desc_handshake
 {
 	"ircd.net.socket.handshake"
 };
 
+[[clang::always_destroy]]
 decltype(ircd::net::socket::desc_disconnect)
 ircd::net::socket::desc_disconnect
 {
 	"ircd.net.socket.disconnect"
 };
 
+[[clang::always_destroy]]
 decltype(ircd::net::socket::desc_timeout)
 ircd::net::socket::desc_timeout
 {
 	"ircd.net.socket.timeout"
 };
 
+[[clang::always_destroy]]
 decltype(ircd::net::socket::desc_wait)
 ircd::net::socket::desc_wait
 {

@@ -130,6 +130,7 @@ ircd::fmt::specifier
 	static const specifier &at(const string_view &name);
 };
 
+[[clang::always_destroy]]
 decltype(ircd::fmt::specifier::registry)
 ircd::fmt::specifier::registry;
 

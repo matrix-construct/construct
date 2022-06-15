@@ -711,6 +711,7 @@ decltype(ircd::server::peer::sock_opts)
 ircd::server::peer::sock_opts
 {};
 
+[[clang::always_destroy]]
 decltype(ircd::server::peer::close_desc)
 ircd::server::peer::close_desc
 {

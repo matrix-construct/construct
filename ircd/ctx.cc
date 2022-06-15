@@ -50,6 +50,7 @@ ircd::ctx::ctx::id_ctr
 /// execution slice in the ircd::ios handler list. This posits the entire
 /// ircd::ctx system as one ircd::ios handler type among all the others.
 /// At this time it is unclear how to hook a context's execution slice in the ircd::ios system.
+[[clang::always_destroy]]
 decltype(ircd::ctx::ctx::ios_desc)
 ircd::ctx::ctx::ios_desc
 {
@@ -543,6 +544,7 @@ namespace ircd::ctx
 	extern ios::descriptor signal_desc;
 }
 
+[[clang::always_destroy]]
 decltype(ircd::ctx::signal_desc)
 ircd::ctx::signal_desc
 {
@@ -740,6 +742,7 @@ noexcept
 // ctx/this_ctx.h
 //
 
+[[clang::always_destroy]]
 decltype(ircd::ctx::this_ctx::courtesy_yield_desc)
 ircd::ctx::this_ctx::courtesy_yield_desc
 {
@@ -1152,6 +1155,7 @@ namespace ircd::ctx
 	extern ios::descriptor spawn_desc[3];
 }
 
+[[clang::always_destroy]]
 decltype(ircd::ctx::spawn_desc)
 ircd::ctx::spawn_desc
 {

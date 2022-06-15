@@ -445,6 +445,7 @@ ircd::util::a2u(const mutable_buffer &out,
 ircd::util::unwind_defer::~unwind_defer()
 noexcept
 {
+	[[clang::always_destroy]]
 	static ios::descriptor descriptor
 	{
 		"ircd.unwind"

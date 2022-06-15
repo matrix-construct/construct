@@ -95,6 +95,7 @@ ircd::client::pool_opts
 /// The pool of request contexts. When a client makes a request it does so by acquiring
 /// a stack from this pool. The request handling and response logic can then be written
 /// in a synchronous manner as if each connection had its own thread.
+[[clang::always_destroy]]
 decltype(ircd::client::pool)
 ircd::client::pool
 {

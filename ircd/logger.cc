@@ -63,6 +63,7 @@ ircd::instance_list<ircd::log::log>::list
 	allocator
 };
 
+[[clang::always_destroy]]
 decltype(ircd::log::file)
 ircd::log::file;
 
@@ -845,6 +846,7 @@ ircd::log::is_conf_mask_file(const string_view &name)
 	return empty(string_view(mask_file));
 }
 
+[[clang::always_destroy]]
 decltype(ircd::log::unmask_file)
 ircd::log::unmask_file
 {
@@ -858,6 +860,7 @@ ircd::log::unmask_file
 	}
 };
 
+[[clang::always_destroy]]
 decltype(ircd::log::unmask_console)
 ircd::log::unmask_console
 {
@@ -871,6 +874,7 @@ ircd::log::unmask_console
 	}
 };
 
+[[clang::always_destroy]]
 decltype(ircd::log::mask_file)
 ircd::log::mask_file
 {
@@ -884,6 +888,7 @@ ircd::log::mask_file
 	}
 };
 
+[[clang::always_destroy]]
 decltype(ircd::log::mask_console)
 ircd::log::mask_console
 {
