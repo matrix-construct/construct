@@ -14,7 +14,7 @@
 
 [[gnu::visibility("protected")]]
 void
-ircd::vg::set_noaccess(const const_buffer &buf)
+ircd::vg::set_noaccess(const const_buffer buf)
 noexcept
 {
 	#ifdef HAVE_VALGRIND_MEMCHECK_H
@@ -24,7 +24,7 @@ noexcept
 
 [[gnu::visibility("protected")]]
 void
-ircd::vg::set_undefined(const const_buffer &buf)
+ircd::vg::set_undefined(const const_buffer buf)
 noexcept
 {
 	#ifdef HAVE_VALGRIND_MEMCHECK_H
@@ -34,7 +34,7 @@ noexcept
 
 [[gnu::visibility("protected")]]
 void
-ircd::vg::set_defined(const const_buffer &buf)
+ircd::vg::set_defined(const const_buffer buf)
 noexcept
 {
 	#ifdef HAVE_VALGRIND_MEMCHECK_H
@@ -44,11 +44,12 @@ noexcept
 
 [[gnu::visibility("protected")]]
 bool
-ircd::vg::defined(const const_buffer &buf)
+ircd::vg::defined(const void *const ptr,
+                  const size_t size)
 noexcept
 {
 	#ifdef HAVE_VALGRIND_MEMCHECK_H
-	return VALGRIND_CHECK_MEM_IS_DEFINED(data(buf), size(buf)) == 0;
+	return VALGRIND_CHECK_MEM_IS_DEFINED(ptr, size) == 0;
 	#else
 	return true;
 	#endif
@@ -82,7 +83,7 @@ ircd::vg::active{[]() -> bool
 
 [[gnu::visibility("protected")]]
 void
-ircd::vg::stack::del(const uint &id)
+ircd::vg::stack::del(const uint id)
 noexcept
 {
 	#ifdef HAVE_VALGRIND_MEMCHECK_H
@@ -92,7 +93,7 @@ noexcept
 
 [[gnu::visibility("protected")]]
 uint
-ircd::vg::stack::add(const mutable_buffer &buf)
+ircd::vg::stack::add(const mutable_buffer buf)
 noexcept
 {
 	#ifdef HAVE_VALGRIND_MEMCHECK_H

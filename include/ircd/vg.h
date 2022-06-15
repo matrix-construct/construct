@@ -15,16 +15,33 @@
 namespace ircd::vg
 {
 	extern const bool active;
-	size_t errors() noexcept;
 
-	bool defined(const const_buffer &) noexcept;
-	void set_defined(const const_buffer &) noexcept;
-	void set_undefined(const const_buffer &) noexcept;
-	void set_noaccess(const const_buffer &) noexcept;
+	[[gnu::hot]] size_t errors() noexcept;
+	[[gnu::hot]] bool defined(const void *, const size_t) noexcept;
+	template<class T> bool defined(const T *const &, const size_t & = sizeof(T));
+	bool defined(const const_buffer &);
+
+	void set_defined(const const_buffer) noexcept;
+	void set_undefined(const const_buffer) noexcept;
+	void set_noaccess(const const_buffer) noexcept;
 }
 
 namespace ircd::vg::stack
 {
-	uint add(const mutable_buffer &) noexcept;
-	void del(const uint &id) noexcept;
+	uint add(const mutable_buffer) noexcept;
+	void del(const uint id) noexcept;
+}
+
+inline bool
+ircd::vg::defined(const const_buffer &buf)
+{
+	return vg::defined(data(buf), size(buf));
+}
+
+template<class T>
+inline bool
+ircd::vg::defined(const T *const &t,
+                  const size_t &size)
+{
+	return vg::defined(static_cast<const void *>(t), size);
 }
