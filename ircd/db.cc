@@ -5277,7 +5277,7 @@ ircd::db::make_opts(const gopts &opts)
 	rocksdb::ReadOptions ret;
 	assume(ret.iterate_lower_bound == nullptr);
 	assume(ret.iterate_upper_bound == nullptr);
-	assume(ret.iter_start_seqnum == 0);
+	//assume(ret.iter_start_seqnum == 0);
 	assume(ret.pin_data == false);
 	assume(ret.fill_cache == true);
 	assume(ret.total_order_seek == false);
@@ -5294,7 +5294,8 @@ ircd::db::make_opts(const gopts &opts)
 	// have the same prefix because ordering is not guaranteed between prefixes
 	ret.iterate_lower_bound = opts.lower_bound;
 	ret.iterate_upper_bound = opts.upper_bound;
-	ret.iter_start_seqnum = opts.seqnum;
+	//ret.iter_start_seqnum = opts.seqnum;
+	assert(opts.seqnum == 0);
 
 	ret.verify_checksums = bool(read_checksum);
 	if(test(opts, get::CHECKSUM) && !test(opts, get::NO_CHECKSUM))
