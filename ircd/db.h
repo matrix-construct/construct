@@ -21,9 +21,9 @@
 /// It is still so verbose that it goes beyond what is tolerable and generally
 /// useful even in debug-mode builds, thus the manual #define being required.
 ///
-//#define RB_DEBUG_DB_SEEK
-//#define RB_DEBUG_DB_SEEK_ROW
-//#define IRCD_DB_DEBUG_PREFETCH
+#define RB_DEBUG_DB_SEEK 0
+#define RB_DEBUG_DB_SEEK_ROW 0
+#define RB_DEBUG_DB_PREFETCH 0
 
 /// Set this #define to 1 or 2 to enable extensive log messages for the
 /// experimental db environment-port implementation. This is only useful

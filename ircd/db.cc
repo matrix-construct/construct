@@ -781,20 +781,19 @@ ircd::db::prefetcher::request_worker()
 	assert(request->fin != steady_point::min());
 	ticker->fetched++;
 
-	#ifdef IRCD_DB_DEBUG_PREFETCH
-	log::debug
-	{
-		log, "prefetcher reject:%zu request:%zu handle:%zu fetch:%zu direct:%zu cancel:%zu queue:%zu rw:%zu",
-		ticker->rejects,
-		ticker->request,
-		ticker->handles,
-		ticker->fetches,
-		ticker->directs,
-		ticker->cancels,
-		queue.size(),
-		this->request_workers,
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_PREFETCH)
+		log::debug
+		{
+			log, "prefetcher reject:%zu request:%zu handle:%zu fetch:%zu direct:%zu cancel:%zu queue:%zu rw:%zu",
+			ticker->rejects,
+			ticker->request,
+			ticker->handles,
+			ticker->fetches,
+			ticker->directs,
+			ticker->cancels,
+			queue.size(),
+			this->request_workers,
+		};
 }
 
 size_t
@@ -844,23 +843,23 @@ try
 		ticker->fetched_bytes_val += size(it->value());
 	}
 
-	#ifdef IRCD_DB_DEBUG_PREFETCH
 	char pbuf[3][32];
-	log::debug
-	{
-		log, "[%s][%s] completed prefetch len:%zu lte:%b k:%zu v:%zu snd-req:%s req-fin:%s snd-fin:%s queue:%zu",
-		name(*request.d),
-		name(column),
-		size(key),
-		lte,
-		lte? size(it->key()) : 0UL,
-		lte? size(it->value()) : 0UL,
-		pretty(pbuf[0], request.req - request.snd, 1),
-		pretty(pbuf[1], request.fin - request.req, 1),
-		pretty(pbuf[2], request.fin - request.snd, 1),
-		queue.size(),
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_PREFETCH)
+		log::debug
+		{
+			log, "[%s][%s] completed prefetch "
+			"len:%zu lte:%b k:%zu v:%zu snd-req:%s req-fin:%s snd-fin:%s queue:%zu",
+			name(*request.d),
+			name(column),
+			size(key),
+			lte,
+			lte? size(it->key()) : 0UL,
+			lte? size(it->value()) : 0UL,
+			pretty(pbuf[0], request.req - request.snd, 1),
+			pretty(pbuf[1], request.fin - request.req, 1),
+			pretty(pbuf[2], request.fin - request.snd, 1),
+			queue.size(),
+		};
 }
 catch(const std::exception &e)
 {
@@ -1774,10 +1773,10 @@ ircd::db::seek(row &r,
 		latch.count_down();
 	}};
 
-	#ifdef RB_DEBUG_DB_SEEK_ROW
-	const ircd::timer timer;
 	size_t submits{0};
-	#endif
+	util::timer timer{util::timer::nostart};
+	if constexpr(RB_DEBUG_DB_SEEK_ROW)
+		timer = util::timer{};
 
 	// Submit all the requests
 	for(auto &cell : r)
@@ -1802,9 +1801,8 @@ ircd::db::seek(row &r,
 			!db::cached(column, key, opts)
 		};
 
-		#ifdef RB_DEBUG_DB_SEEK_ROW
-		submits += submit;
-		#endif
+		if constexpr(RB_DEBUG_DB_SEEK_ROW)
+			submits += submit;
 
 		if(submit)
 			request(reclosure);
@@ -1816,26 +1814,25 @@ ircd::db::seek(row &r,
 	latch.wait();
 	assert(ret <= r.size());
 
-	#ifdef RB_DEBUG_DB_SEEK_ROW
-	if(likely(!r.empty()))
-	{
-		const column &c(r[0]);
-		const database &d(c);
-		thread_local char tmbuf[32];
-		log::debug
+	if constexpr(RB_DEBUG_DB_SEEK_ROW)
+		if(likely(!r.empty()))
 		{
-			log, "'%s' SEEK ROW seq:%lu:%-10lu cnt:%-2zu req:%-2zu ret:%-2zu in %s %s",
-			name(d),
-			sequence(d),
-			sequence(opts.snapshot),
-			r.size(),
-			submits,
-			ret,
-			pretty(tmbuf, timer.at<microseconds>(), true),
-			what(eptr)
-		};
-	}
-	#endif
+			const column &c(r[0]);
+			const database &d(c);
+			thread_local char tmbuf[32];
+			log::debug
+			{
+				log, "'%s' SEEK ROW seq:%lu:%-10lu cnt:%-2zu req:%-2zu ret:%-2zu in %s %s",
+				name(d),
+				sequence(d),
+				sequence(opts.snapshot),
+				r.size(),
+				submits,
+				ret,
+				pretty(tmbuf, timer.at<microseconds>(), true),
+				what(eptr)
+			};
+		}
 
 	if(eptr && !test(opts, get::NO_THROW))
 		std::rethrow_exception(eptr);
@@ -4644,27 +4641,26 @@ ircd::db::_seek(database::column &c,
 	rocksdb::ColumnFamilyHandle *const &cf(c);
 	database &d(*c.d);
 
-	#ifdef RB_DEBUG_DB_SEEK
-	const ircd::timer timer;
-	#endif
+	util::timer timer{util::timer::nostart};
+	if constexpr(RB_DEBUG_DB_SEEK)
+		timer = {};
 
 	const rocksdb::Status ret
 	{
 		d.d->Get(ropts, cf, slice(key), &s)
 	};
 
-	#ifdef RB_DEBUG_DB_SEEK
-	log::debug
-	{
-		log, "[%s] %lu:%lu SEEK %s in %ld$us '%s'",
-		name(d),
-		sequence(d),
-		sequence(ropts.snapshot),
-		ret.ToString(),
-		timer.at<microseconds>().count(),
-		name(c)
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_SEEK)
+		log::debug
+		{
+			log, "[%s] %lu:%lu SEEK %s in %ld$us '%s'",
+			name(d),
+			sequence(d),
+			sequence(ropts.snapshot),
+			ret.ok()? "OK"s: ret.ToString(),
+			timer.at<microseconds>().count(),
+			name(c)
+		};
 
 	return ret;
 }
@@ -4789,28 +4785,27 @@ ircd::db::_seek(const vector_view<_read_op> &op,
 		return static_cast<rocksdb::ColumnFamilyHandle *>(c);
 	});
 
-	#ifdef RB_DEBUG_DB_SEEK
-	const ircd::timer timer;
-	#endif
+	util::timer timer{util::timer::nostart};
+	if constexpr(RB_DEBUG_DB_SEEK)
+		timer = {};
 
 	#ifdef IRCD_DB_HAS_MULTIGET_BATCHED
 	d.d->MultiGet(ropts, num, cf, key, val.data(), ret.data());
 	#endif
 
-	#ifdef RB_DEBUG_DB_SEEK
-	log::debug
-	{
-		log, "[%s] %lu:%lu SEEK parallel:%zu ok:%zu nf:%zu inc:%zu in %ld$us",
-		name(d),
-		sequence(d),
-		sequence(ropts.snapshot),
-		ret.size(),
-		std::count_if(begin(ret), end(ret), [](auto&& s) { return s.ok(); }),
-		std::count_if(begin(ret), end(ret), [](auto&& s) { return s.IsNotFound(); }),
-		std::count_if(begin(ret), end(ret), [](auto&& s) { return s.IsIncomplete(); }),
-		timer.at<microseconds>().count(),
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_SEEK)
+		log::debug
+		{
+			log, "[%s] %lu:%lu SEEK parallel:%zu ok:%zu nf:%zu inc:%zu in %ld$us",
+			name(d),
+			sequence(d),
+			sequence(ropts.snapshot),
+			ret.size(),
+			std::count_if(begin(ret), end(ret), [](auto&& s) { return s.ok(); }),
+			std::count_if(begin(ret), end(ret), [](auto&& s) { return s.IsNotFound(); }),
+			std::count_if(begin(ret), end(ret), [](auto&& s) { return s.IsIncomplete(); }),
+			timer.at<microseconds>().count(),
+		};
 }
 
 //
@@ -4868,26 +4863,25 @@ try
 {
 	const ctx::uninterruptible ui;
 
-	#ifdef RB_DEBUG_DB_SEEK
-	database &d(*c.d);
-	const ircd::timer timer;
-	#endif
+	util::timer timer{util::timer::nostart};
+	if constexpr(RB_DEBUG_DB_SEEK_ROW)
+		timer = util::timer{};
 
 	_seek_(it, p);
 
-	#ifdef RB_DEBUG_DB_SEEK
-	log::debug
-	{
-		log, "[%s] %lu:%lu SEEK %s %s in %ld$us '%s'",
-		name(d),
-		sequence(d),
-		sequence(opts.snapshot),
-		valid(it)? "VALID" : "INVALID",
-		it.status().ToString(),
-		timer.at<microseconds>().count(),
-		name(c)
-	};
-	#endif
+	database &d(*c.d);
+	if constexpr(RB_DEBUG_DB_SEEK)
+		log::debug
+		{
+			log, "[%s] %lu:%lu SEEK %s %s in %ld$us '%s'",
+			name(d),
+			sequence(d),
+			sequence(opts.snapshot),
+			valid(it)? "VALID" : "INVALID",
+			it.status().ok()? "OK"s: it.status().ToString(),
+			timer.at<microseconds>().count(),
+			name(c)
+		};
 
 	return valid(it);
 }
@@ -4916,31 +4910,30 @@ try
 {
 	const ctx::stack_usage_assertion sua;
 
-	#ifdef RB_DEBUG_DB_SEEK
-	database &d(*c.d);
-	const ircd::timer timer;
-	const bool valid_it
+	bool valid_it;
+	util::timer timer{util::timer::nostart};
+	if constexpr(RB_DEBUG_DB_SEEK_ROW)
 	{
-		valid(it)
-	};
-	#endif
+		valid_it = valid(it);
+		timer = util::timer{};
+	}
 
 	_seek_(it, p);
 
-	#ifdef RB_DEBUG_DB_SEEK
-	log::debug
-	{
-		log, "[%s] %lu:%lu SEEK[%s] %s -> %s in %ld$us '%s'",
-		name(d),
-		sequence(d),
-		sequence(opts.snapshot),
-		reflect(p),
-		valid_it? "VALID" : "INVALID",
-		it.status().ToString(),
-		timer.at<microseconds>().count(),
-		name(c)
-	};
-	#endif
+	database &d(*c.d);
+	if constexpr(RB_DEBUG_DB_SEEK)
+		log::debug
+		{
+			log, "[%s] %lu:%lu SEEK[%s] %s -> %s in %ld$us '%s'",
+			name(d),
+			sequence(d),
+			sequence(opts.snapshot),
+			reflect(p),
+			valid_it? "VALID" : "INVALID",
+			it.status().ok()? "OK"s: it.status().ToString(),
+			timer.at<microseconds>().count(),
+			name(c)
+		};
 
 	return valid(it);
 }
