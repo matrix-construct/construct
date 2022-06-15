@@ -1348,6 +1348,8 @@ noexcept try
 	};
 	#endif
 
+	assert(logical_size == -1UL || logical_size == fs::size(fd));
+
 	fd = fs::fd{};
 	return Status::OK();
 }
@@ -1617,6 +1619,7 @@ noexcept try
 	wopts.nodelay = nodelay;
 	wopts.interruptible = false;
 	fs::truncate(fd, size, wopts);
+	logical_size = size;
 	return Status::OK();
 }
 catch(const std::system_error &e)
@@ -1667,6 +1670,9 @@ noexcept try
 		length
 	};
 	#endif
+
+	if(likely(logical_size != -1UL) && offset + length > logical_size)
+		logical_size = -1UL;
 
 	if(opts.direct)
 		return Status::OK();
@@ -1732,7 +1738,14 @@ noexcept try
 		data(s), size(s)
 	};
 
-	fs::append(fd, buf, wopts);
+	const const_buffer appended
+	{
+		fs::append(fd, buf, wopts)
+	};
+
+	if(likely(logical_size != -1UL))
+		logical_size += size(appended);
+
 	return Status::OK();
 }
 catch(const std::system_error &e)
@@ -1798,7 +1811,19 @@ noexcept try
 		data(s), size(s)
 	};
 
-	fs::append(fd, buf, wopts);
+	const const_buffer appended
+	{
+		fs::append(fd, buf, wopts)
+	};
+
+	const auto append_break
+	{
+		offset + size(appended)
+	};
+
+	if(likely(logical_size != -1UL) && append_break > logical_size)
+		logical_size = append_break;
+
 	return Status::OK();
 }
 catch(const std::system_error &e)
@@ -2042,14 +2067,18 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "[%s] wfile:%p fd:%d get file size",
+		log, "[%s] wfile:%p fd:%d get file size; cached:%zd",
 		d.name,
 		this,
-		int(fd)
+		int(fd),
+		logical_size,
 	};
 	#endif
 
-	return fs::size(fd);
+	if(logical_size == -1UL)
+		logical_size = fs::size(fd);
+
+	return logical_size;
 }
 catch(const std::exception &e)
 {
