@@ -83,11 +83,10 @@ struct ircd::rfc3986::uri
 #pragma GCC visibility push(default)
 namespace ircd::rfc3986::parser
 {
-	using it = const char *;
 	using unused = boost::spirit::unused_type;
 
 	template<class R = unused>
-	using rule = boost::spirit::qi::rule<it, R, unused, unused, unused>;
+	using rule = boost::spirit::qi::rule<const char *, R, unused, unused, unused>;
 
 	extern const rule<> sub_delims;
 	extern const rule<> gen_delims;
@@ -146,8 +145,6 @@ namespace ircd::rfc3986::parser
 	extern const rule<> absolute_uri;
 	extern const rule<> uri;
 	extern const rule<> uri_ref;     // uri | relative_ref
-
-	extern const rule<rfc3986::uri> uri_parse;
 }
 #pragma GCC visibility pop
 

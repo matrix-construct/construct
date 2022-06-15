@@ -398,24 +398,30 @@ BOOST_FUSION_ADAPT_STRUCT
 )
 #pragma GCC visibility pop
 
-decltype(ircd::rfc3986::parser::uri_parse)
-ircd::rfc3986::parser::uri_parse
+namespace ircd::rfc3986::parser
 {
-	expect
-	[
+	static const expr uri_parse
+	{
 		raw[parser::scheme] >> lit("://")
 		>> -raw[parser::userinfo >> lit('@')]
 		>> raw[parser::remote]
 		>> raw[parser::path_abempty]
 		>> -raw[lit('?') >> parser::query]
 		>> -raw[lit('#') >> parser::fragment]
-	]
-};
+		,"uri"
+	};
+
+	static const rule<rfc3986::uri> parse_uri
+	{
+		expect[uri_parse]
+		,"uri"
+	};
+}
 
 ircd::rfc3986::uri::uri(const string_view &input)
 {
 	const char *start(begin(input)), *const stop(end(input));
-	ircd::parse(start, stop, parser::uri_parse, *this);
+	ircd::parse(start, stop, parser::parse_uri, *this);
 
 	//TODO: XXX Can this go?
 	this->user = rstrip(this->user, '@');
@@ -623,62 +629,59 @@ ircd::rfc3986::encode(const mutable_buffer &buf_,
 // general interface
 //
 
-#pragma GCC visibility push(internal)
-#pragma clang attribute push(__attribute__((internal_linkage)), apply_to=any(function,variable,record))
-namespace ircd::rfc3986
+namespace ircd::rfc3986::parser
 {
-	extern const parser::rule<string_view>
-	host_literal,
-	host_non_literal,
-	host_alternative,
+	[[gnu::visibility("internal")]]
+	extern const rule<string_view>
+	host_literal_parse,
+	host_non_literal_parse,
+	host_alternative_parse,
 	host_parse;
 
-	extern const parser::rule<uint16_t>
+	[[gnu::visibility("internal")]]
+	extern const rule<uint16_t>
 	port_parse;
 }
 
-decltype(ircd::rfc3986::host_literal)
-ircd::rfc3986::host_literal
+decltype(ircd::rfc3986::parser::host_literal_parse)
+ircd::rfc3986::parser::host_literal_parse
 {
 	parser::ip6_address
 };
 
-decltype(ircd::rfc3986::host_non_literal)
-ircd::rfc3986::host_non_literal
+decltype(ircd::rfc3986::parser::host_non_literal_parse)
+ircd::rfc3986::parser::host_non_literal_parse
 {
 	parser::ip6_address | parser::ip4_address | parser::domain
 };
 
-decltype(ircd::rfc3986::host_alternative)
-ircd::rfc3986::host_alternative
+decltype(ircd::rfc3986::parser::host_alternative_parse)
+ircd::rfc3986::parser::host_alternative_parse
 {
-	(&lit('[') > raw[host_literal]) | raw[host_non_literal]
+	(&lit('[') > raw[host_literal_parse]) | raw[host_non_literal_parse]
 	,"host"
 };
 
-decltype(ircd::rfc3986::host_parse)
-ircd::rfc3986::host_parse
+decltype(ircd::rfc3986::parser::host_parse)
+ircd::rfc3986::parser::host_parse
 {
-	expect[host_alternative >> omit[&lit(':') | eoi]]
+	expect[host_alternative_parse >> omit[&lit(':') | eoi]]
 	,"host"
 };
 
-decltype(ircd::rfc3986::port_parse)
-ircd::rfc3986::port_parse
+decltype(ircd::rfc3986::parser::port_parse)
+ircd::rfc3986::parser::port_parse
 {
-	omit[host_alternative] >> -(omit[lit(':')] >> parser::port) >> eoi
+	omit[host_alternative_parse] >> (omit[lit(':')] >> port) >> eoi
 	,"port"
 };
-
-#pragma clang attribute pop
-#pragma GCC visibility pop
 
 ircd::string_view
 ircd::rfc3986::host(const string_view &str)
 {
 	string_view ret;
 	const char *start(str.data()), *const stop(start + str.size());
-	ircd::parse<error>(start, stop, host_parse, ret);
+	ircd::parse<error>(start, stop, parser::host_parse, ret);
 	assert(!ret.empty());
 	return ret;
 }
@@ -686,9 +689,9 @@ ircd::rfc3986::host(const string_view &str)
 uint16_t
 ircd::rfc3986::port(const string_view &str)
 {
-	uint16_t ret;
+	uint16_t ret(0);
 	const char *start(str.data()), *const stop(start + str.size());
-	ircd::parse<error>(start, stop, port_parse, ret);
+	ircd::parse<error>(start, stop, parser::port_parse, ret);
 	return ret;
 }
 
