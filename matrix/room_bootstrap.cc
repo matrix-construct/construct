@@ -671,12 +671,12 @@ try
 	const json::array &auth_events
 	{
 		proto.get("auth_events")
-    };
+	};
 
 	const json::array &prev_events
 	{
 		proto.get("prev_events")
-    };
+	};
 
 	json::iov event;
 	json::iov content;
