@@ -3056,6 +3056,8 @@ ircd::db::database::cache::Insert(const Slice &key,
                                   Priority priority)
 noexcept
 {
+	using rocksdb::Tickers;
+
 	assert(bool(c));
 	assert(bool(stats));
 
@@ -3064,9 +3066,25 @@ noexcept
 		c->Insert(key, value, charge, del, handle, priority)
 	};
 
-	stats->recordTick(rocksdb::Tickers::BLOCK_CACHE_ADD, ret.ok());
-	stats->recordTick(rocksdb::Tickers::BLOCK_CACHE_ADD_FAILURES, !ret.ok());
-	stats->recordTick(rocksdb::Tickers::BLOCK_CACHE_DATA_BYTES_INSERT, ret.ok()? charge : 0UL);
+	stats->recordTick(Tickers::BLOCK_CACHE_ADD, ret.ok());
+	stats->recordTick(Tickers::BLOCK_CACHE_ADD_FAILURES, !ret.ok());
+	stats->recordTick(Tickers::BLOCK_CACHE_DATA_BYTES_INSERT, ret.ok()? charge : 0UL);
+
+	char pbuf[48];
+	if constexpr(RB_DEBUG_DB_CACHE)
+		log::debug
+		{
+			log, "[%s]'%s' CACHED %-3s +%zu:%zu %s :%s%s",
+			db::name(*d),
+			this->name,
+			ret.ok()? "OK"s: ret.ToString(),
+			stats->getTickerCount(Tickers::BLOCK_CACHE_ADD),
+			stats->getTickerCount(Tickers::BLOCK_CACHE_ADD_FAILURES),
+			pretty(pbuf, si(stats->getTickerCount(Tickers::BLOCK_CACHE_DATA_BYTES_INSERT))),
+			trunc(slice(key), 16),
+			size(slice(key)) > 16? "..."_sv: string_view{},
+		};
+
 	return ret;
 }
 
@@ -3075,6 +3093,8 @@ ircd::db::database::cache::Lookup(const Slice &key,
                                   Statistics *const statistics)
 noexcept
 {
+	using rocksdb::Tickers;
+
 	assert(bool(c));
 	assert(bool(this->stats));
 
@@ -3099,8 +3119,23 @@ noexcept
 	// passing it to Lookup() does nothing internally. We have to do this
 	// here ourselves :/
 
-	this->stats->recordTick(rocksdb::Tickers::BLOCK_CACHE_HIT, bool(ret));
-	this->stats->recordTick(rocksdb::Tickers::BLOCK_CACHE_MISS, !bool(ret));
+	this->stats->recordTick(Tickers::BLOCK_CACHE_HIT, bool(ret));
+	this->stats->recordTick(Tickers::BLOCK_CACHE_MISS, !bool(ret));
+
+	if constexpr(RB_DEBUG_DB_CACHE)
+		if(likely(RB_DEBUG_DB_CACHE_HIT || !ret))
+			log::debug
+			{
+				log, "[%s]'%s' CACHE %-4s +%zu:%zu :%s%s",
+				db::name(*d),
+				this->name,
+				ret? "HIT": "MISS",
+				stats->getTickerCount(Tickers::BLOCK_CACHE_HIT),
+				stats->getTickerCount(Tickers::BLOCK_CACHE_MISS),
+				trunc(slice(key), 16),
+				size(slice(key)) > 16? "..."_sv: string_view{},
+			};
+
 	return ret;
 }
 
