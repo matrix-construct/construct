@@ -1172,6 +1172,12 @@ ircd::m::vm::write_commit(eval &eval)
 		*eval.txn
 	};
 
+	assert(eval.opts);
+	const auto &sopts
+	{
+		eval.opts->wopts.sopts
+	};
+
 	const auto db_seq_before
 	{
 		#ifdef RB_DEBUG
@@ -1188,7 +1194,7 @@ ircd::m::vm::write_commit(eval &eval)
 			write_commit_cycles
 		};
 
-		txn();
+		txn(wopts.sopts);
 	}
 
 	++write_commit_count;

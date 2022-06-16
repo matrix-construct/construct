@@ -71,6 +71,9 @@ struct ircd::m::dbs::write_opts
 	/// actual transaction.
 	db::op op {db::op::SET};
 
+	/// Lower-level write options passed to the transaction's execution.
+	db::sopts sopts {(db::set)0};
+
 	/// Principal's index number. Most codepaths do not permit zero. This may
 	/// be zero for blacklisting, but the blacklist option must be set.
 	uint64_t event_idx {0};
