@@ -254,7 +254,7 @@ noexcept
 {
 	log::debug
 	{
-		"Shutting down Magick Library..."
+		log, "Shutting down Magick Library..."
 	};
 
 	call_ready = false;
