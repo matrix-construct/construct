@@ -247,6 +247,9 @@ try
 	//XXX Consider enable for large batch size.
 	//vmopts.phase.set(vm::phase::PREINDEX, true);
 
+	// Optimize the bootstrap by disabling WAL journaling.
+	vmopts.wopts.sopts |= db::set::NO_JOURNAL;
+
 	// Optimize the bootstrap by not updating room heads at every step.
 	vmopts.wopts.appendix.set(dbs::appendix::ROOM_HEAD, false);
 	vmopts.wopts.appendix.set(dbs::appendix::ROOM_HEAD_RESOLVE, false);
@@ -377,9 +380,9 @@ try
 	}
 
 	// Manual flush of the memtables is required in case the user disabled the
-	// WAL (which is advised in the documentation). If this isn't run several
-	// thousand keys in memory will be dropped inconsistently between database
-	// columns. If WAL is enabled then it tidies the DB up just as well.
+	// WAL. If this isn't run several thousand keys in memory will be dropped
+	// inconsistently between database columns. If WAL is enabled then it
+	// tidies the DB up just as well.
 	if(likely(sequence(*dbs::events) > 0))
 	{
 		const bool blocking(true), allow_stall(true);

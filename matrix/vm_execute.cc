@@ -1194,7 +1194,7 @@ ircd::m::vm::write_commit(eval &eval)
 			write_commit_cycles
 		};
 
-		txn(wopts.sopts);
+		txn(sopts);
 	}
 
 	++write_commit_count;
