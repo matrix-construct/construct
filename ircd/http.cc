@@ -8,18 +8,17 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-namespace ircd { namespace http
-__attribute__((visibility("hidden")))
+namespace ircd::http
 {
-	using namespace ircd::spirit;
+	using reason_codes = std::unordered_map<http::code, string_view>;
+	using expectation_failure = spirit::qi::expectation_failure<const char *>;
 
-	struct grammar;
-	struct parser extern const parser;
+	[[clang::internal_linkage, clang::always_destroy]]
+	extern const reason_codes reason;
 
-	extern const std::unordered_map<ircd::http::code, ircd::string_view> reason;
-
-	[[noreturn]] void throw_error(const qi::expectation_failure<const char *> &, const bool &internal = false);
-}}
+	[[noreturn]]
+	static void throw_error(const expectation_failure &, const bool & = false);
+}
 
 BOOST_FUSION_ADAPT_STRUCT
 (
@@ -113,132 +112,110 @@ ircd::http::reason
 	{ code::CLOUDFLARE_REQUEST_TIMEOUT,          "Cloudflare Customer Request Time-out"            },
 };
 
-struct ircd::http::grammar
+namespace ircd::http::parser
 {
-	using it = const char *;
+	using namespace ircd::spirit;
 
 	template<class R = unused_type,
 	         class... S>
-	using rule = qi::rule<it, R, S...>;
+	struct [[clang::internal_linkage]] rule
+	:qi::rule<const char *, R, S...>
+	{
+		using qi::rule<const char *, R, S...>::rule;
+	};
 
-	rule<> NUL                         { lit('\0')                                          ,"nul" };
+	const expr NUL                     { lit('\0')                                          ,"nul" };
 
 	// insignificant whitespaces
-	rule<> SP                          { lit('\x20')                                      ,"space" };
-	rule<> HT                          { lit('\x09')                             ,"horizontal tab" };
-	rule<> ws                          { SP | HT                                     ,"whitespace" };
+	const expr SP                      { lit('\x20')                                      ,"space" };
+	const expr HT                      { lit('\x09')                             ,"horizontal tab" };
+	const expr ws                      { SP | HT                                     ,"whitespace" };
 
-	rule<> CR                          { lit('\x0D')                            ,"carriage return" };
-	rule<> LF                          { lit('\x0A')                                  ,"line feed" };
-	rule<> CRLF                        { CR >> LF                    ,"carriage return, line feed" };
+	const expr CR                      { lit('\x0D')                            ,"carriage return" };
+	const expr LF                      { lit('\x0A')                                  ,"line feed" };
+	const expr CRLF                    { CR >> LF                    ,"carriage return, line feed" };
 
-	rule<> illegal                     { NUL | CR | LF                                  ,"illegal" };
-	rule<> colon                       { lit(':')                                         ,"colon" };
-	rule<> slash                       { lit('/')                               ,"forward solidus" };
-	rule<> question                    { lit('?')                                 ,"question mark" };
-	rule<> pound                       { lit('#')                                    ,"pound sign" };
-	rule<> equal                       { lit('=')                                    ,"equal sign" };
-	rule<> ampersand                   { lit('&')                                     ,"ampersand" };
+	const expr illegal                 { NUL | CR | LF                                  ,"illegal" };
+	const expr colon                   { lit(':')                                         ,"colon" };
+	const expr slash                   { lit('/')                               ,"forward solidus" };
+	const expr question                { lit('?')                                 ,"question mark" };
+	const expr pound                   { lit('#')                                    ,"pound sign" };
+	const expr equal                   { lit('=')                                    ,"equal sign" };
+	const expr ampersand               { lit('&')                                     ,"ampersand" };
 
-	rule<string_view> token            { raw[+(char_ - (illegal | ws))]                   ,"token" };
-	rule<string_view> string           { raw[+(char_ - illegal)]                         ,"string" };
-	rule<string_view> line             { *ws >> -string >> CRLF                            ,"line" };
+	const rule<string_view> token      { raw[+(char_ - (illegal | ws))]                   ,"token" };
+	const rule<string_view> str        { raw[+(char_ - illegal)]                         ,"string" };
+	const rule<string_view> line       { *ws >> -str >> CRLF                               ,"line" };
 
-	rule<string_view> status           { raw[repeat(3)[char_("0-9")]]                    ,"status" };
-	rule<string_view> reason           { string                                          ,"status" };
+	const rule<string_view> status     { raw[repeat(3)[char_('0','9')]]                  ,"status" };
+	const rule<string_view> reason     { str                                             ,"reason" };
 
-	rule<string_view> head_key         { raw[+(char_ - (illegal | ws | colon))]        ,"head key" };
-	rule<string_view> head_val         { string                                      ,"head value" };
-	rule<http::header> header          { head_key >> *ws >> colon >> *ws >> head_val     ,"header" };
-	rule<unused_type> headers          { (header % (*ws >> CRLF))                       ,"headers" };
+	const rule<string_view> head_key   { raw[+(char_ - (illegal | ws | colon))]        ,"head key" };
+	const rule<string_view> head_val   { str                                         ,"head value" };
+	const rule<http::header> header    { head_key >> *ws >> colon >> *ws >> head_val     ,"header" };
+	const rule<> headers               { header % (*ws >> CRLF)                         ,"headers" };
 
-	rule<> query_terminator            { equal | question | ampersand | pound  ,"query terminator" };
-	rule<> query_illegal               { illegal | ws | query_terminator          ,"query illegal" };
-	rule<string_view> query_key        { raw[+(char_ - query_illegal)]                ,"query key" };
-	rule<string_view> query_val        { raw[*(char_ - query_illegal)]              ,"query value" };
+	const expr query_terminator        { equal | question | ampersand | pound  ,"query terminator" };
+	const expr query_illegal           { illegal | ws | query_terminator          ,"query illegal" };
+	const rule<string_view> query_key  { raw[+(char_ - query_illegal)]                ,"query key" };
+	const rule<string_view> query_val  { raw[*(char_ - query_illegal)]              ,"query value" };
 
-	rule<string_view> method           { token                                           ,"method" };
-	rule<string_view> path             { raw[-slash >> *(char_ - query_illegal)]           ,"path" };
-	rule<string_view> fragment         { pound >> -token                               ,"fragment" };
-	rule<string_view> version          { token                                          ,"version" };
+	const rule<string_view> method     { token                                           ,"method" };
+	const rule<string_view> path       { raw[-slash >> *(char_ - query_illegal)]           ,"path" };
+	const rule<string_view> fragment   { pound >> -token                               ,"fragment" };
+	const rule<string_view> version    { token                                          ,"version" };
 
-	rule<uint32_t> chunk_size
+	const rule<size_t> content_size    { ulong_                                  ,"content length" };
+	const rule<uint32_t> chunk_size
 	{
 		qi::uint_parser<uint32_t, 16, 1, 8>{}
 		,"chunk size"
 	};
 
-	rule<string_view> chunk_extensions
+	const rule<string_view> chunk_extensions
 	{
-		';' >> raw[string]             //TODO: extensions
+		';' >> raw[str]             //TODO: extensions
 		,"chunk extensions"
 	};
 
-	rule<http::query> query
+	const rule<http::query> query
 	{
 		query_key >> -(equal >> query_val)
 		,"query"
 	};
 
-	rule<string_view> query_string
+	const rule<string_view> query_string
 	{
 		question >> -raw[(query_key >> -(equal >> query_val)) % ampersand]
 		,"query string"
 	};
 
-	rule<line::request> request_line
+	const rule<line::request> request_line
 	{
 		method >> +SP >> path >> -query_string >> -fragment >> +SP >> version
 		,"request line"
 	};
 
-	rule<line::response> response_line
+	const rule<line::response> response_line
 	{
 		version >> +SP >> status >> -(+SP >> reason)
 		,"response line"
 	};
 
-	rule<unused_type> request
+	const rule<> request
 	{
 		request_line >> *ws >> CRLF >> -headers >> CRLF
 		,"request"
 	};
 
-	rule<unused_type> response
+	const rule<> response
 	{
 		response_line >> *ws >> CRLF >> -headers >> CRLF
 		,"response"
 	};
-};
 
-struct ircd::http::parser
-:grammar
-{
 	static size_t content_length(const string_view &val);
-
-	template<class gen,
-	         class... attr>
-	bool operator()(const char *&start, const char *const &stop, gen&&, attr&&...) const;
 }
-const ircd::http::parser;
-
-template<class gen,
-         class... attr>
-inline bool
-ircd::http::parser::operator()(const char *&start,
-                               const char *const &stop,
-                               gen&& g,
-                               attr&&... a)
-const
-{
-	return ircd::parse(start, stop, std::forward<gen>(g), std::forward<attr>(a)...);
-}
-
-namespace ircd { namespace http
-__attribute__((visibility("default")))
-{
-	// stub needed for clang
-}}
 
 /// Compose a request. This prints an HTTP head into the buffer. No real IO is
 /// done here. After composing into the buffer, the user can then drive the
@@ -341,21 +318,13 @@ ircd::http::request::head::head(parse::capstan &pc,
 			}
 		};
 
-	if(closure)
-		return http::headers
-		{
-			pc, [this, &closure](const auto &header)
-			{
-				assign(*this, header);
-				closure(header);
-			}
-		};
-
 	return http::headers
 	{
-		pc, [this](const auto &header)
+		pc, [this, &closure](const auto &header)
 		{
 			assign(*this, header);
+			if(likely(closure))
+				closure(header);
 		}
 	};
 }()}
@@ -393,7 +362,7 @@ ircd::http::assign(request::head &head,
 	};
 
 	if(key == "content-length"_sv)
-		head.content_length = parser.content_length(val);
+		head.content_length = parser::content_length(val);
 
 	else if(key == "host"_sv)
 		head.host = val;
@@ -546,6 +515,7 @@ namespace ircd::http
 }
 
 ircd::http::response::head::head(parse::capstan &pc)
+try
 :line::response{pc}
 ,headers
 {
@@ -559,9 +529,14 @@ ircd::http::response::head::head(parse::capstan &pc)
 }
 {
 }
+catch(const expectation_failure &e)
+{
+	throw_error(e, true);
+}
 
 ircd::http::response::head::head(parse::capstan &pc,
                                  const headers::closure &closure)
+try
 :line::response{pc}
 ,headers
 {
@@ -575,6 +550,10 @@ ircd::http::response::head::head(parse::capstan &pc,
 	}
 }
 {
+}
+catch(const expectation_failure &e)
+{
+	throw_error(e, true);
 }
 
 void
@@ -596,7 +575,7 @@ ircd::http::assign(response::head &head,
 	};
 
 	if(key == "content-length"_sv)
-		head.content_length = parser.content_length(val);
+		head.content_length = parser::content_length(val);
 
 	else if(key == "content-type"_sv)
 		head.content_type = val;
@@ -617,25 +596,31 @@ ircd::http::assign(response::head &head,
 		head.location = val;
 }
 
+namespace ircd::http::parser
+{
+	extern const rule<size_t> parse_chunk_head;
+}
+
+decltype(ircd::http::parser::parse_chunk_head)
+ircd::http::parser::parse_chunk_head
+{
+	eoi | (eps > (chunk_size >> -chunk_extensions))
+	,"chunk head"
+};
+
 ircd::http::response::chunk::chunk(parse::capstan &pc)
 try
 :line{pc}
 {
-	static const parser::rule<size_t> grammar
-	{
-		eoi | (eps > (parser.chunk_size >> -parser.chunk_extensions))
-		,"chunk head"
-	};
-
-	const char *start(line::begin());
+	const char *start(line::begin()), *const stop(line::end());
 	const auto res
 	{
-		parser(start, line::end(), grammar, this->size)
+		ircd::parse(start, stop, parser::parse_chunk_head, this->size)
 	};
 
 	assert(res == true);
 }
-catch(const qi::expectation_failure<const char *> &e)
+catch(const expectation_failure &e)
 {
 	throw_error(e, true);
 }
@@ -770,51 +755,90 @@ const
 // header
 //
 
+namespace ircd::http::parser
+{
+	extern const rule<http::header> parse_header;
+	extern const rule<http::line::request> parse_request;
+	extern const rule<http::line::response> parse_response;
+}
+
+decltype(ircd::http::parser::parse_header)
+ircd::http::parser::parse_header
+{
+	expect[header]
+	,"header"
+};
+
+decltype(ircd::http::parser::parse_request)
+ircd::http::parser::parse_request
+{
+	expect[request_line]
+	,"request head line"
+};
+
+decltype(ircd::http::parser::parse_response)
+ircd::http::parser::parse_response
+{
+	expect[response_line]
+	,"response head line"
+};
+
 ircd::http::header::header(const line &line)
 try
 {
-	static const auto grammar
-	{
-		eps > parser.header
-	};
-
 	if(line.empty())
 		return;
 
-	const char *start(line.data());
-	const char *const stop(line.data() + line.size());
-	parser(start, stop, grammar, *this);
+	const char
+	*start(line.data()),
+	*const stop(line.data() + line.size());
+	const auto ok
+	{
+		ircd::parse(start, stop, parser::parse_header, *this)
+	};
+
+	assert(ok);
+	assert(start == stop);
 }
-catch(const qi::expectation_failure<const char *> &e)
+catch(const expectation_failure &e)
 {
 	throw_error(e);
 }
 
 ircd::http::line::response::response(const line &line)
+try
 {
-	static const auto grammar
+	const char
+	*start(line.data()),
+	*const stop(line.data() + line.size());
+	const auto ok
 	{
-		eps > parser.response_line
+		ircd::parse(start, stop, parser::parse_response, *this)
 	};
 
-	const char *start(line.data());
-	const char *const stop(line.data() + line.size());
-	parser(start, stop, grammar, *this);
+	assert(ok);
+	assert(start == stop);
+}
+catch(const expectation_failure &e)
+{
+	throw_error(e, true);
 }
 
 ircd::http::line::request::request(const line &line)
 try
 {
-	static const auto grammar
+	const char
+	*start(line.data()),
+	*const stop(line.data() + line.size());
+	const auto ok
 	{
-		eps > parser.request_line
+		ircd::parse(start, stop, parser::parse_request, *this)
 	};
 
-	const char *start(line.data());
-	const char *const stop(line.data() + line.size());
-	parser(start, stop, grammar, *this);
+	assert(ok);
+	assert(start == stop);
 }
-catch(const qi::expectation_failure<const char *> &e)
+catch(const expectation_failure &e)
 {
 	throw_error(e);
 }
@@ -838,6 +862,18 @@ const
 // http::line
 //
 
+namespace ircd::http::parser
+{
+	extern const rule<string_view> parse_line;
+}
+
+decltype(ircd::http::parser::parse_line)
+ircd::http::parser::parse_line
+{
+	expect[line]
+	,"line"
+};
+
 decltype(ircd::http::line::terminator)
 ircd::http::line::terminator
 {
@@ -847,20 +883,19 @@ ircd::http::line::terminator
 ircd::http::line::line(parse::capstan &pc)
 :string_view{[&pc]
 {
-	static const auto &grammar
-	{
-		parser.line
-	};
-
 	string_view ret;
 	pc([&ret](const char *&start, const char *const &stop)
 	{
-		if(!parser(start, stop, grammar, ret))
-		{
-			ret = {};
+		if(start == stop)
 			return false;
-		}
-		else return true;
+
+		const bool ok
+		{
+			ircd::parse(start, stop, parser::parse_line, ret)
+		};
+
+		assert(ok);
+		return ok;
 	});
 
 	return ret;
@@ -948,15 +983,18 @@ const
 		_get(key, idx)
 	};
 
-	if(!ret)
+	if(unlikely(!ret))
 	{
-		thread_local char buf[1024];
-		const string_view msg{fmt::sprintf
+		char buf[1024];
+		const string_view msg
 		{
-			buf, "Failed to find value for required query string key '%s' #%zu.",
-			key,
-			idx
-		}};
+			fmt::sprintf
+			{
+				buf, "Failed to find value for required query string key '%s' #%zu.",
+				key,
+				idx
+			}
+		};
 
 		throw std::out_of_range
 		{
@@ -1022,14 +1060,15 @@ const
 		continue_ = ret;
 	}};
 
-	const parser::rule<unused_type> grammar
+	const parser::rule<> grammar
 	{
-		-parser.question >> (parser.query[action] % parser.ampersand)
+		-parser::question >> (parser::query[action] % parser::ampersand)
+		,"query strings"
 	};
 
 	const string_view &s(*this);
 	const char *start(s.begin()), *const stop(s.end());
-	parser(start, stop, grammar);
+	ircd::parse(start, stop, grammar);
 	return ret;
 }
 
@@ -1040,16 +1079,14 @@ const
 size_t
 ircd::http::parser::content_length(const string_view &str)
 {
-	static const parser::rule<size_t> grammar
-	{
-		ulong_
-	};
+	const char
+	*start(str.data()),
+	*const stop(start + str.size());
 
 	size_t ret;
-	const char *start(str.data());
 	const bool parsed
 	{
-		http::parser(start, start + str.size(), grammar, ret)
+		ircd::parse(start, stop, parser::content_size, ret)
 	};
 
 	if(!parsed || ret >= 256_GiB)
@@ -1182,7 +1219,7 @@ ircd::http::writeline(window_buffer &write)
 /// a client it does not indicate to *that* client that *they* made a bad
 /// request from a 400 back to them.
 void
-ircd::http::throw_error(const qi::expectation_failure<const char *> &e,
+ircd::http::throw_error(const expectation_failure &e,
                         const bool &internal)
 {
 	const auto &code_
@@ -1261,32 +1298,34 @@ noexcept
 // status
 //
 
-#pragma GCC visibility push(internal)
-namespace ircd::http
+namespace ircd::http::parser
 {
-	extern const parser::rule<uint8_t> status_codepoint;
-	extern const parser::rule<enum category> status_category;
-	extern const parser::rule<enum code> status_code;
+	extern const rule<uint8_t> status_codepoint;
+	extern const rule<enum http::category> status_category;
+	extern const rule<enum http::code> status_code;
 }
-#pragma GCC visibility pop
 
-decltype(ircd::http::status_codepoint)
-ircd::http::status_codepoint
+decltype(ircd::http::parser::status_codepoint)
+ircd::http::parser::status_codepoint
 {
 	qi::uint_parser<uint8_t, 10, 1, 1>{}
 	,"status codepoint"
 };
 
-decltype(ircd::http::status_category)
-ircd::http::status_category
+decltype(ircd::http::parser::status_category)
+ircd::http::parser::status_category
 {
-	&char_("1-9") >> status_codepoint >> omit[repeat(2)[char_("0-9")] >> (eoi | parser.ws)]
+	&char_('1','9')
+	>> status_codepoint
+	>> omit[repeat(2)[char_('0','9')] >> (eoi | ws)]
+	,"status category"
 };
 
-decltype(ircd::http::status_code)
-ircd::http::status_code
+decltype(ircd::http::parser::status_code)
+ircd::http::parser::status_code
 {
-	qi::uint_parser<uint16_t, 10, 3, 3>{} >> omit[eoi | parser.ws]
+	qi::uint_parser<uint16_t, 10, 3, 3>{}
+	>> omit[eoi | ws]
 	,"status code"
 };
 
@@ -1297,7 +1336,7 @@ ircd::http::status(const string_view &str)
 	const char *start(begin(str)), *const stop(end(str));
 	const bool parsed
 	{
-		parser(start, stop, status_code, ret)
+		ircd::parse(start, stop, parser::status_code, ret)
 	};
 
 	if(!parsed)
@@ -1351,7 +1390,7 @@ noexcept
 	const char *start(begin(str)), *const stop(end(str));
 	const bool parsed
 	{
-		parser(start, stop, status_category, ret)
+		ircd::parse(start, stop, parser::status_category, ret)
 	};
 
 	if(!parsed || ret > category::UNKNOWN)
