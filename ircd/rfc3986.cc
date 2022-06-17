@@ -8,16 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#pragma GCC visibility push(internal)
-namespace ircd::rfc3986
-{
-	using namespace ircd::spirit;
-
-	struct encoder extern const encoder;
-	struct decoder extern const decoder;
-}
-#pragma GCC visibility pop
-
 namespace ircd::rfc3986::parser
 {
 	using namespace ircd::spirit;
@@ -433,36 +423,50 @@ ircd::rfc3986::uri::uri(const string_view &input)
 // uri decoding
 //
 
-struct [[gnu::visibility("internal")]]
-ircd::rfc3986::decoder
+namespace ircd::rfc3986::parser::decoder
 {
 	template<class R = unused_type,
 	         class... S>
-	using rule = qi::rule<const char *, R, S...>;
-
-	[[noreturn]] static void throw_unsafe()
+	struct [[gnu::visibility("internal")]] rule
+	:qi::rule<const char *, R, S...>
 	{
-		throw decoding_error
+		using qi::rule<const char *, R, S...>::rule;
+	};
+
+	static const auto is_safe
+	{
+		[](const char val, auto &c, bool &pass)
 		{
-			"Unsafe characters in decoding."
-		};
-	}
+			pass = (val > 0x1F) | (val < 0x00);
+			attr_at<0>(c) = val;
+		}
+	};
 
-	const rule<char()> decode_char
+	const expr decode_char
 	{
-		lit('%') > qi::uint_parser<unsigned char, 16, 2, 2>{}
+		lit('%') > qi::int_parser<char, 16, 2, 2>{}
 		,"url decodable character"
 	};
 
-	const rule<char()> unreserved_char
+	const rule<char()> decode_char_safe
 	{
-		// unreserved characters and !$+*'(),
-		//char_("A-Za-z0-9._~!$+*'(),-")
+		lit('%') > qi::int_parser<char, 16, 2, 2>{}[is_safe]
+		,"url decodable character"
+	};
 
+	const expr unreserved_char
+	{
+		//char_("A-Za-z0-9._~!$+*'(),-")
 		//NOTE: allow any non-control character here. No reason for trouble with
 		//NOTE: already-decoded inputs unless some other grammar expects it.
 		(~ascii::cntrl) - '%'
 		,"url unreserved characters"
+	};
+
+	const rule<mutable_buffer> decode_safe
+	{
+		*(unreserved_char | decode_char_safe)
+		,"url safe decode"
 	};
 
 	const rule<mutable_buffer> decode_unsafe
@@ -470,19 +474,11 @@ ircd::rfc3986::decoder
 		*((char_ - '%') | decode_char)
 		,"url unsafe decode"
 	};
-
-	rule<mutable_buffer> decode_safe
-	{
-		*(unreserved_char | decode_char[_pass = ((local::_1 > 0x1F) | (local::_1 < 0x00))])
-		,"url safe decode"
-	};
 }
-const ircd::rfc3986::decoder;
 
 ircd::const_buffer
 ircd::rfc3986::decode_unsafe(const mutable_buffer &buf,
                              const string_view &url)
-try
 {
 	const char *start(url.data()), *const stop
 	{
@@ -496,7 +492,7 @@ try
 
 	const bool ok
 	{
-		ircd::parse(start, stop, decoder.decode_unsafe, mb)
+		ircd::parse(std::nothrow, start, stop, parser::decoder::decode_unsafe, mb)
 	};
 
 	assert(size(mb) <= size(url));
@@ -504,16 +500,11 @@ try
 	{
 		data(mb), size(mb)
 	};
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	throw expectation_failure<decoding_error>{e};
 }
 
 ircd::string_view
 ircd::rfc3986::decode(const mutable_buffer &buf,
                       const string_view &url)
-try
 {
 	const char *start(url.data()), *const stop
 	{
@@ -527,7 +518,7 @@ try
 
 	const bool ok
 	{
-		ircd::parse(start, stop, decoder.decode_safe, mb)
+		ircd::parse<decoding_error>(start, stop, parser::decoder::decode_safe, mb)
 	};
 
 	assert(size(mb) <= size(url));
@@ -535,23 +526,21 @@ try
 	{
 		data(mb), size(mb)
 	};
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	throw expectation_failure<decoding_error>{e};
 }
 
 //
 // uri encoding
 //
 
-struct [[gnu::visibility("internal")]]
-ircd::rfc3986::encoder
-:karma::grammar<char *, string_view>
+namespace ircd::rfc3986::parser::encoder
 {
 	template<class R = unused_type,
 	         class... S>
-	using rule = karma::rule<char *, R, S...>;
+	struct [[gnu::visibility("internal")]] rule
+	:karma::rule<char *, R, S...>
+	{
+		using karma::rule<char *, R, S...>::rule;
+	};
 
 	const rule<char()> unreserved
 	{
@@ -564,12 +553,7 @@ ircd::rfc3986::encoder
 		*(unreserved | (lit('%') << karma::right_align(2, '0')[karma::upper[karma::hex]]))
 		,"url encode"
 	};
-
-	encoder()
-	:encoder::base_type{encode}
-	{}
 }
-const ircd::rfc3986::encoder;
 
 ircd::string_view
 ircd::rfc3986::encode(const mutable_buffer &out,
@@ -616,7 +600,7 @@ ircd::rfc3986::encode(const mutable_buffer &buf_,
 
 	const bool ok
 	{
-		ircd::generate(buf, encoder, url)
+		ircd::generate(buf, parser::encoder::encode, url)
 	};
 
 	return string_view
@@ -802,7 +786,7 @@ ircd::rfc3986::valid(std::nothrow_t,
 {
 	const parser::rule<> only_rule
 	{
-		rule >> eoi
+		rule >> parser::eoi
 	};
 
 	const char *start(str.data()), *const stop(start + str.size());
@@ -812,17 +796,12 @@ ircd::rfc3986::valid(std::nothrow_t,
 void
 ircd::rfc3986::valid(const parser::rule<> &rule,
                      const string_view &str)
-try
 {
 	const parser::rule<> only_rule
 	{
-		eps > (rule >> eoi)
+		parser::eps > (rule >> parser::eoi)
 	};
 
 	const char *start(str.data()), *const stop(start + str.size());
-	ircd::parse(start, stop, only_rule);
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	throw expectation_failure<error>{e};
+	ircd::parse<error>(start, stop, only_rule);
 }
