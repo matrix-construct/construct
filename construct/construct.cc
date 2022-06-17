@@ -502,7 +502,7 @@ applyargs()
 	if(single && !bootstrap)
 	{
 		ircd::write_avoid.set("true");
-		cmdline = true;
+		cmdline = !debugmode;
 	}
 
 	if(bootstrap)
