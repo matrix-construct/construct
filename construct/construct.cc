@@ -524,7 +524,10 @@ applyargs()
 	}
 
 	if(write_avoid)
+	{
 		ircd::write_avoid.set("true");
+		nobackfill = true;
+	}
 
 	if(debugmode)
 		ircd::debugmode.set("true");
