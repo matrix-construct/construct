@@ -198,7 +198,7 @@ namespace ircd::http::parser
 
 	const rule<line::response> response_line
 	{
-		version >> +SP >> status >> -(+SP >> reason)
+		version >> +SP >> status >> -(+SP >> -reason)
 		,"response line"
 	};
 
