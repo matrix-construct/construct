@@ -15,6 +15,8 @@ namespace ircd::net::dns
 	static uint16_t _service_port(const string_view &name, const string_view &prot);
 	static string_view _service_name(const uint16_t &port, const string_view &prot);
 
+	static bool netdb_ready;
+	extern conf::item<bool> netdb_enable;
 	extern const std::map<pair<string_view>, uint16_t> service_ports;
 	extern const std::map<pair<uint16_t, string_view>, string_view> service_names;
 }
@@ -26,6 +28,9 @@ namespace ircd::net::dns
 decltype(ircd::net::dns::service_ports)
 ircd::net::dns::service_ports
 {
+	{ { "dns",    "tcp" },    53 },
+	{ { "http",   "tcp" },    80 },
+	{ { "https",  "tcp" },   443 },
 	{ { "matrix", "tcp" },  8448 },
 };
 
@@ -36,7 +41,18 @@ ircd::net::dns::service_ports
 decltype(ircd::net::dns::service_names)
 ircd::net::dns::service_names
 {
+	{ {   53, "tcp" },  "dns"    },
+	{ {   80, "tcp" },  "http"   },
+	{ {  443, "tcp" },  "https"  },
 	{ { 8448, "tcp" },  "matrix" },
+};
+
+[[gnu::visibility("internal")]]
+decltype(ircd::net::dns::netdb_enable)
+ircd::net::dns::netdb_enable
+{
+	{ "name",     "ircd.net.dns.netdb.enable" },
+	{ "default",  true                        },
 };
 
 void
@@ -44,9 +60,13 @@ ircd::net::dns::init::service_init()
 {
 	static const int stay_open {true};
 
-	#ifdef HAVE_NETDB_H
-	::setservent(stay_open);
-	#endif
+	if(netdb_enable)
+	{
+		#ifdef HAVE_NETDB_H
+		::setservent(stay_open);
+		netdb_ready = true;
+		#endif
+	}
 }
 
 [[gnu::cold]]
@@ -54,9 +74,12 @@ void
 ircd::net::dns::init::service_fini()
 noexcept
 {
-	#ifdef HAVE_NETDB_H
-	::endservent();
-	#endif
+	if(std::exchange(netdb_ready, false))
+	{
+		#ifdef HAVE_NETDB_H
+		::endservent();
+		#endif
+	}
 }
 
 uint16_t
@@ -95,16 +118,17 @@ try
 
 	strlcpy(_name, name);
 	strlcpy(_prot, prot);
-	syscall
-	(
-		::getservbyname_r,
-		_name,
-		prot? _prot : nullptr,
-		&res,
-		buf,
-		sizeof(buf),
-		&ent
-	);
+	if(likely(netdb_ready))
+		syscall
+		(
+			::getservbyname_r,
+			_name,
+			prot? _prot : nullptr,
+			&res,
+			buf,
+			sizeof(buf),
+			&ent
+		);
 
 	assert(!ent || ent->s_port != 0);
 	assert(!ent || name == ent->s_name);
@@ -188,16 +212,17 @@ try
 	};
 
 	strlcpy(_prot, prot);
-	syscall
-	(
-		::getservbyport_r,
-		ntohs(port),
-		prot? _prot : nullptr,
-		&res,
-		buf,
-		sizeof(buf),
-		&ent
-	);
+	if(likely(netdb_ready))
+		syscall
+		(
+			::getservbyport_r,
+			ntohs(port),
+			prot? _prot : nullptr,
+			&res,
+			buf,
+			sizeof(buf),
+			&ent
+		);
 
 	assert(!ent || ent->s_port == ntohs(port));
 	assert(!ent || !prot || prot == ent->s_proto);
