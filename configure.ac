@@ -41,7 +41,8 @@ AC_PROG_LIBTOOL
 AC_PROG_MAKE_SET
 
 AC_LANG(C++)
-AX_CXX_COMPILE_STDCXX([17], [gnu], [mandatory], 201703)
+AX_CXX_COMPILE_STDCXX([20], [gnu], [optional], 202002)
+AX_CXX_COMPILE_STDCXX([2a], [gnu], [mandatory], 201709)
 
 
 dnl ***************************************************************************
@@ -2558,7 +2559,7 @@ RB_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 
 	boost_linkage="$withval"
 	boost_version="boost-${BOOST_VERSION_MIN}.${BOOST_VERSION_MIN_PATCH}"
-	boost_cxxflags="-std=gnu++17"
+	boost_cxxflags="-std=gnu++20"
 	bash tools/boostrap.sh $BTOOLSET $BOOST_BUILT_LIBS $boost_variant $withval multi $boost_version $boost_cxxflags
 	AS_IF([ test $? != 0 ],
 	[

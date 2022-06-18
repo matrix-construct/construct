@@ -48,6 +48,7 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX], [dnl
   m4_if([$1], [11], [],
         [$1], [14], [],
         [$1], [17], [],
+        [$1], [2a], [],
         [$1], [20], [],
         [m4_fatal([invalid first argument `$1' to AX_CXX_COMPILE_STDCXX])])dnl
   m4_if([$2], [], [],
@@ -155,6 +156,22 @@ dnl  Test body for checking C++17 support
 m4_define([_AX_CXX_COMPILE_STDCXX_testbody_17],
   _AX_CXX_COMPILE_STDCXX_testbody_new_in_11($1)
   _AX_CXX_COMPILE_STDCXX_testbody_new_in_14($1)
+)
+
+dnl  Test body for checking C++2a support
+
+m4_define([_AX_CXX_COMPILE_STDCXX_testbody_2a],
+  _AX_CXX_COMPILE_STDCXX_testbody_new_in_11($1)
+  _AX_CXX_COMPILE_STDCXX_testbody_new_in_14($1)
+  _AX_CXX_COMPILE_STDCXX_testbody_new_in_17($1)
+)
+
+dnl  Test body for checking C++20 support
+
+m4_define([_AX_CXX_COMPILE_STDCXX_testbody_20],
+  _AX_CXX_COMPILE_STDCXX_testbody_new_in_11($1)
+  _AX_CXX_COMPILE_STDCXX_testbody_new_in_14($1)
+  _AX_CXX_COMPILE_STDCXX_testbody_new_in_17($1)
 )
 
 
@@ -571,5 +588,17 @@ namespace cxx14
 // Add tests here if __cplusplus is not to be trusted
 
 #endif  // __cplusplus >= $1L
+
+]])
+
+m4_define([_AX_CXX_COMPILE_STDCXX_testbody_new_in_17], [[
+
+]])
+
+m4_define([_AX_CXX_COMPILE_STDCXX_testbody_new_in_2a], [[
+
+]])
+
+m4_define([_AX_CXX_COMPILE_STDCXX_testbody_new_in_20], [[
 
 ]])
