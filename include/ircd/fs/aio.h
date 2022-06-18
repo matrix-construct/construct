@@ -87,6 +87,8 @@ struct ircd::fs::aio::stats
 struct [[gnu::visibility("hidden")]]
 ircd::fs::aio::init
 {
+	static size_t query_max_events();
+
 	init();
 	~init() noexcept;
 };

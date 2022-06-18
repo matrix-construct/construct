@@ -82,10 +82,6 @@ ircd::fs::aio::submit_coalesce
 
 ircd::fs::aio::init::init()
 {
-	assert(!system);
-	if(!aio::enable)
-		return;
-
 	// Don't init AIO if the io_uring is established. If it is, that means it
 	// was supported by the build, this kernel, and didn't encounter an error
 	// to construct. In all other cases AIO can serve as a fallback.
@@ -94,29 +90,12 @@ ircd::fs::aio::init::init()
 		return;
 	#endif
 
-	// We don't know which storage device (if any one) will be used by this
-	// application, and we only have one aio instance shared by everything.
-	// To deal with this for now, we look for the most favorable device and
-	// tune to it. The caveat here is that if the application makes heavy use
-	// of an inferior device on the same system, it wont be optimally utilized.
-	if(max_events == 0UL)
-		fs::dev::for_each("disk", []
-		(const ulong &id, const fs::dev::blk &device)
-		{
-			max_events._value = std::clamp
-			(
-				device.queue_depth, size_t(max_events), MAX_EVENTS
-			);
+	assert(!system);
+	if(!aio::enable)
+		return;
 
-			return true;
-		});
-
-	// If max_events is still not determined here set a sane default.
-	if(max_events == 0UL)
-	{
-		static const auto MAX_EVENTS_DEFAULT {32UL};
-		max_events._value = std::min(MAX_EVENTS, MAX_EVENTS_DEFAULT);
-	}
+	if(!max_events)
+		max_events._value = query_max_events();
 
 	assert(max_events);
 	system = new struct aio::system
@@ -132,6 +111,35 @@ noexcept
 {
 	delete system;
 	system = nullptr;
+}
+
+// We don't know which storage device (if any one) will be used by this
+// application, and we only have one aio instance shared by everything.
+// To deal with this for now, we look for the most favorable device and
+// tune to it. The caveat here is that if the application makes heavy use
+// of an inferior device on the same system, it wont be optimally utilized.
+size_t
+ircd::fs::aio::init::query_max_events()
+{
+	size_t ret(0);
+	fs::dev::for_each("disk", [&ret]
+	(const ulong &id, const fs::dev::blk &device)
+	{
+		ret = std::clamp
+		(
+			device.queue_depth, ret, MAX_EVENTS
+		);
+
+		return true;
+	});
+
+	if(!ret)
+	{
+		static const auto MAX_EVENTS_DEFAULT {32UL};
+		ret = std::min(MAX_EVENTS, MAX_EVENTS_DEFAULT);
+	}
+
+	return ret;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
