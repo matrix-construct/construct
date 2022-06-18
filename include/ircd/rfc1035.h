@@ -24,8 +24,10 @@ namespace ircd::rfc1035
 	enum class op :uint8_t;
 
 	// Section 2.3.4 Size Limits
-	constexpr size_t LABEL_MAX {63};
+	#ifndef NAME_MAX
 	constexpr size_t NAME_MAX {255};
+	#endif
+	constexpr size_t LABEL_MAX {63};
 	constexpr size_t TTL_MAX {std::numeric_limits<int32_t>::max()};
 
 	constexpr size_t LABEL_BUFSIZE {LABEL_MAX + 1};

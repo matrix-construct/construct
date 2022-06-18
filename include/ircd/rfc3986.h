@@ -21,10 +21,14 @@ namespace ircd::rfc3986
 	IRCD_EXCEPTION(coding_error, encoding_error)
 	IRCD_EXCEPTION(coding_error, decoding_error)
 
+	#ifndef NAME_MAX
+	constexpr size_t DOMAIN_MAX        { rfc1035::NAME_MAX   };
+	#else
+	constexpr size_t DOMAIN_MAX        { NAME_MAX            };
+	#endif
+	constexpr size_t DOMAIN_BUFSIZE    { DOMAIN_MAX + 1      };
 	constexpr size_t HOSTNAME_MAX      { rfc1035::LABEL_MAX  };
 	constexpr size_t HOSTNAME_BUFSIZE  { HOSTNAME_MAX + 1    };
-	constexpr size_t DOMAIN_MAX        { rfc1035::NAME_MAX   };
-	constexpr size_t DOMAIN_BUFSIZE    { DOMAIN_MAX + 1      };
 	constexpr size_t REMOTE_MAX        { DOMAIN_MAX + 6      };
 	constexpr size_t REMOTE_BUFSIZE    { REMOTE_MAX + 1      };
 

@@ -184,7 +184,11 @@ get__query_directory(client &client,
 	{
 		static const size_t max_servers
 		{
-			size(buf) / rfc1035::NAME_MAX - 2
+			#ifdef NAME_MAX
+				size(buf) / NAME_MAX - 2
+			#else
+				size(buf) / rfc1035::NAME_MAX - 2
+			#endif
 		};
 
 		const m::room::origins origins
