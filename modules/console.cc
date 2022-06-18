@@ -361,7 +361,7 @@ console_cmd__time(opt &out, const string_view &line)
 		_console_command(out, line)
 	};
 
-	thread_local char buf[32];
+	char buf[32];
 	out << std::endl
 	    << pretty(buf, timer.at<microseconds>())
 	    << std::endl;
@@ -927,7 +927,7 @@ console_cmd__date(opt &out, const string_view &line)
 	out << ircd::time<milliseconds>() << " ms" << std::endl;
 	out << ircd::time<microseconds>() << " us" << std::endl;
 
-	thread_local char buf[128];
+	char buf[128];
 	const auto now{ircd::now<system_point>()};
 	out << timef(buf, now, ircd::localtime) << std::endl;
 	out << timef(buf, now) << " (UTC)" << std::endl;
@@ -1680,7 +1680,7 @@ console_cmd__ios(opt &out, const string_view &line)
 	const auto stats_output{[&out]
 	(const auto &s)
 	{
-		thread_local char pbuf[64];
+		char pbuf[64];
 		const auto latency_avg
 		{
 			s.calls?
@@ -2956,7 +2956,7 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		    << std::setw(5) << std::right << std::fixed << std::setprecision(2) << (tsc_pct * 100)
 		    << "%";
 
-		thread_local char pbuf[32];
+		char pbuf[32];
 		out << " "
 		    << std::setw(25) << std::right << pretty(pbuf, iec(ctx::stack::get(ctx).at));
 
@@ -4038,7 +4038,7 @@ try
 
 		if(compressed.capacity)
 		{
-			thread_local char buf[64];
+			char buf[64];
 			const fmt::sprintf rename
 			{
 				buf, "%s (compressed)", colname
@@ -5127,7 +5127,7 @@ try
 		if(!event_id)
 			return true;
 
-		thread_local char iecbuf[48];
+		char iecbuf[48];
 		out << std::setw(12) << std::left << _seqnum
 		    << "  "
 		    << std::setw(6) << std::left << txn.size()
@@ -6130,7 +6130,7 @@ try
 			request.out.gethead(request)
 		};
 
-		thread_local char rembuf[128];
+		char rembuf[128];
 		const string_view &remote
 		{
 			link.socket?
@@ -6770,7 +6770,7 @@ console_cmd__client(opt &out, const string_view &line)
 
 	for(const auto &client : clients)
 	{
-		thread_local char pbuf[2][64];
+		char pbuf[2][64];
 
 		if(idnum && client->id < idnum)
 			continue;
@@ -7453,7 +7453,7 @@ console_cmd__stage__send(opt &out, const string_view &line)
 		m::txn::create(pduv)
 	};
 
-	thread_local char idbuf[128];
+	char idbuf[128];
 	const auto txnid
 	{
 		m::txn::create_id(idbuf, txn)
@@ -15000,7 +15000,7 @@ console_cmd__fed__send(opt &out, const string_view &line)
 		m::txn::create(pdus)
 	};
 
-	thread_local char idbuf[128];
+	char idbuf[128];
 	const auto txnid
 	{
 		m::txn::create_id(idbuf, txn)
