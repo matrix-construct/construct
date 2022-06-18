@@ -124,27 +124,27 @@ try
 	create(alias_room, me);
 	create(control_room, me);
 
-	send(my_room, me, "m.room.name", "",
+	send(my_room, me, "m.room.name", "", json::members
 	{
 		{ "name", "IRCd's Room" }
 	});
 
-	send(my_room, me, "m.room.topic", "",
+	send(my_room, me, "m.room.topic", "", json::members
 	{
 		{ "topic", "The daemon's den." }
 	});
 
-	send(conf_room, me, "m.room.name", "",
+	send(conf_room, me, "m.room.name", "", json::members
 	{
 		{ "name", "Server Configuration" }
 	});
 
-	send(tokens_room, me, "m.room.name", "",
+	send(tokens_room, me, "m.room.name", "", json::members
 	{
 		{ "name", "User Tokens" }
 	});
 
-	send(control_room, me, "m.room.name", "",
+	send(control_room, me, "m.room.name", "", json::members
 	{
 		{ "name", "Control Room" }
 	});

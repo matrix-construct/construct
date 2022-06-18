@@ -141,7 +141,7 @@ create_control_room(const m::event &,
 {
 	create(control_room_id, m::me());
 	join(control_room, m::me());
-	send(control_room, m::me(), "m.room.name", "",
+	send(control_room, m::me(), "m.room.name", "", json::members
 	{
 		{ "name", "Control Room" }
 	});

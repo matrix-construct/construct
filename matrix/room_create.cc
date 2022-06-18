@@ -198,7 +198,7 @@ try
 
 	if(guest_access == "can_join") try
 	{
-		send(room, creator, "m.room.guest_access", "",
+		send(room, creator, "m.room.guest_access", "", json::members
 		{
 			{ "guest_access", "can_join" }
 		});
@@ -326,7 +326,7 @@ try
 
 	if(json::get<"guest_can_join"_>(c) && guest_access != "can_join") try
 	{
-		send(room, creator, "m.room.guest_access", "",
+		send(room, creator, "m.room.guest_access", "", json::members
 		{
 			{ "guest_access", "can_join" }
 		});

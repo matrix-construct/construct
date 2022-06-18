@@ -21,7 +21,7 @@ namespace ircd::json
 	struct array;
 	struct vector;
 	struct iov;
-	using members = std::initializer_list<const member>;
+	using members = std::initializer_list<member>;
 
 	/// strict_t overloads scan the whole string to determine both the type
 	/// and validity of the string. For large strings this may involve a lot

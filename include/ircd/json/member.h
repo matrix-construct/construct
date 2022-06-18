@@ -14,7 +14,6 @@
 namespace ircd::json
 {
 	struct member;
-	using members = std::initializer_list<const member>;
 
 	bool operator==(const member &a, const member &b);
 	bool operator==(const member &a, const string_view &b);
