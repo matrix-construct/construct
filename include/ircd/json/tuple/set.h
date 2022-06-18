@@ -101,7 +101,8 @@ template<class dst,
 inline typename std::enable_if
 <
 	std::is_base_of<std::string_view, dst>() &&
-	std::is_pod<typename std::remove_reference<src>::type>(),
+	std::is_trivial<typename std::remove_reference<src>::type>() &&
+	std::is_standard_layout<typename std::remove_reference<src>::type>(),
 void>::type
 _assign(dst &d,
         src&& s)
