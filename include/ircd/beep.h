@@ -24,6 +24,7 @@ class ircd::beep
 {
 	struct ctrl;
 
+	static const fs::fd::opts fd_opts;
 	static ctx::mutex mutex;
 	static conf::item<std::string> path;
 	static conf::item<bool> debug;

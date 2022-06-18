@@ -140,7 +140,10 @@ ircd::gpt::pipe::code::set_cache(const string_view &path)
 
 	const fs::fd fd
 	{
-		path, std::ios::out
+		path, fs::fd::opts
+		{
+			.mode = std::ios::out
+		},
 	};
 
 	const auto written

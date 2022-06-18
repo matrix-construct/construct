@@ -94,7 +94,7 @@ try
 
 	const fs::fd::opts opts
 	{
-		std::ios::in | std::ios::out
+		.mode = std::ios::in | std::ios::out
 	};
 
 	// Open the fd's; if triggers were given we don't open files that were

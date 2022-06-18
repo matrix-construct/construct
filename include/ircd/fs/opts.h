@@ -27,6 +27,13 @@ struct ircd::fs::opts
 	/// at the end of the file (RWF_APPEND or legacy non-atomic lseek()).
 	off_t offset {0};
 
+	/// The enumerated operation code to identify the type of request being
+	/// made at runtime from any abstract list of requests. This is set by
+	/// the fs:: interface call and not the user in most cases. The user
+	/// should not rely on this value being preserved if, e.g. they set a read
+	/// opcode and then pass the opts structure to write().
+	enum op op {op::NOOP};
+
 	/// Request priority. Lower value takes priority over higher. The lowest
 	/// possible priority value is special, on supporting platforms (RWF_HIPRI).
 	/// One can either simply set the integer minimum or use the extern value.
@@ -53,24 +60,7 @@ struct ircd::fs::opts
 	/// not used simultaneously).
 	bool aio {true};
 
-	/// The enumerated operation code to identify the type of request being
-	/// made at runtime from any abstract list of requests. This is set by
-	/// the fs:: interface call and not the user in most cases. The user
-	/// should not rely on this value being preserved if, e.g. they set a read
-	/// opcode and then pass the opts structure to write().
-	enum op op {op::NOOP};
-
 	/// Suppress logging of some expected/tolerated failures. Set to false
 	/// if the call should just silently rethrow.
 	bool errlog {true};
-
-	opts(const off_t &, const enum op & = op::NOOP);
-	opts() = default;
 };
-
-inline
-ircd::fs::opts::opts(const off_t &offset,
-                     const enum op &op)
-:offset{offset}
-,op{op}
-{}

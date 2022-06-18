@@ -29,6 +29,12 @@ struct ircd::beep::ctrl
 	int32_t tone {0};
 };
 
+decltype(ircd::beep::fd_opts)
+ircd::beep::fd_opts
+{
+	.mode = std::ios::out
+};
+
 decltype(ircd::beep::mutex)
 ircd::beep::mutex;
 
@@ -87,7 +93,7 @@ try
 ,fd
 {
 	tone > 0.0f?
-		fs::fd{string_view{path}, std::ios::out}:
+		fs::fd{string_view{path}, fd_opts}:
 		fs::fd{-1}
 }
 {

@@ -327,7 +327,10 @@ construct::console::handle_line_bymodule()
 			{
 				const fs::fd fd
 				{
-					record_path, std::ios::out | std::ios::app
+					record_path, fs::fd::opts
+					{
+						.mode = std::ios::out | std::ios::app,
+					},
 				};
 
 				// Generate a copy of the command line to give some context

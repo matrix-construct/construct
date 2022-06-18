@@ -54,10 +54,6 @@ struct ircd::fs::map::opts
 	bool locked {false};
 	bool huge2mb {false};
 	bool huge1gb {false};
-
-	opts(const fd::opts &opts = {std::ios::in})
-	:fd::opts(opts)
-	{}
 };
 
 inline

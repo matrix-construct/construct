@@ -17,7 +17,10 @@ ircd::m::rooms::dump__file(const opts &opts,
 {
 	const fs::fd file
 	{
-		filename, std::ios::out | std::ios::app
+		filename, fs::fd::opts
+		{
+			.mode = std::ios::out | std::ios::app,
+		},
 	};
 
 	// POSIX_FADV_DONTNEED

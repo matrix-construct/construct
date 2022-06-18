@@ -294,14 +294,12 @@ ircd::fs::support::fallocate(const string_view &path,
                              const write_opts &wopts)
 try
 {
-	const fd::opts opts
+	const fs::fd fd
 	{
-		std::ios::out
-	};
-
-	fs::fd fd
-	{
-		path, opts
+		path, fd::opts
+		{
+			.mode = std::ios::out,
+		},
 	};
 
 	fs::allocate(fd, info::page_size, wopts);
@@ -327,9 +325,15 @@ bool
 ircd::fs::support::direct_io(const string_view &path)
 try
 {
-	fd::opts opts{std::ios::out};
-	opts.direct = true;
-	fd{path, opts};
+	fs::fd
+	{
+		path, fd::opts
+		{
+			.mode = std::ios::out,
+			.direct = true,
+		}
+	};
+
 	return true;
 }
 catch(const std::system_error &e)
@@ -615,10 +619,13 @@ ircd::fs::stdin::tty::tty()
 :fd{[]
 {
 	char buf[256];
-	syscall(::ttyname_r, STDIN_FILENO, buf, sizeof(buf));
-	return fd
+	sys::call(::ttyname_r, STDIN_FILENO, buf, sizeof(buf));
+	return fs::fd
 	{
-		string_view{buf}, std::ios_base::out
+		string_view{buf}, fd::opts
+		{
+			.mode = std::ios_base::out
+		}
 	};
 }()}
 {
@@ -829,9 +836,15 @@ ircd::fs::incore(const fd &fd,
                  const size_t &count,
                  const read_opts &opts)
 {
-	fs::map::opts map_opts;
-	map_opts.offset = align(opts.offset, info::page_size);
-	map_opts.blocking = false;
+	const fs::map::opts map_opts
+	{
+		fs::opts
+		{
+			.offset = off_t(align(opts.offset, info::page_size)),
+			.blocking = false,
+		},
+	};
+
 	const size_t &map_size
 	{
 		count?: size(fd)
@@ -1157,9 +1170,12 @@ ircd::fs::truncate(const string_view &path,
                    const size_t &size,
                    const write_opts &opts)
 {
-	const fd fd
+	const fs::fd fd
 	{
-		path, std::ios::out | std::ios::trunc
+		path, fd::opts
+		{
+			.mode = std::ios::out | std::ios::trunc,
+		},
 	};
 
 	return truncate(fd, size, opts);
@@ -1211,9 +1227,12 @@ ircd::fs::overwrite(const string_view &path,
                     const const_buffers &bufs,
                     const write_opts &opts)
 {
-	const fd fd
+	const fs::fd fd
 	{
-		path, std::ios::out | std::ios::trunc
+		path, fd::opts
+		{
+			.mode = std::ios::out | std::ios::trunc,
+		},
 	};
 
 	return overwrite(fd, bufs, opts);
@@ -1268,9 +1287,12 @@ ircd::fs::append(const string_view &path,
                  const const_buffers &bufs,
                  const write_opts &opts)
 {
-	const fd fd
+	const fs::fd fd
 	{
-		path, std::ios::out | std::ios::app
+		path, fd::opts
+		{
+			.mode = std::ios::out | std::ios::app
+		},
 	};
 
 	return append(fd, bufs, opts);
@@ -1331,9 +1353,12 @@ ircd::fs::write(const string_view &path,
                 const const_buffers &bufs,
                 const write_opts &opts)
 {
-	const fd fd
+	const fs::fd fd
 	{
-		path, std::ios::out
+		path, fd::opts
+		{
+			.mode = std::ios::out
+		},
 	};
 
 	return write(fd, bufs, opts);
@@ -2239,6 +2264,7 @@ namespace ircd::fs
 {
 	static uint flags(const fd::opts &);
 	static uint flags(const std::ios::openmode &);
+	static fd::opts make(const fd::opts &);
 	static long pathconf(const fd &, const int &arg);
 }
 
@@ -2439,32 +2465,6 @@ ircd::fs::size(const fd &fd)
 }
 
 //
-// fd::opts
-//
-
-ircd::fs::fd::opts::opts(const std::ios::openmode &mode)
-:mode
-{
-	mode
-}
-,flags
-{
-	fs::flags(mode)
-}
-,mask
-{
-	flags & O_CREAT?
-		S_IRUSR | S_IWUSR:
-		0U
-}
-,ate
-{
-	bool(mode & std::ios::ate)
-}
-{
-}
-
-//
 // fd::fd
 //
 
@@ -2495,7 +2495,7 @@ ircd::fs::fd::fd(const string_view &path,
 
 ircd::fs::fd::fd(const int &dirfd,
                  const string_view &path,
-                 const opts &opts)
+                 const opts &opts_)
 try
 :fdno
 {
@@ -2505,6 +2505,11 @@ try
 	const unwind_exceptional dtor_on_error
 	{
 		[this] { this->~fd(); }
+	};
+
+	const auto opts
+	{
+		make(opts_)
 	};
 
 	const mode_t mode
@@ -2548,7 +2553,7 @@ try
 }
 catch(const std::system_error &e)
 {
-	if(opts.errlog)
+	if(opts_.errlog)
 		log::derror
 		{
 			log, "`%s' :%s",
@@ -2630,6 +2635,22 @@ const
 	ret.create = ret.flags & O_CREAT;
 	ret.blocking = ret.flags & O_NONBLOCK;
 	ret.exclusive = ret.flags & O_EXCL;
+	return ret;
+}
+
+ircd::fs::fd::opts
+ircd::fs::make(const fd::opts &opts)
+{
+	fd::opts ret(opts);
+	if(!ret.flags)
+		ret.flags = fs::flags(ret);
+
+	if(!ret.mask && (ret.flags & O_CREAT))
+		ret.mask = S_IRUSR | S_IWUSR;
+
+	if(!ret.ate)
+		ret.ate = bool(ret.mode & std::ios::ate);
+
 	return ret;
 }
 

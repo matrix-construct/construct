@@ -193,19 +193,27 @@ try
 		has(string_view(ircd::diagnostic), "valid-json")
 	};
 
-	fs::fd::opts fileopts(std::ios::in);
 	const fs::fd file
 	{
-		path, fileopts
+		path, fs::fd::opts
+		{
+			.mode = std::ios::in
+		},
 	};
 
-	fs::map::opts map_opts(fileopts);
-	map_opts.sequential = true;
-	map_opts.huge2mb = true;
-	map_opts.huge1gb = true;
 	const fs::map map
 	{
-		file, map_opts
+		file, fs::map::opts
+		{
+			fs::fd::opts
+			{
+				.mode = std::ios::in,
+				.sequential = true,
+			},
+
+			.huge2mb = true,
+			.huge1gb = true,
+		},
 	};
 
 	// This array is backed by the mmap
@@ -330,7 +338,14 @@ try
 
 		// advise dontneed
 		if(likely(!validate_json_only))
-			ebytes[0] += evict(map, incore, ebytes[0]);
+		{
+			const fs::opts opts
+			{
+				.offset = off_t(ebytes[0]),
+			};
+
+			ebytes[0] += evict(map, incore, opts);
+		}
 
 		if(count % (batch_max * 256) != 0)
 			continue;

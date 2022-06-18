@@ -1254,19 +1254,13 @@ try
 {
 	env_opts
 }
-,opts{[this, &trunc]
+,opts
 {
-	fs::fd::opts ret
-	{
-		std::ios::out |
-		(trunc? std::ios::trunc : std::ios::openmode(0))
-	};
-
-	ret.dontneed = true;
-	ret.direct = this->env_opts.use_direct_writes;
-	ret.cloexec = this->env_opts.set_fd_cloexec;
-	return ret;
-}()}
+	.mode = std::ios::out | (trunc? std::ios::trunc : std::ios::openmode(0)),
+	.direct = this->env_opts.use_direct_writes,
+	.cloexec = this->env_opts.set_fd_cloexec,
+	.dontneed = true,
+}
 ,ionice
 {
 	ctx::ionice(ctx::cur())
@@ -1677,7 +1671,7 @@ noexcept try
 	if(opts.direct)
 		return Status::OK();
 
-	fs::evict(fd, length, fs::opts(offset));
+	fs::evict(fd, length, offset);
 	return Status::OK();
 }
 catch(const std::system_error &e)
@@ -2842,12 +2836,11 @@ const
 //
 
 decltype(ircd::db::database::env::sequential_file::default_opts)
-ircd::db::database::env::sequential_file::default_opts{[]
+ircd::db::database::env::sequential_file::default_opts
 {
-	ircd::fs::fd::opts ret{std::ios_base::in};
-	ret.sequential = true;
-	return ret;
-}()};
+	.mode = std::ios_base::in,
+	.sequential = true,
+};
 
 ircd::db::database::env::sequential_file::sequential_file(database *const &d,
                                                           const std::string &name,
@@ -3190,7 +3183,7 @@ noexcept try
 	if(opts.direct)
 		return Status::OK();
 
-	fs::evict(fd, length, fs::opts(offset));
+	fs::evict(fd, length, offset);
 	return Status::OK();
 }
 catch(const std::system_error &e)
@@ -3246,12 +3239,11 @@ const noexcept
 //
 
 decltype(ircd::db::database::env::random_access_file::default_opts)
-ircd::db::database::env::random_access_file::default_opts{[]
+ircd::db::database::env::random_access_file::default_opts
 {
-	ircd::fs::fd::opts ret{std::ios_base::in};
-	ret.random = true;
-	return ret;
-}()};
+	.mode = std::ios_base::in,
+	.random = true,
+};
 
 ircd::db::database::env::random_access_file::random_access_file(database *const &d,
                                                                 const std::string &name,
@@ -3585,7 +3577,7 @@ noexcept
 	if(opts.direct)
 		return Status::OK();
 
-	fs::evict(fd, length, fs::opts(offset));
+	fs::evict(fd, length, offset);
 	return Status::OK();
 }
 
@@ -3671,16 +3663,11 @@ const noexcept
 //
 
 decltype(ircd::db::database::env::random_rw_file::default_opts)
-ircd::db::database::env::random_rw_file::default_opts{[]
+ircd::db::database::env::random_rw_file::default_opts
 {
-	ircd::fs::fd::opts ret
-	{
-		std::ios_base::in | std::ios_base::out
-	};
-
-	ret.random = true;
-	return ret;
-}()};
+	.mode = std::ios_base::in | std::ios_base::out,
+	.random = true,
+};
 
 ircd::db::database::env::random_rw_file::random_rw_file(database *const &d,
                                                         const std::string &name,

@@ -92,17 +92,16 @@ ircd::m::events::dump__file(const string_view &filename)
 		db::get::NO_CACHE, db::get::NO_CHECKSUM
 	};
 
-	static const fs::fd::opts fileopts
+	const fs::fd::opts fileopts
 	{
-		std::ios::out
+		.mode = std::ios::out,
+		.exclusive = true,         // error if exists
+		.dontneed = true,          // fadvise
 	};
 
-	auto _fileopts(fileopts);
-	_fileopts.exclusive = true;   // error if exists
-	_fileopts.dontneed = true;    // fadvise
 	const fs::fd file
 	{
-		filename, _fileopts
+		filename, fileopts
 	};
 
 	const unique_buffer<mutable_buffer> buf

@@ -93,10 +93,6 @@ struct ircd::fs::fd::opts
 
 	/// Advise for dontneed access (ignored when direct=true)
 	bool dontneed {false};
-
-	/// Construct options from an std::ios::open_mode bitmask.
-	opts(const std::ios::openmode &);
-	opts() = default;
 };
 
 inline bool

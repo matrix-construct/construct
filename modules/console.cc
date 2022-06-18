@@ -1093,9 +1093,12 @@ console_cmd__proc(opt &out, const string_view &line)
 		return true;
 	}
 
-	fs::fd fd
+	const fs::fd fd
 	{
-		path, std::ios::in
+		path, fs::fd::opts
+		{
+			.mode = std::ios::in,
+		},
 	};
 
 	fs::read_opts opts;
@@ -1124,7 +1127,10 @@ console_cmd__proc__smaps(opt &out, const string_view &line)
 {
 	fs::fd fd
 	{
-		"/proc/self/smaps", std::ios::in //TODO: XXX windows
+		"/proc/self/smaps", fs::fd::opts
+		{
+			.mode = std::ios::in,
+		},
 	};
 
 	fs::read_opts opts;
@@ -8763,16 +8769,22 @@ console_cmd__eval__file(opt &out, const string_view &line)
 		param.at<size_t>("limit", -1UL)
 	};
 
-	fs::fd::opts file_opts(std::ios::in);
-	const fs::fd file
+	const fs::fd::opts opts
 	{
-		path, file_opts
+		.mode = std::ios::in,
 	};
 
-	fs::map::opts map_opts(file_opts);
+	const fs::fd file
+	{
+		path, opts
+	};
+
 	const fs::map map
 	{
-		file, map_opts
+		file, fs::map::opts
+		{
+			opts
+		},
 	};
 
 	// This array is backed by the mmap
