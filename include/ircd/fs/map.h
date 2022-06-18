@@ -34,6 +34,7 @@ struct ircd::fs::map
 	static const opts default_opts;
 
 	map() = default;
+	explicit map(const fd &, const size_t size, const opts &opts);
 	map(const fd &, const opts &opts = default_opts, const size_t &size = 0UL);
 	map(map &&) noexcept;
 	map(const map &) = delete;
@@ -55,6 +56,13 @@ struct ircd::fs::map::opts
 	bool huge2mb {false};
 	bool huge1gb {false};
 };
+
+inline
+ircd::fs::map::map(const fd &fd,
+                   const opts &opts,
+                   const size_t &size)
+:map{fd, size, opts}
+{}
 
 inline
 ircd::fs::map::map(map &&other)

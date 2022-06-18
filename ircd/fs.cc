@@ -2059,8 +2059,8 @@ decltype(ircd::fs::map::default_opts)
 ircd::fs::map::default_opts;
 
 ircd::fs::map::map(const fd &fd,
-                   const opts &opts,
-                   const size_t &size)
+                   const size_t size,
+                   const opts &opts)
 #if defined(HAVE_MMAP)
 {
 	assert(size || int(fd) > -1);
