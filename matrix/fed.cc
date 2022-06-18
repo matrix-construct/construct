@@ -802,6 +802,14 @@ ircd::m::fed::make_join::make_join(const room::id &room_id,
 			"&ver=6"
 			"&ver=7"
 			"&ver=8"
+			"&ver=9"
+			"&ver=10"
+			"&ver=11"
+			"&ver=12"
+			"&ver=13"
+			"&ver=14"
+			"&ver=15"
+			"&ver=16"
 			"&ver=org.matrix.msc2432"
 			,url::encode(ridbuf, room_id)
 			,url::encode(uidbuf, user_id)
