@@ -9,17 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma GCC visibility push(internal)
-namespace ircd::json
-{
-	using namespace ircd::spirit;
-
-	// Instantiations of the grammars
-	struct parser extern const parser;
-	struct printer extern const printer;
-}
-#pragma GCC visibility pop
-
-#pragma GCC visibility push(internal)
 BOOST_FUSION_ADAPT_STRUCT
 (
     ircd::json::member,
@@ -37,80 +26,81 @@ BOOST_FUSION_ADAPT_STRUCT
 )
 #pragma GCC visibility pop
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wuninitialized"
-struct [[gnu::visibility("internal")]]
-ircd::json::parser
+namespace ircd::json::parser
 {
-	using it = const char *;
+	using namespace ircd::spirit;
 
 	template<class T = unused_type,
 	         class... A>
-	using rule = qi::rule<it, T, A...>;
+	struct [[clang::internal_linkage]] rule
+	:qi::rule<const char *, T, A...>
+	{
+		using qi::rule<const char *, T, A...>::rule;
+	};
 
-	const rule<> NUL                   { lit('\0')                                          ,"nul" };
+	const expr NUL                    { lit('\0')                                          ,"nul" };
 
 	// insignificant whitespaces
-	const rule<> SP                    { lit('\x20')                                      ,"space" };
-	const rule<> HT                    { lit('\x09')                             ,"horizontal tab" };
-	const rule<> CR                    { lit('\x0D')                            ,"carriage return" };
-	const rule<> LF                    { lit('\x0A')                                  ,"line feed" };
+	const expr SP                     { lit('\x20')                                      ,"space" };
+	const expr HT                     { lit('\x09')                             ,"horizontal tab" };
+	const expr CR                     { lit('\x0D')                            ,"carriage return" };
+	const expr LF                     { lit('\x0A')                                  ,"line feed" };
 
 	// whitespace skipping
-	const rule<> WS                    { SP | HT | CR | LF                           ,"whitespace" };
-	const rule<> ws                    { *(WS)                                ,"whitespace monoid" };
-	const rule<> wsp                   { +(WS)                             ,"whitespace semigroup" };
+	const expr WS                     { SP | HT | CR | LF                           ,"whitespace" };
+	const expr ws                     { *(WS)                                ,"whitespace monoid" };
+	const expr wsp                    { +(WS)                             ,"whitespace semigroup" };
 
 	// structural
-	const rule<> object_begin          { lit('{')                                  ,"object begin" };
-	const rule<> object_end            { lit('}')                                    ,"object end" };
-	const rule<> array_begin           { lit('[')                                   ,"array begin" };
-	const rule<> array_end             { lit(']')                                     ,"array end" };
-	const rule<> name_sep              { lit(':')                                      ,"name sep" };
-	const rule<> value_sep             { lit(',')                                     ,"value sep" };
-	const rule<> escape                { lit('\\')                                       ,"escape" };
-	const rule<> quote                 { lit('"')                                         ,"quote" };
+	const expr object_begin           { lit('{')                                  ,"object begin" };
+	const expr object_end             { lit('}')                                    ,"object end" };
+	const expr array_begin            { lit('[')                                   ,"array begin" };
+	const expr array_end              { lit(']')                                     ,"array end" };
+	const expr name_sep               { lit(':')                                      ,"name sep" };
+	const expr value_sep              { lit(',')                                     ,"value sep" };
+	const expr escape                 { lit('\\')                                       ,"escape" };
+	const expr quote                  { lit('"')                                         ,"quote" };
 
 	// literal
-	const rule<> lit_false             { lit("false")                             ,"literal false" };
-	const rule<> lit_true              { lit("true")                               ,"literal true" };
-	const rule<> lit_null              { lit("null")                                       ,"null" };
-	const rule<> boolean               { lit_true | lit_false                           ,"boolean" };
-	const rule<> literal               { lit_true | lit_false | lit_null                ,"literal" };
+	const expr lit_false              { lit("false")                             ,"literal false" };
+	const expr lit_true               { lit("true")                               ,"literal true" };
+	const expr lit_null               { lit("null")                                       ,"null" };
+	const expr boolean                { lit_true | lit_false                           ,"boolean" };
+	const expr literal                { lit_true | lit_false | lit_null                ,"literal" };
 
 	// numerical
-	const rule<> number_int
+	const expr number_int
 	{
-		(char_("1-9") >> repeat(0, 18)[char_("0-9")]) | lit('0')
+		(char_('1', '9') >> repeat(0,18)[char_('0', '9')]) | lit('0')
 		,"integer"
 	};
 
-	const rule<> number_frac
+	const expr number_frac
 	{
-		lit('.') >> repeat(1, 19)[char_("0-9")] >> -char_("1-9")
+		lit('.') >> repeat(1, 19)[char_('0', '9')] >> -char_('1', '9')
 		,"fraction"
 	};
 
-	const rule<> number_exp
+	const expr number_exp
 	{
-		char_("eE") >> -char_("+-") >> repeat(1, 4)[char_("0-9")]
+		(lit('e') | lit('E')) >> -(lit('+') | lit('-')) >> repeat(1, 4)[char_('0', '9')]
 		,"exponent"
 	};
 
-	const rule<> number
+	const expr number
 	{
 		-lit('-') >> number_int >> -number_frac >> -number_exp
 		,"number"
 	};
 
-	const rule<> number_begin
+	const expr number_begin
 	{
-		char_("0-9-")
+		char_('0', '9') | lit('-')
 		,"first character of number"
 	};
 
 	// string
-	const rule<> utf16_surrogate
+	const expr utf16_surrogate
 	{
 		qi::uint_parser
 		<
@@ -122,54 +112,50 @@ ircd::json::parser
 		,"UTF-16 surrogate"
 	};
 
-	const rule<> unicode
+	const expr unicode
 	{
 		lit('u') >> utf16_surrogate
 		,"escaped unicode"
 	};
 
-	const rule<> control
+	const expr control
 	{
 		char_('\x00', '\x1F')
 		,"control character"
 	};
 
 	// characters that must be escaped
-	const rule<> escaped
+	const expr escaped
 	{
 		quote | escape | control
 		,"escaped character"
 	};
 
 	// characters that should appear after an escaping solidus
-	const rule<> escaper
+	const expr escaper
 	{
 		char_("btnfr0\"\\") | unicode
 		,"escaper"
 	};
 
-	// cscapers supersetting the rule above with addl non-canonical chars
-	const rule<> escaper_nc
+	// escapers supersetting the rule above with addl non-canonical chars
+	const expr escaper_nc
 	{
 		escaper | lit('/')
 		,"escaper"
 	};
 
-	const rule<> escape_sequence
-	{
-		escape >> escaper_nc
-		,"escape sequence"
-	};
-
-	const rule<string_view> chars
+	const expr chars
 	{
 		//raw[*((char_ - escaped) | (escape >> escaper_nc))]
 		raw[*((~char_('\x00', '\x1F') - char_("\x22\x5C")) | (escape >> escaper_nc))]
 		,"characters"
 	};
 
-	template<class block_t> static u64x2 string_content_block(const block_t, const block_t) noexcept;
-	const custom_parser<0> string_content{};
+	// optimized string
+	template<class block_t>
+	static u64x2 string_content_block(const block_t, const block_t) noexcept;
+	const custom_parser<0> string_content;
 	const rule<string_view> string
 	{
 		//quote >> chars >> (!escape >> quote)
@@ -180,21 +166,26 @@ ircd::json::parser
 	// container
 	const rule<string_view> name
 	{
-		string.alias()
+		//string.alias()
+		string_content
 		,"name"
 	};
 
 	// recursion depth
-	_r1_type depth;
 	[[noreturn]] static void throws_exceeded();
+	using recursive = unused_type (uint);
+	static _r1_type depth;
 
-	rule<unused_type(uint)> member
+	[[clang::internal_linkage]]
+	extern const rule<recursive> value;
+
+	const rule<recursive> member
 	{
 		name >> ws >> name_sep >> ws >> value(depth)
 		,"member"
 	};
 
-	rule<unused_type(uint)> object
+	const rule<recursive> object
 	{
 		(eps(depth < json::object::max_recursion_depth) | eps[throws_exceeded]) >>
 
@@ -202,7 +193,7 @@ ircd::json::parser
 		,"object"
 	};
 
-	rule<unused_type(uint)> array
+	const rule<recursive> array
 	{
 		(eps(depth < json::array::max_recursion_depth) | eps[throws_exceeded]) >>
 
@@ -211,68 +202,66 @@ ircd::json::parser
 	};
 
 	// primary recursive rule
-	rule<unused_type(uint)> value
+	const rule<recursive> value
 	{
 		(&quote >> string)
 		| (&object_begin >> object(depth + 1))
 		| (&array_begin >> array(depth + 1))
 		| (&number_begin >> number)
-		| lit_true
-		| lit_false
-		| lit_null
+		| literal
 		,"value"
 	};
 
 	template<class gen,
 	         class... attr>
-	bool operator()(const char *&start, const char *const &stop, gen&&, attr&&...) const;
+	static bool parse(const char *&start, const char *const &stop, gen&&, attr&&...);
 
 	template<class gen,
 	         class... attr>
-	bool operator()(const char *const &start, const char *const &stop, gen&&, attr&&...) const;
+	static bool parse(const char *const &start, const char *const &stop, gen&&, attr&&...);
 }
-const ircd::json::parser;
-#pragma GCC diagnostic pop
 
-struct [[gnu::visibility("internal")]]
-ircd::json::printer
-:karma::grammar<char *, unused_type>
+namespace ircd::json::printer
 {
-	using it = char *;
+	using namespace ircd::spirit;
 
 	template<class T = unused_type,
 	         class... A>
-	using rule = karma::rule<it, T, A...>;
+	struct [[clang::internal_linkage]] rule
+	:karma::rule<char *, T, A...>
+	{
+		using karma::rule<char *, T, A...>::rule;
+	};
 
-	const rule<> NUL                   { lit('\0')                                          ,"nul" };
+	const expr NUL                    { lit('\0')                                          ,"nul" };
 
 	// insignificant whitespaces
-	const rule<> SP                    { lit('\x20')                                      ,"space" };
-	const rule<> HT                    { lit('\x09')                             ,"horizontal tab" };
-	const rule<> CR                    { lit('\x0D')                            ,"carriage return" };
-	const rule<> LF                    { lit('\x0A')                                  ,"line feed" };
+	const expr SP                     { lit('\x20')                                      ,"space" };
+	const expr HT                     { lit('\x09')                             ,"horizontal tab" };
+	const expr CR                     { lit('\x0D')                            ,"carriage return" };
+	const expr LF                     { lit('\x0A')                                  ,"line feed" };
 
 	// whitespace skipping
-	const rule<> WS                    { SP | HT | CR | LF                           ,"whitespace" };
-	const rule<> ws                    { *(WS)                                ,"whitespace monoid" };
-	const rule<> wsp                   { +(WS)                             ,"whitespace semigroup" };
+	const expr WS                     { SP | HT | CR | LF                           ,"whitespace" };
+	const expr ws                     { *(WS)                                ,"whitespace monoid" };
+	const expr wsp                    { +(WS)                             ,"whitespace semigroup" };
 
 	// structural
-	const rule<> object_begin          { lit('{')                                  ,"object begin" };
-	const rule<> object_end            { lit('}')                                    ,"object end" };
-	const rule<> array_begin           { lit('[')                                   ,"array begin" };
-	const rule<> array_end             { lit(']')                                     ,"array end" };
-	const rule<> name_sep              { lit(':')                                ,"name separator" };
-	const rule<> value_sep             { lit(',')                               ,"value separator" };
-	const rule<> quote                 { lit('"')                                         ,"quote" };
-	const rule<> escape                { lit('\\')                                       ,"escape" };
+	const expr object_begin           { lit('{')                                  ,"object begin" };
+	const expr object_end             { lit('}')                                    ,"object end" };
+	const expr array_begin            { lit('[')                                   ,"array begin" };
+	const expr array_end              { lit(']')                                     ,"array end" };
+	const expr name_sep               { lit(':')                                ,"name separator" };
+	const expr value_sep              { lit(',')                               ,"value separator" };
+	const expr quote                  { lit('"')                                         ,"quote" };
+	const expr escape                 { lit('\\')                                       ,"escape" };
 
 	// literal
-	const rule<string_view> lit_true   { karma::string("true")                     ,"literal true" };
-	const rule<string_view> lit_false  { karma::string("false")                   ,"literal false" };
-	const rule<string_view> lit_null   { karma::string("null")                     ,"literal null" };
-	const rule<string_view> boolean    { lit_true | lit_false                           ,"boolean" };
-	const rule<string_view> literal    { lit_true | lit_false | lit_null                ,"literal" };
+	const rule<string_view> lit_true  { karma::string("true")                     ,"literal true" };
+	const rule<string_view> lit_false { karma::string("false")                   ,"literal false" };
+	const rule<string_view> lit_null  { karma::string("null")                     ,"literal null" };
+	const rule<string_view> boolean   { lit_true | lit_false                           ,"boolean" };
+	const rule<string_view> literal   { lit_true | lit_false | lit_null                ,"literal" };
 
 	// number
 	const rule<string_view> number
@@ -282,7 +271,11 @@ ircd::json::printer
 	};
 
 	// string
-	using string_context = boost::spirit::context<fusion::cons<const string_view &>, fusion::vector<>>;
+	using string_context = boost::spirit::context
+	<
+		fusion::cons<const string_view &>, fusion::vector<>
+	>;
+
 	static void string_generate(unused_type, string_context &, bool &) noexcept;
 	const rule<string_view()> string
 	{
@@ -297,28 +290,34 @@ ircd::json::printer
 	};
 
 	// primary recursive rule
-	rule<string_view> value
-	{
-		rule<string_view>{}
-		,"value"
-	};
+	[[clang::internal_linkage]]
+	extern const rule<string_view> value;
 
-	rule<json::object::member> member
+	const rule<json::object::member> member
 	{
-		rule<json::object::member>{}
+		name << name_sep << value
 		,"member"
 	};
 
-	rule<json::object> object
+	const rule<json::object> object
 	{
-		rule<json::object>{}
+		object_begin << -(member % value_sep) << object_end
 		,"object"
 	};
 
-	rule<json::array> array
+	const rule<json::array> array
 	{
-		rule<json::array>{}
+		array_begin << -(value % value_sep) << array_end
 		,"array"
+	};
+
+	const rule<string_view> value
+	{
+		(&object << object)
+		| (&array << array)
+		| (&literal << literal)
+		| (&number << number)
+		| string
 	};
 
 	template<class it_a,
@@ -328,24 +327,8 @@ ircd::json::printer
 
 	template<class gen,
 	         class... attr>
-	void operator()(mutable_buffer &out, gen&&, attr&&...) const;
-
-	printer() noexcept
-	:printer::base_type{rule<>{}}
-	{
-		// synthesized repropagation of recursive rules
-		member %= name << name_sep << value;
-		object %= object_begin << -(member % value_sep) << object_end;
-		array %= array_begin << -(value % value_sep) << array_end;
-		value %= (&object << object)
-		       | (&array << array)
-		       | (&literal << literal)
-		       | (&number << number)
-		       | string
-		       ;
-	}
+	static void print(mutable_buffer &out, gen&&, attr&&...);
 }
-const ircd::json::printer;
 
 decltype(ircd::json::stats)
 ircd::json::stats;
@@ -354,10 +337,9 @@ template<class gen,
          class... attr>
 [[gnu::always_inline]]
 inline void
-ircd::json::printer::operator()(mutable_buffer &out,
-                                gen&& g,
-                                attr&&... a)
-const
+ircd::json::printer::print(mutable_buffer &out,
+                           gen&& g,
+                           attr&&... a)
 {
 	#ifdef IRCD_JSON_PRINTER_STATS
 	++stats.print_calls;
@@ -386,8 +368,7 @@ ircd::json::printer::list_protocol(mutable_buffer &out,
 		lambda(out, *it);
 		for(++it; it != end; ++it)
 		{
-			const auto &printer(json::printer);
-			printer(out, printer.value_sep);
+			print(out, value_sep);
 			lambda(out, *it);
 		}
 	}
@@ -430,25 +411,23 @@ template<class gen,
          class... attr>
 [[gnu::always_inline]]
 inline bool
-ircd::json::parser::operator()(const char *const &start_,
-                               const char *const &stop,
-                               gen&& g,
-                               attr&&...a)
-const
+ircd::json::parser::parse(const char *const &start_,
+                          const char *const &stop,
+                          gen&& g,
+                          attr&&...a)
 {
 	const char *start(start_);
-	return operator()(start, stop, std::forward<gen>(g), std::forward<attr>(a)...);
+	return parser::parse(start, stop, std::forward<gen>(g), std::forward<attr>(a)...);
 }
 
 template<class gen,
          class... attr>
 [[gnu::always_inline]]
 inline bool
-ircd::json::parser::operator()(const char *&start,
-                               const char *const &stop,
-                               gen&& g,
-                               attr&&...a)
-const
+ircd::json::parser::parse(const char *&start,
+                          const char *const &stop,
+                          gen&& g,
+                          attr&&...a)
 {
 	#ifdef IRCD_JSON_PARSER_STATS
 	++stats.parse_calls;
@@ -468,11 +447,11 @@ template<class iterator,
          class skipper,
          class attr>
 inline bool
-ircd::json::custom_parser<0>::parse(iterator &__restrict__ start,
-                                    const iterator &__restrict__ stop,
-                                    context &g,
-                                    const skipper &,
-                                    attr &)
+ircd::json::parser::custom_parser<0>::parse(iterator &__restrict__ start,
+                                            const iterator &__restrict__ stop,
+                                            context &g,
+                                            const skipper &,
+                                            attr &)
 const
 {
 	// Clang scales between 128bit and 256bit systems when we use the 256 bit
@@ -1731,6 +1710,14 @@ ircd::json::stack::member::member(stack &s,
 {
 }
 
+namespace ircd::json::printer
+{
+	const rule<string_view> member_name
+	{
+		name << name_sep
+	};
+}
+
 ircd::json::stack::member::member(object &po,
                                   const string_view &name)
 :s{po.s}
@@ -1746,14 +1733,9 @@ ircd::json::stack::member::member(object &po,
 	if(po.mc)
 		s->append(',');
 
-	static const printer::rule<string_view> rule
-	{
-		printer.name << printer.name_sep
-	};
-
 	char tmp[512];
 	mutable_buffer buf{tmp};
-	printer(buf, rule, name);
+	printer::print(buf, printer::member_name, name);
 	assert(data(buf) >= tmp);
 	s->append(string_view{tmp, size_t(data(buf) - tmp)});
 }
@@ -2104,7 +2086,7 @@ ircd::json::stringify(mutable_buffer &buf,
 	{
 		[](mutable_buffer &buf, const member *const &m)
 		{
-			printer(buf, printer.name << printer.name_sep, m->first);
+			printer::print(buf, printer::name << printer::name_sep, m->first);
 			stringify(buf, m->second);
 		}
 	};
@@ -2122,9 +2104,9 @@ ircd::json::stringify(mutable_buffer &buf,
 	const auto start(begin(buf));
 	std::transform(std::begin(iov), std::end(iov), m, addressof);
 	std::sort(m, m + iov.size(), less_member);
-	printer(buf, printer.object_begin);
+	printer::print(buf, printer::object_begin);
 	printer::list_protocol(buf, m, m + iov.size(), print_member);
-	printer(buf, printer.object_end);
+	printer::print(buf, printer::object_end);
 	const string_view ret
 	{
 		start, begin(buf)
@@ -2390,36 +2372,6 @@ const
 // json/vector.h
 //
 
-namespace ircd::json
-{
-	[[gnu::visibility("internal")]]
-	extern const parser::rule<string_view>
-	vector_object,
-	vector_next_parse,
-	vector_begin_parse;
-}
-
-decltype(ircd::json::vector_object)
-ircd::json::vector_object
-{
-	raw[parser.object(0)]
-	,"vector object"
-};
-
-decltype(ircd::json::vector_next_parse)
-ircd::json::vector_next_parse
-{
-	expect[eoi | (vector_object >> parser.ws)]
-	,"next object vector element or end"
-};
-
-decltype(ircd::json::vector_begin_parse)
-ircd::json::vector_begin_parse
-{
-	expect[parser.ws >> (eoi | (vector_object >> parser.ws))]
-	,"object vector element"
-};
-
 bool
 ircd::json::operator!(const vector &v)
 {
@@ -2506,6 +2458,21 @@ const
 	return it;
 }
 
+namespace ircd::json::parser
+{
+	const rule<string_view> vector_object
+	{
+		raw[object(0)]
+		,"vector object"
+	};
+
+	const rule<string_view> vector_begin_parse
+	{
+		expect[ws >> (eoi | (vector_object >> ws))]
+		,"object vector element"
+	};
+}
+
 ircd::json::vector::const_iterator
 ircd::json::vector::begin()
 const
@@ -2516,7 +2483,7 @@ const
 	};
 
 	string_view &state(ret.state);
-	parser(ret.start, ret.stop, vector_begin_parse, state);
+	parser::parse(ret.start, ret.stop, parser::vector_begin_parse, state);
 	return ret;
 }
 
@@ -2524,12 +2491,21 @@ const
 // vector::const_iterator::const_iterator
 //
 
+namespace ircd::json::parser
+{
+	const rule<string_view> vector_next_parse
+	{
+		expect[eoi | (vector_object >> ws)]
+		,"next object vector element or end"
+	};
+}
+
 ircd::json::vector::const_iterator &
 ircd::json::vector::const_iterator::operator++()
 {
 	this->state = {};
 	string_view &state(this->state);
-	parser(start, stop, vector_next_parse, state);
+	parser::parse(start, stop, parser::vector_next_parse, state);
 	return *this;
 }
 
@@ -2540,58 +2516,15 @@ ircd::json::vector::const_iterator::operator++()
 
 namespace ircd::json
 {
-	[[gnu::visibility("internal")]]
-	extern const parser::rule<object::member>
-	object_member,
-	object_next,
-	object_begin,
-	object_next_parse,
-	object_begin_parse;
-
 	using object_member_array_type = std::array<object::member, object::max_sorted_members>;
 	using object_member_arrays_type = std::array<object_member_array_type, object::max_recursion_depth>;
 	static_assert(sizeof(object_member_arrays_type) == 3_MiB); // yay reentrance .. joy :/
+
 	static thread_local object_member_arrays_type object_member_arrays;
 	static thread_local size_t object_member_arrays_ctr;
 
 	static string_view _stringify(mutable_buffer &buf, const object::member *const &b, const object::member *const &e);
 }
-
-decltype(ircd::json::object_member)
-ircd::json::object_member
-{
-	parser.name >> parser.ws >> parser.name_sep >> parser.ws >> raw[parser.value(0)]
-	,"object member"
-};
-
-decltype(ircd::json::object_next)
-ircd::json::object_next
-{
-	(parser.value_sep >> parser.ws >> object_member) |
-	(parser.object_end >> parser.ws >> eoi)
-	,"object member"
-};
-
-decltype(ircd::json::object_begin)
-ircd::json::object_begin
-{
-	parser.object_begin >> parser.ws >> (parser.object_end | object_member)
-	,"object"
-};
-
-decltype(ircd::json::object_next_parse)
-ircd::json::object_next_parse
-{
-	expect[object_next >> parser.ws]
-	,"object increment"
-};
-
-decltype(ircd::json::object_begin_parse)
-ircd::json::object_begin_parse
-{
-	expect[parser.ws >> (eoi | (object_begin >> parser.ws))]
-	,"object begin"
-};
 
 std::ostream &
 ircd::json::operator<<(std::ostream &s, const object &object)
@@ -2777,6 +2710,33 @@ const
 	});
 }
 
+namespace ircd::json::parser
+{
+	const expr object_member
+	{
+		name >> ws >> name_sep >> ws >> raw[value(0)]
+		,"object member"
+	};
+
+	const expr begin_object
+	{
+		object_begin >> ws >> (object_end | object_member)
+		,"object"
+	};
+
+	const expr begin_object_parse
+	{
+		ws >> (eoi | (begin_object >> ws))
+		,"object begin"
+	};
+
+	const rule<object::member> parse_begin_object
+	{
+		expect[begin_object_parse]
+		,"object begin"
+	};
+}
+
 [[gnu::hot]]
 ircd::json::object::const_iterator
 ircd::json::object::begin()
@@ -2787,10 +2747,10 @@ const try
 		string_view::begin(), string_view::end()
 	};
 
-	parser(ret.start, ret.stop, object_begin_parse, ret.state);
+	parser::parse(ret.start, ret.stop, parser::parse_begin_object, ret.state);
 	return ret;
 }
-catch(const expectation_failure<parse_error> &e)
+catch(const parser::expectation_failure<parse_error> &e)
 {
 	const auto type
 	{
@@ -2811,14 +2771,40 @@ catch(const expectation_failure<parse_error> &e)
 // object::const_iterator
 //
 
+namespace ircd::json::parser
+{
+	const expr next_member
+	{
+		value_sep >> ws >> object_member
+		,"next member"
+	};
+
+	const expr end_object
+	{
+		object_end >> ws >> eoi
+		,"end of object"
+	};
+
+	const expr next_member_parse
+	{
+		(next_member | end_object) >> ws
+		,"object increment"
+	};
+
+	const rule<object::member> parse_next_member
+	{
+		expect[next_member_parse]
+		,"object increment"
+	};
+}
+
 [[gnu::hot]]
 ircd::json::object::const_iterator &
 ircd::json::object::const_iterator::operator++()
 {
 	assert(start != stop);
-
 	state = {};
-	parser(start, stop, object_next_parse, state);
+	parser::parse(start, stop, parser::parse_next_member, state);
 	return *this;
 }
 
@@ -2839,7 +2825,7 @@ ircd::json::stringify(mutable_buffer &buf,
 {
 	char *const start(begin(buf));
 	assert(!surrounds(member.first, '"'));
-	printer(buf, printer.name << printer.name_sep, member.first);
+	printer::print(buf, printer::name << printer::name_sep, member.first);
 	stringify(buf, member.second);
 	const string_view ret
 	{
@@ -2898,9 +2884,9 @@ ircd::json::_stringify(mutable_buffer &buf,
 	};
 
 	char *const start(begin(buf));
-	printer(buf, printer.object_begin);
+	printer::print(buf, printer::object_begin);
 	printer::list_protocol(buf, b, e, stringify_member);
-	printer(buf, printer.object_end);
+	printer::print(buf, printer::object_end);
 	const string_view ret
 	{
 		start, begin(buf)
@@ -2937,52 +2923,6 @@ ircd::json::sorted(const object::member *const &begin,
 //
 // json/array.h
 //
-
-namespace ircd::json
-{
-	[[gnu::visibility("internal")]]
-	extern const parser::rule<string_view>
-	array_value,
-	array_next,
-	array_begin,
-	array_next_parse,
-	array_begin_parse;
-}
-
-decltype(ircd::json::array_value)
-ircd::json::array_value
-{
-	raw[parser.value(0)]
-	,"array element"
-};
-
-decltype(ircd::json::array_next)
-ircd::json::array_next
-{
-	parser.array_end | (parser.value_sep >> parser.ws >> array_value)
-	,"next array element"
-};
-
-decltype(ircd::json::array_begin)
-ircd::json::array_begin
-{
-	parser.array_begin >> parser.ws >> (parser.array_end | array_value)
-	,"array begin element"
-};
-
-decltype(ircd::json::array_next_parse)
-ircd::json::array_next_parse
-{
-	expect[array_next >> parser.ws]
-	,"array next"
-};
-
-decltype(ircd::json::array_begin_parse)
-ircd::json::array_begin_parse
-{
-	expect[parser.ws >> (eoi | (array_begin >> parser.ws))]
-	,"array begin"
-};
 
 std::ostream &
 ircd::json::operator<<(std::ostream &s, const array &a)
@@ -3080,9 +3020,9 @@ ircd::json::array::stringify(mutable_buffer &buf,
 
 	using ircd::buffer::begin;
 	char *const start(begin(buf));
-	printer(buf, printer.array_begin);
+	printer::print(buf, printer::array_begin);
 	printer::list_protocol(buf, b, e, print_element);
-	printer(buf, printer.array_end);
+	printer::print(buf, printer::array_end);
 	const string_view ret
 	{
 		start, begin(buf)
@@ -3112,6 +3052,33 @@ const
 	return json::strung(*this);
 }
 
+namespace ircd::json::parser
+{
+	const rule<string_view> array_value
+	{
+		raw[value(0)]
+		,"array element"
+	};
+
+	const expr begin_array
+	{
+		array_begin >> ws >> (array_end | array_value)
+		,"array begin element"
+	};
+
+	const expr begin_array_parse
+	{
+		ws >> (eoi | (begin_array >> ws))
+		,"array begin"
+	};
+
+	const rule<string_view> parse_begin_array
+	{
+		expect[begin_array_parse]
+		,"array begin"
+	};
+}
+
 [[gnu::hot]]
 ircd::json::array::const_iterator
 ircd::json::array::begin()
@@ -3122,7 +3089,7 @@ const
 		string_view::begin(), string_view::end()
 	};
 
-	parser(ret.start, ret.stop, array_begin_parse, ret.state);
+	parser::parse(ret.start, ret.stop, parser::parse_begin_array, ret.state);
 	return ret;
 }
 
@@ -3175,14 +3142,34 @@ const
 // array::const_iterator
 //
 
+namespace ircd::json::parser
+{
+	const expr array_next_value
+	{
+		value_sep >> ws >> array_value
+		,"array next value"
+	};
+
+	const expr array_next_parse
+	{
+		(array_end | array_next_value) >> ws
+		,"array end or next value"
+	};
+
+	const rule<string_view> parse_next_value
+	{
+		expect[array_next_parse]
+		,"array increment"
+	};
+}
+
 [[gnu::hot]]
 ircd::json::array::const_iterator &
 ircd::json::array::const_iterator::operator++()
 {
 	assert(start != stop);
-
 	state = string_view{};
-	parser(start, stop, array_next_parse, state);
+	parser::parse(start, stop, parser::parse_next_value, state);
 	return *this;
 }
 
@@ -3235,7 +3222,7 @@ ircd::json::stringify(mutable_buffer &buf,
 		{
 			assert(type(m->first) == STRING);
 			stringify(buf, m->first);
-			printer(buf, printer.name_sep);
+			printer::print(buf, printer::name_sep);
 			stringify(buf, m->second);
 		}
 	};
@@ -3262,9 +3249,9 @@ ircd::json::stringify(mutable_buffer &buf,
 
 	std::sort(begin(m), begin(m) + count, less_member);
 	const char *const start(begin(buf));
-	printer(buf, printer.object_begin);
+	printer::print(buf, printer::object_begin);
 	printer::list_protocol(buf, begin(m), begin(m) + count, print_member);
-	printer(buf, printer.object_end);
+	printer::print(buf, printer::object_end);
 	const string_view ret
 	{
 		start, begin(buf)
@@ -3592,7 +3579,7 @@ ircd::json::escape(const mutable_buffer &buf,
                    const string_view &in)
 {
 	mutable_buffer out{buf};
-	printer(out, printer.string, in);
+	printer::print(out, printer::string, in);
 	const string_view ret
 	{
 		data(buf), data(out)
@@ -4142,9 +4129,9 @@ ircd::json::stringify(mutable_buffer &buf,
 	};
 
 	char *const start(begin(buf));
-	printer(buf, printer.array_begin);
+	printer::print(buf, printer::array_begin);
 	printer::list_protocol(buf, b, e, print_value);
-	printer(buf, printer.array_end);
+	printer::print(buf, printer::array_end);
 	const string_view ret
 	{
 		start, begin(buf)
@@ -4187,16 +4174,16 @@ ircd::json::stringify(mutable_buffer &buf,
 			};
 
 			if(v.serial)
-				printer(buf, printer.string, json::string(sv));
+				printer::print(buf, printer::string, json::string(sv));
 			else
-				printer(buf, printer.string, sv);
+				printer::print(buf, printer::string, sv);
 			break;
 		}
 
 		case LITERAL:
 		{
 			if(v.serial)
-				printer(buf, printer.literal, string_view{v});
+				printer::print(buf, printer::literal, string_view{v});
 			else if(v.integer)
 				consume(buf, copy(buf, "true"_sv));
 			else
@@ -4229,7 +4216,7 @@ ircd::json::stringify(mutable_buffer &buf,
 		case NUMBER:
 		{
 			if(v.serial)
-				//printer(buf, printer.number, string_view{v});
+				//printer::print(buf, printer::number, string_view{v});
 				consume(buf, copy(buf, strip(string_view{v}, ' ')));
 			else if(v.floats)
 				consume(buf, copy(buf, lex_cast(v.floating)));
@@ -4808,25 +4795,20 @@ ircd::json::operator==(const value &a, const value &b)
 // json/util.h
 //
 
-namespace ircd::json
+namespace ircd::json::parser
 {
-	[[gnu::visibility("internal")]]
-	extern const parser::rule<>
-	validation,
-	validation_expect;
+	const expr validation
+	{
+		value(0) >> ws >> eoi
+		,"validation"
+	};
+
+	const expr validation_expect
+	{
+		expect[validation]
+		,"valid expectation"
+	};
 }
-
-decltype(ircd::json::validation)
-ircd::json::validation
-{
-	parser.value(0) >> parser.ws >> eoi
-};
-
-decltype(ircd::json::validation_expect)
-ircd::json::validation_expect
-{
-	expect[validation]
-};
 
 const ircd::string_view
 ircd::json::literal_null   { "null"   },
@@ -4865,7 +4847,7 @@ ircd::json::valid(const string_view &s,
 noexcept try
 {
 	const char *start(begin(s)), *const stop(end(s));
-	return parser(start, stop, validation);
+	return parser::parse(start, stop, parser::validation);
 }
 catch(...)
 {
@@ -4879,7 +4861,7 @@ ircd::json::valid(const string_view &s)
 	const char *start(begin(s)), *const stop(end(s));
 	const bool ret
 	{
-		parser(start, stop, validation_expect)
+		parser::parse(start, stop, parser::validation_expect)
 	};
 
 	assert(ret);
@@ -4947,62 +4929,57 @@ ircd::json::serialized(const string_view &v)
 // json/type.h
 //
 
-namespace ircd::json
+namespace ircd::json::parser
 {
-	[[gnu::visibility("internal")]]
-	extern const parser::rule<>
-	type_parse_is[5],
-	type_parse_is_strict[5];
+	const expr type_parse_is_string
+	{
+		ws >> quote
+		,"is string"
+	};
 
-	[[gnu::visibility("internal")]]
-	extern const parser::rule<enum json::type>
-	type_parse,
-	type_parse_strict;
+	const expr type_parse_is_object
+	{
+		ws >> object_begin
+		,"is object"
+	};
+
+	const expr type_parse_is_array
+	{
+		ws >> array_begin
+		,"is array"
+	};
+
+	const expr type_parse_is_number
+	{
+		ws >> number_begin
+		,"is number"
+	};
+
+	const expr type_parse_is_literal
+	{
+		ws >> literal >> ws >> eoi
+		,"is literal"
+	};
+
+	const rule<> type_parse_is[]
+	{
+		{ &type_parse_is_string    ,"is string"   },
+		{ &type_parse_is_object    ,"is object"   },
+		{ &type_parse_is_array     ,"is array"    },
+		{ &type_parse_is_number    ,"is number"   },
+		{ &type_parse_is_literal   ,"is literal"  },
+	};
+
+	const rule<enum json::type> type_parse
+	{
+		(omit[type_parse_is_string]  >> attr(json::STRING))  |
+		(omit[type_parse_is_object]  >> attr(json::OBJECT))  |
+		(omit[type_parse_is_array]   >> attr(json::ARRAY))   |
+		(omit[type_parse_is_number]  >> attr(json::NUMBER))  |
+		(omit[type_parse_is_literal] >> attr(json::LITERAL))
+		,"type check"
+	};
 }
-
-//TODO: XXX array designated initializers
-decltype(ircd::json::type_parse_is)
-ircd::json::type_parse_is
-{
-	{ parser.ws >> parser.quote                              },
-	{ parser.ws >> parser.object_begin                       },
-	{ parser.ws >> parser.array_begin                        },
-	{ parser.ws >> parser.number_begin                       },
-	{ parser.ws >> parser.literal >> parser.ws >> eoi        },
-};
-
-//TODO: XXX array designated initializers
-decltype(ircd::json::type_parse_is_strict)
-ircd::json::type_parse_is_strict
-{
-	{ parser.ws >> &parser.quote >> parser.string >> parser.ws >> eoi            },
-	{ parser.ws >> &parser.object_begin >> parser.object(0) >> parser.ws >> eoi  },
-	{ parser.ws >> &parser.array_begin >> parser.array(0) >> parser.ws >> eoi    },
-	{ parser.ws >> &parser.number_begin >> parser.number >> parser.ws >> eoi     },
-	{ parser.ws >> parser.literal >> parser.ws >> eoi                            },
-};
-
-decltype(ircd::json::type_parse)
-ircd::json::type_parse
-{
-	(omit[type_parse_is[json::STRING]]  >> attr(json::STRING))  |
-	(omit[type_parse_is[json::OBJECT]]  >> attr(json::OBJECT))  |
-	(omit[type_parse_is[json::ARRAY]]   >> attr(json::ARRAY))   |
-	(omit[type_parse_is[json::NUMBER]]  >> attr(json::NUMBER))  |
-	(omit[type_parse_is[json::LITERAL]] >> attr(json::LITERAL))
-	,"type check"
-};
-
-decltype(ircd::json::type_parse_strict)
-ircd::json::type_parse_strict
-{
-	(omit[type_parse_is_strict[json::STRING]]  >> attr(json::STRING))  |
-	(omit[type_parse_is_strict[json::OBJECT]]  >> attr(json::OBJECT))  |
-	(omit[type_parse_is_strict[json::ARRAY]]   >> attr(json::ARRAY))   |
-	(omit[type_parse_is_strict[json::NUMBER]]  >> attr(json::NUMBER))  |
-	(omit[type_parse_is_strict[json::LITERAL]] >> attr(json::LITERAL))
-	,"type check strict"
-};
 
 bool
 ircd::json::type(const string_view &buf,
@@ -5010,20 +4987,7 @@ ircd::json::type(const string_view &buf,
 {
 	const bool ret
 	{
-		parser(begin(buf), end(buf), type_parse_is[type])
-	};
-
-	return ret;
-}
-
-bool
-ircd::json::type(const string_view &buf,
-                 const enum type &type,
-                 strict_t)
-{
-	const bool ret
-	{
-		parser(begin(buf), end(buf), type_parse_is_strict[type])
+		parser::parse(begin(buf), end(buf), parser::type_parse_is[type])
 	};
 
 	return ret;
@@ -5033,7 +4997,7 @@ enum ircd::json::type
 ircd::json::type(const string_view &buf)
 {
 	enum type ret;
-	if(!parser(begin(buf), end(buf), type_parse, ret))
+	if(!parser::parse(begin(buf), end(buf), parser::type_parse, ret))
 		throw type_error
 		{
 			"Failed to derive JSON value type from input buffer."
@@ -5047,8 +5011,73 @@ ircd::json::type(const string_view &buf,
                  std::nothrow_t)
 {
 	enum type ret;
-	if(!parser(begin(buf), end(buf), type_parse, ret))
+	if(!parser::parse(begin(buf), end(buf), parser::type_parse, ret))
 		return STRING;
+
+	return ret;
+}
+
+namespace ircd::json::parser
+{
+	const expr type_parse_is_string_strict
+	{
+		ws >> &quote >> string >> ws >> eoi
+		,"is string"
+	};
+
+	const expr type_parse_is_object_strict
+	{
+		ws >> &object_begin >> object(0) >> ws >> eoi
+		,"is object"
+	};
+
+	const expr type_parse_is_array_strict
+	{
+		ws >> &array_begin >> array(0) >> ws >> eoi
+		,"is array"
+	};
+
+	const expr type_parse_is_number_strict
+	{
+		ws >> &number_begin >> number >> ws >> eoi
+		,"is number"
+	};
+
+	const expr type_parse_is_literal_strict
+	{
+		ws >> literal >> ws >> eoi
+		,"is literal"
+	};
+
+	const rule<> type_parse_is_strict[]
+	{
+		{ &type_parse_is_string_strict    ,"is string"   },
+		{ &type_parse_is_object_strict    ,"is object"   },
+		{ &type_parse_is_array_strict     ,"is array"    },
+		{ &type_parse_is_number_strict    ,"is number"   },
+		{ &type_parse_is_literal_strict   ,"is literal"  },
+	};
+
+	const rule<enum json::type> type_parse_strict
+	{
+		(omit[type_parse_is_string_strict]  >> attr(json::STRING))  |
+		(omit[type_parse_is_object_strict]  >> attr(json::OBJECT))  |
+		(omit[type_parse_is_array_strict]   >> attr(json::ARRAY))   |
+		(omit[type_parse_is_number_strict]  >> attr(json::NUMBER))  |
+		(omit[type_parse_is_literal_strict] >> attr(json::LITERAL))
+		,"type check strict"
+	};
+}
+
+bool
+ircd::json::type(const string_view &buf,
+                 const enum type &type,
+                 strict_t)
+{
+	const bool ret
+	{
+		parser::parse(begin(buf), end(buf), parser::type_parse_is_strict[type])
+	};
 
 	return ret;
 }
@@ -5058,7 +5087,7 @@ ircd::json::type(const string_view &buf,
                  strict_t)
 {
 	enum type ret;
-	if(!parser(begin(buf), end(buf), type_parse_strict, ret))
+	if(!parser::parse(begin(buf), end(buf), parser::type_parse_strict, ret))
 		throw type_error
 		{
 			"Failed to derive JSON value type from input buffer."
@@ -5073,7 +5102,7 @@ ircd::json::type(const string_view &buf,
                  std::nothrow_t)
 {
 	enum type ret;
-	if(!parser(begin(buf), end(buf), type_parse_strict, ret))
+	if(!parser::parse(begin(buf), end(buf), parser::type_parse_strict, ret))
 		return STRING;
 
 	return ret;
