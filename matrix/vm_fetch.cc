@@ -238,6 +238,7 @@ ircd::m::vm::fetch::auth(const event &event,
 	}
 	catch(const std::exception &e)
 	{
+		const ctx::exception_handler eh;
 		throw vm::error
 		{
 			vm::fault::AUTH, "Failed to fetch %zu of %zu auth_events :%s",
