@@ -1145,7 +1145,7 @@ ircd::http::serialized(const vector_view<const header> &headers)
 	// indicate an extra space for a null string terminator to not overlof
 	const size_t initial{!headers.empty()};
 	return std::accumulate(std::begin(headers), std::end(headers), initial, []
-	(auto &ret, const auto &pair)
+	(auto &&ret, const auto &pair)
 	{
 		//            key                 :   SP  value                CRLF
 		return ret += pair.first.size() + 1 + 1 + pair.second.size() + 2;
