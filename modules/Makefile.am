@@ -336,6 +336,7 @@ client_client_rooms_la_SOURCES = \
 	client/rooms/relations.cc \
 	client/rooms/upgrade.cc \
 	client/rooms/aliases.cc \
+	client/rooms/hierarchy.cc \
 	client/rooms/rooms.cc \
 	###
 

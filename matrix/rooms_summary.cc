@@ -424,6 +424,20 @@ ircd::m::rooms::summary::chunk_local(const m::room &room,
 		};
 	});
 
+	// Space children
+	{
+		json::stack::array array
+		{
+			obj, "children_state"
+		};
+
+		state.for_each("m.space.child", [&array]
+		(const m::event &event)
+		{
+			array.append(event);
+		});
+	}
+
 	query("m.room.guest_access", "guest_access", [&obj]
 	(const string_view &value)
 	{

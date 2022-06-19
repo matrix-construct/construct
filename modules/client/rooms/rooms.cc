@@ -95,6 +95,9 @@ get_rooms(client &client,
 	if(cmd == "aliases")
 		return get__aliases(client, request, room_id);
 
+	if(cmd == "hierarchy")
+		return get__hierarchy(client, request, room_id);
+
 	throw m::NOT_FOUND
 	{
 		"/rooms command not found"

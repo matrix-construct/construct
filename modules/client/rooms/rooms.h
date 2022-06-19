@@ -244,3 +244,13 @@ ircd::m::resource::response
 get__aliases(ircd::client &,
              const ircd::m::resource::request &,
              const ircd::m::room::id &);
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// hierarchy.cc
+//
+
+ircd::m::resource::response
+get__hierarchy(ircd::client &,
+               const ircd::m::resource::request &,
+               const ircd::m::room::id &);
