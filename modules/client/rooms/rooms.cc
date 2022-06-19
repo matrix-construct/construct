@@ -29,6 +29,16 @@ rooms_resource
 };
 
 m::resource
+rooms_resource_v1
+{
+	"/_matrix/client/v1/rooms/",
+	{
+		"(8.0) Rooms (v1)",
+		resource::DIRECTORY,
+	}
+};
+
+m::resource
 rooms_resource_unstable
 {
 	"/_matrix/client/unstable/rooms/",
@@ -95,6 +105,12 @@ m::resource::method
 method_get
 {
 	rooms_resource, "GET", get_rooms
+};
+
+m::resource::method
+method_get_v1
+{
+	rooms_resource_v1, "GET", get_rooms
 };
 
 m::resource::method
