@@ -14788,6 +14788,101 @@ console_cmd__feds__send(opt &out, const string_view &line)
 //
 
 bool
+console_cmd__fed__hierarchy(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "remote", "op"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const string_view remote
+	{
+		param.at(1, room_id.host())
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const unique_mutable_buffer buf
+	{
+		16_KiB
+	};
+
+	m::fed::hierarchy::opts opts
+	{
+		m::fed::request::opts
+		{
+			.remote = remote
+		},
+
+		.suggested_only = has(param["op"], "suggested"),
+	};
+
+	m::fed::hierarchy request
+	{
+		room_id, buf, std::move(opts)
+	};
+
+	request.wait(out.timeout);
+	request.get();
+
+	const json::object &response
+	{
+		request
+	};
+
+	if(has(param["op"], "raw"))
+	{
+		out << string_view{response} << std::endl;
+		return true;
+	}
+
+	const json::array &inaccessible
+	{
+		response["inaccessible_children"]
+	};
+
+	for(const json::string room_id : inaccessible)
+		out << "inaccessible: " << room_id << std::endl;
+
+	const json::array &children
+	{
+		response["children"]
+	};
+
+	for(const json::object child : children)
+		for(const auto &[k, v] : child)
+			out << "child: " << std::setw(30) << k << " " << v << std::endl;
+
+	const json::object &room_summary
+	{
+		response["room"]
+	};
+
+	for(const auto &[k, v] : room_summary)
+		if(k != "children_state")
+			out << "room:  " << std::setw(30) << k << " " << v << std::endl;
+
+	const json::array &children_state
+	{
+		room_summary["children_state"]
+	};
+
+	for(const json::object child : children_state)
+		for(const auto &[k, v] : child)
+			out << "state: " << std::setw(30) << k << " " << v << std::endl;
+
+	return true;
+}
+
+bool
 console_cmd__fed__groups(opt &out, const string_view &line)
 {
 	const string_view node

@@ -32,6 +32,7 @@
 #include "rooms.h"
 #include "send.h"
 #include "groups.h"
+#include "hierarchy.h"
 
 /// Federation Interface
 namespace ircd::m::fed

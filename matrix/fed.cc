@@ -10,6 +10,43 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// fed/hierarchy.h
+//
+
+ircd::m::fed::hierarchy::hierarchy(const room::id &room_id,
+                                   const mutable_buffer &buf_,
+                                   opts opts)
+:request{[&]
+{
+	assert(!!opts.remote);
+
+	if(likely(!defined(json::get<"method"_>(opts.request))))
+		json::get<"method"_>(opts.request) = "GET";
+
+	mutable_buffer buf{buf_};
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
+	{
+		thread_local char ridbuf[768];
+		json::get<"uri"_>(opts.request) = fmt::sprintf
+		{
+			buf, "/_matrix/federation/v1/hierarchy/%s?suggested_only=%s",
+			url::encode(ridbuf, room_id),
+			lex_cast(opts.suggested_only),
+		};
+
+		consume(buf, size(json::get<"uri"_>(opts.request)));
+	}
+
+	return request
+	{
+		buf, std::move(opts)
+	};
+}()}
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // fed/groups.h
 //
 
