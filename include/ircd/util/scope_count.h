@@ -43,7 +43,7 @@ ircd::util::scope_count<T>::scope_count(T &count,
 }
 
 template<class T>
-ircd::util::scope_count<T>::~scope_count<T>()
+ircd::util::scope_count<T>::~scope_count()
 noexcept
 {
 	assert(count);

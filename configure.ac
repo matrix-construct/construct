@@ -943,6 +943,7 @@ RB_HELP_STRING([--enable-every-warning], [Enable warning discovery (-Weverything
 	RB_MAYBE_CXXFLAG([-Wno-extra-semi-stmt], charybdis_cv_c_gcc_w_no_extra_semi_stmt)
 	RB_MAYBE_CXXFLAG([-Wno-weak-vtables], charybdis_cv_c_gcc_w_no_weak_vtables)
 	RB_MAYBE_CXXFLAG([-Wno-global-constructors], charybdis_cv_c_gcc_w_no_global_constructors)
+	RB_MAYBE_CXXFLAG([-Wno-dtor-name], charybdis_cv_c_gcc_w_no_dtor_name)
 
 	dnl Ignored with issue low priority
 	RB_MAYBE_CXXFLAG([-Wno-old-style-cast], charybdis_cv_c_gcc_w_no_old_style_cast)

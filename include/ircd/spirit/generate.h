@@ -266,7 +266,7 @@ boost::spirit::karma::detail::enable_buffering<ircd::spirit::sink_type>::enable_
 }
 
 inline
-boost::spirit::karma::detail::enable_buffering<ircd::spirit::sink_type>::~enable_buffering<ircd::spirit::sink_type>()
+boost::spirit::karma::detail::enable_buffering<ircd::spirit::sink_type>::~enable_buffering()
 noexcept
 {
 	assert(ircd::spirit::generator_state == &state);

@@ -74,7 +74,7 @@ inline //TODO: ???
 extern inline
 __attribute__((always_inline, gnu_inline, artificial))
 #endif
-ircd::prof::scope_cycles<fenced>::~scope_cycles<fenced>()
+ircd::prof::scope_cycles<fenced>::~scope_cycles()
 noexcept
 {
 	if constexpr(fenced)

@@ -41,7 +41,7 @@ ircd::ctx::unlock_guard<lockable>::unlock_guard(lockable &l)
 }
 
 template<class lockable>
-ircd::ctx::unlock_guard<lockable>::~unlock_guard<lockable>()
+ircd::ctx::unlock_guard<lockable>::~unlock_guard()
 noexcept
 {
 	l.lock();

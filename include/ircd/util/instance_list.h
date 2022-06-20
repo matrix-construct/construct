@@ -121,7 +121,7 @@ ircd::util::instance_list<T>::operator=(const instance_list &other)
 }
 
 template<class T>
-ircd::util::instance_list<T>::~instance_list<T>()
+ircd::util::instance_list<T>::~instance_list()
 noexcept
 {
 	assert(it != end(list));

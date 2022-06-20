@@ -13,12 +13,8 @@
 
 namespace ircd::ctx
 {
-	template<class T,
-	         class mutex = ircd::ctx::mutex>
-	class view;
-
-	template<class T>
-	using shared_view = view<T, ircd::ctx::shared_mutex>;
+	template<class T, class mutex = mutex> class view;
+	template<class T> using shared_view = view<T, shared_mutex>;
 }
 
 /// Device for a context to share data on its stack with others while yielding
@@ -57,12 +53,17 @@ class ircd::ctx::view
 	void operator()(T &);
 
 	view() = default;
-	~view() noexcept
-	{
-		assert(!waiting);
-		assert(!wanting);
-	}
+	~view() noexcept;
 };
+
+template<class T,
+         class mutex>
+ircd::ctx::view<T, mutex>::~view()
+noexcept
+{
+	assert(!waiting);
+	assert(!wanting);
+}
 
 template<class T,
          class mutex>
@@ -163,7 +164,7 @@ ircd::ctx::view<T, mutex>::wait_until(lock &l,
 
 template<class T,
          class mutex>
-inline bool
+bool
 ircd::ctx::view<T, mutex>::ready()
 const
 {

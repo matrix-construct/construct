@@ -62,7 +62,7 @@ ircd::ctx::queue<T, A>::queue(A&& alloc)
 
 template<class T,
          class A>
-ircd::ctx::queue<T, A>::~queue<T, A>()
+ircd::ctx::queue<T, A>::~queue()
 noexcept
 {
 	assert(q.empty());

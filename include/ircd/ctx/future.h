@@ -98,7 +98,7 @@ struct ircd::ctx::scoped_future
 
 template<class... T>
 inline
-ircd::ctx::scoped_future<T...>::~scoped_future<T...>()
+ircd::ctx::scoped_future<T...>::~scoped_future()
 noexcept
 {
 	if(std::uncaught_exceptions() || !this->valid())

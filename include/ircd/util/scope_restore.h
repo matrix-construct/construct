@@ -62,7 +62,7 @@ ircd::util::scope_restore<T>::scope_restore(T &restore,
 }
 
 template<class T>
-ircd::util::scope_restore<T>::~scope_restore<T>()
+ircd::util::scope_restore<T>::~scope_restore()
 noexcept
 {
 	assert(restore);
