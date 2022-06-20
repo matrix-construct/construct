@@ -785,12 +785,12 @@ ircd::db::prefetcher::request_worker()
 		log::debug
 		{
 			log, "prefetcher reject:%zu request:%zu handle:%zu fetch:%zu direct:%zu cancel:%zu queue:%zu rw:%zu",
-			ticker->rejects,
-			ticker->request,
-			ticker->handles,
-			ticker->fetches,
-			ticker->directs,
-			ticker->cancels,
+			size_t(ticker->rejects),
+			size_t(ticker->request),
+			size_t(ticker->handles),
+			size_t(ticker->fetches),
+			size_t(ticker->directs),
+			size_t(ticker->cancels),
 			queue.size(),
 			this->request_workers,
 		};
