@@ -2233,8 +2233,12 @@ PKG_CHECK_MODULES(jemalloc, [jemalloc],
 AC_MSG_CHECKING(whether to disable use of any found jemalloc)
 AC_ARG_ENABLE(jemalloc, RB_HELP_STRING([--disable-jemalloc], [Disable jemalloc as third-party dynamic memory manager]),
 [
-	AC_MSG_RESULT([$enableval])
-	enable_jemalloc=!$enableval
+	enable_jemalloc=$enableval
+	if test "$enable_jemalloc" = "no"; then
+		AC_MSG_RESULT([yes])
+	else
+		AC_MSG_RESULT([no])
+	fi
 ], [
 	AC_MSG_RESULT([no])
 	enable_jemalloc="yes"
