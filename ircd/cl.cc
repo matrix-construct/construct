@@ -274,7 +274,7 @@ ircd::cl::init::init_libs()
 {
 	const ctx::posix::enable_pthread enable_pthread;
 
-	const std::string &path
+	const string_view path
 	{
 		cl::path
 	};
