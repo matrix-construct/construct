@@ -15660,6 +15660,63 @@ console_cmd__fed__event(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__fed__event__near(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "remote", "ts"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const string_view remote
+	{
+		param.at(1, room_id.host())
+	};
+
+	const int64_t ts
+	{
+		param.at<int64_t>("ts", 0)
+	};
+
+	const unique_mutable_buffer buf
+	{
+		16_KiB
+	};
+
+	m::fed::request::opts opts
+	{
+		.remote = remote,
+	};
+
+	m::fed::event_near request
+	{
+		room_id, buf, ts, std::move(opts)
+	};
+
+	request.wait(out.timeout);
+	request.get();
+
+	const json::object response
+	{
+		request
+	};
+
+	const m::event::id event_id
+	{
+		response.has("event_id")?
+			m::event::id{response["event_id"]}:
+			m::event::id{}
+	};
+
+	out << event_id << std::endl;
+	return true;
+}
+
+bool
 console_cmd__fed__public_rooms(opt &out, const string_view &line)
 {
 	const params param{line, " ",

@@ -632,6 +632,59 @@ ircd::m::fed::event_auth::event_auth(const m::room::id &room_id,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// fed/event_near.h
+//
+
+ircd::m::fed::event_near::event_near(const m::room::id &room_id,
+                                     const mutable_buffer &buf_,
+                                     const int64_t ts,
+                                     opts opts)
+:request{[&]
+{
+	const auto _ts
+	{
+		ts != 0?
+			std::abs(ts):
+			now<milliseconds>().count()
+	};
+
+	const auto dir
+	{
+		ts <= 0? 'b': 'f'
+	};
+
+	if(!opts.remote)
+		opts.remote = room_id.host();
+
+	if(likely(!defined(json::get<"method"_>(opts.request))))
+		json::get<"method"_>(opts.request) = "GET";
+
+	mutable_buffer buf{buf_};
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
+	{
+		thread_local char ridbuf[768];
+		json::get<"uri"_>(opts.request) = fmt::sprintf
+		{
+			buf, "/_matrix/federation/unstable/org.matrix.msc3030/timestamp_to_event/%s?ts=%lu&dir=%c",
+			url::encode(ridbuf, room_id),
+			uint64_t(_ts),
+			dir,
+		};
+
+		consume(buf, size(json::get<"uri"_>(opts.request)));
+	}
+
+	assert(!!opts.remote);
+	return request
+	{
+		buf, std::move(opts)
+	};
+}()}
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // fed/event.h
 //
 

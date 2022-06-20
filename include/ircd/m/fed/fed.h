@@ -23,6 +23,7 @@
 #include "invite.h"
 #include "invite2.h"
 #include "event.h"
+#include "event_near.h"
 #include "event_auth.h"
 #include "query_auth.h"
 #include "state.h"
