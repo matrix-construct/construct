@@ -15,10 +15,17 @@
 /// XXX eventually
 struct ircd_math_mean
 {
-	float
-	last,     ///< Last addend.
-	mean,     ///< Computed mean.
-	sum[4];   ///< Summand spread. TODO XXX
+	/// Summand spread. TODO XXX
+	float sum[4];
+
+	/// Divisor.
+	uint div;
+
+	/// Last addend.
+	float last;
+
+	/// Computed mean.
+	float mean;
 };
 
 #ifdef __OPENCL_VERSION__
