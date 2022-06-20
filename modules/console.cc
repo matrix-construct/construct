@@ -14973,7 +14973,7 @@ console_cmd__fed__head(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "remote", "user_id", "op"
+		"room_id", "remote", "user_id", "op", "knock"
 	}};
 
 	const auto &room_id
@@ -15005,8 +15005,16 @@ console_cmd__fed__head(opt &out, const string_view &line)
 		16_KiB
 	};
 
-	m::fed::make_join::opts opts;
-	opts.remote = remote;
+	m::fed::make_join::opts opts
+	{
+		m::fed::request::opts
+		{
+			.remote = remote
+		},
+
+		.knock = param["knock"] == "knock",
+	};
+
 	m::fed::make_join request
 	{
 		room_id, user_id, buf, std::move(opts)

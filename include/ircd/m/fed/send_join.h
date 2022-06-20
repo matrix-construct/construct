@@ -19,6 +19,8 @@ namespace ircd::m::fed
 struct ircd::m::fed::send_join
 :request
 {
+	struct opts;
+
 	explicit operator json::array() const
 	{
 		return json::array
@@ -34,4 +36,10 @@ struct ircd::m::fed::send_join
 	          opts);
 
 	send_join() = default;
+};
+
+struct ircd::m::fed::send_join::opts
+:request::opts
+{
+	bool knock {false};
 };

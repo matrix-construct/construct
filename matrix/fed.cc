@@ -835,7 +835,8 @@ ircd::m::fed::send_join::send_join(const room::id &room_id,
 		thread_local char ridbuf[768], uidbuf[768];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			buf, "/_matrix/federation/v1/send_join/%s/%s",
+			buf, "/_matrix/federation/v1/send_%s/%s/%s",
+			opts.knock? "knock"_sv: "join"_sv,
 			url::encode(ridbuf, room_id),
 			url::encode(uidbuf, event_id)
 		};
@@ -883,7 +884,7 @@ ircd::m::fed::make_join::make_join(const room::id &room_id,
 		thread_local char ridbuf[768], uidbuf[768];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			buf, "/_matrix/federation/v1/make_join/%s/%s"
+			buf, "/_matrix/federation/v1/make_%s/%s/%s"
 			"?ver=1"
 			"&ver=2"
 			"&ver=3"
@@ -901,6 +902,7 @@ ircd::m::fed::make_join::make_join(const room::id &room_id,
 			"&ver=15"
 			"&ver=16"
 			"&ver=org.matrix.msc2432"
+			,opts.knock? "knock"_sv: "join"_sv
 			,url::encode(ridbuf, room_id)
 			,url::encode(uidbuf, user_id)
 		};

@@ -19,6 +19,8 @@ namespace ircd::m::fed
 struct ircd::m::fed::make_join
 :request
 {
+	struct opts;
+
 	explicit operator json::object() const
 	{
 		return json::object
@@ -33,4 +35,10 @@ struct ircd::m::fed::make_join
 	          opts);
 
 	make_join() = default;
+};
+
+struct ircd::m::fed::make_join::opts
+:request::opts
+{
+	bool knock {false};
 };
