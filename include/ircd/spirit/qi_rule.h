@@ -11,6 +11,7 @@
 #pragma once
 #define HAVE_IRCD_SPIRIT_QI_RULE_H
 
+#if defined(__clang__)
 /// Custom reimplementation/interposition of the qi::rule template by
 /// specializing the `const char *` iterator, which is common to our parsers.
 ///
@@ -330,3 +331,5 @@ const
 
 	return ret;
 }
+
+#endif defined(__clang__)

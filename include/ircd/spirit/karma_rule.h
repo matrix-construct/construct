@@ -11,6 +11,7 @@
 #pragma once
 #define HAVE_IRCD_SPIRIT_KARMA_RULE_H
 
+#if defined(__clang__)
 /// Custom reimplementation/interposition of the qi::rule template by
 /// specializing the `char *` iterator, which is common to our generators.
 ///
@@ -268,3 +269,5 @@ const
 
 	return ret;
 }
+
+#endif defined(__clang__)
