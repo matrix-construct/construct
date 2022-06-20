@@ -11,89 +11,71 @@
 #pragma once
 #define HAVE_IRCD_GPT_CTRL_H
 
-/// Epoch Precision Interrupt Controller
-///
-struct ircd_gpt_ctrl_epic
-{
-	/// Accumulates the number of task cycles. The cycle counter is incremented
-	/// by device software after each repetition of the kernel pipeline to
-	/// produce one additional token.
-	ulong cycle;
-
-	/// Accumulates the epoch count for the task. The counter is incremented
-	/// by one in device software before control returns back to the host.
-	/// Several cycles may occur during each epoch.
-	ulong epoch;
-
-	/// Accumulates the training epoch count for the task. The counter is
-	/// incremented by one in device software for each backward propagation.
-	ulong step;
-
-	/// Updated by the host with the value of the timestamp register as sampled
-	/// immediately before each transfer of control to the device.
-	ulong host_tsc;
-
-	/// Accumulates time in microseconds elapsed for the task.
-	ulong elapsed;
-};
-
-/// Token Context Buffer (Control Block)
-///
-struct ircd_gpt_ctrl_tokens
-{
-	/// Token ring head. Tokens in the ring extend behind the head for
-	/// `tokens`. The `head` value is automatically modulated by device
-	/// software to wrap around the ring.
-	uint head;
-
-	/// Token counter. The counter indicates the number of valid tokens in
-	/// the context buffer. This value must not exceed the buffer size.
-	uint count;
-
-	/// Accumulates the number of tokens produced by the task. Several tokens
-	/// may be produced each epoch, but currently only one token is produced
-	/// each cycle.
-	ulong produced;
-
-	/// Accumulates the number tokens witnessed by the task. The number of
-	/// tokens in the context for each cycle is counted as witnessed.
-	ulong witnessed;
-};
-
-/// Target label register (abridged)
-///
+/// Result logit control block.
 struct ircd_gpt_ctrl_logit
 {
 	/// Vocabulary token.
 	ushort token;
 
 	/// Padding #0.
-	ushort _pad0;
+	ushort flag;
 
 	/// Result logit softmax probability.
 	float samax;
 };
 
-/// Target label register (full)
-///
+/// Target label control block. Results for each target are registered
+/// and state is updated each cycle.
 struct ircd_gpt_ctrl_label
 {
-	/// Vocabulary token.
-	ushort token;
-
-	/// Padding #0.
-	ushort _pad0;
-
-	/// Result logit softmax probability.
-	float samax;
+	/// Logit descriptor
+	struct ircd_gpt_ctrl_logit logit;
 
 	/// Loss state
 	struct ircd_math_mean loss;
 
 	/// Perplexity state
-	struct ircd_math_mean perp;
-}
-__attribute__((aligned(64)));
+	struct ircd_math_mean ppl;
+};
+
+/// Master clock
+struct ircd_gpt_ctrl_clk
+{
+	/// Master clock. The cycle count is incremented by one in device software
+	/// after each repetition of the kernels producing one additional token.
+	/// The cycle count resets to zero before the beginning of each sample.
+	uint cycle;
+
+	/// Master clock. Sample consists of one or more cycles; sample count is
+	/// incremented by one in device software after every accept condition,
+	/// growing monotonically for the `step`; resets to zero each `step`.
+	uint samp;
+
+	/// Master clock. Step (or timestep) consists of one or more samples. Step
+	/// count is incremented by one in device software after each backward
+	/// propagation. Step grows monotonically even across epochs.
+	uint step;
+
+	/// Master clock. Epoch consists of one or more steps; epoch count is
+	/// incremented by one after every backward propagation.
+	uint epoch;
+};
+
+/// Profiling block
+struct ircd_gpt_ctrl_prof
+{
+	/// Host timestamp sampled at last control page transfer to the device.
+	ulong released;
+
+	/// Host timestamp sampled when this control page accquired by the host.
+	ulong acquired;
+
+	/// Device timestamp at beginning of cycle.
+	ulong entered;
+
+	/// Device timestamp at end of cycle.
+	ulong finished;
+};
 
 /// Task Control Page
 ///
@@ -104,50 +86,94 @@ __attribute__((aligned(64)));
 ///
 struct ircd_gpt_ctrl
 {
-	/// Epoch counting & interrupt control block.
-	struct ircd_gpt_ctrl_epic epic;
+	/// Accept register. If >= 0 the cycle produced a token which satisfies the
+	/// indicated accept condition.
+	int accept;
 
-	/// Token context control block. Contains state for the token context
-	/// buffer; the buffer with the tokens themselves is elsewhere.
-	struct ircd_gpt_ctrl_tokens tokens;
+	/// Dispatch register. Device software wishes additional cycles to be
+	/// commanded by the host. Effectively minimum distance until next accept.
+	uint dispatch;
 
-	/// Top result summary from the softed result logit softmax vector. This
-	/// is updated each cycle by device software with extended statistics on
-	/// the top N results.
-	struct ircd_gpt_ctrl_logit top[16];
+	/// Token counter. The counter indicates the number of valid tokens in
+	/// the context buffer. This value must not exceed the opts.buffer_size.
+	/// This value should not exceed the opts.context_size at least for now.
+	uint count;
 
-	/// Target label control block. Results for each target are registered
-	/// and state is updated each cycle.
-	struct ircd_gpt_ctrl_label label[4];
+	/// Token counter. The counter indicates the number of valid tokens in
+	/// the context buffer. This value must not exceed the opts.buffer_size.
+	/// This value should not exceed the opts.context_size at least for now.
+	uint tokens;
 
-	/// Result logit vector softmax internal state.
-	struct ircd_math_samax samax;
+	/// Master clock.
+	struct ircd_gpt_ctrl_clk clk;
+
+	/// Profiling related.
+	struct ircd_gpt_ctrl_prof prof;
 
 	/// PRNG xoshiro256 internal state (note: see opts.h to seed the prng).
 	ulong rand[4];
 
-	/// Perform backprop TODO: XXX
-	bool prop;
+	/// Top result summary from the softed result logit softmax vector. This
+	/// is updated each cycle by device software with extended statistics on
+	/// the top N results.
+	struct ircd_gpt_ctrl_logit top[16] __attribute__((aligned(8)));
 
-	/// Header magic 0xC7012C70
-	uint magic;
+	/// User label control block. Results for each target are registered
+	/// and state is updated each cycle; averaged for each step.
+	struct ircd_gpt_ctrl_label label[14] __attribute__((aligned(64)));
 
-	/// The token buffer starts at offset 2048 and continues to the end of
-	/// the page; options specify the size of the tokens buffer in tokens.
-	/// Additional pages must be attached for larger buffer sizes.
-	ushort token[] __attribute__((aligned(2048)));
+	/// Target result label; traces training token.
+	struct ircd_gpt_ctrl_label target __attribute__((aligned(64)));
+
+	/// Selected result token label.
+	struct ircd_gpt_ctrl_label select __attribute__((aligned(64)));
+
+	/// Incremented when the target is the selected token.
+	uint hit, miss;
+
+	/// Attention summary; [layer][head] => [token]. Each value points to a
+	/// position in the token buffer. The top-scoring softmax result for each
+	/// head in each layer is attending to the token.at(value) for this cycle.
+	/// These values are completely updated every cycle.
+	ushort attn[12][12];
+
+	/// Header magic: host sets 0xDEADBEEF before release to device; device
+	/// sets 0xC7012C7012 before release to host.
+	ulong magic;
+
+	/// Token buffer
+	ushort token[1024] __attribute__((aligned(2048)));
 }
 __attribute__((aligned(4096)));
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 namespace ircd::gpt
 {
 	using ctrl = struct ircd_gpt_ctrl;
+	using ctrl_clk = struct ircd_gpt_ctrl_clk;
+	using ctrl_prof = struct ircd_gpt_ctrl_prof;
+	using ctrl_logit = struct ircd_gpt_ctrl_logit;
+	using ctrl_label = struct ircd_gpt_ctrl_label;
+
+	string_view debug_token_at(const mutable_buffer &, const opts &, const ctrl &, const uint, const uint fmt = -1U);
+	string_view debug_token(const mutable_buffer &, const opts &, const ctrl &, const uint fmt = -1U);
+	string_view debug_head(const mutable_buffer &, const opts &, const ctrl_clk &);
+	string_view debug_head(const mutable_buffer &, const opts &, const ctrl &);
+	string_view debug(const mutable_buffer &, const opts &, const ctrl_logit &, const uint fmt = 0);
+	string_view debug(const mutable_buffer &, const opts &, const ctrl_label &, const uint fmt = 0);
+	string_view debug(const mutable_buffer &, const opts &, const ctrl &);
+
+	string_view debug_attn(const mutable_buffer &, const opts &, const ctrl &, const uint);
+	string_view debug_label(const mutable_buffer &, const opts &, const ctrl &, const uint, const uint fmt = 0);
+	string_view debug_top(const mutable_buffer &, const opts &, const ctrl &, const uint);
 }
 #endif
 
-#ifdef __cplusplus
-static_assert(sizeof(struct ircd_gpt_ctrl) == 4096);
+#if defined(__cplusplus)
+static_assert(sizeof(struct ircd_gpt_ctrl) % 4096 == 0);
+#endif
+
+#if defined(__cplusplus) && defined(__GLIBCXX__)
 static_assert(offsetof(struct ircd_gpt_ctrl, token) == 2048);
 static_assert(std::is_standard_layout<struct ircd_gpt_ctrl>::value);
 #endif

@@ -13,21 +13,21 @@
 
 namespace ircd::gpt::pipe
 {
-	struct model;
 	struct code;
+	struct model;
 	struct desc;
-	struct exec;
+	struct range;
+	struct cycle;
+	struct prof;
 
-	extern model *default_model;
-	extern code *default_code;
-	extern desc *default_desc;
-
-	void generate(task &);
+	extern conf::item<size_t> queue_cycles;
 
 	void init(), fini() noexcept;
 };
 
-#include "model.h"
 #include "code.h"
+#include "model.h"
 #include "desc.h"
-#include "exec.h"
+#include "range.h"
+#include "cycle.h"
+#include "prof.h"

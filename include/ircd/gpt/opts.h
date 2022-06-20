@@ -11,6 +11,13 @@
 #pragma once
 #define HAVE_IRCD_GPT_OPTS_H
 
+#if defined(__cplusplus)
+namespace ircd::gpt::model
+{
+	struct decoder;
+}
+#endif
+
 /// Task Options Page
 ///
 /// The option block is directly shared with task software as constant data.
@@ -20,30 +27,23 @@
 ///
 struct ircd_gpt_opts
 {
-	#ifdef __cplusplus
-	ircd_gpt_opts(const ircd::gpt::model::decoder * = nullptr) noexcept;
+	#if defined(__cplusplus)
+	ircd_gpt_opts() noexcept;
 	#endif
 
-	/// Reference to the model (currently not available in device software).
-	#ifndef __cplusplus
-	const void *model;
-	#else
-	const ircd::gpt::model::decoder *model;
-	#endif
+	//
+	// Frontside
+	//
 
 	/// Seed for the task's PRNG.
 	ulong seed;
-
-	/// Limit number of output tokens. Default of -1 is unlimited; the number
-	/// of tokens generated will be limited by other factors.
-	uint limit;
 
 	/// Flip random coins over the top k logits each round. Setting to 1
 	/// deterministically selects the top logit.
 	uint top_k;
 
 	/// Flip a random coin between 0 and top_p ( = 90 = 0.9) for logit select.
-	uint top_p;
+	float top_p;
 
 	/// Registers the top n result logits in the ctrl block each cycle.
 	uint top_n;
@@ -51,59 +51,25 @@ struct ircd_gpt_opts
 	/// Number of target labels to register results for in the ctrl block.
 	uint labels;
 
-	/// Bitbar toggling various debug modes
+	/// Number of pages available after the control block for the frame log.
+	uint frames;
+
+	/// Limit number of output tokens. Default of -1; other halting conditions
+	/// will be used.
+	uint limit;
+
+	/// Bitbar toggling various debug modes.
 	uint debug;
 
-	/// Specifies the token context size in tokens.
-	uint context_tokens;
+	/// Accepting condition codes.
+	ushort accept[4][8] __attribute__((aligned(4)));
 
-	/// Specifies the token buffer size in tokens.
-	uint buffer_tokens;
+	//
+	// Backside
+	//
 
-	/// Decoding layers.
-	uint layers;
-
-	/// SIMD lane count.
-	uint lanes;
-
-	/// Embedding vector elements
-	uint embed_elems;
-
-	/// Cross-attention dimension
-	uint attn_rank;
-
-	/// Attention unit fcon width multiple
-	uint attn_mult;
-
-	/// (computed) MLP unit fcon width multiple
-	uint ffnn_mult;
-
-	/// (computed) attention unit width multiple
-	uint attn_elems;
-
-	/// FFNN unit width multiple
-	uint ffnn_elems;
-
-	/// SIMD lane count
-	uint lanes;
-
-	/// (computed) `embed_elems` / `lanes`
-	uint embed_width;
-
-	/// (computed) Attention unit X dimension
-	uint attn_width;
-
-	/// (computed) Attention unit Y dimension
-	uint attn_height;
-
-	/// (computed) MLP backend X dimension
-	uint ffnn_width;
-
-	/// (computed) MLP backend Y dimension
-	uint ffnn_height;
-
-	/// Number of possible target n-grams.
-	uint logits;
+	/// Samples per step.
+	uint batch_size;
 
 	/// Training steps
 	uint training_steps;
@@ -122,15 +88,90 @@ struct ircd_gpt_opts
 
 	/// Denorm smoothing
 	float epsilon;
+
+	/// Tuning convergence rate
+	float lambda;
+
+	//
+	// Model dimensions
+	//
+
+	/// Number of possible target n-grams.
+	uint logits;
+
+	/// Specifies the token buffer size in tokens.
+	uint buffer_tokens;
+
+	/// Specifies the token context size in tokens.
+	uint context_tokens;
+
+	/// Decoding layers.
+	uint layers;
+
+	/// SIMD lane count.
+	uint lanes;
+
+	/// Embedding vector elements
+	uint embed_elems;
+
+	/// (computed) `embed_elems` / `lanes`
+	uint embed_width;
+
+	/// Cross-attention dimension
+	uint attn_rank;
+
+	/// Attention unit fcon width multiple
+	uint attn_mult;
+
+	/// (computed) attention unit width multiple
+	uint attn_elems;
+
+	/// (computed) Attention unit X dimension
+	uint attn_fcon_width;
+
+	/// (computed) Attention unit Y dimension
+	uint attn_fcon_height;
+
+	/// (computed) Attention unit X dimension
+	uint attn_proj_width;
+
+	/// (computed) Attention unit Y dimension
+	uint attn_proj_height;
+
+	/// (computed) Packed attention array total element count
+	uint attn_self_elems;
+
+	/// MLP unit fcon width multiple
+	uint ffnn_mult;
+
+	/// (computed) FFNN unit width multiple
+	uint ffnn_elems;
+
+	/// (computed) MLP backend X dimension
+	uint ffnn_fcon_width;
+
+	/// (computed) MLP backend Y dimension
+	uint ffnn_fcon_height;
+
+	/// (computed) MLP backend X dimension
+	uint ffnn_proj_width;
+
+	/// (computed) MLP backend Y dimension
+	uint ffnn_proj_height;
 }
 __attribute__((aligned(4096)));
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 namespace ircd::gpt
 {
 	using opts = ::ircd_gpt_opts;
 }
+#endif
 
+#if defined(__cplusplus)
 static_assert(sizeof(struct ircd_gpt_opts) == 4096);
+#endif
+
+#if defined(__cplusplus) && defined(__GLIBCXX__)
 static_assert(std::is_standard_layout<struct ircd_gpt_opts>::value);
 #endif

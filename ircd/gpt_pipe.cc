@@ -10,15 +10,9 @@
 
 namespace ircd::gpt::pipe
 {
-	static void profile_dumplog(pipe::exec &);
+	static void profile_dumplog(pipe::cycle &);
 
-	extern conf::item<size_t> queue_cycles;
 	extern const ircd::run::changed handle_quit;
-
-	static ircd::cl::exec::opts
-	send_opts_opts, send_ctrl_opts, send_coil_opts, send_head_opts,
-	anode_opts, negative_opts, positive_opts, cathode_opts,
-	lmhead_opts, lmamax_opts, backprop_opts, recv_ctrl_opts;
 }
 
 decltype(ircd::gpt::pipe::queue_cycles)
@@ -28,62 +22,19 @@ ircd::gpt::pipe::queue_cycles
 	{ "default",  1L,                   },
 };
 
-decltype(ircd::gpt::pipe::default_model)
-ircd::gpt::pipe::default_model;
-
-decltype(ircd::gpt::pipe::default_code)
-ircd::gpt::pipe::default_code;
-
-decltype(ircd::gpt::pipe::default_desc)
-ircd::gpt::pipe::default_desc;
-
 decltype(ircd::gpt::pipe::handle_quit)
 ircd::gpt::pipe::handle_quit
 {
 	run::level::QUIT, pipe::fini
 };
 
+[[gnu::visibility("hidden")]]
 void
 ircd::gpt::pipe::init()
 {
-	const gpt::model::decoder &default_model
-	{
-		*gpt::model::default_model
-	};
-
-	assert(!pipe::default_model);
-	pipe::default_model = new pipe::model
-	{
-		default_model, default_model.word
-	};
-
-	pipe::default_code = new pipe::code
-	{
-
-	};
-
-	pipe::default_desc = new pipe::desc
-	{
-		*pipe::default_code, *pipe::default_model
-	};
-
-	//XXX
-	send_ctrl_opts.flush = true;
-	send_ctrl_opts.nice = 1;
-	lmamax_opts.flush = true;
-	lmamax_opts.nice = 2;
-	recv_ctrl_opts.flush = true;
-
-	log::debug
-	{
-		log, "Pipe initialized from model:%p data:%p code:%p desc:%p",
-		&default_model,
-		pipe::default_model,
-		pipe::default_code,
-		pipe::default_desc,
-	};
 }
 
+[[using gnu: cold, visibility("hidden")]]
 void
 ircd::gpt::pipe::fini()
 noexcept
@@ -101,372 +52,409 @@ noexcept
 		};
 
 	cl::sync();
-
-	delete default_desc;   default_desc = nullptr;
-	delete default_code;   default_code = nullptr;
-	delete default_model;  default_model = nullptr;
+	ctx::yield();
 }
 
 //
-// pipe
+// pipe::prof
 //
 
-void
-ircd::gpt::pipe::generate(task &task)
+ircd::string_view
+ircd::gpt::pipe::debug(const mutable_buffer &buf,
+                       const prof &p)
 {
-	assert(pipe::default_model);
-
-	assert(task.opts);
-	const auto &opts
-	{
-		*task.opts
-	};
-
-	assert(task.ctrl);
-	auto &ctrl
-	{
-		*task.ctrl
-	};
-
-	ctrl.epic.cycle = 0;
-	ctrl.epic.host_tsc = prof::cycles();
-
-	const auto tokens(ctrl.tokens.count);
-	const auto epoch(ctrl.epic.epoch);
-	volatile auto cycle(ctrl.epic.cycle);
-
-	std::deque<pipe::exec> list;
-	for(; cycle < opts.limit; ++cycle)
-	{
-		// When the release/acquire bits are set the control pages are sent
-		// and received; only set on first and last iterations of this loop.
-		const bool
-		rel(cycle == 0),
-		acq(cycle + 1 >= opts.limit || ctx::interruption_requested());
-
-		// Enqueue the cycle's commands
-		list.emplace_back
-		(
-			task, tokens + cycle, rel, acq
-		);
-
-		if(ctx::interruption_requested())
-			if(acq || termination(ctx::cur()))
-				break;
-
-		// Enqueue consecutive repetitions of our kernel batch before waiting
-		// on the first; based on the configuration. XXX get from ircd::cl
-		if(list.size() <= pipe::queue_cycles)
-			continue;
-
-		// Profiling branch
-		if((false))
+	window_buffer window(buf);
+	for(uint i(0); i < p.stages; ++i)
+		window([&p, &i](auto buf)
 		{
-			auto &ex(list.front());
-			profile_dumplog(ex);
-		}
+			size_t ret(0);
+			ret += consume(buf, size(debug(buf, p, i)));
+			ret += consume(buf, copy(buf, '\n'));
+			return ret;
+		});
 
-		// Destructing the front of the queue waits for completion by yielding
-		// this ircd::ctx.
-		list.pop_front();
-	}
-
-	// Wait for all unfinished
-	list.clear();
-
-	assert(ctrl.magic == 0xC7012C70);
-	assert(ctrl.epic.cycle == cycle || ctx::interruption_requested());
-	this_ctx::interruption_point();
+	return window.completed();
 }
 
-void
-ircd::gpt::pipe::profile_dumplog(pipe::exec &exec)
+ircd::string_view
+ircd::gpt::pipe::debug(const mutable_buffer &buf,
+                       const prof &p,
+                       const size_t &i)
 {
-	constexpr size_t coils
+	using phase = prof::phase;
+
+	assert(i < p.info.size());
+	assert(i < p.ts.size());
+
+	char tbuf[4][32];
+	return fmt::sprintf
 	{
-		sizeof(exec.coil) / sizeof(cl::exec)
+		buf, "%-20s %04x [ %10s %10s %10s %10s ]",
+		std::get<0>(p.info[i]),
+		std::get<1>(p.info[i]),
+		pretty(tbuf[0], p.ts[i][phase::QUEUE], 1),
+		pretty(tbuf[1], p.ts[i][phase::SUBMIT], 1),
+		pretty(tbuf[2], p.ts[i][phase::START], 1),
+		pretty(tbuf[3], p.ts[i][phase::END], 1),
 	};
+}
 
-	for(size_t i(0); i < coils; ++i)
+//
+// prof::prof
+//
+
+decltype(ircd::gpt::pipe::prof::info)
+ircd::gpt::pipe::prof::info;
+
+decltype(ircd::gpt::pipe::prof::name)
+ircd::gpt::pipe::prof::name;
+
+[[gnu::visibility("hidden")]]
+decltype(ircd::gpt::pipe::prof::init)
+ircd::gpt::pipe::prof::init;
+
+ircd::gpt::pipe::prof::prof()
+noexcept
+{
+	for(uint i(0); i < stages; ++i)
+		for(uint j(0); j < phases; ++j)
+			ts[i][j] = 0ns;
+}
+
+ircd::gpt::pipe::prof::prof(const cycle &c)
+{
+	if(!std::exchange(init, true))
+		init_info(c);
+
+	if(!cl::profile_queue)
+		return;
+
+	for(uint i(0); i < stages; ++i)
 	{
-		exec.coil[i].wait();
-		const auto &pro
+		const cl::work::prof p
 		{
-			exec.coil[i].profile()
+			c.stage[i]
 		};
 
-		char tmbuf[4][32] {{0}};
-		log::logf
-		{
-			log, log::level::DEBUG,
-			"coil:%-2lu %8s %8s %8s %8s",
-			i,
-			util::pretty(tmbuf[0], si(pro[0]), 1),
-			util::pretty(tmbuf[1], si(pro[1]), 1),
-			util::pretty(tmbuf[2], si(pro[2]), 1),
-			util::pretty(tmbuf[3], si(pro[3]), 1),
-		};
+		ts[i][phase::QUEUE] = p[phase::SUBMIT] - p[phase::QUEUE];
+		ts[i][phase::SUBMIT] = p[phase::START] - p[phase::SUBMIT];
+		ts[i][phase::START] = p[phase::END] - p[phase::START];
+		ts[i][phase::END] = p[phase::END] - p[phase::QUEUE];
 	}
 }
 
+[[gnu::visibility("hidden")]]
+void
+ircd::gpt::pipe::prof::init_info(const cycle &c)
+{
+	static_assert
+	(
+		name.size() >= stages
+	);
+
+	for(uint i(0); i < stages; ++i)
+		info[i] = info_type
+		{
+			c.stage[i].name(name[i]),
+			c.stage[i].type(),
+		};
+}
+
+///////////////////////////////////////////////////////////////////////////////
 //
-// pipe::exec
+// pipe::cycle
 //
 
-ircd::gpt::pipe::exec::exec(task &task,
-                            const size_t tokens,
-                            const bool release,
-                            const bool acquire)
+const ircd::gpt::ctrl &
+ircd::gpt::pipe::acquire(cycle &cycle)
+{
+	// Some tail stages may not be active each cycle
+	const auto last_exec
+	{
+		std::find_if(std::rbegin(cycle.stage), std::rend(cycle.stage), []
+		(const auto &work)
+		{
+			return work.handle;
+		})
+	};
+
+	assert(last_exec != std::rend(cycle.stage));
+	last_exec->wait();
+
+	const auto ctrl
+	{
+		reinterpret_cast<const gpt::ctrl *>(cycle.desc.frame[cycle.frame].ptr())
+	};
+
+	assert(ctrl);
+	assert(ctrl->magic != 0xDEADBEEF);
+	assert(ctrl->magic == 0xC7012C70UL);
+	return *ctrl;
+}
+
+//
+// pipe::cycle::cycle
+//
+
+ircd::gpt::pipe::cycle::cycle(gpt::samp &samp)
 :desc
 {
-	default_desc
+	samp.desc
 }
-,send_opts
+,tick
 {
-	reinterpret_cast<const char *>(task.opts),
-	release?
-		sizeof(gpt::opts):
-		0
+	samp.cycle
 }
-,send_ctrl
+,count
 {
-	reinterpret_cast<const char *>(task.ctrl),
-	release?
-		sizeof(gpt::ctrl):
-		0
+	samp.count
 }
-,send_coil
+,tokens
 {
-	reinterpret_cast<const char *>(gpt::model::default_model),
-	release && desc->model->invalid?
-		(sizeof(gpt::model::block) * 12 + sizeof(gpt::model::norm)):
-		0
+	samp.tokens
 }
-,send_head
+,cached
 {
-	reinterpret_cast<const char *>(&gpt::model::default_model->word),
-	release && desc->model->invalid?
-		sizeof(gpt::model::embed):
-		0
+	desc.cached
 }
-,recv_ctrl
+,frame
 {
-	reinterpret_cast<char *>(task.ctrl),
-	acquire?
-		sizeof(gpt::ctrl):
-		0
+	tick % samp.opts.frames
 }
-,range_full
+,range
 {
-	{ tokens * 192UL, 0, },
-	{          192UL, 0, },
+	tick,
+	count,
+	tokens,
+	cached,
+	true,
+	false,
 }
-,range_last
+,stage
+{
+	cl::exec // data
+	{
+		desc.opts, std::memory_order_release
+	},
+	cl::exec // data
+	{
+		desc.ctrl, std::memory_order_release
+	},
+	cl::exec // data
+	{
+		desc.frame[frame], std::memory_order_release
+	},
+	cl::exec // data
+	{
+		desc.model->decode->master[0], std::memory_order_release
+	},
+	cl::exec // Initial kernel
+	{
+		desc.alloc, range.alloc,
+	},
+	cl::exec // Initial cycle kernel
+	{
+		desc.enter, range.embed,
+	},
+	cl::exec // Compute token and positional embeddings.
+	{
+		desc.lm_embed, range.embed,
+	},
+	// Forward Pass
+	cl::exec { desc.layer[0x00]->attn, range.attn },
+	cl::exec { desc.layer[0x00]->ffnn, range.ffnn },
+	cl::exec { desc.layer[0x01]->attn, range.attn },
+	cl::exec { desc.layer[0x01]->ffnn, range.ffnn },
+	cl::exec { desc.layer[0x02]->attn, range.attn },
+	cl::exec { desc.layer[0x02]->ffnn, range.ffnn },
+	cl::exec { desc.layer[0x03]->attn, range.attn },
+	cl::exec { desc.layer[0x03]->ffnn, range.ffnn },
+	cl::exec { desc.layer[0x04]->attn, range.attn },
+	cl::exec { desc.layer[0x04]->ffnn, range.ffnn },
+	cl::exec { desc.layer[0x05]->attn, range.attn },
+	cl::exec { desc.layer[0x05]->ffnn, range.ffnn },
+	cl::exec { desc.layer[0x06]->attn, range.attn },
+	cl::exec { desc.layer[0x06]->ffnn, range.ffnn },
+	cl::exec { desc.layer[0x07]->attn, range.attn },
+	cl::exec { desc.layer[0x07]->ffnn, range.ffnn },
+	cl::exec { desc.layer[0x08]->attn, range.attn },
+	cl::exec { desc.layer[0x08]->ffnn, range.ffnn },
+	cl::exec { desc.layer[0x09]->attn, range.attn },
+	cl::exec { desc.layer[0x09]->ffnn, range.ffnn },
+	cl::exec { desc.layer[0x0a]->attn, range.attn },
+	cl::exec { desc.layer[0x0a]->ffnn, range.ffnn },
+	cl::exec { desc.layer[0x0b]->attn, range.attn },
+	cl::exec { desc.layer[0x0b]->ffnn, range.fffnn },
+	cl::exec // Final normalization.
+	{
+		desc.lm_norm, range.fnorm
+	},
+	cl::exec // Compute language logits.
+	{
+		desc.lm_logit, range.logit
+	},
+	cl::exec // Statistics on the logits.
+	{
+		desc.lm_logsm, range.logsm
+	},
+	cl::exec // Select next token.
+	{
+		desc.lm_select, range.select
+	},
+	cl::exec // Backpropagate
+	{
+		desc.lm_prop_embed, range.prop_embed
+	},
+	cl::exec // Backpropagate
+	{
+		desc.lm_prop_norm, range.prop_norm
+	},
+	// Backward Pass
+	cl::exec { desc.layer[0x0b]->prop_ffnn, range.prop_ffnn },
+	cl::exec { desc.layer[0x0b]->prop_attn, range.prop_attn },
+	cl::exec { desc.layer[0x0a]->prop_ffnn, range.prop_ffnn },
+	cl::exec { desc.layer[0x0a]->prop_attn, range.prop_attn },
+	cl::exec { desc.layer[0x09]->prop_ffnn, range.prop_ffnn },
+	cl::exec { desc.layer[0x09]->prop_attn, range.prop_attn },
+	cl::exec { desc.layer[0x08]->prop_ffnn, range.prop_ffnn },
+	cl::exec { desc.layer[0x08]->prop_attn, range.prop_attn },
+	cl::exec { desc.layer[0x07]->prop_ffnn, range.prop_ffnn },
+	cl::exec { desc.layer[0x07]->prop_attn, range.prop_attn },
+	cl::exec { desc.layer[0x06]->prop_ffnn, range.prop_ffnn },
+	cl::exec { desc.layer[0x06]->prop_attn, range.prop_attn },
+	cl::exec { desc.layer[0x05]->prop_ffnn, range.prop_ffnn },
+	cl::exec { desc.layer[0x05]->prop_attn, range.prop_attn },
+	cl::exec { desc.layer[0x04]->prop_ffnn, range.prop_ffnn },
+	cl::exec { desc.layer[0x04]->prop_attn, range.prop_attn },
+	cl::exec { desc.layer[0x03]->prop_ffnn, range.prop_ffnn },
+	cl::exec { desc.layer[0x03]->prop_attn, range.prop_attn },
+	cl::exec { desc.layer[0x02]->prop_ffnn, range.prop_ffnn },
+	cl::exec { desc.layer[0x02]->prop_attn, range.prop_attn },
+	cl::exec { desc.layer[0x01]->prop_ffnn, range.prop_ffnn },
+	cl::exec { desc.layer[0x01]->prop_attn, range.prop_attn },
+	cl::exec { desc.layer[0x00]->prop_ffnn, range.prop_ffnn },
+	cl::exec { desc.layer[0x00]->prop_attn, range.prop_attn },
+	cl::exec // Final kernel
+	{
+		desc.leave[frame], range.select
+	},
+}
+{
+}
+
+ircd::gpt::pipe::cycle::~cycle()
+noexcept
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// pipe::range
+//
+
+ircd::gpt::pipe::range::range(const uint tick,
+                              const uint count,
+                              const uint tokens,
+                              const uint cached,
+                              const bool fwd,
+                              const bool rev)
+noexcept
+:_full
+{
+	{ (tokens - cached) * 192UL, 0 },
+	{                     192UL, 0 },
+	{            cached * 192UL, 0 },
+}
+,_last
 {
 	{            1 * 192UL, 0 },
 	{                192UL, 0 },
-	{ (tokens - 1) * 192UL, 0 },
+	{  (count - 1) * 192UL, 0 },
 }
-,range_lm_embed
+,alloc
 {
-	release?
-		range_full:
-		range_last
+	{  (tick == 0) * 192UL, 0 },
+	{                192UL, 0 },
 }
-,range_negative
+,embed
 {
-	release?
-		range_full:
-		range_last
+	fwd?
+		_full:
+		cl::kern::range{},
 }
-,range_positive
+,attn
 {
-	release?
-		range_full:
-		range_last
+	fwd?
+		_full:
+		cl::kern::range{},
 }
-,range_lm_norm
+,ffnn
 {
-	range_last
+	fwd?
+		_full:
+		cl::kern::range{},
 }
-,range_lm_logit
+,fffnn
 {
-	{  786 * 64UL, 0 },  // align_up(50257) / 64
-	{        64UL, 0 },
+	fwd && tokens > count?
+		_full:
+	fwd?
+		_last:
+		cl::kern::range{},
 }
-,range_lm_logsm
+,fnorm
 {
-	{  1 * 256UL, 0 },
-	{      256UL, 0 },
+	fwd?
+		_last:
+		cl::kern::range{},
 }
-,range_lm_select
+,logit // TODO: align_up(50257) / 64|256
 {
-	{   1 * 256UL, 0 },
-	{       256UL, 0 },
+	{ int(fwd) * 50432UL, 0 },
+	{                64L, 0 },
 }
-,release_opts
+,logsm
 {
-	desc->opts, send_opts, send_opts_opts,
+	{ int(fwd) * 1 * 256UL, 0 },
+	{                256UL, 0 },
 }
-,release_ctrl
+,select
 {
-	desc->ctrl, send_ctrl, send_ctrl_opts
+	{ int(fwd) * 1 * 256UL, 0 },
+	{                256UL, 0 },
 }
-,release_coil
+,prop_embed
 {
-	desc->model->decode->master[0], send_coil, send_coil_opts
+	{ int(rev) * 0 * 192UL, 0 },
+	{                192UL, 0 },
 }
-,release_head
+,prop_norm
 {
-	desc->model->embed->master[0], send_head, send_head_opts
+	{ int(rev) * 0 * 192UL, 0 },
+	{                192UL, 0 },
 }
-,lm_embed
+,prop_attn
 {
-	desc->lm_embed, range_lm_embed, anode_opts
+	{ int(rev) * 0 * 192UL, 0 },
+	{                192UL, 0 },
 }
-,coil
+,prop_ffnn
 {
-	{ desc->layer[0x00]->negative, range_negative, negative_opts },
-	{ desc->layer[0x00]->positive, range_positive, positive_opts },
-	{ desc->layer[0x01]->negative, range_negative, negative_opts },
-	{ desc->layer[0x01]->positive, range_positive, positive_opts },
-	{ desc->layer[0x02]->negative, range_negative, negative_opts },
-	{ desc->layer[0x02]->positive, range_positive, positive_opts },
-	{ desc->layer[0x03]->negative, range_negative, negative_opts },
-	{ desc->layer[0x03]->positive, range_positive, positive_opts },
-	{ desc->layer[0x04]->negative, range_negative, negative_opts },
-	{ desc->layer[0x04]->positive, range_positive, positive_opts },
-	{ desc->layer[0x05]->negative, range_negative, negative_opts },
-	{ desc->layer[0x05]->positive, range_positive, positive_opts },
-	{ desc->layer[0x06]->negative, range_negative, negative_opts },
-	{ desc->layer[0x06]->positive, range_positive, positive_opts },
-	{ desc->layer[0x07]->negative, range_negative, negative_opts },
-	{ desc->layer[0x07]->positive, range_positive, positive_opts },
-	{ desc->layer[0x08]->negative, range_negative, negative_opts },
-	{ desc->layer[0x08]->positive, range_positive, positive_opts },
-	{ desc->layer[0x09]->negative, range_negative, negative_opts },
-	{ desc->layer[0x09]->positive, range_positive, positive_opts },
-	{ desc->layer[0x0a]->negative, range_negative, negative_opts },
-	{ desc->layer[0x0a]->positive, range_positive, positive_opts },
-	{ desc->layer[0x0b]->negative, range_negative, negative_opts },
-	{ desc->layer[0x0b]->positive, range_positive, positive_opts },
+	{ int(rev) * 0 * 192UL, 0 },
+	{                192UL, 0 },
 }
-,lm_norm
-{
-	desc->lm_norm, range_lm_norm, cathode_opts
-}
-,lm_logit
-{
-	desc->lm_logit, range_lm_logit, lmhead_opts
-}
-,lm_logsm
-{
-	desc->lm_logsm, range_lm_logsm, lmhead_opts
-}
-,lm_select
-{
-	desc->lm_select, range_lm_select, lmamax_opts
-}
-,acquire_ctrl
-{
-	desc->ctrl, recv_ctrl, recv_ctrl_opts
-}
-{
-	if(release && desc->model->invalid)
-		desc->model->invalid = false;
-}
-
-ircd::gpt::pipe::exec::~exec()
-noexcept
 {
 }
 
-//
-// code
-//
-
-decltype(ircd::gpt::pipe::code::default_path)
-ircd::gpt::pipe::code::default_path
-{
-	{ "name",     "ircd.gpt.pipe.code.path" },
-};
-
-decltype(ircd::gpt::pipe::code::default_opts)
-ircd::gpt::pipe::code::default_opts
-{
-	{ "name",     "ircd.gpt.pipe.code.opts" },
-	{ "default",  string_view
-	{
-		" -cl-strict-aliasing"
-		" -cl-no-signed-zeros"
-		" -cl-finite-math-only"
-		" -cl-unsafe-math-optimizations"
-		" -cl-fast-relaxed-math"
-		" -cl-mad-enable"
-		" -cl-single-precision-constant"
-		//" -cl-fp32-correctly-rounded-divide-sqrt"
-
-		" -cl-kernel-arg-info"
-	}}
-};
-
-ircd::gpt::pipe::code::code()
-:cl::code{[]
-{
-	const string_view code_path
-	{
-		default_path
-	};
-
-	const fs::fd fd
-	{
-		code_path
-	};
-
-	const std::string read
-	{
-		fs::read(fd)
-	};
-
-	const string_view bin
-	{
-		read
-	};
-
-	const vector_view<const string_view> bins
-	(
-		&bin, 1
-	);
-
-	const auto opts
-	{
-		fmt::snstringf
-		{
-			4096, "%s -I%s",
-			string_view{default_opts},
-			string_view{fs::base::include},
-		}
-	};
-
-	return cl::code
-	{
-		bins, opts
-	};
-}()}
-{
-}
-
-ircd::gpt::pipe::code::~code()
-noexcept
-{
-}
-
+///////////////////////////////////////////////////////////////////////////////
 //
 // pipe::desc
 //
 
-ircd::gpt::pipe::desc::desc(pipe::code &code,
-                            pipe::model &model)
+ircd::gpt::pipe::desc::desc(const gpt::opts *const &opt,
+                            gpt::ctrl *const &ctrl_,
+                            pipe::model &model,
+                            pipe::code &code)
 :model
 {
 	&model
@@ -475,27 +463,44 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 {
 	&code
 }
-,state
+,opts
 {
-	0
-	+ 12 * 512 * 3 * 768 * sizeof(float),
-	mutable_buffer{},
+	const_buffer
+	{
+		reinterpret_cast<const char *>(opt),
+		sizeof(gpt::opts)
+	},
+}
+,ctrl
+{
+	const_buffer
+	{
+		reinterpret_cast<const char *>(ctrl_),
+		sizeof(gpt::ctrl)
+	},
 }
 ,master
 {
 	0
-	+ 512 * 768 * sizeof(float)
+	+ opt->layers * opt->context_tokens * opt->attn_elems * sizeof(float)
+	+ opt->context_tokens * opt->embed_elems * sizeof(float)
 	+ 65536 * sizeof(float)
-	+ 65536 * sizeof(float)
-	+ 65536 * sizeof(float)
-	,mutable_buffer{}
+	+ opt->layers * opt->attn_self_elems * sizeof(float)
+}
+,state
+{
+	master,
+	{
+		opt->layers * opt->context_tokens * opt->attn_elems * sizeof(float),
+		off_t(0),
+	}
 }
 ,accum
 {
 	master,
 	{
-		512 * 768 * sizeof(float),
-		off_t(0),
+		opt->context_tokens * opt->embed_elems * sizeof(float),
+		state.offset() + off_t(state.size()),
 	},
 }
 ,logit
@@ -506,23 +511,52 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 		accum.offset() + off_t(accum.size()),
 	},
 }
-,logsm
+,attns
 {
 	master,
 	{
-		65536 * sizeof(float),
-		logit.offset() + off_t(logit.size()),
-	},
+		opt->layers * opt->attn_self_elems * sizeof(float),
+		logit.offset() + off_t(logit.size())
+	}
 }
-,ctrl
+,frame
 {
-	sizeof(gpt::ctrl),
-	mutable_buffer{}
+	//             size, read, write, }, // idx
+	{ sizeof(gpt::ctrl), true, false, }, // 0
+	{ sizeof(gpt::ctrl), true, false, }, // 1
+	{ sizeof(gpt::ctrl), true, false, }, // 2
+	{ sizeof(gpt::ctrl), true, false, }, // 3
+	{ sizeof(gpt::ctrl), true, false, }, // 4
+	{ sizeof(gpt::ctrl), true, false, }, // 5
+	{ sizeof(gpt::ctrl), true, false, }, // 6
+	{ sizeof(gpt::ctrl), true, false, }, // 7
 }
-,opts
+,alloc
 {
-	sizeof(gpt::opts),
-	const_buffer{}
+	code,
+	"ircd_gpt_alloc",
+	model.decode->master[0],
+	master,
+	opts,
+	ctrl,
+	frame[0],
+	frame[1],
+	frame[2],
+	frame[3],
+	frame[4],
+	frame[5],
+	frame[6],
+	frame[7],
+}
+,enter
+{
+	code,
+	"ircd_gpt_enter",
+	model.decode->master[0],
+	state,
+	master,
+	opts,
+	ctrl,
 }
 ,lm_embed
 {
@@ -531,8 +565,8 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 	ctrl,
 	opts,
 	accum,
-	model.embed->pos.param,
-	model.embed->token.param,
+	model.decode->embed.pos.param,
+	model.decode->embed.token.param,
 }
 ,lm_norm
 {
@@ -541,8 +575,8 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 	ctrl,
 	opts,
 	accum,
-	model.decode->norm.bias.param,
-	model.decode->norm.weight.param,
+	model.decode->embed.norm.bias.param,
+	model.decode->embed.norm.weight.param,
 }
 ,lm_logit
 {
@@ -552,7 +586,8 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 	opts,
 	logit,
 	accum,
-	model.embed->token.param,
+	model.decode->embed.pos.param,
+	model.decode->embed.token.param,
 }
 ,lm_logsm
 {
@@ -560,7 +595,6 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 	"ircd_gpt_lm_logsm",
 	ctrl,
 	opts,
-	logsm,
 	logit,
 }
 ,lm_select
@@ -569,49 +603,132 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 	"ircd_gpt_lm_select",
 	ctrl,
 	opts,
-	logsm,
 	logit,
+	attns,
 }
-,lm_norm_backprop
-{
-	code,
-	"ircd_gpt_norm_prop",
-	ctrl,
-	opts,
-	model.decode->norm.bias.param,
-	model.decode->norm.bias.moment[0],
-	model.decode->norm.bias.moment[1],
-	model.decode->norm.weight.param,
-	model.decode->norm.weight.moment[0],
-	model.decode->norm.weight.moment[1],
-}
-,lm_embed_backprop
+,lm_prop_embed
 {
 	code,
 	"ircd_gpt_lm_embed_prop",
 	ctrl,
 	opts,
-	model.embed->pos.param,
-	model.embed->pos.moment[0],
-	model.embed->pos.moment[1],
-	model.embed->token.param,
-	model.embed->token.moment[0],
-	model.embed->token.moment[1],
+	model.decode->embed.pos.param,
+	model.decode->embed.pos.moment[0],
+	model.decode->embed.pos.moment[1],
+	model.decode->embed.token.param,
+	model.decode->embed.token.moment[0],
+	model.decode->embed.token.moment[1],
+}
+,lm_prop_norm
+{
+	code,
+	"ircd_gpt_norm_prop",
+	ctrl,
+	opts,
+	model.decode->embed.norm.bias.param,
+	model.decode->embed.norm.bias.moment[0],
+	model.decode->embed.norm.bias.moment[1],
+	model.decode->embed.norm.weight.param,
+	model.decode->embed.norm.weight.moment[0],
+	model.decode->embed.norm.weight.moment[1],
+}
+,leave
+{
+	{
+		code,
+		"ircd_gpt_leave",
+		model.decode->master[0],
+		state,
+		master,
+		opts,
+		ctrl,
+		frame[0],
+	},
+	{
+		code,
+		"ircd_gpt_leave",
+		model.decode->master[0],
+		state,
+		master,
+		opts,
+		ctrl,
+		frame[1],
+	},
+	{
+		code,
+		"ircd_gpt_leave",
+		model.decode->master[0],
+		state,
+		master,
+		opts,
+		ctrl,
+		frame[2],
+	},
+	{
+		code,
+		"ircd_gpt_leave",
+		model.decode->master[0],
+		state,
+		master,
+		opts,
+		ctrl,
+		frame[3],
+	},
+	{
+		code,
+		"ircd_gpt_leave",
+		model.decode->master[0],
+		state,
+		master,
+		opts,
+		ctrl,
+		frame[4],
+	},
+	{
+		code,
+		"ircd_gpt_leave",
+		model.decode->master[0],
+		state,
+		master,
+		opts,
+		ctrl,
+		frame[5],
+	},
+	{
+		code,
+		"ircd_gpt_leave",
+		model.decode->master[0],
+		state,
+		master,
+		opts,
+		ctrl,
+		frame[6],
+	},
+	{
+		code,
+		"ircd_gpt_leave",
+		model.decode->master[0],
+		state,
+		master,
+		opts,
+		ctrl,
+		frame[7],
+	},
 }
 ,layer
 {
-	std::make_unique<struct desc::layer>(*this, 0x00),
-	std::make_unique<struct desc::layer>(*this, 0x01),
-	std::make_unique<struct desc::layer>(*this, 0x02),
-	std::make_unique<struct desc::layer>(*this, 0x03),
-	std::make_unique<struct desc::layer>(*this, 0x04),
-	std::make_unique<struct desc::layer>(*this, 0x05),
-	std::make_unique<struct desc::layer>(*this, 0x06),
-	std::make_unique<struct desc::layer>(*this, 0x07),
-	std::make_unique<struct desc::layer>(*this, 0x08),
-	std::make_unique<struct desc::layer>(*this, 0x09),
-	std::make_unique<struct desc::layer>(*this, 0x0a),
-	std::make_unique<struct desc::layer>(*this, 0x0b),
+	std::make_unique<struct desc::layer>(*this, opt, 0x00),
+	std::make_unique<struct desc::layer>(*this, opt, 0x01),
+	std::make_unique<struct desc::layer>(*this, opt, 0x02),
+	std::make_unique<struct desc::layer>(*this, opt, 0x03),
+	std::make_unique<struct desc::layer>(*this, opt, 0x04),
+	std::make_unique<struct desc::layer>(*this, opt, 0x05),
+	std::make_unique<struct desc::layer>(*this, opt, 0x06),
+	std::make_unique<struct desc::layer>(*this, opt, 0x07),
+	std::make_unique<struct desc::layer>(*this, opt, 0x08),
+	std::make_unique<struct desc::layer>(*this, opt, 0x09),
+	std::make_unique<struct desc::layer>(*this, opt, 0x0a),
+	std::make_unique<struct desc::layer>(*this, opt, 0x0b),
 }
 {
 }
@@ -621,94 +738,106 @@ ircd::gpt::pipe::desc::desc(pipe::code &code,
 //
 
 ircd::gpt::pipe::desc::layer::layer(pipe::desc &desc,
-                                    const int laynum)
+                                    const gpt::opts *const &opts,
+                                    const uint laynum)
 :state
 {
 	desc.state,
 	{
-		512 * 3 * 768 * sizeof(float),
-		laynum * 512 * 3 * 768 * sizeof(float),
+		opts->context_tokens * opts->attn_elems * sizeof(float),
+		laynum * opts->context_tokens * opts->attn_elems * sizeof(float),
 	}
 }
-,negative
+,attns
+{
+	desc.attns,
+	{
+		opts->attn_self_elems * sizeof(float),
+		laynum * opts->attn_self_elems * sizeof(float),
+	}
+}
+,attn
 {
 	*desc.code,
 	"ircd_gpt_attn_fcon",
 	desc.ctrl,
 	desc.opts,
+	laynum,
 	state,
 	desc.accum,
-	desc.model->decode->block[laynum].attn.norm.bias.param,
-	desc.model->decode->block[laynum].attn.norm.weight.param,
-	desc.model->decode->block[laynum].attn.fcon.bias.param,
-	desc.model->decode->block[laynum].attn.fcon.weight.param,
+	desc.model->decode->layer[laynum].attn.norm.bias.param,
+	desc.model->decode->layer[laynum].attn.norm.weight.param,
+	desc.model->decode->layer[laynum].attn.fcon.bias.param,
+	desc.model->decode->layer[laynum].attn.fcon.weight.param,
 }
-,positive
+,ffnn
 {
 	*desc.code,
 	"ircd_gpt_coil",
 	desc.ctrl,
 	desc.opts,
+	laynum,
 	desc.accum,
+	attns,
 	state,
-	desc.model->decode->block[laynum].attn.proj.bias.param,
-	desc.model->decode->block[laynum].attn.proj.weight.param,
-	desc.model->decode->block[laynum].ffnn.norm.bias.param,
-	desc.model->decode->block[laynum].ffnn.norm.weight.param,
-	desc.model->decode->block[laynum].ffnn.fcon.bias.param,
-	desc.model->decode->block[laynum].ffnn.fcon.weight.param,
-	desc.model->decode->block[laynum].ffnn.proj.bias.param,
-	desc.model->decode->block[laynum].ffnn.proj.weight.param,
+	desc.model->decode->layer[laynum].attn.proj.bias.param,
+	desc.model->decode->layer[laynum].attn.proj.weight.param,
+	desc.model->decode->layer[laynum].ffnn.norm.bias.param,
+	desc.model->decode->layer[laynum].ffnn.norm.weight.param,
+	desc.model->decode->layer[laynum].ffnn.fcon.bias.param,
+	desc.model->decode->layer[laynum].ffnn.fcon.weight.param,
+	desc.model->decode->layer[laynum].ffnn.proj.bias.param,
+	desc.model->decode->layer[laynum].ffnn.proj.weight.param,
 }
-,backattn
+,prop_attn
 {
 	*desc.code,
 	"ircd_gpt_coil_prop_attn",
 	desc.ctrl,
 	desc.opts,
-	desc.model->decode->block[laynum].attn.norm.bias.param,
-	desc.model->decode->block[laynum].attn.norm.bias.moment[0],
-	desc.model->decode->block[laynum].attn.norm.bias.moment[1],
-	desc.model->decode->block[laynum].attn.norm.weight.param,
-	desc.model->decode->block[laynum].attn.norm.weight.moment[0],
-	desc.model->decode->block[laynum].attn.norm.weight.moment[1],
-	desc.model->decode->block[laynum].attn.fcon.bias.param,
-	desc.model->decode->block[laynum].attn.fcon.bias.moment[0],
-	desc.model->decode->block[laynum].attn.fcon.bias.moment[1],
-	desc.model->decode->block[laynum].attn.fcon.weight.param,
-	desc.model->decode->block[laynum].attn.fcon.weight.moment[0],
-	desc.model->decode->block[laynum].attn.fcon.weight.moment[1],
-	desc.model->decode->block[laynum].attn.proj.bias.param,
-	desc.model->decode->block[laynum].attn.proj.bias.moment[0],
-	desc.model->decode->block[laynum].attn.proj.bias.moment[1],
-	desc.model->decode->block[laynum].attn.proj.weight.param,
-	desc.model->decode->block[laynum].attn.proj.weight.moment[0],
-	desc.model->decode->block[laynum].attn.proj.weight.moment[1],
+	desc.model->decode->layer[laynum].attn.norm.bias.param,
+	desc.model->decode->layer[laynum].attn.norm.bias.moment[0],
+	desc.model->decode->layer[laynum].attn.norm.bias.moment[1],
+	desc.model->decode->layer[laynum].attn.norm.weight.param,
+	desc.model->decode->layer[laynum].attn.norm.weight.moment[0],
+	desc.model->decode->layer[laynum].attn.norm.weight.moment[1],
+	desc.model->decode->layer[laynum].attn.fcon.bias.param,
+	desc.model->decode->layer[laynum].attn.fcon.bias.moment[0],
+	desc.model->decode->layer[laynum].attn.fcon.bias.moment[1],
+	desc.model->decode->layer[laynum].attn.fcon.weight.param,
+	desc.model->decode->layer[laynum].attn.fcon.weight.moment[0],
+	desc.model->decode->layer[laynum].attn.fcon.weight.moment[1],
+	desc.model->decode->layer[laynum].attn.proj.bias.param,
+	desc.model->decode->layer[laynum].attn.proj.bias.moment[0],
+	desc.model->decode->layer[laynum].attn.proj.bias.moment[1],
+	desc.model->decode->layer[laynum].attn.proj.weight.param,
+	desc.model->decode->layer[laynum].attn.proj.weight.moment[0],
+	desc.model->decode->layer[laynum].attn.proj.weight.moment[1],
 }
-,backffnn
+,prop_ffnn
 {
 	*desc.code,
 	"ircd_gpt_coil_prop_ffnn",
 	desc.ctrl,
 	desc.opts,
-	desc.model->decode->block[laynum].ffnn.norm.bias.param,
-	desc.model->decode->block[laynum].ffnn.norm.bias.moment[0],
-	desc.model->decode->block[laynum].ffnn.norm.bias.moment[1],
-	desc.model->decode->block[laynum].ffnn.norm.weight.param,
-	desc.model->decode->block[laynum].ffnn.norm.weight.moment[0],
-	desc.model->decode->block[laynum].ffnn.norm.weight.moment[1],
-	desc.model->decode->block[laynum].ffnn.fcon.bias.param,
-	desc.model->decode->block[laynum].ffnn.fcon.bias.moment[0],
-	desc.model->decode->block[laynum].ffnn.fcon.bias.moment[1],
-	desc.model->decode->block[laynum].ffnn.fcon.weight.param,
-	desc.model->decode->block[laynum].ffnn.fcon.weight.moment[0],
-	desc.model->decode->block[laynum].ffnn.fcon.weight.moment[1],
-	desc.model->decode->block[laynum].ffnn.proj.bias.param,
-	desc.model->decode->block[laynum].ffnn.proj.bias.moment[0],
-	desc.model->decode->block[laynum].ffnn.proj.bias.moment[1],
-	desc.model->decode->block[laynum].ffnn.proj.weight.param,
-	desc.model->decode->block[laynum].ffnn.proj.weight.moment[0],
-	desc.model->decode->block[laynum].ffnn.proj.weight.moment[1],
+	desc.model->decode->layer[laynum].ffnn.norm.bias.param,
+	desc.model->decode->layer[laynum].ffnn.norm.bias.moment[0],
+	desc.model->decode->layer[laynum].ffnn.norm.bias.moment[1],
+	desc.model->decode->layer[laynum].ffnn.norm.weight.param,
+	desc.model->decode->layer[laynum].ffnn.norm.weight.moment[0],
+	desc.model->decode->layer[laynum].ffnn.norm.weight.moment[1],
+	desc.model->decode->layer[laynum].ffnn.fcon.bias.param,
+	desc.model->decode->layer[laynum].ffnn.fcon.bias.moment[0],
+	desc.model->decode->layer[laynum].ffnn.fcon.bias.moment[1],
+	desc.model->decode->layer[laynum].ffnn.fcon.weight.param,
+	desc.model->decode->layer[laynum].ffnn.fcon.weight.moment[0],
+	desc.model->decode->layer[laynum].ffnn.fcon.weight.moment[1],
+	desc.model->decode->layer[laynum].ffnn.proj.bias.param,
+	desc.model->decode->layer[laynum].ffnn.proj.bias.moment[0],
+	desc.model->decode->layer[laynum].ffnn.proj.bias.moment[1],
+	desc.model->decode->layer[laynum].ffnn.proj.weight.param,
+	desc.model->decode->layer[laynum].ffnn.proj.weight.moment[0],
+	desc.model->decode->layer[laynum].ffnn.proj.weight.moment[1],
 }
 {
 }
@@ -722,28 +851,30 @@ ircd::gpt::pipe::desc::layer::layer(pipe::desc &desc,
 // pipe::model::model
 //
 
-ircd::gpt::pipe::model::model(gpt::model::decoder &decoder,
-                              gpt::model::embed &embed)
-:decode
+ircd::gpt::pipe::model::model(gpt::model::decoder &decoder)
+:decode_const
+{
+	std::addressof(decoder)
+}
+,decode_mutable
+{
+	std::addressof(decoder)
+}
+,decode
 {
 	std::make_unique<model::decoder>(decoder)
-}
-,embed
-{
-	std::make_unique<model::language>(embed)
 }
 {
 }
 
-ircd::gpt::pipe::model::model(const gpt::model::decoder &decoder,
-                              const gpt::model::embed &embed)
-:decode
+ircd::gpt::pipe::model::model(const gpt::model::decoder &decoder)
+:decode_const
+{
+	std::addressof(decoder)
+}
+,decode
 {
 	std::make_unique<model::decoder>(decoder)
-}
-,embed
-{
-	std::make_unique<model::language>(embed)
 }
 {
 }
@@ -762,26 +893,30 @@ ircd::gpt::pipe::model::decoder::decoder(gpt::model::decoder &decoder)
 {
 	// params
 	{
-		sizeof(gpt::model::block) * 12 + sizeof(gpt::model::norm), mutable_buffer
+		mutable_buffer
 		{
-			reinterpret_cast<char *>(decoder.layer),
-			sizeof(decoder.layer) + sizeof(decoder.f)
+			reinterpret_cast<char *>(&decoder) + sizeof(gpt::model::decoder) * 0,
+			sizeof(gpt::model::decoder)
 		}
 	},
-
 	// first moment
 	{
-		sizeof(gpt::model::block) * 12 + sizeof(gpt::model::norm),
-		mutable_buffer{}
+		mutable_buffer
+		{
+			reinterpret_cast<char *>(&decoder) + sizeof(gpt::model::decoder) * 1,
+			sizeof(gpt::model::decoder)
+		}
 	},
-
 	// second moment
 	{
-		sizeof(gpt::model::block) * 12 + sizeof(gpt::model::norm),
-		mutable_buffer{}
+		mutable_buffer
+		{
+			reinterpret_cast<char *>(&decoder) + sizeof(gpt::model::decoder) * 2,
+			sizeof(gpt::model::decoder)
+		}
 	},
 }
-,block
+,layer
 {
 	{ master, sizeof(gpt::model::block) * 0x00, decoder.layer[0x00], 0x00, },
 	{ master, sizeof(gpt::model::block) * 0x01, decoder.layer[0x01], 0x01, },
@@ -796,12 +931,11 @@ ircd::gpt::pipe::model::decoder::decoder(gpt::model::decoder &decoder)
 	{ master, sizeof(gpt::model::block) * 0x0a, decoder.layer[0x0a], 0x0a, },
 	{ master, sizeof(gpt::model::block) * 0x0b, decoder.layer[0x0b], 0x0b, },
 }
-,norm
+,embed
 {
 	master,
-	off_t(sizeof(gpt::model::block) * 12),
-	mutable_buffer{decoder.f.bias},
-	mutable_buffer{decoder.f.weight},
+	off_t(offsetof(gpt::model::decoder, embed)),
+	decoder.embed,
 }
 {
 }
@@ -811,34 +945,33 @@ ircd::gpt::pipe::model::decoder::decoder(const gpt::model::decoder &decoder)
 {
 	// params
 	{
-		sizeof(gpt::model::block) * 12 + sizeof(gpt::model::norm), const_buffer
+		const_buffer
 		{
-			reinterpret_cast<const char *>(decoder.layer),
-			sizeof(decoder.layer) + sizeof(decoder.f)
+			reinterpret_cast<const char *>(&decoder),
+			sizeof(gpt::model::decoder)
 		}
 	},
 }
-,block
+,layer
 {
-	{ master, sizeof(gpt::model::block) * 0x00, decoder.layer[0x00], 0x00, },
-	{ master, sizeof(gpt::model::block) * 0x01, decoder.layer[0x01], 0x01, },
-	{ master, sizeof(gpt::model::block) * 0x02, decoder.layer[0x02], 0x02, },
-	{ master, sizeof(gpt::model::block) * 0x03, decoder.layer[0x03], 0x03, },
-	{ master, sizeof(gpt::model::block) * 0x04, decoder.layer[0x04], 0x04, },
-	{ master, sizeof(gpt::model::block) * 0x05, decoder.layer[0x05], 0x05, },
-	{ master, sizeof(gpt::model::block) * 0x06, decoder.layer[0x06], 0x06, },
-	{ master, sizeof(gpt::model::block) * 0x07, decoder.layer[0x07], 0x07, },
-	{ master, sizeof(gpt::model::block) * 0x08, decoder.layer[0x08], 0x08, },
-	{ master, sizeof(gpt::model::block) * 0x09, decoder.layer[0x09], 0x09, },
-	{ master, sizeof(gpt::model::block) * 0x0a, decoder.layer[0x0a], 0x0a, },
-	{ master, sizeof(gpt::model::block) * 0x0b, decoder.layer[0x0b], 0x0b, },
+	{ master, off_t(offsetof(gpt::model::decoder, layer[0x00])), decoder.layer[0x00], 0x00, },
+	{ master, off_t(offsetof(gpt::model::decoder, layer[0x01])), decoder.layer[0x01], 0x01, },
+	{ master, off_t(offsetof(gpt::model::decoder, layer[0x02])), decoder.layer[0x02], 0x02, },
+	{ master, off_t(offsetof(gpt::model::decoder, layer[0x03])), decoder.layer[0x03], 0x03, },
+	{ master, off_t(offsetof(gpt::model::decoder, layer[0x04])), decoder.layer[0x04], 0x04, },
+	{ master, off_t(offsetof(gpt::model::decoder, layer[0x05])), decoder.layer[0x05], 0x05, },
+	{ master, off_t(offsetof(gpt::model::decoder, layer[0x06])), decoder.layer[0x06], 0x06, },
+	{ master, off_t(offsetof(gpt::model::decoder, layer[0x07])), decoder.layer[0x07], 0x07, },
+	{ master, off_t(offsetof(gpt::model::decoder, layer[0x08])), decoder.layer[0x08], 0x08, },
+	{ master, off_t(offsetof(gpt::model::decoder, layer[0x09])), decoder.layer[0x09], 0x09, },
+	{ master, off_t(offsetof(gpt::model::decoder, layer[0x0a])), decoder.layer[0x0a], 0x0a, },
+	{ master, off_t(offsetof(gpt::model::decoder, layer[0x0b])), decoder.layer[0x0b], 0x0b, },
 }
-,norm
+,embed
 {
 	master,
-	off_t(sizeof(gpt::model::block) * 12),
-	const_buffer{decoder.f.bias},
-	const_buffer{decoder.f.weight},
+	off_t(offsetof(gpt::model::decoder, embed)),
+	decoder.embed,
 }
 {
 }
@@ -849,170 +982,64 @@ noexcept
 }
 
 //
-// pipe::model::language
+// pipe::model::embed
 //
 
-ircd::gpt::pipe::model::language::language(gpt::model::embed &embed)
-:master
+ircd::gpt::pipe::model::embed::embed(cl::data *const master,
+                                     const off_t offset,
+                                     gpt::model::embed &embed)
+:norm
 {
-	// params
-	{
-		sizeof(embed), mutable_buffer
-		{
-			reinterpret_cast<char *>(&embed),
-			sizeof(embed),
-		}
-	},
-
-	// first moment
-	{
-		sizeof(embed), mutable_buffer{},
-	},
-
-	// second moment
-	{
-		sizeof(embed), mutable_buffer{},
-	},
+	master,
+	offset + off_t(offsetof(gpt::model::embed, norm)) + off_t(offsetof(gpt::model::norm, bias)),
+	mutable_buffer{embed.norm.bias.elem},
+	offset + off_t(offsetof(gpt::model::embed, norm)) + off_t(offsetof(gpt::model::norm, weight)),
+	mutable_buffer{embed.norm.weight.elem},
 }
 ,pos
 {
-	master, 0, mutable_buffer{embed.pos}
+	master,
+	offset + off_t(offsetof(gpt::model::embed, pos)),
+	mutable_buffer{embed.pos}
 }
 ,token
 {
-	master, sizeof(embed.pos), mutable_buffer{embed.token}
+	master,
+	offset + off_t(offsetof(gpt::model::embed, token)),
+	mutable_buffer{embed.token}
 }
 {
 }
 
-ircd::gpt::pipe::model::language::language(const gpt::model::embed &embed)
-:master
+ircd::gpt::pipe::model::embed::embed(cl::data *const master,
+                                     const off_t offset,
+                                     const gpt::model::embed &embed)
+:norm
 {
-	{
-		sizeof(embed), const_buffer
-		{
-			reinterpret_cast<const char *>(&embed),
-			sizeof(embed),
-		}
-	},
+	master,
+	offset + off_t(offsetof(gpt::model::embed, norm)) + off_t(offsetof(gpt::model::norm, bias)),
+	const_buffer{embed.norm.bias.elem},
+	offset + off_t(offsetof(gpt::model::embed, norm)) + off_t(offsetof(gpt::model::norm, weight)),
+	const_buffer{embed.norm.weight.elem},
 }
 ,pos
 {
-	master, 0, const_buffer{embed.pos}
+	master,
+	offset + off_t(offsetof(gpt::model::embed, pos)),
+	const_buffer{embed.pos}
 }
 ,token
 {
-	master, sizeof(embed.pos), const_buffer{embed.token}
+	master,
+	offset + off_t(offsetof(gpt::model::embed, token)),
+	const_buffer{embed.token}
 }
-{
-}
-
-ircd::gpt::pipe::model::language::language(cl::data *const master,
-                                           const off_t offset,
-                                           gpt::model::embed &embed)
-:pos
-{
-	master, offset, mutable_buffer{embed.pos}
-}
-,token
-{
-	master, offset + off_t(sizeof(embed.pos)), mutable_buffer{embed.token}
-}
-{
-}
-
-ircd::gpt::pipe::model::language::language(cl::data *const master,
-                                           const off_t offset,
-                                           const gpt::model::embed &embed)
-:pos
-{
-	master, offset, const_buffer{embed.pos}
-}
-,token
-{
-	master, offset + off_t(sizeof(embed.pos)), const_buffer{embed.token}
-}
-{
-}
-
-ircd::gpt::pipe::model::language::~language()
-noexcept
 {
 }
 
 //
 // pipe::model::block
 //
-
-ircd::gpt::pipe::model::block::block(gpt::model::block &block,
-                                     const size_t layer)
-:master
-{
-	// params
-	{
-		sizeof(block), mutable_buffer
-		{
-			reinterpret_cast<char *>(&block), sizeof(block)
-		}
-	},
-
-	// first moment
-	{
-		sizeof(block),
-		mutable_buffer{}
-	},
-
-	// second moment
-	{
-		sizeof(block),
-		mutable_buffer{}
-	},
-}
-,attn
-{
-	master,
-	0,
-	block.ln1,
-	block.attn,
-}
-,ffnn
-{
-	master,
-	off_t(sizeof(block.ln1) + sizeof(block.attn)),
-	block.ln2,
-	block.ffnn,
-}
-{
-}
-
-ircd::gpt::pipe::model::block::block(const gpt::model::block &block,
-                                     const size_t layer)
-:master
-{
-	// params
-	{
-		sizeof(block), const_buffer
-		{
-			reinterpret_cast<const char *>(&block), sizeof(block)
-		}
-	}
-}
-,attn
-{
-	master,
-	0,
-	block.ln1,
-	block.attn,
-}
-,ffnn
-{
-	master,
-	off_t(sizeof(block.ln1) + sizeof(block.attn)),
-	block.ln2,
-	block.ffnn,
-}
-{
-}
 
 ircd::gpt::pipe::model::block::block(cl::data *const master,
                                      const off_t offset,
@@ -1021,15 +1048,13 @@ ircd::gpt::pipe::model::block::block(cl::data *const master,
 :attn
 {
 	master,
-	offset,
-	block.ln1,
+	offset + off_t(offsetof(gpt::model::block, attn)),
 	block.attn,
 }
 ,ffnn
 {
 	master,
-	offset + off_t(sizeof(block.ln1) + sizeof(block.attn)),
-	block.ln2,
+	offset + off_t(offsetof(gpt::model::block, ffnn)),
 	block.ffnn,
 }
 {
@@ -1042,15 +1067,13 @@ ircd::gpt::pipe::model::block::block(cl::data *const master,
 :attn
 {
 	master,
-	offset,
-	block.ln1,
+	offset + off_t(offsetof(gpt::model::block, attn)),
 	block.attn,
 }
 ,ffnn
 {
 	master,
-	offset + off_t(sizeof(block.ln1) + sizeof(block.attn)),
-	block.ln2,
+	offset + off_t(offsetof(gpt::model::block, ffnn)),
 	block.ffnn,
 }
 {
@@ -1062,78 +1085,62 @@ ircd::gpt::pipe::model::block::block(cl::data *const master,
 
 ircd::gpt::pipe::model::ffnn::ffnn(cl::data *const master,
                                    const off_t offset,
-                                   gpt::model::norm &norm,
                                    gpt::model::ffnn &ffnn)
 :norm
 {
 	master,
-	offset,
-	mutable_buffer{norm.bias},
-	mutable_buffer{norm.weight},
+	offset + off_t(offsetof(gpt::model::ffnn, norm)) + off_t(offsetof(gpt::model::norm, bias)),
+	mutable_buffer{ffnn.norm.bias.elem},
+	offset + off_t(offsetof(gpt::model::ffnn, norm)) + off_t(offsetof(gpt::model::norm, weight)),
+	mutable_buffer{ffnn.norm.weight.elem},
 }
 ,fcon
 {
 	master,
-	offset + off_t(sizeof(norm)),
-	mutable_buffer{ffnn.fc_bias},
-	mutable_buffer{ffnn.fc_weight},
+	offset + off_t(offsetof(gpt::model::ffnn, fcon_bias)),
+	mutable_buffer{ffnn.fcon_bias.fcon},
+	offset + off_t(offsetof(gpt::model::ffnn, fcon_weight)),
+	mutable_buffer{ffnn.fcon_weight},
 }
 ,proj
 {
 	master,
-	offset + off_t(sizeof(norm) + sizeof(ffnn.fc_bias) + sizeof(ffnn.fc_weight)),
-	mutable_buffer{ffnn.proj_bias},
+	offset + off_t(offsetof(gpt::model::ffnn, proj_bias)),
+	mutable_buffer{ffnn.proj_bias.elem},
+	offset + off_t(offsetof(gpt::model::ffnn, proj_weight)),
 	mutable_buffer{ffnn.proj_weight},
 }
 {
-	always_assert
-	(
-		ircd::data(const_buffer{ffnn.proj_weight})
-		==
-		ircd::data(const_buffer{norm.bias}) +
-		sizeof(norm) +
-		sizeof(ffnn.fc_bias) +
-		sizeof(ffnn.fc_weight) +
-		ircd::size(const_buffer{ffnn.proj_bias})
-	);
 }
 
 ircd::gpt::pipe::model::ffnn::ffnn(cl::data *const master,
                                    const off_t offset,
-                                   const gpt::model::norm &norm,
                                    const gpt::model::ffnn &ffnn)
 :norm
 {
 	master,
-	offset,
-	const_buffer{norm.bias},
-	const_buffer{norm.weight},
+	offset + off_t(offsetof(gpt::model::ffnn, norm)) + off_t(offsetof(gpt::model::norm, bias)),
+	const_buffer{ffnn.norm.bias.elem},
+	offset + off_t(offsetof(gpt::model::ffnn, norm)) + off_t(offsetof(gpt::model::norm, weight)),
+	const_buffer{ffnn.norm.weight.elem},
 }
 ,fcon
 {
 	master,
-	offset + off_t(sizeof(norm)),
-	const_buffer{ffnn.fc_bias},
-	const_buffer{ffnn.fc_weight},
+	offset + off_t(offsetof(gpt::model::ffnn, fcon_bias)),
+	const_buffer{ffnn.fcon_bias.fcon},
+	offset + off_t(offsetof(gpt::model::ffnn, fcon_weight)),
+	const_buffer{ffnn.fcon_weight},
 }
 ,proj
 {
 	master,
-	offset + off_t(sizeof(norm) + sizeof(ffnn.fc_bias) + sizeof(ffnn.fc_weight)),
-	const_buffer{ffnn.proj_bias},
+	offset + off_t(offsetof(gpt::model::ffnn, proj_bias)),
+	const_buffer{ffnn.proj_bias.elem},
+	offset + off_t(offsetof(gpt::model::ffnn, proj_weight)),
 	const_buffer{ffnn.proj_weight},
 }
 {
-	always_assert
-	(
-		ircd::data(const_buffer{ffnn.proj_weight})
-		==
-		ircd::data(const_buffer{norm.bias}) +
-		sizeof(norm) +
-		sizeof(ffnn.fc_bias) +
-		sizeof(ffnn.fc_weight) +
-		ircd::size(const_buffer{ffnn.proj_bias})
-	);
 }
 
 //
@@ -1142,78 +1149,62 @@ ircd::gpt::pipe::model::ffnn::ffnn(cl::data *const master,
 
 ircd::gpt::pipe::model::attn::attn(cl::data *const master,
                                    const off_t offset,
-                                   gpt::model::norm &norm,
                                    gpt::model::attn &attn)
 :norm
 {
 	master,
-	offset,
-	mutable_buffer{norm.bias},
-	mutable_buffer{norm.weight},
+	offset + off_t(offsetof(gpt::model::attn, norm)) + off_t(offsetof(gpt::model::norm, bias)),
+	mutable_buffer{attn.norm.bias.elem},
+	offset + off_t(offsetof(gpt::model::attn, norm)) + off_t(offsetof(gpt::model::norm, weight)),
+	mutable_buffer{attn.norm.weight.elem},
 }
 ,fcon
 {
 	master,
-	offset + off_t(sizeof(norm)),
-	mutable_buffer{attn.attn_bias},
-	mutable_buffer{attn.attn_weight},
+	offset + off_t(offsetof(gpt::model::attn, fcon_bias)),
+	mutable_buffer{attn.fcon_bias.fcon},
+	offset + off_t(offsetof(gpt::model::attn, fcon_weight)),
+	mutable_buffer{attn.fcon_weight},
 }
 ,proj
 {
 	master,
-	offset + off_t(sizeof(norm) + sizeof(attn.attn_bias) + sizeof(attn.attn_weight)),
-	mutable_buffer{attn.proj_bias},
+	offset + off_t(offsetof(gpt::model::attn, proj_bias)),
+	mutable_buffer{attn.proj_bias.elem},
+	offset + off_t(offsetof(gpt::model::attn, proj_weight)),
 	mutable_buffer{attn.proj_weight},
 }
 {
-	always_assert
-	(
-		ircd::data(const_buffer{attn.proj_weight})
-		==
-		ircd::data(const_buffer{norm.bias}) +
-		sizeof(norm) +
-		sizeof(attn.attn_bias) +
-		sizeof(attn.attn_weight) +
-		ircd::size(const_buffer{attn.proj_bias})
-	);
 }
 
 ircd::gpt::pipe::model::attn::attn(cl::data *const master,
                                    const off_t offset,
-                                   const gpt::model::norm &norm,
                                    const gpt::model::attn &attn)
 :norm
 {
 	master,
-	offset,
-	const_buffer{norm.bias},
-	const_buffer{norm.weight},
+	offset + off_t(offsetof(gpt::model::attn, norm)) + off_t(offsetof(gpt::model::norm, bias)),
+	const_buffer{attn.norm.bias.elem},
+	offset + off_t(offsetof(gpt::model::attn, norm)) + off_t(offsetof(gpt::model::norm, weight)),
+	const_buffer{attn.norm.weight.elem},
 }
 ,fcon
 {
 	master,
-	offset + off_t(sizeof(norm)),
-	const_buffer{attn.attn_bias},
-	const_buffer{attn.attn_weight},
+	offset + off_t(offsetof(gpt::model::attn, fcon_bias)),
+	const_buffer{attn.fcon_bias.fcon},
+	offset + off_t(offsetof(gpt::model::attn, fcon_weight)),
+	const_buffer{attn.fcon_weight},
 }
 ,proj
 {
 	master,
-	offset + off_t(sizeof(norm) + sizeof(attn.attn_bias) + sizeof(attn.attn_weight)),
-	const_buffer{attn.proj_bias},
+	offset + off_t(offsetof(gpt::model::attn, proj_bias)),
+	const_buffer{attn.proj_bias.elem},
+	offset + off_t(offsetof(gpt::model::attn, proj_weight)),
 	const_buffer{attn.proj_weight},
 }
 {
-	always_assert
-	(
-		ircd::data(const_buffer{attn.proj_weight})
-		==
-		ircd::data(const_buffer{norm.bias}) +
-		sizeof(norm) +
-		sizeof(attn.attn_bias) +
-		sizeof(attn.attn_weight) +
-		ircd::size(const_buffer{attn.proj_bias})
-	);
 }
 
 //
@@ -1221,38 +1212,40 @@ ircd::gpt::pipe::model::attn::attn(cl::data *const master,
 //
 
 ircd::gpt::pipe::model::tensor::tensor(cl::data *const master,
-                                       const off_t offset,
+                                       const off_t bias_offset,
                                        const mutable_buffer &bias,
+                                       const off_t weight_offset,
                                        const mutable_buffer &weight)
 :bias
 {
 	master,
-	offset,
+	bias_offset,
 	bias,
 }
 ,weight
 {
 	master,
-	off_t(offset + ircd::size(bias)),
+	weight_offset,
 	weight,
 }
 {
 }
 
 ircd::gpt::pipe::model::tensor::tensor(cl::data *const master,
-                                       const off_t offset,
+                                       const off_t bias_offset,
                                        const const_buffer &bias,
+                                       const off_t weight_offset,
                                        const const_buffer &weight)
 :bias
 {
 	master,
-	offset,
+	bias_offset,
 	bias,
 }
 ,weight
 {
 	master,
-	off_t(offset + ircd::size(bias)),
+	weight_offset,
 	weight,
 }
 {
@@ -1269,7 +1262,7 @@ ircd::gpt::pipe::model::matrix::matrix(cl::data *const master,
 {
 	master[0],
 	{
-		ircd::size(param),
+		pad_to(ircd::size(param), 4096),
 		offset,
 	},
 }
@@ -1279,7 +1272,7 @@ ircd::gpt::pipe::model::matrix::matrix(cl::data *const master,
 	{
 		master[1],
 		{
-			ircd::size(param),
+			pad_to(ircd::size(param), 4096),
 			offset,
 		},
 	},
@@ -1288,12 +1281,13 @@ ircd::gpt::pipe::model::matrix::matrix(cl::data *const master,
 	{
 		master[2],
 		{
-			ircd::size(param),
+			pad_to(ircd::size(param), 4096),
 			offset,
 		},
 	},
 }
 {
+	assert(aligned(offset, 4096));
 }
 
 ircd::gpt::pipe::model::matrix::matrix(cl::data *const master,
@@ -1303,8 +1297,8 @@ ircd::gpt::pipe::model::matrix::matrix(cl::data *const master,
 {
 	master[0],
 	{
-		ircd::size(param),          // size
-		offset,                     // offset
+		pad_to(ircd::size(param), 4096),
+		offset,
 	},
 }
 {

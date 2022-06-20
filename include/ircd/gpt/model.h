@@ -20,66 +20,105 @@ namespace ircd::gpt::model
 	struct embed;
 	struct decoder;
 
-	constexpr auto align {64};
+	struct prop;
+	struct text;
+
 	extern decoder *default_model;
+	extern float *default_moment[2];
+	extern float *default_checkpoint[3];
 	extern string_view default_dataset;
 	extern std::vector<json::object> default_data;
+
+	constexpr auto alignment {4096};
 }
+
+/// Layer normalization
+struct ircd::gpt::model::norm
+{
+	union ircd_gpt_vector
+	bias alignas(alignment),
+	weight alignas(alignment);
+};
 
 /// Attention aperature
 struct ircd::gpt::model::attn
 {
-	float
-	attn_bias    alignas(align) [2304],
-	attn_weight  alignas(align) [768][2304];
+	model::norm
+	norm;
 
-	float
-	proj_bias    alignas(align) [768],
-	proj_weight  alignas(align) [768][768];
+	union ircd_gpt_attn_aperature
+	fcon_bias alignas(alignment),
+	fcon_weight alignas(alignment) [768];
+
+	union ircd_gpt_vector
+	proj_bias alignas(alignment),
+	proj_weight alignas(alignment) [768];
 };
 
 /// Feed-forward neural network
 struct ircd::gpt::model::ffnn
 {
-	float
-	fc_bias      alignas(align) [3072],
-	fc_weight    alignas(align) [768][3072];
+	model::norm
+	norm;
 
-	float
-	proj_bias    alignas(align) [768],
-	proj_weight  alignas(align) [3072][768];
-};
+	union ircd_gpt_ffnn_aperature
+	fcon_bias alignas(alignment),
+	fcon_weight alignas(alignment) [768];
 
-/// Layer normalization
-struct ircd::gpt::model::norm
-{
-	float
-	bias    alignas(align) [768],
-	weight  alignas(align) [768];
+	union ircd_gpt_vector
+	proj_bias alignas(alignment),
+	proj_weight alignas(alignment) [3072];
 };
 
 /// Transformer block
 struct ircd::gpt::model::block
 {
-	norm ln1;
-	model::attn attn;
+	model::attn
+	attn;
 
-	norm ln2;
-	model::ffnn ffnn;
+	model::ffnn
+	ffnn;
 };
 
 /// Vocabulary embeddings
 struct ircd::gpt::model::embed
 {
-	float
-	pos     alignas(align) [1024][768],
-	token   alignas(align) [65536][768];
+	model::norm
+	norm;
+
+	union ircd_gpt_vector
+	pos alignas(alignment) [1024],
+	token alignas(alignment) [65536];
 };
 
-struct ircd::gpt::model::decoder
+/// Transformer decoder
+struct alignas(ircd::gpt::model::alignment)
+ircd::gpt::model::decoder
 {
-	block layer[12];
+	model::block
+	layer[12];
 
-	norm f;
-	embed word;
+	model::embed
+	embed;
+};
+
+struct ircd::gpt::model::prop
+{
+	static constexpr const char
+	*const ended {"ended"},
+	*const id {"id"},
+	*const length {"length"},
+	*const text {"text"};
+};
+
+struct ircd::gpt::model::text
+:json::tuple
+<
+	json::property<prop::ended, bool>,
+	json::property<prop::id, uint>,
+	json::property<prop::length, uint>,
+	json::property<prop::text, json::string>
+>
+{
+	using super_type::tuple;
 };

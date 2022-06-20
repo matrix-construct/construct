@@ -8,17 +8,21 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#pragma clang fp exceptions(ignore)
+#pragma clang fp reassociate(on)
+#pragma clang fp contract(fast)
+
 namespace ircd::gpt
 {
-	static size_t adamw(f32x4 &, f32x4 &, f32x4 &, const f32, const f32, const f32, const f32, const u32, size_t);
-	static size_t adamw(task &, const f32, f32 *, const size_t, f32 *const (&)[2], const size_t);
+	static void adamw(const opts &, const u32, const f32, const uint, f32 *, f32 *, f32 *);
 
-	static size_t backprop(task &, const f32, model::norm &, f32 *const (&)[2], size_t);
-	static size_t backprop(task &, const f32, model::attn &, f32 *const (&)[2], size_t);
-	static size_t backprop(task &, const f32, model::ffnn &, f32 *const (&)[2], size_t);
-	static size_t backprop(task &, const f32, model::block &, f32 *const (&)[2], size_t);
-	static size_t backprop(task &, const f32, model::embed &, f32 *const (&)[2], size_t);
-	extern size_t backprop(task &, const f32, model::decoder &, f32 *const (&)[2], size_t = 0);
+	static void backprop(const opts &, const u32, const f32, model::norm &, model::norm &, model::norm &);
+	static void backprop(const opts &, const u32, const f32, model::attn &, model::attn &, model::attn &);
+	static void backprop(const opts &, const u32, const f32, model::ffnn &, model::ffnn &, model::ffnn &);
+	static void backprop(const opts &, const u32, const f32, model::block &, model::block &, model::block &);
+	static void backprop(const opts &, const u32, const f32, model::embed &, model::embed &, model::embed &);
+	static void backprop(const opts &, const u32, const f32, model::decoder &, model::decoder &, model::decoder &);
+	extern void backprop(const opts &, const u32, const f32, model::decoder &, f32 *const __restrict__ [2]) noexcept;
 
 	template<class T>
 	static void fmma(T *out, const T *in, const T *bias, const T *weight, const math::fmma_opts &);
@@ -37,7 +41,7 @@ namespace ircd::gpt
 	static void logits(float *, const float *, const model::decoder &);
 	static void tail(float *, const float *, const model::decoder &);
 	static u16 argmax(const float *, const opts &);
-	static void embed(float *, const u16 token, const u16 position, const opts &);
+	static void embed(float *, const u16 token, const u16 position, const model::decoder &);
 
 	static f32
 	logit alignas(64) [65536],
@@ -49,21 +53,20 @@ void
 ircd::gpt::embed(float *const out,
                  const u16 token,
                  const u16 position,
-                 const opts &opts)
+                 const model::decoder &model)
 {
-	assert(opts.model);
 	const auto &wpe
 	{
-		opts.model->word.pos[position]
+		model.embed.pos[position]
 	};
 
 	const auto &wte
 	{
-		opts.model->word.token[token]
+		model.embed.token[token]
 	};
 
 	for(uint j(0); j < 768; ++j)
-		out[j] = wte[j] + wpe[j];
+		out[j] = wte.elem[j] + wpe.elem[j];
 }
 
 uint16_t
@@ -117,7 +120,7 @@ ircd::gpt::tail(float *const __restrict__ logit,
 	for(uint i(0); i < 768; ++i)
 		buf[0][i] = state[i];
 
-	norm((f32x4 *)buf[0], (const f32x4 *)state, (const f32x4 *)d.f.bias, (const f32x4 *)d.f.weight, lnf_epsilon);
+	norm((f32x4 *)buf[0], (const f32x4 *)state, (const f32x4 *)d.embed.norm.bias.elem, (const f32x4 *)d.embed.norm.weight.elem, lnf_epsilon);
 	logits(logit, buf[0], d);
 	//logitsmax(logit, logit, vocab::tokens);
 }
@@ -132,7 +135,7 @@ ircd::gpt::logits(float *const __restrict__ out,
 
 	for(uint j(0); j < vocab::tokens; ++j)
 		for(uint k(0); k < 768; ++k)
-			out[j] += in[k] * d.word.token[j][k];
+			out[j] += in[k] * d.embed.token[j].elem[k];
 }
 
 [[gnu::noinline]]
@@ -192,7 +195,7 @@ ircd::gpt::coil(float *__restrict__ accum,
 		};
 
 		for(uint j(0); j < tokens; ++j)
-			fmma((f32x4 *)(accum + j * 768), (const f32x4 *)(a[j]), (const f32x4 *)layer.attn.proj_bias, (const f32x4 *)layer.attn.proj_weight, fmma_opts);
+			fmma((f32x4 *)(accum + j * 768), (const f32x4 *)(a[j]), (const f32x4 *)layer.attn.proj_bias.elem, (const f32x4 *)layer.attn.proj_weight, fmma_opts);
 
 		for(uint j(0); j < tokens; ++j)
 			ffnn(accum + j * 768, accum + j * 768, decoder, i);
@@ -227,7 +230,7 @@ ircd::gpt::attn(float (&__restrict__ out)[3][1024][12][64],
 		buf alignas(64) [768],
 		proj alignas(64) [2304];
 
-		norm((f32x4 *)buf, (const f32x4 *)(in + i * 768), (const f32x4 *)layer.ln1.bias, (const f32x4 *)layer.ln1.weight, ln1_epsilon);
+		norm((f32x4 *)buf, (const f32x4 *)(in + i * 768), (const f32x4 *)layer.attn.norm.bias.elem, (const f32x4 *)layer.attn.norm.weight.elem, ln1_epsilon);
 
 		static const math::fmma_opts fmma_opts
 		{
@@ -235,7 +238,7 @@ ircd::gpt::attn(float (&__restrict__ out)[3][1024][12][64],
 		};
 
 		memset(proj, 0x0, sizeof(proj));
-		fmma((f32x4 *)proj, (const f32x4 *)buf, (const f32x4 *)layer.attn.attn_bias, (const f32x4 *)layer.attn.attn_weight, fmma_opts);
+		fmma((f32x4 *)proj, (const f32x4 *)buf, (const f32x4 *)layer.attn.fcon_bias.fcon, (const f32x4 *)layer.attn.fcon_weight, fmma_opts);
 
 		#pragma clang loop unroll (disable)
 		for(uint j(0); j < 12; ++j)
@@ -372,10 +375,10 @@ ircd::gpt::ffnn(float *const out,
 	buf2 alignas(64) [3072];
 
 	memset(buf2, 0x0, sizeof(buf2));
-	norm((f32x4 *)buf, (const f32x4 *)in, (const f32x4 *)layer.ln2.bias, (const f32x4 *)layer.ln2.weight, ln2_epsilon);
-	fmma((f32x4 *)buf2, (const f32x4 *)buf, (const f32x4 *)layer.ffnn.fc_bias, (const f32x4 *)layer.ffnn.fc_weight, fmma3_opts);
+	norm((f32x4 *)buf, (const f32x4 *)in, (const f32x4 *)layer.ffnn.norm.bias.elem, (const f32x4 *)layer.ffnn.norm.weight.elem, ln2_epsilon);
+	fmma((f32x4 *)buf2, (const f32x4 *)buf, (const f32x4 *)layer.ffnn.fcon_bias.fcon, (const f32x4 *)layer.ffnn.fcon_weight, fmma3_opts);
 	gelu((f32x4 *)buf2, (const f32x4 *)buf2);
-	fmma((f32x4 *)out, (const f32x4 *)buf2, (const f32x4 *)layer.ffnn.proj_bias, (const f32x4 *)layer.ffnn.proj_weight, fmma4_opts);
+	fmma((f32x4 *)out, (const f32x4 *)buf2, (const f32x4 *)layer.ffnn.proj_bias.elem, (const f32x4 *)layer.ffnn.proj_weight, fmma4_opts);
 }
 
 void
@@ -431,213 +434,219 @@ ircd::gpt::gelu(f32x4 &out,
 //
 
 [[gnu::noinline]]
-size_t
-ircd::gpt::backprop(task &task,
+void
+ircd::gpt::backprop(const opts &opts,
+                    const u32 step,
                     const f32 grad,
-                    model::decoder &param,
-                    f32 *const (&moment)[2],
-                    size_t off)
+                    model::decoder &__restrict__ param,
+                    f32 *const __restrict__ buf[2])
+noexcept
 {
-	for(uint i(0); i < 12; ++i)
-		off = backprop(task, grad, param.layer[i], moment, off);
-
-	off = backprop(task, grad, param.f, moment, off);
-	off = backprop(task, grad, param.word, moment, off);
-	return off;
-}
-
-size_t
-ircd::gpt::backprop(task &task,
-                    const f32 grad,
-                    model::embed &param,
-                    f32 *const (&moment)[2],
-                    size_t off)
-{
-	assert(task.opts);
-	const auto &opts
+	model::decoder *const __restrict__ moment[2]
 	{
-		*task.opts
+		reinterpret_cast<model::decoder *>(buf[0]),
+		reinterpret_cast<model::decoder *>(buf[1]),
 	};
 
+	backprop(opts, step, grad, param, *moment[0], *moment[1]);
+}
+
+void
+ircd::gpt::backprop(const opts &opts,
+                    const u32 step,
+                    const f32 grad,
+                    model::decoder &__restrict__ param,
+                    model::decoder &__restrict__ moment0,
+                    model::decoder &__restrict__ moment1)
+{
+	fpe::errors_handle eh;
+
+	assume(opts.attn_rank > 0);
+	assume(opts.layers > 0);
+	const auto eln
+	{
+		opts.layers - 1 // step % opts.layers
+	};
+
+	for(int i(opts.layers - 1); i >= int(opts.layers - eln - 1); --i)
+	{
+		assert(i >= 0 && i < int(opts.layers));
+		backprop(opts, step, grad, param.layer[i], moment0.layer[i], moment1.layer[i]);
+	}
+
+	backprop(opts, step, grad, param.embed, moment0.embed, moment1.embed);
+
+	auto pending(eh.pending());
+	eh.clear_pending();
+	pending &= ~pending & FE_INEXACT;
+	if(unlikely(pending))
+		fpe::throw_errors(pending);
+}
+
+void
+ircd::gpt::backprop(const opts &opts,
+                    const u32 step,
+                    const f32 grad,
+                    model::embed &__restrict__ param,
+                    model::embed &__restrict__ moment0,
+                    model::embed &__restrict__ moment1)
+{
+	backprop(opts, step, grad, param.norm, moment0.norm, moment1.norm);
+
+	assume(opts.context_tokens > 0);
 	for(uint i(0); i < opts.context_tokens; ++i)
-		off = adamw(task, grad, param.pos[i], 768, moment, off);
+		adamw(opts, step, grad, 768, param.pos[i].elem, moment0.pos[i].elem, moment1.pos[i].elem);
 
+	assume(opts.logits > 0);
 	for(uint i(0); i < opts.logits; ++i)
-		off = adamw(task, grad, param.token[i], 768, moment, off);
-
-	return off;
+		adamw(opts, step, grad, 768, param.token[i].elem, moment0.token[i].elem, moment1.token[i].elem);
 }
 
-size_t
-ircd::gpt::backprop(task &task,
+void
+ircd::gpt::backprop(const opts &opts,
+                    const u32 step,
                     const f32 grad,
-                    model::block &param,
-                    f32 *const (&moment)[2],
-                    size_t off)
+                    model::block &__restrict__ param,
+                    model::block &__restrict__ moment0,
+                    model::block &__restrict__ moment1)
 {
-	off = backprop(task, grad, param.ln1, moment, off);
-	off = backprop(task, grad, param.attn, moment, off);
-	off = backprop(task, grad, param.ln2, moment, off);
-	off = backprop(task, grad, param.ffnn, moment, off);
-	return off;
+	backprop(opts, step, grad, param.attn.norm, moment0.attn.norm, moment1.attn.norm);
+	backprop(opts, step, grad, param.attn, moment0.attn, moment1.attn);
+
+	backprop(opts, step, grad, param.ffnn.norm, moment0.ffnn.norm, moment1.ffnn.norm);
+	backprop(opts, step, grad, param.ffnn, moment0.ffnn, moment1.ffnn);
 }
 
-size_t
-ircd::gpt::backprop(task &task,
+void
+ircd::gpt::backprop(const opts &opts,
+                    const u32 step,
                     const f32 grad,
-                    model::attn &param,
-                    f32 *const (&moment)[2],
-                    size_t off)
+                    model::attn &__restrict__ param,
+                    model::attn &__restrict__ moment0,
+                    model::attn &__restrict__ moment1)
 {
-	off = adamw(task, grad, param.attn_bias, 2304, moment, off);
+	adamw(opts, step, grad, 2304, param.fcon_bias.fcon, moment0.fcon_bias.fcon, moment1.fcon_bias.fcon);
 
 	for(uint i(0); i < 768; ++i)
-		off = adamw(task, grad, param.attn_weight[i], 2304, moment, off);
+		adamw(opts, step, grad, 2304, param.fcon_weight[i].fcon, moment0.fcon_weight[i].fcon, moment1.fcon_weight[i].fcon);
 
-	off = adamw(task, grad, param.proj_bias, 768, moment, off);
+	adamw(opts, step, grad, 768, param.proj_bias.elem, moment0.proj_bias.elem, moment1.proj_bias.elem);
 
 	for(uint i(0); i < 768; ++i)
-		off = adamw(task, grad, param.proj_weight[i], 768, moment, off);
-
-	return off;
+		adamw(opts, step, grad, 768, param.proj_weight[i].elem, moment0.proj_weight[i].elem, moment1.proj_weight[i].elem);
 }
 
-size_t
-ircd::gpt::backprop(task &task,
+void
+ircd::gpt::backprop(const opts &opts,
+                    const u32 step,
                     const f32 grad,
-                    model::ffnn &param,
-                    f32 *const (&moment)[2],
-                    size_t off)
+                    model::ffnn &__restrict__ param,
+                    model::ffnn &__restrict__ moment0,
+                    model::ffnn &__restrict__ moment1)
 {
-	off = adamw(task, grad, param.fc_bias, 3072, moment, off);
+	adamw(opts, step, grad, 3072, param.fcon_bias.fcon, moment0.fcon_bias.fcon, moment1.fcon_bias.fcon);
 
 	for(uint i(0); i < 768; ++i)
-		off = adamw(task, grad, param.fc_weight[i], 3072, moment, off);
+		adamw(opts, step, grad, 3072, param.fcon_weight[i].fcon, moment0.fcon_weight[i].fcon, moment1.fcon_weight[i].fcon);
 
-	off = adamw(task, grad, param.proj_bias, 768, moment, off);
+	adamw(opts, step, grad, 768, param.proj_bias.elem, moment0.proj_bias.elem, moment1.proj_bias.elem);
 
 	for(uint i(0); i < 3072; ++i)
-		off = adamw(task, grad, param.proj_weight[i], 768, moment, off);
-
-	return off;
+		adamw(opts, step, grad, 768, param.proj_weight[i].elem, moment0.proj_weight[i].elem, moment1.proj_weight[i].elem);
 }
 
-size_t
-ircd::gpt::backprop(task &task,
+void
+ircd::gpt::backprop(const opts &opts,
+                    const u32 step,
                     const f32 grad,
-                    model::norm &param,
-                    f32 *const (&moment)[2],
-                    size_t off)
+                    model::norm &__restrict__ param,
+                    model::norm &__restrict__ moment0,
+                    model::norm &__restrict__ moment1)
 {
-	off = adamw(task, grad, param.bias, 768, moment, off);
-	off = adamw(task, grad, param.weight, 768, moment, off);
-	return off;
+	adamw(opts, step, grad, 768, param.bias.elem, moment0.bias.elem, moment1.bias.elem);
+	adamw(opts, step, grad, 768, param.weight.elem, moment0.weight.elem, moment1.weight.elem);
 }
 
-[[gnu::noinline]]
-size_t
-ircd::gpt::adamw(task &task,
-                 const f32 grad,
-                 f32 *const p_,
-                 const size_t num,
-                 f32 *const (&__restrict__ m_)[2],
-                 size_t off)
+namespace ircd::gpt
 {
-	assert(task.opts);
-	const auto &opts
+	static f32x4 adamw_moment(const f32x4, const f32, const f32);
+	static f32x4 adamw_numer(const f32x4, const f32, const u32);
+	static f32x4 adamw_denom(const f32x4, const f32, const u32);
+	static f32x4 adamw_delta(const f32x4, const f32x4, const f32, const f32, const f32, const u32);
+	static void adamw(f32x4 &, f32x4 &, f32x4 &, const f32, const f32, const f32, const f32, const u32);
+	static void adamw(const opts &, const u32, const f32, const u32, f32 *, f32 *, f32 *);
+}
+
+void
+ircd::gpt::adamw(const opts &opts,
+                 const u32 step,
+                 const f32 grad,
+                 const u32 num,
+                 f32 *const __restrict__ param,
+                 f32 *const __restrict__ moment0,
+                 f32 *const __restrict__ moment1)
+{
+	f32x4 *const __restrict__ val[3]
 	{
-		*task.opts
+		reinterpret_cast<f32x4 *>(param),
+		reinterpret_cast<f32x4 *>(moment0),
+		reinterpret_cast<f32x4 *>(moment1),
 	};
 
-	assert(task.ctrl);
-	auto &ctrl
+	const auto n
 	{
-		*task.ctrl
+		num / 4
 	};
 
-	f32x4 *const p[3]
-	{
-		reinterpret_cast<f32x4 *>(p_),
-		reinterpret_cast<f32x4 *>(m_[0]) + off,
-		reinterpret_cast<f32x4 *>(m_[1]) + off,
-	};
-
-	assert(num >= 4);
-	const uint n
-	{
-		uint(num) / 4
-	};
-
-	// Assume loop body always taken w/o soundness; otherwise extra branch.
-	assert(n > 0);
-	uint i(0); do
-	{
-		off = adamw
+	assume(0 < n);
+	for(uint i(0); i < n; ++i)
+		adamw
 		(
-			p[0][i],
-			p[1][i],
-			p[2][i],
+			val[0][i],
+			val[1][i],
+			val[2][i],
 			grad,
 			opts.alpha,
 			opts.beta[0],
 			opts.beta[1],
-			ctrl.epic.step,
-			off
+			step + 1
 		);
-	}
-	while(++i < n);
-
-	return off;
 }
 
-size_t
+void
 ircd::gpt::adamw(f32x4 &__restrict__ param,
                  f32x4 &__restrict__ moment0,
                  f32x4 &__restrict__ moment1,
-                 const f32 grad,
-                 const f32 alpha,
+                 const f32 grad_,
+                 const f32 alpha_,
                  const f32 beta0,
                  const f32 beta1,
-                 const u32 step,
-                 const size_t off)
+                 const u32 step)
 {
-	const f32x4 one
+	const f32 alpha
 	{
-		1.0f, 1.0f, 1.0f, 1.0f,
+		grad_ < 0? -alpha_ : alpha_
 	};
 
-	const f32x4 a[2]
+	const f32 grad
 	{
-		{ one - beta0 },
-		{ one - beta1 },
+		grad_ < 0? -grad_ : grad_
 	};
 
-	const f32x4 avg_mul[2]
+	const f32 grad_grad
 	{
-		{ moment0 * beta0 },
-		{ moment1 * beta1 },
+		grad * grad
 	};
 
-	const f32x4 avg_dot[2]
+	const f32x4 moment[]
 	{
-		{ avg_mul[0] + a[0] * grad         },
-		{ avg_mul[1] + a[1] * grad * grad  },
-	};
-
-	const f32x4 bias[2]
-	{
-		{ avg_dot[0] / (one - powf(beta0, step + 1)) },
-		{ avg_dot[1] / (one - powf(beta1, step + 1)) },
-	};
-
-	const f32x4 denom
-	{
-		sqrtf(bias[1]) + 0.000001f // epsilon
+		adamw_moment(moment0, grad, beta0),
+		adamw_moment(moment1, grad_grad, beta1)
 	};
 
 	const f32x4 delta
 	{
-		alpha * (bias[0] / denom)
+		adamw_delta(moment[0], moment[1], alpha, beta0, beta1, step)
 	};
 
 	const f32x4 update
@@ -645,8 +654,168 @@ ircd::gpt::adamw(f32x4 &__restrict__ param,
 		param - delta
 	};
 
-	moment0 = avg_dot[0];
-	moment1 = avg_dot[1];
+	if((false))
+	for(uint i(0); i < 4; ++i)
+		printf("%-15p p[%11.8lf] m[%11.8lf][%11.8lf] g[%11.8lf] d[%11.8lf] p[%11.8lf] m[%11.8lf][%11.8lf]\n",
+		((f32 *)&param) + i,
+		param[i],
+		moment0[i],
+		moment1[i],
+		grad,
+		delta[i],
+		update[i],
+		moment[0][i],
+		moment[1][i]);
+
+	assert(std::isnormal(update[0]));
+	assert(std::isnormal(update[1]));
+	assert(std::isnormal(update[2]));
+	assert(std::isnormal(update[3]));
+
+	assert(std::isnormal(moment[0][0]));
+	assert(std::isnormal(moment[0][1]));
+	assert(std::isnormal(moment[0][2]));
+	assert(std::isnormal(moment[0][3]));
+
+	assert(std::isnormal(moment[1][0]));
+	assert(std::isnormal(moment[1][1]));
+	assert(std::isnormal(moment[1][2]));
+	assert(std::isnormal(moment[1][3]));
+
 	param = update;
-	return off + 1;
+	//__builtin_nontemporal_store(update, &param);
+
+	moment0 = moment[0];
+	moment1 = moment[1];
+	//__builtin_nontemporal_store(moment[0], &moment0);
+	//__builtin_nontemporal_store(moment[1], &moment1);
+}
+
+ircd::f32x4
+ircd::gpt::adamw_delta(const f32x4 moment0,
+                       const f32x4 moment1,
+                       const f32 alpha,
+                       const f32 beta0,
+                       const f32 beta1,
+                       const u32 step)
+{
+	static const f32 epsilon
+	{
+		FLT_EPSILON
+	};
+
+	const f32x4 denom
+	{
+		adamw_denom(moment1, beta1, step) + epsilon
+	};
+
+	const f32x4 decay
+	{
+		adamw_numer(moment0, beta0, step)
+	};
+
+	const f32x4 smooth
+	{
+		alpha * decay
+	};
+
+	assert(std::isnormal(denom[0]));
+	assert(std::isnormal(denom[1]));
+	assert(std::isnormal(denom[2]));
+	assert(std::isnormal(denom[3]));
+	const f32x4 delta
+	{
+		smooth / denom
+	};
+
+	return delta;
+}
+
+ircd::f32x4
+ircd::gpt::adamw_denom(const f32x4 moment,
+                       const f32 beta,
+                       const u32 step)
+{
+	static const f32x4 one
+	{
+		1.0f, 1.0f, 1.0f, 1.0f,
+	};
+
+	assert(step > 0);
+	const f32x4 decay
+	{
+		one - powf(beta, step)
+	};
+
+	assert(std::isnormal(decay[0]));
+	assert(std::isnormal(decay[1]));
+	assert(std::isnormal(decay[2]));
+	assert(std::isnormal(decay[3]));
+	const f32x4 bias
+	{
+		moment / decay
+	};
+
+	const f32x4 denom
+	{
+		sqrtf(bias)
+	};
+
+	return denom;
+}
+
+ircd::f32x4
+ircd::gpt::adamw_numer(const f32x4 moment,
+                       const f32 beta,
+                       const u32 step)
+{
+	static const f32x4 one
+	{
+		1.0f, 1.0f, 1.0f, 1.0f,
+	};
+
+	assert(step > 0);
+	const f32x4 decay
+	{
+		one - powf(beta, step)
+	};
+
+	assert(std::isnormal(decay[0]));
+	assert(std::isnormal(decay[1]));
+	assert(std::isnormal(decay[2]));
+	assert(std::isnormal(decay[3]));
+	const f32x4 bias
+	{
+		moment / decay
+	};
+
+	return bias;
+}
+
+ircd::f32x4
+ircd::gpt::adamw_moment(const f32x4 moment,
+                        const f32 grad,
+                        const f32 beta)
+{
+	static const f32x4 one
+	{
+		1.0f, 1.0f, 1.0f, 1.0f,
+	};
+
+	const f32x4 rate
+	{
+		one - beta
+	};
+
+	const f32x4 avg
+	{
+		moment * beta
+	};
+
+	const f32x4 dot
+	{
+		rate * grad + avg
+	};
+
+	return dot;
 }

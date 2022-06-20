@@ -12,6 +12,14 @@
 #define HAVE_IRCD_GPT_TASK_H
 
 #ifdef __cplusplus
+namespace ircd::gpt
+{
+	void seed(task &, const uint64_t &) noexcept;
+	void seed(task &) noexcept;
+	void clear(task &) noexcept;
+	void reset(task &) noexcept;
+}
+
 /// Task Context
 ///
 /// State for a task.
@@ -22,27 +30,25 @@ struct ircd::gpt::task
 	/// Reference to the attached options.
 	const gpt::opts *opts {nullptr};
 
-	/// Reference to control pages.
+	/// Reference to user's control block.
 	gpt::ctrl *ctrl {nullptr};
 
-	/// Current task status.
-	enum status status {'\0'};
+	/// Pipe code
+	std::unique_ptr<pipe::code> code;
 
-	task(const gpt::opts * = nullptr, gpt::ctrl * = nullptr);
+	/// Pipe model
+	std::unique_ptr<pipe::model> model;
+
+	/// Pipe state
+	pipe::desc desc;
+
+  public:
+	bool done() const noexcept;
+	bool operator()();
+
+	task(const gpt::opts *     = nullptr,
+	     gpt::ctrl *           = nullptr);
+
 	~task() noexcept;
 };
-
-/// The current status of a task is indicated with intelligible characters
-enum ircd::gpt::task::status
-:char
-{
-	QUEUED    = 'Q',  ///< Queued for execution.
-	RUNNING   = 'R',  ///< Currently being executed.
-	ACCEPT    = 'A',  ///< Execution completed successfully.
-	ERROR     = 'E',  ///< Execution did not complete successfully.
-};
-
-static_assert(sizeof(struct ircd_gpt_ctrl) == 4096);
-static_assert(offsetof(struct ircd_gpt_ctrl, token) == 2048);
-static_assert(std::is_standard_layout<struct ircd_gpt_ctrl>::value);
 #endif

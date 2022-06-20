@@ -10,6 +10,7 @@
 
 namespace ircd::gpt::vocab
 {
+	static u8x16 get_token(const u16);
 	static u16 find_token(const u8x16);
 	static u16 find_merge(const u8x16, const u8x16);
 	static u16 bpe_score(u16 (&)[16], const u8x16 (&)[16][2], const uint);
@@ -23,11 +24,11 @@ namespace ircd::gpt::vocab
 	static u64x2 tokenize_block(u16x16 &, const u8x16, const i8x16) noexcept;
 	static void init_tokens(), init_merges();
 
-	[[gnu::visibility("internal")]]
 	extern const char32_t charset[256];
 }
 
 /// Remapping of single byte characters (Control (C0) and Basic Latin (ASCII)).
+[[gnu::visibility("internal")]]
 decltype(ircd::gpt::vocab::charset)
 ircd::gpt::vocab::charset
 alignas(64)
@@ -169,7 +170,8 @@ ircd::gpt::vocab::init_merges()
 
 ircd::string_view
 ircd::gpt::vocab::debug(const mutable_buffer &out,
-                        const u16 idx)
+                        const u16 idx,
+                        const uint mask)
 {
 	const auto *const token
 	{
@@ -177,13 +179,21 @@ ircd::gpt::vocab::debug(const mutable_buffer &out,
 	};
 
 	thread_local char strbuf[2][512];
-	return string_view{fmt::sprintf
+	return fmt::sprintf
 	{
-		out, "%5u  [%32s]  %s",
+		out, "%5u %s%32s%s%s%s",
 		idx,
-		simd::print_chr(strbuf[0], token[idx]),
-		simd::print_mem(strbuf[1], token[idx]),
-	}};
+		mask & 0x1?
+			"[ "_sv: string_view{},
+		mask & 0x1?
+			simd::print_chr(strbuf[0], token[idx]): string_view{},
+		mask & 0x1?
+			" ]"_sv: string_view{},
+		mask & 0x2?
+			" "_sv: string_view{},
+		mask & 0x2?
+			simd::print_mem(strbuf[1], token[idx]): string_view{},
+	};
 }
 
 //
@@ -193,6 +203,7 @@ ircd::gpt::vocab::debug(const mutable_buffer &out,
 ircd::string_view
 ircd::gpt::vocab::detokenize(const mutable_buffer &out,
                              const vector_view<const u16> &in)
+noexcept
 {
 	size_t off(0);
 	for(const u16 &id : in)
@@ -228,9 +239,65 @@ ircd::gpt::vocab::detokenize(const mutable_buffer &out,
 // tokenize
 //
 
+uint16_t
+ircd::gpt::vocab::tokenize(const string_view &in)
+{
+	char str_buf[16];
+	const string_view str
+	{
+		str_buf, copy(str_buf, in)
+	};
+
+	u16 buf[16];
+	const auto out
+	{
+		tokenize(buf, str)
+	};
+
+	if(unlikely(out.size() != 1))
+		throw error
+		{
+			"Input tokenizes to %zu tokens.",
+			out.size()
+		};
+
+	return buf[0];
+}
+
+uint16_t
+ircd::gpt::vocab::tokenize(const_buffer &in)
+noexcept
+{
+	char str_buf[16];
+	const string_view str
+	{
+		str_buf, copy(str_buf, in)
+	};
+
+	u16 buf[16];
+	const auto out
+	{
+		tokenize(buf, str)
+	};
+
+	const auto &tok
+	{
+		get_token(buf[0])
+	};
+
+	const auto consumed
+	{
+		simd::strlen(tok)
+	};
+
+	consume(in, consumed);
+	return buf[0];
+}
+
 ircd::vector_view<ircd::u16>
 ircd::gpt::vocab::tokenize(const vector_view<u16> &out,
                            const string_view &in)
+noexcept
 {
 	using input_t = u8x16;
 	using block_t = u16x16;
@@ -801,13 +868,8 @@ ircd::gpt::vocab::bpe_score(u16 (&score)[16],
 ircd::u16
 ircd::gpt::vocab::find_token(const u8x16 string)
 {
-	const auto *const __restrict__ token
-	{
-		reinterpret_cast<const u8x16 *>(vocab::token)
-	};
-
 	for(uint i(0); i < tokens; ++i)
-		if(simd::streq(string, token[i]))
+		if(simd::streq(string, get_token(i)))
 			return i;
 
 	return u16(-1U);
@@ -834,4 +896,15 @@ ircd::gpt::vocab::find_merge(const u8x16 a,
 	}
 
 	return u16(-1U);
+}
+
+ircd::u8x16
+ircd::gpt::vocab::get_token(const u16 idx)
+{
+	const auto *const __restrict__ token
+	{
+		reinterpret_cast<const u8x16 *>(vocab::token)
+	};
+
+	return token[idx];
 }

@@ -152,10 +152,12 @@ ircd::gpt::pipe::code::set_cache(const string_view &path)
 }
 
 extern const uint8_t
-gpt_gpu_r600_barts_bc[];
+gpt_gpu_r600_barts_bc[],
+gpt_gpu_spv[];
 
 extern const uint
-gpt_gpu_r600_barts_bc_len;
+gpt_gpu_r600_barts_bc_len,
+gpt_gpu_spv_len;
 
 ircd::cl::code
 ircd::gpt::pipe::code::from_bitcode(const string_view &link_opts)
@@ -164,6 +166,9 @@ ircd::gpt::pipe::code::from_bitcode(const string_view &link_opts)
 	{
 		reinterpret_cast<const char *>(gpt_gpu_r600_barts_bc),
 		gpt_gpu_r600_barts_bc_len
+
+		//reinterpret_cast<const char *>(gpt_gpu_spv),
+		//gpt_gpu_spv_len
 	};
 
 	char pbuf[1][48];

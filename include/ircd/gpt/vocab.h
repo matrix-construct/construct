@@ -34,11 +34,17 @@ namespace ircd::gpt::vocab
 	merges_path;
 
 	// Tokenize UTF-8 input string of any length into proper token values,
-	vector_view<u16> tokenize(const vector_view<u16> &out, const string_view &in);
+	vector_view<u16> tokenize(const vector_view<u16> &out, const string_view &in) noexcept;
+
+	// Tokenize one token. The buffer is advanced consuming one token per call.
+	u16 tokenize(const_buffer &) noexcept;
+
+	// Tokenize one token. Error thrown if input is not exactly one token.
+	u16 tokenize(const string_view &in);
 
 	// Decode token values to build output text string.
-	string_view detokenize(const mutable_buffer &out, const vector_view<const u16> &in);
+	string_view detokenize(const mutable_buffer &out, const vector_view<const u16> &in) noexcept;
 
 	// Other tools
-	string_view debug(const mutable_buffer &buf, const u16 token);
+	string_view debug(const mutable_buffer &buf, const u16 token, const uint fmt_msk = -1U);
 }

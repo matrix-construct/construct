@@ -21,15 +21,15 @@ struct ircd::gpt::pipe::model
 	struct attn;
 	struct ffnn;
 	struct block;
+	struct embed;
 	struct decoder;
-	struct language;
 
+	const gpt::model::decoder *decode_const {nullptr};
+	gpt::model::decoder *decode_mutable {nullptr};
 	std::unique_ptr<model::decoder> decode;
-	std::unique_ptr<model::language> embed;
-	bool invalid {false};
 
-	model(const gpt::model::decoder &, const gpt::model::embed &);
-	model(gpt::model::decoder &, gpt::model::embed &);
+	model(const gpt::model::decoder &);
+	model(gpt::model::decoder &);
 	~model() noexcept;
 };
 
@@ -49,8 +49,8 @@ struct ircd::gpt::pipe::model::tensor
 	bias,
 	weight;
 
-	tensor(cl::data *, const off_t, const const_buffer &bias, const const_buffer &weight);
-	tensor(cl::data *, const off_t, const mutable_buffer &bias, const mutable_buffer &weight);
+	tensor(cl::data *, const off_t, const const_buffer &bias, const off_t, const const_buffer &weight);
+	tensor(cl::data *, const off_t, const mutable_buffer &bias, const off_t, const mutable_buffer &weight);
 };
 
 struct ircd::gpt::pipe::model::attn
@@ -60,8 +60,8 @@ struct ircd::gpt::pipe::model::attn
 	fcon,
 	proj;
 
-	attn(cl::data *, const off_t, const gpt::model::norm &, const gpt::model::attn &);
-	attn(cl::data *, const off_t, gpt::model::norm &, gpt::model::attn &);
+	attn(cl::data *, const off_t, const gpt::model::attn &);
+	attn(cl::data *, const off_t, gpt::model::attn &);
 };
 
 struct ircd::gpt::pipe::model::ffnn
@@ -71,40 +71,33 @@ struct ircd::gpt::pipe::model::ffnn
 	fcon,
 	proj;
 
-	ffnn(cl::data *, const off_t, const gpt::model::norm &, const gpt::model::ffnn &);
-	ffnn(cl::data *, const off_t, gpt::model::norm &, gpt::model::ffnn &);
+	ffnn(cl::data *, const off_t, const gpt::model::ffnn &);
+	ffnn(cl::data *, const off_t, gpt::model::ffnn &);
 };
 
 struct ircd::gpt::pipe::model::block
 {
-	// Single layer memory roots
-	cl::data
-	master[3];
+	model::attn
+	attn;
 
-	// Layer units
-	model::attn attn;
-	model::ffnn ffnn;
+	model::ffnn
+	ffnn;
 
 	block(cl::data *, const off_t, const gpt::model::block &, const size_t);
 	block(cl::data *, const off_t, gpt::model::block &, const size_t);
-	block(const gpt::model::block &, const size_t);
-	block(gpt::model::block &, const size_t);
 };
 
-struct ircd::gpt::pipe::model::language
+struct ircd::gpt::pipe::model::embed
 {
-	cl::data
-	master[3];
+	tensor
+	norm;
 
 	matrix
 	pos,
 	token;
 
-	language(cl::data *, const off_t, const gpt::model::embed &);
-	language(cl::data *, const off_t, gpt::model::embed &);
-	language(const gpt::model::embed &);
-	language( gpt::model::embed &);
-	~language() noexcept;
+	embed(cl::data *, const off_t, const gpt::model::embed &);
+	embed(cl::data *, const off_t, gpt::model::embed &);
 };
 
 struct ircd::gpt::pipe::model::decoder
@@ -115,10 +108,11 @@ struct ircd::gpt::pipe::model::decoder
 
 	// Layer blocks
 	model::block
-	block[12];
+	layer[12];
 
-	// Final norm
-	tensor norm;
+	// Language model head
+	model::embed
+	embed;
 
 	decoder(const gpt::model::decoder &);
 	decoder(gpt::model::decoder &);

@@ -53,6 +53,7 @@ if LTO
 if CLANG
 AM_CXXFLAGS += -fstrict-vtable-pointers
 AM_CXXFLAGS += -fwhole-program-vtables
+#AM_LDFLAGS += -Wl,-plugin-opt,-pass-remarks='.*'
 endif
 endif
 
@@ -85,22 +86,6 @@ endif
 if MINGW
 AM_LDFLAGS += -Wl,--enable-runtime-pseudo-reloc
 AM_LDFLAGS += -export-symbols-regex '*'
-endif
-
-ROCKSDB_SRC_CPPFLAGS =#
-ROCKSDB_SRC_CPPFLAGS += -isystem $(top_srcdir)/deps/rocksdb/include
-ROCKSDB_SRC_CPPFLAGS += -isystem $(top_srcdir)/deps/rocksdb
-
-GPT_FP_CXXFLAGS =#
-GPT_FP_CXXFLAGS += -fno-math-errno
-GPT_FP_CXXFLAGS += -fno-trapping-math
-GPT_FP_CXXFLAGS += -ffinite-math-only
-GPT_FP_CXXFLAGS += -fno-signed-zeros
-GPT_FP_CXXFLAGS += -fassociative-math
-GPT_FP_CXXFLAGS += -ffp-contract=fast
-GPT_FP_CXXFLAGS += -freciprocal-math
-if CLANG
-GPT_FP_CXXFLAGS += -fdenormal-fp-math=positive-zero
 endif
 
 libircddir = @libdir@
@@ -241,16 +226,12 @@ libircd_la_SOURCES += png.cc
 if OPENCL
 libircd_la_SOURCES += cl.cc
 endif
-libircd_la_SOURCES += gpt.cc
-libircd_la_SOURCES += gpt_pipe.cc
-libircd_la_SOURCES += gpt_model.cc
 libircd_la_SOURCES += gpt_vocab.cc
+libircd_la_SOURCES += gpt_model.cc
+libircd_la_SOURCES += gpt_pipe_code.cc
+libircd_la_SOURCES += gpt_pipe.cc
 libircd_la_SOURCES += gpt_cpu.cc
-if OPENCL
-if CLANG
-BUILT_SOURCES += gpt_gpu.o
-endif
-endif
+libircd_la_SOURCES += gpt.cc
 libircd_la_SOURCES += openssl.cc
 libircd_la_SOURCES += rfc1459.cc
 libircd_la_SOURCES += rfc3986.cc
@@ -283,6 +264,23 @@ libircd_la_SOURCES += ircd.cc
 # Specific unit option composition
 #
 
+ROCKSDB_SRC_CPPFLAGS =#
+ROCKSDB_SRC_CPPFLAGS += -isystem $(top_srcdir)/deps/rocksdb/include
+ROCKSDB_SRC_CPPFLAGS += -isystem $(top_srcdir)/deps/rocksdb
+
+GPT_FP_CXXFLAGS =#
+GPT_FP_CXXFLAGS += -fno-math-errno
+GPT_FP_CXXFLAGS += -fno-trapping-math
+GPT_FP_CXXFLAGS += -ffinite-math-only
+GPT_FP_CXXFLAGS += -fno-signed-zeros
+GPT_FP_CXXFLAGS += -fassociative-math
+GPT_FP_CXXFLAGS += -freciprocal-math
+GPT_FP_CXXFLAGS += -ffp-contract=fast
+if CLANG
+GPT_FP_CXXFLAGS += -fdenormal-fp-math=positive-zero
+GPT_FP_CXXFLAGS += -ffp-model=fast
+endif
+
 client.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 ctx_x86_64.lo:        AM_CPPFLAGS := -I$(top_srcdir)/include
 ctx.lo:               AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
@@ -307,7 +305,7 @@ endif
 if IOU
 fs_iou.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 endif
-gpt.lo:               AM_CXXFLAGS := ${AM_CXXFLAGS} ${GPT_FP_CXXFLAGS}
+gpt_cpu.lo:           AM_CXXFLAGS := ${AM_CXXFLAGS} ${GPT_FP_CXXFLAGS}
 http.lo:              AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 http.lo:              AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
 ios.lo:               AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
@@ -364,12 +362,118 @@ default.profdata:
 	-$(LLVM_PROFDATA) merge -output=default.profdata default.proftext
 endif
 
+###############################################################################
+#
+# Hardware Acceleration / sub-targets
+#
+
 if CLANG
 if OPENCL
-gpt_gpu.ll: gpt_gpu.cl
-	$(CC) -S -emit-llvm -std=CL1.1 $(AM_CPPFLAGS) $(CPPFLAGS) $(DEFS) -Xclang -finclude-default-header -include "ircd/config.h" -o $@ -c $^
 
-gpt_gpu.o: gpt_gpu.ll
-	$(CC) -std=CL1.1 -o $@ -c $^
-endif
-endif
+GPU_CPPFLAGS =#
+GPU_CPPFLAGS += -D__OPENCL_VERSION__=110
+GPU_CPPFLAGS += -Dcl_clang_storage_class_specifiers
+GPU_CPPFLAGS += -DNOFP64
+GPU_CPPFLAGS += $(AM_CPPFLAGS)
+GPU_CPPFLAGS += $(CPPFLAGS)
+GPU_CPPFLAGS += $(DEFS)
+
+GPU_CFLAGS =#
+GPU_CFLAGS += -std=cl1.1
+GPU_CFLAGS += -fident
+GPU_CFLAGS += -fno-builtin
+GPU_CFLAGS += -fverbose-asm
+GPU_CFLAGS += -fno-discard-value-names
+GPU_CFLAGS += -mllvm -propagate-attrs=true
+GPU_CFLAGS += -O3
+GPU_CFLAGS += -fno-trapping-math
+GPU_CFLAGS += -ffinite-math-only
+GPU_CFLAGS += -fno-signed-zeros
+GPU_CFLAGS += -ffp-contract=fast
+#GPU_CFLAGS += -include "ircd/config.h"
+#GPU_CFLAGS += -include "clc/clc.h"
+#GPU_CFLAGS += -Wassume
+#GPU_CFLAGS += -Rpass-analysis=".*"
+#GPU_CFLAGS += -Rpass-missed=".*"
+
+GPU_LINKFLAGS =#
+GPU_LINKFLAGS +=#
+
+GPU_OPTFLAGS =#
+GPU_OPTFLAGS += -propagate-attrs=true
+GPU_OPTFLAGS += -O3
+#GPU_OPTFLAGS += -opt-bisect-limit=-1
+#GPU_OPTFLAGS += -debug-pass=Arguments
+#GPU_OPTFLAGS += -pass-remarks='.*'
+
+GPU_ASFLAGS =#
+GPU_ASFLAGS += -fident
+GPU_ASFLAGS += -fno-builtin
+GPU_ASFLAGS += -mllvm -propagate-attrs=true
+GPU_ASFLAGS += -mllvm -verify-machineinstrs
+GPU_ASFLAGS += -O3
+GPU_ASFLAGS += -Rpass-analysis=asm-printer
+#GPU_ASFLAGS += -Rpass-analysis=".*"
+#GPU_ASFLAGS += -mllvm -debug-pass=Arguments
+#GPU_ASFLAGS += -mllvm -pass-remarks='.*'
+
+#
+# SPV
+#
+
+BUILT_SOURCES += gpt_gpu.spv.bc
+gpt_gpu.spv.bc: gpt_gpu.cl
+	clang-13 -target spir-- $(GPU_CPPFLAGS) -O0 -emit-llvm -o $@ -x cl -c $^
+
+BUILT_SOURCES += gpt_gpu.spv
+gpt_gpu.spv: gpt_gpu.spv.bc
+	llvm-spirv -o $@ $^
+
+CLEANFILES += gpt_gpu.spv.cc
+libircd_la_SOURCES += gpt_gpu.spv.cc
+gpt_gpu.spv.cc: gpt_gpu.spv
+	xxd -i $^ $@
+
+#
+# R600
+#
+
+R600_TARGET = r600--
+
+#
+# R600 Saint Barthélemy
+#
+
+R600_BARTS_CFLAGS = $(GPU_CFLAGS)
+R600_BARTS_CFLAGS += -target $(R600_TARGET)
+R600_BARTS_CFLAGS += -mcpu=barts
+R600_BARTS_CFLAGS += -Xclang -mlink-bitcode-file -Xclang /usr/lib/clc/barts-r600--.bc
+
+BUILT_SOURCES += gpt_gpu.r600_barts.bc
+gpt_gpu.r600_barts.bc: gpt_gpu.cl
+	$(CC) $(R600_BARTS_CFLAGS) $(GPU_CPPFLAGS) -emit-llvm -o $@ -x cl -c $^
+
+#BUILT_SOURCES += gpt_gpu.r600_barts.link.bc
+gpt_gpu.r600_barts.link.bc: gpt_gpu.r600_barts.bc
+	llvm-link-14 $(GPU_LINKFLAGS) -o $@ $^ /usr/lib/clc/barts-r600--.bc
+	opt-14 $(GPU_OPTFLAGS) -o $@ $@
+
+#BUILT_SOURCES += gpt_gpu.r600_barts.s
+gpt_gpu.r600_barts.s: gpt_gpu.r600_barts.link.bc
+	$(CC) -cc1 $(GPU_ASFLAGS) -triple $(R600_TARGET) -emit-obj -S -o $@ -x ir $^
+
+#BUILT_SOURCES += gpt_gpu.r600_barts.o
+gpt_gpu.r600_barts.o: gpt_gpu.r600_barts.link.bc
+	$(CC) -cc1 $(GPU_ASFLAGS) -triple $(R600_TARGET) -emit-obj -o $@ -x ir $^
+
+CLEANFILES += gpt_gpu.r600_barts.bc.cc
+libircd_la_SOURCES += gpt_gpu.r600_barts.bc.cc
+gpt_gpu.r600_barts.bc.cc: gpt_gpu.r600_barts.bc
+	xxd -i $^ $@
+
+#
+#
+#
+
+endif # OPENCL
+endif # CLANG

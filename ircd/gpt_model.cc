@@ -54,9 +54,13 @@ namespace ircd::gpt::model
 	static fs::map
 	default_model_shm,
 	default_dataset_shm;
-
-	static std::unique_ptr<decoder> default_model_res;
 }
+
+constexpr const char
+*const ircd::gpt::model::prop::ended,
+*const ircd::gpt::model::prop::id,
+*const ircd::gpt::model::prop::length,
+*const ircd::gpt::model::prop::text;
 
 decltype(ircd::gpt::model::manifest_h)
 ircd::gpt::model::manifest_h
@@ -102,7 +106,7 @@ decltype(ircd::gpt::model::cache_hugepage)
 ircd::gpt::model::cache_hugepage
 {
 	{ "name",     "ircd.gpt.model.cache.hugepage" },
-	{ "default",  true                            },
+	{ "default",  false                           },
 };
 
 decltype(ircd::gpt::model::cache_path)
@@ -132,6 +136,12 @@ ircd::gpt::model::path
 decltype(ircd::gpt::model::default_model)
 ircd::gpt::model::default_model;
 
+decltype(ircd::gpt::model::default_moment)
+ircd::gpt::model::default_moment;
+
+decltype(ircd::gpt::model::default_checkpoint)
+ircd::gpt::model::default_checkpoint;
+
 decltype(ircd::gpt::model::default_dataset)
 ircd::gpt::model::default_dataset;
 
@@ -144,17 +154,31 @@ ircd::gpt::model::init()
 	if(!model::path)
 		return;
 
-	if(!init_from_cache(model::cache_path))
-		init_from_json(model::cache_path, model::path);
-
 	if(model::dataset_path)
 		init_dataset(model::dataset_path);
+
+	if(likely(init_from_cache(model::cache_path)))
+		return;
+
+	init_from_json(model::cache_path, model::path);
+	if(unlikely(!init_from_cache(model::cache_path)))
+		throw error
+		{
+			"Failed to find and/or initialize model."
+		};
 }
 
 void
 ircd::gpt::model::fini()
 noexcept
 {
+	default_checkpoint[2] = nullptr;
+	default_checkpoint[1] = nullptr;
+	default_checkpoint[0] = nullptr;
+
+	default_moment[1] = nullptr;
+	default_moment[0] = nullptr;
+
 	default_model = nullptr;
 	default_model_shm = {};
 
@@ -169,18 +193,33 @@ ircd::gpt::model::init_from_cache(const string_view &cache_path)
 	if(!fs::is_reg(cache_path))
 		return false;
 
-	const auto size
+	const auto file_size
 	{
 		fs::size(cache_path)
 	};
 
-	if(unlikely(size != sizeof(model::decoder)))
+	const auto decoder_size
+	{
+		sizeof(model::decoder)
+	};
+
+	const bool has_params
+	{
+		file_size >= decoder_size
+	};
+
+	const bool has_moments
+	{
+		file_size >= decoder_size * 6
+	};
+
+	if(unlikely(!has_params))
 		throw error
 		{
-			"Cached model `%s' size %zu differs from %zu.",
+			"Cached model `%s' size %zu insufficient for decoder size %zu.",
 			cache_path,
-			size,
-			sizeof(model::decoder),
+			file_size,
+			decoder_size,
 		};
 
 	const auto mode
@@ -192,20 +231,41 @@ ircd::gpt::model::init_from_cache(const string_view &cache_path)
 
 	const fs::fd fd
 	{
-		cache_path, mode
+		cache_path, fs::fd::opts
+		{
+			.mode = mode,
+		},
 	};
 
-	fs::map::opts map_opts
+	const bool map_moments
 	{
-		mode
+		has_moments || cache_shared
 	};
 
-	map_opts.locked = bool(cache_locked);
-	map_opts.shared = bool(cache_shared);
-	map_opts.huge2mb = bool(cache_hugepage);
+	if(!has_moments && map_moments)
+	{
+		fs::truncate(fd, decoder_size * 6);
+		fs::allocate(fd, decoder_size * 5, decoder_size);
+	}
+
+	const auto map_size
+	{
+		map_moments?
+			decoder_size * 6:
+			decoder_size
+	};
+
+	const fs::map::opts map_opts
+	{
+		.alignment = alignof(model::decoder),
+		.shared = bool(cache_shared),
+		.locked = bool(cache_locked),
+		.huge2mb = bool(cache_hugepage),
+	};
+
 	default_model_shm = fs::map
 	{
-		fd, map_opts, sizeof(decoder)
+		fd, map_opts, map_size
 	};
 
 	default_model = reinterpret_cast<decoder *>
@@ -213,13 +273,28 @@ ircd::gpt::model::init_from_cache(const string_view &cache_path)
 		data(default_model_shm)
 	);
 
+	if(map_moments)
+	{
+		default_moment[0] = reinterpret_cast<float *>(default_model + 1);
+		default_moment[1] = reinterpret_cast<float *>(default_model + 2);
+		default_checkpoint[0] = reinterpret_cast<float *>(default_model + 3);
+		default_checkpoint[1] = reinterpret_cast<float *>(default_model + 4);
+		default_checkpoint[2] = reinterpret_cast<float *>(default_model + 5);
+	}
+
+	allocator::lock({(const char *)default_model, sizeof(decoder)});
+	fs::prefetch(default_model_shm, sizeof(decoder));
+
 	char pbuf[48];
 	log::info
 	{
-		log, "model(%p) mapped cached model `%s' %s",
+		log, "model(%p) mapped cached model `%s' params:%b moments:%b align:%u %s",
 		data(default_model_shm),
 		cache_path,
-		pretty(pbuf, iec(size)),
+		has_params,
+		has_moments,
+		map_opts.alignment,
+		pretty(pbuf, iec(map_size)),
 	};
 
 	return true;
@@ -264,9 +339,6 @@ ircd::gpt::model::init_from_json(const string_view &cache_path,
 		cache_path,
 		stopwatch.pretty(pbuf[1]),
 	};
-
-	default_model_res = std::move(decoder);
-	default_model = default_model_res.get();
 }
 
 void
@@ -363,6 +435,7 @@ ircd::gpt::model::init_dataset(const string_view &path)
 
 	size_t checkpoint(0);
 	default_data.resize(260000); //TODO: XXX
+	fs::prefetch(default_dataset_shm, size);
 	ircd::tokens(default_dataset, '\n', [&checkpoint]
 	(const string_view &line)
 	{
@@ -379,6 +452,7 @@ ircd::gpt::model::init_dataset(const string_view &path)
 		checkpoint,
 	};
 
+	fs::evict(default_dataset_shm, size);
 	return true;
 }
 
@@ -393,9 +467,9 @@ ircd::gpt::model::init_wpe_weight(decoder &d,
 	{
 		size_t j(0);
 		for(const auto &elem : vec)
-			d.word.pos[i][j++] = lex_cast<float>(elem);
+			d.embed.pos[i].elem[j++] = lex_cast<float>(elem);
 
-		always_assert(j == sizeof(d.word.pos[i]) / sizeof(float));
+		always_assert(j == sizeof(d.embed.pos[i]) / sizeof(float));
 		++i;
 	}
 }
@@ -411,9 +485,9 @@ ircd::gpt::model::init_wte_weight(decoder &d,
 	{
 		size_t j(0);
 		for(const auto &elem : vec)
-			d.word.token[i][j++] = lex_cast<float>(elem);
+			d.embed.token[i].elem[j++] = lex_cast<float>(elem);
 
-		always_assert(j == sizeof(d.word.token[i]) / sizeof(float));
+		always_assert(j == sizeof(d.embed.token[i]) / sizeof(float));
 		++i;
 	}
 }
@@ -426,9 +500,9 @@ ircd::gpt::model::init_f_weight(decoder &d,
 {
 	size_t i(0);
 	for(const auto &elem : vec)
-		d.f.weight[i++] = lex_cast<float>(elem);
+		d.embed.norm.weight.elem[i++] = lex_cast<float>(elem);
 
-	always_assert(i == sizeof(d.f.weight) / sizeof(float));
+	always_assert(i == sizeof(d.embed.norm.weight) / sizeof(float));
 }
 
 void
@@ -439,9 +513,9 @@ ircd::gpt::model::init_f_bias(decoder &d,
 {
 	size_t i(0);
 	for(const auto &elem : vec)
-		d.f.bias[i++] = lex_cast<float>(elem);
+		d.embed.norm.bias.elem[i++] = lex_cast<float>(elem);
 
-	always_assert(i == sizeof(d.f.bias) / sizeof(float));
+	always_assert(i == sizeof(d.embed.norm.bias) / sizeof(float));
 }
 
 void
@@ -455,16 +529,16 @@ ircd::gpt::model::init_h_ffnn_fc_weight(decoder &d,
 	{
 		size_t j(0);
 		for(const auto &elem : vec)
-			d.layer[layer].ffnn.fc_weight[i][j++] = lex_cast<float>(elem);
+			d.layer[layer].ffnn.fcon_weight[i].fcon[j++] = lex_cast<float>(elem);
 
-		always_assert(j == sizeof(d.layer[layer].ffnn.fc_weight[i]) / sizeof(float));
+		always_assert(j == sizeof(d.layer[layer].ffnn.fcon_weight[i]) / sizeof(float));
 		++i;
 	}
 
 	always_assert
 	(
-		i == sizeof(d.layer[layer].ffnn.fc_weight)
-		/ sizeof(d.layer[layer].ffnn.fc_weight[0])
+		i == sizeof(d.layer[layer].ffnn.fcon_weight)
+		/ sizeof(d.layer[layer].ffnn.fcon_weight[0])
 	);
 }
 
@@ -476,9 +550,9 @@ ircd::gpt::model::init_h_ffnn_fc_bias(decoder &d,
 {
 	size_t i(0);
 	for(const auto &elem : vec)
-		d.layer[layer].ffnn.fc_bias[i++] = lex_cast<float>(elem);
+		d.layer[layer].ffnn.fcon_bias.fcon[i++] = lex_cast<float>(elem);
 
-	always_assert(i == sizeof(d.layer[layer].ffnn.fc_bias) / sizeof(float));
+	always_assert(i == sizeof(d.layer[layer].ffnn.fcon_bias) / sizeof(float));
 }
 
 void
@@ -492,7 +566,7 @@ ircd::gpt::model::init_h_ffnn_proj_weight(decoder &d,
 	{
 		size_t j(0);
 		for(const auto &elem : vec)
-			d.layer[layer].ffnn.proj_weight[i][j++] = lex_cast<float>(elem);
+			d.layer[layer].ffnn.proj_weight[i].elem[j++] = lex_cast<float>(elem);
 
 		always_assert(j == sizeof(d.layer[layer].ffnn.proj_weight[i]) / sizeof(float));
 		++i;
@@ -513,7 +587,7 @@ ircd::gpt::model::init_h_ffnn_proj_bias(decoder &d,
 {
 	size_t i(0);
 	for(const auto &elem : vec)
-		d.layer[layer].ffnn.proj_bias[i++] = lex_cast<float>(elem);
+		d.layer[layer].ffnn.proj_bias.elem[i++] = lex_cast<float>(elem);
 
 	always_assert(i == sizeof(d.layer[layer].ffnn.proj_bias) / sizeof(float));
 }
@@ -526,9 +600,9 @@ ircd::gpt::model::init_h_ln_1_weight(decoder &d,
 {
 	size_t i(0);
 	for(const auto &elem : vec)
-		d.layer[layer].ln1.weight[i++] = lex_cast<float>(elem);
+		d.layer[layer].attn.norm.weight.elem[i++] = lex_cast<float>(elem);
 
-	always_assert(i == sizeof(d.layer[layer].ln1.weight) / sizeof(float));
+	always_assert(i == sizeof(d.layer[layer].attn.norm.weight) / sizeof(float));
 }
 
 void
@@ -539,9 +613,9 @@ ircd::gpt::model::init_h_ln_1_bias(decoder &d,
 {
 	size_t i(0);
 	for(const auto &elem : vec)
-		d.layer[layer].ln1.bias[i++] = lex_cast<float>(elem);
+		d.layer[layer].attn.norm.bias.elem[i++] = lex_cast<float>(elem);
 
-	always_assert(i == sizeof(d.layer[layer].ln1.bias) / sizeof(float));
+	always_assert(i == sizeof(d.layer[layer].attn.norm.bias) / sizeof(float));
 }
 
 void
@@ -552,9 +626,9 @@ ircd::gpt::model::init_h_ln_2_weight(decoder &d,
 {
 	size_t i(0);
 	for(const auto &elem : vec)
-		d.layer[layer].ln2.weight[i++] = lex_cast<float>(elem);
+		d.layer[layer].ffnn.norm.weight.elem[i++] = lex_cast<float>(elem);
 
-	always_assert(i == sizeof(d.layer[layer].ln2.weight) / sizeof(float));
+	always_assert(i == sizeof(d.layer[layer].ffnn.norm.weight) / sizeof(float));
 }
 
 void
@@ -565,9 +639,9 @@ ircd::gpt::model::init_h_ln_2_bias(decoder &d,
 {
 	size_t i(0);
 	for(const auto &elem : vec)
-		d.layer[layer].ln2.bias[i++] = lex_cast<float>(elem);
+		d.layer[layer].ffnn.norm.bias.elem[i++] = lex_cast<float>(elem);
 
-	always_assert(i == sizeof(d.layer[layer].ln2.bias) / sizeof(float));
+	always_assert(i == sizeof(d.layer[layer].ffnn.norm.bias) / sizeof(float));
 }
 
 void
@@ -581,16 +655,16 @@ ircd::gpt::model::init_h_attn_attn_weight(decoder &d,
 	{
 		size_t j(0);
 		for(const auto &elem : vec)
-			d.layer[layer].attn.attn_weight[i][j++] = lex_cast<float>(elem);
+			d.layer[layer].attn.fcon_weight[i].fcon[j++] = lex_cast<float>(elem);
 
-		always_assert(j == sizeof(d.layer[layer].attn.attn_weight[i]) / sizeof(float));
+		always_assert(j == sizeof(d.layer[layer].attn.fcon_weight[i]) / sizeof(float));
 		++i;
 	}
 
 	always_assert
 	(
-		i == sizeof(d.layer[layer].attn.attn_weight)
-		/ sizeof(d.layer[layer].attn.attn_weight[0])
+		i == sizeof(d.layer[layer].attn.fcon_weight)
+		/ sizeof(d.layer[layer].attn.fcon_weight[0])
 	);
 }
 
@@ -602,9 +676,9 @@ ircd::gpt::model::init_h_attn_attn_bias(decoder &d,
 {
 	size_t i(0);
 	for(const auto &elem : vec)
-		d.layer[layer].attn.attn_bias[i++] = lex_cast<float>(elem);
+		d.layer[layer].attn.fcon_bias.fcon[i++] = lex_cast<float>(elem);
 
-	always_assert(i == sizeof(d.layer[layer].attn.attn_bias) / sizeof(float));
+	always_assert(i == sizeof(d.layer[layer].attn.fcon_bias) / sizeof(float));
 }
 
 void
@@ -618,7 +692,7 @@ ircd::gpt::model::init_h_attn_proj_weight(decoder &d,
 	{
 		size_t j(0);
 		for(const auto &elem : vec)
-			d.layer[layer].attn.proj_weight[i][j++] = lex_cast<float>(elem);
+			d.layer[layer].attn.proj_weight[i].elem[j++] = lex_cast<float>(elem);
 
 		always_assert(j == sizeof(d.layer[layer].attn.proj_weight[i]) / sizeof(float));
 		++i;
@@ -639,7 +713,7 @@ ircd::gpt::model::init_h_attn_proj_bias(decoder &d,
 {
 	size_t i(0);
 	for(const auto &elem : vec)
-		d.layer[layer].attn.proj_bias[i++] = lex_cast<float>(elem);
+		d.layer[layer].attn.proj_bias.elem[i++] = lex_cast<float>(elem);
 
 	always_assert(i == sizeof(d.layer[layer].attn.proj_bias) / sizeof(float));
 }

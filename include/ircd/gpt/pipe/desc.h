@@ -16,43 +16,62 @@ struct ircd::gpt::pipe::desc
 {
 	struct layer;
 
+	// Model descriptor
 	pipe::model *model;
+
+	// Code descriptor
 	pipe::code *code;
 
+	// Memories
 	cl::data
-	state,         // [root] projection (layers * tokens * embed * 3 * float)
+	opts,          // [root] options page
+	ctrl,          // [root] control page
 	master,        // [root] single allocation for additional buffers:
+	state,         // [-sub] projection (layers * tokens * embed * 3 * float)
 	accum,         // [-sub] accumulator (tokens * embed * float)
 	logit,         // [-sub] result logit vector (50257 * float)
-	logsm,         // [-sub] outputs distribution (50257 * float)
-	ctrl,          // [root] control page
-	opts;          // [root] options page
+	attns,         // [-sub] result attention softmax
+	frame[8];      // [root] result stream
 
+	// Programs
 	cl::kern
+	alloc,
+	enter,
 	lm_embed,
 	lm_norm,
 	lm_logit,
 	lm_logsm,
 	lm_select,
-	lm_norm_backprop,
-	lm_embed_backprop;
+	lm_prop_embed,
+	lm_prop_norm,
+	leave[8];
 
-	std::unique_ptr<struct desc::layer>
-	layer[12];
+	/// Coil pack
+	std::unique_ptr<struct desc::layer> layer[12];
 
-	desc(pipe::code &, pipe::model &);
+	/// Attention projection for first N tokens already contained in `state`.
+	uint cached {0};
+
+	desc(const gpt::opts *const &,
+	     gpt::ctrl *const &,
+	     pipe::model &model,
+	     pipe::code &code);
 };
 
+/// Pipe descriptor: coil layer
 struct ircd::gpt::pipe::desc::layer
 {
 	cl::data
-	state;         // [-sub] qry/key/val projection (tokens * embed * 3 * float)
+	state,         // [-sub] qry/key/val projection (tokens * embed * 3 * float)
+	attns;         // [-sub] attn softmax result (((tokens * tokens) / 2) * 12 * float)
 
 	cl::kern
-	negative,
-	positive,
-	backattn,
-	backffnn;
+	attn,
+	ffnn,
+	prop_attn,
+	prop_ffnn;
 
-	layer(pipe::desc &, const int);
+	layer(pipe::desc &,
+	      const gpt::opts *const &,
+	      const uint laynum);
 };

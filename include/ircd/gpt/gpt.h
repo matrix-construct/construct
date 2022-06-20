@@ -17,16 +17,36 @@ namespace ircd::gpt
 {
 	IRCD_EXCEPTION(ircd::error, error)
 
+	struct samp;
+	struct step;
+	struct epoch;
 	struct task;
 
 	extern log::log log;
 }
 
 #include "vocab.h"
-#include "model.h"
 #include "token.h"
+#include "vector.h"
+#include "model.h"
 #include "opts.h"
 #include "ctrl.h"
-#include "task.h"
 #include "pipe/pipe.h"
+#include "samp.h"
+#include "step.h"
+#include "epoch.h"
+#include "task.h"
 #include "generate.h"
+
+namespace ircd::gpt
+{
+	void backprop(const opts &, const u32, const f32, model::decoder &, f32 *const __restrict__ [2]) noexcept;
+
+	void log_debug(const opts &, const ctrl &);
+	void log_debug_token(const opts &, const ctrl &, const uint);
+	void log_debug_attns(const opts &, const ctrl &);
+	void log_debug_attns_top(const opts &, const ctrl &);
+	void log_debug_labels(const opts &, const ctrl &);
+	void log_debug_topn(const opts &, const ctrl &);
+	void log_debug_prof(const opts &, const ctrl &, const pipe::prof &);
+}

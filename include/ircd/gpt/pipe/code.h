@@ -16,12 +16,15 @@ struct ircd::gpt::pipe::code
 :cl::code
 {
 	static conf::item<std::string> default_path;
-	static conf::item<std::string> default_opts;
+	static conf::item<std::string> default_compile_opts;
+	static conf::item<std::string> default_link_opts;
 	static conf::item<std::string> cache_path;
 
 	static string_view make_cache_path(const mutable_buffer &);
-	static cl::code from_cache(const string_view &opts, const string_view &path);
-	static cl::code from_source(const string_view &opts);
+
+	static cl::code from_cache();
+	static cl::code from_source(const string_view &comp_opts = {}, const string_view &link_opts = {});
+	static cl::code from_bitcode(const string_view &link_opts = {});
 
 	void set_cache(const string_view &path);
 	bool put_cache();
