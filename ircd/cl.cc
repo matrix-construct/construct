@@ -763,6 +763,7 @@ namespace ircd::cl
 	static const size_t _deps_list_max {32};
 	static thread_local cl_event _deps_list[_deps_list_max];
 
+	static cl_event *addressof_handle(cl::work *const &);
 	static void check_submit_blocking(cl::exec *const &, const exec::opts &);
 	static void handle_submitted(cl::exec *const &, const exec::opts &);
 	static vector_view<cl_event> make_deps_default(cl::work *const &, const exec::opts &);
@@ -804,7 +805,7 @@ try
 		q,
 		deps.size(),
 		deps.size()? deps.data(): nullptr,
-		reinterpret_cast<cl_event *>(&this->handle)
+		addressof_handle(this)
 	);
 
 	primary_stats.exec_barrier_tasks += 1;
@@ -866,7 +867,7 @@ try
 		work.local.data(),
 		deps.size(),
 		deps.size()? deps.data(): nullptr,
-		reinterpret_cast<cl_event *>(&this->handle)
+		addressof_handle(this)
 	);
 
 	size_t global_size(work.global[0]);
@@ -935,7 +936,7 @@ try
 		size,
 		deps.size(),
 		deps.size()? deps.data(): nullptr,
-		reinterpret_cast<cl_event *>(&this->handle)
+		addressof_handle(this)
 	);
 
 	primary_stats.exec_copy_bytes += size;
@@ -1052,7 +1053,7 @@ try
 			size,
 			deps.size(),
 			deps.size()? deps.data(): nullptr,
-			reinterpret_cast<cl_event *>(&this->handle),
+			addressof_handle(this),
 			&err
 		);
 	else
@@ -1064,7 +1065,7 @@ try
 			std::exchange(data.mapped, nullptr),
 			0, // deps
 			nullptr, // depslist
-			reinterpret_cast<cl_event *>(&this->handle)
+			addressof_handle(this)
 		);
 
 	throw_on_error(err);
@@ -1195,6 +1196,22 @@ ircd::cl::make_deps_default(cl::work *const &work,
 	{
 		out, ret
 	};
+}
+
+cl_event *
+ircd::cl::addressof_handle(cl::work *const &work)
+{
+	const auto handle
+	{
+		std::addressof(work->handle)
+	};
+
+	cl_event *const ret
+	(
+		reinterpret_cast<cl_event *>(handle)
+	);
+
+	return ret;
 }
 
 //
