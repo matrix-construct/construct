@@ -47,7 +47,13 @@ ircd::allocator::info(const mutable_buffer &buf,
 
 	const auto ma
 	{
-		::mallinfo()
+		#if defined(HAVE_MALLINFO2)
+			::mallinfo2()
+		#elif defined(HAVE_MALLINFO)
+			::mallinfo2()
+		#else
+			#error "Missing mallinfo(3)."
+		#endif
 	};
 
 	char pbuf[96];

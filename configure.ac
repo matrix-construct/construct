@@ -1272,6 +1272,8 @@ AC_CHECK_FUNCS([          \
 	backtrace             \
 	fadvise               \
 	madvise               \
+	mallinfo              \
+	mallinfo2             \
 	mlock                 \
 	mlock2                \
 	mmap                  \
