@@ -55,6 +55,7 @@ extern "C"
 #include <RB_INC_LIMITS
 #include <RB_INC_TYPEINDEX
 #include <RB_INC_TYPE_TRAITS
+#include <RB_INC_CONCEPTS
 
 // Errors
 #include <RB_INC_CERRNO
@@ -68,6 +69,7 @@ extern "C"
 // Containers
 #include <RB_INC_VARIANT
 #include <RB_INC_OPTIONAL
+#include <RB_INC_TUPLE
 #include <RB_INC_ARRAY
 #include <RB_INC_BITSET
 #include <RB_INC_VECTOR
