@@ -15,27 +15,31 @@
 #endif
 
 // In case these declarations are missing in <malloc.h>
-extern "C" void *(*__malloc_hook)(size_t, const void *);
-extern "C" void *(*__realloc_hook)(void *, size_t, const void *);
-extern "C" void (*__free_hook)(void *, const void *);
+#if defined(__GNU_LIBRARY__) && defined(HAVE_MALLOC_H)
+extern "C" void *(*__MALLOC_HOOK_VOLATILE __malloc_hook)(size_t, const void *);
+extern "C" void *(*__MALLOC_HOOK_VOLATILE __realloc_hook)(void *, size_t, const void *);
+extern "C" void (*__MALLOC_HOOK_VOLATILE __free_hook)(void *, const void *);
+#endif
 
+#if defined(__GNU_LIBRARY__) && defined(HAVE_MALLOC_H)
 namespace ircd::allocator
 {
-	static void *(*their_malloc_hook)(size_t, const void *);
+	static decltype(__malloc_hook) their_malloc_hook;
 	[[gnu::weak]] void *malloc_hook(size_t, const void *);
 	static void install_malloc_hook();
 	static void uninstall_malloc_hook();
 
-	static void *(*their_realloc_hook)(void *, size_t, const void *);
+	static decltype(__realloc_hook) their_realloc_hook;
 	[[gnu::weak]] void *realloc_hook(void *, size_t, const void *);
 	static void install_realloc_hook();
 	static void uninstall_realloc_hook();
 
-	static void (*their_free_hook)(void *, const void *);
+	static decltype(__free_hook) their_free_hook;
 	[[gnu::weak]] void free_hook(void *, const void *);
 	static void install_free_hook();
 	static void uninstall_free_hook();
 }
+#endif
 
 #ifdef IRCD_ALLOCATOR_USE_GNU
 ircd::string_view
