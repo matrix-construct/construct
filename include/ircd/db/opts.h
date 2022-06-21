@@ -87,7 +87,6 @@ struct ircd::db::gopts
 	const rocksdb::Slice *lower_bound { nullptr };
 	const rocksdb::Slice *upper_bound { nullptr };
 	size_t readahead { 0 };
-	[[deprecated]] uint64_t seqnum { 0 };
 
 	using opts<get>::opts;
 };
