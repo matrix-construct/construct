@@ -863,16 +863,18 @@ AM_COND_IF([DEBUG],
 	RB_MAYBE_CXXFLAG([-Wsuggest-override], charybdis_cv_c_gcc_w_suggest_override)
 	RB_MAYBE_CXXFLAG([-Wmissing-noreturn], charybdis_cv_c_gcc_w_missing_noreturn)
 ], [
-	RB_MAYBE_CXXFLAG([-Wno-unknown-pragmas], charybdis_cv_c_gcc_w_unknown_pragmas)
+	RB_MAYBE_CXXFLAG([-Wno-unknown-pragmas], charybdis_cv_c_gcc_w_no_unknown_pragmas)
 
 	AM_COND_IF([CLANG],
 	[
-		RB_MAYBE_CXXFLAG([-Wno-unknown-attributes], charybdis_cv_c_gcc_w_unknown_attributes)
+		RB_MAYBE_CXXFLAG([-Wno-unknown-attributes], charybdis_cv_c_gcc_w_no_unknown_attributes)
 	])
 
 	AM_COND_IF([GCC],
 	[
-		RB_MAYBE_CXXFLAG([-Wno-ignored-attributes], charybdis_cv_c_gcc_w_ignored_attributes)
+		RB_MAYBE_CXXFLAG([-Wno-ignored-attributes], charybdis_cv_c_gcc_w_no_ignored_attributes)
+		RB_MAYBE_CXXFLAG([-Wno-attributes], charybdis_cv_c_gcc_w_no_attributes)
+		RB_MAYBE_CXXFLAG([-Wno-pragmas], charybdis_cv_c_gcc_w_no_pragmas)
 	])
 ])
 
