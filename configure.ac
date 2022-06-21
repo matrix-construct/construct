@@ -529,6 +529,27 @@ AC_ARG_ENABLE(lowmem-compile, RB_HELP_STRING([--enable-lowmem-compile], [Enable 
 
 AM_CONDITIONAL([LOWMEM_COMPILE], [[[[ $lowmem_compile = "yes" ]]]])
 
+dnl
+dnl GCC toolchain selection (for clang)
+dnl
+
+AC_MSG_CHECKING(whether to use a specific GCC toolchain)
+AC_ARG_WITH(gcc-toolchain, RB_HELP_STRING([--with-gcc-toolchain], [Path to GCC toolchain]),
+[
+	with_gcc_toolchain=$withval
+	AC_MSG_RESULT([yes, "$with_gcc_toolchain"])
+	AC_SUBST(GCC_TOOLCHAIN, $with_gcc_toolchain)
+	AM_COND_IF(CLANG,
+	[
+		RB_VAR_PREPEND([CXXFLAGS], ["--gcc-toolchain=$with_gcc_toolchain"])
+		RB_VAR_PREPEND([LDFLAGS], ["--gcc-toolchain=$with_gcc_toolchain"])
+	], [
+		AC_MSG_WARN([--with-gcc-toolchain only applies to clang builds.])
+	])
+], [
+	AC_MSG_RESULT([no])
+])
+
 
 dnl ***************************************************************************
 dnl
