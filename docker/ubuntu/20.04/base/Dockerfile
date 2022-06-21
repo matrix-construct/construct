@@ -18,6 +18,7 @@ RUN \
         curl \
         git \
         libbz2-dev \
+        liblz4-dev \
         libgraphicsmagick1-dev \
         libicu-dev \
         libjemalloc-dev \

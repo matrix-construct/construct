@@ -8,20 +8,59 @@ environment:
   COMMAND: rmdir -v deps/rocksdb && ln -sv /usr/src/rocksdb deps && ./autogen.sh && ./configure --enable-assert && make install && construct -smoketest localhost
 
   matrix:
-    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
-      DOCKER_IMAGE: jevolk/construct:ubuntu-20.04-gcc-8
+#   - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+#     DOCKER_IMAGE: jevolk/construct:ubuntu-20.04-gcc-8
 
 #   - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
 #     DOCKER_IMAGE: jevolk/construct:ubuntu-20.04-gcc-9
 
-    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
-      DOCKER_IMAGE: jevolk/construct:ubuntu-20.04-clang-9
+#   - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+#     DOCKER_IMAGE: jevolk/construct:ubuntu-20.04-gcc-10
 
-    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
-      DOCKER_IMAGE: jevolk/construct:ubuntu-20.04-gcc-10
+#   - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+#     DOCKER_IMAGE: jevolk/construct:ubuntu-20.04-clang-9
 
 #   - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
 #     DOCKER_IMAGE: jevolk/construct:ubuntu-20.04-clang-10
+
+#   - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+#     DOCKER_IMAGE: jevolk/construct:ubuntu-20.04-clang-11
+
+#   - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+#     DOCKER_IMAGE: jevolk/construct:ubuntu-20.04-clang-12
+
+#   - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+#     DOCKER_IMAGE: jevolk/construct:ubuntu-22.04-base-gcc-8
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+      DOCKER_IMAGE: jevolk/construct:ubuntu-22.04-base-gcc-9
+
+#   - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+#      DOCKER_IMAGE: jevolk/construct:ubuntu-22.04-base-gcc-10
+
+#   - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+#     DOCKER_IMAGE: jevolk/construct:ubuntu-22.04-base-gcc-11
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+      DOCKER_IMAGE: jevolk/construct:ubuntu-22.04-base-gcc-12
+
+#   - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+#     DOCKER_IMAGE: jevolk/construct:ubuntu-22.04-base-clang-10
+
+#   - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+#     DOCKER_IMAGE: jevolk/construct:ubuntu-22.04-base-clang-11
+
+#   - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+#     DOCKER_IMAGE: jevolk/construct:ubuntu-22.04-base-clang-12
+
+#   - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+#     DOCKER_IMAGE: jevolk/construct:ubuntu-22.04-base-clang-13
+
+#   - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+#     DOCKER_IMAGE: jevolk/construct:ubuntu-22.04-base-clang-14
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+      DOCKER_IMAGE: jevolk/construct:ubuntu-22.04-full-clang-14
 
 for:
 -
