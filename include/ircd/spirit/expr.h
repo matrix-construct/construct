@@ -14,7 +14,7 @@
 namespace ircd::spirit
 {
 	template<class T>
-	struct [[gnu::nodebug]] expr;
+	struct [[clang::nodebug]] expr;
 }
 
 /// Expression storage wrapper. This could also be called `named_expression`.

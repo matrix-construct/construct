@@ -193,27 +193,22 @@ try
 		has(string_view(ircd::diagnostic), "valid-json")
 	};
 
-	const fs::fd file
+	const fs::fd::opts file_opts
 	{
-		path, fs::fd::opts
-		{
-			.mode = std::ios::in
-		},
+		.mode = std::ios::in,
+		.sequential = true,
 	};
 
+	const fs::fd file
+	{
+		path, file_opts
+	};
+
+	fs::map::opts map_opts{file_opts};
+	map_opts.huge2mb = true;
 	const fs::map map
 	{
-		file, fs::map::opts
-		{
-			fs::fd::opts
-			{
-				.mode = std::ios::in,
-				.sequential = true,
-			},
-
-			.huge2mb = true,
-			.huge1gb = true,
-		},
+		file, map_opts
 	};
 
 	// This array is backed by the mmap

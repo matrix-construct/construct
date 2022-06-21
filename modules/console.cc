@@ -14817,14 +14817,10 @@ console_cmd__fed__hierarchy(opt &out, const string_view &line)
 
 	m::fed::hierarchy::opts opts
 	{
-		m::fed::request::opts
-		{
-			.remote = remote
-		},
-
 		.suggested_only = has(param["op"], "suggested"),
 	};
 
+	opts.remote = remote;
 	m::fed::hierarchy request
 	{
 		room_id, buf, std::move(opts)
@@ -14833,7 +14829,7 @@ console_cmd__fed__hierarchy(opt &out, const string_view &line)
 	request.wait(out.timeout);
 	request.get();
 
-	const json::object &response
+	const json::object response
 	{
 		request
 	};
@@ -15007,14 +15003,10 @@ console_cmd__fed__head(opt &out, const string_view &line)
 
 	m::fed::make_join::opts opts
 	{
-		m::fed::request::opts
-		{
-			.remote = remote
-		},
-
 		.knock = param["knock"] == "knock",
 	};
 
+	opts.remote = remote;
 	m::fed::make_join request
 	{
 		room_id, user_id, buf, std::move(opts)
