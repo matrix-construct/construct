@@ -765,7 +765,7 @@ namespace ircd::http::parser
 decltype(ircd::http::parser::parse_header)
 ircd::http::parser::parse_header
 {
-	expect[header]
+	eoi | expect[header]
 	,"header"
 };
 
@@ -786,9 +786,6 @@ ircd::http::parser::parse_response
 ircd::http::header::header(const line &line)
 try
 {
-	if(line.empty())
-		return;
-
 	const char
 	*start(line.data()),
 	*const stop(line.data() + line.size());
@@ -881,9 +878,8 @@ ircd::http::line::terminator
 };
 
 ircd::http::line::line(parse::capstan &pc)
-:string_view{[&pc]
 {
-	string_view ret;
+	auto &ret(static_cast<string_view &>(*this));
 	pc([&ret](const char *&start, const char *const &stop)
 	{
 		if(start == stop)
@@ -897,10 +893,6 @@ ircd::http::line::line(parse::capstan &pc)
 		assert(ok);
 		return ok;
 	});
-
-	return ret;
-}()}
-{
 }
 
 //
