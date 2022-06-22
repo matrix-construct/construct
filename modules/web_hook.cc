@@ -76,15 +76,27 @@ static void
 appveyor_handle(client &,
                 const resource::request &);
 
+static void
+dockerhub_handle(client &,
+                 const resource::request &);
+
 resource::response
 post__webhook(client &client,
               const resource::request &request)
 {
-	if(has(http::headers(request.head.headers), "X-GitHub-Event"_sv))
+	const http::headers &headers
+	{
+		request.head.headers
+	};
+
+	if(http::has(headers, "X-GitHub-Event"))
 		github_handle(client, request);
 
-	else if(has(http::headers(request.head.headers), "X-Appveyor-Secret"_sv))
+	else if(http::has(headers, "X-Appveyor-Secret"))
 		appveyor_handle(client, request);
+
+	else if(startswith(request.head.content_type, "application/json"))
+		dockerhub_handle(client, request);
 
 	return resource::response
 	{
@@ -1779,6 +1791,11 @@ catch(const crh::error &e)
 	};
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// appveyor
+//
+
 void
 appveyor_handle(client &client,
                 const resource::request &request)
@@ -1787,4 +1804,126 @@ appveyor_handle(client &client,
 	{
 		request.head.headers
 	};
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// dockerhub
+//
+
+static void
+dockerhub_handle_push(std::ostream &out,
+                      client &client,
+                      const resource::request &request);
+
+void
+dockerhub_handle(client &client,
+                 const resource::request &request)
+try
+{
+	if(!string_view(webhook_room))
+		return;
+
+	if(!string_view(webhook_user))
+		return;
+
+	const auto callback_url
+	{
+		request["callback_url"]
+	};
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		48_KiB
+	};
+
+	std::stringstream out;
+	pubsetbuf(out, buf);
+
+	if(request.has("push_data"))
+		dockerhub_handle_push(out, client, request);
+
+	const auto room_id
+	{
+		m::room_id(string_view(webhook_room))
+	};
+
+	const m::user::id::buf user_id
+	{
+		string_view(webhook_user), my_host()
+	};
+
+	const auto msg
+	{
+		view(out, buf)
+	};
+
+	const auto evid
+	{
+		m::msghtml(room_id, user_id, msg, "dockerhub shot", "m.notice")
+	};
+
+	log::info
+	{
+		"Webhook '%s' delivered to %s %s",
+		"push"_sv,
+		string_view{room_id},
+		string_view{evid},
+	};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"dockerhub webhook :%s",
+		e.what(),
+	};
+
+	throw;
+}
+
+void
+dockerhub_handle_push(std::ostream &out,
+                      client &client,
+                      const resource::request &request)
+{
+	const json::object push_data
+	{
+		request["push_data"]
+	};
+
+	const json::object repository
+	{
+		request["repository"]
+	};
+
+	const json::string pusher
+	{
+		push_data["pusher"]
+	};
+
+	const string_view pushed_at
+	{
+		push_data["pushed_at"]
+	};
+
+	const json::string tag
+	{
+		push_data["tag"]
+	};
+
+	const json::array images
+	{
+		push_data["images"]
+	};
+
+	out
+	<< "<a href=" << repository["repo_url"] << ">"
+	<< json::string(repository["repo_name"])
+	<< "</a> push by <b>"
+	<< pusher
+	<< "</b> to <b>"
+	<< tag
+	<< "</b>"
+	;
 }
