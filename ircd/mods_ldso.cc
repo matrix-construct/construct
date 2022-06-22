@@ -16,6 +16,8 @@
 #include <RB_INC_DLFCN_H
 #include <RB_INC_LINK_H
 
+#include "mods.h"
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // dlfcn suite
@@ -308,7 +310,12 @@ ircd::mods::ldso::fullname(const struct link_map &map)
 // transit from here through libdl and out of a random PLT slot. non-call-
 // exceptions does not appear to be necessary, at least for FUNC symbols.
 //
-#if defined(HAVE_DLFCN_H)
+
+decltype(ircd::mods::ldso::exceptions::enable)
+ircd::mods::ldso::exceptions::enable
+{
+	true
+};
 
 // glibc/sysdeps/generic/ldsodefs.h
 struct dl_exception
@@ -327,10 +334,31 @@ __attribute__((noreturn))
 _dl_signal_exception(int, struct dl_exception *, const char *);
 
 extern "C" void
+__real__dl_signal_exception(int, struct dl_exception *, const char *);
+
+extern "C" void
 __attribute__((noreturn))
-_dl_signal_exception(int errcode,
-                     struct dl_exception *e,
-                     const char *occasion)
+ircd_dl_signal_exception(int, struct dl_exception *, const char *);
+
+extern "C" void
+__wrap__dl_signal_exception(int errcode,
+                            struct dl_exception *e,
+                            const char *occasion)
+{
+	#if defined(HAVE_DLFCN_H)
+	if(ircd::mods::ldso::exceptions::enable)
+		return ircd_dl_signal_exception(errcode, e, occasion);
+	#endif
+
+	__real__dl_signal_exception(errcode, e, occasion);
+}
+
+#if defined(HAVE_DLFCN_H)
+extern "C" void
+__attribute__((noreturn))
+ircd_dl_signal_exception(int errcode,
+                         struct dl_exception *e,
+                         const char *occasion)
 {
 	using namespace ircd;
 
@@ -346,7 +374,7 @@ _dl_signal_exception(int errcode,
 		errcode,
 		occasion,
 		e->objname,
-		e->errstring
+		e->errstring,
 	};
 
 	static const auto &undefined_symbol_prefix
@@ -379,8 +407,7 @@ _dl_signal_exception(int errcode,
 		e->errstring,
 	};
 }
-
-#endif // defined(HAVE_DLFCN_H
+#endif // defined(HAVE_DLFCN_H)
 
 ///////////////////////////////////////////////////////////////////////////////
 //

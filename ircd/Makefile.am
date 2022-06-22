@@ -34,6 +34,7 @@ AM_LDFLAGS = \
 	-Wl,--wrap=pthread_clockjoin_np \
 	-Wl,--wrap=pthread_self \
 	-Wl,--wrap=pthread_setname_np \
+	-Wl,--wrap=_dl_signal_exception \
 	-Wl,-z,nodelete \
 	-Wl,-z,nodlopen \
 	-Wl,-z,lazy \

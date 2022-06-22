@@ -25,6 +25,7 @@ extern "C"
 namespace ircd::mods::ldso
 {
 	struct info;
+	struct exceptions;
 
 	IRCD_EXCEPTION(mods::error, error)
 	IRCD_EXCEPTION(error, not_found);
@@ -73,3 +74,27 @@ struct ircd::mods::ldso::info
 	info(const void *const &addr);
 	info() = default;
 };
+
+struct ircd::mods::ldso::exceptions
+{
+	static bool enable;
+	const bool theirs;
+
+  public:
+	exceptions(const bool enable = true);
+	~exceptions() noexcept;
+};
+
+inline
+ircd::mods::ldso::exceptions::exceptions(const bool ours)
+:theirs{enable}
+{
+	enable = ours;
+}
+
+inline
+ircd::mods::ldso::exceptions::~exceptions()
+noexcept
+{
+	enable = theirs;
+}
