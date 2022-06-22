@@ -12,11 +12,13 @@
 
 namespace ircd::png
 {
+	#ifdef HAVE_PNG_H
 	static void handle_error(png_structp, const char *) noexcept(false);
 	static void handle_warn(png_structp, const char *) noexcept;
 	static void *handle_alloc(png_structp, size_t) noexcept;
 	static void handle_free(png_structp, void *) noexcept;
 	static void handle_read(png_structp, uint8_t *, size_t) noexcept;
+	#endif
 
 	extern log::log log;
 }
@@ -53,7 +55,7 @@ ircd::png::version_abi
 
 bool
 ircd::png::is_animated(const const_buffer &buf)
-#ifdef PNG_APNG_SUPPORTED
+#if defined(HAVE_PNG_H) && defined(PNG_APNG_SUPPORTED)
 {
 	// Cannot be a PNG
 	if(unlikely(size(buf) < 8))
@@ -100,13 +102,12 @@ ircd::png::is_animated(const const_buffer &buf)
 }
 #else
 {
-	// If there's no libpng there's no reason to decide APNG's right now
-	// because they won't be thumbnailed by magick anyway.
-	#warning "Upgrade your libpng version for animation detection."
+	#warning "An upgraded version of libpng is required for animation detection."
 	return false;
 }
 #endif
 
+#ifdef HAVE_PNG_H
 void
 ircd::png::handle_read(png_structp handle,
                        uint8_t *const ptr,
@@ -139,7 +140,9 @@ noexcept
 
 	assert(copied == consumed);
 }
+#endif
 
+#ifdef HAVE_PNG_H
 void *
 ircd::png::handle_alloc(png_structp handle,
                         size_t size)
@@ -147,7 +150,9 @@ noexcept
 {
 	return std::malloc(size);
 }
+#endif
 
+#ifdef HAVE_PNG_H
 void
 ircd::png::handle_free(png_structp handle,
                        void *const ptr)
@@ -155,7 +160,9 @@ noexcept
 {
 	std::free(ptr);
 }
+#endif
 
+#ifdef HAVE_PNG_H
 void
 ircd::png::handle_warn(png_structp handle,
                        const char *const msg)
@@ -168,7 +175,9 @@ noexcept
 		msg,
 	};
 }
+#endif
 
+#ifdef HAVE_PNG_H
 void
 ircd::png::handle_error(png_structp handle,
                         const char *const msg)
@@ -186,3 +195,4 @@ noexcept(false)
 		"%s", msg
 	};
 }
+#endif
