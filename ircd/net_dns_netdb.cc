@@ -62,7 +62,9 @@ ircd::net::dns::init::service_init()
 
 	if(netdb_enable)
 	{
+
 		#ifdef HAVE_NETDB_H
+		const mods::ldso::exceptions enable {false};
 		::setservent(stay_open);
 		netdb_ready = true;
 		#endif
@@ -77,6 +79,7 @@ noexcept
 	if(std::exchange(netdb_ready, false))
 	{
 		#ifdef HAVE_NETDB_H
+		const mods::ldso::exceptions enable {false};
 		::endservent();
 		#endif
 	}
@@ -111,6 +114,8 @@ try
 {
 	thread_local struct ::servent res, *ent {nullptr};
 	thread_local char _name[32], _prot[32], buf[2048];
+
+	const mods::ldso::exceptions enable {false};
 	const prof::syscall_usage_warning timer
 	{
 		"net::dns::service_port(%s)", name
@@ -206,6 +211,8 @@ try
 
 	thread_local struct ::servent res, *ent {nullptr};
 	thread_local char _prot[32], buf[2048];
+
+	const mods::ldso::exceptions enable {false};
 	const prof::syscall_usage_warning timer
 	{
 		"net::dns::service_name(%u)", port
