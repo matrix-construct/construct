@@ -679,7 +679,7 @@ ircd::http::headers::headers(parse::capstan &pc,
 {
 	header h{pc};
 	const char *const &started{h.first.data()}, *stopped{started};
-	for(; !h.first.empty(); stopped = h.second.data() + h.second.size(), h = header{pc})
+	for(; !h.first.empty(); stopped = pc.parsed, h = header{pc})
 		if(c && !c(h))
 			c = {};
 
