@@ -5,7 +5,7 @@ services:
 - docker
 
 environment:
-  COMMAND: if [[ "${APPVEYOR_REPO_COMMIT_MESSAGE}" == *"[ci debug]"* ]]; then export DEBUG_FLAGS="--enable-debug"; fi && rmdir -v deps/rocksdb && ln -sv /usr/src/rocksdb deps && ./autogen.sh && ./configure --enable-assert ${DEBUG_FLAGS} && make install && construct -smoketest -debug localhost
+  COMMAND: if [[ "${APPVEYOR_REPO_COMMIT_MESSAGE}" == *"[ci debug]"* ]]; then export DEBUG_FLAGS="--enable-debug"; fi; if [[ "${APPVEYOR_REPO_COMMIT_MESSAGE}" == *"[ci gdb]"* ]]; then apt-get update && apt-get -y install gdb && export CONSTRUCT="gdb --batch -ex r -ex bt --return-child-result --args construct"; else export CONSTRUCT="construct"; fi && rmdir -v deps/rocksdb && ln -sv /usr/src/rocksdb deps && ./autogen.sh && ./configure --enable-assert ${DEBUG_FLAGS} && make install && ${CONSTRUCT} -smoketest -debug localhost
 
   matrix:
 #   - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
