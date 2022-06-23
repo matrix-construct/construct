@@ -195,7 +195,11 @@ const try
 		std::min(id.end(), start + MAX_SIZE)
 	};
 
-	const bool res{qi::parse(start, stop, view_mxid, out)};
+	const bool res
+	{
+		ircd::parse(start, stop, view_mxid, out)
+	};
+
 	assert(res == true);
 	return out;
 }
@@ -220,7 +224,11 @@ const try
 		std::min(id.end(), start + MAX_SIZE)
 	};
 
-	const bool res(qi::parse(start, stop, view_mxid, out));
+	const bool res
+	{
+		ircd::parse(start, stop, view_mxid, out)
+	};
+
 	assert(res == true);
 	return out;
 }
@@ -247,7 +255,11 @@ const try
 		std::min(id.end(), start + MAX_SIZE)
 	};
 
-	const bool ret(qi::parse(start, stop, eps > parser.mxid));
+	const bool ret
+	{
+		ircd::parse(start, stop, eps > parser.mxid)
+	};
+
 	assert(ret == true);
 }
 catch(const qi::expectation_failure<const char *> &e)
@@ -266,7 +278,7 @@ const noexcept
 		std::min(id.end(), start + MAX_SIZE)
 	};
 
-	return qi::parse(start, stop, parser.mxid >> eoi);
+	return ircd::parse(std::nothrow, start, stop, parser.mxid >> eoi);
 }
 
 void
@@ -291,7 +303,11 @@ const try
 		std::min(id.end(), start + MAX_SIZE)
 	};
 
-	const bool ret(qi::parse(start, stop, valid_mxid));
+	const bool ret
+	{
+		ircd::parse(start, stop, valid_mxid)
+	};
+
 	assert(ret == true);
 }
 catch(const qi::expectation_failure<const char *> &e)
@@ -322,7 +338,7 @@ const noexcept try
 		std::min(id.end(), start + MAX_SIZE)
 	};
 
-	return qi::parse(start, stop, valid_mxid);
+	return ircd::parse(start, stop, valid_mxid);
 }
 catch(...)
 {
@@ -630,7 +646,7 @@ const
 	};
 
 	const char *start(hostname.begin()), *const stop(hostname.end());
-	return qi::parse(start, stop, rule);
+	return ircd::parse(start, stop, rule);
 }
 
 uint16_t
@@ -648,7 +664,7 @@ const
 	auto *start{begin()};
 	const auto res
 	{
-		qi::parse(start, end(), rule, ret)
+		ircd::parse(start, end(), rule, ret)
 	};
 
 	assert(res || ret == 0);
@@ -673,7 +689,7 @@ const
 	auto *start{begin()};
 	const auto res
 	{
-		qi::parse(start, end(), rule, ret)
+		ircd::parse(start, end(), rule, ret)
 	};
 
 	assert(res || event::v4::is(*this) || event::v3::is(*this));
@@ -709,7 +725,7 @@ const
 	auto *start{begin()};
 	const auto res
 	{
-		qi::parse(start, end(), rule, ret)
+		ircd::parse(start, end(), rule, ret)
 	};
 
 	assert(res || event::v4::is(*this) || event::v3::is(*this));
@@ -733,7 +749,7 @@ const
 
 	string_view ret;
 	auto *start{begin()};
-	qi::parse(start, end(), rule, ret);
+	ircd::parse(start, end(), rule, ret);
 	assert(!ret.empty());
 	return ret;
 }
@@ -760,9 +776,9 @@ const
 	auto *const stop(std::end(*this));
 
 	return
-		qi::parse(start, stop, is_v4)? "4":
-		qi::parse(start, stop, is_v3)? "3":
-		                               "1";
+		ircd::parse(start, stop, is_v4)? "4":
+		ircd::parse(start, stop, is_v3)? "3":
+		                                 "1";
 }
 
 //
@@ -833,7 +849,7 @@ noexcept
 
 	auto *start(std::begin(id));
 	auto *const stop(std::end(id));
-	return qi::parse(start, stop, valid);
+	return ircd::parse(std::nothrow, start, stop, valid);
 }
 
 //
@@ -904,7 +920,7 @@ noexcept
 
 	auto *start(std::begin(id));
 	auto *const stop(std::end(id));
-	return qi::parse(start, stop, valid);
+	return ircd::parse(std::nothrow, start, stop, valid);
 }
 
 //
@@ -957,7 +973,7 @@ noexcept try
 
 	return !empty(id) &&
 	       id.at(0) == sigil &&
-	       qi::parse(start, stop, test);
+	       ircd::parse(std::nothrow, start, stop, test);
 }
 catch(...)
 {
@@ -983,7 +999,7 @@ noexcept try
 
 	return !empty(id) &&
 	       id.at(0) == sigil &&
-	       qi::parse(start, stop, test);
+	       ircd::parse(start, stop, test);
 }
 catch(...)
 {
@@ -1006,7 +1022,7 @@ ircd::m::is_sigil(const char &c)
 noexcept
 {
 	const char *start(&c), *const stop(start + 1);
-	return qi::parse(start, stop, id::parser.sigil);
+	return ircd::parse(std::nothrow, start, stop, id::parser.sigil);
 }
 
 enum ircd::m::id::sigil
@@ -1028,7 +1044,7 @@ ircd::m::sigil(const char &c)
 {
 	id::sigil ret;
 	const char *start(&c), *const stop(&c + 1);
-	if(!qi::parse(start, stop, id::parser.sigil, ret))
+	if(!ircd::parse(start, stop, id::parser.sigil, ret))
 		throw BAD_SIGIL
 		{
 			"not a valid sigil"
