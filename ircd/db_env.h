@@ -227,7 +227,6 @@ ircd::db::database::env::writable_file
 	bool nodelay {false};
 	WriteLifeTimeHint hint {WriteLifeTimeHint::WLTH_NOT_SET};
 	fs::fd fd;
-	size_t logical_size {-1UL};
 	size_t preallocation_block_size {0};
 	ssize_t preallocation_last_block {-1};
 
