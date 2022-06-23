@@ -253,7 +253,7 @@ ircd::db::database::env::writable_file
 	Status Flush() noexcept override;
 	Status Close() noexcept override;
 
-	writable_file(database *const &d, const std::string &name, const EnvOptions &, const bool &trunc);
+	writable_file(database *const &d, const std::string &name, const EnvOptions &, const bool &trunc, const bool &ate);
 	writable_file(const writable_file &) = delete;
 	writable_file(writable_file &&) = delete;
 	~writable_file() noexcept;
@@ -291,5 +291,5 @@ ircd::db::database::env::writable_file_direct final
 	Status Truncate(uint64_t size) noexcept override;
 	Status Close() noexcept override;
 
-	writable_file_direct(database *const &d, const std::string &name, const EnvOptions &, const bool &trunc);
+	writable_file_direct(database *const &d, const std::string &name, const EnvOptions &, const bool &trunc, const bool &ate);
 };

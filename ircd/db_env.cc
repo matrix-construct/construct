@@ -121,9 +121,9 @@ noexcept try
 	#endif
 
 	if(options.use_direct_writes)
-		*r = std::make_unique<writable_file_direct>(&d, name, options, true);
+		*r = std::make_unique<writable_file_direct>(&d, name, options, true, false);
 	else
-		*r = std::make_unique<writable_file>(&d, name, options, true);
+		*r = std::make_unique<writable_file>(&d, name, options, true, false);
 
 	return Status::OK();
 }
@@ -155,9 +155,9 @@ noexcept try
 	#endif
 
 	if(options.use_direct_writes)
-		*r = std::make_unique<writable_file_direct>(&d, name, options, false);
+		*r = std::make_unique<writable_file_direct>(&d, name, options, false, true);
 	else
-		*r = std::make_unique<writable_file>(&d, name, options, false);
+		*r = std::make_unique<writable_file>(&d, name, options, false, true);
 
 	return Status::OK();
 }
@@ -1244,7 +1244,8 @@ ircd::db::database::env::make_nice(const IOPriority &prio)
 ircd::db::database::env::writable_file::writable_file(database *const &d,
                                                       const std::string &name,
                                                       const EnvOptions &env_opts,
-                                                      const bool &trunc)
+                                                      const bool &trunc,
+                                                      const bool &ate)
 try
 :d
 {
@@ -1257,6 +1258,7 @@ try
 ,opts
 {
 	.mode = std::ios::out | (trunc? std::ios::trunc : std::ios::openmode(0)),
+	.ate = ate,
 	.direct = this->env_opts.use_direct_writes,
 	.cloexec = this->env_opts.set_fd_cloexec,
 	.dontneed = true,
@@ -2220,10 +2222,11 @@ catch(...)
 ircd::db::database::env::writable_file_direct::writable_file_direct(database *const &d,
                                                                     const std::string &name,
                                                                     const EnvOptions &env_opts,
-                                                                    const bool &trunc)
+                                                                    const bool &trunc,
+                                                                    const bool &ate)
 :writable_file
 {
-	d, name, env_opts, trunc
+	d, name, env_opts, trunc, ate
 }
 ,alignment
 {
