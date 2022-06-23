@@ -15,16 +15,17 @@
 #include <RB_INC_SYS_RESOURCE_H
 #include <boost/filesystem.hpp>
 
-#ifdef IRCD_USE_AIO
+#if IRCD_USE_AIO > 0
 	#include "fs_aio.h"
 #endif
 
-#ifdef IRCD_USE_IOU
+#if IRCD_USE_IOU > 0
 	#include "fs_iou.h"
 #endif
 
 // TODO: prevents use until io_uring support implemented
 #undef IRCD_USE_IOU
+#define IRCD_USE_IOU 0
 
 namespace ircd::fs
 {
@@ -230,17 +231,13 @@ ircd::fs::support::rwf_write_life
 decltype(ircd::fs::support::aio)
 ircd::fs::support::aio
 {
-	#ifdef IRCD_USE_AIO
-		true
-	#else
-		false
-	#endif
+	IRCD_USE_AIO
 };
 
 void
 ircd::fs::support::dump_info()
 {
-	#if defined(IRCD_USE_AIO) || defined(IRCD_USE_IOU)
+	#if IRCD_USE_AIO || IRCD_USE_IOU
 		const bool support_async {true};
 	#else
 		const bool support_async {false};
@@ -779,21 +776,19 @@ ircd::fs::flush(const fd &fd,
 {
 	assert(opts.op == op::SYNC);
 
-	#ifdef IRCD_USE_IOU
-	if(iou::system && opts.aio)
-		return void(iou::fsync(fd, opts));
-	#endif
+	if constexpr(IRCD_USE_IOU)
+		if(iou::system && opts.aio)
+			return void(iou::fsync(fd, opts));
 
-	#ifdef IRCD_USE_AIO
-	if(aio::system && opts.aio)
-	{
-		if(support::aio_fdsync && !opts.metadata)
-			return void(aio::fsync(fd, opts));
+	if constexpr(IRCD_USE_AIO)
+		if(aio::system && opts.aio)
+		{
+			if(support::aio_fdsync && !opts.metadata)
+				return void(aio::fsync(fd, opts));
 
-		else if(support::aio_fsync && opts.metadata)
-			return void(aio::fsync(fd, opts));
-	}
-	#endif
+			else if(support::aio_fsync && opts.metadata)
+				return void(aio::fsync(fd, opts));
+		}
 
 	const prof::syscall_usage_warning message
 	{
@@ -1038,15 +1033,13 @@ ircd::fs::_read(const fd &fd,
 {
 	assert(opts.op == op::READ);
 
-	#ifdef IRCD_USE_IOU
-	if(likely(iou::system && opts.aio))
-		return iou::read(fd, iov, opts);
-	#endif
+	if constexpr(IRCD_USE_IOU)
+		if(likely(iou::system && opts.aio))
+			return iou::read(fd, iov, opts);
 
-	#ifdef IRCD_USE_AIO
-	if(likely(aio::system && opts.aio))
-		return aio::read(fd, iov, opts);
-	#endif
+	if constexpr(IRCD_USE_AIO)
+		if(likely(aio::system && opts.aio))
+			return aio::read(fd, iov, opts);
 
 	#ifdef HAVE_PREADV2
 	return support::preadv2?
@@ -1425,15 +1418,13 @@ ircd::fs::_write(const fd &fd,
 {
 	assert(opts.op == op::WRITE);
 
-	#ifdef IRCD_USE_IOU
-	if(likely(iou::system && opts.aio))
-		return iou::write(fd, iov, opts);
-	#endif
+	if constexpr(IRCD_USE_IOU)
+		if(likely(iou::system && opts.aio))
+			return iou::write(fd, iov, opts);
 
-	#ifdef IRCD_USE_AIO
-	if(likely(aio::system && opts.aio))
-		return aio::write(fd, iov, opts);
-	#endif
+	if constexpr(IRCD_USE_AIO)
+		if(likely(aio::system && opts.aio))
+			return aio::write(fd, iov, opts);
 
 	#ifdef HAVE_PWRITEV2
 	return support::pwritev2?
@@ -1671,14 +1662,14 @@ ircd::fs::aio::system;
 // init
 //
 
-#ifndef IRCD_USE_AIO
+#if IRCD_USE_AIO == 0
 ircd::fs::aio::init::init()
 {
 	assert(!system);
 }
 #endif
 
-#ifndef IRCD_USE_AIO
+#if IRCD_USE_AIO == 0
 [[using gnu: weak, cold]]
 ircd::fs::aio::init::~init()
 noexcept
@@ -1895,12 +1886,9 @@ ircd::fs::aio::stats::stats()
 decltype(ircd::fs::iou::support)
 ircd::fs::iou::support
 {
-	#ifdef IRCD_USE_IOU
-		info::kernel_version[0] > 5 ||
-		(info::kernel_version[0] >= 5 && info::kernel_version[1] >= 1)
-	#else
-		false
-	#endif
+	IRCD_USE_IOU &&
+	(info::kernel_version[0] > 5 ||
+	(info::kernel_version[0] >= 5 && info::kernel_version[1] >= 1))
 };
 
 /// Conf item to control whether iou is enabled or bypassed.
@@ -1927,7 +1915,7 @@ ircd::fs::iou::system;
 // init
 //
 
-#ifndef IRCD_USE_IOU
+#if IRCD_USE_IOU == 0
 [[gnu::weak]]
 ircd::fs::iou::init::init()
 {
@@ -1935,7 +1923,7 @@ ircd::fs::iou::init::init()
 }
 #endif
 
-#ifndef IRCD_USE_IOU
+#if IRCD_USE_IOU == 0
 [[gnu::weak]]
 ircd::fs::iou::init::~init()
 noexcept
@@ -2725,7 +2713,7 @@ ircd::fs::reflect(const op &op)
 	return "????";
 }
 
-#ifndef IRCD_USE_AIO
+#if IRCD_USE_AIO == 0
 [[gnu::weak]]
 ircd::fs::op
 ircd::fs::aio::translate(const int &val)
@@ -2734,7 +2722,7 @@ ircd::fs::aio::translate(const int &val)
 }
 #endif
 
-#ifndef IRCD_USE_IOU
+#if IRCD_USE_IOU == 0
 [[gnu::weak]]
 ircd::fs::op
 ircd::fs::iou::translate(const int &val)

@@ -113,15 +113,7 @@ ircd::magick::init
 };
 
 // inline stubs when magick disabled/unavailable.
-#if !defined(IRCD_USE_MAGICK)
-
-inline
-ircd::magick::init::init()
-{}
-
-inline
-ircd::magick::init::~init()
-noexcept
-{}
-
-#endif IRCD_USE_MAGICK
+#if IRCD_USE_MAGICK == 0
+inline ircd::magick::init::init() {}
+inline ircd::magick::init::~init() noexcept {}
+#endif IRCD_USE_MAGICK == 0

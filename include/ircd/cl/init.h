@@ -38,7 +38,7 @@ ircd::cl::init
 	init(), ~init() noexcept;
 };
 
-#ifndef IRCD_USE_OPENCL
+#if IRCD_USE_OPENCL == 0
 inline ircd::cl::init::init() {}
 inline ircd::cl::init::~init() noexcept {}
 #endif

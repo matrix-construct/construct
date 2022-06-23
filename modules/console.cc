@@ -17284,6 +17284,12 @@ console_cmd__bridge__protocol(opt &out, const string_view &line)
 bool
 console_cmd__icu(opt &out, const string_view &line)
 {
+	if constexpr(!IRCD_USE_ICU)
+		throw error
+		{
+			"ICU is not available."
+		};
+
 	const unique_mutable_buffer buf
 	{
 		size(line) * 4
@@ -17553,6 +17559,12 @@ console_cmd__app__signal(opt &out, const string_view &line)
 bool
 console_cmd__cl__info(opt &out, const string_view &line)
 {
+	if constexpr(!IRCD_USE_OPENCL)
+		throw error
+		{
+			"OpenCL is not available."
+		};
+
 	const params param{line, " ",
 	{
 		"platform", "device",

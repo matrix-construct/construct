@@ -85,10 +85,9 @@ ircd::fs::aio::init::init()
 	// Don't init AIO if the io_uring is established. If it is, that means it
 	// was supported by the build, this kernel, and didn't encounter an error
 	// to construct. In all other cases AIO can serve as a fallback.
-	#if defined(IRCD_USE_IOU)
-	if(iou::system)
-		return;
-	#endif
+	if constexpr(IRCD_USE_IOU)
+		if(iou::system)
+			return;
 
 	assert(!system);
 	if(!aio::enable)

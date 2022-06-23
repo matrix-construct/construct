@@ -1403,6 +1403,8 @@ AM_COND_IF(LINUX,
 
 if test "$aio" = "yes"; then
 	IRCD_DEFINE(USE_AIO, [1], [Linux AIO is supported and will be used])
+else
+	IRCD_DEFINE(USE_AIO, [0], [Linux AIO is not supported and won't be used])
 fi
 
 AM_CONDITIONAL([AIO], [[[[ $aio = yes ]]]])
@@ -1426,6 +1428,8 @@ AM_CONDITIONAL([IOU], [[[[ $io_uring = yes ]]]])
 AM_COND_IF([IOU],
 [
 	IRCD_DEFINE(USE_IOU, [1], [Linux io_uring is supported and may be used])
+], [
+	IRCD_DEFINE(USE_IOU, [0], [Linux io_uring is not available])
 ])
 
 
@@ -1658,6 +1662,13 @@ PKG_CHECK_MODULES(icuuc, [icuuc],
 
 AM_CONDITIONAL([ICUUC], [test "x$have_icuuc" = "xyes" ])
 AM_CONDITIONAL([ICU], [test "x$have_icu" = "xyes" ])
+
+AM_COND_IF(ICU,
+[
+	IRCD_DEFINE(USE_ICU, [1], [International Components for Unicode is available])
+], [
+	IRCD_DEFINE(USE_ICU, [0], [International Components for Unicode is not available])
+])
 
 dnl
 dnl
@@ -2237,6 +2248,8 @@ dnl IRCD_ENABLE_MAGICK is always defined for use in a constexpr if
 AM_COND_IF([IMAGEMAGICK],
 [
 	IRCD_DEFINE(USE_MAGICK, [1], [Magick support is available and enabled])
+], [
+	IRCD_DEFINE(USE_MAGICK, [0], [Magick support is not available])
 ])
 
 dnl
@@ -2343,6 +2356,13 @@ PKG_CHECK_MODULES(LLVM, [LLVM],
 
 AM_CONDITIONAL([LLVM], [test "x$have_libllvm" = "xyes" ])
 
+AM_COND_IF(LLVM,
+[
+	IRCD_DEFINE(USE_LLVM, [1], [libllvm is available and enabled])
+], [
+	IRCD_DEFINE(USE_LLVM, [0], [libllvm is not available])
+])
+
 dnl
 dnl
 dnl LibDRM
@@ -2389,6 +2409,8 @@ AM_COND_IF([DRM],
 	AC_MSG_RESULT([yes])
 	IRCD_DEFINE(USE_DRM, [1], [DRM support is available and enabled])
 	DRM_LIBS+="-ldrm"
+], [
+	IRCD_DEFINE(USE_DRM, [0], [DRM support is not available])
 ])
 
 dnl
@@ -2465,7 +2487,11 @@ AM_COND_IF([OPENCL],
 	[
 		IRCD_DEFINE(USE_MESA_OPENCL, [1], [MesaOpenCL support is available and enabled])
 		OPENCL_LIBS+=" -lMesaOpenCL"
+	], [
+		IRCD_DEFINE(USE_MESA_OPENCL, [0], [MesaOpenCL support is not available and disabled])
 	])
+], [
+	IRCD_DEFINE(USE_OPENCL, [0], [OpenCL support is not available])
 ])
 
 dnl
@@ -2521,6 +2547,8 @@ AM_COND_IF([ARMNN],
 [
 	IRCD_DEFINE(USE_ARMNN, [1], [Arm NN support is available and enabled])
 	ARMNN_LIBS+="-larmnn"
+], [
+	IRCD_DEFINE(USE_ARMNN, [0], [Arm NN support is not available])
 ])
 
 dnl

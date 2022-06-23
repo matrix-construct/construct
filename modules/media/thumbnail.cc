@@ -282,11 +282,7 @@ get__thumbnail_local(client &client,
 	const bool supported
 	{
 		// Available in build
-		#ifdef IRCD_USE_MAGICK
-			(true)
-		#else
-			(false)
-		#endif
+		IRCD_USE_MAGICK
 
 		// Enabled by configuration
 		&& enable

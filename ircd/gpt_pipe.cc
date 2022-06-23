@@ -32,6 +32,8 @@ ircd::gpt::pipe::handle_quit
 void
 ircd::gpt::pipe::init()
 {
+	if constexpr(!IRCD_USE_OPENCL)
+		return;
 }
 
 [[using gnu: cold, visibility("hidden")]]
@@ -39,6 +41,9 @@ void
 ircd::gpt::pipe::fini()
 noexcept
 {
+	if constexpr(!IRCD_USE_OPENCL)
+		return;
+
 	const auto pending
 	{
 		cl::work::list.size()
