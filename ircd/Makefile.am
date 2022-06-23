@@ -160,6 +160,7 @@ libircd_la_SOURCES += simd.cc
 libircd_la_SOURCES += fpe.cc
 libircd_la_SOURCES += parse.cc
 libircd_la_SOURCES += lex_cast.cc
+libircd_la_SOURCES += versions.cc
 libircd_la_SOURCES += info.cc
 libircd_la_SOURCES += allocator.cc
 libircd_la_SOURCES += allocator_gnu.cc

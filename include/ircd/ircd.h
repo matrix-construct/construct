@@ -57,6 +57,7 @@
 #include "run.h"
 #include "demangle.h"
 #include "backtrace.h"
+#include "versions.h"
 #include "info.h"
 #include "logger.h"
 #include "stringops.h"

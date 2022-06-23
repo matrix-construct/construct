@@ -19,8 +19,7 @@ extern "C" const char *const ircd_version;
 /// Information & metadata about the library.
 namespace ircd::info
 {
-	struct line;
-	struct versions;
+	using ircd::versions;
 
 	// Util
 	void dump();
@@ -125,7 +124,7 @@ namespace ircd::info::hardware::x86
 	extern const bool sse, sse2, sse3, ssse3, sse4a, sse4_1, sse4_2;
 	extern const bool avx, avx2, avx512f;
 	extern const bool tsc, tsc_constant;
-};
+}
 
 namespace ircd::info::hardware::arm
 {
@@ -137,81 +136,4 @@ namespace ircd::info::hardware::arm
 	extern const uint64_t ctr;
 
 	extern const string_view vendor;
-};
-
-/// Instances of `versions` create a dynamic version registry identifying
-/// third-party dependencies throughout the project and its loaded modules.
-///
-/// Create a static instance of this class in a definition file or module
-/// which has access to the version information of the dependency. Often there
-/// can be two version identifiers for a dependency, one for headers and the
-/// other for dynamically loaded shared object. In that case, create two
-/// instances of this class with the same name.
-///
-struct ircd::info::versions
-:instance_list<versions>
-{
-	/// Our own name for the dependency.
-	string_view name;
-
-	/// Set the type to either API or ABI to indicate where this version
-	/// information has been sourced. Defaults to API.
-	enum type {API, ABI} type {API};
-
-	/// If the version number is a single (likely monotonic) integer.
-	long monotonic {0};
-
-	/// Alternative semantic version number.
-	std::array<long, 3> semantic {0};
-
-	/// Version string buffer. Copy any provided version string here.
-	char string[128] {0};
-
-	/// Convenience access to read the semantic version numbers.
-	auto &operator[](const int &idx) const;
-
-	/// Convenience access to read the monotonic integer; note that if zero
-	/// the semantic major number is read instead.
-	explicit operator const long &() const;
-
-	/// Convenience access to read the string
-	explicit operator string_view() const;
-
-	versions(const string_view &name,
-	         const enum type &type                = type::API,
-	         const long &monotonic                = 0,
-	         const std::array<long, 3> &semantic  = {0L},
-	         const string_view &string            = {});
-
-	versions(const string_view &name,
-	         const enum type &type,
-	         const long &monotonic,
-	         const std::array<long, 3> &semantic,
-	         const std::function<void (versions &, const mutable_buffer &)> &generator);
-
-	versions() = default;
-	versions(versions &&) = delete;
-	versions(const versions &) = delete;
-	~versions() noexcept;
-};
-
-inline ircd::info::versions::operator
-const long &()
-const
-{
-	return monotonic?: semantic[0];
-}
-
-inline ircd::info::versions::operator
-ircd::string_view()
-const
-{
-	return string;
-}
-
-inline auto &
-ircd::info::versions::operator[](const int &idx)
-const
-{
-	return semantic.at(idx);
 }
