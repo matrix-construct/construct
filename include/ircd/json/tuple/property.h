@@ -38,26 +38,8 @@ struct ircd::json::property
 	constexpr operator const T &() const;
 	constexpr operator T &();
 
-	property() = default;
-	constexpr property(T&& value);
-	constexpr property &operator=(T&& value);
+	constexpr property() = default;
 };
-
-template<const char *const &name,
-         class T>
-constexpr
-ircd::json::property<name, T>::property(T&& value)
-:value{std::forward<T>(value)}
-{}
-
-template<const char *const &name,
-         class T>
-constexpr ircd::json::property<name, T> &
-ircd::json::property<name, T>::operator=(T&& value)
-{
-	this->value = std::forward<T>(value);
-	return *this;
-}
 
 template<const char *const &name,
          class T>
