@@ -350,13 +350,13 @@ ircd::ios::stats_name(const descriptor &d,
 {
 	return string_view
 	{
-		stats_name_buf, ::snprintf
+		stats_name_buf, unsigned(::snprintf
 		(
 			stats_name_buf, sizeof(stats_name_buf),
 			"ircd.ios.%s.%s",
 			d.name.c_str(),
 			key.c_str()
-		)
+		))
 	};
 }
 

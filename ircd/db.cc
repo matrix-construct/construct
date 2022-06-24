@@ -1098,7 +1098,7 @@ ircd::string_view
 ircd::db::debug(const mutable_buffer &buf,
                 database &d,
                 const rocksdb::WriteBatch &wb_,
-                const ulong &fmt)
+                const long &fmt)
 {
 	auto &wb
 	{
@@ -1121,7 +1121,7 @@ ircd::db::debug(const mutable_buffer &buf,
 ircd::string_view
 ircd::db::debug(const mutable_buffer &buf,
                 const txn &t,
-                const ulong &fmt)
+                const long &fmt)
 {
 	size_t len(0);
 
@@ -4540,8 +4540,8 @@ ircd::string_view
 ircd::db::debug(const mutable_buffer &buf,
                 const rocksdb::WriteBatch &batch)
 {
-	char pbuf[48] {0};
-	const auto len(snprintf
+	char pbuf[64] {0};
+	const size_t len(::snprintf
 	(
 		data(buf), size(buf),
 		"%d deltas; %s %s+%s+%s+%s+%s+%s+%s+%s+%s"

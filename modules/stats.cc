@@ -61,14 +61,13 @@ ircd::stats::get_stats(client &client,
 
 		const string_view line
 		{
-			buf,
-			::snprintf
+			buf, size_t(::snprintf
 			(
 				buf, sizeof(buf), "%s %s %lu\n",
 				data(strlcpy(name[1], _name)),
 				data(string(val, *item)),
 				ts
-			)
+			))
 		};
 
 		response.write(line);

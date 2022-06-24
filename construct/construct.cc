@@ -295,7 +295,7 @@ noexcept try
 	// The smoketest is enabled if the first value is true; then all of the
 	// values must be true for the smoketest to pass.
 	if(smoketest[0])
-		return std::count(begin(smoketest), end(smoketest), true) == smoketest.size()?
+		return std::all_of(begin(smoketest), end(smoketest), ircd::identity())?
 			EXIT_SUCCESS:
 			EXIT_FAILURE;
 

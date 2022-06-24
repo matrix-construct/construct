@@ -461,7 +461,7 @@ const
 {
 	room::events it
 	{
-		room, depth.first
+		room, uint64_t(depth.first)
 	};
 
 	bool ret{true};

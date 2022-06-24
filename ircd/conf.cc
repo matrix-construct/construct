@@ -504,12 +504,12 @@ ircd::conf::make_env_name(const mutable_buffer &buf,
 
 	return string_view
 	{
-		data(buf), ::snprintf
+		data(buf), unsigned(::snprintf
 		(
 			data(buf), size(buf), "%s__%s",
 			name.c_str(),
 			feature.c_str()
-		)
+		))
 	};
 }
 

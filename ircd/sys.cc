@@ -34,7 +34,7 @@ try
 
 	string_view ret
 	{
-		data(out), sys::call(::read, fd, data(out), size(out))
+		data(out), size_t(sys::call(::read, fd, data(out), size(out)))
 	};
 
 	ret = rstrip(ret, '\n');
