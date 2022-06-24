@@ -121,6 +121,9 @@ github_find_issue_number(const json::object &content);
 static std::pair<json::string, json::string>
 github_find_party(const json::object &content);
 
+static std::pair<json::string, json::string>
+github_find_repo(const json::object &content);
+
 static bool
 github_handle__milestone(std::ostream &,
                          const json::object &content);
@@ -1656,6 +1659,31 @@ github_handle__ping(std::ostream &out,
 	    << "</code></pre>";
 
 	return true;
+}
+
+std::pair<json::string, json::string>
+github_find_repo(const json::object &content)
+{
+	const json::object repository
+	{
+		content["repository"]
+	};
+
+	if(!empty(repository))
+		return
+		{
+		    repository["full_name"], repository["html_url"]
+		};
+
+	const json::object organization
+	{
+		content["organization"]
+	};
+
+	return
+	{
+	    organization["login"], organization["url"]
+	};
 }
 
 /// Researched from yestifico bot
