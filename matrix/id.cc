@@ -15,11 +15,18 @@ namespace ircd::m
 	[[noreturn]] void failure(const qi::expectation_failure<const char *> &, const string_view &);
 }
 
-struct __attribute__((visibility("hidden"))) ircd::m::id::input
+struct [[gnu::visibility("hidden")]]
+ircd::m::id::parser
 {
 	using id = m::id;
-	using it = const char *;
-	template<class R = unused_type, class... S> using rule = qi::rule<it, R, S...>;
+
+	template<class R = unused_type,
+	         class... S>
+	struct [[gnu::visibility("hidden")]] rule
+	:qi::rule<const char *, R, S...>
+	{
+		using qi::rule<const char *, R, S...>::rule;
+	};
 
 	// Sigils
 	const rule<id::sigil> event_id_sigil         { lit(char(id::EVENT))          ,"event_id sigil" };
@@ -154,19 +161,7 @@ struct __attribute__((visibility("hidden"))) ircd::m::id::input
 		| event_id_v3
 		,"mxid"
 	};
-};
 
-struct __attribute__((visibility("hidden"))) ircd::m::id::output
-{
-	using it = char *;
-	template<class T = unused_type> using rule = karma::rule<it, T>;
-
-	output() = default;
-};
-
-struct __attribute__((visibility("hidden"))) ircd::m::id::parser
-:input
-{
 	string_view operator()(const id::sigil &, const string_view &id) const;
 	string_view operator()(const string_view &id) const;
 }
@@ -186,6 +181,7 @@ const try
 	const rule<string_view> view_mxid
 	{
 		raw[eps > (sigil_type > mxid)]
+		,"mxid"
 	};
 
 	string_view out;
@@ -215,6 +211,7 @@ const try
 	static const rule<string_view> view_mxid
 	{
 		raw[eps > mxid]
+		,"mxid"
 	};
 
 	string_view out;
@@ -295,6 +292,7 @@ const try
 	const parser::rule<> valid_mxid
 	{
 		eps > (sigil_type > parser.mxid)
+		,"valid mxid"
 	};
 
 	const char *start{id.begin()};
@@ -330,6 +328,7 @@ const noexcept try
 	const parser::rule<> valid_mxid
 	{
 		(sigil_type > parser.mxid) >> eoi
+		,"valid mxid"
 	};
 
 	const char *start{id.begin()};
@@ -350,9 +349,17 @@ catch(...)
 //
 
 //TODO: abstract this pattern with ircd::json::printer in ircd/spirit.h
-struct __attribute__((visibility("hidden"))) ircd::m::id::printer
-:output
+struct [[gnu::visibility("hidden")]]
+ircd::m::id::printer
 {
+	template<class R = unused_type,
+	         class... S>
+	struct [[gnu::visibility("hidden")]] rule
+	:karma::rule<char *, R, S...>
+	{
+		using karma::rule<char *, R, S...>::rule;
+	};
+
 	template<class generator,
 	         class attribute>
 	bool operator()(char *&out, char *const &stop, generator&&, attribute&&) const;
@@ -638,6 +645,7 @@ const
 	{
 		rfc3986::parser::ip4_literal |
 		rfc3986::parser::ip6_literal
+		,"literal"
 	};
 
 	const auto &hostname
@@ -678,11 +686,13 @@ const
 	static const parser::rule<string_view> host
 	{
 		rfc3986::parser::host
+		,"rfc3986 host"
 	};
 
 	static const parser::rule<string_view> rule
 	{
 		omit[parser.prefix >> ':'] >> raw[host]
+		,"host"
 	};
 
 	string_view ret;
@@ -714,11 +724,13 @@ const
 	static const parser::rule<string_view> server_name
 	{
 		parser.server_name
+		,"server name"
 	};
 
 	static const parser::rule<string_view> rule
 	{
 		omit[parser.prefix >> ':'] >> raw[server_name]
+		,"host"
 	};
 
 	string_view ret;
@@ -740,11 +752,13 @@ const
 	static const parser::rule<string_view> prefix
 	{
 		parser.prefix
+		,"prefix"
 	};
 
 	static const parser::rule<string_view> rule
 	{
 		eps > raw[prefix]
+		,"local"
 	};
 
 	string_view ret;
@@ -765,11 +779,13 @@ const
 	static const parser::rule<> is_v4
 	{
 		parser.event_id_v4 >> eoi
+		,"is v4"
 	};
 
 	static const parser::rule<> is_v3
 	{
 		parser.event_id_v3 >> eoi
+		,"is v3"
 	};
 
 	auto *start(std::begin(*this));
@@ -845,6 +861,7 @@ noexcept
 	static const parser::rule<> valid
 	{
 		parser.event_id_v3 >> eoi
+		,"is v3"
 	};
 
 	auto *start(std::begin(id));
@@ -916,6 +933,7 @@ noexcept
 	static const parser::rule<> valid
 	{
 		parser.event_id_v4 >> eoi
+		,"is v4"
 	};
 
 	auto *start(std::begin(id));
@@ -959,11 +977,13 @@ noexcept try
 		id::parser.prefix
 		| id::parser.event_id_v4
 		| id::parser.event_id_v3
+		,"valid local only"
 	};
 
 	static const id::parser::rule<> test
 	{
 		rule >> eoi
+		,"valid local only"
 	};
 
 	const char *start(data(id)), *const &stop
@@ -990,6 +1010,7 @@ noexcept try
 		id::parser.prefix
 		| id::parser.event_id_v4
 		| id::parser.event_id_v3
+		,"valid local"
 	};
 
 	const char *start(data(id)), *const &stop

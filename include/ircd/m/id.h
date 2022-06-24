@@ -49,8 +49,6 @@ struct ircd::m::id
 
 	enum sigil :char;
 	template<class T> struct buf;
-	struct input;
-	struct output;
 	struct parser;
 	struct printer;
 	struct valid;
