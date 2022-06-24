@@ -30,5 +30,15 @@ namespace boost::spirit::qi
 	         class T2,
 	         class T3,
 	         class T4>
-	struct rule;
+	struct [[gnu::visibility("default")]] rule;
+}
+
+namespace boost::spirit::karma
+{
+	template<class it,
+	         class T1,
+	         class T2,
+	         class T3,
+	         class T4>
+	struct [[gnu::visibility("default")]] rule;
 }

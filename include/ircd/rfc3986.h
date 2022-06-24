@@ -84,14 +84,18 @@ struct ircd::rfc3986::uri
 // which take a reference to any apropos rule. To avoid exposure of
 // boost::spirit in project headers these types are carefully crafted thin forward
 // declarations, so spirit itself is not included here.
-#pragma GCC visibility push(default)
 namespace ircd::rfc3986::parser
 {
 	using unused = boost::spirit::unused_type;
 
-	template<class R = unused>
-	using rule = boost::spirit::qi::rule<const char *, R, unused, unused, unused>;
+	template<class T = unused>
+	struct [[gnu::visibility("default")]] rule
+	:boost::spirit::qi::rule<const char *, T, unused, unused, unused>
+	{
+		using boost::spirit::qi::rule<const char *, T, unused, unused, unused>::rule;
+	};
 
+	#pragma GCC visibility push(default)
 	extern const rule<> sub_delims;
 	extern const rule<> gen_delims;
 	extern const rule<> reserved;
@@ -149,8 +153,8 @@ namespace ircd::rfc3986::parser
 	extern const rule<> absolute_uri;
 	extern const rule<> uri;
 	extern const rule<> uri_ref;     // uri | relative_ref
+	#pragma GCC visibility pop
 }
-#pragma GCC visibility pop
 
 // Validator suite
 namespace ircd::rfc3986
