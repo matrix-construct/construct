@@ -290,14 +290,18 @@ github_handle(client &client,
 		string_view(webhook_user), my_host()
 	};
 
-	const json::string &apropos_hash
+	const fmt::bsprintf<512> alt_msg
 	{
-		github_find_commit_hash(request.content)
+		"%s by %s to %s",
+		type,
+		github_find_party(request.content).first,
+		github_find_repo(request.content).first,
+
 	};
 
 	const auto evid
 	{
-		m::msghtml(room_id, user_id, view(out, buf), apropos_hash, "m.notice")
+		m::msghtml(room_id, user_id, view(out, buf), alt_msg, "m.notice")
 	};
 
 	log::info
