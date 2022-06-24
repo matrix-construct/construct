@@ -52,6 +52,7 @@ ircd::string_view
 ircd::tokens_before(const string_view &str,
                     const char sep,
                     const size_t i)
+noexcept
 {
 	assert(sep != '\0');
 	const char _sep[2]
@@ -66,6 +67,7 @@ ircd::string_view
 ircd::tokens_before(const string_view &str,
                     const string_view &sep,
                     const size_t i)
+noexcept
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
@@ -92,6 +94,7 @@ ircd::string_view
 ircd::tokens_after(const string_view &str,
                    const char sep,
                    const ssize_t i)
+noexcept
 {
 	assert(sep != '\0');
 	const char _sep[2]
@@ -106,6 +109,7 @@ ircd::string_view
 ircd::tokens_after(const string_view &str,
                    const string_view &sep,
                    const ssize_t i)
+noexcept
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
@@ -191,7 +195,7 @@ ircd::token(const string_view &str,
             const char sep,
             const size_t i,
             const string_view &def)
-try
+noexcept try
 {
 	return token(str, sep, i);
 }
@@ -205,7 +209,7 @@ ircd::token(const string_view &str,
             const string_view &sep,
             const size_t i,
             const string_view &def)
-try
+noexcept try
 {
 	return token(str, sep, i);
 }
@@ -254,6 +258,7 @@ bool
 ircd::token_exists(const string_view &str,
                    const char sep,
                    const string_view &tok)
+noexcept
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
@@ -272,6 +277,7 @@ bool
 ircd::token_exists(const string_view &str,
                    const string_view &sep,
                    const string_view &tok)
+noexcept
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
@@ -289,6 +295,7 @@ ircd::token_exists(const string_view &str,
 size_t
 ircd::token_count(const string_view &str,
                   const char sep)
+noexcept
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
@@ -306,6 +313,7 @@ ircd::token_count(const string_view &str,
 size_t
 ircd::token_count(const string_view &str,
                   const string_view &sep)
+noexcept
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
@@ -325,6 +333,7 @@ ircd::tokens(const string_view &str,
              const char sep_,
              const mutable_buffer &buf,
              const token_view &closure)
+noexcept
 {
 	assert(sep_ != '\0');
 	const char _sep[2]
@@ -345,6 +354,7 @@ ircd::tokens(const string_view &str,
              const string_view &sep,
              const mutable_buffer &buf,
              const token_view &closure)
+noexcept
 {
 	char *ptr(data(buf));
 	char *const stop(data(buf) + size(buf));
@@ -369,6 +379,7 @@ ircd::tokens(const string_view &str,
              const char sep,
              const size_t limit,
              const token_view &closure)
+noexcept
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
@@ -393,6 +404,7 @@ ircd::tokens(const string_view &str,
              const string_view &sep,
              const size_t limit,
              const token_view &closure)
+noexcept
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
@@ -416,6 +428,7 @@ bool
 ircd::tokens(const string_view &str,
              const char sep,
              const token_view &closure)
+noexcept
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;
@@ -438,6 +451,7 @@ bool
 ircd::tokens(const string_view &str,
              const string_view &sep,
              const token_view &closure)
+noexcept
 {
 	using type = string_view;
 	using iter = typename type::const_iterator;

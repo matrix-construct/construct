@@ -126,7 +126,7 @@ ircd::net::dns::resolver::~resolver()
 noexcept
 {
 	const ctx::uninterruptible::nothrow ui;
-	done.wait([this]
+	done.wait([this]() noexcept
 	{
 		if(!tags.empty())
 			log::warning
@@ -231,7 +231,7 @@ ircd::net::dns::resolver::sendq_worker()
 {
 	while(1)
 	{
-		dock.wait([this]
+		dock.wait([this]() noexcept
 		{
 			assert(sendq.empty() || !tags.empty());
 			return !sendq.empty() && !server.empty();
@@ -289,7 +289,7 @@ ircd::net::dns::resolver::timeout_worker()
 		// Dock here until somebody submits a request into the tag map. Also
 		// wait until recv_idle is asserted which indicates the UDP queue has
 		// been exhausted.
-		dock.wait([this]
+		dock.wait([this]() noexcept
 		{
 			return !tags.empty() && recv_idle;
 		});

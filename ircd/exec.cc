@@ -84,7 +84,7 @@ ircd::exec::~exec()
 noexcept try
 {
 	join(SIGKILL);
-	dock.wait([this]
+	dock.wait([this]() noexcept
 	{
 		return this->pid <= 0;
 	});
@@ -150,7 +150,7 @@ try
 	};
 
 	//child->wait();
-	dock.wait([this]
+	dock.wait([this]() noexcept
 	{
 		return this->pid <= 0;
 	});

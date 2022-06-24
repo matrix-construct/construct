@@ -105,7 +105,7 @@ try
 {
 	for(;; ctx::sleep(milliseconds(timeout_int)))
 	{
-		dock.wait([]
+		dock.wait([]() noexcept
 		{
 			return !typists.empty();
 		});

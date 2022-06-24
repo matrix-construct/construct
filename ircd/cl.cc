@@ -2486,7 +2486,8 @@ ircd::cl::wait_event_callback(work &work,
 	};
 
 	// Completion condition closure to be satisfied.
-	const auto condition{[&c, &desired]() -> bool
+	const auto condition{[&c, &desired]
+	() noexcept -> bool
 	{
 		return !c.event || c.status <= desired;
 	}};

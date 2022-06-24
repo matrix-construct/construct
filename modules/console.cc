@@ -574,7 +574,7 @@ console_cmd__restart(opt &out, const string_view &line)
 
 	size_t swargs(0), posargs(0);
 	ircd::tokens(line, ' ', [&swargs, &posargs]
-	(const auto &token)
+	(const string_view &token)
 	{
 		swargs += startswith(token, '-');
 		posargs += !startswith(token, '-');
@@ -1871,6 +1871,7 @@ console_cmd__ios__depth(opt &out, const string_view &line)
 	{
 		started = ios::epoch();
 		ios::dispatch(dispatch_desc, ios::yield, [&executed]
+		() noexcept
 		{
 			executed = ios::epoch();
 		});
@@ -1888,6 +1889,7 @@ console_cmd__ios__depth(opt &out, const string_view &line)
 	{
 		started = ios::epoch();
 		ios::dispatch(post_desc, ios::defer, ios::yield, [&executed]
+		() noexcept
 		{
 			executed = ios::epoch();
 		});
@@ -1905,6 +1907,7 @@ console_cmd__ios__depth(opt &out, const string_view &line)
 	{
 		started = ios::epoch();
 		ios::dispatch(defer_desc, ios::defer, ios::yield, [&executed]
+		() noexcept
 		{
 			executed = ios::epoch();
 		});
@@ -1980,6 +1983,7 @@ console_cmd__ios__latency(opt &out, const string_view &line)
 		asm volatile ("lfence");
 
 		ios::dispatch(dispatch_desc, ios::yield, [&executed]
+		() noexcept
 		{
 			__sync_synchronize();
 			asm volatile ("lfence");
@@ -2010,6 +2014,7 @@ console_cmd__ios__latency(opt &out, const string_view &line)
 		asm volatile ("lfence");
 
 		ios::dispatch(post_desc, ios::defer, ios::yield, [&executed]
+		() noexcept
 		{
 			__sync_synchronize();
 			asm volatile ("lfence");
@@ -2040,6 +2045,7 @@ console_cmd__ios__latency(opt &out, const string_view &line)
 		asm volatile ("lfence");
 
 		ios::dispatch(defer_desc, ios::defer, ios::yield, [&executed]
+		() noexcept
 		{
 			__sync_synchronize();
 			asm volatile ("lfence");
@@ -4776,7 +4782,7 @@ console_cmd__db__sst__scan__count(opt &out, const string_view &line)
 	db::database::sst::scan
 	{
 		database, path, [&out, &i]
-		(const auto &key, const auto &val)
+		(const auto &key, const auto &val) noexcept
 		{
 			++i;
 			return true;
@@ -6359,7 +6365,7 @@ console_cmd__net__host(opt &out, const string_view &line)
 		net::dns::resolve(hostport, opts, cbarr);
 
 	const ctx::uninterruptible ui;
-	dock.wait([&done]
+	dock.wait([&done]() noexcept
 	{
 		return done;
 	});
@@ -7787,7 +7793,7 @@ console_cmd__events__type__counts(opt &out, const string_view &line)
 	{
 		size_t i(0);
 		m::events::type::for_each_in(type, [&i]
-		(const string_view &type, const m::event::idx &event_idx)
+		(const string_view &type, const m::event::idx &event_idx) noexcept
 		{
 			++i;
 			return true;
@@ -10052,7 +10058,7 @@ console_cmd__room__members__origin(opt &out, const string_view &line)
 		const bool same_origin
 		{
 			m::query(std::nothrow, event_idx, "origin", [&origin]
-			(const auto &_origin)
+			(const auto &_origin) noexcept
 			{
 				return _origin == origin;
 			})
@@ -11572,6 +11578,7 @@ console_cmd__room__type__count(opt &out, const string_view &line)
 	size_t ret(0);
 	events.for_each([&ret]
 	(const string_view &type, const uint64_t &depth, const m::event::idx &event_idx)
+	noexcept
 	{
 		++ret;
 		return true;
@@ -12940,7 +12947,8 @@ console_cmd__user__read__count(opt &out, const string_view &line)
 
 	size_t count {0};
 	space.for_each("ircd.read", room_id, [&out, &count]
-	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx) -> bool
+	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
+	noexcept -> bool
 	{
 		++count;
 		return true;

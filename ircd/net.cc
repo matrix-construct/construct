@@ -643,7 +643,7 @@ const ircd::net::close_opts_default
 /// of close(). This callback does nothing.
 ircd::net::close_callback
 const ircd::net::close_ignore{[]
-(std::exception_ptr eptr)
+(std::exception_ptr eptr) noexcept
 {
 	return;
 }};
@@ -1550,7 +1550,7 @@ try
 {
 	assert(!fini);
 	const auto interruption{[this]
-	(ctx::ctx *const &)
+	(ctx::ctx *const &) noexcept
 	{
 		this->cancel();
 	}};
@@ -1742,7 +1742,7 @@ try
 
 	assert(!fini);
 	const auto interruption{[this]
-	(ctx::ctx *const &)
+	(ctx::ctx *const &) noexcept
 	{
 		this->cancel();
 	}};
@@ -1781,7 +1781,7 @@ try
 {
 	assert(!fini);
 	const auto interruption{[this]
-	(ctx::ctx *const &)
+	(ctx::ctx *const &) noexcept
 	{
 		this->cancel();
 	}};
@@ -1887,7 +1887,7 @@ try
 	assert(!fini);
 	assert(!blocking(*this));
 	const auto interruption{[this]
-	(ctx::ctx *const &)
+	(ctx::ctx *const &) noexcept
 	{
 		this->cancel();
 	}};
@@ -1921,7 +1921,7 @@ try
 	assert(!fini);
 	assert(!blocking(*this));
 	const auto interruption{[this]
-	(ctx::ctx *const &)
+	(ctx::ctx *const &) noexcept
 	{
 		this->cancel();
 	}};

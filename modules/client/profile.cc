@@ -104,7 +104,7 @@ put__profile(client &client,
 
 	bool modified{true};
 	profile.get(std::nothrow, param, [&value, &modified]
-	(const string_view &param, const string_view &existing)
+	(const string_view &param, const string_view &existing) noexcept
 	{
 		modified = existing != value;
 	});
@@ -202,7 +202,7 @@ get__profile(client &client,
 	const bool empty
 	{
 		profile.for_each([]
-		(const string_view &, const string_view &)
+		(const string_view &, const string_view &) noexcept
 		{
 			return false;
 		})

@@ -566,7 +566,7 @@ command__read(const mutable_buffer &buf,
 
 		// return true if the expression is not matched for this room.
 		const auto without_match{[&match]
-		(const string_view &key, const json::object &object)
+		(const string_view &key, const json::object &object) noexcept
 		{
 			return !match(key);
 		}};

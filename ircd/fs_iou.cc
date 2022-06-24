@@ -478,7 +478,7 @@ ircd::fs::iou::system::wait()
 		log, "Waiting for iou context %p", this
 	};
 
-	dock.wait([this]
+	dock.wait([this]() noexcept
 	{
 		return ev_count == uint64_t(-1);
 	});

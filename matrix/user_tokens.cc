@@ -45,7 +45,7 @@ const
 
 	const auto match
 	{
-		[this](const string_view &sender)
+		[this](const string_view &sender) noexcept
 		{
 			return sender == this->user.user_id;
 		}
@@ -90,7 +90,7 @@ const
 	};
 
 	return event_idx && m::query(std::nothrow, event_idx, "sender", [this]
-	(const string_view &sender)
+	(const string_view &sender) noexcept
 	{
 		return sender == this->user.user_id;
 	});
@@ -120,7 +120,7 @@ const
 	{
 		const auto match
 		{
-			[this](const string_view &sender)
+			[this](const string_view &sender) noexcept
 			{
 				return sender == this->user.user_id;
 			}

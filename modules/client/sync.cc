@@ -43,7 +43,9 @@ namespace ircd::m::sync::longpoll
 ircd::mapi::header
 IRCD_MODULE
 {
-	"Client 6.2.1 :Sync", nullptr, []
+	"Client 6.2.1 :Sync",
+	nullptr,
+	[]() noexcept
 	{
 		ircd::m::sync::longpoll::fini();
 	}
@@ -635,7 +637,7 @@ catch(const std::exception &e)
 int
 ircd::m::sync::longpoll::poll(data &data)
 {
-	const auto ready{[&data]
+	const auto ready{[&data]() noexcept
 	{
 		assert(data.range.second <= m::vm::sequence::retired + 1);
 		return data.range.second <= m::vm::sequence::retired;

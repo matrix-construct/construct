@@ -68,7 +68,8 @@ ircd::m::event::auth::ids(event::id (&out)[N])
 const
 {
 	size_t i(0);
-	m::for_each(*this, [&i, &out](const event::id &event_id)
+	m::for_each(*this, [&i, &out]
+	(const event::id &event_id) noexcept
 	{
 		out[i++] = event_id;
 		return i < N;

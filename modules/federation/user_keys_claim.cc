@@ -84,7 +84,7 @@ post__user_keys_claim(client &client,
 			const json::string &algorithm{algorithm_};
 			const json::string &device_id{device_id_};
 			const auto match{[&device_id]
-			(const string_view &state_key)
+			(const string_view &state_key) noexcept
 			{
 				return state_key == device_id;
 			}};

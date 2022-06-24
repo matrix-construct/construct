@@ -153,7 +153,7 @@ noexcept
 {
 	eval *ret {nullptr};
 	eval::for_each(&c, [&ret, &a]
-	(eval &eval)
+	(eval &eval) noexcept
 	{
 		const bool cond
 		{
@@ -377,7 +377,8 @@ ircd::m::vm::eval *
 ircd::m::vm::eval::find(const event::id &event_id)
 {
 	eval *ret{nullptr};
-	for_each([&event_id, &ret](eval &e)
+	for_each([&event_id, &ret]
+	(eval &e) noexcept
 	{
 		if(e.event_)
 			if(e.event_->event_id == event_id)
@@ -393,7 +394,8 @@ size_t
 ircd::m::vm::eval::count(const event::id &event_id)
 {
 	size_t ret(0);
-	for_each([&event_id, &ret](eval &e)
+	for_each([&event_id, &ret]
+	(eval &e) noexcept
 	{
 		if(e.event_)
 			if(e.event_->event_id == event_id)
@@ -410,7 +412,7 @@ ircd::m::vm::eval::find_pdu(const event::id &event_id)
 {
 	const m::event *ret{nullptr};
 	for_each_pdu([&ret, &event_id]
-	(const m::event &event)
+	(const m::event &event) noexcept
 	{
 		if(event.event_id != event_id)
 			return true;

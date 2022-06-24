@@ -117,7 +117,7 @@ ircd::m::fed::well_known::worker_context
 decltype(ircd::m::fed::well_known::handle_quit)
 ircd::m::fed::well_known::handle_quit
 {
-	run::level::QUIT, []
+	run::level::QUIT, []() noexcept
 	{
 		worker_dock.notify_all();
 	}
@@ -316,7 +316,7 @@ try
 	run::barrier<ctx::interrupted>{};
 	while(!request::list.empty() || run::level == run::level::RUN)
 	{
-		worker_dock.wait([]
+		worker_dock.wait([]() noexcept
 		{
 			return !request::list.empty() || run::level != run::level::RUN;
 		});

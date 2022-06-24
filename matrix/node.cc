@@ -157,7 +157,7 @@ ircd::m::node::mitsein::has(const m::node &other,
 const
 {
 	return !for_each(other, membership, []
-	(const auto &, const auto &)
+	(const auto &, const auto &) noexcept
 	{
 		return false;
 	});
@@ -170,7 +170,7 @@ const
 {
 	size_t ret(0);
 	for_each(other, membership, [&ret]
-	(const auto &, const auto &)
+	(const auto &, const auto &) noexcept
 	{
 		++ret;
 		return true;

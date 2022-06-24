@@ -66,7 +66,7 @@ noexcept
 			sequence::pending,
 		};
 
-	vm::dock.wait([]
+	vm::dock.wait([]() noexcept
 	{
 		return !eval::executing && !eval::injecting;
 	});
@@ -81,7 +81,7 @@ noexcept
 			sequence::uncommitted,
 		};
 
-	sequence::dock.wait([]
+	sequence::dock.wait([]() noexcept
 	{
 		return !sequence::pending;
 	});

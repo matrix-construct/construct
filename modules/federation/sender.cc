@@ -180,7 +180,7 @@ send_worker()
 {
 	while(1) try
 	{
-		notified_dock.wait([]
+		notified_dock.wait([]() noexcept
 		{
 			return !notified_queue.empty();
 		});
@@ -503,7 +503,7 @@ recv_worker()
 {
 	while(1)
 	{
-		recv_action.wait([]
+		recv_action.wait([]() noexcept
 		{
 			return !txns.empty();
 		});

@@ -211,7 +211,7 @@ try
 
 	auto since {vm::sequence::retired}; do
     {
-		worker_dock.wait([&since]
+		worker_dock.wait([&since]() noexcept
 		{
 			return since < vm::sequence::retired;
 		});

@@ -241,12 +241,12 @@ _listener_allow
 	{
 		while(1)
 		{
-			client::dock.wait([]
+			client::dock.wait([]() noexcept
 			{
 				return !client::pool.avail();
 			});
 
-			client::dock.wait([]
+			client::dock.wait([]() noexcept
 			{
 				if(!client::pool.avail())
 					return false;

@@ -88,7 +88,7 @@ bool
 ircd::m::myself(const m::user::id &user_id)
 {
 	return !for_each([&user_id]
-	(const auto &homeserver)
+	(const auto &homeserver) noexcept
 	{
 		return homeserver.self != user_id;
 	});
@@ -581,7 +581,8 @@ const
 
 		bool dup{false}, exists{false};
 		if(!force)
-			get(key, [&exists, &dup, &val](const string_view &val_)
+			get(key, [&exists, &dup, &val]
+			(const string_view &val_) noexcept
 			{
 				exists = true;
 				dup = val == val_;

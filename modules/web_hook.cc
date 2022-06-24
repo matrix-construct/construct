@@ -1419,7 +1419,7 @@ github_handle__status(std::ostream &out,
 
 		static const auto type_match
 		{
-			[](const string_view &type)
+			[](const string_view &type) noexcept
 			{
 				return type == "m.room.message";
 			}
@@ -1427,7 +1427,7 @@ github_handle__status(std::ostream &out,
 
 		const auto user_match
 		{
-			[&_webhook_user](const string_view &sender)
+			[&_webhook_user](const string_view &sender) noexcept
 			{
 				return sender && sender == _webhook_user;
 			}

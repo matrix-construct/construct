@@ -204,7 +204,7 @@ const
 	size_t j{i};
 	string_view ret;
 	for_each_posarg([&ret, &j]
-	(const string_view &token)
+	(const string_view &token) noexcept
 	{
 		if(j-- == 0)
 		{
@@ -225,7 +225,7 @@ const
 	{
 		string_view ret;
 		for_each_pararg([&ret, &arg]
-		(const string_view &token)
+		(const string_view &token) noexcept
 		{
 			if(startswith(token, arg))
 			{
@@ -246,7 +246,7 @@ const
 {
 	if(prefix && startswith(arg, prefix))
 		return !for_each_pararg([&arg]
-		(const string_view &token)
+		(const string_view &token) noexcept
 		{
 			return !startswith(token, arg);
 		});
@@ -259,7 +259,8 @@ ircd::util::params::count()
 const
 {
 	size_t ret{0};
-	for_each_posarg([&ret](const string_view &)
+	for_each_posarg([&ret]
+	(const string_view &) noexcept
 	{
 		++ret;
 		return true;
@@ -273,7 +274,8 @@ ircd::util::params::count_pararg()
 const
 {
 	size_t ret{0};
-	for_each_pararg([&ret](const string_view &)
+	for_each_pararg([&ret]
+	(const string_view &) noexcept
 	{
 		++ret;
 		return true;

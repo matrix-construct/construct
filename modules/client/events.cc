@@ -194,7 +194,7 @@ get__events(client &client,
 		)
 	};
 
-	dock.wait_for(timeout, [&event, &eid]
+	dock.wait_for(timeout, [&event, &eid]() noexcept
 	{
 		return !empty(event) && !empty(eid);
 	});

@@ -65,7 +65,7 @@ ircd::net::dns::cache::fini()
 			waiting.size(),
 		};
 
-	dock.wait([]
+	dock.wait([]() noexcept
 	{
 		return waiting.empty();
 	});

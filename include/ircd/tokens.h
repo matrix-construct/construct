@@ -18,15 +18,15 @@ namespace ircd
 	// to allocate and copy the token with null termination.
 	using token_view = closure_bool<std::function, const string_view &>;
 
-	bool tokens(const string_view &str, const char sep, const token_view &);
-	bool tokens(const string_view &str, const string_view &sep, const token_view &);
+	bool tokens(const string_view &, const char sep, const token_view &) noexcept;
+	bool tokens(const string_view &, const string_view &sep, const token_view &) noexcept;
 
-	size_t tokens(const string_view &str, const char sep, const size_t limit, const token_view &);
-	size_t tokens(const string_view &str, const string_view &sep, const size_t limit, const token_view &);
+	size_t tokens(const string_view &, const char sep, const size_t lim, const token_view &) noexcept;
+	size_t tokens(const string_view &, const string_view &sep, const size_t lim, const token_view &) noexcept;
 
 	// Copies tokens into your buffer and null terminates strtok() style. Returns BYTES of buf consumed.
-	size_t tokens(const string_view &str, const char sep, const mutable_buffer &buf, const token_view &);
-	size_t tokens(const string_view &str, const string_view &sep, const mutable_buffer &buf, const token_view &);
+	size_t tokens(const string_view &, const char sep, const mutable_buffer &, const token_view &) noexcept;
+	size_t tokens(const string_view &, const string_view &sep, const mutable_buffer &, const token_view &) noexcept;
 
 	// Receive token view into iterator range
 	template<class it,
@@ -81,17 +81,17 @@ namespace ircd
 // Tools
 namespace ircd
 {
-	size_t token_count(const string_view &str, const char sep);
-	size_t token_count(const string_view &str, const string_view &sep);
+	size_t token_count(const string_view &str, const char sep) noexcept;
+	size_t token_count(const string_view &str, const string_view &sep) noexcept;
 
-	bool token_exists(const string_view &str, const char sep, const string_view &token);
-	bool token_exists(const string_view &str, const string_view &sep, const string_view &token);
+	bool token_exists(const string_view &str, const char sep, const string_view &token) noexcept;
+	bool token_exists(const string_view &str, const string_view &sep, const string_view &token) noexcept;
 
 	string_view token(const string_view &str, const char sep, const size_t at);
 	string_view token(const string_view &str, const string_view &sep, const size_t at);
 
-	string_view token(const string_view &str, const char sep, const size_t at, const string_view &def);
-	string_view token(const string_view &str, const string_view &sep, const size_t at, const string_view &def);
+	string_view token(const string_view &str, const char sep, const size_t at, const string_view &def) noexcept;
+	string_view token(const string_view &str, const string_view &sep, const size_t at, const string_view &def) noexcept;
 
 	string_view token_last(const string_view &str, const char sep);
 	string_view token_last(const string_view &str, const string_view &sep);
@@ -99,11 +99,11 @@ namespace ircd
 	string_view token_first(const string_view &str, const char sep);
 	string_view token_first(const string_view &str, const string_view &sep);
 
-	string_view tokens_after(const string_view &str, const char sep, const ssize_t at = 0);
-	string_view tokens_after(const string_view &str, const string_view &sep, const ssize_t at = 0);
+	string_view tokens_after(const string_view &str, const char sep, const ssize_t at = 0) noexcept;
+	string_view tokens_after(const string_view &str, const string_view &sep, const ssize_t at = 0) noexcept;
 
-	string_view tokens_before(const string_view &str, const char sep, const size_t at = 0);
-	string_view tokens_before(const string_view &str, const string_view &sep, const size_t at = 0);
+	string_view tokens_before(const string_view &str, const char sep, const size_t at = 0) noexcept;
+	string_view tokens_before(const string_view &str, const string_view &sep, const size_t at = 0) noexcept;
 }
 
 template<size_t N,

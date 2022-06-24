@@ -648,7 +648,7 @@ ircd::fs::aio::request::queued()
 const
 {
 	return !for_each_queued([this]
-	(const auto &request)
+	(const auto &request) noexcept
 	{
 		return &request != this; // true to continue and return true
 	});
@@ -853,7 +853,7 @@ ircd::fs::aio::system::wait()
 		log, "Waiting for AIO context %p", this
 	};
 
-	dock.wait([this]
+	dock.wait([this]() noexcept
 	{
 		return ecount == uint64_t(-1);
 	});

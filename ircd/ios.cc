@@ -590,7 +590,7 @@ ircd::ios::dispatch::dispatch(descriptor &descriptor,
                               yield_t)
 :dispatch
 {
-	descriptor, defer, yield, []
+	descriptor, defer, yield, []() noexcept
 	{
 	}
 }

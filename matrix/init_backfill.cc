@@ -290,7 +290,7 @@ try
 	// All rooms have been submitted to the pool but the pool workers might
 	// still be busy. If we unwind now the pool's dtor will kill the workers
 	// so we synchronize their completion here.
-	dock.wait([]
+	dock.wait([]() noexcept
 	{
 		return complete >= count;
 	});

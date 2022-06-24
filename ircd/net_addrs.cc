@@ -15,7 +15,8 @@ bool
 ircd::net::addrs::has_usable_ipv6_interface()
 try
 {
-	return !for_each([](const addr &a)
+	return !for_each([]
+	(const addr &a) noexcept
 	{
 		if(a.family != AF_INET6)
 			return true;

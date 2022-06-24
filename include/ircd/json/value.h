@@ -125,7 +125,7 @@ struct ircd::json::value
 	value(const json::object &);
 	value(const json::array &);
 	value(const nullptr_t &);
-	value();
+	value() noexcept;
 	value(value &&) noexcept;
 	value(const value &);
 	value &operator=(value &&) noexcept;
@@ -137,6 +137,7 @@ static_assert(sizeof(ircd::json::value) == 16, "");
 
 inline
 ircd::json::value::value()
+noexcept
 :string{nullptr}
 ,len{0}
 ,type{STRING}

@@ -914,7 +914,7 @@ ircd::gpt::samp::tokenize()
 	}
 
 	ircd::tokens(str, delim, [this, &count, &p, &phrases]
-	(const string_view &phrase) -> bool
+	(const string_view &phrase) noexcept -> bool
 	{
 		assert(!empty(phrase));
 		const vector_view<u16> buf

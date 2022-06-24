@@ -297,7 +297,7 @@ ircd::db::database::mergeop final
 	bool Merge(const rocksdb::Slice &, const rocksdb::Slice *, const rocksdb::Slice &, std::string *, rocksdb::Logger *) const noexcept override;
 	const char *Name() const noexcept override;
 
-	mergeop(database *const &d, merge_closure merger = nullptr);
+	mergeop(database *const &d, merge_closure merger = nullptr) noexcept;
 	~mergeop() noexcept;
 };
 
@@ -506,7 +506,7 @@ ircd::db::database::logger final
 
 	rocksdb::Status Close() noexcept override;
 
-	logger(database *const &d);
+	logger(database *const &d) noexcept;
 	~logger() noexcept override;
 };
 

@@ -184,7 +184,7 @@ ircd::client::wait_all()
 
 	static const auto is_empty
 	{
-		[] { return client::map.empty(); }
+		[]() noexcept { return client::map.empty(); }
 	};
 
 	while(!dock.wait_for(seconds(3), is_empty))

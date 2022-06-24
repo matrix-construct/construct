@@ -172,7 +172,8 @@ size_t
 ircd::mods::ldso::count()
 {
 	size_t ret(0);
-	for_each([&ret](const struct link_map &)
+	for_each([&ret]
+	(const struct link_map &) noexcept
 	{
 		++ret;
 		return true;

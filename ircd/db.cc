@@ -579,7 +579,7 @@ noexcept
 			queue.size(),
 		};
 
-		dock.wait_for(seconds(5), [this]
+		dock.wait_for(seconds(5), [this]() noexcept
 		{
 			return queue.empty();
 		});
@@ -640,7 +640,7 @@ size_t
 ircd::db::prefetcher::cancel(column &c)
 {
 	return cancel([&c]
-	(const auto &request)
+	(const auto &request) noexcept
 	{
 		return request.cid == id(c);
 	});
@@ -650,7 +650,7 @@ size_t
 ircd::db::prefetcher::cancel(database &d)
 {
 	return cancel([&d]
-	(const auto &request)
+	(const auto &request) noexcept
 	{
 		return request.d == std::addressof(d);
 	});
@@ -693,7 +693,7 @@ try
 {
 	while(1)
 	{
-		dock.wait([this]
+		dock.wait([this]() noexcept
 		{
 			if(queue.empty())
 				return false;
@@ -893,7 +893,7 @@ ircd::db::prefetcher::wait_pending()
 		fetched_counter + request_workers
 	};
 
-	dock.wait([this, &fetched_target]
+	dock.wait([this, &fetched_target]() noexcept
 	{
 		return this->ticker->fetched >= fetched_target;
 	});
@@ -1415,7 +1415,7 @@ ircd::db::txn::has(const op &op,
 const
 {
 	return !for_each(*this, delta_closure_bool{[&op, &col]
-	(const auto &delta)
+	(const auto &delta) noexcept
 	{
 		return std::get<delta::OP>(delta) != op &&
 		       std::get<delta::COL>(delta) != col;
@@ -1463,7 +1463,7 @@ ircd::db::txn::has(const op &op,
 const
 {
 	return !for_each(*this, delta_closure_bool{[&op, &col, &key]
-	(const auto &delta)
+	(const auto &delta) noexcept
 	{
 		return std::get<delta::OP>(delta) != op &&
 		       std::get<delta::COL>(delta) != col &&
@@ -3009,7 +3009,7 @@ ircd::db::bytes_value(column &column,
 {
 	size_t ret{0};
 	column(key, std::nothrow, gopts, [&ret]
-	(const string_view &value)
+	(const string_view &value) noexcept
 	{
 		ret = value.size();
 	});
@@ -4057,7 +4057,7 @@ ircd::db::count(const rocksdb::Cache &cache)
 {
 	size_t ret(0);
 	for_each(cache, [&ret]
-	(const const_buffer &)
+	(const const_buffer &) noexcept
 	{
 		++ret;
 	});

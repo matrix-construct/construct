@@ -81,12 +81,12 @@ const ircd::db::prefix_transform
 ircd::m::dbs::desc::event_refs__pfx
 {
 	"_event_refs",
-	[](const string_view &key)
+	[](const string_view &key) noexcept
 	{
 		return size(key) >= sizeof(event::idx) * 2;
 	},
 
-	[](const string_view &key)
+	[](const string_view &key) noexcept
 	{
 		assert(size(key) >= sizeof(event::idx));
 		return string_view

@@ -256,7 +256,8 @@ const
 	char allow_methods_buf[48];
 	const string_view &allow_methods
 	{
-		method_list(allow_methods_buf, [&](const method &method)
+		method_list(allow_methods_buf, [&]
+		(const method &method) noexcept
 		{
 			return true;
 		})
@@ -281,7 +282,7 @@ ircd::resource::method_list(const mutable_buffer &buf)
 const
 {
 	return method_list(buf, []
-	(const method &)
+	(const method &) noexcept
 	{
 		return true;
 	});
@@ -474,7 +475,7 @@ noexcept
 		};
 
 	const ctx::uninterruptible::nothrow ui;
-	idle_dock.wait([this]
+	idle_dock.wait([this]() noexcept
 	{
 		return !stats || stats->pending == 0;
 	});

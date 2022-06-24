@@ -83,7 +83,7 @@ const
 {
 	size_t ret(0);
 	for_each([&ret]
-	(const auto &, const auto &)
+	(const auto &, const auto &) noexcept
 	{
 		++ret;
 		return true;
@@ -97,7 +97,7 @@ ircd::m::event::horizon::has(const event::idx &event_idx)
 const
 {
 	return !for_each([&event_idx]
-	(const auto &, const auto &_event_idx)
+	(const auto &, const auto &_event_idx) noexcept
 	{
 		// false to break; true to continue.
 		return _event_idx == event_idx? false : true;

@@ -101,7 +101,7 @@ get__make_join(client &client,
 	const bool version_mismatch
 	{
 		request.query.for_each("ver", [&room_version]
-		(const auto &val)
+		(const auto &val) noexcept
 		{
 			return val.second != room_version;
 		})

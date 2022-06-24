@@ -791,7 +791,7 @@ ircd::m::contains(const id::room &room_id,
                   const event::idx &event_idx)
 {
 	return m::query(event_idx, "room_id", [&room_id]
-	(const string_view &_room_id) -> bool
+	(const string_view &_room_id) noexcept -> bool
 	{
 		return _room_id == room_id;
 	});
@@ -1088,7 +1088,7 @@ const
 {
 	size_t ret(0);
 	for_each(event::closure_idx_bool{[&ret]
-	(const event::idx &event_idx)
+	(const event::idx &event_idx) noexcept
 	{
 		++ret;
 		return true;
@@ -1103,7 +1103,7 @@ const
 {
 	size_t ret(0);
 	for_each(type, event::closure_idx_bool{[&ret]
-	(const event::idx &event_idx)
+	(const event::idx &event_idx) noexcept
 	{
 		++ret;
 		return true;
@@ -1122,7 +1122,7 @@ const
 	(const event::idx &event_idx)
 	{
 		ret += query(std::nothrow, event_idx, "state_key", [&state_key]
-		(const string_view &_state_key) -> bool
+		(const string_view &_state_key) noexcept -> bool
 		{
 			return state_key == _state_key;
 		});
@@ -1201,7 +1201,7 @@ const
 {
 	event::idx ret{0};
 	for_each(type, event::closure_idx_bool{[&ret]
-	(const event::idx &event_idx)
+	(const event::idx &event_idx) noexcept
 	{
 		ret = event_idx;
 		return false;

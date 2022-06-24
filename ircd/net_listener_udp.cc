@@ -153,7 +153,7 @@ ircd::net::acceptor_udp::join()
 noexcept try
 {
 	interrupt();
-	joining.wait([this]
+	joining.wait([this]() noexcept
 	{
 		return waiting == 0;
 	});
@@ -194,7 +194,7 @@ ircd::net::acceptor_udp::operator()(datagram &datagram)
 	};
 
 	const auto interruption{[this]
-	(ctx::ctx *const &)
+	(ctx::ctx *const &) noexcept
 	{
 		this->interrupt();
 	}};

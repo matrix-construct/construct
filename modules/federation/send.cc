@@ -224,7 +224,7 @@ handle_put(client &client,
 	size_t evals{0};
 	bool txn_in_progress{false};
 	m::vm::eval::for_each([&txn_id, &request, &evals, &txn_in_progress]
-	(const auto &eval)
+	(const auto &eval) noexcept
 	{
 		assert(eval.opts);
 		const bool match_node

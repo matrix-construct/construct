@@ -439,7 +439,7 @@ noexcept try
 	if(!ctx::current)
 		return;
 
-	joining.wait([this]
+	joining.wait([this]() noexcept
 	{
 		return !accepting && handshaking.empty();
 	});

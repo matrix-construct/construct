@@ -56,7 +56,7 @@ template<class value>
 void
 ircd::ctx::concurrent<value>::wait()
 {
-	d.wait([this]
+	d.wait([this]() noexcept
 	{
 		return snd == fin;
 	});
@@ -68,7 +68,7 @@ void
 ircd::ctx::concurrent<value>::operator()(V&& v)
 {
 	++snd;
-	p([this, v(std::move(v))]
+	p([this, v(std::move(v))]() noexcept
 	{
 		++rcv; try
 		{

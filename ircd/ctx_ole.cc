@@ -106,6 +106,7 @@ ircd::ctx::ole::offload::offload(const opts &opts,
 		// synchronization we need to hit the latch from this thread.
 		assert(context);
 		signal(*context, [&latch]
+		() noexcept
 		{
 			assert(!latch.is_ready());
 			latch.count_down();

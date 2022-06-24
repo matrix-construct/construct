@@ -258,7 +258,7 @@ noexcept
 	};
 
 	call_ready = false;
-	call_dock.wait([]
+	call_dock.wait([]() noexcept
 	{
 		return !call_mutex.locked();
 	});

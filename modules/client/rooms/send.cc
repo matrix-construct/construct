@@ -279,7 +279,7 @@ check_transaction_id(const m::user::id &user_id,
 {
 	static const auto type_match
 	{
-		[](const string_view &type)
+		[](const string_view &type) noexcept
 		{
 			return type == "ircd.client.txnid";
 		}

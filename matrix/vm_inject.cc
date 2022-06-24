@@ -250,7 +250,7 @@ ircd::m::vm::inject(eval &eval,
 	{
 		event, opts.prop_mask.has("depth") && !event.has("depth"),
 		{
-			"depth", [&depth]
+			"depth", [&depth]() noexcept
 			{
 				// When the depth value is undefined_number it was intended
 				// that no depth should appear in the event JSON so that value

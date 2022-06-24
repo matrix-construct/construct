@@ -2144,6 +2144,7 @@ noexcept
 //
 
 ircd::db::database::logger::logger(database *const &d)
+noexcept
 :rocksdb::Logger{}
 ,d{d}
 {
@@ -2248,6 +2249,7 @@ noexcept
 
 ircd::db::database::mergeop::mergeop(database *const &d,
                                      merge_closure merger)
+noexcept
 :d{d}
 ,merger
 {
