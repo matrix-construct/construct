@@ -240,6 +240,13 @@ is_integer()
 	return is_number<T>() && !is_floating<T>();
 }
 
+template<class T>
+constexpr bool
+is_pod()
+{
+	return std::is_standard_layout<T>::value && std::is_trivial<T>::value;
+}
+
 //
 // Convenience constexprs for iterators
 //

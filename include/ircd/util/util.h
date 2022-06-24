@@ -129,7 +129,7 @@ noexcept
 }
 
 template<class T>
-constexpr typename std::enable_if<std::is_pod<T>::value, const uint8_t *>::type
+constexpr typename std::enable_if<is_pod<T>(), const uint8_t *>::type
 data(const T &val)
 noexcept
 {
@@ -137,7 +137,7 @@ noexcept
 }
 
 template<class T>
-constexpr typename std::enable_if<std::is_pod<T>::value, uint8_t *>::type
+constexpr typename std::enable_if<is_pod<T>(), uint8_t *>::type
 data(T &val)
 noexcept
 {
