@@ -7023,7 +7023,7 @@ std::vector<std::string> stage;
 bool
 console_cmd__stage__list(opt &out, const string_view &line)
 {
-	for(const json::object &object : stage)
+	for(const json::object object : stage)
 	{
 		const m::event event{object};
 		out << pretty_oneline(event) << std::endl;
@@ -14482,7 +14482,7 @@ console_cmd__feds__auth(opt &out, const string_view &line)
 		};
 
 		out << "+ " << std::setw(40) << std::left << result.origin;
-		for(const json::object &auth_event : auth_chain)
+		for(const json::object auth_event : auth_chain)
 		{
 			out << " " << unquote(auth_event.at("event_id"));
 		};
@@ -14628,7 +14628,7 @@ console_cmd__feds__perspective(opt &out, const string_view &line)
 			result.object["server_keys"]
 		};
 
-		for(const json::object &server_key : server_keys)
+		for(const json::object server_key : server_keys)
 		{
 			const m::keys &key{server_key};
 			out << key << std::endl;
@@ -14682,7 +14682,7 @@ console_cmd__feds__backfill(opt &out, const string_view &line)
 			result.object["pdus"]
 		};
 
-		for(const json::object &pdu : pdus)
+		for(const json::object pdu : pdus)
 		{
 			const auto &event_id
 			{
@@ -15239,7 +15239,7 @@ console_cmd__fed__state(opt &out, const string_view &line)
 		if(op != "auth")
 		{
 			out << "state at " << event_id << ":" << std::endl;
-			for(const json::object &event : pdus)
+			for(const json::object event : pdus)
 				out << pretty_oneline(m::event{event}) << std::endl;
 		}
 
@@ -15247,7 +15247,7 @@ console_cmd__fed__state(opt &out, const string_view &line)
 		if(op != "state")
 		{
 			out << "auth chain at " << event_id << ":" << std::endl;
-			for(const json::object &event : auth_chain)
+			for(const json::object event : auth_chain)
 				out << pretty_oneline(m::event{event}) << std::endl;
 		}
 
@@ -15430,7 +15430,7 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 
 	if(op != "eval")
 	{
-		for(const json::object &event : pdus)
+		for(const json::object event : pdus)
 			out << pretty_oneline(m::event{event}) << std::endl;
 
 		return true;
@@ -15521,7 +15521,7 @@ console_cmd__fed__frontfill(opt &out, const string_view &line)
 		request
 	};
 
-	for(const json::object &event : response)
+	for(const json::object event : response)
 		out << pretty_oneline(m::event{event}) << std::endl;
 
 	return true;
@@ -15787,7 +15787,7 @@ console_cmd__fed__public_rooms(opt &out, const string_view &line)
 		response["chunk"]
 	};
 
-	for(const json::object &summary : rooms)
+	for(const json::object summary : rooms)
 	{
 		for(const auto &member : summary)
 			out << std::setw(24) << member.first << " => " << member.second << std::endl;
@@ -15854,7 +15854,7 @@ console_cmd__fed__auth(opt &out, const string_view &line)
 
 	if(opts.ids_only)
 	{
-		for(const json::string &event_id : auth_chain)
+		for(const json::string event_id : auth_chain)
 			out << event_id << std::endl;
 
 		return true;
@@ -15987,7 +15987,7 @@ console_cmd__fed__query_auth(opt &out, const string_view &line)
 	};
 
 	out << "auth_chain: " << std::endl;
-	for(const json::object &event : auth_chain)
+	for(const json::object event : auth_chain)
 		out << pretty_oneline(m::event{event}) << std::endl;
 
 	out << std::endl;
@@ -16137,7 +16137,7 @@ console_cmd__fed__user__devices(opt &out, const string_view &line)
 		response["devices"]
 	};
 
-	for(const json::object &device : devices)
+	for(const json::object device : devices)
 		out << string_view{device} << std::endl;
 
 	out << "-- " << size(devices) << " devices." << std::endl;
@@ -16381,7 +16381,7 @@ console_cmd__fed__key__query(opt &out, const string_view &line)
 		request
 	};
 
-	for(const json::object &key : keys)
+	for(const json::object key : keys)
 	{
 		const m::keys &k{key};
 		out << k << std::endl;
@@ -16931,7 +16931,7 @@ console_cmd__fetch__event__auth(opt &out, const string_view &line)
 	    << std::endl
 	    ;
 
-	for(const json::object &event : auth_chain)
+	for(const json::object event : auth_chain)
 		out << string_view{event} << std::endl;
 
 	return true;

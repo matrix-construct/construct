@@ -409,7 +409,7 @@ github_handle__gollum(std::ostream &out,
 	<< ":"
 	;
 
-	for(const json::object &page : pages)
+	for(const json::object page : pages)
 	{
 		const json::string &action
 		{
@@ -678,7 +678,7 @@ github_handle__pull_request(std::ostream &out,
 		pr["base"]
 	};
 
-	for(const json::object &label : json::array(pr["labels"]))
+	for(const json::object label : json::array(pr["labels"]))
 	{
 		out << "&nbsp;";
 		out << "<font color=\"#FFFFFF\""
@@ -887,7 +887,7 @@ github_handle__issues(std::ostream &out,
 	    << "</a>"
 	    ;
 
-	for(const json::object &label : json::array(issue["labels"]))
+	for(const json::object label : json::array(issue["labels"]))
 	{
 		out << "&nbsp;";
 		out << "<font color=\"#FFFFFF\""
@@ -1108,7 +1108,7 @@ github_handle__issue_comment(std::ostream &out,
 		    ;
 	}
 
-	for(const json::object &label : json::array(issue["labels"]))
+	for(const json::object label : json::array(issue["labels"]))
 		out
 		<< "<font color=\"#FFFFFF\""
 		<< "data-mx-bg-color=\"#"
