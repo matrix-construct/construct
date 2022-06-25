@@ -36,6 +36,7 @@ ircd::m::query(const event::idx &event_idx,
 	R ret;
 	m::get(event_idx, key, [&ret, &closure]
 	(const string_view &value)
+	noexcept(std::is_nothrow_invocable<F, decltype(value)>())
 	{
 		ret = closure(value);
 	});
@@ -72,6 +73,7 @@ ircd::m::query(std::nothrow_t,
 	const auto assign
 	{
 		[&ret, &closure](const string_view &value)
+		noexcept(std::is_nothrow_invocable<F, decltype(value)>())
 		{
 			ret = closure(value);
 		}
@@ -103,6 +105,7 @@ ircd::m::query(std::nothrow_t,
 
 	m::get(std::nothrow, event_idx, key, [&ret, &closure]
 	(const string_view &value)
+	noexcept(std::is_nothrow_invocable<F, decltype(value)>())
 	{
 		ret = closure(value);
 	});
