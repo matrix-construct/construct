@@ -155,7 +155,7 @@ get__event_auth(client &client,
 		});
 	}
 
-	return std::move(response);
+	return response;
 }
 
 m::resource::method

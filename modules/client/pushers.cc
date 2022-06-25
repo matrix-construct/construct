@@ -153,5 +153,5 @@ ircd::m::push::handle_pushers_get(client &client,
 		return true;
 	});
 
-	return std::move(response);
+	return response;
 }

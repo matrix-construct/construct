@@ -71,5 +71,5 @@ ircd::m::groups::handle_get(client &client,
 //	for(const auto &group_id : group_ids)
 //		groups.append(group_id);
 
-	return std::move(response);
+	return response;
 }

@@ -132,5 +132,5 @@ get__hierarchy(ircd::client &client,
 	state.for_each("m.space.child", closure);
 
 	// done
-	return std::move(response);
+	return response;
 }

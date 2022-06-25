@@ -140,7 +140,7 @@ get__backfill(client &client,
 			pdus.append(event);
 	}
 
-	return std::move(response);
+	return response;
 }
 
 static size_t

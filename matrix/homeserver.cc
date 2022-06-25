@@ -445,7 +445,7 @@ ircd::m::homeserver::key::key(const struct opts &opts)
 	};
 
 	if(!secret_key)
-		return std::move(ret);
+		return ret;
 
 	const ed25519::sig sig
 	{
@@ -470,7 +470,7 @@ ircd::m::homeserver::key::key(const struct opts &opts)
 		key
 	};
 
-	return std::move(ret);
+	return ret;
 }()}
 {
 	if(!secret_key)

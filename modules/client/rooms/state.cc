@@ -170,7 +170,7 @@ get__state(client &client,
 		append_event(request, top, event_idx);
 	});
 
-	return std::move(response);
+	return response;
 }
 
 bool

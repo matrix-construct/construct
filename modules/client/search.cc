@@ -117,7 +117,7 @@ ircd::m::search::search_post_handle(client &client,
 		handle_room_events(client, request, search_categories, room_events_result);
 	}
 
-	return std::move(response);
+	return response;
 }
 
 void

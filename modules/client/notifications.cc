@@ -228,5 +228,5 @@ ircd::m::get_notifications(client &client,
 		};
 
 	top.~object();
-	return std::move(response);
+	return response;
 }

@@ -74,5 +74,5 @@ ircd::stats::get_stats(client &client,
 		response.write(line);
 	}
 
-	return std::move(response);
+	return response;
 }

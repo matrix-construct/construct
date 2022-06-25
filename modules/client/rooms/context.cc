@@ -291,7 +291,7 @@ get__context(client &client,
 		counts.state,
 	};
 
-	return std::move(response);
+	return response;
 }
 
 bool

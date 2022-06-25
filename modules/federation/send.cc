@@ -272,7 +272,7 @@ handle_put(client &client,
 	};
 
 	handle_txn(client, request, txn_id, out);
-	return std::move(response);
+	return response;
 }
 
 m::resource::method

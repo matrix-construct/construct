@@ -72,7 +72,7 @@ post__user_keys_query(client &client,
 	_query_device_keys(client, request, response);
 	_query_master_keys(client, request, response);
 	_query_self_keys(client, request, response);
-	return std::move(response);
+	return response;
 }
 
 void

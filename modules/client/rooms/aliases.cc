@@ -63,5 +63,5 @@ get__aliases(client &client,
 		return true;
 	});
 
-	return std::move(response);
+	return response;
 }

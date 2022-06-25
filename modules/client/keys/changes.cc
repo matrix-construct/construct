@@ -133,5 +133,5 @@ get__keys_changes(client &client,
 		};
 	}
 
-	return std::move(response);
+	return response;
 }

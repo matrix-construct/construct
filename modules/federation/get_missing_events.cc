@@ -202,5 +202,5 @@ get__missing_events(client &client,
 				break;
 	}
 
-	return std::move(response);
+	return response;
 }

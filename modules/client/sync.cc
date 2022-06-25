@@ -411,7 +411,7 @@ ircd::m::sync::handle_get(client &client,
 		});
 
 	assert(complete);
-	return std::move(response);
+	return response;
 }
 
 bool

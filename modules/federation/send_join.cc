@@ -196,7 +196,7 @@ put__send_join(client &client,
 		};
 
 		send_join__response(client, request, event, state, auth_chain, data);
-		return std::move(response);
+		return response;
 	}
 
 	json::stack::object top
@@ -206,7 +206,7 @@ put__send_join(client &client,
 
 	// Top element is the object
 	send_join__response(client, request, event, state, auth_chain, top);
-	return std::move(response);
+	return response;
 }
 
 void

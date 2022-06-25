@@ -101,7 +101,7 @@ get__relations(client &client,
 	};
 
 	relations_chunk(client, request, room_id, event_id, rel_type, type, chunk);
-	return std::move(response);
+	return response;
 }
 
 void

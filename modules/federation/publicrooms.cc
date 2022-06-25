@@ -158,5 +158,5 @@ handle_get(client &client,
 			top, "next_batch", next_batch_buf
 		};
 
-	return std::move(response);
+	return response;
 }

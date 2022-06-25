@@ -80,7 +80,7 @@ get__initialsync(client &client,
 	};
 
 	get__initialsync_local(client, request, room, request.user_id, top);
-	return std::move(response);
+	return response;
 }
 
 void

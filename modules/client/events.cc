@@ -171,7 +171,7 @@ get__events(client &client,
 		};
 
 		if(get_events_from(client, request, room_id, event_id, room_head, room_depth, top))
-			return std::move(response);
+			return response;
 
 		checkpoint.rollback();
 	}
@@ -246,7 +246,7 @@ get__events(client &client,
 			top, "end", room_head
 		};
 
-	return std::move(response);
+	return response;
 }
 
 static void

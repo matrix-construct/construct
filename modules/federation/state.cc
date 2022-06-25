@@ -216,5 +216,5 @@ get__state(client &client,
 		}});
 	}
 
-	return std::move(response);
+	return response;
 }

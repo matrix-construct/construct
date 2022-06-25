@@ -151,5 +151,5 @@ get__user_devices(client &client,
 		return true;
 	});
 
-	return std::move(response);
+	return response;
 }

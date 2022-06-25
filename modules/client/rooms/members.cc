@@ -165,7 +165,7 @@ get__members(client &client,
 		return true;
 	});
 
-	return std::move(response);
+	return response;
 }
 
 m::resource::response
@@ -245,5 +245,5 @@ get__joined_members(client &client,
 		return true;
 	});
 
-	return std::move(response);
+	return response;
 }
