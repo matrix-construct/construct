@@ -1,14 +1,10 @@
 AUTOMAKE_OPTIONS = foreign
 
-AM_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	$(EXTRA_CPPFLAGS) \
-    ###
+AM_CPPFLAGS =#
+AM_CPPFLAGS += -I$(top_srcdir)/include
 
-AM_CXXFLAGS = \
-	-x c++-header \
-	$(EXTRA_CXXFLAGS) \
-	###
+AM_CXXFLAGS =#
+AM_CXXFLAGS += -x c++-header
 
 if GCC
 AM_CXXFLAGS += -fpch-deps
@@ -31,6 +27,9 @@ if LOWMEM_COMPILE
 LOWMEM_FLAGS= --param ggc-min-expand=1
 endif
 endif
+
+AM_CPPFLAGS += $(EXTRA_CPPFLAGS)
+AM_CXXFLAGS += $(EXTRA_CXXFLAGS)
 
 # includedir = @includedir@/$(PACKAGE_TARNAME)
 includedir = @includedir@/ircd

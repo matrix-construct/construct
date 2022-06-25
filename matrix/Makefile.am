@@ -3,35 +3,25 @@ AUTOMAKE_OPTIONS = foreign
 BUILT_SOURCES =#
 CLEANFILES =#
 
-DEFS += \
-	-DIRCD_UNIT \
-	-DIRCD_MATRIX_UNIT \
-	###
+DEFS += -DIRCD_UNIT
+DEFS += -DIRCD_MATRIX_UNIT
 
-CXXFLAGS += \
-	$(EXTRA_CXXFLAGS) \
-	###
+AM_CPPFLAGS =#
+AM_CPPFLAGS += -I$(top_srcdir)/include
 
-AM_CXXFLAGS = \
-	-include ircd/matrix.pic.h \
-	-include ircd/mods/mapi.h \
-	###
+AM_CXXFLAGS =#
+AM_CXXFLAGS += -include ircd/matrix.pic.h
+AM_CXXFLAGS += -include ircd/mods/mapi.h
 
-AM_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	$(EXTRA_CPPFLAGS) \
-	###
-
-AM_LDFLAGS = \
-	-version-info 0:1:0 \
-	-Wl,--no-undefined-version \
-	-Wl,--allow-shlib-undefined \
-	-Wl,--unresolved-symbols=ignore-in-shared-libs \
-	-Wl,-z,lazy \
-	-L$(top_srcdir)/ircd \
-	$(PLATFORM_LDFLAGS) \
-	$(EXTRA_LDFLAGS) \
-	###
+AM_LDFLAGS =#
+AM_LDFLAGS += -version-info 0:1:0
+AM_LDFLAGS += -Wl,--sort-section=name
+AM_LDFLAGS += -Wl,--no-undefined-version
+AM_LDFLAGS += -Wl,--allow-shlib-undefined
+AM_LDFLAGS += -Wl,--unresolved-symbols=ignore-in-shared-libs
+AM_LDFLAGS += -Wl,-z,lazy
+AM_LDFLAGS += -L$(top_srcdir)/ircd
+AM_LDFLAGS += $(PLATFORM_LDFLAGS)
 
 if GCC
 AM_CXXFLAGS += -ftls-model=local-dynamic
@@ -56,9 +46,18 @@ CLEANFILES += default.profdata
 endif
 endif
 
+if GOLD
+AM_LDFLAGS += -Wl,--no-text-reorder
+AM_LDFLAGS += -Wl,--sort-common=descending
+endif
+
 if MINGW
 AM_LDFLAGS += -Wl,--enable-runtime-pseudo-reloc
 endif
+
+AM_CXXFLAGS += $(EXTRA_CXXFLAGS)
+AM_CPPFLAGS += $(EXTRA_CPPFLAGS)
+AM_LDFLAGS += $(EXTRA_LDFLAGS)
 
 libircd_matrixdir = @libdir@
 libircd_matrix_LTLIBRARIES = \

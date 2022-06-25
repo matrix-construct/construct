@@ -1,36 +1,29 @@
 AUTOMAKE_OPTIONS = foreign
 
-DEFS += \
-	-DIRCD_UNIT \
-	-DIRCD_UNIT_MODULE \
-	###
+DEFS += -DIRCD_UNIT
+DEFS += -DIRCD_UNIT_MODULE
 
-CXXFLAGS += \
-	$(EXTRA_CXXFLAGS) \
-	###
+AM_CPPFLAGS =#
+AM_CPPFLAGS += -I$(top_srcdir)/include
+AM_CPPFLAGS += $(EXTRA_CPPFLAGS)
 
-AM_CXXFLAGS = \
-	-ftls-model=global-dynamic \
-	-include $(top_srcdir)/include/ircd/matrix.pic.h \
-	-include $(top_srcdir)/include/ircd/mods/mapi.h \
-	###
+AM_CXXFLAGS =#
+AM_CXXFLAGS += -ftls-model=global-dynamic
+AM_CXXFLAGS += -include $(top_srcdir)/include/ircd/matrix.pic.h
+AM_CXXFLAGS += -include $(top_srcdir)/include/ircd/mods/mapi.h
 
-AM_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	$(EXTRA_CPPFLAGS) \
-	###
+AM_LDFLAGS =#
+AM_LDFLAGS += -module
+AM_LDFLAGS += -avoid-version
+AM_LDFLAGS += -Wl,--allow-shlib-undefined
+AM_LDFLAGS += -Wl,-z,lazy
+AM_LDFLAGS += -L$(top_srcdir)/ircd
+AM_LDFLAGS += -L$(top_srcdir)/matrix
+AM_LDFLAGS += $(PLATFORM_LDFLAGS)
 
-#TODO: split options for if LD_GOLD
-AM_LDFLAGS = \
-	-module \
-	-avoid-version \
-	-Wl,--allow-shlib-undefined \
-	-Wl,-z,lazy \
-	-L$(top_srcdir)/ircd \
-	-L$(top_srcdir)/matrix \
-	$(PLATFORM_LDFLAGS) \
-	$(EXTRA_LDFLAGS) \
-	###
+AM_CXXFLAGS += $(EXTRA_CXXFLAGS)
+AM_CPPFLAGS += $(EXTRA_CPPFLAGS)
+AM_LDFLAGS += $(EXTRA_LDFLAGS)
 
 ###############################################################################
 #

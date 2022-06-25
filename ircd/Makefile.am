@@ -3,44 +3,33 @@ AUTOMAKE_OPTIONS = foreign
 BUILT_SOURCES =#
 CLEANFILES =#
 
-DEFS += \
-	-DIRCD_UNIT \
-	###
+DEFS += -DIRCD_UNIT
 
-CXXFLAGS += \
-	$(EXTRA_CXXFLAGS) \
-	###
+AM_CPPFLAGS =#
+AM_CPPFLAGS += -I$(top_srcdir)/include
 
-AM_CXXFLAGS = \
-	-ftls-model=initial-exec \
-	-include ircd/ircd.pic.h \
-	###
+AM_CXXFLAGS =#
+AM_CXXFLAGS += -ftls-model=initial-exec
+AM_CXXFLAGS += -include ircd/ircd.pic.h
 
-AM_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	$(EXTRA_CPPFLAGS) \
-	###
-
-AM_LDFLAGS = \
-	-version-info 3:2:0 \
-	-Wl,--no-undefined-version \
-	-Wl,--icf=all \
-	-Wl,--sort-section=name \
-	-Wl,--unresolved-symbols=ignore-in-shared-libs \
-	-Wl,--wrap=pthread_create \
-	-Wl,--wrap=pthread_join \
-	-Wl,--wrap=pthread_tryjoin_np \
-	-Wl,--wrap=pthread_timedjoin_np \
-	-Wl,--wrap=pthread_clockjoin_np \
-	-Wl,--wrap=pthread_self \
-	-Wl,--wrap=pthread_setname_np \
-	-Wl,--wrap=_dl_signal_exception \
-	-Wl,-z,nodelete \
-	-Wl,-z,nodlopen \
-	-Wl,-z,lazy \
-	$(PLATFORM_LDFLAGS) \
-	$(EXTRA_LDFLAGS) \
-	###
+AM_LDFLAGS =#
+AM_LDFLAGS += -version-info 3:2:0
+AM_LDFLAGS += -Wl,--no-undefined-version
+AM_LDFLAGS += -Wl,--icf=all
+AM_LDFLAGS += -Wl,--sort-section=name
+AM_LDFLAGS += -Wl,--unresolved-symbols=ignore-in-shared-libs
+AM_LDFLAGS += -Wl,--wrap=pthread_create
+AM_LDFLAGS += -Wl,--wrap=pthread_join
+AM_LDFLAGS += -Wl,--wrap=pthread_tryjoin_np
+AM_LDFLAGS += -Wl,--wrap=pthread_timedjoin_np
+AM_LDFLAGS += -Wl,--wrap=pthread_clockjoin_np
+AM_LDFLAGS += -Wl,--wrap=pthread_self
+AM_LDFLAGS += -Wl,--wrap=pthread_setname_np
+AM_LDFLAGS += -Wl,--wrap=_dl_signal_exception
+AM_LDFLAGS += -Wl,-z,nodelete
+AM_LDFLAGS += -Wl,-z,nodlopen
+AM_LDFLAGS += -Wl,-z,lazy
+AM_LDFLAGS += $(PLATFORM_LDFLAGS)
 
 if CLANG
 AM_CXXFLAGS += -fno-c++-static-destructors
@@ -88,6 +77,10 @@ if MINGW
 AM_LDFLAGS += -Wl,--enable-runtime-pseudo-reloc
 AM_LDFLAGS += -export-symbols-regex '*'
 endif
+
+AM_CXXFLAGS += $(EXTRA_CXXFLAGS)
+AM_CPPFLAGS += $(EXTRA_CPPFLAGS)
+AM_LDFLAGS += $(EXTRA_LDFLAGS)
 
 libircddir = @libdir@
 libircd_LTLIBRARIES = libircd.la
