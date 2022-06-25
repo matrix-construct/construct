@@ -754,7 +754,7 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	throw panic
+	ircd::terminate
 	{
 		"[%s] time to string :%s",
 		d.name,
@@ -963,7 +963,7 @@ const noexcept try
 }
 catch(const std::exception &e)
 {
-	throw panic
+	ircd::terminate
 	{
 		"[%s] set background threads :%s",
 		d.name,
@@ -1170,7 +1170,7 @@ const noexcept try
 }
 catch(const std::exception &e)
 {
-	throw panic
+	ircd::terminate
 	{
 		"[%s] get thread id :%s",
 		d.name,
@@ -2926,7 +2926,7 @@ noexcept try
 	// RocksDB sez that this call requires "External synchronization" i.e the
 	// caller, not this class is responsible for exclusion. We assert anyway.
 	if(unlikely(!bool(lock)))
-		throw panic
+		ircd::terminate
 		{
 			"[%s] Unexpected concurrent access to seqfile %p",
 			d.name,
@@ -3014,7 +3014,7 @@ noexcept try
 	};
 
 	if(unlikely(!bool(lock)))
-		throw panic
+		ircd::terminate
 		{
 			"[%s] Unexpected concurrent access to seqfile %p",
 			d.name,
@@ -3102,7 +3102,7 @@ noexcept try
 	// RocksDB sez that this call requires "External synchronization" i.e the
 	// caller, not this class is responsible for exclusion. We assert anyway.
 	if(unlikely(!bool(lock)))
-		throw panic
+		ircd::terminate
 		{
 			"[%s] Unexpected concurrent access to seqfile %p",
 			d.name,
