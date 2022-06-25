@@ -831,13 +831,15 @@ ircd::fs::incore(const fd &fd,
                  const size_t &count,
                  const read_opts &opts)
 {
+	const fs::opts fs_opts
+	{
+		.offset = off_t(align(opts.offset, info::page_size)),
+		.blocking = false,
+	};
+
 	const fs::map::opts map_opts
 	{
-		fs::opts
-		{
-			.offset = off_t(align(opts.offset, info::page_size)),
-			.blocking = false,
-		},
+		{ fs_opts },
 	};
 
 	const size_t &map_size
@@ -853,7 +855,7 @@ ircd::fs::incore(const fd &fd,
 	assert(map_opts.offset % 4096 == 0);
 	const fs::map map
 	{
-		fd, map_opts, map_size
+		fd, map_size, map_opts
 	};
 
 	const size_t res

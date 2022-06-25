@@ -151,6 +151,8 @@ struct ircd::m::fetch::result
 	/// instance go out of scope by making this conversion.
 	explicit operator json::object() const;
 	explicit operator json::array() const;
+
+	result() = default;
 };
 
 /// Fetch entity state. DO NOT CONSTRUCT. This is an internal structure but we

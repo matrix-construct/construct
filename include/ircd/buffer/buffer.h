@@ -197,7 +197,7 @@ ircd::buffer::consume(buffer<it> &b,
 {
 	assert(!null(b));
 	assert(bytes <= size(b));
-	const auto &advance
+	const size_t advance
 	{
 		std::min(bytes, size(b))
 	};
