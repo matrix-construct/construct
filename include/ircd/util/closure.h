@@ -65,11 +65,13 @@ struct ircd::util::closure<F, bool, A...>
 
 	template<class lambda>
 	closure(lambda &&o,
-	        typename std::enable_if<!std::is_constructible<func_bool_type, lambda>::value, int>::type = 0) noexcept;
+	        typename std::enable_if<!std::is_constructible<func_bool_type, lambda>::value, int>::type = 0)
+	noexcept(std::is_nothrow_invocable<lambda, void, A...>());
 
 	template<class lambda>
 	closure(lambda &&o,
-	        typename std::enable_if<std::is_constructible<func_bool_type, lambda>::value, int>::type = 0) noexcept;
+	        typename std::enable_if<std::is_constructible<func_bool_type, lambda>::value, int>::type = 0)
+	noexcept(std::is_nothrow_invocable<lambda, bool, A...>());
 };
 
 template<template<class, class...>
@@ -80,10 +82,11 @@ template<class lambda>
 inline
 ircd::util::closure<F, bool, A...>::closure(lambda &&o,
                                             typename std::enable_if<!std::is_constructible<func_bool_type, lambda>::value, int>::type)
-noexcept
+noexcept(std::is_nothrow_invocable<lambda, void, A...>())
 :F<bool (A...)>
 {
 	[o(std::move(o))](A&&... a)
+	noexcept(std::is_nothrow_invocable<lambda, void, A...>())
 	{
 		static_assert
 		(
@@ -104,7 +107,7 @@ template<class lambda>
 inline
 ircd::util::closure<F, bool, A...>::closure(lambda &&o,
                                             typename std::enable_if<std::is_constructible<func_bool_type, lambda>::value, int>::type)
-noexcept
+noexcept(std::is_nothrow_invocable<lambda, bool, A...>())
 :F<bool (A...)>
 {
 	std::forward<lambda>(o)
