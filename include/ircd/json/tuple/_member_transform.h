@@ -24,7 +24,7 @@ _member_transform_if(const tuple<T...> &tuple,
                      const it_b end,
                      closure&& lambda)
 {
-	until(tuple, [&it, &end, &lambda]
+	for_each(tuple, [&it, &end, &lambda]
 	(const auto &key, auto&& val)
 	{
 		if(it == end)

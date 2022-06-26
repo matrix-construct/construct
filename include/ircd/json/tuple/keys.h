@@ -39,8 +39,7 @@ template<class T>
 struct ircd::json::keys<T>::selection
 :std::bitset<T::size()>
 {
-	template<class closure> constexpr bool until(closure&&) const;
-	template<class closure> constexpr void for_each(closure&&) const;
+	template<class closure> constexpr bool for_each(closure&&) const;
 	template<class it> constexpr it transform(it, const it end) const;
 	bool has(const string_view &) const;
 	void set(const string_view &, const bool & = true);
@@ -129,7 +128,7 @@ ircd::json::keys<T>::selection::transform(it i,
                                           const it end)
 const
 {
-	this->until([&i, &end](auto&& key)
+	this->for_each([&i, &end](auto&& key)
 	{
 		if(i == end)
 			return false;
@@ -144,21 +143,8 @@ const
 
 template<class T>
 template<class closure>
-inline constexpr void
-ircd::json::keys<T>::selection::for_each(closure&& function)
-const
-{
-	this->until([&function](auto&& key)
-	{
-		function(key);
-		return true;
-	});
-}
-
-template<class T>
-template<class closure>
 inline constexpr bool
-ircd::json::keys<T>::selection::until(closure&& function)
+ircd::json::keys<T>::selection::for_each(closure&& function)
 const
 {
 	for(size_t i(0); i < T::size(); ++i)

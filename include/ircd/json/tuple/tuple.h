@@ -211,7 +211,7 @@ has_key(const tuple &t,
 } // namespace ircd
 
 #include "for_each.h"
-#include "until.h"
+#include "rfor_each.h"
 #include "get.h"
 #include "at.h"
 #include "set.h"
@@ -243,7 +243,8 @@ tuple<T...>::tuple(const json::object &object)
 }
 {
 	for(const auto &[key, val] : object)
-		set(*this, key, val);
+		if(has_key(*this, key))
+			set(*this, key, val);
 }
 
 template<class... T>
@@ -292,7 +293,8 @@ tuple<T...>::tuple(const tuple<U...> &t)
 	for_each(t, [this]
 	(const auto &key, const auto &val)
 	{
-		set(*this, key, val);
+		if(has_key(*this, key))
+			set(*this, key, val);
 	});
 }
 

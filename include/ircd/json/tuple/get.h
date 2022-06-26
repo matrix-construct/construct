@@ -25,6 +25,11 @@ noexcept
 		indexof<tuple, hash>()
 	};
 
+	static_assert
+	(
+		idx < size<tuple>(), "out of range"
+	);
+
 	const auto &ret
 	{
 		val<idx>(t)
@@ -45,6 +50,11 @@ noexcept
 		indexof<tuple, hash>()
 	};
 
+	static_assert
+	(
+		idx < size<tuple>(), "out of range"
+	);
+
 	const auto &ret
 	{
 		val<idx>(t)
@@ -63,6 +73,11 @@ noexcept
 	{
 		indexof<tuple, hash>()
 	};
+
+	static_assert
+	(
+		idx < size<tuple>(), "out of range"
+	);
 
 	auto &ret
 	{
@@ -133,7 +148,7 @@ get(const tuple &t,
     R ret)
 noexcept
 {
-	until(t, [&name, &ret]
+	for_each(t, [&name, &ret]
 	(const auto &key, auto&& val)
 	noexcept
 	{

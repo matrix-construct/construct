@@ -80,50 +80,44 @@ at(tuple &t)
 
 template<class tuple,
          class function,
-         size_t i>
-constexpr typename std::enable_if<i == size<tuple>(), void>::type
-at(tuple &t,
-   const string_view &name,
-   function&& f)
-noexcept
-{}
-
-template<class tuple,
-         class function,
          size_t i = 0>
-inline typename std::enable_if<i < size<tuple>(), void>::type
+inline enable_if_tuple<tuple, void>
 at(tuple &t,
    const string_view &name,
    function&& f)
 {
-	if(indexof<tuple>(name) == i)
-		return f(val<i>(t));
-
-	at<tuple, function, i + 1>(t, name, std::forward<function>(f));
+	if constexpr(i < size<tuple>())
+	{
+		if(_constexpr_equal(name, key<tuple, i>()))
+			f(val<i>(t));
+		else
+			at<tuple, function, i + 1>(t, name, std::forward<function>(f));
+	}
+	else throw not_found
+	{
+		"%s", name
+	};
 }
 
 template<class tuple,
          class function,
-         size_t i>
-constexpr typename std::enable_if<i == size<tuple>(), void>::type
-at(const tuple &t,
-   const string_view &name,
-   function&& f)
-noexcept
-{}
-
-template<class tuple,
-         class function,
          size_t i = 0>
-inline typename std::enable_if<i < size<tuple>(), void>::type
+inline enable_if_tuple<tuple, void>
 at(const tuple &t,
    const string_view &name,
    function&& f)
 {
-	if(indexof<tuple>(name) == i)
-		return f(val<i>(t));
-
-	at<tuple, function, i + 1>(t, name, std::forward<function>(f));
+	if constexpr(i < size<tuple>())
+	{
+		if(_constexpr_equal(name, key<tuple, i>()))
+			f(val<i>(t));
+		else
+			at<tuple, function, i + 1>(t, name, std::forward<function>(f));
+	}
+	else throw not_found
+	{
+		"%s", name
+	};
 }
 
 template<class R,
@@ -133,9 +127,7 @@ at(const tuple &t,
    const string_view &name)
 {
 	const R *ret;
-	at(t, name, [&ret]
-	(auto&& val)
-	noexcept
+	at(t, name, [&ret](auto&& val) noexcept
 	{
 		//XXX is_pointer_interconvertible_base_of? (C++20)
 		if constexpr(std::is_assignable<R, decltype(val)>())

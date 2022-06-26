@@ -12,7 +12,7 @@ bool
 ircd::m::for_each(const event::prev &prev,
                   const event::id::closure_bool &closure)
 {
-	return json::until(prev, [&closure]
+	return json::for_each(prev, [&closure]
 	(const auto &key, const json::array &prevs)
 	{
 		for(const string_view &prev_ : prevs)

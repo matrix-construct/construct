@@ -1,7 +1,7 @@
 // Matrix Construct
 //
 // Copyright (C) Matrix Construct Developers, Authors & Contributors
-// Copyright (C) 2016-2018 Jason Volk <jason@zemos.net>
+// Copyright (C) 2016-2022 Jason Volk <jason@zemos.net>
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -9,19 +9,19 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_JSON_TUPLE_FOR_EACH_H
+#define HAVE_IRCD_JSON_TUPLE_RFOR_EACH_H
 
 namespace ircd {
 namespace json {
 
-template<size_t i = 0,
-         class tuple,
-         class function>
+template<class tuple,
+         class function,
+         ssize_t i = size<tuple>() - 1>
 inline enable_if_tuple<tuple, bool>
-for_each(const tuple &t,
-         function&& f)
+rfor_each(const tuple &t,
+          function&& f)
 {
-	if constexpr(i < size<tuple>())
+	if constexpr(i >= 0)
 	{
 		using closure_result = std::invoke_result_t
 		<
@@ -40,19 +40,19 @@ for_each(const tuple &t,
 		}
 		else f(key<i>(t), val<i>(t));
 
-		return for_each<i + 1>(t, std::forward<function>(f));
+		return rfor_each<tuple, function, i - 1>(t, std::forward<function>(f));
 	}
 	else return true;
 }
 
-template<size_t i = 0,
-         class tuple,
-         class function>
+template<class tuple,
+         class function,
+         ssize_t i = size<tuple>() - 1>
 inline enable_if_tuple<tuple, bool>
-for_each(tuple &t,
-         function&& f)
+rfor_each(tuple &t,
+          function&& f)
 {
-	if constexpr(i < size<tuple>())
+	if constexpr(i >= 0)
 	{
 		using closure_result = std::invoke_result_t
 		<
@@ -71,45 +71,9 @@ for_each(tuple &t,
 		}
 		else f(key<i>(t), val<i>(t));
 
-		return for_each<i + 1>(t, std::forward<function>(f));
+		return rfor_each<tuple, function, i - 1>(t, std::forward<function>(f));
 	}
 	else return true;
-}
-
-template<class tuple,
-         class function>
-inline void
-for_each(const tuple &t,
-         const vector_view<const string_view> &mask,
-         function&& f)
-{
-	std::for_each(std::begin(mask), std::end(mask), [&t, &f]
-	(const auto &key)
-	{
-		at(t, key, [&f, &key]
-		(auto&& val)
-		{
-			f(key, val);
-		});
-	});
-}
-
-template<class tuple,
-         class function>
-inline void
-for_each(tuple &t,
-         const vector_view<const string_view> &mask,
-         function&& f)
-{
-	std::for_each(std::begin(mask), std::end(mask), [&t, &f]
-	(const auto &key)
-	{
-		at(t, key, [&f, &key]
-		(auto&& val)
-		{
-			f(key, val);
-		});
-	});
 }
 
 } // namespace json
