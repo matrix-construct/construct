@@ -99,7 +99,7 @@ struct ircd::json::keys<T>::exclude
 //
 
 template<class T>
-void
+inline void
 ircd::json::keys<T>::selection::set(const string_view &key,
                                     const bool &val)
 {
@@ -107,7 +107,7 @@ ircd::json::keys<T>::selection::set(const string_view &key,
 }
 
 template<class T>
-void
+inline void
 ircd::json::keys<T>::selection::set(const size_t &pos,
                                     const bool &val)
 {
@@ -115,7 +115,7 @@ ircd::json::keys<T>::selection::set(const size_t &pos,
 }
 
 template<class T>
-bool
+inline bool
 ircd::json::keys<T>::selection::has(const string_view &key)
 const
 {
@@ -124,7 +124,7 @@ const
 
 template<class T>
 template<class it>
-constexpr it
+inline constexpr it
 ircd::json::keys<T>::selection::transform(it i,
                                           const it end)
 const
@@ -144,7 +144,7 @@ const
 
 template<class T>
 template<class closure>
-constexpr void
+inline constexpr void
 ircd::json::keys<T>::selection::for_each(closure&& function)
 const
 {
@@ -157,7 +157,7 @@ const
 
 template<class T>
 template<class closure>
-constexpr bool
+inline constexpr bool
 ircd::json::keys<T>::selection::until(closure&& function)
 const
 {
@@ -174,13 +174,14 @@ const
 //
 
 template<class T>
+inline
 ircd::json::keys<T>::keys(const selection &selection)
 {
 	selection.transform(this->begin(), this->end());
 }
 
 template<class T>
-ircd::json::keys<T>::operator
+inline ircd::json::keys<T>::operator
 vector_view<const string_view>()
 const
 {
@@ -188,7 +189,7 @@ const
 }
 
 template<class T>
-bool
+inline bool
 ircd::json::keys<T>::has(const string_view &key)
 const
 {
@@ -207,7 +208,7 @@ const
 }
 
 template<class T>
-size_t
+inline size_t
 ircd::json::keys<T>::count()
 const
 {
