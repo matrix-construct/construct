@@ -19,6 +19,9 @@ namespace ircd
 	template<size_t N> constexpr size_t _constexpr_strlen(const char (&)[N]) noexcept;
 
 	constexpr bool _constexpr_equal(const char *a, const char *b) noexcept;
+	constexpr bool _constexpr_equal(const char *a, const char *b, size_t) noexcept;
+	constexpr bool _constexpr_equal(const char *a, const size_t, const char *b, const size_t) noexcept;
+	constexpr bool _constexpr_equal(const string_view &, const string_view &) noexcept;
 	template<size_t N0, size_t N1> constexpr bool _constexpr_equal(const char (&)[N0], const char (&)[N1]) noexcept;
 
 	constexpr const char *data(const string_view &) noexcept;
@@ -324,6 +327,33 @@ noexcept
 			return false;
 
 	return true;
+}
+
+constexpr bool
+ircd::_constexpr_equal(const string_view &a,
+                       const string_view &b)
+noexcept
+{
+	return _constexpr_equal(data(a), size(a), data(b), size(b));
+}
+
+constexpr bool
+ircd::_constexpr_equal(const char *const a,
+                       const size_t a_len,
+                       const char *const b,
+                       const size_t b_len)
+noexcept
+{
+	return a_len == b_len && _constexpr_equal(a, b, a_len);
+}
+
+constexpr bool
+ircd::_constexpr_equal(const char *const a,
+                       const char *const b,
+                       size_t len)
+noexcept
+{
+	return !len || (*a == *b && (*a == '\0' || _constexpr_equal(a + 1, b + 1, len - 1)));
 }
 
 constexpr bool
