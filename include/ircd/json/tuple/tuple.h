@@ -97,7 +97,6 @@ namespace json {
 template<class T>
 constexpr bool
 is_tuple()
-noexcept
 {
 	return std::is_base_of<tuple_base, T>::value;
 }
@@ -142,9 +141,26 @@ stdcast(T &o)
 template<class T>
 constexpr enable_if_tuple<T, size_t>
 size()
-noexcept
 {
 	return tuple_size<T>::value;
+}
+
+/// Reference to the json::property wrapper of the key and value
+template<size_t i,
+         class tuple>
+inline enable_if_tuple<tuple, tuple_element<tuple, i> &>
+prop(tuple &t)
+{
+	return std::get<i>(t);
+}
+
+/// Reference to the json::property wrapper of the key and value
+template<size_t i,
+         class tuple>
+inline enable_if_tuple<tuple, const tuple_element<tuple, i> &>
+prop(const tuple &t)
+{
+	return std::get<i>(t);
 }
 
 } // namespace json
@@ -156,29 +172,39 @@ noexcept
 namespace ircd {
 namespace json {
 
+/// Reference to the payload value directly at index
 template<size_t i,
          class tuple>
 inline enable_if_tuple<tuple, tuple_value_type<tuple, i> &>
 val(tuple &t)
-noexcept
 {
-	return static_cast<tuple_value_type<tuple, i> &>(std::get<i>(t));
+	return static_cast<tuple_value_type<tuple, i> &>(prop<i>(t));
 }
 
+/// Reference to the payload value directly at index
 template<size_t i,
          class tuple>
 inline enable_if_tuple<tuple, const tuple_value_type<tuple, i> &>
 val(const tuple &t)
-noexcept
 {
-	return static_cast<const tuple_value_type<tuple, i> &>(std::get<i>(t));
+	return static_cast<const tuple_value_type<tuple, i> &>(prop<i>(t));
 }
 
+/// Convenience to determine if tuple has property by name.
 template<class tuple>
 inline bool
-key_exists(const string_view &key)
+has_key(const string_view &key)
 {
 	return indexof<tuple>(key) < size<tuple>();
+}
+
+/// Convenience to determine if tuple has property by name.
+template<class tuple>
+inline bool
+has_key(const tuple &t,
+        const string_view &key)
+{
+	return has_key<tuple>(key);
 }
 
 } // namespace json

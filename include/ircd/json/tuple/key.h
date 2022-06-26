@@ -29,7 +29,7 @@ inline enable_if_tuple<tuple, const char *>
 key(const tuple &t)
 noexcept
 {
-	return std::get<i>(t).key;
+	return prop<i>(t).key;
 }
 
 template<class tuple,
