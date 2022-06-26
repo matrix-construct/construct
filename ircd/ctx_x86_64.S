@@ -8,13 +8,9 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-// This unit contains customization and experimentation for the core context
-// switching routines. First note that everything here is platform-specific
-// and not implemented on all platforms. Furthermore, boost::context functions
-// overriden here are also overriden for the entire address space; if other
-// libraries use boost::context our code will hook their context switches
-// which we might not want. All of this must be considered to build or change
-// any functionality from here.
+//
+// This context switch is smaller than asio's and fits in a single iline
+//
 
 #include <ircd/config.h>
 #if defined(__x86_64__) && defined(__ELF__)
