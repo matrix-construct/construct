@@ -49,11 +49,12 @@ ircd::m::sync::groups_linear(data &data)
 		data.room, &room
 	};
 
+	assert(data.room);
 	char membuf[room::MEMBERSHIP_MAX_SIZE];
 	const string_view &membership
 	{
-		data.room?
-			m::membership(membuf, room, data.user):
+		data.room->room_id?
+			m::membership(membuf, *data.room, data.user):
 			string_view{}
 	};
 
