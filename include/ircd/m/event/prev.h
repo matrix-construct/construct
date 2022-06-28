@@ -39,7 +39,7 @@ struct ircd::m::event::prev
 	json::property<name::prev_events, json::array>
 >
 {
-	static constexpr const size_t &MAX
+	static constexpr const size_t MAX
 	{
 		20
 	};

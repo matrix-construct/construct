@@ -32,7 +32,7 @@ struct ircd::m::event::auth
 	json::property<name::auth_events, json::array>
 >
 {
-	static constexpr const size_t &MAX
+	static constexpr const size_t MAX
 	{
 		5
 	};

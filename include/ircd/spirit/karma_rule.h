@@ -102,7 +102,7 @@ struct boost::spirit::karma::rule<char *, T1, T2, T3, T4>
 		);
 	}
 
-	static constexpr const size_t &buf_sz
+	static constexpr const size_t buf_sz
 	{
 		512 - 32 // offsetof buf
 	};

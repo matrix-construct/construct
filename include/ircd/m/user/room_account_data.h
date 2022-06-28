@@ -21,7 +21,7 @@ struct ircd::m::user::room_account_data
 		"ircd.account_data"
 	};
 
-	static constexpr const size_t &typebuf_size
+	static constexpr const size_t typebuf_size
 	{
 		m::room::id::MAX_SIZE + 24
 	};

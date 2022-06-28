@@ -21,7 +21,7 @@ struct ircd::m::user::room_tags
 		"ircd.room_tag"
 	};
 
-	static constexpr const size_t &typebuf_size
+	static constexpr const size_t typebuf_size
 	{
 		m::room::id::MAX_SIZE + 16
 	};

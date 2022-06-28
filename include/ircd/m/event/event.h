@@ -114,10 +114,10 @@ struct ircd::m::event
 	using closure_idx_bool = std::function<bool (const idx &)>;
 	using closure_iov_mutable = std::function<void (json::iov &)>;
 
-	static constexpr const size_t &MAX_SIZE {64_KiB};
-	static constexpr const size_t &TYPE_MAX_SIZE {256};
-	static constexpr const size_t &ORIGIN_MAX_SIZE {256};
-	static constexpr const size_t &STATE_KEY_MAX_SIZE {512};
+	static constexpr const size_t MAX_SIZE {64_KiB};
+	static constexpr const size_t TYPE_MAX_SIZE {256};
+	static constexpr const size_t ORIGIN_MAX_SIZE {256};
+	static constexpr const size_t STATE_KEY_MAX_SIZE {512};
 	static conf::item<size_t> max_size;
 	static thread_local char buf[4][MAX_SIZE]; // general-use scratch
 

@@ -57,7 +57,7 @@ struct ircd::m::id
 	struct printer static const printer;
 	struct valid static const valid;
 
-	static constexpr const size_t &MAX_SIZE
+	static constexpr const size_t MAX_SIZE
 	{
 		RB_MXID_MAXLEN // set by ./configure; should be 255
 	};

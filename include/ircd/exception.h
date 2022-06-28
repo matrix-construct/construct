@@ -79,7 +79,7 @@ namespace ircd
 struct ircd::exception
 :virtual std::exception
 {
-	static constexpr const size_t &BUFSIZE
+	static constexpr const size_t BUFSIZE
 	{
 		512UL
 	};

@@ -77,7 +77,7 @@ struct boost::spirit::qi::rule<const char *, T1, T2, T3, T4>
 		using type = attr_type;
 	};
 
-	static constexpr const size_t &params_size
+	static constexpr const auto &params_size
 	{
 		parameter_types_size::value
 	};
@@ -119,7 +119,7 @@ struct boost::spirit::qi::rule<const char *, T1, T2, T3, T4>
 	/// Slightly exceeds the worst-case for currently in use compiled
 	/// expressions. It is possible to build an expression which exceeds
 	/// this value, and in that case, feel free to increase this size.
-	static constexpr const size_t &buf_sz
+	static constexpr const size_t buf_sz
 	{
 		2048 - 32 // offsetof buf
 	};
