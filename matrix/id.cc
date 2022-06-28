@@ -485,64 +485,63 @@ ircd::m::id::id(const id::sigil &sigil,
 {
 }
 
+namespace ircd::m
+{
+	static thread_local char
+	tmp_buf alignas(64) [2][id::MAX_SIZE];
+}
+
 ircd::m::id::id(const enum sigil &sigil,
                 const mutable_buffer &buf,
                 const string_view &local,
                 const string_view &host)
-:string_view{[&sigil, &buf, &local, &host]
+:string_view
 {
-	thread_local char tmp alignas(16) [2][MAX_SIZE];
-	static_assert(sizeof(tmp) == MAX_SIZE * 2);
-	const string_view src
+	parser(sigil, string_view
 	{
 		startswith(local, sigil)?
 			fmt::sprintf
 			{
 				buf, "%s%s%s",
 				sigil == sigil::ROOM_ALIAS?
-					tolower(tmp[0], local):
+					tolower(tmp_buf[0], local):
 					local,
 				host?
 					":"_sv:
 					string_view{},
-				tolower(tmp[1], host),
-			}
-		:
+				tolower(tmp_buf[1], host),
+			}:
 			fmt::sprintf
 			{
 				buf, "%c%s%s%s",
 				char(sigil),
 				sigil == sigil::ROOM_ALIAS?
-					tolower(tmp[0], local):
+					tolower(tmp_buf[0], local):
 					local,
 				host?
 					":"_sv:
 					string_view{},
-				tolower(tmp[1], host),
+				tolower(tmp_buf[1], host),
 			}
-	};
-
-	return parser(sigil, src);
-}()}
+	})
+}
 {
 }
 
 ircd::m::id::id(const id::sigil &sigil,
                 const mutable_buffer &buf,
                 const string_view &id)
-:string_view{[&sigil, &buf, &id]
+:string_view
 {
-	const string_view src
+	parser(sigil, string_view
 	{
 		sigil == sigil::ROOM_ALIAS?
 			tolower(buf, id):               //XXX no null here
 		buffer::data(buf) != id.data()?
 			strlcpy(buf, id):
 			id
-	};
-
-	return parser(sigil, src);
-}()}
+	})
+}
 {
 }
 
@@ -554,27 +553,28 @@ ircd::m::id::id(const enum sigil &sigil,
 {
 	//TODO: output grammar
 
-	thread_local char namebuf[MAX_SIZE];
 	string_view name; switch(sigil)
 	{
 		case sigil::USER:
 			name = fmt::sprintf
 			{
-				namebuf, "guest%lu", rand::integer()
+				tmp_buf[0], "guest%lu",
+				rand::integer()
 			};
 			break;
 
 		case sigil::ROOM_ALIAS:
 			name = fmt::sprintf
 			{
-				namebuf, "%lu", rand::integer()
+				tmp_buf[0], "%lu",
+				rand::integer()
 			};
 			break;
 
 		case sigil::ROOM:
 		{
 			static const auto &dict{rand::dict::alnum};
-			const mutable_buffer dst{namebuf, 18};
+			const mutable_buffer dst{tmp_buf[0], 18};
 			name = rand::string(dst, dict);
 			break;
 		}
@@ -582,7 +582,7 @@ ircd::m::id::id(const enum sigil &sigil,
 		case sigil::DEVICE:
 		{
 			static const auto &dict{rand::dict::alnum};
-			const mutable_buffer dst{namebuf, 10};
+			const mutable_buffer dst{tmp_buf[0], 10};
 			name = rand::string(dst, dict);
 			break;
 		}
@@ -590,14 +590,19 @@ ircd::m::id::id(const enum sigil &sigil,
 		default:
 			name = fmt::sprintf
 			{
-				namebuf, "%c%lu", rand::character(), rand::integer()
+				tmp_buf[0], "%c%lu",
+				rand::character(),
+				rand::integer()
 			};
 			break;
 	};
 
 	return fmt::sprintf
 	{
-		buf, "%c%s:%s", char(sigil), name, host
+		buf, "%c%s:%s",
+		char(sigil),
+		name,
+		host
 	};
 }()}
 {
