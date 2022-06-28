@@ -329,7 +329,7 @@ bool
 ircd::m::id::valid::operator()(std::nothrow_t,
                                const id::sigil &sigil,
                                const string_view &id)
-const noexcept try
+const noexcept
 {
 	const parser::rule<> sigil_type
 	{
@@ -339,7 +339,7 @@ const noexcept try
 
 	const parser::rule<> valid_mxid
 	{
-		(sigil_type > parser.mxid) >> eoi
+		sigil_type >> parser.mxid >> eoi
 		,"valid mxid"
 	};
 
@@ -349,11 +349,7 @@ const noexcept try
 		std::min(id.end(), start + MAX_SIZE)
 	};
 
-	return ircd::parse(start, stop, valid_mxid);
-}
-catch(...)
-{
-	return false;
+	return ircd::parse(std::nothrow, start, stop, valid_mxid);
 }
 
 //
@@ -982,7 +978,7 @@ noexcept
 bool
 ircd::m::valid_local_only(const id::sigil &sigil,
                           const string_view &id)
-noexcept try
+noexcept
 {
 	static const id::parser::rule<> rule
 	{
@@ -1004,24 +1000,26 @@ noexcept try
 	};
 
 	return !empty(id) &&
-	       id.at(0) == sigil &&
+	       id[0] == sigil &&
 	       ircd::parse(std::nothrow, start, stop, test);
-}
-catch(...)
-{
-	return false;
 }
 
 bool
 ircd::m::valid_local(const id::sigil &sigil,
                      const string_view &id)
-noexcept try
+noexcept
 {
-	static const id::parser::rule<> test
+	static const id::parser::rule<> rule
 	{
 		id::parser.prefix
 		| id::parser.event_id_v4
 		| id::parser.event_id_v3
+		,"valid local"
+	};
+
+	static const id::parser::rule<> test
+	{
+		rule >> (lit(':') | eoi)
 		,"valid local"
 	};
 
@@ -1031,12 +1029,8 @@ noexcept try
 	};
 
 	return !empty(id) &&
-	       id.at(0) == sigil &&
-	       ircd::parse(start, stop, test);
-}
-catch(...)
-{
-	return false;
+	       id[0] == sigil &&
+	       ircd::parse(std::nothrow, start, stop, test);
 }
 
 bool
@@ -1077,7 +1071,7 @@ ircd::m::sigil(const char &c)
 {
 	id::sigil ret;
 	const char *start(&c), *const stop(&c + 1);
-	if(!ircd::parse(start, stop, id::parser.sigil, ret))
+	if(!ircd::parse(std::nothrow, start, stop, id::parser.sigil, ret))
 		throw BAD_SIGIL
 		{
 			"not a valid sigil"
