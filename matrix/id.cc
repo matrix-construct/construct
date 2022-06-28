@@ -246,6 +246,12 @@ void
 ircd::m::id::valid::operator()(const string_view &id)
 const try
 {
+	static const parser::rule<> rule
+	{
+		eps > parser.mxid > eoi
+		,"valid mxid"
+	};
+
 	const char *start{id.begin()};
 	const char *const stop
 	{
@@ -254,7 +260,7 @@ const try
 
 	const bool ret
 	{
-		ircd::parse(start, stop, eps > parser.mxid)
+		ircd::parse(start, stop, rule)
 	};
 
 	assert(ret == true);
@@ -269,13 +275,19 @@ ircd::m::id::valid::operator()(std::nothrow_t,
                                const string_view &id)
 const noexcept
 {
+	static const parser::rule<> rule
+	{
+		parser.mxid >> eoi
+		,"valid mxid"
+	};
+
 	const char *start{id.begin()};
 	const char *const stop
 	{
 		std::min(id.end(), start + MAX_SIZE)
 	};
 
-	return ircd::parse(std::nothrow, start, stop, parser.mxid >> eoi);
+	return ircd::parse(std::nothrow, start, stop, rule);
 }
 
 void
@@ -291,7 +303,7 @@ const try
 
 	const parser::rule<> valid_mxid
 	{
-		eps > (sigil_type > parser.mxid)
+		eps > sigil_type > parser.mxid > eoi
 		,"valid mxid"
 	};
 
