@@ -12,7 +12,11 @@ ircd::m::event::id::buf
 ircd::m::event_id(const event::idx &event_idx)
 {
 	event::id::buf ret;
-	event_id(event_idx, ret);
+	const auto res
+	{
+		event_id(event_idx, ret)
+	};
+
 	return ret;
 }
 
@@ -21,7 +25,11 @@ ircd::m::event_id(std::nothrow_t,
                   const event::idx &event_idx)
 {
 	event::id::buf ret;
-	event_id(std::nothrow, event_idx, ret);
+	const auto res
+	{
+		event_id(std::nothrow, event_idx, ret)
+	};
+
 	return ret;
 }
 
