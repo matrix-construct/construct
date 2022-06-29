@@ -45,10 +45,10 @@ namespace ircd::ctx { inline namespace this_ctx
 /// exception (= timeout) is thrown.
 /// interruption point.
 template<class E>
-ircd::throw_overload<E>
+inline ircd::throw_overload<E>
 ircd::ctx::this_ctx::wait_until(const system_point &tp)
 {
-	if(wait_until<std::nothrow_t>(tp))
+	if(unlikely(wait_until<std::nothrow_t>(tp)))
 		throw E{};
 }
 
@@ -56,7 +56,7 @@ ircd::ctx::this_ctx::wait_until(const system_point &tp)
 /// then returns true. If there's never a notification then returns false.
 /// interruption point. this is not noexcept.
 template<class E>
-ircd::nothrow_overload<E, bool>
+inline ircd::nothrow_overload<E, bool>
 ircd::ctx::this_ctx::wait_until(const system_point &tp)
 {
 	return wait_until(tp, std::nothrow);
@@ -68,7 +68,7 @@ ircd::ctx::this_ctx::wait_until(const system_point &tp)
 /// interruption point
 template<class E,
          class duration>
-ircd::throw_overload<E, duration>
+inline ircd::throw_overload<E, duration>
 ircd::ctx::this_ctx::wait(const duration &d)
 {
 	const auto ret
@@ -76,9 +76,10 @@ ircd::ctx::this_ctx::wait(const duration &d)
 		wait<std::nothrow_t>(d)
 	};
 
-	return ret <= duration(0)?
-		throw E{}:
-		ret;
+	if(unlikely(ret <= duration(0)))
+		throw E{};
+
+	return ret;
 }
 
 /// Wait for a notification for some amount of time. This function returns
@@ -87,7 +88,7 @@ ircd::ctx::this_ctx::wait(const duration &d)
 /// interruption point. this is not noexcept.
 template<class E,
          class duration>
-ircd::nothrow_overload<E, duration>
+inline ircd::nothrow_overload<E, duration>
 ircd::ctx::this_ctx::wait(const duration &d)
 {
 	const auto ret

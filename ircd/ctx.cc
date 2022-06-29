@@ -2837,7 +2837,6 @@ noexcept
 	});
 }
 
-[[gnu::hot]]
 void
 ircd::ctx::dock::wait()
 {
@@ -2880,6 +2879,117 @@ ircd::ctx::dock::wait(const predicate &pred)
 	while(!pred());
 }
 
+template<>
+bool
+ircd::ctx::dock::wait_for(const microseconds dur)
+{
+	static const microseconds zero {0};
+
+	assert(current);
+	const unwind_exceptional renotify{[this]
+	{
+		notify_one();
+	}};
+
+	const unwind remove{[this]
+	{
+		q.remove(current);
+	}};
+
+	q.push_back(current);
+	return ircd::ctx::wait<std::nothrow_t>(dur) > zero;
+}
+
+template<>
+bool
+ircd::ctx::dock::wait_for(const microseconds dur,
+                          const predicate &pred)
+{
+	static const microseconds zero {0};
+
+	if(pred())
+		return true;
+
+	assert(current);
+	const unwind_exceptional renotify{[this]
+	{
+		notify_one();
+	}};
+
+	const unwind remove{[this]
+	{
+		q.remove(current);
+	}};
+
+	q.push_back(current); do
+	{
+		const bool expired
+		{
+			ircd::ctx::wait<std::nothrow_t>(dur) <= zero
+		};
+
+		if(pred())
+			return true;
+
+		if(expired)
+			return false;
+	}
+	while(1);
+}
+
+bool
+ircd::ctx::dock::wait_until(const system_point tp)
+{
+	assert(current);
+	const unwind_exceptional renotify{[this]
+	{
+		notify_one();
+	}};
+
+	const unwind remove{[this]
+	{
+		q.remove(current);
+	}};
+
+	q.push_back(current);
+	return !ircd::ctx::wait_until<std::nothrow_t>(tp);
+}
+
+/// Returns true if predicate passed; false if timed out
+bool
+ircd::ctx::dock::wait_until(const system_point tp,
+                            const predicate &pred)
+{
+	if(pred())
+		return true;
+
+	assert(current);
+	const unwind_exceptional renotify{[this]
+	{
+		notify_one();
+	}};
+
+	const unwind remove{[this]
+	{
+		q.remove(current);
+	}};
+
+	q.push_back(current); do
+	{
+		const bool expired
+		{
+			ircd::ctx::wait_until<std::nothrow_t>(tp)
+		};
+
+		if(pred())
+			return true;
+
+		if(expired)
+			return false;
+	}
+	while(1);
+}
+
 /// The number of contexts waiting in the queue.
 bool
 ircd::ctx::dock::waiting(const ctx &a)
@@ -2892,22 +3002,6 @@ const noexcept
 		// return false to break on equal
 		return std::addressof(a) != std::addressof(b);
 	}});
-}
-
-/// The number of contexts waiting in the queue.
-size_t
-ircd::ctx::dock::size()
-const noexcept
-{
-	return q.size();
-}
-
-/// The number of contexts waiting in the queue.
-bool
-ircd::ctx::dock::empty()
-const noexcept
-{
-	return q.empty();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

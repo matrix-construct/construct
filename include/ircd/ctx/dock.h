@@ -34,11 +34,11 @@ class ircd::ctx::dock
 	size_t size() const noexcept;
 	bool waiting(const ctx &) const noexcept;
 
-	template<class time_point> bool wait_until(time_point&&, const predicate &);
-	template<class time_point> bool wait_until(time_point&&);
+	bool wait_until(const system_point, const predicate &);
+	bool wait_until(const system_point);
 
-	template<class duration> bool wait_for(const duration &, const predicate &);
-	template<class duration> bool wait_for(const duration &);
+	template<class duration> bool wait_for(const duration, const predicate &);
+	template<class duration> bool wait_for(const duration);
 
 	void wait(const predicate &);
 	void wait();
@@ -49,6 +49,57 @@ class ircd::ctx::dock
 	void notify_one() noexcept;
 	void notify() noexcept;
 };
+
+namespace ircd::ctx
+{
+	template<> bool dock::wait_for(const microseconds, const predicate &);
+	template<> bool dock::wait_for(const microseconds);
+}
+
+/// Wake up the next context waiting on the dock
+inline void
+ircd::ctx::dock::notify_one()
+noexcept
+{
+	if(q.empty())
+		return;
+
+	ircd::ctx::notify(*q.front());
+}
+
+template<class duration>
+inline bool
+ircd::ctx::dock::wait_for(const duration dur,
+                          const predicate &pred)
+{
+	static_assert(!std::is_same<duration, microseconds>());
+	return wait_for(duration_cast<microseconds>(dur), pred);
+}
+
+template<class duration>
+inline bool
+ircd::ctx::dock::wait_for(const duration dur)
+{
+	static_assert(!std::is_same<duration, microseconds>());
+	return wait_for(duration_cast<microseconds>(dur));
+}
+
+
+/// The number of contexts waiting in the queue.
+inline size_t
+ircd::ctx::dock::size()
+const noexcept
+{
+    return q.size();
+}
+
+/// The number of contexts waiting in the queue.
+inline bool
+ircd::ctx::dock::empty()
+const noexcept
+{
+    return q.empty();
+}
 
 inline void
 ircd::ctx::notify(dock &dock)
@@ -69,135 +120,4 @@ ircd::ctx::terminate(dock &dock)
 noexcept
 {
 	dock.terminate_all();
-}
-
-//
-// dock::dock
-//
-
-/// Wake up the next context waiting on the dock
-inline void
-ircd::ctx::dock::notify_one()
-noexcept
-{
-	if(q.empty())
-		return;
-
-	ircd::ctx::notify(*q.front());
-}
-
-/// Returns true if notified; false if timed out
-template<class duration>
-inline bool
-ircd::ctx::dock::wait_for(const duration &dur)
-{
-	static const duration zero(0);
-
-	assert(current);
-	const unwind_exceptional renotify{[this]
-	{
-		notify_one();
-	}};
-
-	const unwind remove{[this]
-	{
-		q.remove(current);
-	}};
-
-	q.push_back(current);
-	return ircd::ctx::wait<std::nothrow_t>(dur) > zero;
-}
-
-/// Returns true if predicate passed; false if timed out
-template<class duration>
-inline bool
-ircd::ctx::dock::wait_for(const duration &dur,
-                          const predicate &pred)
-{
-	static const duration zero(0);
-
-	if(pred())
-		return true;
-
-	assert(current);
-	const unwind_exceptional renotify{[this]
-	{
-		notify_one();
-	}};
-
-	const unwind remove{[this]
-	{
-		q.remove(current);
-	}};
-
-	q.push_back(current); do
-	{
-		const bool expired
-		{
-			ircd::ctx::wait<std::nothrow_t>(dur) <= zero
-		};
-
-		if(pred())
-			return true;
-
-		if(expired)
-			return false;
-	}
-	while(1);
-}
-
-/// Returns true if notified; false if timed out
-template<class time_point>
-inline bool
-ircd::ctx::dock::wait_until(time_point&& tp)
-{
-	assert(current);
-	const unwind_exceptional renotify{[this]
-	{
-		notify_one();
-	}};
-
-	const unwind remove{[this]
-	{
-		q.remove(current);
-	}};
-
-	q.push_back(current);
-	return !ircd::ctx::wait_until<std::nothrow_t>(tp);
-}
-
-/// Returns true if predicate passed; false if timed out
-template<class time_point>
-inline bool
-ircd::ctx::dock::wait_until(time_point&& tp,
-                            const predicate &pred)
-{
-	if(pred())
-		return true;
-
-	assert(current);
-	const unwind_exceptional renotify{[this]
-	{
-		notify_one();
-	}};
-
-	const unwind remove{[this]
-	{
-		q.remove(current);
-	}};
-
-	q.push_back(current); do
-	{
-		const bool expired
-		{
-			ircd::ctx::wait_until<std::nothrow_t>(tp)
-		};
-
-		if(pred())
-			return true;
-
-		if(expired)
-			return false;
-	}
-	while(1);
 }
