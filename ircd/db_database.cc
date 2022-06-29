@@ -452,14 +452,16 @@ ircd::db::fdeletions(database &d,
                      const bool &enable,
                      const bool &force)
 {
-	if(enable) throw_on_error
-	{
-		d.d->EnableFileDeletions(force)
-	};
-	else throw_on_error
-	{
-		d.d->DisableFileDeletions()
-	};
+	if(enable)
+		throw_on_error
+		{
+			d.d->EnableFileDeletions(force)
+		};
+	else
+		throw_on_error
+		{
+			d.d->DisableFileDeletions()
+		};
 }
 
 void
@@ -1246,7 +1248,7 @@ try
 	// Disable file deletions here if ordered by the conf item (generally for
 	// -safe mode operation). If this can be done via DBOptions rather than
 	// here it would be better.
-	if(!db::auto_deletion)
+	if(!db::auto_deletion && !read_only)
 		db::fdeletions(*this, false);
 
 	// Conduct drops from schema changes. The database must be fully opened
