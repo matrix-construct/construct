@@ -79,7 +79,75 @@ ircd::ios::init(asio::executor &&user)
 	ios::main = *ios::primary;
 }
 
-[[using gnu: cold, visibility("hidden")]]
+[[using gnu: cold]]
+void
+ircd::ios::exiting_quick()
+noexcept
+{
+	if(run::level == run::level::HALT)
+		return;
+
+	if(ircd::debugmode)
+		log::logf
+		{
+			log::star, log::level::DEBUG,
+			"IRCd notified of quick exit() in runlevel:%s ctx:%p",
+			reflect(run::level),
+			(const void *)ctx::current,
+		};
+}
+
+[[using gnu: cold]]
+void
+ircd::ios::exiting()
+noexcept
+{
+	if(run::level == run::level::HALT)
+		return;
+
+	if(ircd::debugmode)
+		log::logf
+		{
+			log::star, log::level::DEBUG,
+			"IRCd notified of exit() in runlevel:%s ctx:%p",
+			reflect(run::level),
+			(const void *)ctx::current,
+		};
+}
+
+[[using gnu: cold]]
+void
+ircd::ios::continuing()
+noexcept
+{
+	if(run::level == run::level::HALT)
+		return;
+
+	log::logf
+	{
+		log::star, log::level::DEBUG,
+		"IRCd notified of SIGCONT in runlevel:%s ctx:%p",
+		reflect(run::level),
+		(const void *)ctx::current,
+	};
+
+	switch(run::level)
+	{
+		case run::level::RUN:
+			break;
+
+		default:
+			return;
+	}
+
+	log::notice
+	{
+		log::star, "IRCd resuming service in runlevel %s.",
+		reflect(run::level),
+	};
+}
+
+[[using gnu: cold]]
 void
 ircd::ios::forking()
 {
@@ -90,7 +158,7 @@ ircd::ios::forking()
 	#endif
 }
 
-[[using gnu: cold, visibility("hidden")]]
+[[using gnu: cold]]
 void
 ircd::ios::forked_child()
 {
@@ -101,7 +169,7 @@ ircd::ios::forked_child()
 	#endif
 }
 
-[[using gnu: cold, visibility("hidden")]]
+[[using gnu: cold]]
 void
 ircd::ios::forked_parent()
 {

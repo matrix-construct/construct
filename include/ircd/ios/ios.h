@@ -34,9 +34,12 @@ namespace ircd::ios
 	bool available() noexcept;
 	const uint64_t &epoch() noexcept;
 
-	void forked_parent();
-	void forked_child();
-	void forking();
+	void forking();                 // fork prepare
+	void forked_child();            // on fork child
+	void forked_parent();           // on fork parent
+	void continuing() noexcept;     // on SIGCONT
+	void exiting() noexcept;        // on atexit
+	void exiting_quick() noexcept;  // on at_quick_exit
 
 	void init(asio::executor &&);
 }

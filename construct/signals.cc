@@ -250,7 +250,7 @@ void
 construct::handle_cont()
 try
 {
-	ircd::cont();
+	ircd::ios::continuing();
 }
 catch(const std::exception &e)
 {

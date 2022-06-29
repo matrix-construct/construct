@@ -2796,7 +2796,7 @@ console_cmd__ctx__interrupt(opt &out, const string_view &line)
 	}};
 
 	size_t count(0);
-	for(size_t i(0); i < param.count() && cont; ++i)
+	for(size_t i(0); i < param.count(); ++i)
 		count += !ctx::for_each([&](auto &ctx)
 		{
 			if(id(ctx) == param.at<uint64_t>(i))
@@ -2866,7 +2866,7 @@ console_cmd__ctx__term(opt &out, const string_view &line)
 	}};
 
 	size_t count(0);
-	for(size_t i(0); i < param.count() && cont; ++i)
+	for(size_t i(0); i < param.count(); ++i)
 		count += !ctx::for_each([&](auto &ctx)
 		{
 			if(id(ctx) == param.at<uint64_t>(i))

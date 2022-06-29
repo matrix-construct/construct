@@ -154,7 +154,6 @@ namespace ircd
 	seconds uptime();
 
 	// Control panel
-	void cont() noexcept;
 	bool quit() noexcept;
 	void init(boost::asio::executor &&, user_main);
 }
