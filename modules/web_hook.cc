@@ -292,11 +292,11 @@ github_handle(client &client,
 
 	const fmt::bsprintf<512> alt_msg
 	{
-		"%s by %s to %s",
+		"%s by %s to %s at %s",
 		type,
 		github_find_party(request.content).first,
 		github_find_repo(request.content).first,
-
+		github_find_commit_hash(request.content),
 	};
 
 	const auto evid
@@ -1442,7 +1442,7 @@ github_handle__status(std::ostream &out,
 					content["body"]
 				};
 
-				return body == commit_hash;
+				return has(body, "push") && has(body, commit_hash);
 			}
 		};
 
