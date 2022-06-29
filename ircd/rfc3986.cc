@@ -174,7 +174,7 @@ ircd::rfc3986::parser::ip4_literal
 decltype(ircd::rfc3986::parser::ip4_remote)
 ircd::rfc3986::parser::ip4_remote
 {
-	ip4_literal >> -(':' > port)
+	ip4_literal >> -(':' >> port)
 	,"IPv4 remote"
 };
 
@@ -248,7 +248,7 @@ ircd::rfc3986::parser::ip6_literal
 decltype(ircd::rfc3986::parser::ip6_remote)
 ircd::rfc3986::parser::ip6_remote
 {
-	ip6_literal >> -(':' > port)
+	ip6_literal >> -(':' >> port)
 	,"IPv6 literal"
 };
 
@@ -269,7 +269,7 @@ ircd::rfc3986::parser::ip_literal
 decltype(ircd::rfc3986::parser::ip_remote)
 ircd::rfc3986::parser::ip_remote
 {
-	ip_literal >> -(':' > port)
+	ip_literal >> -(':' >> port)
 	,"IP literal"
 };
 
@@ -290,7 +290,7 @@ ircd::rfc3986::parser::domain
 decltype(ircd::rfc3986::parser::hostport)
 ircd::rfc3986::parser::hostport
 {
-	domain >> -(':' > port)
+	domain >> -(':' >> port)
 	,"hostport"
 };
 
