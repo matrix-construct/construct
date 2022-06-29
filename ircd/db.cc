@@ -33,29 +33,19 @@ ircd::db::version_api
 	}
 };
 
-#ifndef IRCD_DB_HAS_VERSION_ABI
-extern "C" const char *
-rocksdb_build_git_sha,
-rocksdb_build_compile_date;
-#endif
-
 decltype(ircd::db::version_abi)
 ircd::db::version_abi
 {
 	"RocksDB", info::versions::ABI, 0, {0}, []
 	(auto &, const mutable_buffer &buf)
 	{
+		#if defined(IRCD_DB_HAS_VERSION_ABI)
 		fmt::sprintf
 		{
-			#ifdef IRCD_DB_HAS_VERSION_ABI
 			buf, "%s",
 			rocksdb::GetRocksVersionAsString(true),
-			#else
-			buf, "%s (%s)",
-			lstrip(rocksdb_build_git_sha, "rocksdb_build_git_sha:"),
-			rocksdb_build_compile_date,
-			#endif
 		};
+		#endif
 	}
 };
 
