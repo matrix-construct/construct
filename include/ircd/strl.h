@@ -46,19 +46,17 @@ struct ircd::strlcpy
 	}
 
 	strlcpy(char *const &dst, const string_view &src, const size_t &max)
-	:ret{[&]() -> mutable_buffer
+	noexcept
 	{
 		mutable_buffer buf{dst, max};
-		const mutable_buffer tgt
+		ret = mutable_buffer
 		{
 			buf, std::min(size(src), std::max(max, 1UL) - 1UL)
 		};
 
-		consume(buf, copy(tgt, src));
+		consume(buf, copy(ret, src));
 		consume(buf, copy(buf, '\0'));
-		return tgt;
-	}()}
-	{}
+	}
 
 	#ifndef HAVE_STRLCPY
 	strlcpy(char *const &dst, const char *const &src, const size_t &max)
@@ -91,18 +89,30 @@ struct ircd::strlcat
 	}
 
 	strlcat(char *const &dst, const string_view &src, const size_t &max)
-	:ret{[&]() -> mutable_buffer
+	noexcept
 	{
-		const auto pos{strnlen(dst, max)};
-		const auto remain{max - pos};
+		const auto pos
+		{
+			strnlen(dst, max)
+		};
+
+		assert(pos <= max);
+		const auto remain
+		{
+			max - pos
+		};
+
 		strlcpy(dst + pos, src, remain);
-		return { dst, pos + src.size() };
-	}()}
-	{}
+		assert(pos + src.size() <= max);
+		ret = mutable_buffer
+		{
+			dst, pos + src.size()
+		};
+	}
 
 	#ifndef HAVE_STRLCAT
 	strlcat(char *const &dst, const char *const &src, const size_t &max)
-	:strlcat{dst, string_view{src, ::strnlen(src, max)}, max}
+	:strlcat{dst, string_view{src, strnlen(src, max)}, max}
 	{}
 	#endif
 
