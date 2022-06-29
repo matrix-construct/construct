@@ -1277,7 +1277,14 @@ ircd::http::error::error(const http::code &code,
 ,code{code}
 {
 	auto &buf(ircd::error::buf);
-	::snprintf(buf, sizeof(buf), "%u %s", uint(code), status(code).c_str());
+	const auto msg(status(code));
+	::snprintf
+	(
+		buf, sizeof(buf),
+		"%u %s",
+		uint(code),
+		msg? msg.c_str(): ""
+	);
 }
 
 // Out-of-line placement.

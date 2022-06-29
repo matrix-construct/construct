@@ -354,8 +354,8 @@ ircd::ios::stats_name(const descriptor &d,
 		(
 			stats_name_buf, sizeof(stats_name_buf),
 			"ircd.ios.%s.%s",
-			d.name.c_str(),
-			key.c_str()
+			d.name? d.name.c_str(): "",
+			key? key.c_str(): ""
 		))
 	};
 }
