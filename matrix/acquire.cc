@@ -521,9 +521,14 @@ ircd::m::acquire::fetch_state(const m::event::id &event_id,
 void
 ircd::m::acquire::acquire_head()
 {
+	const auto top
+	{
+		m::top(opts.room.room_id)
+	};
+
 	m::room::head::fetch::opts hfopts;
 	hfopts.room_id = opts.room.room_id;
-	hfopts.top = m::top(opts.room.room_id);
+	hfopts.top = top;
 	m::room::head::fetch
 	{
 		hfopts, [this, &hfopts](const m::event &result)
