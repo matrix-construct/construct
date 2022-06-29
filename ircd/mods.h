@@ -30,7 +30,7 @@ namespace ircd::mods
 /// It is a critical error if static initialization and destruction is not
 /// congruent with the lifetime of this instance.
 ///
-struct [[gnu::visibility("hidden")]]
+struct [[gnu::visibility("protected")]]
 ircd::mods::mod
 :std::enable_shared_from_this<mod>
 {
