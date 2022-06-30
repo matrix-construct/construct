@@ -11,8 +11,9 @@
 namespace ircd::gpt::pipe
 {
 	static void profile_dumplog(pipe::cycle &);
+	static void handle_quit() noexcept;
 
-	extern const ircd::run::changed handle_quit;
+	extern const ircd::run::changed quit_handler;
 }
 
 decltype(ircd::gpt::pipe::queue_cycles)
@@ -22,23 +23,15 @@ ircd::gpt::pipe::queue_cycles
 	{ "default",  1L,                   },
 };
 
-decltype(ircd::gpt::pipe::handle_quit)
-ircd::gpt::pipe::handle_quit
+decltype(ircd::gpt::pipe::quit_handler)
+ircd::gpt::pipe::quit_handler
 {
-	run::level::QUIT, pipe::fini
+	run::level::QUIT, handle_quit
 };
 
-[[gnu::visibility("hidden")]]
+[[gnu::cold]]
 void
-ircd::gpt::pipe::init()
-{
-	if constexpr(!IRCD_USE_OPENCL)
-		return;
-}
-
-[[using gnu: cold, visibility("hidden")]]
-void
-ircd::gpt::pipe::fini()
+ircd::gpt::pipe::handle_quit()
 noexcept
 {
 	if constexpr(!IRCD_USE_OPENCL)

@@ -21,8 +21,6 @@ namespace ircd::gpt::pipe
 	struct prof;
 
 	extern conf::item<size_t> queue_cycles;
-
-	void init(), fini() noexcept;
 };
 
 #include "code.h"
