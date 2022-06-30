@@ -47,6 +47,7 @@ endif
 endif
 
 if GOLD
+AM_LDFLAGS += -Wl,--no-gnu-unique
 AM_LDFLAGS += -Wl,--no-text-reorder
 AM_LDFLAGS += -Wl,--sort-common=descending
 endif

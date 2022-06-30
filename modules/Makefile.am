@@ -21,6 +21,11 @@ AM_LDFLAGS += -L$(top_srcdir)/ircd
 AM_LDFLAGS += -L$(top_srcdir)/matrix
 AM_LDFLAGS += $(PLATFORM_LDFLAGS)
 
+if GOLD
+AM_LDFLAGS += -Wl,--no-gnu-unique
+AM_LDFLAGS += -Wl,--sort-common=descending
+endif
+
 AM_CXXFLAGS += $(EXTRA_CXXFLAGS)
 AM_CPPFLAGS += $(EXTRA_CPPFLAGS)
 AM_LDFLAGS += $(EXTRA_LDFLAGS)
