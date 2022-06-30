@@ -107,5 +107,5 @@ const
 	// object before it has any context that the set is an array; it doesn't
 	// matter here for us.
 	assert(sv.size() > 2 || sv.empty() || sv == empty_array || sv == empty_object);
-	return sv.size() <= 2;
+	return sv.size() <= 2 || sv == literal_null;
 }

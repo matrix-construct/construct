@@ -263,3 +263,12 @@ const
 {
 	return { string_view::end(), string_view::end() };
 }
+
+inline bool
+ircd::json::object::empty()
+const
+{
+	const string_view &sv{*this};
+	assert(sv.size() > 2 || (sv.empty() || sv == empty_object));
+	return sv.size() <= 2 || sv == literal_null;
+}

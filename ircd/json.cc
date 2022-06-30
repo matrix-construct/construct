@@ -2679,15 +2679,6 @@ const
 	return std::distance(begin(), end());
 }
 
-bool
-ircd::json::object::empty()
-const
-{
-	const string_view &sv{*this};
-	assert(sv.size() > 2 || (sv.empty() || sv == empty_object));
-	return sv.size() <= 2;
-}
-
 ircd::json::object::const_iterator
 ircd::json::object::find(const name_hash_t &key)
 const
