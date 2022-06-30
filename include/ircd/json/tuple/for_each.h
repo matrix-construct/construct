@@ -14,66 +14,30 @@
 namespace ircd {
 namespace json {
 
-template<size_t i = 0,
-         class tuple,
+template<class tuple,
          class function>
 inline enable_if_tuple<tuple, bool>
 for_each(const tuple &t,
          function&& f)
 {
-	if constexpr(i < size<tuple>())
+	return util::for_each(t, [&f]
+	(const auto &prop)
 	{
-		using closure_result = std::invoke_result_t
-		<
-			decltype(f), decltype(key<i>(t)), decltype(val<i>(t))
-		>;
-
-		constexpr bool terminable
-		{
-			std::is_same<closure_result, bool>()
-		};
-
-		if constexpr(terminable)
-		{
-			if(!f(key<i>(t), val<i>(t)))
-				return false;
-		}
-		else f(key<i>(t), val<i>(t));
-
-		return for_each<i + 1>(t, std::forward<function>(f));
-	}
-	else return true;
+		return f(prop.key, prop.value);
+	});
 }
 
-template<size_t i = 0,
-         class tuple,
+template<class tuple,
          class function>
 inline enable_if_tuple<tuple, bool>
 for_each(tuple &t,
          function&& f)
 {
-	if constexpr(i < size<tuple>())
+	return util::for_each(t, [&f]
+	(auto &prop)
 	{
-		using closure_result = std::invoke_result_t
-		<
-			decltype(f), decltype(key<i>(t)), decltype(val<i>(t))
-		>;
-
-		constexpr bool terminable
-		{
-			std::is_same<closure_result, bool>()
-		};
-
-		if constexpr(terminable)
-		{
-			if(!f(key<i>(t), val<i>(t)))
-				return false;
-		}
-		else f(key<i>(t), val<i>(t));
-
-		return for_each<i + 1>(t, std::forward<function>(f));
-	}
-	else return true;
+		return f(prop.key, prop.value);
+	});
 }
 
 template<class tuple,

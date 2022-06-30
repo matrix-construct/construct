@@ -21,28 +21,11 @@ inline enable_if_tuple<tuple, bool>
 rfor_each(const tuple &t,
           function&& f)
 {
-	if constexpr(i >= 0)
+	return util::rfor_each(t, [&f]
+	(const auto &prop)
 	{
-		using closure_result = std::invoke_result_t
-		<
-			decltype(f), decltype(key<i>(t)), decltype(val<i>(t))
-		>;
-
-		constexpr bool terminable
-		{
-			std::is_same<closure_result, bool>()
-		};
-
-		if constexpr(terminable)
-		{
-			if(!f(key<i>(t), val<i>(t)))
-				return false;
-		}
-		else f(key<i>(t), val<i>(t));
-
-		return rfor_each<tuple, function, i - 1>(t, std::forward<function>(f));
-	}
-	else return true;
+		return f(prop.key, prop.value);
+	});
 }
 
 template<class tuple,
@@ -52,28 +35,11 @@ inline enable_if_tuple<tuple, bool>
 rfor_each(tuple &t,
           function&& f)
 {
-	if constexpr(i >= 0)
+	return util::rfor_each(t, [&f]
+	(auto &prop)
 	{
-		using closure_result = std::invoke_result_t
-		<
-			decltype(f), decltype(key<i>(t)), decltype(val<i>(t))
-		>;
-
-		constexpr bool terminable
-		{
-			std::is_same<closure_result, bool>()
-		};
-
-		if constexpr(terminable)
-		{
-			if(!f(key<i>(t), val<i>(t)))
-				return false;
-		}
-		else f(key<i>(t), val<i>(t));
-
-		return rfor_each<tuple, function, i - 1>(t, std::forward<function>(f));
-	}
-	else return true;
+		return f(prop.key, prop.value);
+	});
 }
 
 } // namespace json
