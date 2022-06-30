@@ -768,9 +768,9 @@ const
 		return ret;
 	});
 
-	return !until(types, [&](auto type)
+	return test(types, [&](const auto type)
 	{
-		return !visit_type<decltype(type)>(val, closure);
+		return visit_type<decltype(type)>(val, closure);
 	});
 }
 
@@ -854,9 +854,9 @@ const
 		return ret;
 	});
 
-	return !until(types, [&](auto type)
+	return test(types, [&](const auto type)
 	{
-		return !visit_type<decltype(type)>(val, closure);
+		return visit_type<decltype(type)>(val, closure);
 	});
 }
 
@@ -940,9 +940,9 @@ const
 		return ret;
 	});
 
-	return !until(types, [&](auto type)
+	return test(types, [&](const auto type)
 	{
-		return !visit_type<decltype(type)>(val, closure);
+		return visit_type<decltype(type)>(val, closure);
 	});
 }
 
@@ -1023,9 +1023,9 @@ const
 		return ret;
 	});
 
-	return !until(types, [&](auto type)
+	return test(types, [&](const auto type)
 	{
-		return !visit_type<decltype(type)>(val, closure);
+		return visit_type<decltype(type)>(val, closure);
 	});
 }
 
@@ -1106,9 +1106,9 @@ const
 		return ret;
 	});
 
-	return !until(types, [&](auto type)
+	return test(types, [&](const auto type)
 	{
-		return !visit_type<decltype(type)>(val, closure);
+		return visit_type<decltype(type)>(val, closure);
 	});
 }
 
@@ -1217,9 +1217,9 @@ const
 		return ret;
 	});
 
-	return !until(types, [&](auto type)
+	return test(types, [&](const auto type)
 	{
-		return !visit_type<decltype(type)>(val, closure);
+		return visit_type<decltype(type)>(val, closure);
 	});
 }
 

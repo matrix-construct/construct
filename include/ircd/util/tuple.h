@@ -44,45 +44,66 @@ size(const std::tuple<args...> &t)
 //
 // for_each(tuple, [](auto&& elem) { ... });
 
-template<size_t i,
-         class func,
-         class... args>
-constexpr typename std::enable_if<i == std::tuple_size<std::tuple<args...>>::value, void>::type
-for_each(std::tuple<args...> &t,
-         func&& f)
-{}
-
-template<size_t i,
-         class func,
-         class... args>
-constexpr
-typename std::enable_if<i == std::tuple_size<std::tuple<args...>>::value, void>::type
-for_each(const std::tuple<args...> &t,
-         func&& f)
-{}
-
 template<size_t i = 0,
          class func,
          class... args>
-constexpr
-typename std::enable_if<i < std::tuple_size<std::tuple<args...>>::value, void>::type
+constexpr inline bool
 for_each(const std::tuple<args...> &t,
          func&& f)
 {
-	f(std::get<i>(t));
-	for_each<i+1>(t, std::forward<func>(f));
+	if constexpr(i < size<std::tuple<args...>>())
+	{
+		using closure_result = std::invoke_result_t
+		<
+			decltype(f), decltype(std::get<i>(t))
+		>;
+
+		constexpr bool terminable
+		{
+			std::is_same<closure_result, bool>()
+		};
+
+		if constexpr(terminable)
+		{
+			if(!f(std::get<i>(t)))
+				return false;
+		}
+		else f(std::get<i>(t));
+
+		return for_each<i + 1, func, args...>(t, std::forward<func>(f));
+	}
+	else return true;
 }
 
 template<size_t i = 0,
          class func,
          class... args>
-constexpr
-typename std::enable_if<i < std::tuple_size<std::tuple<args...>>::value, void>::type
+constexpr inline bool
 for_each(std::tuple<args...> &t,
          func&& f)
 {
-	f(std::get<i>(t));
-	for_each<i+1>(t, std::forward<func>(f));
+	if constexpr(i < size<std::tuple<args...>>())
+	{
+		using closure_result = std::invoke_result_t
+		<
+			decltype(f), decltype(std::get<i>(t))
+		>;
+
+		constexpr bool terminable
+		{
+			std::is_same<closure_result, bool>()
+		};
+
+		if constexpr(terminable)
+		{
+			if(!f(std::get<i>(t)))
+				return false;
+		}
+		else f(std::get<i>(t));
+
+		return for_each<i + 1, func, args...>(t, std::forward<func>(f));
+	}
+	else return true;
 }
 
 //
@@ -90,234 +111,92 @@ for_each(std::tuple<args...> &t,
 //
 // rfor_each(tuple, [](auto&& elem) { ... });
 
-template<ssize_t i,
-         class func,
-         class... args>
-constexpr
-typename std::enable_if<i == 0, void>::type
-rfor_each(const std::tuple<args...> &t,
-          func&& f)
-{}
-
-template<ssize_t i,
-         class func,
-         class... args>
-constexpr
-typename std::enable_if<i == 0, void>::type
-rfor_each(std::tuple<args...> &t,
-          func&& f)
-{}
-
-template<ssize_t i,
-         class func,
-         class... args>
-constexpr
-typename std::enable_if<(i > 0), void>::type
+template<class func,
+         class... args,
+         ssize_t i = size<std::tuple<args...>>() - 1>
+constexpr inline bool
 rfor_each(const std::tuple<args...> &t,
           func&& f)
 {
-	f(std::get<i - 1>(t));
-	rfor_each<i - 1>(t, std::forward<func>(f));
+	if constexpr(i >= 0)
+	{
+		using closure_result = std::invoke_result_t
+		<
+			decltype(f), decltype(std::get<i>(t))
+		>;
+
+		constexpr bool terminable
+		{
+			std::is_same<closure_result, bool>()
+		};
+
+		if constexpr(terminable)
+		{
+			if(!f(std::get<i>(t)))
+				return false;
+		}
+		else f(std::get<i>(t));
+
+		return rfor_each<func, args..., i - 1>(t, std::forward<func>(f));
+	}
+	else return true;
 }
 
-template<ssize_t i,
-         class func,
-         class... args>
-constexpr
-typename std::enable_if<(i > 0), void>::type
+template<class func,
+         class... args,
+         ssize_t i = size<std::tuple<args...>>() - 1>
+constexpr inline bool
 rfor_each(std::tuple<args...> &t,
           func&& f)
 {
-	f(std::get<i - 1>(t));
-	rfor_each<i - 1>(t, std::forward<func>(f));
-}
-
-template<ssize_t i = -1,
-         class func,
-         class... args>
-constexpr
-typename std::enable_if<(i == -1), void>::type
-rfor_each(const std::tuple<args...> &t,
-          func&& f)
-{
-	constexpr const ssize_t size
+	if constexpr(i >= 0)
 	{
-		std::tuple_size<std::tuple<args...>>::value
-	};
+		using closure_result = std::invoke_result_t
+		<
+			decltype(f), decltype(std::get<i>(t))
+		>;
 
-	rfor_each<size>(t, std::forward<func>(f));
-}
+		constexpr bool terminable
+		{
+			std::is_same<closure_result, bool>()
+		};
 
-template<ssize_t i = -1,
-         class func,
-         class... args>
-constexpr
-typename std::enable_if<(i == -1), void>::type
-rfor_each(std::tuple<args...> &t,
-          func&& f)
-{
-	constexpr const ssize_t size
-	{
-		std::tuple_size<std::tuple<args...>>::value
-	};
+		if constexpr(terminable)
+		{
+			if(!f(std::get<i>(t)))
+				return false;
+		}
+		else f(std::get<i>(t));
 
-	rfor_each<size>(t, std::forward<func>(f));
+		return rfor_each<func, args..., i - 1>(t, std::forward<func>(f));
+	}
+	else return true;
 }
 
 //
-// Iteration of a tuple until() style: your closure returns true to continue, false
-// to break. until() then remains true to the end, or returns false if not.
-
-template<size_t i,
-         class func,
-         class... args>
-constexpr
-typename std::enable_if<i == std::tuple_size<std::tuple<args...>>::value, bool>::type
-until(std::tuple<args...> &t,
-      func&& f)
-{
-	return true;
-}
-
-template<size_t i,
-         class func,
-         class... args>
-constexpr
-typename std::enable_if<i == std::tuple_size<std::tuple<args...>>::value, bool>::type
-until(const std::tuple<args...> &t,
-      func&& f)
-{
-	return true;
-}
-
-template<size_t i = 0,
-         class func,
-         class... args>
-constexpr
-typename std::enable_if<i < std::tuple_size<std::tuple<args...>>::value, bool>::type
-until(std::tuple<args...> &t,
-      func&& f)
-{
-	using value_type = typename std::tuple_element<i, std::tuple<args...>>::type;
-	return f(static_cast<value_type &>(std::get<i>(t)))? until<i+1>(t, f) : false;
-}
-
-template<size_t i = 0,
-         class func,
-         class... args>
-constexpr
-typename std::enable_if<i < std::tuple_size<std::tuple<args...>>::value, bool>::type
-until(const std::tuple<args...> &t,
-      func&& f)
-{
-	using value_type = typename std::tuple_element<i, std::tuple<args...>>::type;
-	return f(static_cast<const value_type &>(std::get<i>(t)))? until<i+1>(t, f) : false;
-}
-
-//
-// Circuits for reverse iteration of a tuple
-//
-// runtil(tuple, [](auto&& elem) -> bool { ... });
-
-template<ssize_t i,
-         class func,
-         class... args>
-constexpr
-typename std::enable_if<i == 0, bool>::type
-runtil(const std::tuple<args...> &t,
-       func&& f)
-{
-	return true;
-}
-
-template<ssize_t i,
-         class func,
-         class... args>
-constexpr
-typename std::enable_if<i == 0, bool>::type
-runtil(std::tuple<args...> &t,
-       func&& f)
-{
-	return true;
-}
-
-template<ssize_t i,
-         class func,
-         class... args>
-constexpr
-typename std::enable_if<(i > 0), bool>::type
-runtil(const std::tuple<args...> &t,
-       func&& f)
-{
-	return f(std::get<i - 1>(t))? runtil<i - 1>(t, f) : false;
-}
-
-template<ssize_t i,
-         class func,
-         class... args>
-constexpr typename std::enable_if<(i > 0), bool>::type
-runtil(std::tuple<args...> &t,
-       func&& f)
-{
-	return f(std::get<i - 1>(t))? runtil<i - 1>(t, f) : false;
-}
-
-template<ssize_t i = -1,
-         class func,
-         class... args>
-constexpr typename std::enable_if<(i == -1), bool>::type
-runtil(const std::tuple<args...> &t,
-       func&& f)
-{
-	constexpr const auto size
-	{
-		std::tuple_size<std::tuple<args...>>::value
-	};
-
-	return runtil<size>(t, std::forward<func>(f));
-}
-
-template<ssize_t i = -1,
-         class func,
-         class... args>
-constexpr typename std::enable_if<(i == -1), bool>::type
-runtil(std::tuple<args...> &t,
-       func&& f)
-{
-	constexpr const auto size
-	{
-		std::tuple_size<std::tuple<args...>>::value
-	};
-
-	return runtil<size>(t, std::forward<func>(f));
-}
-
-//
-// test() is a logical inversion of until() for intuitive find()-like
+// test() is a logical inversion of for_each() for intuitive find()-like
 // boolean semantics.
 //
 
-template<size_t i,
-         class func,
+template<class func,
          class... args>
-constexpr auto
-test(std::tuple<args...> &t,
+constexpr inline auto
+test(const std::tuple<args...> &t,
      func&& f)
 {
-	return !until(t, [&f](auto&& arg)
+	return !for_each(t, [&f](const auto &arg)
 	{
 		return !f(arg);
 	});
 }
 
-template<size_t i,
-         class func,
+template<class func,
          class... args>
-constexpr auto
-rtest(std::tuple<args...> &t,
+constexpr inline auto
+rtest(const std::tuple<args...> &t,
       func&& f)
 {
-	return !runtil(t, [&f](auto&& arg)
+	return !rfor_each(t, [&f](const auto &arg)
 	{
 		return !f(arg);
 	});
@@ -331,8 +210,7 @@ template<size_t j,
          size_t i,
          class func,
          class... args>
-constexpr
-typename std::enable_if<i == j, void>::type
+constexpr typename std::enable_if<i == j, void>::type
 kronecker_delta(const std::tuple<args...> &t,
                 func&& f)
 {
@@ -344,8 +222,7 @@ template<size_t i,
          size_t j,
          class func,
          class... args>
-constexpr
-typename std::enable_if<i == j, void>::type
+constexpr typename std::enable_if<i == j, void>::type
 kronecker_delta(std::tuple<args...> &t,
                 func&& f)
 {
@@ -357,8 +234,7 @@ template<size_t j,
          size_t i = 0,
          class func,
          class... args>
-constexpr
-typename std::enable_if<(i < j), void>::type
+constexpr typename std::enable_if<(i < j), void>::type
 kronecker_delta(const std::tuple<args...> &t,
                 func&& f)
 {
@@ -369,19 +245,16 @@ template<size_t j,
          size_t i = 0,
          class func,
          class... args>
-constexpr
-typename std::enable_if<(i < j), void>::type
+constexpr typename std::enable_if<(i < j), void>::type
 kronecker_delta(std::tuple<args...> &t,
                 func&& f)
 {
 	kronecker_delta<j, i + 1>(t, std::forward<func>(f));
 }
 
-//
-// Get the index of a tuple element by address at runtime
-//
+/// Get the index of a tuple element by address at runtime
 template<class tuple>
-size_t
+inline size_t
 indexof(tuple &t, const void *const &ptr)
 {
 	size_t ret(0);
@@ -401,12 +274,10 @@ indexof(tuple &t, const void *const &ptr)
 	return ret;
 }
 
-//
-// Tuple layouts are not standard layouts; we can only do this at runtime
-//
+//// Tuple layouts are not standard layouts; we can only do this at runtime
 template<size_t index,
          class tuple>
-off_t
+inline off_t
 tuple_offset(const tuple &t)
 {
 	return off_t
