@@ -255,7 +255,7 @@ ircd::gpt::model::init_from_cache(const string_view &cache_path)
 			decoder_size
 	};
 
-	const fs::map::opts map_opts
+	fs::map::opts map_opts
 	{
 		.alignment = alignof(model::decoder),
 		.shared = bool(cache_shared),
@@ -263,9 +263,10 @@ ircd::gpt::model::init_from_cache(const string_view &cache_path)
 		.huge2mb = bool(cache_hugepage),
 	};
 
+	map_opts.mode = mode;
 	default_model_shm = fs::map
 	{
-		fd, map_opts, map_size
+		fd, map_size, map_opts,
 	};
 
 	default_model = reinterpret_cast<decoder *>
@@ -365,17 +366,21 @@ ircd::gpt::model::init_from_json_handle(decoder &d,
 		fs::path(fs::path_scratch, path_part)
 	};
 
-	fs::fd::opts fdopts;
-	fdopts.sequential = true;
+	const fs::fd::opts fd_opts
+	{
+		.mode = std::ios::in,
+		.sequential = true,
+	};
+
 	const fs::fd fd
 	{
-		path, fdopts
+		path, fd_opts
 	};
 
 	// mmap of the file
 	const fs::map map
 	{
-		fd
+		fd, size(fd), fs::map::opts{fd_opts},
 	};
 
 	// Each file is a JSON array at the top level.
@@ -416,16 +421,21 @@ ircd::gpt::model::init_dataset(const string_view &path)
 		fs::size(path)
 	};
 
-	const fs::fd fd
+	const fs::fd::opts fd_opts
 	{
-		path
+		.mode = std::ios::in,
 	};
 
-	fs::map::opts map_opts;
+	const fs::fd fd
+	{
+		path, fd_opts,
+	};
+
+	fs::map::opts map_opts{fd_opts};
 	map_opts.huge2mb = bool(cache_hugepage);
 	default_dataset_shm = fs::map
 	{
-		fd, map_opts, size
+		fd, size, map_opts
 	};
 
 	default_dataset = string_view

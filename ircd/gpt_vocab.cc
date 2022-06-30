@@ -107,14 +107,23 @@ ircd::gpt::vocab::init_tokens()
 	if(!tokens_path)
 		return;
 
-	const ircd::fs::fd file
+	const fs::fd file
 	{
-		string_view{tokens_path}
+		string_view{tokens_path}, fs::fd::opts
+		{
+			.mode = std::ios::in,
+		},
 	};
 
-	const ircd::fs::map vocab_json
+	const fs::map vocab_json
 	{
-		file, ircd::fs::map::opts{}
+		file, fs::size(file), fs::map::opts
+		{
+			fs::fd::opts
+			{
+				.mode = std::ios::in
+			},
+		},
 	};
 
 	tokens = 0;
@@ -143,14 +152,22 @@ ircd::gpt::vocab::init_merges()
 	if(!merges_path)
 		return;
 
-	const ircd::fs::fd file
+	const fs::fd::opts file_opts
 	{
-		string_view{merges_path}
+		.mode = std::ios::in,
 	};
 
-	const ircd::fs::map merges_txt
+	const fs::fd file
 	{
-		file, ircd::fs::map::opts{}
+		string_view{merges_path}, file_opts
+	};
+
+	const fs::map merges_txt
+	{
+		file, fs::size(file), fs::map::opts
+		{
+			file_opts
+		},
 	};
 
 	merges = 0;
