@@ -261,12 +261,22 @@ const
 		origin
 	};
 
-	bool verified{false};
-	node_keys.get(key, [this, &verified, &sig]
+	bool attempted{false}, verified{false};
+	node_keys.get(key, [this, &attempted, &verified, &sig]
 	(const ed25519::pk &pk)
 	{
+		attempted = true;
 		verified = verify(pk, sig);
 	});
+
+	if(!verified && !attempted)
+		throw m::error
+		{
+			http::UNAUTHORIZED, "M_UNVERIFIABLE_SIGNATURE",
+			"The X-Matrix Authorization key '%s' for '%s' could not be obtained.",
+			key,
+			origin,
+		};
 
 	return verified;
 }
