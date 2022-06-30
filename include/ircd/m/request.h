@@ -70,6 +70,7 @@ struct ircd::m::request::x_matrix
 	string_view origin;
 	string_view key;
 	string_view sig;
+	string_view destination;
 
 	x_matrix(const string_view &type, const string_view &values);
 	x_matrix(const pair<string_view> &authorization);

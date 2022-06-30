@@ -374,14 +374,32 @@ try
 		throw m::error
 		{
 			http::UNAUTHORIZED, "M_NOT_MY_HOST",
+			"The HTTP Host '%s' is not an authenticable destination here.",
+			request.head.host,
+		};
+
+	const auto head_host
+	{
+		rstrip(request.head.host, ":8448")
+	};
+
+	const auto auth_dest
+	{
+		rstrip(request.x_matrix.destination, ":8448")
+	};
+
+	if(x_matrix_verify_destination && auth_dest && head_host != auth_dest)
+		throw m::error
+		{
+			http::UNAUTHORIZED, "M_NOT_MY_DESTINATION",
 			"The X-Matrix Authorization destination '%s' is not recognized here.",
-			request.head.host
+			auth_dest,
 		};
 
 	const m::request object
 	{
 		request.x_matrix.origin,
-		rstrip(request.head.host, ":8448"),
+		head_host,
 		method.name,
 		request.head.uri,
 		request.content

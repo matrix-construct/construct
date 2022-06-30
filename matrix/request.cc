@@ -100,15 +100,15 @@ ircd::m::request::operator()(const mutable_buffer &out,
 const
 {
 	thread_local http::header header[headers_max];
+	thread_local char authorization[2_KiB];
 	const ctx::critical_assertion ca;
-	size_t headers{0};
 
+	size_t headers{0};
 	header[headers++] =
 	{
 		"User-Agent", info::user_agent
 	};
 
-	thread_local char x_matrix[2_KiB];
 	if(startswith(json::at<"uri"_>(*this), "/_matrix/federation"))
 	{
 		const json::string &origin
@@ -133,7 +133,7 @@ const
 
 		header[headers++] =
 		{
-			"Authorization", generate(x_matrix, secret_key, public_key_id)
+			"Authorization", generate(authorization, secret_key, public_key_id)
 		};
 	}
 
@@ -209,6 +209,11 @@ const
 		json::at<"origin"_>(*this)
 	};
 
+	const json::string &destination
+	{
+		json::at<"destination"_>(*this)
+	};
+
 	const auto &secret_key
 	{
 		m::secret_key(my(origin))
@@ -219,13 +224,17 @@ const
 		secret_key.sign(object)
 	};
 
+	assert(pkid);
+	assert(origin);
+	assert(destination);
 	char sigb64[128];
 	return fmt::sprintf
 	{
-		out, "X-Matrix origin=%s,key=\"%s\",sig=\"%s\"",
+		out, "X-Matrix origin=%s,key=\"%s\",sig=\"%s\",destination=\"%s\"",
 		origin,
 		pkid,
-		b64::encode_unpadded(sigb64, sig)
+		b64::encode_unpadded(sigb64, sig),
+		destination,
 	};
 }
 
@@ -275,7 +284,7 @@ const
 		};
 
 	assert(!empty(request_content_buf));
-	const mutable_buffer buf
+	mutable_buffer buf
 	{
 		request_content_buf
 	};
@@ -305,7 +314,7 @@ const
 
 	const json::object object
 	{
-		stringify(mutable_buffer{buf}, _this)
+		json::stringify(buf, _this)
 	};
 
 	return verify(pk, sig, object);
@@ -316,6 +325,11 @@ ircd::m::request::verify(const ed25519::pk &pk,
                          const ed25519::sig &sig,
                          const json::object &object)
 {
+	assert(object.has("destination"));
+	assert(object.has("method"));
+	assert(object.has("origin"));
+	assert(object.has("uri"));
+
 	return pk.verify(object, sig);
 }
 
@@ -343,14 +357,16 @@ ircd::m::request::x_matrix::x_matrix(const pair<string_view> &authorization)
 ircd::m::request::x_matrix::x_matrix(const string_view &type,
                                      const string_view &values)
 {
+	static const size_t tokens_max {8}, tokens_min {3};
+
 	// Assumes caller determined this is X-Matrix lest they suffer exception.
 	assert(iequals(type, "X-Matrix"_sv));
 
-	string_view tokens[3];
-	if(ircd::tokens(values, ',', tokens) != 3)
+	string_view tokens[tokens_max];
+	if(unlikely(ircd::tokens(values, ',', tokens) < tokens_min))
 		throw std::out_of_range
 		{
-			"The x_matrix header is malformed"
+			"The x_matrix header is malformed."
 		};
 
 	for(const auto &token : tokens)
@@ -367,25 +383,26 @@ ircd::m::request::x_matrix::x_matrix(const string_view &type,
 
 		switch(hash(key))
 		{
-			case hash("origin"):  this->origin = val;  break;
-			case hash("key"):     this->key = val;     break;
-			case hash("sig"):     this->sig = val;     break;
+			case hash("origin"):       this->origin = val;       break;
+			case hash("key"):          this->key = val;          break;
+			case hash("sig"):          this->sig = val;          break;
+			case hash("destination"):  this->destination = val;  break;
 		}
 	}
 
-	if(empty(origin))
+	if(unlikely(empty(origin)))
 		throw std::out_of_range
 		{
 			"The x_matrix header is missing 'origin='"
 		};
 
-	if(empty(key))
+	if(unlikely(empty(key)))
 		throw std::out_of_range
 		{
 			"The x_matrix header is missing 'key='"
 		};
 
-	if(empty(sig))
+	if(unlikely(empty(sig)))
 		throw std::out_of_range
 		{
 			"The x_matrix header is missing 'sig='"
