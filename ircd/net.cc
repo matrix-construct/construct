@@ -1689,7 +1689,8 @@ catch(const boost::system::system_error &e)
 	throw_system_error(e);
 }
 
-std::error_code
+[[gnu::always_inline]]
+inline std::error_code
 ircd::net::socket::check(std::nothrow_t,
                          const ready &type)
 noexcept
@@ -1730,9 +1731,9 @@ noexcept
 }
 
 /// Yields ircd::ctx until buffers are full.
-template<class iov>
-size_t
-ircd::net::socket::read_all(iov&& bufs)
+[[gnu::always_inline]]
+inline size_t
+ircd::net::socket::read_all(const mutable_buffers &bufs)
 try
 {
 	static const auto completion
@@ -1752,7 +1753,7 @@ try
 		continuation::asio_predicate, interruption, [this, &ret, &bufs]
 		(auto &yield)
 		{
-			ret = asio::async_read(ssl, std::forward<iov>(bufs), completion, yield);
+			ret = asio::async_read(ssl, bufs, completion, yield);
 		}
 	};
 
@@ -1774,9 +1775,9 @@ catch(const boost::system::system_error &e)
 }
 
 /// Yields ircd::ctx until remote has sent at least some data.
-template<class iov>
-size_t
-ircd::net::socket::read_few(iov&& bufs)
+[[gnu::always_inline]]
+inline size_t
+ircd::net::socket::read_few(const mutable_buffers &bufs)
 try
 {
 	assert(!fini);
@@ -1791,7 +1792,7 @@ try
 		continuation::asio_predicate, interruption, [this, &ret, &bufs]
 		(auto &yield)
 		{
-			ret = ssl.async_read_some(std::forward<iov>(bufs), yield);
+			ret = ssl.async_read_some(bufs, yield);
 		}
 	};
 
@@ -1813,9 +1814,9 @@ catch(const boost::system::system_error &e)
 }
 
 /// Non-blocking; as much as possible without blocking
-template<class iov>
-size_t
-ircd::net::socket::read_any(iov&& bufs)
+[[gnu::always_inline]]
+inline size_t
+ircd::net::socket::read_any(const mutable_buffers &bufs)
 {
 	static const auto completion
 	{
@@ -1827,7 +1828,7 @@ ircd::net::socket::read_any(iov&& bufs)
 	boost::system::error_code ec;
 	const size_t ret
 	{
-		asio::read(ssl, std::forward<iov>(bufs), completion, ec)
+		asio::read(ssl, bufs, completion, ec)
 	};
 
 	++in.calls;
@@ -1846,16 +1847,16 @@ ircd::net::socket::read_any(iov&& bufs)
 }
 
 /// Non-blocking; One system call only; never throws eof;
-template<class iov>
-size_t
-ircd::net::socket::read_one(iov&& bufs)
+[[gnu::always_inline]]
+inline size_t
+ircd::net::socket::read_one(const mutable_buffers &bufs)
 {
 	assert(!fini);
 	assert(!blocking(*this));
 	boost::system::error_code ec;
 	const size_t ret
 	{
-		ssl.read_some(std::forward<iov>(bufs), ec)
+		ssl.read_some(bufs, ec)
 	};
 
 	++in.calls;
@@ -1874,9 +1875,9 @@ ircd::net::socket::read_one(iov&& bufs)
 }
 
 /// Yields ircd::ctx until all buffers are sent.
-template<class iov>
-size_t
-ircd::net::socket::write_all(iov&& bufs)
+[[gnu::always_inline]]
+inline size_t
+ircd::net::socket::write_all(const const_buffers &bufs)
 try
 {
 	static const auto completion
@@ -1897,7 +1898,7 @@ try
 		continuation::asio_predicate, interruption, [this, &ret, &bufs]
 		(auto &yield)
 		{
-			ret = asio::async_write(ssl, std::forward<iov>(bufs), completion, yield);
+			ret = asio::async_write(ssl, bufs, completion, yield);
 		}
 	};
 
@@ -1913,9 +1914,9 @@ catch(const boost::system::system_error &e)
 }
 
 /// Yields ircd::ctx until one or more bytes are sent.
-template<class iov>
-size_t
-ircd::net::socket::write_few(iov&& bufs)
+[[gnu::always_inline]]
+inline size_t
+ircd::net::socket::write_few(const const_buffers &bufs)
 try
 {
 	assert(!fini);
@@ -1931,7 +1932,7 @@ try
 		continuation::asio_predicate, interruption, [this, &ret, &bufs]
 		(auto &yield)
 		{
-			ret = ssl.async_write_some(std::forward<iov>(bufs), yield);
+			ret = ssl.async_write_some(bufs, yield);
 		}
 	};
 
@@ -1947,9 +1948,9 @@ catch(const boost::system::system_error &e)
 }
 
 /// Non-blocking; writes as much as possible without blocking
-template<class iov>
-size_t
-ircd::net::socket::write_any(iov&& bufs)
+[[gnu::always_inline]]
+inline size_t
+ircd::net::socket::write_any(const const_buffers &bufs)
 try
 {
 	static const auto completion
@@ -1961,7 +1962,7 @@ try
 	assert(!blocking(*this));
 	const size_t ret
 	{
-		asio::write(ssl, std::forward<iov>(bufs), completion)
+		asio::write(ssl, bufs, completion)
 	};
 
 	++out.calls;
@@ -1976,16 +1977,16 @@ catch(const boost::system::system_error &e)
 }
 
 /// Non-blocking; Writes one "unit" of data or less; never more.
-template<class iov>
-size_t
-ircd::net::socket::write_one(iov&& bufs)
+[[gnu::always_inline]]
+inline size_t
+ircd::net::socket::write_one(const const_buffers &bufs)
 try
 {
 	assert(!fini);
 	assert(!blocking(*this));
 	const size_t ret
 	{
-		ssl.write_some(std::forward<iov>(bufs))
+		ssl.write_some(bufs)
 	};
 
 	++out.calls;

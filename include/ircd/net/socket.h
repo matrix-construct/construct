@@ -94,16 +94,16 @@ ircd::net::socket
 	milliseconds cancel_timeout() noexcept;
 
 	// low level write suite
-	template<class iov> size_t write_one(iov&&); // non-blocking
-	template<class iov> size_t write_any(iov&&); // non-blocking
-	template<class iov> size_t write_few(iov&&); // yielding
-	template<class iov> size_t write_all(iov&&); // yielding
+	size_t write_one(const const_buffers &);     // non-blocking
+	size_t write_any(const const_buffers &);     // non-blocking
+	size_t write_few(const const_buffers &);     // yielding
+	size_t write_all(const const_buffers &);     // yielding
 
 	// low level read suite
-	template<class iov> size_t read_one(iov&&);  // non-blocking
-	template<class iov> size_t read_any(iov&&);  // non-blocking
-	template<class iov> size_t read_few(iov&&);  // yielding
-	template<class iov> size_t read_all(iov&&);  // yielding
+	size_t read_one(const mutable_buffers &);    // non-blocking
+	size_t read_any(const mutable_buffers &);    // non-blocking
+	size_t read_few(const mutable_buffers &);    // yielding
+	size_t read_all(const mutable_buffers &);    // yielding
 
 	// low level check suite
 	error_code check(std::nothrow_t, const ready &) noexcept;

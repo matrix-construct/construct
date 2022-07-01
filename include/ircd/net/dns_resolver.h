@@ -27,7 +27,7 @@ namespace ircd::net::dns
 	uint16_t resolver_call(const hostport &, const opts &);
 }
 
-struct [[gnu::visibility("protected")]]
+struct [[gnu::visibility("hidden")]]
 ircd::net::dns::resolver
 {
 	using header = rfc1035::header;
@@ -101,7 +101,7 @@ ircd::net::dns::resolver
 	~resolver() noexcept;
 };
 
-struct [[gnu::visibility("protected")]]
+struct [[gnu::visibility("hidden")]]
 ircd::net::dns::tag
 {
 	uint16_t id {0};
