@@ -2805,20 +2805,21 @@ ircd::net::make_address(const uint32_t &ip)
 [[gnu::visibility("protected")]]
 boost::asio::ip::address_v6
 ircd::net::make_address(const uint128_t &ip)
+#ifdef __cpp_lib_bit_cast
 {
-	const auto &pun
+	return ip::address_v6
 	{
-		reinterpret_cast<const uint8_t (&)[16]>(ip)
+		std::bit_cast<decltype(ipaddr::byte)>(hton(ip))
 	};
-
-	auto punpun
-	{
-		reinterpret_cast<const std::array<uint8_t, 16> &>(pun)
-	};
-
-	std::reverse(begin(punpun), end(punpun));
-	return ip::address_v6{punpun};
 }
+#else
+{
+	return ip::address_v6
+	{
+		reinterpret_cast<const decltype(ipaddr::byte) &&>(hton(ip))
+	};
+}
+#endif
 
 std::ostream &
 ircd::net::operator<<(std::ostream &s, const ipaddr &ipa)
