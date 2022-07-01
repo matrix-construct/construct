@@ -257,18 +257,24 @@ noexcept
 //
 
 uint16_t
-ircd::gpt::vocab::tokenize(const string_view &in)
+ircd::gpt::vocab::tokenize(const string_view &in,
+                           const bool prefix_space)
 {
-	char str_buf[16];
-	const string_view str
+	char str_buf[16] {' '};
+	const mutable_buffer buf
 	{
-		str_buf, copy(str_buf, in)
+		str_buf + prefix_space, sizeof(str_buf) - prefix_space
 	};
 
-	u16 buf[16];
+	const string_view str
+	{
+		str_buf, copy(buf, in) + prefix_space
+	};
+
+	u16 out_buf[16];
 	const auto out
 	{
-		tokenize(buf, str)
+		tokenize(out_buf, str)
 	};
 
 	if(unlikely(out.size() != 1))
@@ -278,7 +284,7 @@ ircd::gpt::vocab::tokenize(const string_view &in)
 			out.size()
 		};
 
-	return buf[0];
+	return out_buf[0];
 }
 
 uint16_t

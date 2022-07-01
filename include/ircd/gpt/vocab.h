@@ -40,7 +40,7 @@ namespace ircd::gpt::vocab
 	u16 tokenize(const_buffer &) noexcept;
 
 	// Tokenize one token. Error thrown if input is not exactly one token.
-	u16 tokenize(const string_view &in);
+	u16 tokenize(const string_view &in, const bool prefix_space = false);
 
 	// Decode token values to build output text string.
 	string_view detokenize(const mutable_buffer &out, const vector_view<const u16> &in) noexcept;

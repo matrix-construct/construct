@@ -29,7 +29,7 @@ class ircd::gpt::token
 	operator string_view() const;
 
 	token(const_buffer &buf) noexcept;
-	token(const string_view &);
+	token(const string_view &, const bool prefix_space = false);
 	token(const uint16_t &) noexcept;
 };
 
@@ -44,9 +44,11 @@ noexcept
 {}
 
 /// Must resolve to one token or error thrown.
+/// prefix_space=true internally prepends space for potentially better token.
 inline
-ircd::gpt::token::token(const string_view &str)
-:val{vocab::tokenize(str)}
+ircd::gpt::token::token(const string_view &str,
+                        const bool prefix_space)
+:val{vocab::tokenize(str, prefix_space)}
 {}
 
 /// Consumes input for one token off front of buf
