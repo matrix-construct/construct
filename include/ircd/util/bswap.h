@@ -138,11 +138,18 @@ ircd::util::bswap(T *const val)
 noexcept
 {
 	assert(val != nullptr);
-	const auto ptr
+	const auto &src
 	{
-		reinterpret_cast<uint8_t *>(val)
+		reinterpret_cast<const uint8_t *>(val)
 	};
 
-	std::reverse(ptr, ptr + sizeof(T));
+	T tmp;
+	const auto &dst
+	{
+		reinterpret_cast<uint8_t *>(&tmp)
+	};
+
+	std::reverse_copy(src, src + sizeof(T), dst);
+	*val = tmp;
 	return *val;
 }
