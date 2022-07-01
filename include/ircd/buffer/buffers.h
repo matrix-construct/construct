@@ -13,6 +13,12 @@
 
 namespace ircd::buffer::buffers
 {
+	template<template<class> class I> using const_buffers = I<const_buffer>;
+	template<template<class> class I> using mutable_buffers = I<mutable_buffer>;
+
+	// Convenience null buffers
+	extern const ilist<mutable_buffer> null_buffers;
+
 	// Iterable of buffers tools
 	template<template<class> class I, class T> size_t size(const I<T> &buffers);
 	template<template<class> class I, class T> size_t copy(const mutable_buffer &, const I<T> &buffer);

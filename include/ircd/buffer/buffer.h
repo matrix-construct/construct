@@ -46,17 +46,14 @@ namespace ircd::buffer
 
 	template<size_t SIZE> using fixed_const_buffer = fixed_buffer<const_buffer, SIZE>;
 	template<size_t SIZE> using fixed_mutable_buffer = fixed_buffer<mutable_buffer, SIZE>;
-	template<template<class> class I> using const_buffers = I<const_buffer>;
-	template<template<class> class I> using mutable_buffers = I<mutable_buffer>;
 
 	using unique_const_buffer = unique_buffer<const_buffer>;
 	using unique_mutable_buffer = unique_buffer<mutable_buffer>;
 	using shared_const_buffer = shared_buffer<const_buffer>;
 	using shared_mutable_buffer = shared_buffer<mutable_buffer>;
 
-	// Preconstructed null buffers
+	// Convenience null buffer
 	extern const mutable_buffer null_buffer;
-	extern const ilist<mutable_buffer> null_buffers;
 
 	// Single buffer iteration of contents
 	template<class it> const it &begin(const buffer<it> &buffer);
@@ -121,9 +118,11 @@ namespace ircd
 	using buffer::unique_mutable_buffer;
 	using buffer::shared_const_buffer;
 	using buffer::shared_mutable_buffer;
+	using buffer::null_buffer;
 
-	using buffer::const_buffers;
-	using buffer::mutable_buffers;
+	using buffers::const_buffers;
+	using buffers::mutable_buffers;
+	using buffers::null_buffers;
 
 	using buffer::size;
 	using buffer::data;
@@ -351,3 +350,15 @@ ircd::buffer::begin(const buffer<it> &buffer)
 {
 	return get<0>(buffer);
 }
+
+inline decltype(ircd::buffer::null_buffer)
+ircd::buffer::null_buffer
+{
+	nullptr, nullptr
+};
+
+inline decltype(ircd::buffers::null_buffers)
+ircd::buffers::null_buffers
+{
+	{ null_buffer }
+};

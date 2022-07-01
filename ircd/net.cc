@@ -3204,18 +3204,6 @@ ircd::net::string(const mutable_buffer &out,
 // buffer.h - provide definition for the null buffers and asio conversion
 //
 
-const ircd::buffer::mutable_buffer
-ircd::buffer::null_buffer
-{
-	nullptr, nullptr
-};
-
-const ircd::ilist<ircd::buffer::mutable_buffer>
-ircd::buffer::null_buffers
-{{
-	null_buffer
-}};
-
 [[gnu::visibility("protected")]]
 ircd::buffer::mutable_buffer::operator
 boost::asio::mutable_buffer()
