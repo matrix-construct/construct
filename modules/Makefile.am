@@ -218,6 +218,7 @@ federation_federation_user_devices_la_SOURCES = federation/user_devices.cc
 federation_federation_user_keys_query_la_SOURCES = federation/user_keys_query.cc
 federation_federation_user_keys_claim_la_SOURCES = federation/user_keys_claim.cc
 federation_federation_rooms_la_SOURCES = federation/rooms.cc
+federation_federation_hierarchy_la_SOURCES = federation/hierarchy.cc
 
 federation_module_LTLIBRARIES = \
 	federation/federation_send.la \
@@ -242,6 +243,7 @@ federation_module_LTLIBRARIES = \
 	federation/federation_user_keys_query.la \
 	federation/federation_user_keys_claim.la \
 	federation/federation_rooms.la \
+	federation/federation_hierarchy.la \
 	###
 
 ###############################################################################
