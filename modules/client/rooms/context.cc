@@ -39,14 +39,6 @@ context_log
 	"m.context"
 };
 
-static bool
-_append(json::stack::array &,
-        const m::event &,
-        const m::event::idx &,
-        const m::user::room &,
-        const int64_t &,
-        const bool &query_txnid = true);
-
 m::resource::response
 get__context(client &client,
              const m::resource::request &request,
@@ -179,7 +171,18 @@ get__context(client &client,
 			if(!visible(event, request.user_id))
 				continue;
 
-			counts.before += _append(array, event, before.event_idx(), user_room, room_depth);
+			const auto event_idx(before.event_idx());
+			counts.before += m::event::append
+			{
+				array, event,
+				{
+					.event_idx = &event_idx,
+					.user_id = &user_room.user.user_id,
+					.user_room = &user_room,
+					.room_depth = &room_depth,
+					.query_txnid = true,
+				}
+			};
 		}
 
 		if(before && limit > 0)
@@ -219,7 +222,18 @@ get__context(client &client,
 			if(!visible(event, request.user_id))
 				continue;
 
-			counts.after += _append(array, event, after.event_idx(), user_room, room_depth);
+			const auto event_idx(after.event_idx());
+			counts.after += m::event::append
+			{
+				array, event,
+				{
+					.event_idx = &event_idx,
+					.user_id = &user_room.user.user_id,
+					.user_room = &user_room,
+					.room_depth = &room_depth,
+					.query_txnid = true,
+				}
+			};
 		}
 
 		if(after && limit > 0)
@@ -277,7 +291,18 @@ get__context(client &client,
 			if(!visible(event, request.user_id))
 				return true;
 
-			counts.state += _append(array, event, event_idx, user_room, room_depth, false);
+			counts.state += m::event::append
+			{
+				array, event,
+				{
+					.event_idx = &event_idx,
+					.user_id = &user_room.user.user_id,
+					.user_room = &user_room,
+					.room_depth = &room_depth,
+					.query_txnid = false,
+				}
+			};
+
 			return true;
 		});
 	}
@@ -296,24 +321,4 @@ get__context(client &client,
 	};
 
 	return response;
-}
-
-bool
-_append(json::stack::array &chunk,
-        const m::event &event,
-        const m::event::idx &event_idx,
-        const m::user::room &user_room,
-        const int64_t &room_depth,
-        const bool &query_txnid)
-{
-	return m::event::append
-	{
-		chunk, event,
-		{
-			.event_idx = &event_idx,
-			.user_id = &user_room.user.user_id,
-			.user_room = &user_room,
-			.room_depth = &room_depth,
-		}
-	};
 }

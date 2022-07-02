@@ -22,13 +22,6 @@ struct pagination_tokens
 	pagination_tokens(const m::resource::request &);
 };
 
-static bool
-_append(json::stack::array &chunk,
-        const m::event &,
-        const m::event::idx &,
-        const m::user::room &user_room,
-        const int64_t &room_depth);
-
 conf::item<size_t>
 max_filter_miss
 {
@@ -149,13 +142,23 @@ get__messages(client &client,
 		if(hit >= page.limit || miss >= size_t(max_filter_miss))
 			break;
 
+		const m::event::idx event_idx{it};
 		const bool ok
 		{
 			(empty(filter_json) || match(filter, event))
 
 			&& visible(event, request.user_id)
 
-			&& _append(chunk, event, it.event_idx(), user_room, room_depth)
+			&& m::event::append
+			{
+				chunk, event,
+				{
+					.event_idx = &event_idx,
+					.user_id = &user_room.user.user_id,
+					.user_room = &user_room,
+					.room_depth = &room_depth,
+				}
+			}
 		};
 
 		hit += ok;
@@ -212,25 +215,6 @@ get__messages(client &client,
 	};
 
 	return {};
-}
-
-bool
-_append(json::stack::array &chunk,
-        const m::event &event,
-        const m::event::idx &event_idx,
-        const m::user::room &user_room,
-        const int64_t &room_depth)
-{
-	return m::event::append
-	{
-		chunk, event,
-		{
-			.event_idx = &event_idx,
-			.user_id = &user_room.user.user_id,
-			.user_room = &user_room,
-			.room_depth = &room_depth,
-		}
-	};
 }
 
 // Client-Server 6.3.6 query parameters

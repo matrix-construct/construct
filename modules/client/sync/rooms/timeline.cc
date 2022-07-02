@@ -10,7 +10,6 @@
 
 namespace ircd::m::sync
 {
-	static bool _room_timeline_append(data &, json::stack::array &, const m::event::idx &, const m::event &);
 	static event::id::buf _room_timeline_polylog_events(data &, const m::room &, bool &, bool &);
 	static bool room_timeline_polylog(data &);
 
@@ -209,7 +208,17 @@ ircd::m::sync::room_timeline_linear(data &data)
 		*data.out, "events"
 	};
 
-	return _room_timeline_append(data, array, data.event_idx, *data.event);
+	return m::event::append
+	{
+		array, *data.event,
+		{
+			.event_idx = &data.event_idx,
+			.client_txnid = &data.client_txnid,
+			.user_id = &data.user.user_id,
+			.user_room = &data.user_room,
+			.room_depth = &data.room_depth,
+		}
+	};
 }
 
 bool
@@ -258,7 +267,17 @@ ircd::m::sync::_room_timeline_linear_command(data &data)
 		data.event, &event
 	};
 
-	return _room_timeline_append(data, array, data.event_idx, event);
+	return m::event::append
+	{
+		array, *data.event,
+		{
+			.event_idx = &data.event_idx,
+			.client_txnid = &data.client_txnid,
+			.user_id = &data.user.user_id,
+			.user_room = &data.user_room,
+			.room_depth = &data.room_depth,
+		}
+	};
 }
 
 bool
@@ -349,34 +368,25 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 	if(i > 0 && it)
 		for(++it; i > 0 && it; --i, ++it)
 		{
-			const m::event &event
+			const auto event_idx
 			{
-				*it
+				it.event_idx()
 			};
 
-			ret |= _room_timeline_append(data, array, it.event_idx(), event);
+			ret |= m::event::append
+			{
+				array, *it,
+				{
+					.event_idx = &event_idx,
+					.client_txnid = &data.client_txnid,
+					.user_id = &data.user.user_id,
+					.user_room = &data.user_room,
+					.room_depth = &data.room_depth,
+				}
+			};
 		}
 
 	assert(i >= 0);
 	event_idx &= boolmask<event::idx>(ret);
 	return m::event_id(std::nothrow, event_idx);
-}
-
-bool
-ircd::m::sync::_room_timeline_append(data &data,
-                                     json::stack::array &events,
-                                     const m::event::idx &event_idx,
-                                     const m::event &event)
-{
-	return m::event::append
-	{
-		events, event,
-		{
-			.event_idx = &event_idx,
-			.client_txnid = &data.client_txnid,
-			.user_id = &data.user.user_id,
-			.user_room = &data.user_room,
-			.room_depth = &data.room_depth,
-		}
-	};
 }
