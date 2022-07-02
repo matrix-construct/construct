@@ -136,12 +136,16 @@ get__context(client &client,
 		};
 
 		// We use m::event::append() to modify/add/remove data for this client.
-		m::event::append::opts opts;
-		opts.event_idx = &event.event_idx;
-		opts.user_id = &user_room.user.user_id;
-		opts.user_room = &user_room;
-		opts.room_depth = &room_depth;
-		m::event::append(_event, event, opts);
+		m::event::append
+		{
+			_event, event,
+			{
+				.event_idx = &event.event_idx,
+				.user_id = &user_room.user.user_id,
+				.user_room = &user_room,
+				.room_depth = &room_depth,
+			}
+		};
 	}
 
 	// Counters for debug messages
@@ -302,10 +306,14 @@ _append(json::stack::array &chunk,
         const int64_t &room_depth,
         const bool &query_txnid)
 {
-	m::event::append::opts opts;
-	opts.event_idx = &event_idx;
-	opts.user_id = &user_room.user.user_id;
-	opts.user_room = &user_room;
-	opts.room_depth = &room_depth;
-	return m::event::append(chunk, event, opts);
+	return m::event::append
+	{
+		chunk, event,
+		{
+			.event_idx = &event_idx,
+			.user_id = &user_room.user.user_id,
+			.user_room = &user_room,
+			.room_depth = &room_depth,
+		}
+	};
 }

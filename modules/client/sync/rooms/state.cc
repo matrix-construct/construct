@@ -626,12 +626,16 @@ ircd::m::sync::room_state_append(data &data,
                                  const m::event::idx &event_idx,
                                  const bool &query_prev)
 {
-	m::event::append::opts opts;
-	opts.event_idx = &event_idx;
-	opts.user_id = &data.user.user_id;
-	opts.user_room = &data.user_room;
-	opts.query_txnid = false;
-	opts.room_depth = &data.room_depth;
-	opts.query_prev_state = query_prev;
-	return m::event::append(events, event, opts);
+	return m::event::append
+	{
+		events, event,
+		{
+			.event_idx = &event_idx,
+			.user_id = &data.user.user_id,
+			.user_room = &data.user_room,
+			.room_depth = &data.room_depth,
+			.query_txnid = false,
+			.query_prev_state = query_prev,
+		}
+	};
 }

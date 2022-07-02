@@ -198,13 +198,18 @@ get__initialsync_local(client &client,
 		if(!visible(state_event, user.user_id))
 			return true;
 
-		m::event::append::opts opts;
-		opts.event_idx = &event_idx;
-		opts.user_id = &user.user_id;
-		opts.user_room = &user_room;
-		opts.room_depth = &room_depth;
-		opts.query_txnid = false;
-		m::event::append(state, state_event, opts);
+		m::event::append
+		{
+			state, state_event,
+			{
+				.event_idx = &event_idx,
+				.user_id = &user.user_id,
+				.user_room = &user_room,
+				.room_depth = &room_depth,
+				.query_txnid = false,
+			}
+		};
+
 		return true;
 	});
 	state.~array();
@@ -247,13 +252,14 @@ get__initialsync_local(client &client,
 		if(!visible(event, user.user_id))
 			continue;
 
-		m::event::append::opts opts;
-		opts.event_idx = &event_idx;
-		opts.user_id = &user.user_id;
-		opts.user_room = &user_room;
-		opts.room_depth = &room_depth;
-		opts.query_txnid = true;
-		m::event::append(chunk, event, opts);
+		m::event::append(chunk, event,
+		{
+			.event_idx = &event_idx,
+			.user_id = &user.user_id,
+			.user_room = &user_room,
+			.room_depth = &room_depth,
+			.query_txnid = true,
+		});
 	}
 }
 

@@ -369,13 +369,14 @@ append_event(json::stack::array &out,
              const int64_t &room_depth,
              const m::user::room &user_room)
 {
-	m::event::append::opts opts;
-	opts.event_idx = &event_idx;
-	opts.room_depth = &room_depth;
-	opts.user_room = &user_room;
-	opts.user_id = &user_room.user.user_id;
 	return m::event::append
 	{
-		out, event, opts
+		out, event,
+		{
+			.event_idx = &event_idx,
+			.user_id = &user_room.user.user_id,
+			.user_room = &user_room,
+			.room_depth = &room_depth,
+		},
 	};
 }

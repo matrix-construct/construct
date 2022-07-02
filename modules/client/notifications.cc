@@ -84,12 +84,12 @@ ircd::m::get_notifications(client &client,
 		request.query.get<ushort>("limit", size_t(notifications_limit_default))
 	};
 
-	m::user::notifications::opts opts;
-	opts.only = only;
-	opts.to = 0UL;
-	opts.from = from?
-		lex_cast<event::idx>(from):
-		0UL;
+	const m::user::notifications::opts opts
+	{
+		.from = from? lex_cast<event::idx>(from): 0,
+		.to = 0,
+		.only = only,
+	};
 
 	const m::user::notifications notifications
 	{
@@ -202,15 +202,16 @@ ircd::m::get_notifications(client &client,
 				object, "event"
 			};
 
-			m::event::append::opts opts;
-			opts.keys = &notification_event_keys;
-			opts.event_idx = &event_idx;
-			opts.query_redacted = false;
-			//opts.query_txnid = false;
-			//opts.query_prev_state = false;
 			m::event::append
 			{
-				event_object, event, opts
+				event_object, event,
+				{
+					.event_idx = &event_idx,
+					.keys = &notification_event_keys,
+					//.query_txnid = false,
+					//.query_prev_state = false,
+					.query_redacted = false,
+				},
 			};
 
 			++count;

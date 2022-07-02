@@ -189,15 +189,16 @@ append_event(const m::resource::request &request,
 	if(!visible(event, request.user_id))
 		return false;
 
-	m::event::append::opts opts;
-	opts.event_idx = &event_idx;
-	opts.user_id = &request.user_id;
-	opts.query_redacted = false;
-	opts.query_prev_state = false;
-	opts.query_txnid = false;
 	m::event::append
 	{
-		array, event, opts
+		array, event,
+		{
+			.event_idx = &event_idx,
+			.user_id = &request.user_id,
+			.query_txnid = false,
+			.query_prev_state = false,
+			.query_redacted = false,
+		},
 	};
 
 	return true;

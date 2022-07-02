@@ -368,11 +368,15 @@ ircd::m::sync::_room_timeline_append(data &data,
                                      const m::event::idx &event_idx,
                                      const m::event &event)
 {
-	m::event::append::opts opts;
-	opts.event_idx = &event_idx;
-	opts.client_txnid = &data.client_txnid;
-	opts.user_id = &data.user.user_id;
-	opts.user_room = &data.user_room;
-	opts.room_depth = &data.room_depth;
-	return m::event::append(events, event, opts);
+	return m::event::append
+	{
+		events, event,
+		{
+			.event_idx = &event_idx,
+			.client_txnid = &data.client_txnid,
+			.user_id = &data.user.user_id,
+			.user_room = &data.user_room,
+			.room_depth = &data.room_depth,
+		}
+	};
 }

@@ -117,13 +117,14 @@ try
 	const auto append{[&chunk, &request]
 	(const auto &event_idx, const m::event &event)
 	{
-		m::event::append::opts opts;
-		opts.event_idx = &event_idx;
-		opts.user_id = &request.user_id;
-		opts.query_txnid = false;
 		m::event::append
 		{
-			chunk, event, opts
+			chunk, event,
+			{
+				.event_idx = &event_idx,
+				.user_id = &request.user_id,
+				.query_txnid = false,
+			}
 		};
 	}};
 

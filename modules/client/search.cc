@@ -430,12 +430,6 @@ try
 		object, "rank", json::value(result.rank)
 	};
 
-	m::event::append::opts opts;
-	opts.event_idx = &result.event_idx;
-	opts.user_id = &query.user_id;
-	opts.event_filter = &event_filter;
-	opts.query_prev_state = false;
-	opts.query_visible = true;
 	bool ret{false};
 	{
 		json::stack::object result_event
@@ -443,7 +437,18 @@ try
 			object, "result"
 		};
 
-		ret = event::append(result_event, event, opts);
+		ret = event::append
+		{
+			result_event, event,
+			{
+				.event_idx = &result.event_idx,
+				.user_id = &query.user_id,
+				.event_filter = &event_filter,
+				.query_prev_state = false,
+				.query_visible = true,
+			},
+		};
+
 		result.appends += ret;
 		cp.committing(ret);
 	}
@@ -481,8 +486,17 @@ try
 				it.event_idx()
 			};
 
-			opts.event_idx = &event_idx;
-			result.appends += event::append(events_before, event, opts);
+			result.appends += event::append
+			{
+				events_before, event,
+				{
+					.event_idx = &event_idx,
+					.user_id = &query.user_id,
+					.event_filter = &event_filter,
+					.query_prev_state = false,
+					.query_visible = true,
+				},
+			};
 		}
 	}
 
@@ -501,8 +515,17 @@ try
 				it.event_idx()
 			};
 
-			opts.event_idx = &event_idx;
-			result.appends += event::append(events_after, event, opts);
+			result.appends += event::append
+			{
+				events_after, event,
+				{
+					.event_idx = &event_idx,
+					.user_id = &query.user_id,
+					.event_filter = &event_filter,
+					.query_prev_state = false,
+					.query_visible = true,
+				},
+			};
 		}
 	}
 
