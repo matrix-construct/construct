@@ -468,7 +468,8 @@ ircd::server::canonize(const net::hostport &hostport)
 decltype(ircd::server::request::log)
 ircd::server::request::log
 {
-	"server.request"
+	{ "server.request"  },
+	{ "server.response" },
 };
 
 decltype(ircd::server::request::opts_default)
@@ -498,7 +499,7 @@ ircd::server::cancel(request &request)
 
 	log::debug
 	{
-		request::log, "%s cancel commit:%d w:%zu hr:%zu cr:%zu",
+		request::log[1], "%s cancel commit:%d w:%zu hr:%zu cr:%zu",
 		loghead(request),
 		tag.committed(),
 		tag.state.written,
@@ -1301,7 +1302,7 @@ noexcept try
 		++tag_done;
 		log::logf
 		{
-			request::log, uint(tag.state.status) >= 300? log::DERROR: log::DEBUG,
+			request::log[1], uint(tag.state.status) >= 300? log::DERROR: log::DEBUG,
 			"%s [%u] %s wt:%zu rt:%zu hr:%zu cr:%zu cl:%zu chunks:%zu",
 			loghead(*tag.request),
 			uint(tag.state.status),
@@ -2503,7 +2504,7 @@ ircd::server::link::process_write(tag &tag)
 		if(tag.request)
 			log::debug
 			{
-				request::log, "%s wt:%zu on %s",
+				request::log[0], "%s wt:%zu on %s",
 				loghead(*tag.request),
 				tag.write_size(),
 				loghead(*this),

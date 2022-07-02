@@ -110,7 +110,7 @@ struct ircd::server::request
 	using each_closure = std::function<bool (const peer &, const link &, const request &)>;
 
 	static const opts opts_default;
-	static log::log log;
+	static log::log log[2];
 
 	server::tag *tag {nullptr};
 
