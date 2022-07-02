@@ -14,112 +14,6 @@ ircd::gpt::log
 	"gpt"
 };
 
-ircd::string_view
-ircd::gpt::generate(const mutable_buffer &out,
-                    const string_view &in,
-                    task &task)
-{
-	u16 input_buf[1024];
-	const auto input_tokens
-	{
-		gpt::vocab::tokenize(input_buf, in)
-	};
-
-	u16 output_buf[1024];
-	const auto output_tokens
-	{
-		generate(output_buf, input_tokens, task)
-	};
-
-	const auto output
-	{
-		gpt::vocab::detokenize(out, output_tokens)
-	};
-
-	return output;
-}
-
-ircd::vector_view<ircd::u16>
-ircd::gpt::generate(const vector_view<u16> &out,
-                    const vector_view<const u16> &in,
-                    task &task)
-{
-	assert(task.opts);
-	const auto &opts
-	{
-		*task.opts
-	};
-
-	assert(task.ctrl);
-	auto &ctrl
-	{
-		*task.ctrl
-	};
-
-	size_t in_i(0);
-	while(in_i < in.size() && ctrl.count < opts.buffer_tokens)
-		if(in[in_i] == 628)
-		{
-			ctrl.token[ctrl.count++] = 198;
-			ctrl.token[ctrl.count++] = 198;
-			in_i++;
-		}
-		else ctrl.token[ctrl.count++] = in[in_i++];
-
-	generate(task);
-
-	size_t out_i(0);
-	for(; out_i < out.size() && in_i + out_i < ctrl.count; out_i++)
-		out[out_i] = ctrl.token[in_i + out_i];
-
-	return vector_view<u16>
-	{
-		out, out_i
-	};
-}
-
-void
-ircd::gpt::generate(task &task)
-{
-	assert(task.opts);
-	const auto &opts
-	{
-		*task.opts
-	};
-
-	assert(task.ctrl);
-	auto &ctrl
-	{
-		*task.ctrl
-	};
-
-	gpt::epoch epoch
-	{
-		task
-	};
-
-	gpt::step step
-	{
-		epoch
-	};
-
-	gpt::samp samp
-	{
-		step
-	};
-
-	bool halt {false}; do
-	{
-		gpt::pipe::cycle cycle
-		{
-			samp
-		};
-
-		halt = !samp.evaluate(cycle);
-	}
-	while(!halt);
-}
-
 //
 // debug
 //
@@ -392,6 +286,80 @@ catch(const std::exception &e)
 ircd::gpt::task::~task()
 noexcept
 {
+}
+
+ircd::string_view
+ircd::gpt::task::operator()(const mutable_buffer &out,
+                            const string_view &in)
+{
+	u16 input_buf[1024];
+	const auto input_tokens
+	{
+		gpt::vocab::tokenize(input_buf, in)
+	};
+
+	u16 output_buf[1024];
+	const auto output_tokens
+	{
+		operator()(output_buf, input_tokens)
+	};
+
+	const auto output
+	{
+		gpt::vocab::detokenize(out, output_tokens)
+	};
+
+	return output;
+}
+
+ircd::vector_view<ircd::u16>
+ircd::gpt::task::operator()(const vector_view<u16> &out,
+                            const vector_view<const u16> &in)
+{
+	assert(this->opts);
+	const auto &opts{*this->opts};
+
+	assert(this->ctrl);
+	auto &ctrl{*this->ctrl};
+
+	size_t in_i(0);
+	for(; in_i < in.size() && ctrl.count < opts.buffer_tokens; in_i++)
+		if(in[in_i] == 628)
+		{
+			ctrl.token[ctrl.count++] = 198;
+			ctrl.token[ctrl.count++] = 198;
+		}
+		else ctrl.token[ctrl.count++] = in[in_i];
+
+	gpt::epoch epoch
+	{
+		*this,
+	};
+
+	gpt::step step
+	{
+		epoch
+	};
+
+	gpt::samp samp
+	{
+		step
+	};
+
+	bool halt {false}; do
+	{
+		halt = samp();
+	}
+	while(!halt);
+
+	size_t out_i(0);
+	for(; out_i < out.size() && in_i + out_i < ctrl.count; out_i++)
+		out[out_i] = ctrl.token[in_i + out_i];
+
+	return vector_view<u16>
+	{
+		out, out_i
+	};
 }
 
 bool
@@ -776,15 +744,18 @@ ircd::gpt::samp::samp(gpt::step &step)
 }
 ,tokens
 {
-	tokenize()
+	ctrl.count?:
+		tokenize()
 }
 ,count
 {
-	int(opts.limit) > 0?
+	opts.limit > 0?
 		tokens - opts.limit:
-	int(opts.limit) < 0?
-		std::abs(int(opts.limit)):
-		tokens
+	opts.limit < 0?
+		std::abs(opts.limit):
+	!ctrl.count?
+		tokens:
+		1
 }
 {
 	desc.cached = 0;
@@ -840,7 +811,7 @@ ircd::gpt::samp::operator()()
 		ctx::interruption_point();
 		queue.emplace_back(*this);
 		desc.cached = tokens;
-		tokens += count < tokens? 0: 1;
+		tokens += count >= tokens;
 		++cycle;
 		++count;
 		--dispatch;
@@ -987,7 +958,7 @@ ircd::gpt::samp::evaluate(pipe::cycle &cycle)
 	stepping = sampling && (frame.clk.samp + 1) >= batch_size,
 	epoching = stepping && (frame.clk.step + 1) >= steps;
 
-	//ctrl[ctrl.count] = ctrl.select.logit.token;
+	//ctrl.token[ctrl.count] = ctrl.select.logit.token;
 	//ctrl.count++;
 
 	if(accepting)
@@ -1329,7 +1300,7 @@ noexcept
 }
 ,limit
 {
-	-1U
+	-1
 }
 ,debug
 {

@@ -56,7 +56,7 @@ struct ircd_gpt_opts
 
 	/// Limit number of output tokens. Default of -1; other halting conditions
 	/// will be used.
-	uint limit;
+	int limit;
 
 	/// Bitbar toggling various debug modes.
 	uint debug;

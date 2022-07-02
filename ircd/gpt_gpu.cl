@@ -1081,15 +1081,17 @@ ircd_gpt_accept(__local struct ircd_gpt_ctrl *const ctrl,
                 __constant const struct ircd_gpt_opts *const opts)
 {
 	const bool
-	unlimited = opts->limit == -1U;
+	unlimited = opts->limit < 0;
 
 	const uint
 	batch_size = opts->batch_size,
 	samps = opts->training_steps + opts->validation_steps + opts->testing_steps,
-	steps = samps / batch_size;
+	steps = samps / batch_size,
+	limit_ = opts->limit,
+	unproc = ctrl->tokens - ctrl->count;
 
 	const int
-	limit = min(opts->limit, opts->context_tokens),
+	limit = min(limit_?: unproc, opts->context_tokens),
 	cycle_remain = limit - (ctrl->clk.cycle + 1),    // cycle not yet incr
 	token_remain = opts->context_tokens - ctrl->count, // but count already incr
 	remain_ = min(cycle_remain, token_remain),

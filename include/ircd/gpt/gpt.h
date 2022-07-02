@@ -36,7 +36,6 @@ namespace ircd::gpt
 #include "step.h"
 #include "epoch.h"
 #include "task.h"
-#include "generate.h"
 
 namespace ircd::gpt
 {

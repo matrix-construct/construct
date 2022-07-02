@@ -44,7 +44,17 @@ struct ircd::gpt::task
 
   public:
 	bool done() const noexcept;
-	bool operator()();
+
+	bool
+	operator()();
+
+	vector_view<u16>
+	operator()(const vector_view<u16> &out,
+	           const vector_view<const u16> &in);
+
+	string_view
+	operator()(const mutable_buffer &out,
+	           const string_view &in);
 
 	task(const gpt::opts *     = nullptr,
 	     gpt::ctrl *           = nullptr);
