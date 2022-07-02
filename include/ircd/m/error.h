@@ -44,8 +44,14 @@ class ircd::m::error
 	string_view errcode() const noexcept;
 	string_view errstr() const noexcept;
 
-	template<class... args> error(const http::code &, const string_view &errcode, const string_view &fmt, args&&...);
-	template<class... args> error(const string_view &errcode, const string_view &fmt, args&&...);
+	template<class... args>
+	[[clang::internal_linkage]]
+	error(const http::code &, const string_view &errcode, const string_view &fmt, args&&...);
+
+	template<class... args>
+	error(const string_view &errcode, const string_view &fmt, args&&...);
+
+	error(const http::code &, const string_view &errcode, const string_view &fmt);
 	error(const http::code &, const json::object &object);
 	error(const http::code &, const json::members &);
 	error(const http::code &, const json::iov &);
@@ -76,7 +82,8 @@ class ircd::m::error
 struct _name_                                                           \
 : _parent_                                                              \
 {                                                                       \
-    [[gnu::noinline]]                                                   \
+    [[clang::internal_linkage]]                                         \
+    [[gnu::noinline, gnu::visibility("internal")]]                      \
     _name_()                                                            \
     : _parent_                                                          \
     {                                                                   \
@@ -84,7 +91,8 @@ struct _name_                                                           \
     }{}                                                                 \
                                                                         \
     template<class... args>                                             \
-    [[gnu::noinline]]                                                   \
+    [[clang::internal_linkage]]                                         \
+    [[gnu::noinline, gnu::visibility("internal")]]                      \
     _name_(const string_view &fmt, args&&... a)                         \
     : _parent_                                                          \
     {                                                                   \
@@ -92,7 +100,7 @@ struct _name_                                                           \
     }{}                                                                 \
                                                                         \
     template<class... args>                                             \
-    [[gnu::noinline]]                                                   \
+    [[gnu::always_inline]]                                              \
     _name_(child_t, args&&... a)                                        \
     : _parent_                                                          \
     {                                                                   \
@@ -119,33 +127,29 @@ namespace ircd::m
 }
 
 template<class... args>
-[[using gnu: flatten]]
-inline
+[[using clang: internal_linkage]]
+[[using gnu: noinline, visibility("internal")]]
 ircd::m::error::error(const http::code &status,
                       const string_view &errcode,
                       const string_view &fmt,
                       args&&... a)
 :error
 {
-	internal, status, [&errcode, &fmt, &a...]() -> json::strung
+	status, json::members
 	{
-		const string_view str
+		{ "errcode", errcode },
+		{ "error", string_view
 		{
 			fmt::sprintf
 			{
 				fmtbuf, fmt, std::forward<args>(a)...
 			}
-		};
-
-		return json::members
-		{
-			{ "errcode",  errcode  },
-			{ "error",    str      },
-		};
-	}()
+		}}
+	}
 }{}
 
 template<class... args>
+[[using gnu: always_inline]]
 inline
 ircd::m::error::error(const string_view &errcode,
                       const string_view &fmt,
@@ -153,16 +157,14 @@ ircd::m::error::error(const string_view &errcode,
 :error
 {
 	http::INTERNAL_SERVER_ERROR, errcode, fmt, std::forward<args>(a)...
-}
-{}
+}{}
 
 template<class... args>
-[[using gnu: flatten, always_inline]]
+[[using gnu: always_inline]]
 inline
 ircd::m::error::error(child_t,
                       args&&... a)
 :error
 {
 	std::forward<args>(a)...
-}
-{}
+}{}

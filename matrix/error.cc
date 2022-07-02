@@ -70,6 +70,19 @@ ircd::m::error::error(const http::code &c,
 }
 {}
 
+ircd::m::error::error(const http::code &status,
+                      const string_view &errcode,
+                      const string_view &fmt)
+:error
+{
+	status, json::members
+	{
+		{ "errcode",  errcode  },
+		{ "error",    fmt      },
+	},
+}
+{}
+
 ircd::m::error::error(internal_t,
                       const http::code &c,
                       std::string object)
