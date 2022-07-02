@@ -17606,60 +17606,6 @@ console_cmd__cl__info(opt &out, const string_view &line)
 //
 
 bool
-console_cmd__gpt__raw(opt &out, const string_view &line)
-{
-	const params param{line, " ",
-	{
-		"limit"
-	}};
-
-	const auto text
-	{
-		tokens_after(line, " ", 0)
-	};
-
-	const unique_mutable_buffer buf
-	{
-		2048, 64
-	};
-
-	gpt::opts opts;
-	opts.limit = param.at<uint>("limit");
-	opts.top_k = 3;
-
-	gpt::ctrl ctrl;
-	gpt::task task
-	{
-		&opts, &ctrl
-	};
-
-	const auto output
-	{
-		gpt::generate(buf, text, task)
-	};
-
-	out
-	<< text
-	<< output
-	<< std::endl;
-	return true;
-}
-
-bool
-console_cmd__gpt(opt &out, const string_view &line)
-{
-	return console_cmd__gpt__raw(out, line);
-}
-
-bool
-console_cmd__gpt__pipe__reset(opt &out, const string_view &line)
-{
-	gpt::pipe::fini();
-	gpt::pipe::init();
-	return true;
-}
-
-bool
 console_cmd__gpt__token(opt &out, const string_view &line)
 {
 	const params param{line, " ",
@@ -17699,7 +17645,32 @@ console_cmd__gpt__tokenize(opt &out, const string_view &line)
 	char dbuf[512];
 	for(const auto &token : tokens)
 		out
-		<< std::setw(3) << (i++) << ":  "
+		<< std::setw(4) << (i++) << ":  "
+		<< gpt::vocab::debug(dbuf, token)
+		<< std::endl;
+
+	return true;
+}
+
+bool
+console_cmd__gpt__tokensp(opt &out, const string_view &line)
+{
+	const auto text
+	{
+		std::string{" "} + std::string{line}
+	};
+
+	u16 buf[1024];
+	const auto tokens
+	{
+		gpt::vocab::tokenize(buf, text)
+	};
+
+	uint i(0);
+	char dbuf[512];
+	for(const auto &token : tokens)
+		out
+		<< std::setw(4) << (i++) << ":  "
 		<< gpt::vocab::debug(dbuf, token)
 		<< std::endl;
 
@@ -17733,5 +17704,208 @@ console_cmd__gpt__data(opt &out, const string_view &line)
 	<< step["text"]
 	<< std::endl;
 
+	return true;
+}
+
+bool
+console_cmd__gpt__data__tokenize(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"id"
+	}};
+
+	const auto idx
+	{
+		param.at<uint>("id")
+	};
+
+	const json::object step
+	{
+		gpt::model::default_data.at(idx)
+	};
+
+	const json::string text
+	{
+		step.get("text")
+	};
+
+	const unique_mutable_buffer sbuf
+	{
+		16_KiB
+	};
+
+	const string_view input
+	{
+		json::unescape(sbuf, text)
+	};
+
+	u16 tbuf[1024];
+	const auto tokens
+	{
+		gpt::vocab::tokenize(tbuf, input)
+	};
+
+	uint i(0);
+	char dbuf[256];
+	for(const auto &token : tokens)
+		out
+		<< std::setw(4) << (i++) << ":  "
+		<< gpt::vocab::debug(dbuf, token)
+		<< std::endl;
+
+	return true;
+}
+
+bool
+console_cmd__gpt__raw(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"limit", "top_k"
+	}};
+
+	const int skips
+	{
+		-1
+		+ lex_castable<int>(param.at("limit"))
+		+ lex_castable<uint>(param.at("top_k"))
+	};
+
+	const auto text
+	{
+		tokens_after(line, " ", skips)
+	};
+
+	const unique_mutable_buffer buf
+	{
+		16_KiB
+	};
+
+	gpt::opts opts alignas(4096);
+	opts.debug |= 0x1;
+	opts.debug |= 0x2;
+
+	if(skips >= 1)
+		opts.limit = param.at<int>("limit", opts.limit);
+
+	if(skips >= 0)
+		opts.top_k = param.at<uint>("top_k", opts.top_k);
+
+	gpt::ctrl ctrl alignas(4096) {0};
+	ctrl.label[opts.labels++].logit.token = 198;
+
+	gpt::task task
+	{
+		&opts, &ctrl
+	};
+
+	const auto output
+	{
+		task(buf, text)
+	};
+
+	out
+	<< output
+	<< std::endl;
+	return true;
+}
+
+bool
+console_cmd__gpt__query(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"limit", "top_k"
+	}};
+
+	const int skips
+	{
+		-1
+		+ lex_castable<int>(param.at("limit"))
+		+ lex_castable<uint>(param.at("top_k"))
+	};
+
+	std::string text {"Q: "s};
+	text += tokens_after(line, " ", skips);
+	text += "\n\nA:";
+
+	const unique_mutable_buffer buf
+	{
+		16_KiB
+	};
+
+	gpt::opts opts;
+	opts.debug |= 0x2;
+
+	if(skips >= 1)
+		opts.limit = param.at<int>("limit", opts.limit);
+
+	if(skips >= 0)
+		opts.top_k = param.at<uint>("top_k", opts.top_k);
+
+	if(opts.limit == 1)
+		opts.debug |= 0x10;
+
+	gpt::ctrl ctrl {0};
+	ctrl.label[0].logit.token = 198;
+	opts.labels = 1;
+	opts.top_n = 16;
+
+	gpt::task task
+	{
+		&opts, &ctrl
+	};
+
+	const auto output
+	{
+		task(buf, text)
+	};
+
+	out
+	<< output
+	<< std::endl;
+	return true;
+}
+
+bool
+console_cmd__gpt__label(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"label",
+	}};
+
+	const gpt::token label
+	{
+		param["label"], true
+	};
+
+	const auto text
+	{
+		tokens_after(line, ' ', 0)
+	};
+
+	gpt::opts opts alignas(4096);
+	opts.limit = 0;
+	opts.debug |= 0x40;
+
+	gpt::ctrl ctrl alignas(4096) {0};
+	ctrl.label[opts.labels++].logit.token = label;
+
+	gpt::task task
+	{
+		&opts, &ctrl
+	};
+
+	char buf[32] {0};
+	const auto output
+	{
+		task(buf, text)
+	};
+
+	out
+	<< output
+	<< std::endl;
 	return true;
 }
