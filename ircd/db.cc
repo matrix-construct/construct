@@ -614,7 +614,7 @@ ircd::db::prefetcher::operator()(column &c,
 		// control queue growth, so we insert voluntary yield here to allow
 		// prefetch operations to at least be processed before returning to
 		// the user submitting more prefetches.
-		if(likely(!test(opts, db::get::NO_BLOCKING)))
+		if(likely(opts.blocking))
 			ctx::yield();
 
 		return true;
@@ -1725,15 +1725,15 @@ ircd::db::seek(row &r,
 	{
 		// If there's a pending error from another cell by the time this
 		// closure is executed we don't perform the seek() unless the user
-		// specifies db::get::NO_THROW to suppress it.
-		if(!eptr || test(opts, get::NO_THROW)) try
+		// specifies db::gopts::throwing=0 to suppress it.
+		if(!eptr || opts.throwing == false) try
 		{
 			if(!seek(cell, key))
 			{
 				// If the cell is not_found that's not a thrown exception here;
-				// the cell will just be !valid(). The user can specify
-				// get::THROW to propagate a not_found from the seek(row);
-				if(test(opts, get::THROW))
+				// the cell will just be !valid(). The user can option
+				// throwing=1 to propagate a not_found from the seek(row).
+				if(opts.throwing == true)
 					throw not_found
 					{
 						"column '%s' key '%s'", cell.col(), key
@@ -1787,7 +1787,7 @@ ircd::db::seek(row &r,
 		const bool submit
 		{
 			r.size() > 1 &&
-			!test(opts, get::NO_PARALLEL) &&
+			opts.parallel &&
 			!db::cached(column, key, opts)
 		};
 
@@ -1824,7 +1824,7 @@ ircd::db::seek(row &r,
 			};
 		}
 
-	if(eptr && !test(opts, get::NO_THROW))
+	if(eptr && opts.throwing != false)
 		std::rethrow_exception(eptr);
 
 	return ret;
@@ -2346,12 +2346,6 @@ const
 // db/domain.h
 //
 
-const ircd::db::gopts
-ircd::db::domain::applied_opts
-{
-	get::PREFIX
-};
-
 bool
 ircd::db::seek(domain::const_iterator_base &it,
                const pos &p)
@@ -2373,7 +2367,7 @@ ircd::db::seek(domain::const_iterator_base &it,
 			break;
 	}
 
-	it.opts |= domain::applied_opts;
+	it.opts.prefix = true;
 	return seek(static_cast<column::const_iterator_base &>(it), p);
 }
 
@@ -2381,7 +2375,7 @@ bool
 ircd::db::seek(domain::const_iterator_base &it,
                const string_view &p)
 {
-	it.opts |= domain::applied_opts;
+	it.opts.prefix = true;
 	return seek(static_cast<column::const_iterator_base &>(it), p);
 }
 
@@ -5277,29 +5271,26 @@ ircd::db::make_opts(const gopts &opts)
 	ret.iterate_lower_bound = opts.lower_bound;
 	ret.iterate_upper_bound = opts.upper_bound;
 
-	ret.verify_checksums = bool(read_checksum);
-	if(test(opts, get::CHECKSUM) && !test(opts, get::NO_CHECKSUM))
-		ret.verify_checksums = true;
+	ret.verify_checksums = opts.checksum <= -1?
+		bool(read_checksum):
+		opts.checksum;
 
-	if(test(opts, get::NO_SNAPSHOT))
+	if(opts.tailing)
 		ret.tailing = true;
 
-	if(test(opts, get::ORDERED))
+	if(opts.ordered)
 		ret.total_order_seek = true;
 
-	if(test(opts, get::PIN))
+	if(opts.pin)
 		ret.pin_data = true;
 
-	if(test(opts, get::CACHE))
+	if(opts.cache)
 		ret.fill_cache = true;
 
-	if(likely(test(opts, get::NO_CACHE)))
-		ret.fill_cache = false;
-
-	if(likely(test(opts, get::PREFIX)))
+	if(opts.prefix)
 		ret.prefix_same_as_start = true;
 
-	if(likely(test(opts, get::NO_BLOCKING)))
+	if(!opts.blocking)
 		ret.read_tier = rocksdb::ReadTier::kBlockCacheTier;
 
 	return ret;
@@ -5318,13 +5309,11 @@ rocksdb::WriteOptions
 ircd::db::make_opts(const sopts &opts)
 {
 	rocksdb::WriteOptions ret;
-	//ret.no_slowdown = true;    // read_tier = NON_BLOCKING for writes
-
-	ret.sync = test(opts, set::FSYNC);
-	ret.disableWAL = !enable_wal || test(opts, set::NO_JOURNAL);
-	ret.ignore_missing_column_families = test(opts, set::NO_COLUMN_ERR);
-	ret.no_slowdown = test(opts, set::NO_BLOCKING);
-	ret.low_pri = test(opts, set::PRIO_LOW);
+	ret.sync = opts.fsync;
+	ret.disableWAL = !enable_wal || !opts.journal;
+	ret.ignore_missing_column_families = true;
+	ret.no_slowdown = !opts.blocking;
+	ret.low_pri = opts.prio_low;
 	return ret;
 }
 

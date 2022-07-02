@@ -13,82 +13,72 @@
 
 namespace ircd::db
 {
-	enum class set :uint64_t;
-	enum class get :uint64_t;
-
-	struct options;
-	template<class> struct opts;
 	struct sopts;
 	struct gopts;
-
-	template<class T> bool test(const opts<T> &, const typename std::underlying_type<T>::type &);
-	template<class T> bool test(const opts<T> &, const T &value);
-
-	template<class T> opts<T> &operator|=(opts<T> &, const opts<T> &);
-	template<class T> opts<T> &operator|=(opts<T> &, const T &value);
-
-	template<class T> opts<T> &operator&=(opts<T> &, const opts<T> &);
-	template<class T> opts<T> &operator&=(opts<T> &, const T &value);
+	struct options;
 }
 
-enum class ircd::db::set
-:uint64_t
-{
-	FSYNC            = 0x0001, ///< Uses kernel filesystem synchronization after write (slow).
-	NO_JOURNAL       = 0x0002, ///< Write Ahead Log (WAL) for some crash recovery (danger).
-	NO_BLOCKING      = 0x0004, ///< Fail if write would block.
-	NO_COLUMN_ERR    = 0x0008, ///< No exception thrown when writing to a deleted column.
-	PRIO_LOW         = 0x0010, ///< Mark for low priority behavior.
-	PRIO_HIGH        = 0x0020, ///< Mark for high priority behavior.
-};
-
-enum class ircd::db::get
-:uint64_t
-{
-	PIN              = 0x0001, ///< Keep iter data in memory for iter lifetime (good for lots ++/--).
-	PREFIX           = 0x0002, ///< (prefix_same_as_start); automatic for index columns with pfx.
-	ORDERED          = 0x0004, ///< (total_order_seek); relevant to index columns.
-	CACHE            = 0x0008, ///< Update the cache.
-	NO_CACHE         = 0x0010, ///< Do not update the cache.
-	CHECKSUM         = 0x0020, ///< Integrity of data will be checked (overrides conf).
-	NO_CHECKSUM      = 0x0040, ///< Integrity of data will not be checked (overrides conf).
-	NO_BLOCKING      = 0x0080, ///< Fail if read would block from not being cached.
-	NO_SNAPSHOT      = 0x0100, ///< This iterator will have the latest data (tailing).
-	NO_PARALLEL      = 0x0200, ///< Don't submit requests in parallel (relevant to db::row).
-	THROW            = 0x0400, ///< Throw exceptions more than usual.
-	NO_THROW         = 0x0800, ///< Suppress exceptions if possible.
-};
-
-template<class T>
-struct ircd::db::opts
-{
-	using flag_t = typename std::underlying_type<T>::type;
-
-	flag_t value {0};
-
-	opts() = default;
-	opts(const std::initializer_list<T> &list)
-	:value{combine_flags(list)}
-	{}
-};
-
-/// options for writing (set)
+/// Options for setting (writes)
 struct ircd::db::sopts
-:opts<set>
 {
-	using opts<set>::opts;
+	/// Uses kernel filesystem synchronization after this write (slow).
+	bool fsync {false};
+
+	/// Write Ahead Log (WAL) for some crash recovery.
+	bool journal {true};
+
+	/// Set to false to fail if write would block.
+	bool blocking {true};
+
+	/// Mark for low priority behavior.
+	bool prio_low {false};
+
+	/// Mark for high priority behavior.
+	bool prio_high {false};
 };
 
-/// options for reading (get)
+/// Options for getting (reads)
 struct ircd::db::gopts
-:opts<get>
 {
-	database::snapshot snapshot;
-	const rocksdb::Slice *lower_bound { nullptr };
-	const rocksdb::Slice *upper_bound { nullptr };
-	size_t readahead { 0 };
+	/// Keep iter data in memory for iter lifetime (good for lots ++/--).
+	bool pin {false};
 
-	using opts<get>::opts;
+	/// Fill the cache with results.
+	bool cache {true};
+
+	/// Allow query to continue after cache miss.
+	bool blocking {true};
+
+	/// Submit requests in parallel (relevant to db::row).
+	bool parallel {true};
+
+	/// (prefix_same_as_start); automatic for index columns with pfx.
+	bool prefix {false};
+
+	/// (total_order_seek); relevant to index columns.
+	bool ordered {false};
+
+	/// Ensures no snapshot is used; this iterator will have the latest data.
+	bool tailing {false};
+
+	/// 1 = Throw exceptions more than usual.
+	/// 0 = Throw exceptions less than usual.
+	int8_t throwing {-1};
+
+	/// 1 = Integrity of data will be checked (overrides conf).
+	/// 0 = Checksums will not be checked (overrides conf).
+	int8_t checksum {-1};
+
+	/// Readahead bytes.
+	size_t readahead {0};
+
+	/// Bounding keys
+	const rocksdb::Slice
+	*lower_bound {nullptr},
+	*upper_bound {nullptr};
+
+	/// Attached snapshot
+	database::snapshot snapshot;
 };
 
 /// options <-> string
@@ -134,63 +124,3 @@ struct ircd::db::options::map
 	:std::unordered_map<std::string, std::string>{std::move(m)}
 	{}
 };
-
-template<class T>
-inline ircd::db::opts<T> &
-ircd::db::operator&=(opts<T> &a,
-                     const T &value)
-{
-	using flag_t = typename opts<T>::flag_t;
-
-	a.value &= flag_t(value);
-	return a;
-}
-
-template<class T>
-inline ircd::db::opts<T> &
-ircd::db::operator&=(opts<T> &a,
-                     const opts<T> &b)
-{
-	a.value &= b.value;
-	return a;
-}
-
-template<class T>
-inline ircd::db::opts<T> &
-ircd::db::operator|=(opts<T> &a,
-                     const T &value)
-{
-	using flag_t = typename opts<T>::flag_t;
-
-	a.value |= flag_t(value);
-	return a;
-}
-
-template<class T>
-inline ircd::db::opts<T> &
-ircd::db::operator|=(opts<T> &a,
-                     const opts<T> &b)
-{
-	a.value |= b.value;
-	return a;
-}
-
-template<class T>
-inline bool
-ircd::db::test(const opts<T> &a,
-               const T &value)
-{
-	using flag_t = typename opts<T>::flag_t;
-
-	return a.value & flag_t(value);
-}
-
-template<class T>
-inline bool
-ircd::db::test(const opts<T> &a,
-               const typename std::underlying_type<T>::type &value)
-{
-	using flag_t = typename opts<T>::flag_t;
-
-	return a.value & flag_t(value);
-}

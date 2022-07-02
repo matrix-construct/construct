@@ -346,12 +346,15 @@ ircd::m::room::head::reset(const head &head)
 size_t
 ircd::m::room::head::rebuild(const head &head)
 {
-	size_t ret{0};
 	static const m::event::fetch::opts fopts
 	{
-		{ db::get::NO_CACHE }
+		db::gopts
+		{
+			.cache = false,
+		},
 	};
 
+	size_t ret{0};
 	m::room::events it
 	{
 		head.room, 0UL, &fopts

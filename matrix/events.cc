@@ -89,7 +89,8 @@ ircd::m::events::dump__file(const string_view &filename)
 {
 	static const db::gopts gopts
 	{
-		db::get::NO_CACHE, db::get::NO_CHECKSUM
+		.cache = false,
+		.checksum = false,
 	};
 
 	const fs::fd::opts fileopts
@@ -313,13 +314,12 @@ ircd::m::events::source::for_each(const range &range,
 			range.second
 	};
 
-	db::gopts gopts
+	const db::gopts gopts
 	{
-		db::get::NO_CACHE,
-		db::get::NO_CHECKSUM
+		.cache = false,
+		.checksum = false,
+		.readahead = size_t(readahead) & boolmask<size_t>(ascending),
 	};
-	gopts.readahead = size_t(readahead);
-	gopts.readahead &= boolmask<size_t>(ascending);
 
 	auto it
 	{
@@ -375,17 +375,17 @@ ircd::m::events::content::for_each(const closure &closure)
 		json::indexof<event, "content"_>()
 	};
 
+	const db::gopts gopts
+	{
+		.cache = false,
+		.checksum = false,
+		.readahead = size_t(readahead),
+	};
+
 	db::column &column
 	{
 		dbs::event_column.at(content_idx)
 	};
-
-	db::gopts gopts
-	{
-		db::get::NO_CACHE,
-		db::get::NO_CHECKSUM
-	};
-	gopts.readahead = size_t(readahead);
 
 	auto it(column.begin(gopts));
 	for(; it; ++it)
@@ -432,12 +432,12 @@ ircd::m::events::refs::for_each(const range &range,
 		dbs::event_refs
 	};
 
-	db::gopts gopts
+	const db::gopts gopts
 	{
-		db::get::NO_CACHE,
-		db::get::NO_CHECKSUM
+		.cache = false,
+		.checksum = false,
+		.readahead = size_t(readahead),
 	};
-	gopts.readahead = size_t(readahead);
 
 	const auto start
 	{

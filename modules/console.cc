@@ -10143,8 +10143,10 @@ console_cmd__room__members__read(opt &out, const string_view &line)
 			{
 				"event_id", "content", "origin_server_ts", "sender"
 			},
+
+			db::gopts
 			{
-				db::get::NO_CACHE
+				.cache = false,
 			},
 		};
 

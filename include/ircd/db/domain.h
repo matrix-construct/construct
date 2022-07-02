@@ -46,8 +46,6 @@ struct ircd::db::domain
 	using iterator_type = const_iterator;
 	using const_iterator_type = const_iterator;
 
-	static const gopts applied_opts;
-
 	const_iterator end(const string_view &key, gopts = {});
 	const_iterator begin(const string_view &key, gopts = {});
 	const_reverse_iterator rend(const string_view &key, gopts = {});

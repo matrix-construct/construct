@@ -46,7 +46,7 @@ ircd::m::room::stats::bytes_json(const m::room &room)
 
 		static const db::gopts gopts
 		{
-			db::get::NO_CACHE
+			.cache = false,
 		};
 
 		ret += db::bytes_value(m::dbs::event_json, key, gopts);

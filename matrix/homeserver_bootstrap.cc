@@ -251,7 +251,7 @@ try
 	//vmopts.phase.set(vm::phase::PREINDEX, true);
 
 	// Optimize the bootstrap by disabling WAL journaling.
-	vmopts.wopts.sopts |= db::set::NO_JOURNAL;
+	vmopts.wopts.sopts.journal = false;
 
 	// Optimize the bootstrap by not updating room heads at every step.
 	vmopts.wopts.appendix.set(dbs::appendix::ROOM_HEAD, false);
