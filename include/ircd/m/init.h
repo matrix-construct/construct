@@ -20,7 +20,10 @@ namespace ircd::m::init
 /// Internal use only; do not call
 namespace ircd::m::init::backfill
 {
-	void init(), fini() noexcept;
+	void
+	init(),
+	term() noexcept,
+	fini() noexcept;
 }
 
 /// Internal use only; do not call

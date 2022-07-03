@@ -131,7 +131,7 @@ ircd::m::init::backfill::handle_quit
 {
 	run::level::QUIT, []
 	{
-		fini();
+		term();
 	}
 };
 
@@ -164,29 +164,59 @@ ircd::m::init::backfill::init()
 }
 
 void
+ircd::m::init::backfill::term()
+noexcept
+{
+	assert(!worker_pool || worker_context);
+
+	if(worker_pool)
+	{
+		log::debug
+		{
+			log, "Terminating worker pool...",
+		};
+
+		worker_pool->terminate();
+	}
+
+	if(worker_context)
+	{
+		log::debug
+		{
+			log, "Terminating worker context...",
+		};
+
+		ctx::terminate(*worker_context);
+	}
+}
+
+void
 ircd::m::init::backfill::fini()
 noexcept
 {
+	term();
 	if(worker_context)
-		log::debug
+		log::dwarning
 		{
-			log, "Terminating worker context..."
+			log, "Waiting for worker context...",
 		};
 
-	if(worker_pool)
-		worker_pool->terminate();
+	while(worker_context)
+		ctx::sleep(333ms);
 
-	if(worker_context)
-		ctx::terminate(*worker_context);
-
-	worker_context = nullptr;
-	worker_pool = nullptr;
+	assert(!worker_pool);
+	assert(!worker_context);
 }
 
 void
 ircd::m::init::backfill::worker()
 try
 {
+	const unwind nullify{[]
+	{
+		worker_context = nullptr;
+	}};
+
 	// Wait for runlevel RUN before proceeding...
 	run::barrier<ctx::interrupted>{};
 
