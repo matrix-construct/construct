@@ -72,13 +72,16 @@ ircd::m::client_versions::get(client &client,
 decltype(ircd::m::client_versions::versions_default)
 ircd::m::client_versions::versions_default
 {
-	"r0.1.0 "
-	"r0.2.0 "
-	"r0.3.0 "
-	"r0.4.0 "
-	"r0.5.0 "
-	"r0.6.0 "
-	"r0.6.1 "
+	"r0.0.1"
+	" r0.1.0"
+	" r0.2.0"
+	" r0.3.0"
+	" r0.4.0"
+	" r0.5.0"
+	" r0.6.0"
+	" r0.6.1"
+	" v1.1"
+	" v1.2"
 };
 
 /// Note this conf item doesn't persist to and from the database, which means
