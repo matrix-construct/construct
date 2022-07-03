@@ -256,11 +256,6 @@ ircd::m::vm::fetch::auth_chain(const event &event,
 try
 {
 	assert(eval.opts);
-	m::fetch::opts opts;
-	opts.op = m::fetch::op::auth;
-	opts.room_id = room.room_id;
-	opts.event_id = room.event_id;
-	opts.check_hashes = false;
 
 	// Figure out a remote hint as the primary target to request the missing
 	// auth events from; if provided, m::fetch will ask this remote first. We
@@ -268,7 +263,7 @@ try
 	// the eval (i.e in a /send/ or when processing some response data from
 	// them); next we try the origin of the event itself. These remotes are
 	// most likely to provide a satisfying response.
-	opts.hint =
+	const string_view hint
 	{
 		eval.opts->node_id && !my_host(eval.opts->node_id)?
 			eval.opts->node_id:
@@ -290,13 +285,20 @@ try
 		log, "Fetching auth chain for %s in %s hint:%s",
 		string_view{room.event_id},
 		string_view{room.room_id},
-		opts.hint,
+		hint,
 	};
 
 	// send
 	auto future
 	{
-		m::fetch::start(opts)
+		m::fetch::start(
+		{
+			.op = m::fetch::op::auth,
+			.room_id = room.room_id,
+			.event_id = room.event_id,
+			.hint = hint,
+			.check_hashes = false,
+		})
 	};
 
 	// recv
@@ -644,14 +646,17 @@ ircd::m::vm::fetch::prev_fetch(const event &event,
 			std::max(std::abs(at<"depth"_>(event) - room_depth), 1L)
 		};
 
-		m::fetch::opts opts;
-		opts.op = m::fetch::op::backfill;
-		opts.room_id = room.room_id;
-		opts.event_id = prev_id;
-		opts.backfill_limit = size_t(depth_gap);
-		opts.backfill_limit = std::min(opts.backfill_limit, eval.opts->fetch_prev_limit);
-		opts.backfill_limit = std::min(opts.backfill_limit, size_t(prev_backfill_limit));
-		opts.hint =
+		const auto backfill_max
+		{
+			std::min(size_t(prev_backfill_limit), eval.opts->fetch_prev_limit)
+		};
+
+		const auto backfill_limit
+		{
+			std::min(size_t(depth_gap), backfill_max)
+		};
+
+		const string_view hint
 		{
 			eval.opts->node_id && !my_host(eval.opts->node_id)?
 				eval.opts->node_id:
@@ -670,17 +675,26 @@ ircd::m::vm::fetch::prev_fetch(const event &event,
 
 		log::debug
 		{
-			log, "%s requesting backfill off %s; depth:%ld viewport:%ld room:%ld gap:%ld limit:%zu",
+			log, "%s requesting backfill off %s; "
+			"depth:%ld viewport:%ld room:%ld gap:%ld limit:%zu hint:%s",
 			loghead(eval),
 			string_view{prev_id},
 			at<"depth"_>(event),
 			viewport_depth,
 			room_depth,
 			depth_gap,
-			opts.backfill_limit,
+			backfill_limit,
+			hint,
 		};
 
-		ret.emplace_front(m::fetch::start(opts));
+		ret.emplace_front(m::fetch::start(
+		{
+			.op = m::fetch::op::backfill,
+			.room_id = room.room_id,
+			.event_id = prev_id,
+			.hint = hint,
+			.backfill_limit = backfill_limit,
+		}));
 	}
 	catch(const ctx::interrupted &)
 	{
