@@ -1341,7 +1341,17 @@ noexcept try
 		// prefetcher::cancel() only removes requests from its queue, but if
 		// a prefetch request from this database is in flight that is bad; so
 		// we wait until the unit has completed its pending requests.
-		prefetcher->wait_pending();
+		const size_t waited
+		{
+			prefetcher->wait_pending()
+		};
+
+		log::debug
+		{
+			log, "[%s] cleared %zu from prefetcher.",
+			name,
+			waited,
+		};
 	}
 
 	bgcancel(*this, true);

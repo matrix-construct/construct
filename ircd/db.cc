@@ -561,6 +561,11 @@ ircd::db::prefetcher::prefetcher()
 ircd::db::prefetcher::~prefetcher()
 noexcept
 {
+	log::debug
+	{
+		log, "Stopping prefetcher..."
+	};
+
 	while(!queue.empty())
 	{
 		log::warning
