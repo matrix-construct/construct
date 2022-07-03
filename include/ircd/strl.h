@@ -35,6 +35,11 @@ struct ircd::strlcpy
 	mutable_buffer ret;
 
   public:
+	explicit operator const mutable_buffer &() const
+	{
+		return ret;
+	}
+
 	operator string_view() const
 	{
 		return ret;
@@ -97,16 +102,14 @@ struct ircd::strlcat
 		};
 
 		assert(pos <= max);
-		const auto remain
+		const mutable_buffer tgt
 		{
-			max - pos
+			dst + pos, max - pos
 		};
 
-		strlcpy(dst + pos, src, remain);
-		assert(pos + src.size() <= max);
 		ret = mutable_buffer
 		{
-			dst, pos + src.size()
+			dst, end(mutable_buffer(strlcpy(tgt, src)))
 		};
 	}
 
