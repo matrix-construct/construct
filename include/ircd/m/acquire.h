@@ -127,7 +127,10 @@ struct ircd::m::acquire::opts
 
 struct ircd::m::acquire::result
 {
+	event::id::buf event_id;
 	const m::vm::opts *vmopts {nullptr};
 	ctx::future<fetch::result> future;
-	event::id::buf event_id;
+
+	result(const vm::opts *, const event::id &, ctx::future<fetch::result> &&);
+	result() = default;
 };

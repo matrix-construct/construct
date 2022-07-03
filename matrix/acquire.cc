@@ -617,27 +617,23 @@ ircd::m::acquire::start(const m::event::id &event_id,
                         const vm::opts *const &vmopts)
 try
 {
-	assert(vmopts);
-
-	fetch::opts fopts;
-	fopts.room_id = opts.room.room_id;
-	fopts.event_id = event_id;
-	fopts.backfill_limit = limit;
-	fopts.op =
-		(limit > 1 || hint)?
-			fetch::op::backfill:
-			fetch::op::event;
-
-	fopts.hint = hint;
-	fopts.attempt_limit =
-		!hint_only?
-			opts.attempt_max:
-			1U;
-
-	fetching.emplace_back(result
+	const auto op
 	{
-		vmopts, fetch::start(fopts), event_id
-	});
+		limit > 1 || hint?
+			fetch::op::backfill:
+			fetch::op::event
+	};
+
+	assert(vmopts);
+	fetching.emplace_back(vmopts, event_id, fetch::start(
+	{
+		.op = op,
+		.room_id = opts.room.room_id,
+		.event_id = event_id,
+		.hint = hint,
+		.attempt_limit = !hint_only? opts.attempt_max: 1U,
+		.backfill_limit = limit,
+	}));
 
 	return true;
 }
@@ -777,4 +773,26 @@ ircd::m::acquire::full()
 const noexcept
 {
 	return fetching.size() >= opts.fetch_width;
+}
+
+//
+// result
+//
+
+ircd::m::acquire::result::result(const m::vm::opts *const vmopts,
+                                 const m::event::id &event_id,
+                                 ctx::future<fetch::result> &&future)
+:event_id
+{
+	event_id
+}
+,vmopts
+{
+	vmopts
+}
+,future
+{
+	std::move(future)
+}
+{
 }

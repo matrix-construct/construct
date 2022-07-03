@@ -1104,22 +1104,22 @@ noexcept
 // request::request
 //
 
-ircd::m::fetch::request::request(const fetch::opts &opts)
+ircd::m::fetch::request::request(fetch::opts opts)
 :opts
 {
-	opts
+	std::move(opts)
 }
 ,buf
 {
-	opts.bufsz?: 16_KiB
+	this->opts.bufsz?: 16_KiB
 }
 ,event_id
 {
-	opts.event_id
+	this->opts.event_id
 }
 ,room_id
 {
-	opts.room_id
+	this->opts.room_id
 }
 {
 	this->opts.event_id = this->event_id;

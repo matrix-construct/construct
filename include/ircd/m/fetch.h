@@ -207,7 +207,7 @@ struct ircd::m::fetch::request
 	m::room::id::buf room_id;
 
 	/// Internal
-	request(const fetch::opts &);
+	request(fetch::opts);
 	request(request &&) = delete;
 	request(const request &) = delete;
 	request &operator=(request &&) = delete;
