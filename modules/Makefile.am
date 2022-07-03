@@ -5,7 +5,6 @@ DEFS += -DIRCD_UNIT_MODULE
 
 AM_CPPFLAGS =#
 AM_CPPFLAGS += -I$(top_srcdir)/include
-AM_CPPFLAGS += $(EXTRA_CPPFLAGS)
 
 AM_CXXFLAGS =#
 AM_CXXFLAGS += -ftls-model=global-dynamic
