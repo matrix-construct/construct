@@ -573,10 +573,9 @@ catch(const std::exception &e)
 	throw m::error
 	{
 		http::UNAUTHORIZED, "M_UNVERIFIABLE_SIGNATURE",
-		"%s key %s for %s :%s",
-		string_view{event.event_id},
-		keyid,
+		"%s key %s :%s",
 		origin,
+		keyid,
 		e.what(),
 	};
 }
