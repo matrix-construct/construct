@@ -218,7 +218,7 @@ ircd::m::acquire::fetch_history(event::idx &ref_min)
 		// Fortunately in practice the majority of estimates are close enough.
 		// XXX /get_missing_events should be considered if there's low
 		// confidence in a gap estimate.
-		const auto &limit
+		const auto limit
 		{
 			std::clamp(gap, 1UL, 48UL)
 		};
@@ -557,12 +557,12 @@ ircd::m::acquire::fetch_head(const m::event &result,
 
 	const auto gap
 	{
-		json::get<"depth"_>(result) - top_depth
+		uint64_t(json::get<"depth"_>(result)) - top_depth
 	};
 
-	const auto &limit
+	const auto limit
 	{
-		std::clamp(gap, 1L, 48L)
+		std::clamp(int64_t(gap), 1L, 48L)
 	};
 
 	const auto &hint

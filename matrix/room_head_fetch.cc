@@ -211,9 +211,9 @@ ircd::m::room::head::fetch::fetch(const opts &opts,
 
 		// The depth comes back as one greater than any existing
 		// depth so we subtract one.
-		const auto &depth
+		const auto depth
 		{
-			std::max(json::get<"depth"_>(event) - 1L, 0L)
+			int64_t(std::max(uint64_t(json::get<"depth"_>(event)) - 1, 0UL))
 		};
 
 		const auto &ots
