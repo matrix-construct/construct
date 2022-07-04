@@ -64,7 +64,10 @@
 #include <boost/spirit/include/qi.hpp>
 #include "qi_rule.h"
 #include "qi_char.h"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdangling-pointer"
 #include <boost/spirit/include/karma.hpp>
+#pragma GCC diagnostic pop
 #include "karma_rule.h"
 #include <boost/spirit/repository/include/qi_seek.hpp>
 #include <boost/spirit/repository/include/qi_subrule.hpp>

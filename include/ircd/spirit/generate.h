@@ -102,7 +102,6 @@ extern inline bool
 ircd::spirit::generate(mutable_buffer &out,
                        gen&& g,
                        attr&&... a)
-
 {
 	// Save the user buffer as originally provided in case we need to restore it.
 	const mutable_buffer user
