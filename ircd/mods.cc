@@ -1216,7 +1216,7 @@ ircd::mods::prefix_if_relative(std::string path)
 //
 
 ircd::mods::paths::paths()
-:std::vector<std::string>
+:p
 {{
 	mods::prefix
 }}
@@ -1226,6 +1226,7 @@ ircd::mods::paths::paths()
 bool
 ircd::mods::paths::add(const string_view &dir)
 {
+	assert(!dir.empty());
 	const auto path
 	{
 		prefix_if_relative(dir)
@@ -1252,7 +1253,7 @@ ircd::mods::paths::add(const string_view &dir)
 	if(added(dir))
 		return false;
 
-	emplace(begin(), dir);
+	p.emplace(p.begin(), std::string(dir));
 	return true;
 }
 
@@ -1278,7 +1279,7 @@ catch(const std::exception &e)
 bool
 ircd::mods::paths::del(const string_view &dir)
 {
-	std::remove(begin(), end(), prefix_if_relative(dir));
+	std::remove(p.begin(), p.end(), prefix_if_relative(dir));
 	return true;
 }
 
@@ -1286,5 +1287,5 @@ bool
 ircd::mods::paths::added(const string_view &dir)
 const
 {
-	return std::find(begin(), end(), dir) != end();
+	return std::find(p.begin(), p.end(), dir) != p.end();
 }

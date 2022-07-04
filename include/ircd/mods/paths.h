@@ -25,9 +25,21 @@ namespace ircd::mods
 /// when a relative path/name is given to various other places in the
 /// ircd::mods interface.
 ///
-struct ircd::mods::paths
-:std::vector<std::string>
+class ircd::mods::paths
 {
+	std::vector<std::string> p;
+
+  public:
+	auto begin() const
+	{
+		return p.begin();
+	}
+
+	auto end() const
+	{
+		return p.end();
+	}
+
 	bool added(const string_view &dir) const;
 
 	bool del(const string_view &dir);
