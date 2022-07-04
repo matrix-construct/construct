@@ -15,9 +15,7 @@
 // it involves extremely expensive boost headers for creating formal spirit
 // grammars. This file is automatically included in the spirit.h group.
 
-namespace ircd {
-namespace spirit
-__attribute__((visibility("internal")))
+namespace ircd::spirit
 {
 	template<class rule,
 	         class... attr>
@@ -32,7 +30,7 @@ __attribute__((visibility("internal")))
 	template<class rule,
 	         class... attr>
 	bool parse(std::nothrow_t, const char *&start, const char *const &stop, rule&&, attr&&...) noexcept;
-}}
+}
 
 /// Execute the parse. The start pointer is advanced upon successful execution.
 /// Failures must not throw: If the grammar contains any epsilon expressions or

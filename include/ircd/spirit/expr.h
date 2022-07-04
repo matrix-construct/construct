@@ -40,7 +40,7 @@ namespace ircd::spirit
 /// of indirect calls.
 ///
 template<class T>
-struct [[clang::internal_linkage]]
+struct [[gnu::visibility("internal"), clang::internal_linkage]]
 ircd::spirit::expr
 :boost::proto::result_of::deep_copy<T>::type
 {

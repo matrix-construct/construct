@@ -15,19 +15,17 @@
 // it involves extremely expensive boost headers for creating formal spirit
 // grammars. This file is automatically included in the spirit.h group.
 
-namespace ircd {
-namespace spirit
-__attribute__((visibility("internal")))
+namespace ircd::spirit
 {
-	template<size_t id> struct custom_parser;
+	template<size_t id>
+	struct custom_parser;
+
 	BOOST_SPIRIT_TERMINAL(custom0);
 	BOOST_SPIRIT_TERMINAL(custom1);
 	BOOST_SPIRIT_TERMINAL(custom2);
-}}
+}
 
-namespace boost {
-namespace spirit
-__attribute__((visibility("internal")))
+namespace boost::spirit
 {
 	namespace qi
 	{
@@ -42,23 +40,23 @@ __attribute__((visibility("internal")))
 	}
 
 	template<>
-	struct [[clang::internal_linkage]]
+	struct [[gnu::visibility("internal"), clang::internal_linkage]]
 	use_terminal<qi::domain, ircd::spirit::tag::custom0>
 	:mpl::true_
 	{};
 
 	template<>
-	struct [[clang::internal_linkage]]
+	struct [[gnu::visibility("internal"), clang::internal_linkage]]
 	use_terminal<qi::domain, ircd::spirit::tag::custom1>
 	:mpl::true_
 	{};
 
 	template<>
-	struct [[clang::internal_linkage]]
+	struct [[gnu::visibility("internal"), clang::internal_linkage]]
 	use_terminal<qi::domain, ircd::spirit::tag::custom2>
 	:mpl::true_
 	{};
-}}
+}
 
 template<size_t id>
 struct [[gnu::visibility("internal"), clang::internal_linkage]]

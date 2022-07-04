@@ -15,28 +15,11 @@
 // it involves extremely expensive boost headers for creating formal spirit
 // grammars. This file is automatically included in the spirit.h group.
 
-namespace ircd {
-namespace spirit
-__attribute__((visibility("default")))
+namespace ircd::spirit
 {
 	IRCD_EXCEPTION(error, generator_error);
 	IRCD_EXCEPTION(generator_error, buffer_overrun);
 
-	constexpr size_t
-	generator_buffer_size {64_KiB},
-	generator_buffer_count {8};
-
-	extern thread_local struct generator_state *
-	generator_state;
-
-	extern thread_local char
-	generator_buffer[generator_buffer_count][generator_buffer_size];
-}}
-
-namespace ircd {
-namespace spirit
-__attribute__((visibility("internal")))
-{
 	using prop_mask = mpl_::int_
 	<
 		karma::generator_properties::no_properties
@@ -51,11 +34,22 @@ __attribute__((visibility("internal")))
 		char *, prop_mask, unused_type
 	>;
 
+	constexpr size_t
+	generator_buffer_size {64_KiB},
+	generator_buffer_count {8};
+
+	extern thread_local struct generator_state *
+	generator_state;
+
+	extern thread_local char
+	generator_buffer[generator_buffer_count][generator_buffer_size];
+
 	template<bool truncation = false,
 	         class gen,
 	         class... attr>
+	[[gnu::visibility("internal"), clang::internal_linkage]]
 	bool generate(mutable_buffer &out, gen&&, attr&&...);
-}}
+}
 
 /// This structure is a shadow for the default spirit::karma buffering
 /// stack. They conduct buffering by allocating and copying standard strings
@@ -65,7 +59,7 @@ __attribute__((visibility("internal")))
 /// height of any stack growing from an ircd::spirit::generate() call without
 /// need for reentrancy. This gives us the ability to pre-allocate thread_local
 /// buffers.
-struct [[gnu::visibility("internal")]]
+struct [[gnu::visibility("default")]]
 ircd::spirit::generator_state
 {
 	/// The number of instances stacked behind the current state. This should

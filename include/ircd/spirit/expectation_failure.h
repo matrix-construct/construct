@@ -11,20 +11,17 @@
 #pragma once
 #define HAVE_IRCD_SPIRIT_EXPECTATION_FAILURE_H
 
-namespace ircd {
-namespace spirit
-__attribute__((visibility("default")))
+namespace ircd::spirit
 {
 	template<class parent_error>
 	struct expectation_failure;
 
 	// parse.cc
 	extern thread_local char rule_buffer[128];
-}}
+}
 
 template<class parent_error>
-struct __attribute__((visibility("default")))
-ircd::spirit::expectation_failure
+struct ircd::spirit::expectation_failure
 :parent_error
 {
 	template<class it = const char *>

@@ -11,17 +11,10 @@
 #pragma once
 #define HAVE_IRCD_SPIRIT_SPIRIT_H
 
-namespace ircd {
-namespace spirit
-__attribute__((visibility("default")))
+namespace ircd::spirit
 {
 	IRCD_EXCEPTION(ircd::error, error);
-}}
 
-namespace ircd {
-namespace spirit
-__attribute__((visibility("internal")))
-{
 	namespace phx = boost::phoenix;
 	namespace proto = boost::proto;
 	namespace fusion = boost::fusion;
@@ -113,7 +106,7 @@ __attribute__((visibility("internal")))
 	         class semantic_context>
 	auto &
 	local_at(semantic_context&&);
-}}
+}
 
 template<size_t idx,
          class semantic_context>
