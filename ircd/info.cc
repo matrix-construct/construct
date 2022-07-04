@@ -330,22 +330,26 @@ ircd::info::hardware::x86::_lwp
 };
 
 static ircd::fixed_buffer<ircd::const_buffer, 16>
-ircd_info_hardware_x86_vendor{[](const auto &out)
+ircd_info_hardware_x86_vendor{[]
+(const ircd::mutable_buffer &out) noexcept
 {
 	const auto in
 	{
 		reinterpret_cast<const uint8_t *>(&ircd::info::hardware::x86::manufact)
 	};
 
-	out[0] = in[4];  out[1] = in[5];  out[2] = in[6];   out[3] = in[7];
-	out[4] = in[12]; out[5] = in[13]; out[6] = in[14];  out[7] = in[15];
-	out[8] = in[8];  out[9] = in[9];  out[10] = in[10]; out[11] = in[11];
+	out[0x0] = in[0x4];  out[0x1] = in[0x5];  out[0x2] = in[0x6];  out[0x3] = in[0x7];
+	out[0x4] = in[0xc];  out[0x5] = in[0xd];  out[0x6] = in[0xe];  out[0x7] = in[0xf];
+	out[0x8] = in[0x8];  out[0x9] = in[0x9];  out[0xa] = in[0xa];  out[0xb] = in[0xb];
 }};
 
 decltype(ircd::info::hardware::x86::vendor)
 ircd::info::hardware::x86::vendor
 {
-	ircd_info_hardware_x86_vendor
+	ircd::const_buffer
+	{
+		ircd_info_hardware_x86_vendor
+	}
 };
 
 decltype(ircd::info::hardware::x86::sse)
