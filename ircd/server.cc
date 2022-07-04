@@ -1130,15 +1130,21 @@ ircd::server::peer::link_add(const size_t &num)
 {
 	assert(!finished());
 
-	if(e)
-	{
+	if(e && e->eptr)
 		std::rethrow_exception(e->eptr);
-		__builtin_unreachable();
-	}
+
+	assert(!e);
+	if(unlikely(e))
+		throw unavailable
+		{
+			"Cannot add link to peer %s."
+		};
 
 	assert(!op_fini);
-	links.emplace_back(*this);
-	auto &link{links.back()};
+	auto &link
+	{
+		links.emplace_back(*this)
+	};
 
 	if(remote)
 		link.open(open_opts);
