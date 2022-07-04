@@ -258,23 +258,3 @@ ircd::m::vm::sequence::get(const eval &eval)
 {
 	return eval.sequence;
 }
-
-//
-// copts (creation options)
-//
-
-// Out-of-line linkage
-ircd::m::vm::copts::copts()
-noexcept
-{
-}
-
-//
-// opts (options)
-//
-
-// Out-of-line linkage
-ircd::m::vm::opts::opts()
-noexcept
-{
-}

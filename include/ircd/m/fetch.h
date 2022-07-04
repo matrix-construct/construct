@@ -69,7 +69,7 @@ enum class ircd::m::fetch::op
 struct ircd::m::fetch::opts
 {
 	/// Operation to perform.
-	fetch::op op {op::noop};
+	fetch::op op {fetch::op::noop};
 
 	/// room::id apropos. Many federation requests require a room_id, but
 	/// nevertheless a room_id is still used by this unit as a pool of servers.

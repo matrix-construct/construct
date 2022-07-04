@@ -95,7 +95,7 @@ struct ircd::m::feds::result
 struct ircd::m::feds::opts
 {
 	/// Operation type
-	enum op op {(enum op)0};
+	feds::op op {feds::op::noop};
 
 	/// Timeout for this operation. For a batch of operations, this system
 	/// may attempt -- but does not guarantee -- to cancel timed-out requests

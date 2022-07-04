@@ -169,7 +169,7 @@ ircd::m::fetch::start(opts opts)
 
 	assert(!exists || it->opts.room_id == opts.room_id);
 	if(!exists)
-		it = requests.emplace_hint(it, opts);
+		it = requests.emplace_hint(it, std::move(opts));
 
 	auto &request
 	{

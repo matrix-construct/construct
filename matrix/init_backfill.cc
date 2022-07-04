@@ -364,19 +364,17 @@ catch(const std::exception &e)
 void
 ircd::m::init::backfill::handle_room(const room::id &room_id)
 {
-	{
-		struct m::acquire::opts opts;
-		opts.room = room_id;
-		opts.viewport_size = ssize_t(m::room::events::viewport_size);
-		opts.viewport_size *= size_t(viewports);
-		opts.vmopts.infolog_accept = true;
-		opts.vmopts.warnlog &= ~vm::fault::EXISTS;
-		opts.attempt_max = size_t(attempt_max);
-		m::acquire
+	m::acquire
+	{{
+		.room = room_id,
+		.viewport_size = ssize_t(m::room::events::viewport_size) * size_t(viewports),
+		.attempt_max = size_t(attempt_max),
+		.vmopts = vm::opts
 		{
-			opts
-		};
-	}
+			.warnlog = 0,
+			.infolog_accept = true,
+		},
+	}};
 
 	if(reset_head)
 		room::head::reset(room(room_id));

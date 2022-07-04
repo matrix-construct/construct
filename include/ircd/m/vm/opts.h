@@ -203,8 +203,6 @@ struct ircd::m::vm::opts
 
 	/// Point this at a json::stack to transcribe output.
 	json::stack::object *out {nullptr};
-
-	opts() noexcept;
 };
 
 /// Extension structure to vm::opts which includes additional options for
@@ -244,6 +242,4 @@ struct ircd::m::vm::copts
 
 	/// Whether to log an info message after commit accepted
 	bool infolog_postcommit {false};
-
-	copts() noexcept;
 };
