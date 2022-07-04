@@ -1748,7 +1748,8 @@ try
 		this->cancel();
 	}};
 
-	size_t ret; continuation
+	size_t ret{};
+	continuation
 	{
 		continuation::asio_predicate, interruption, [this, &ret, &bufs]
 		(auto &yield)
@@ -1787,7 +1788,8 @@ try
 		this->cancel();
 	}};
 
-	size_t ret; continuation
+	size_t ret{};
+	continuation
 	{
 		continuation::asio_predicate, interruption, [this, &ret, &bufs]
 		(auto &yield)
@@ -1893,7 +1895,8 @@ try
 		this->cancel();
 	}};
 
-	size_t ret; continuation
+	size_t ret{};
+	continuation
 	{
 		continuation::asio_predicate, interruption, [this, &ret, &bufs]
 		(auto &yield)
@@ -1927,7 +1930,8 @@ try
 		this->cancel();
 	}};
 
-	size_t ret; continuation
+	size_t ret{};
+	continuation
 	{
 		continuation::asio_predicate, interruption, [this, &ret, &bufs]
 		(auto &yield)

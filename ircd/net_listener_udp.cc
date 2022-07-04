@@ -205,7 +205,8 @@ ircd::net::acceptor_udp::operator()(datagram &datagram)
 	};
 
 	ip::udp::endpoint ep;
-	size_t rlen; continuation
+	size_t rlen{};
+	continuation
 	{
 		continuation::asio_predicate, interruption, [this, &rlen, &datagram, &ep, &flags]
 		(auto &yield)

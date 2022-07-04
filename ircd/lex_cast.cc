@@ -141,7 +141,7 @@ inline T
 ircd::lex::cast(const string_view &s)
 try
 {
-	T ret;
+	T ret {};
 	const char *start(begin(s)), *const stop(end(s));
 	const bool pass
 	{
