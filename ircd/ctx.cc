@@ -1360,7 +1360,7 @@ ircd::ctx::context::join()
 
 	assert(bool(c));
 	mark(prof::event::JOIN);
-	ctx::adjoindre.wait([this]
+	ctx::adjoindre.wait([this]() noexcept
 	{
 		return joined();
 	});

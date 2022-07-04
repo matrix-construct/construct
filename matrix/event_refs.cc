@@ -75,7 +75,7 @@ ircd::m::event::refs::rebuild()
 		++i;
 	}
 
-	dock.wait([&i, &j]
+	dock.wait([&i, &j]() noexcept
 	{
 		return i == j;
 	});
@@ -133,7 +133,7 @@ const
 {
 	size_t ret(0);
 	for_each(type, [&ret]
-	(const event::idx &, const dbs::ref &)
+	(const event::idx &, const dbs::ref &) noexcept
 	{
 		++ret;
 		return true;
@@ -154,7 +154,7 @@ ircd::m::event::refs::has(const dbs::ref &type)
 const
 {
 	return !for_each(type, [&type]
-	(const event::idx &, const dbs::ref &ref)
+	(const event::idx &, const dbs::ref &ref) noexcept
 	{
 		assert(ref == type);
 		return false;
@@ -167,7 +167,7 @@ ircd::m::event::refs::has(const dbs::ref &type,
 const
 {
 	return !for_each(type, [&idx]
-	(const event::idx &ref, const dbs::ref &)
+	(const event::idx &ref, const dbs::ref &) noexcept
 	{
 		return ref != idx; // true to continue, false to break
 	});

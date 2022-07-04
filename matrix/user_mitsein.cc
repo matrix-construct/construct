@@ -15,7 +15,7 @@ const
 {
 	// Return true if broken out of loop.
 	return !for_each(other, membership, []
-	(const m::room &, const string_view &)
+	(const m::room &, const string_view &) noexcept
 	{
 		// Break out of loop at first shared room
 		return false;
@@ -27,7 +27,8 @@ ircd::m::user::mitsein::count(const string_view &membership)
 const
 {
 	size_t ret{0};
-	for_each(membership, [&ret](const m::user &)
+	for_each(membership, [&ret]
+	(const m::user &) noexcept
 	{
 		++ret;
 		return true;
@@ -42,7 +43,8 @@ ircd::m::user::mitsein::count(const m::user &user,
 const
 {
 	size_t ret{0};
-	for_each(user, membership, [&ret](const m::room &, const string_view &)
+	for_each(user, membership, [&ret]
+	(const m::room &, const string_view &) noexcept
 	{
 		++ret;
 		return true;

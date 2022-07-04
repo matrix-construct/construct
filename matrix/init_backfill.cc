@@ -129,7 +129,7 @@ ircd::m::init::backfill::worker_context;
 decltype(ircd::m::init::backfill::handle_quit)
 ircd::m::init::backfill::handle_quit
 {
-	run::level::QUIT, []
+	run::level::QUIT, []() noexcept
 	{
 		term();
 	}

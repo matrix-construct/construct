@@ -13,7 +13,7 @@ ircd::m::user::events::count()
 const
 {
 	size_t ret{0};
-	for_each([&ret](const event::idx &)
+	for_each([&ret](const event::idx &) noexcept
 	{
 		++ret;
 		return true;

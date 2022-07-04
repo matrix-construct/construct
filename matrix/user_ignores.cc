@@ -33,7 +33,7 @@ ircd::m::user::ignores::has(const m::user::id &other)
 const
 {
 	return !for_each([&other]
-	(const m::user::id &user_id, const json::object &)
+	(const m::user::id &user_id, const json::object &) noexcept
 	{
 		return user_id != other;
 	});

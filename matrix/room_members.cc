@@ -28,7 +28,7 @@ ircd::m::room::members::empty(const string_view &membership,
 const
 {
 	return for_each(membership, host, closure{[]
-	(const user::id &user_id)
+	(const user::id &user_id) noexcept
 	{
 		return false;
 	}});
@@ -55,7 +55,7 @@ const
 {
 	size_t ret{0};
 	for_each(membership, host, closure{[&ret]
-	(const user::id &user_id)
+	(const user::id &user_id) noexcept
 	{
 		++ret;
 		return true;

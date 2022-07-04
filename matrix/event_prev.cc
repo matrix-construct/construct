@@ -66,7 +66,8 @@ size_t
 ircd::m::count(const event::prev &prev)
 {
 	size_t ret{0};
-	m::for_each(prev, [&ret](const event::id &event_id)
+	m::for_each(prev, [&ret]
+	(const event::id &event_id) noexcept
 	{
 		++ret;
 		return true;

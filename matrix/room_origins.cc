@@ -90,7 +90,7 @@ ircd::m::room::origins::empty()
 const
 {
 	return for_each(closure_bool{[]
-	(const string_view &)
+	(const string_view &) noexcept
 	{
 		// return false to break and return false.
 		return false;
@@ -102,7 +102,8 @@ ircd::m::room::origins::count()
 const
 {
 	size_t ret{0};
-	for_each([&ret](const string_view &)
+	for_each([&ret]
+	(const string_view &) noexcept
 	{
 		++ret;
 	});
@@ -150,7 +151,7 @@ const
 {
 	ushort ret{2};
 	for_each(closure_bool{[&ret, &origin]
-	(const string_view &origin_) -> bool
+	(const string_view &origin_) noexcept -> bool
 	{
 		if(origin == origin_)
 			ret = 1;

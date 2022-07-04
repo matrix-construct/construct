@@ -278,7 +278,7 @@ void
 ircd::m::app::worker()
 try
 {
-	child.dock.wait([this]
+	child.dock.wait([this]() noexcept
 	{
 		return child.pid >= 0;
 	});

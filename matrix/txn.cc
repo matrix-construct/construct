@@ -89,7 +89,7 @@ ircd::m::txn::create(const closure &closure,
 	{
 		iov, !empty(pdu),
 		{
-			"pdus", [&pdu]() -> json::value
+			"pdus", [&pdu]() noexcept -> json::value
 			{
 				return { data(pdu), size(pdu) };
 			}
@@ -100,7 +100,7 @@ ircd::m::txn::create(const closure &closure,
 	{
 		iov, !empty(edu),
 		{
-			"edus", [&edu]() -> json::value
+			"edus", [&edu]() noexcept -> json::value
 			{
 				return { data(edu), size(edu) };
 			}
@@ -111,7 +111,7 @@ ircd::m::txn::create(const closure &closure,
 	{
 		iov, !empty(pdu_failure),
 		{
-			"pdu_failures", [&pdu_failure]() -> json::value
+			"pdu_failures", [&pdu_failure]() noexcept -> json::value
 			{
 				return { data(pdu_failure), size(pdu_failure) };
 			}

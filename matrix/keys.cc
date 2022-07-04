@@ -288,7 +288,7 @@ size_t
 ircd::m::keys::fetch(const queries &queries)
 {
 	size_t ret(0);
-	get(queries, [&ret](const auto &)
+	get(queries, [&ret](const auto &) noexcept
 	{
 		++ret;
 		return true;

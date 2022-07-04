@@ -21,7 +21,7 @@ bool
 ircd::m::users::exists(const opts &opts)
 {
 	return !for_each(opts, []
-	(const auto &)
+	(const auto &) noexcept
 	{
 		// return false to break and have for_each() returns false
 		return false;
@@ -32,7 +32,8 @@ size_t
 ircd::m::users::count(const opts &opts)
 {
 	size_t ret(0);
-	for_each(opts, [&ret](const auto &)
+	for_each(opts, [&ret]
+	(const auto &) noexcept
 	{
 		++ret;
 		return true;

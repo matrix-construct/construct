@@ -125,7 +125,8 @@ ircd::m::user::pushers::has(const string_view &key)
 const
 {
 	return !for_each([&key] // for_each() returns true if no match
-	(const event::idx &pusher_idx, const string_view &pushkey, const push::pusher &pusher)
+	(const event::idx &, const string_view &pushkey, const push::pusher &)
+	noexcept
 	{
 		return key != pushkey;
 	});
@@ -136,7 +137,8 @@ ircd::m::user::pushers::any(const string_view &kind)
 const
 {
 	return !for_each([&kind] // for_each() returns true if no match
-	(const event::idx &pusher_idx, const string_view &pushkey, const push::pusher &pusher)
+	(const event::idx &, const string_view &, const push::pusher &pusher)
+	noexcept
 	{
 		if(!kind)
 			return false;
@@ -154,7 +156,8 @@ const
 {
 	size_t ret{0};
 	for_each([&ret, &kind]
-	(const event::idx &pusher_idx, const string_view &pushkey, const push::pusher &pusher)
+	(const event::idx &, const string_view &, const push::pusher &pusher)
+	noexcept
 	{
 		ret += !kind || json::get<"kind"_>(pusher) == kind;
 		return true;

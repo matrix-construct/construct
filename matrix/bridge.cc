@@ -195,8 +195,9 @@ bool
 ircd::m::bridge::config::exists(const string_view &id)
 {
 	return get(std::nothrow, id, []
-	(const auto &, const auto &, const auto &)
+	(const auto &, const auto &, const auto &) noexcept
 	{
+		// no action
 	});
 }
 

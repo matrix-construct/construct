@@ -15,7 +15,7 @@ const
 {
 	// Return true if broken out of loop.
 	return !for_each(membership, []
-	(const auto &server)
+	(const auto &server) noexcept
 	{
 		// Break out of loop at first shared room
 		return false;
@@ -28,7 +28,7 @@ const
 {
 	size_t ret{0};
 	for_each(membership, [&ret]
-	(const auto &server)
+	(const auto &server) noexcept
 	{
 		++ret;
 		return true;

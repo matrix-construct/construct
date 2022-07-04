@@ -551,7 +551,7 @@ const
 {
 	size_t ret{0};
 	for_each([&ret]
-	(const string_view &, const int64_t &)
+	(const string_view &, const int64_t &) noexcept
 	{
 		++ret;
 		return true;
@@ -581,7 +581,7 @@ const
 {
 	size_t ret{0};
 	for_each(prop, [&ret]
-	(const string_view &, const int64_t &)
+	(const string_view &, const int64_t &) noexcept
 	{
 		++ret;
 		return true;

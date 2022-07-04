@@ -237,7 +237,7 @@ const
 	const bool got
 	{
 		get(std::nothrow, id, prop, [&val, &dup]
-		(const auto &event_idx, const json::string &existing)
+		(const auto &event_idx, const json::string &existing) noexcept
 		{
 			dup = val == existing;
 		})
@@ -293,7 +293,7 @@ const
 {
 	bool ret{false};
 	get(std::nothrow, id, prop, [&ret]
-	(const auto &event_idx, const string_view &value)
+	(const auto &event_idx, const string_view &value) noexcept
 	{
 		ret = !empty(value);
 	});

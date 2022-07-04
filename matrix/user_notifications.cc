@@ -58,7 +58,7 @@ ircd::m::user::notifications::empty(const opts &opts)
 const
 {
 	return !for_each(opts, closure_meta{[&]
-	(const auto &, const auto &)
+	(const auto &, const auto &) noexcept
 	{
 		return false;
 	}});
@@ -70,7 +70,7 @@ const
 {
 	size_t ret(0);
 	for_each(opts, closure_meta{[&ret]
-	(const auto &, const auto &)
+	(const auto &, const auto &) noexcept
 	{
 		++ret;
 		return true;

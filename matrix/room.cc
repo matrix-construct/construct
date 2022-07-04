@@ -489,7 +489,11 @@ ircd::m::exists(const id::room_alias &room_alias,
 	if(!remote_query)
 		return false;
 
-	return room::aliases::cache::get(std::nothrow, room_alias, [](const room::id &room_id) {});
+	return room::aliases::cache::get(std::nothrow, room_alias, []
+	(const room::id &) noexcept
+	{
+		// no action
+	});
 }
 
 int64_t
@@ -1407,7 +1411,7 @@ const
 
 		if(!match)
 			column(byte_view<string_view>(event_idx), std::nothrow, [&match, &type]
-			(const string_view &value)
+			(const string_view &value) noexcept
 			{
 				match = value == type;
 			});

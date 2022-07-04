@@ -44,7 +44,8 @@ ircd::m::room::aliases::count(const string_view &server)
 const
 {
 	size_t ret(0);
-	for_each(server, [&ret](const auto &a)
+	for_each(server, [&ret]
+	(const auto &a) noexcept
 	{
 		++ret;
 		return true;
@@ -58,7 +59,7 @@ ircd::m::room::aliases::has(const alias &alias)
 const
 {
 	return !for_each(alias.host(), [&alias]
-	(const id::room_alias &a)
+	(const id::room_alias &a) noexcept
 	{
 		assert(a.host() == alias.host());
 		return a == alias? false : true; // false to break on found

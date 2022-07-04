@@ -392,7 +392,7 @@ try
 	};
 
 	power.for_each("notifications", [&required_level, &key]
-	(const auto &name, const auto &level)
+	(const auto &name, const auto &level) noexcept
 	{
 		if(name == key)
 		{

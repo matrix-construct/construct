@@ -14,7 +14,7 @@ const
 {
 	size_t ret{0};
 	for_each([&ret]
-	(const m::room &, const string_view &membership)
+	(const m::room &, const string_view &membership) noexcept
 	{
 		++ret;
 	});
@@ -28,7 +28,7 @@ const
 {
 	size_t ret{0};
 	for_each(membership, [&ret]
-	(const m::room &, const string_view &membership)
+	(const m::room &, const string_view &membership) noexcept
 	{
 		++ret;
 	});

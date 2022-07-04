@@ -56,7 +56,7 @@ ircd::m::twain(const room &room)
 	};
 
 	s.rfor_each([&ret]
-	(const auto &range, const auto &event_idx)
+	(const auto &range, const auto &event_idx) noexcept
 	{
 		ret.first = range.first - 1;
 		return false;
@@ -79,7 +79,7 @@ ircd::m::sounding(const room &room)
 	};
 
 	s.rfor_each([&ret]
-	(const auto &range, const auto &event_idx)
+	(const auto &range, const auto &event_idx) noexcept
 	{
 		ret.first = range.second;
 		ret.second = event_idx;
@@ -103,7 +103,7 @@ ircd::m::hazard(const room &room)
 	};
 
 	s.for_each([&ret]
-	(const auto &range, const auto &event_idx)
+	(const auto &range, const auto &event_idx) noexcept
 	{
 		ret.first = range.first;
 		return false;
@@ -438,7 +438,7 @@ const
 {
 	size_t ret{0};
 	for_each([&ret]
-	(const auto &event_id, const auto &depth, const auto &event_idx)
+	(const auto &event_id, const auto &depth, const auto &event_idx) noexcept
 	{
 		++ret;
 		return true;
@@ -662,7 +662,7 @@ const
 {
 	size_t ret{0};
 	for_each([&ret]
-	(const auto &event_id, const auto &depth, const auto &event_idx)
+	(const auto &event_id, const auto &depth, const auto &event_idx) noexcept
 	{
 		++ret;
 		return true;
@@ -677,7 +677,7 @@ const
 {
 	const std::function<bool (const string_view &)> in_room
 	{
-		[this](const string_view &room_id)
+		[this](const string_view &room_id) noexcept
 		{
 			return room_id == this->room.room_id;
 		}

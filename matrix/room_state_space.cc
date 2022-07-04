@@ -73,7 +73,7 @@ ircd::m::room::state::space::has(const string_view &type,
 const
 {
 	return !for_each(type, state_key, depth, []
-	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
+	(const auto &, const auto &, const auto &, const auto &) noexcept
 	{
 		return false;
 	});
@@ -109,7 +109,7 @@ const
 {
 	size_t ret(0);
 	for_each(type, state_key, depth, [&ret]
-	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
+	(const auto &, const auto &, const auto &, const auto &) noexcept
 	{
 		++ret;
 		return true;

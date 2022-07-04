@@ -556,7 +556,7 @@ ircd::m::events::type::has(const string_view &type)
 {
 	bool ret{false};
 	for_each(type, [&ret, &type]
-	(const string_view &type_)
+	(const string_view &type_) noexcept
 	{
 		ret = type == type_;
 		return false; // uncond break out of loop after first result
@@ -570,7 +570,7 @@ ircd::m::events::type::has_prefix(const string_view &type)
 {
 	bool ret{false};
 	for_each(type, [&ret, &type]
-	(const string_view &type_)
+	(const string_view &type_) noexcept
 	{
 		ret = startswith(type_, type);
 		return false; // uncond break out of loop after first result

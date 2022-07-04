@@ -85,7 +85,7 @@ const
 {
 	event::idx ret;
 	get(type, state_key, event::closure_idx{[&ret]
-	(const event::idx &event_idx)
+	(const event::idx &event_idx) noexcept
 	{
 		ret = event_idx;
 	}});
@@ -101,7 +101,7 @@ const
 {
 	event::idx ret{0};
 	get(std::nothrow, type, state_key, event::closure_idx{[&ret]
-	(const event::idx &event_idx)
+	(const event::idx &event_idx) noexcept
 	{
 		ret = event_idx;
 	}});
@@ -295,7 +295,7 @@ const
 	}
 
 	return !for_each(type, []
-	(const string_view &, const string_view &, const event::idx &)
+	(const string_view &, const string_view &, const event::idx &) noexcept
 	{
 		return false;
 	});
@@ -366,7 +366,7 @@ const
 
 	size_t ret(0);
 	for_each(type, [&ret]
-	(const string_view &, const string_view &, const event::idx &)
+	(const string_view &, const string_view &, const event::idx &) noexcept
 	{
 		++ret;
 		return true;
@@ -755,7 +755,7 @@ ircd::m::room::state::is(const event::idx &event_idx)
 {
 	bool ret{false};
 	m::get(event_idx, "state_key", [&ret]
-	(const string_view &state_key)
+	(const string_view &state_key) noexcept
 	{
 		ret = true;
 	});
@@ -769,7 +769,7 @@ ircd::m::room::state::is(std::nothrow_t,
 {
 	bool ret{false};
 	m::get(std::nothrow, event_idx, "state_key", [&ret]
-	(const string_view &state_key)
+	(const string_view &state_key) noexcept
 	{
 		ret = true;
 	});
@@ -797,7 +797,8 @@ ircd::m::room::state::purge_replaced(const room::id &room_id)
 	for(; it; ++it)
 	{
 		const m::event::idx &event_idx(it.event_idx());
-		if(!m::get(std::nothrow, event_idx, "state_key", [](const auto &) {}))
+		static const auto no_action{[](const auto &) noexcept {}};
+		if(!m::get(std::nothrow, event_idx, "state_key", no_action))
 			continue;
 
 		if(!m::event::refs(event_idx).count(m::dbs::ref::NEXT_STATE))
@@ -846,7 +847,7 @@ ircd::m::room::state::prev(const event::idx &event_idx)
 {
 	event::idx ret{0};
 	prev(event_idx, [&ret]
-	(const event::idx &event_idx)
+	(const event::idx &event_idx) noexcept
 	{
 		if(event_idx > ret)
 			ret = event_idx;
@@ -862,7 +863,7 @@ ircd::m::room::state::next(const event::idx &event_idx)
 {
 	event::idx ret{0};
 	next(event_idx, [&ret]
-	(const event::idx &event_idx)
+	(const event::idx &event_idx) noexcept
 	{
 		if(event_idx > ret)
 			ret = event_idx;

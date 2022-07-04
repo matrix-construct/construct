@@ -64,7 +64,7 @@ bool
 ircd::m::rooms::has(const opts &opts)
 {
 	return !for_each(opts, []
-	(const m::room::id &)
+	(const m::room::id &) noexcept
 	{
 		// false to break; for_each() returns false
 		return false;
@@ -76,7 +76,7 @@ ircd::m::rooms::count(const opts &opts)
 {
 	size_t ret{0};
 	for_each(opts, [&ret]
-	(const m::room::id &)
+	(const m::room::id &) noexcept
 	{
 		++ret;
 		return true;
@@ -216,7 +216,7 @@ ircd::m::rooms::for_each(const opts &opts,
 	{
 		++prefetch;
 		prefetched += m::prefetch(event_idx, "room_id");
-		dock.wait([&]
+		dock.wait([&]() noexcept
 		{
 			return fetch + opts.prefetch > prefetch;
 		});

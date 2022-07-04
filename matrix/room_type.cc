@@ -34,7 +34,7 @@ ircd::m::room::type::empty()
 const
 {
 	return for_each([]
-	(const auto &type, const auto &depth, const auto &event_idx)
+	(const auto &type, const auto &depth, const auto &event_idx) noexcept
 	{
 		return false;
 	});
@@ -46,7 +46,7 @@ const
 {
 	size_t ret(0);
 	for_each([&ret]
-	(const auto &type, const auto &depth, const auto &event_idx)
+	(const auto &type, const auto &depth, const auto &event_idx) noexcept
 	{
 		++ret;
 		return true;

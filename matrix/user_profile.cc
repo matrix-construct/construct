@@ -152,7 +152,7 @@ ircd::m::user::profile::fetch(const m::user &user,
 	{
 		bool exists{false};
 		profile.get(std::nothrow, member.first, [&exists, &member]
-		(const string_view &key, const string_view &val)
+		(const string_view &key, const string_view &val) noexcept
 		{
 			exists = member.second == val;
 		});

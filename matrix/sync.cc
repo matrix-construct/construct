@@ -461,7 +461,7 @@ const
 {
 	size_t ret(0);
 	sync::for_each(this->name(), [&ret]
-	(auto &item)
+	(auto &item) noexcept
 	{
 		++ret;
 		return true;

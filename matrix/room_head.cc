@@ -225,7 +225,7 @@ const
 {
 	size_t ret(0);
 	for_each([&ret]
-	(const event::idx &event_idx, const event::id &event_id)
+	(const event::idx &event_idx, const event::id &event_id) noexcept
 	{
 		++ret;
 		return true;
@@ -240,7 +240,7 @@ const
 {
 	bool ret{false};
 	for_each([&ret, &event_id]
-	(const event::idx &event_idx, const event::id &event_id_)
+	(const event::idx &event_idx, const event::id &event_id_) noexcept
 	{
 		ret = event_id_ == event_id;
 		return !ret; // for_each protocol: false to break

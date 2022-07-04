@@ -660,28 +660,28 @@ ircd::m::room::auth::hookdata::hookdata(const m::event &event,
 }
 ,auth_create
 {
-	find([](const auto &event)
+	find([](const auto &event) noexcept
 	{
 		return json::get<"type"_>(event) == "m.room.create";
 	})
 }
 ,auth_power
 {
-	find([](const auto &event)
+	find([](const auto &event) noexcept
 	{
 		return json::get<"type"_>(event) == "m.room.power_levels";
 	})
 }
 ,auth_join_rules
 {
-	find([](const auto &event)
+	find([](const auto &event) noexcept
 	{
 		return json::get<"type"_>(event) == "m.room.join_rules";
 	})
 }
 ,auth_member_target
 {
-	find([&event](const auto &auth_event)
+	find([&event](const auto &auth_event) noexcept
 	{
 		return json::get<"type"_>(auth_event) == "m.room.member" &&
 		       json::get<"state_key"_>(auth_event) == json::get<"state_key"_>(event);
@@ -689,7 +689,7 @@ ircd::m::room::auth::hookdata::hookdata(const m::event &event,
 }
 ,auth_member_sender
 {
-	find([&event](const auto &auth_event)
+	find([&event](const auto &auth_event) noexcept
 	{
 		return json::get<"type"_>(auth_event) == "m.room.member" &&
 		       json::get<"state_key"_>(auth_event) == json::get<"sender"_>(event);
@@ -725,7 +725,8 @@ ircd::m::room::auth::refs::count(const string_view &type)
 const
 {
 	size_t ret(0);
-	for_each(type, [&ret](const auto &)
+	for_each(type, [&ret]
+	(const auto &) noexcept
 	{
 		++ret;
 		return true;
@@ -738,7 +739,8 @@ bool
 ircd::m::room::auth::refs::has(const event::idx &idx)
 const
 {
-	return !for_each([&idx](const event::idx &ref)
+	return !for_each([&idx]
+	(const event::idx &ref) noexcept
 	{
 		return ref != idx; // true to continue, false to break
 	});
@@ -749,7 +751,8 @@ ircd::m::room::auth::refs::has(const string_view &type)
 const
 {
 	bool ret{false};
-	for_each(type, [&ret](const auto &)
+	for_each(type, [&ret]
+	(const auto &) noexcept
 	{
 		ret = true;
 		return false;
@@ -782,7 +785,7 @@ const
 		bool match;
 		const auto matcher
 		{
-			[&type, &match](const string_view &type_)
+			[&type, &match](const string_view &type_) noexcept
 			{
 				match = type == type_;
 			}
@@ -814,7 +817,8 @@ ircd::m::room::auth::chain::depth()
 const
 {
 	size_t ret(0);
-	for_each([&ret](const auto &)
+	for_each([&ret]
+	(const auto &) noexcept
 	{
 		++ret;
 		return true;
@@ -832,7 +836,7 @@ const
 	(const auto &idx)
 	{
 		m::get(std::nothrow, idx, "type", [&type, &ret]
-		(const auto &value)
+		(const auto &value) noexcept
 		{
 			ret = value == type;
 		});

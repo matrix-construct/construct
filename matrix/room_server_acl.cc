@@ -173,7 +173,7 @@ const
 	};
 
 	return !for_each(prop, [&server]
-	(const string_view &expression)
+	(const string_view &expression) noexcept
 	{
 		const globular_imatch match
 		{
@@ -191,7 +191,7 @@ ircd::m::room::server_acl::has(const string_view &prop,
 const
 {
 	return !for_each(prop, [&expr]
-	(const string_view &_expr)
+	(const string_view &_expr) noexcept
 	{
 		// false to break on match
 		return _expr == expr? false : true;
@@ -240,7 +240,7 @@ const
 {
 	size_t ret(0);
 	for_each(prop, [&ret]
-	(const string_view &)
+	(const string_view &) noexcept
 	{
 		++ret;
 		return true;

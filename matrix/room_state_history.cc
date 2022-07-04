@@ -102,7 +102,7 @@ const
 	event::idx ret{0};
 	assert(type && defined(state_key));
 	for_each(type, state_key, [&ret]
-	(const auto &, const auto &, const auto &, const auto &event_idx)
+	(const auto &, const auto &, const auto &, const auto &event_idx) noexcept
 	{
 		ret = event_idx;
 		return false;
@@ -124,7 +124,7 @@ ircd::m::room::state::history::has(const string_view &type,
 const
 {
 	return !for_each(type, state_key, []
-	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
+	(const auto &, const auto &, const auto &, const auto &) noexcept
 	{
 		return false;
 	});
@@ -144,7 +144,7 @@ const
 {
 	size_t ret(0);
 	for_each(type, state_key, [&ret]
-	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
+	(const auto &, const auto &, const auto &, const auto &) noexcept
 	{
 		++ret;
 		return true;

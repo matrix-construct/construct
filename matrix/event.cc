@@ -1076,7 +1076,7 @@ ircd::m::bad(const id::event &event_id)
 {
 	bool ret {false};
 	index(std::nothrow, event_id, [&ret]
-	(const event::idx &event_idx)
+	(const event::idx &event_idx) noexcept
 	{
 		ret = event_idx == 0;
 	});
