@@ -20,6 +20,7 @@ ircd::m::membership_negative
 {
 	"leave"_sv,
 	"ban"_sv,
+	"knock"_sv,
 	""_sv,
 };
 

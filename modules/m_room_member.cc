@@ -10,6 +10,9 @@
 
 namespace ircd::m
 {
+	static void auth_room_member_knock(const event &, room::auth::hookdata &);
+	extern m::hookfn<room::auth::hookdata &> auth_room_member_knock_hookfn;
+
 	static void auth_room_member_ban(const event &, room::auth::hookdata &);
 	extern m::hookfn<room::auth::hookdata &> auth_room_member_ban_hookfn;
 
@@ -92,6 +95,10 @@ ircd::m::auth_room_member(const m::event &event,
 	if(membership == "ban")
 		return; // see hook handler
 
+	// 6. If membership is knock
+	if(membership == "knock")
+		return; // see hook handler
+
 	// f. Otherwise, the membership is unknown. Reject.
 	throw FAIL
 	{
@@ -157,7 +164,7 @@ ircd::m::auth_room_member_join(const m::event &event,
 
 	// iv. If the join_rule is invite then allow if membership state
 	// is invite or join.
-	if(join_rule == "invite")
+	if(join_rule == "invite" || join_rule == "knock")
 	{
 		if(!data.auth_member_target)
 			throw FAIL
@@ -315,13 +322,12 @@ ircd::m::auth_room_member_leave(const m::event &event,
 	// user's current membership state is invite or join.
 	if(json::get<"sender"_>(event) == json::get<"state_key"_>(event))
 	{
-		if(data.auth_member_target && membership(*data.auth_member_target) == "join")
+		static const string_view allowed[]
 		{
-			data.allow = true;
-			return;
-		}
+			"join", "invite", "knock"
+		};
 
-		if(data.auth_member_target && membership(*data.auth_member_target) == "invite")
+		if(data.auth_member_target && membership(*data.auth_member_target, allowed))
 		{
 			data.allow = true;
 			return;
@@ -329,7 +335,8 @@ ircd::m::auth_room_member_leave(const m::event &event,
 
 		throw FAIL
 		{
-			"m.room.member membership=leave self-target must have membership=join|invite."
+			"m.room.member membership=leave "
+			"self-target must have membership=join|invite|knock."
 		};
 	}
 
@@ -382,7 +389,6 @@ ircd::m::auth_room_member_leave(const m::event &event,
 		"m.room.member membership=leave fails authorization."
 	};
 }
-
 
 decltype(ircd::m::auth_room_member_ban_hookfn)
 ircd::m::auth_room_member_ban_hookfn
@@ -439,5 +445,75 @@ ircd::m::auth_room_member_ban(const m::event &event,
 	throw FAIL
 	{
 		"m.room.member membership=ban fails authorization."
+	};
+}
+
+decltype(ircd::m::auth_room_member_knock_hookfn)
+ircd::m::auth_room_member_knock_hookfn
+{
+	auth_room_member_knock,
+	{
+		{ "_site",       "room.auth"     },
+		{ "type",        "m.room.member" },
+		{ "content",
+		{
+			{ "membership",  "knock" },
+		}},
+	}
+};
+
+void
+ircd::m::auth_room_member_knock(const m::event &event,
+                                room::auth::hookdata &data)
+{
+	using FAIL = m::room::auth::FAIL;
+
+	// e. If membership is knock
+	assert(membership(event) == "knock");
+
+	const json::string &join_rule
+	{
+		data.auth_join_rules?
+			json::get<"content"_>(*data.auth_join_rules).get("join_rule"):
+			"invite"_sv
+	};
+
+	// 1. If the join_rule is anything other than knock, reject.
+	if(join_rule != "knock" && join_rule != "knock_restricted")
+		throw FAIL
+		{
+			"m.room.member membership=knock :join rule anything other than knock."
+		};
+
+	// 2. If sender does not match state_key, reject.
+	if(at<"sender"_>(event) != at<"state_key"_>(event))
+		throw FAIL
+		{
+			"m.room.member membership=knock sender != state_key"
+		};
+
+	// 3. If the sender’s current membership
+	if(!data.auth_member_sender)
+		throw FAIL
+		{
+			"m.room.member membership=knock missing sender member auth event."
+		};
+
+	static const string_view is_not[]
+	{
+		"ban", "invite", "join"
+	};
+
+	// ... is not ban, invite, or join, allow.
+	if(!membership(*data.auth_member_sender, is_not))
+	{
+		data.allow = true;
+		return;
+	};
+
+	// 4. Otherwise, reject.
+	throw FAIL
+	{
+		"m.room.member membership=knock fails authorization."
 	};
 }

@@ -42,8 +42,9 @@ namespace ircd::m
 	bool membership(const room &, const id::user &, const vector_view<const string_view> &);
 
 	// Convenience definitions of membership states for atomic queries.
-	extern const std::initializer_list<const string_view> membership_positive; // join, invite
-	extern const std::initializer_list<const string_view> membership_negative; // leave, ban, [non-membership]
+	extern const std::initializer_list<const string_view>
+	membership_positive, // join, invite
+	membership_negative; // leave, ban, knock, [non-membership]
 }
 
 inline bool
