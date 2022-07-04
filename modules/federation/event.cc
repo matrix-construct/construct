@@ -10,22 +10,32 @@
 
 using namespace ircd;
 
-mapi::header IRCD_MODULE
+mapi::header
+IRCD_MODULE
 {
 	"federation event"
 };
 
-struct send
-:m::resource
-{
-	using m::resource::resource;
-}
+m::resource
 event_resource
 {
 	"/_matrix/federation/v1/event/",
 	{
 		"federation event",
 		resource::DIRECTORY,
+	}
+};
+
+static m::resource::response
+handle_get(client &,
+           const m::resource::request &);
+
+m::resource::method
+method_get
+{
+	event_resource, "GET", handle_get,
+	{
+		method_get.VERIFY_ORIGIN
 	}
 };
 
@@ -74,12 +84,3 @@ handle_get(client &client,
 	pdus.append(event);
 	return response;
 }
-
-m::resource::method
-method_get
-{
-	event_resource, "GET", handle_get,
-	{
-		method_get.VERIFY_ORIGIN
-	}
-};
