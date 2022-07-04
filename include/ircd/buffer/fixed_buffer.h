@@ -26,17 +26,17 @@ struct ircd::buffer::fixed_buffer
 	using proto_type = void (const mutable_buffer &);
 	using args_type = const mutable_buffer &;
 
-	operator buffer_type() const;
-	operator buffer_type();
+	operator buffer_type() const noexcept;
+	operator buffer_type() noexcept;
 
 	using array_type::array_type;
-	fixed_buffer(buffer_type b);
-	explicit fixed_buffer(nullptr_t);
 
 	template<class F>
 	fixed_buffer(F&&,
 	             typename std::enable_if<std::is_invocable<F, args_type>::value, void>::type * = nullptr);
 
+	explicit fixed_buffer(nullptr_t) noexcept;
+	fixed_buffer(const buffer_type &b) noexcept;
 	fixed_buffer() = default;
 };
 
@@ -54,25 +54,31 @@ inline
 ircd::buffer::fixed_buffer<buffer_type, SIZE>::fixed_buffer(F&& closure,
                                                             typename std::enable_if<std::is_invocable<F, args_type>::value, void>::type *)
 {
-	closure(mutable_buffer
+	const mutable_buffer buf
 	{
-		reinterpret_cast<mutable_buffer::iterator>(this->data()),
-		this->size()
-	});
+		reinterpret_cast<mutable_buffer::iterator>(this->data()), SIZE
+	};
+
+	closure(buf);
 }
 
 template<class buffer_type,
          size_t SIZE>
 inline
-ircd::buffer::fixed_buffer<buffer_type, SIZE>::fixed_buffer(nullptr_t)
-:array_type{{0}}
+ircd::buffer::fixed_buffer<buffer_type, SIZE>::fixed_buffer(const buffer_type &b)
+noexcept
+:array_type
+{
+	std::begin(b), std::end(b)
+}
 {}
 
 template<class buffer_type,
          size_t SIZE>
 inline
-ircd::buffer::fixed_buffer<buffer_type, SIZE>::fixed_buffer(buffer_type b)
-:array_type{std::begin(b), std::end(b)}
+ircd::buffer::fixed_buffer<buffer_type, SIZE>::fixed_buffer(nullptr_t)
+noexcept
+:array_type{{0}}
 {}
 
 template<class buffer_type,
@@ -80,10 +86,11 @@ template<class buffer_type,
 inline
 ircd::buffer::fixed_buffer<buffer_type, SIZE>::operator
 buffer_type()
+noexcept
 {
 	return buffer_type
 	{
-		std::begin(*this), std::end(*this)
+		this->data(), SIZE,
 	};
 }
 
@@ -92,10 +99,10 @@ template<class buffer_type,
 inline
 ircd::buffer::fixed_buffer<buffer_type, SIZE>::operator
 buffer_type()
-const
+const noexcept
 {
 	return buffer_type
 	{
-		std::begin(*this), std::end(*this)
+		this->data(), SIZE,
 	};
 }
