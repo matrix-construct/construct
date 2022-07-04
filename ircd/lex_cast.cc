@@ -198,14 +198,14 @@ ircd::lex::from_bool
 decltype(ircd::lex::to_bool)
 ircd::lex::to_bool
 {
-	spirit::expect[spirit::qi::bool_]
+	spirit::expect[spirit::qi::bool_ >> spirit::eoi]
 	,"boolean"
 };
 
 decltype(ircd::lex::is_bool)
 ircd::lex::is_bool
 {
-	&spirit::qi::bool_
+	&spirit::qi::bool_ >> spirit::eoi
 	,"boolean"
 };
 
@@ -256,21 +256,21 @@ noexcept
 decltype(ircd::lex::from_int8_t)
 ircd::lex::from_int8_t
 {
-	spirit::karma::short_
+	spirit::karma::ushort_
 	,"signed byte"
 };
 
 decltype(ircd::lex::to_int8_t)
 ircd::lex::to_int8_t
 {
-	spirit::expect[spirit::qi::short_]
+	spirit::expect[spirit::qi::ushort_ >> spirit::eoi]
 	,"signed byte"
 };
 
 decltype(ircd::lex::is_int8_t)
 ircd::lex::is_int8_t
 {
-	&spirit::qi::short_
+	&spirit::qi::ushort_ >> spirit::eoi
 	,"signed byte"
 };
 
@@ -308,14 +308,14 @@ ircd::lex::from_uint8_t
 decltype(ircd::lex::to_uint8_t)
 ircd::lex::to_uint8_t
 {
-	spirit::expect[spirit::qi::ushort_]
+	spirit::expect[spirit::qi::ushort_ >> spirit::eoi]
 	,"unsigned byte"
 };
 
 decltype(ircd::lex::is_uint8_t)
 ircd::lex::is_uint8_t
 {
-	&spirit::qi::ushort_
+	&spirit::qi::ushort_ >> spirit::eoi
 	,"unsigned byte"
 };
 
@@ -353,14 +353,14 @@ ircd::lex::from_short
 decltype(ircd::lex::to_short)
 ircd::lex::to_short
 {
-	spirit::expect[spirit::qi::short_]
+	spirit::expect[spirit::qi::short_ >> spirit::eoi]
 	,"signed short integer"
 };
 
 decltype(ircd::lex::is_short)
 ircd::lex::is_short
 {
-	&spirit::qi::short_
+	&spirit::qi::short_ >> spirit::eoi
 	,"signed short integer"
 };
 
@@ -398,14 +398,14 @@ ircd::lex::from_ushort
 decltype(ircd::lex::to_ushort)
 ircd::lex::to_ushort
 {
-	spirit::expect[spirit::qi::ushort_]
+	spirit::expect[spirit::qi::ushort_ >> spirit::eoi]
 	,"unsigned short integer"
 };
 
 decltype(ircd::lex::is_ushort)
 ircd::lex::is_ushort
 {
-	&spirit::qi::ushort_
+	&spirit::qi::ushort_ >> spirit::eoi
 	,"unsigned short integer"
 };
 
@@ -443,14 +443,14 @@ ircd::lex::from_int
 decltype(ircd::lex::to_int)
 ircd::lex::to_int
 {
-	spirit::expect[spirit::qi::int_]
+	spirit::expect[spirit::qi::int_ >> spirit::eoi]
 	,"signed integer"
 };
 
 decltype(ircd::lex::is_int)
 ircd::lex::is_int
 {
-	&spirit::qi::int_
+	&spirit::qi::int_ >> spirit::eoi
 	,"signed integer"
 };
 
@@ -488,14 +488,14 @@ ircd::lex::from_uint
 decltype(ircd::lex::to_uint)
 ircd::lex::to_uint
 {
-	spirit::expect[spirit::qi::uint_]
+	spirit::expect[spirit::qi::uint_ >> spirit::eoi]
 	,"unsigned integer"
 };
 
 decltype(ircd::lex::is_uint)
 ircd::lex::is_uint
 {
-	&spirit::qi::uint_
+	&spirit::qi::uint_ >> spirit::eoi
 	,"unsigned integer"
 };
 
@@ -533,14 +533,14 @@ ircd::lex::from_long
 decltype(ircd::lex::to_long)
 ircd::lex::to_long
 {
-	spirit::expect[spirit::qi::long_]
+	spirit::expect[spirit::qi::long_ >> spirit::eoi]
 	,"long integer"
 };
 
 decltype(ircd::lex::is_long)
 ircd::lex::is_long
 {
-	&spirit::qi::long_
+	&spirit::qi::long_ >> spirit::eoi
 	,"long integer"
 };
 
@@ -578,14 +578,14 @@ ircd::lex::from_ulong
 decltype(ircd::lex::to_ulong)
 ircd::lex::to_ulong
 {
-	spirit::expect[spirit::qi::ulong_]
+	spirit::expect[spirit::qi::ulong_ >> spirit::eoi]
 	,"long unsigned integer"
 };
 
 decltype(ircd::lex::is_ulong)
 ircd::lex::is_ulong
 {
-	&spirit::qi::ulong_
+	&spirit::qi::ulong_ >> spirit::eoi
 	,"long unsigned integer"
 };
 
@@ -640,14 +640,14 @@ ircd::lex::from_float
 decltype(ircd::lex::to_float)
 ircd::lex::to_float
 {
-	spirit::expect[spirit::qi::real_parser<float, to_float_policy>{}]
+	spirit::expect[spirit::qi::real_parser<float, to_float_policy>{} >> spirit::eoi]
 	,"single floating point precision"
 };
 
 decltype(ircd::lex::is_float)
 ircd::lex::is_float
 {
-	&spirit::qi::real_parser<float, to_float_policy>{}
+	&spirit::qi::real_parser<float, to_float_policy>{} >> spirit::eoi
 	,"single floating point precision"
 };
 
@@ -702,14 +702,14 @@ ircd::lex::from_double
 decltype(ircd::lex::to_double)
 ircd::lex::to_double
 {
-	spirit::expect[spirit::qi::real_parser<double, to_double_policy>{}]
+	spirit::expect[spirit::qi::real_parser<double, to_double_policy>{} >> spirit::eoi]
 	,"double floating point precision"
 };
 
 decltype(ircd::lex::is_double)
 ircd::lex::is_double
 {
-	&spirit::qi::real_parser<double, to_double_policy>{}
+	&spirit::qi::real_parser<double, to_double_policy>{} >> spirit::eoi
 	,"double floating point precision"
 };
 
@@ -764,14 +764,14 @@ ircd::lex::from_long_double
 decltype(ircd::lex::to_long_double)
 ircd::lex::to_long_double
 {
-	spirit::expect[spirit::qi::real_parser<long double, to_long_double_policy>{}]
+	spirit::expect[spirit::qi::real_parser<long double, to_long_double_policy>{} >> spirit::eoi]
 	,"long double floating point precision"
 };
 
 decltype(ircd::lex::is_long_double)
 ircd::lex::is_long_double
 {
-	&spirit::qi::real_parser<long double, to_long_double_policy>{}
+	&spirit::qi::real_parser<long double, to_long_double_policy>{} >> spirit::eoi
 	,"long double floating point precision"
 };
 
