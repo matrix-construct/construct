@@ -682,10 +682,10 @@ const
 	};
 
 	uint16_t ret{0};
-	auto *start{begin()};
+	const char *start(begin()), *const stop(end());
 	const auto res
 	{
-		ircd::parse(start, end(), rule, ret)
+		ircd::parse(start, stop, rule, ret)
 	};
 
 	assert(res || ret == 0);
@@ -709,10 +709,10 @@ const
 	};
 
 	string_view ret;
-	auto *start{begin()};
+	const char *start(begin()), *const stop(end());
 	const auto res
 	{
-		ircd::parse(start, end(), rule, ret)
+		ircd::parse(start, stop, rule, ret)
 	};
 
 	assert(res || event::v4::is(*this) || event::v3::is(*this));
@@ -747,10 +747,10 @@ const
 	};
 
 	string_view ret;
-	auto *start{begin()};
+	const char *start(begin()), *const stop(end());
 	const auto res
 	{
-		ircd::parse(start, end(), rule, ret)
+		ircd::parse(start, stop, rule, ret)
 	};
 
 	assert(res || event::v4::is(*this) || event::v3::is(*this));
@@ -775,8 +775,8 @@ const
 	};
 
 	string_view ret;
-	auto *start{begin()};
-	ircd::parse(start, end(), rule, ret);
+	const char *start(begin()), *const stop(end());
+	ircd::parse(start, stop, rule, ret);
 	assert(!ret.empty());
 	return ret;
 }
@@ -801,13 +801,13 @@ const
 		,"is v3"
 	};
 
-	auto *start(std::begin(*this));
-	auto *const stop(std::end(*this));
-
+	const char
+	*start[2] {begin(), begin()},
+	*const stop{end()};
 	return
-		ircd::parse(start, stop, is_v4)? "4":
-		ircd::parse(start, stop, is_v3)? "3":
-		                                 "1";
+		ircd::parse(start[0], stop, is_v4)? "4":
+		ircd::parse(start[1], stop, is_v3)? "3":
+		                                    "1";
 }
 
 //
@@ -877,8 +877,7 @@ noexcept
 		,"is v3"
 	};
 
-	auto *start(std::begin(id));
-	auto *const stop(std::end(id));
+	const char *start(id.begin()), *const stop(id.end());
 	return ircd::parse(std::nothrow, start, stop, valid);
 }
 
@@ -949,8 +948,7 @@ noexcept
 		,"is v4"
 	};
 
-	auto *start(std::begin(id));
-	auto *const stop(std::end(id));
+	const char *start(id.begin()), *const stop(id.end());
 	return ircd::parse(std::nothrow, start, stop, valid);
 }
 
