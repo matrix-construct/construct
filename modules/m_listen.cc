@@ -263,6 +263,13 @@ _listener_allow
 	}
 };
 
+conf::item<std::string>
+listener_whitelist
+{
+	{ "name",     "ircd.net.listen.whitelist" },
+	{ "default",   string_view{}              },
+};
+
 static bool
 _listener_proffer(net::listener &listener,
                   const net::ipport &ipport)
@@ -272,7 +279,7 @@ _listener_proffer(net::listener &listener,
 	{
 		log::dwarning
 		{
-			"Refusing to add new client from %s in runlevel %s",
+			"Refusing to add new client from %s :runlevel %s",
 			string(strbuf, ipport),
 			reflect(ircd::run::level)
 		};
@@ -288,7 +295,7 @@ _listener_proffer(net::listener &listener,
 	{
 		log::warning
 		{
-			"Refusing to add new client from %s because maximum of %zu reached",
+			"Refusing to add new client from %s :maximum of %zu reached",
 			string(strbuf, ipport),
 			size_t(client::settings::max_client)
 		};
@@ -300,7 +307,7 @@ _listener_proffer(net::listener &listener,
 	{
 		log::dwarning
 		{
-			"Refusing to add new client from %s because request pool exhausted.",
+			"Refusing to add new client from %s :request pool exhausted.",
 			string(strbuf, ipport),
 		};
 
@@ -311,9 +318,36 @@ _listener_proffer(net::listener &listener,
 	{
 		log::dwarning
 		{
-			"Refusing to add new client from %s: maximum of %zu connections for peer.",
-			string(ipport),
+			"Refusing to add new client from %s :maximum of %zu connections for peer.",
+			string(strbuf, ipport),
 			size_t(client::settings::max_client_per_peer)
+		};
+
+		return false;
+	}
+
+	const string_view ipaddr_str
+	{
+		listener_whitelist?
+			net::string(strbuf, net::ipaddr(ipport)):
+			string_view{}
+	};
+
+	const bool listed
+	{
+		!ircd::tokens(listener_whitelist, ' ', [&ipaddr_str]
+		(const string_view &item)
+		{
+			return item == ipaddr_str? false: true;
+		})
+	};
+
+	if(listener_whitelist && !listed)
+	{
+		log::dwarning
+		{
+			"Refusing to add new client from %s :not whitelisted.",
+			ipaddr_str,
 		};
 
 		return false;
