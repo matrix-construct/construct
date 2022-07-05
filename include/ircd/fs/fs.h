@@ -11,9 +11,6 @@
 #pragma once
 #define HAVE_IRCD_FS_H
 
-// Forward declarations for boost because it is not included here.
-namespace boost::filesystem {}
-
 /// Local filesystem interface.
 ///
 /// IRCd has wrapped operations for the local filesystem to maintain a
@@ -30,11 +27,6 @@ namespace boost::filesystem {}
 namespace ircd::fs
 {
 	struct init;
-
-	// Forward interface to boost::filesystem. We do not include boost
-	// from here; it is used internally only. Some exposed interfaces
-	// may make forward-declared references to boost symbols.
-	namespace filesystem = boost::filesystem;
 
 	// Log facility for ircd::fs
 	extern log::log log;

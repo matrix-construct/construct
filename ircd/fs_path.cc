@@ -11,7 +11,6 @@
 #include <RB_INC_SYS_STAT_H
 #include <RB_INC_SYS_STATFS_H
 #include <RB_INC_SYS_STATVFS_H
-#include <boost/filesystem.hpp>
 
 /// Default maximum path string length (for all filesystems & platforms).
 decltype(ircd::fs::NAME_MAX_LEN)
@@ -241,7 +240,7 @@ try
 {
 	return path(buf, canonical(_path(p)));
 }
-catch(const filesystem::filesystem_error &e)
+catch(const std::filesystem::filesystem_error &e)
 {
 	throw error
 	{
@@ -256,9 +255,9 @@ ircd::fs::canonical(const mutable_buffer &buf,
                     const string_view &p)
 try
 {
-	return path(buf, canonical(_path(p), _path(root)));
+	return path(buf, std::filesystem::canonical(_path(root) / _path(p)));
 }
-catch(const filesystem::filesystem_error &e)
+catch(const std::filesystem::filesystem_error &e)
 {
 	throw error
 	{
@@ -271,75 +270,45 @@ ircd::string_view
 ircd::fs::relative(const mutable_buffer &buf,
                    const string_view &root,
                    const string_view &p)
-try
 {
-	return path(buf, relative(_path(p), _path(root)));
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
+	return path(buf, std::filesystem::relative(_path(root) / _path(p)));
 }
 
 ircd::string_view
 ircd::fs::absolute(const mutable_buffer &buf,
                    const string_view &root,
                    const string_view &p)
-try
 {
-	return path(buf, absolute(_path(p), _path(root)));
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
+	return path(buf, std::filesystem::absolute(_path(root) / _path(p)));
 }
 
 ircd::string_view
 ircd::fs::parent(const mutable_buffer &buf,
                  const string_view &p)
-try
 {
 	return path(buf, _path(p).parent_path());
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
 }
 
 ircd::string_view
 ircd::fs::filename(const mutable_buffer &buf,
                    const string_view &p)
-try
 {
 	return path(buf, _path(p).filename());
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
 }
 
 ircd::string_view
 ircd::fs::extension(const mutable_buffer &buf,
                     const string_view &p)
-try
 {
 	return path(buf, _path(p).extension());
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
 }
 
 ircd::string_view
 ircd::fs::extension(const mutable_buffer &buf,
                     const string_view &p,
                     const string_view &replace)
-try
 {
 	return path(buf, _path(p).replace_extension(_path(replace)));
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
 }
 
 bool
@@ -360,34 +329,24 @@ ircd::fs::is_absolute(const string_view &p)
 
 std::string
 ircd::fs::cwd()
-try
 {
 	const auto &cur
 	{
-		filesystem::current_path()
+		std::filesystem::current_path()
 	};
 
 	return cur.string();
 }
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
 
 ircd::string_view
 ircd::fs::cwd(const mutable_buffer &buf)
-try
 {
 	const auto &cur
 	{
-		filesystem::current_path()
+		std::filesystem::current_path()
 	};
 
 	return strlcpy(buf, cur.native());
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
 }
 
 #ifdef _PC_PATH_MAX
@@ -510,7 +469,7 @@ ircd::fs::path(const mutable_buffer &buf,
 
 ircd::string_view
 ircd::fs::path(const mutable_buffer &buf,
-               const filesystem::path &path)
+               const std::filesystem::path &path)
 {
 	return strlcpy(buf, path.c_str());
 }
@@ -533,54 +492,34 @@ ircd::fs::path(const mutable_buffer &buf,
 // fs::_path()
 //
 
-boost::filesystem::path
+std::filesystem::path
 ircd::fs::_path(const path_strings &list)
-try
 {
-	filesystem::path ret;
+	std::filesystem::path ret;
 	for(const auto &s : list)
 		ret /= s;
 
 	return ret.string();
 }
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
 
-boost::filesystem::path
+std::filesystem::path
 ircd::fs::_path(const path_views &list)
-try
 {
-	filesystem::path ret;
+	std::filesystem::path ret;
 	for(const auto &s : list)
 		ret /= _path(s);
 
 	return ret.string();
 }
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
 
-boost::filesystem::path
+std::filesystem::path
 ircd::fs::_path(const string_view &s)
-try
 {
 	return _path(std::string{s});
 }
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
 
-boost::filesystem::path
+std::filesystem::path
 ircd::fs::_path(std::string s)
-try
 {
-	return filesystem::path{std::move(s)};
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
+	return std::filesystem::path{std::move(s)};
 }

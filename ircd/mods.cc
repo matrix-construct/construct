@@ -473,7 +473,7 @@ ircd::mods::available()
 			ret.emplace_front(unpostfixed(std::move(relpath)));
 		}
 	}
-	catch(const filesystem::filesystem_error &e)
+	catch(const std::filesystem::filesystem_error &e)
 	{
 		log::warning
 		{
@@ -631,8 +631,6 @@ catch(const std::exception &e)
 bool
 ircd::mods::available(const string_view &name)
 {
-	using filesystem::path;
-
 	std::vector<std::string> why;
 	return !search(name, why).empty();
 }
@@ -1136,7 +1134,7 @@ try
 
 	return closure(info);
 }
-catch(const filesystem::filesystem_error &e)
+catch(const std::filesystem::filesystem_error &e)
 {
 	throw fs::error
 	{

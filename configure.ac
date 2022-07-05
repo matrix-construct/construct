@@ -2559,7 +2559,7 @@ dnl
 
 BOOST_VERSION_MIN="1.66"
 BOOST_VERSION_MIN_PATCH="0"
-BOOST_BUILT_LIBS="system,filesystem,context,coroutine,chrono"
+BOOST_BUILT_LIBS="system,context,coroutine,chrono"
 
 AC_SUBST(BOOST_CPPFLAGS, [])
 AC_SUBST(BOOST_LDFLAGS, [])
@@ -2640,7 +2640,6 @@ RB_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 
 	AX_BOOST_ASIO
 	AX_BOOST_SYSTEM
-	AX_BOOST_FILESYSTEM
 	AX_BOOST_COROUTINE
 	AX_BOOST_CONTEXT
 	AX_BOOST_CHRONO
@@ -2650,16 +2649,16 @@ RB_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 if [[ "$boost_linkage" = "shared" ]]; then
 	AM_COND_IF([MINGW],
 	[
-		AC_SUBST(BOOST_LIBS, ["-lboost_coroutine-mgw53-1_61.dll -lboost_context-mgw53-1_61.dll -lboost_thread-mgw53-1_61.dll -lboost_filesystem-mgw53-1_61.dll -lboost_system-mgw53-1_61.dll"])
+		AC_SUBST(BOOST_LIBS, ["-lboost_coroutine-mgw53-1_61.dll -lboost_context-mgw53-1_61.dll -lboost_thread-mgw53-1_61.dll -lboost_system-mgw53-1_61.dll"])
 	], [
-		AC_SUBST(BOOST_LIBS, ["-lboost_coroutine -lboost_context -lboost_thread -lboost_filesystem -lboost_chrono -lboost_system"])
+		AC_SUBST(BOOST_LIBS, ["-lboost_coroutine -lboost_context -lboost_thread -lboost_chrono -lboost_system"])
 	])
 else
 	AM_COND_IF([MINGW],
 	[
-		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_coroutine-mgw53-1_61.dll.a $boost_libdir/libboost_context-mgw53-1_61.dll.a $boost_libdir/libboost_thread-mgw53-1_61.dll.a $boost_libdir/libboost_filesystem-mgw53-1_61.dll.a $boost_libdir/libboost_system-mgw53-1_61.dll.a"])
+		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_coroutine-mgw53-1_61.dll.a $boost_libdir/libboost_context-mgw53-1_61.dll.a $boost_libdir/libboost_thread-mgw53-1_61.dll.a $boost_libdir/libboost_system-mgw53-1_61.dll.a"])
 	], [
-		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_coroutine.a $boost_libdir/libboost_context.a $boost_libdir/libboost_thread.a $boost_libdir/libboost_filesystem.a $boost_libdir/libboost_system.a"])
+		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_coroutine.a $boost_libdir/libboost_context.a $boost_libdir/libboost_thread.a $boost_libdir/libboost_system.a"])
 	])
 fi
 

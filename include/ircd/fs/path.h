@@ -11,12 +11,6 @@
 #pragma once
 #define HAVE_IRCD_FS_PATH_H
 
-// Forward declarations for boost because it is not included here.
-namespace boost::filesystem
-{
-	struct path;
-}
-
 // Filesystem path utility interface
 namespace ircd::fs
 {
@@ -31,15 +25,15 @@ namespace ircd::fs
 	extern const mutable_buffer name_scratch;
 
 	// must include boost in unit to call these; use path() instead
-	filesystem::path _path(std::string);
-	filesystem::path _path(const string_view &);
-	filesystem::path _path(const path_views &);
-	filesystem::path _path(const path_strings &);
+	std::filesystem::path _path(std::string);
+	std::filesystem::path _path(const string_view &);
+	std::filesystem::path _path(const path_views &);
+	std::filesystem::path _path(const path_strings &);
 
 	// append path strings together to create a viable result amalgam.
 	string_view path(const mutable_buffer &, const path_views &);
 	string_view path(const mutable_buffer &, const path_strings &);
-	string_view path(const mutable_buffer &, const filesystem::path &);
+	string_view path(const mutable_buffer &, const std::filesystem::path &);
 
 	// guarantees result is contained within the base, mitigating `../` etc.
 	string_view path(const mutable_buffer &, const string_view &base, const path_views &);

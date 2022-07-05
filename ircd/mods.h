@@ -8,11 +8,10 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <boost/filesystem.hpp>
+#define BOOST_DLL_USE_STD_FS
 #include <boost/dll.hpp>
 #include <ircd/mods/mapi.h>  // Module's internal API
 
-namespace filesystem = boost::filesystem;
 namespace load_mode = boost::dll::load_mode;
 namespace ircd::mods
 {

@@ -13,7 +13,6 @@
 #include <RB_INC_SYS_STATFS_H
 #include <RB_INC_SYS_STATVFS_H
 #include <RB_INC_SYS_RESOURCE_H
-#include <boost/filesystem.hpp>
 
 #if IRCD_USE_AIO > 0
 	#include "fs_aio.h"
@@ -387,29 +386,19 @@ ircd::fs::support::rlimit_nofile()
 
 bool
 ircd::fs::mkdir(const string_view &path)
-try
 {
-	return filesystem::create_directories(_path(path));
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
+	return std::filesystem::create_directories(_path(path));
 }
 
 bool
 ircd::fs::remove(const string_view &path)
-try
 {
 	const prof::syscall_usage_warning message
 	{
 		"fs::remove(%s)", path
 	};
 
-	return filesystem::remove(_path(path));
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
+	return std::filesystem::remove(_path(path));
 }
 
 bool
@@ -421,26 +410,21 @@ ircd::fs::remove(std::nothrow_t,
 		"fs::remove(%s)", path
 	};
 
-	boost::system::error_code ec;
-	return filesystem::remove(_path(path), ec);
+	std::error_code ec;
+	return std::filesystem::remove(_path(path), ec);
 }
 
 bool
 ircd::fs::rename(const string_view &old,
                  const string_view &new_)
-try
 {
 	const prof::syscall_usage_warning message
 	{
 		"fs::rename(%s, %s)", old, new_
 	};
 
-	filesystem::rename(_path(old), _path(new_));
+	std::filesystem::rename(_path(old), _path(new_));
 	return true;
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
 }
 
 bool
@@ -453,17 +437,16 @@ ircd::fs::rename(std::nothrow_t,
 		"fs::rename(%s, %s)", old, new_
 	};
 
-	boost::system::error_code ec;
-	filesystem::rename(_path(old), _path(new_), ec);
+	std::error_code ec;
+	std::filesystem::rename(_path(old), _path(new_), ec);
 	return !ec;
 }
 
 std::vector<std::string>
 ircd::fs::ls_r(const string_view &path)
-try
 {
-	const filesystem::recursive_directory_iterator end;
-	filesystem::recursive_directory_iterator it
+	const std::filesystem::recursive_directory_iterator end;
+	std::filesystem::recursive_directory_iterator it
 	{
 		_path(path)
 	};
@@ -476,18 +459,13 @@ try
 	});
 
 	return ret;
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
 }
 
 std::vector<std::string>
 ircd::fs::ls(const string_view &path)
-try
 {
-	static const filesystem::directory_iterator end;
-	filesystem::directory_iterator it
+	static const std::filesystem::directory_iterator end;
+	std::filesystem::directory_iterator it
 	{
 		_path(path)
 	};
@@ -501,64 +479,40 @@ try
 
 	return ret;
 }
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
 
 size_t
 ircd::fs::size(const string_view &path)
-try
 {
-	return filesystem::file_size(_path(path));
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
+	return std::filesystem::file_size(_path(path));
 }
 
 bool
 ircd::fs::is_exec(const string_view &path)
-try
 {
-	return filesystem::status(_path(path)).permissions() & filesystem::owner_exe;
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
+	static const auto mask
+	{
+		std::filesystem::perms::owner_exec
+	};
+
+	return ulong(std::filesystem::status(_path(path)).permissions() & mask);
 }
 
 bool
 ircd::fs::is_reg(const string_view &path)
-try
 {
-	return filesystem::is_regular_file(_path(path));
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
+	return std::filesystem::is_regular_file(_path(path));
 }
 
 bool
 ircd::fs::is_dir(const string_view &path)
-try
 {
-	return filesystem::is_directory(_path(path));
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
+	return std::filesystem::is_directory(_path(path));
 }
 
 bool
 ircd::fs::exists(const string_view &path)
-try
 {
-	return filesystem::exists(_path(path));
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
+	return std::filesystem::exists(_path(path));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2838,7 +2792,7 @@ ircd::fs::bytes(const const_iovec_view &iov)
 //
 
 std::string
-ircd::string(const boost::filesystem::filesystem_error &e)
+ircd::string(const std::filesystem::filesystem_error &e)
 {
 	return ircd::string(512, [&e]
 	(const mutable_buffer &buf)
@@ -2849,7 +2803,7 @@ ircd::string(const boost::filesystem::filesystem_error &e)
 
 ircd::string_view
 ircd::string(const mutable_buffer &buf,
-             const boost::filesystem::filesystem_error &e)
+             const std::filesystem::filesystem_error &e)
 {
 	return fmt::sprintf
 	{
@@ -2857,39 +2811,42 @@ ircd::string(const mutable_buffer &buf,
 	};
 }
 
-std::system_error
-ircd::make_system_error(const boost::filesystem::filesystem_error &e)
-{
-	return std::system_error
-	{
-		make_error_code(e), e.what()
-	};
-}
-
-std::error_code
-ircd::make_error_code(const boost::filesystem::filesystem_error &e)
-{
-	const boost::system::error_code &ec
-	{
-		e.code()
-	};
-
-	return make_error_code(ec);
-}
-
 //
 // error::error
 //
 
-decltype(ircd::fs::error::buf)
-thread_local
-ircd::fs::error::buf;
-
-ircd::fs::error::error(const boost::filesystem::filesystem_error &e)
-:std::system_error
+ircd::fs::error::error(const std::error_code &e,
+                       const string_view &fmt)
+:std::filesystem::filesystem_error
 {
-	make_system_error(e)
+	fmt,
+	e,
 }
+{
+}
+
+ircd::fs::error::error(const std::filesystem::filesystem_error &e,
+                       const string_view &fmt)
+:std::filesystem::filesystem_error
+{
+	fmt,
+	e.path1(),
+	e.path2(),
+	e.code(),
+}
+{
+}
+
+ircd::fs::error::error(const std::filesystem::filesystem_error &e)
+:std::filesystem::filesystem_error
+{
+	e
+}
+{
+}
+
+ircd::fs::error::~error()
+noexcept
 {
 }
 

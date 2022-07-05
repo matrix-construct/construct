@@ -11,12 +11,6 @@
 #pragma once
 #define HAVE_IRCD_FS_ERROR_H
 
-// Forward declarations for boost
-namespace boost::filesystem
-{
-	struct filesystem_error;
-}
-
 namespace ircd::fs
 {
 	struct error; // does not participate in ircd::exception hierarchy
@@ -24,50 +18,55 @@ namespace ircd::fs
 
 namespace ircd
 {
-	std::error_code make_error_code(const boost::filesystem::filesystem_error &);
-	std::system_error make_system_error(const boost::filesystem::filesystem_error &);
-
-	string_view string(const mutable_buffer &, const boost::filesystem::filesystem_error &);
-	std::string string(const boost::filesystem::filesystem_error &);
+	string_view string(const mutable_buffer &, const std::filesystem::filesystem_error &);
+	std::string string(const std::filesystem::filesystem_error &);
 }
 
 struct ircd::fs::error
-:std::system_error
+:std::filesystem::filesystem_error
 {
-	static thread_local char buf[1024];
+	static constexpr size_t max_len {4096};
 
-  public:
 	template<class... args>
-	error(const boost::filesystem::filesystem_error &e,
+	[[clang::internal_linkage]]
+	error(const std::filesystem::filesystem_error &e,
 	      const string_view &fmt,
 	      args&&...);
 
 	template<class... args>
+	[[clang::internal_linkage]]
 	error(const std::error_code &e,
 	      const string_view &fmt,
 	      args&&...);
 
-	error(const boost::filesystem::filesystem_error &e);
+	error(const std::error_code &e, const string_view &fmt);
+	error(const std::filesystem::filesystem_error &e, const string_view &fmt);
+	error(const std::filesystem::filesystem_error &e);
+	~error() noexcept;
 };
 
 template<class... args>
-ircd::fs::error::error(const boost::filesystem::filesystem_error &e,
+[[gnu::noinline, gnu::visibility("internal")]]
+ircd::fs::error::error(const std::filesystem::filesystem_error &e,
                        const string_view &fmt,
                        args&&... a)
-:error
+:std::filesystem::filesystem_error
 {
-	make_error_code(e), fmt, std::forward<args>(a)...
+	fmt::snstringf{max_len, fmt, std::forward<args>(a)...},
+	e.path1(),
+	e.path2(),
+	e.code(),
 }
 {}
 
 template<class... args>
+[[gnu::noinline, gnu::visibility("internal")]]
 ircd::fs::error::error(const std::error_code &e,
                        const string_view &fmt,
                        args&&... a)
-:std::system_error{[&]
-() -> std::system_error
+:std::filesystem::filesystem_error
 {
-	fmt::sprintf{buf, fmt, std::forward<args>(a)...};
-	return {e, buf};
-}()}
+	fmt::snstringf{max_len, fmt, std::forward<args>(a)...},
+	e,
+}
 {}

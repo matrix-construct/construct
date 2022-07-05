@@ -108,7 +108,7 @@ try
 	eptr = {};
 	child = std::make_unique<boost::process::child>
 	(
-		fs::_path(path),
+		fs::_path(path).string(),
 		argv,
 		(boost::process::std_in) = pipe->first,
 		(boost::process::std_out & boost::process::std_err) = pipe->second,
