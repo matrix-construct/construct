@@ -345,20 +345,20 @@ try
 	for(auto it(begin(requests)); it != end(requests); ++it)
 	{
 		auto &request(mutable_cast(*it));
-		if(!!request.finished)
+		if(!!request.finished || !request.promise)
 			continue;
 
 		else if(!request.started)
 			start(request);
 
-		else if(!request.finished && timedout(request, now))
+		else if(timedout(request, now))
 			retry(request);
 	}
 
 	auto it(begin(requests)); while(it != end(requests))
 	{
 		auto &request(mutable_cast(*it));
-		if(!!request.finished)
+		if(!!request.finished || !request.promise)
 		{
 			it = requests.erase(it);
 			++ret;
@@ -387,6 +387,7 @@ bool
 ircd::m::fetch::start(request &request)
 try
 {
+	assert(request.promise);
 	assert(!request.finished);
 
 	// Attempt the user's hint first
@@ -442,13 +443,20 @@ ircd::m::fetch::start(request &request,
                       const string_view &remote)
 try
 {
-	assert(!request.finished);
 	if(unlikely(run::level != run::level::RUN))
 		throw m::UNAVAILABLE
 		{
 			"Cannot start fetch requests in runlevel."
 		};
 
+	if(unlikely(!request.promise))
+		throw ctx::broken_promise
+		{
+			"Fetch response check interrupted."
+		};
+
+	assert(request.promise);
+	assert(!request.finished);
 	request.last = ircd::now<system_point>();
 	if(!request.started)
 		request.started = request.last;
@@ -659,7 +667,7 @@ ircd::m::fetch::handle(request &request)
 	if(likely(request.future))
 		handle_result(request);
 
-	if(!request.eptr)
+	if(!request.eptr || !request.promise)
 		finish(request);
 	else
 		retry(request);
@@ -671,18 +679,25 @@ void
 ircd::m::fetch::handle_result(request &request)
 try
 {
+	assert(request.future);
 	const auto code
 	{
 		request.future->get()
 	};
 
-	const string_view &content
+	const string_view content
 	{
 		request.future->in.content
 	};
 
 	check_response(request, content);
+	if(unlikely(!request.promise))
+		throw ctx::broken_promise
+		{
+			"Fetch response check interrupted."
+		};
 
+	assert(request.promise);
 	char pbuf[48];
 	log::debug
 	{
@@ -715,6 +730,7 @@ void
 ircd::m::fetch::retry(request &request)
 try
 {
+	assert(request.promise);
 	assert(!request.finished);
 	assert(!!request.started && !!request.last);
 
@@ -768,6 +784,7 @@ ircd::m::fetch::finish(request &request)
 	res.buf = std::move(request.future->in.dynamic);
 	res.content = res.buf;
 	strlcpy(res.origin, request.origin);
+	assert(request.origin == res.origin);
 	request.promise.set_value(std::move(res));
 }
 
@@ -921,6 +938,12 @@ void
 ircd::m::fetch::_check_event(const request &request,
                              const m::event &event)
 {
+	if(unlikely(!request.promise))
+		throw ctx::broken_promise
+		{
+			"Fetch response check interrupted."
+		};
+
 	if(request.opts.check_event_id && check_event_id && !m::check_id(event))
 	{
 		event::id::buf buf;
@@ -978,6 +1001,7 @@ ircd::m::fetch::_check_event(const request &request,
 	}
 
 	// only check signature for v1 events
+	assert(request.promise);
 	if(request.opts.check_signature && check_signature && request.opts.event_id.version() == "1")
 	{
 		const string_view &server
