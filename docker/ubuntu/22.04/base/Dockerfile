@@ -10,12 +10,16 @@ RUN true \
         autoconf2.13 \
         automake \
         autotools-dev \
-        boost1.74 \
         build-essential \
         ca-certificates \
         cmake \
         curl \
         git \
+        libboost-chrono1.74-dev \
+        libboost-context1.74-dev \
+        libboost-coroutine1.74-dev \
+        libboost-system1.74-dev \
+        libboost-thread1.74-dev \
         liblz4-dev \
         libnss-db \
         libmagic-dev \
@@ -64,6 +68,12 @@ RUN true \
         -DBUILD_SHARED_LIBS=1 \
     && cmake --build build --target install \
     && rm -rf build \
+    && apt-get purge -y \
+        cmake \
+        curl \
+    && apt-get clean \
+    && apt-get autoremove --purge -y \
+    && rm -rf /var/lib/apt/lists/* \
 	&& true
 
 RUN mkdir /build
