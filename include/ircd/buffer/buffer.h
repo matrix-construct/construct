@@ -53,7 +53,7 @@ namespace ircd::buffer
 	using shared_mutable_buffer = shared_buffer<mutable_buffer>;
 
 	// Convenience null buffer
-	extern const mutable_buffer null_buffer;
+	[[clang::internal_linkage]] extern const mutable_buffer null_buffer;
 
 	// Single buffer iteration of contents
 	template<class it> const it &begin(const buffer<it> &buffer);
@@ -351,12 +351,14 @@ ircd::buffer::begin(const buffer<it> &buffer)
 	return get<0>(buffer);
 }
 
+[[gnu::visibility("internal")]]
 inline decltype(ircd::buffer::null_buffer)
 ircd::buffer::null_buffer
 {
 	nullptr, nullptr
 };
 
+[[gnu::visibility("internal")]]
 inline decltype(ircd::buffers::null_buffers)
 ircd::buffers::null_buffers
 {
