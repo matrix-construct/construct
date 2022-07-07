@@ -17,6 +17,10 @@ struct ircd::buffer::const_buffer
 	// Definition for this is somewhere in the .cc files where boost is incl.
 	operator boost::asio::const_buffer() const noexcept;
 
+	template<class R,
+	         bool safety = true>
+	explicit operator const R *() const noexcept(!safety);
+
 	// For boost::spirit conceptual compliance; illegal/noop
 	void insert(const char *const &, const char &);
 
@@ -91,4 +95,18 @@ ircd::buffer::const_buffer::insert(const char *const &,
 {
 	assert(0);
 	__builtin_unreachable();
+}
+
+template<class R,
+         bool safety>
+inline ircd::buffer::const_buffer::operator
+const R *()
+const noexcept(!safety)
+{
+	assert(sizeof(R) <= size(*this));
+	if constexpr(safety)
+		if(unlikely(sizeof(R) > size(*this)))
+			throw std::bad_cast{};
+
+	return reinterpret_cast<const R *>(data(*this));
 }

@@ -21,6 +21,10 @@ struct ircd::buffer::mutable_buffer
 	/// Conversion offered for the analogous asio buffer.
 	operator boost::asio::mutable_buffer() const noexcept;
 
+	template<class R,
+	         bool safety = true>
+	explicit operator R *() const noexcept(!safety);
+
 	/// Allows boost::spirit to append to the buffer; this means the size() of
 	/// this buffer becomes a consumption counter and the real size of the buffer
 	/// must be kept separately. This is the lowlevel basis for a stream buffer.
@@ -86,3 +90,16 @@ ircd::buffer::mutable_buffer::insert(char *const &it,
 	++std::get<1>(*this);
 }
 
+template<class R,
+         bool safety>
+inline ircd::buffer::mutable_buffer::operator
+R *()
+const noexcept(!safety)
+{
+    assert(sizeof(R) <= size(*this));
+    if constexpr(safety)
+        if(unlikely(sizeof(R) > size(*this)))
+            throw std::bad_cast{};
+
+    return reinterpret_cast<const R *>(data(*this));
+}
