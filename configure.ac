@@ -1055,6 +1055,7 @@ dnl	RB_VAR_PREPEND([LDFLAGS], ["-Wl,--icf=all"])
 	RB_VAR_PREPEND([LDFLAGS], ["-Wl,-z,noexecstack"])
 	RB_VAR_PREPEND([LDFLAGS], ["-Wl,-z,combreloc"])
 	RB_VAR_PREPEND([LDFLAGS], ["-Wl,-z,text-unlikely-segment"])
+	RB_VAR_PREPEND([LDFLAGS], ["-Wl,-z,keep-text-section-prefix"])
 ])
 
 dnl Note compact mode options available in both GOLD and LLD
