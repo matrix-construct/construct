@@ -247,6 +247,9 @@ libircd_la_SOURCES += net_dns_cache.cc
 libircd_la_SOURCES += net_dns_resolver.cc
 libircd_la_SOURCES += net_listener.cc
 libircd_la_SOURCES += net_listener_udp.cc
+if LINUX
+libircd_la_SOURCES += net_bpf.cc
+endif
 libircd_la_SOURCES += server.cc
 libircd_la_SOURCES += client.cc
 libircd_la_SOURCES += resource.cc

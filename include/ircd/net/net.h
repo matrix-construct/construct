@@ -37,6 +37,7 @@ namespace ircd::net
 #include "hostport.h"
 #include "ipaddr.h"
 #include "ipport.h"
+#include "bpf.h"
 #include "dns.h"
 #include "dns_cache.h"
 #include "listener.h"

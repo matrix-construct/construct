@@ -1258,6 +1258,7 @@ RB_CHK_SYSHEADER(linux/hw_breakpoint.h, [LINUX_HW_BREAKPOINT_H])
 RB_CHK_SYSHEADER(linux/io_uring.h, [LINUX_IO_URING_H])
 RB_CHK_SYSHEADER(linux/icmp.h, [LINUX_ICMP_H])
 RB_CHK_SYSHEADER(linux/input-event-codes.h, [LINUX_INPUT_EVENT_CODES_H])
+RB_CHK_SYSHEADER(linux/bpf.h, [LINUX_BPF_H])
 
 dnl windows platform
 RB_CHK_SYSHEADER(windows.h, [WINDOWS_H])
