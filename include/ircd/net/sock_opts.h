@@ -25,6 +25,7 @@ namespace ircd::net
 	size_t write_bufsz(const socket &);
 	size_t read_lowat(const socket &);
 	size_t write_lowat(const socket &);
+	int attach(const socket &);
 
 	void v6only(socket &, const bool &);
 	void blocking(socket &, const bool &);
@@ -36,6 +37,10 @@ namespace ircd::net
 	void write_bufsz(socket &, const size_t &bytes);
 	void read_lowat(socket &, const size_t &bytes);
 	void write_lowat(socket &, const size_t &bytes);
+	void attach(const int &sd, const int &fd);
+	void attach(socket &, const int &fd);
+	void detach(const int &sd, const int &fd);
+	void detach(socket &, const int &fd);
 
 	void set(socket &, const sock_opts &);
 }
@@ -59,6 +64,7 @@ struct ircd::net::sock_opts
 	ssize_t write_bufsz { IGN };
 	ssize_t read_lowat { IGN };
 	ssize_t write_lowat { IGN };
+	int ebpf { -1 };
 
 	sock_opts(const socket &);          // Get options from socket
 	sock_opts() = default;

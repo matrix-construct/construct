@@ -841,7 +841,64 @@ ircd::net::set(socket &socket,
 
 	if(opts.write_lowat != opts.IGN)
 		net::write_lowat(socket, opts.write_lowat);
+
+	if(opts.ebpf != -1)
+		net::attach(socket, opts.ebpf);
 }
+
+void
+ircd::net::detach(socket &socket,
+                  const int &prog_fd)
+{
+	ip::tcp::socket &sd(socket);
+	const auto &fd
+	{
+		sd.lowest_layer().native_handle()
+	};
+
+	return detach(fd, prog_fd);
+}
+
+void
+ircd::net::detach(const int &sd,
+                  const int &prog_fd)
+#if defined(SO_DETACH_BPF) && defined(SOL_SOCKET)
+{
+	const socklen_t len(sizeof(prog_fd));
+	sys::call(::setsockopt, sd, SOL_SOCKET, SO_DETACH_BPF, &prog_fd, len);
+}
+#else
+{
+	#warning "SO_DETACH_BPF is not defined on this platform."
+}
+#endif
+
+void
+ircd::net::attach(socket &socket,
+                  const int &prog_fd)
+{
+	ip::tcp::socket &sd(socket);
+	const auto &fd
+	{
+		sd.lowest_layer().native_handle()
+	};
+
+	return attach(fd, prog_fd);
+}
+
+void
+ircd::net::attach(const int &sd,
+                  const int &prog_fd)
+#if defined(SO_ATTACH_BPF) && defined(SOL_SOCKET)
+{
+	const socklen_t len(sizeof(prog_fd));
+	sys::call(::setsockopt, sd, SOL_SOCKET, SO_ATTACH_BPF, &prog_fd, len);
+}
+#else
+{
+	#warning "SO_ATTACH_BPF is not defined on this platform."
+}
+#endif
 
 void
 ircd::net::write_lowat(socket &socket,
@@ -994,6 +1051,28 @@ ircd::net::v6only(socket &socket,
 	ip::tcp::socket &sd(socket);
 	sd.set_option(option);
 }
+
+int
+ircd::net::attach(const socket &socket)
+#if defined(SO_ATTACH_BPF) && defined(SOL_SOCKET)
+{
+	const ip::tcp::socket &sd(socket);
+	const auto &fd
+	{
+		mutable_cast(sd).lowest_layer().native_handle()
+	};
+
+	int ret {-1};
+	socklen_t len(sizeof(ret));
+	sys::call(::getsockopt, fd, SOL_SOCKET, SO_ATTACH_BPF, &ret, &len);
+	assert(len <= sizeof(ret));
+	return ret;
+}
+#else
+{
+	#warning "SO_ATTACH_BPF is not defined on this platform."
+}
+#endif
 
 size_t
 ircd::net::write_lowat(const socket &socket)
