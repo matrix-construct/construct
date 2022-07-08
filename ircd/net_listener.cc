@@ -324,6 +324,13 @@ try
 		std::move(pcb):
 		proffer_default
 }
+,filter
+{
+	const_buffer
+	{
+		nullptr, nullptr
+	},
+}
 ,ssl
 {
 	asio::ssl::context::method::sslv23_server
@@ -388,9 +395,21 @@ ircd::net::acceptor::open()
 	a.non_blocking(true);
 	log::debug
 	{
-		log, "%s opened listener socket",
-		loghead(*this)
+		log, "%s opened listener socket:%d",
+		loghead(*this),
+		int(a.native_handle()),
 	};
+
+	if(filter)
+	{
+		net::attach(a.native_handle(), filter.fd);
+		log::debug
+		{
+			log, "%s attach filter fd:%d",
+			loghead(*this),
+			int(filter.fd),
+		};
+	}
 
 	a.bind(ep);
 	log::debug

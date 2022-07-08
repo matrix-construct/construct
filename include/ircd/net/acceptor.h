@@ -46,6 +46,7 @@ ircd::net::acceptor
 	size_t backlog;
 	listener::callback cb;
 	listener::proffer pcb;
+	bpf::prog filter;
 	asio::ssl::context ssl;
 	ip::tcp::endpoint ep;
 	ip::tcp::acceptor a;
