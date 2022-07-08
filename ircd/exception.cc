@@ -152,6 +152,16 @@ noexcept
 	       ec == boost::system::generic_category();
 }
 
+[[noreturn]]
+void
+ircd::throw_system_error()
+{
+    throw std::system_error
+    {
+		errno, std::system_category()
+    };
+}
+
 std::system_error
 ircd::make_system_error(const boost::system::system_error &e)
 {

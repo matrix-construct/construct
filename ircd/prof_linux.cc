@@ -432,10 +432,7 @@ ircd::prof::event::event(const int &group,
 	};
 
 	if(ret == (void *)-1)
-		throw std::system_error
-		{
-			errno, std::system_category()
-		};
+		throw_system_error();
 
 	if(map_size && ret == nullptr)
 		throw error

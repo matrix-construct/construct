@@ -1022,10 +1022,7 @@ ircd::fs::_read_preadv(const fd &fd,
 		return 0UL;
 
 	if(unlikely(ret == -1))
-		throw std::system_error
-		{
-			errno, std::system_category()
-		};
+		throw_system_error();
 
 	return ret;
 }
@@ -1052,10 +1049,7 @@ ircd::fs::_read_preadv2(const fd &fd,
 		return 0UL;
 
 	if(unlikely(ret == -1))
-		throw std::system_error
-		{
-			errno, std::system_category()
-		};
+		throw_system_error();
 
 	return ret;
 }
@@ -1407,10 +1401,7 @@ ircd::fs::_write_pwritev(const fd &fd,
 		return 0UL;
 
 	if(unlikely(ret == -1))
-		throw std::system_error
-		{
-			errno, std::system_category()
-		};
+		throw_system_error();
 
 	return ret;
 }
@@ -1440,10 +1431,7 @@ ircd::fs::_write_pwritev2(const fd &fd,
 		return 0UL;
 
 	if(unlikely(ret == -1))
-		throw std::system_error
-		{
-			errno, std::system_category()
-		};
+		throw_system_error();
 
 	return ret;
 }

@@ -107,10 +107,7 @@ ircd::sys::call(function&& f,
 	};
 
 	if(unlikely(!nothrow && ret == -1L))
-		throw std::system_error
-		{
-			errno, std::system_category()
-		};
+		throw_system_error();
 
 	return ret;
 }

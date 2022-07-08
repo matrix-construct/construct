@@ -63,10 +63,8 @@ ircd::allocator::allocate(const size_t alignment,
 			throw std::bad_alloc{};
 
 		default:
-			throw std::system_error
-			{
-				errc, std::system_category()
-			};
+			throw_system_error();
+			__builtin_unreachable();
 	}
 
 	assert(ret != nullptr);
