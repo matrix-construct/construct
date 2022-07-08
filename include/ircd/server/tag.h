@@ -93,7 +93,7 @@ struct ircd::server::tag
 	tag(server::request &) noexcept;
 	tag(tag &&) noexcept;
 	tag(const tag &) = delete;
-	tag &operator=(tag &&) noexcept;
+	tag &operator=(tag &&) = delete;
 	tag &operator=(const tag &) = delete;
 	~tag() noexcept;
 };
@@ -118,18 +118,6 @@ noexcept
 
 	assert(!o.request);
 	assert(!o.cancellation);
-}
-
-inline ircd::server::tag &
-ircd::server::tag::operator=(tag &&o)
-noexcept
-{
-	this->~tag();
-	state = std::move(o.state);
-	p = std::move(o.p);
-	request = std::move(o.request);
-	cancellation = std::move(o.cancellation);
-	return *this;
 }
 
 inline
