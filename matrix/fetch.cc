@@ -412,6 +412,12 @@ try
 
 	while(request.origin)
 	{
+		if(unlikely(!request.promise))
+			throw ctx::broken_promise
+			{
+				"Fetch interrupted."
+			};
+
 		if(start(request, request.origin))
 			return true;
 
@@ -447,12 +453,6 @@ try
 		throw m::UNAVAILABLE
 		{
 			"Cannot start fetch requests in runlevel."
-		};
-
-	if(unlikely(!request.promise))
-		throw ctx::broken_promise
-		{
-			"Fetch response check interrupted."
 		};
 
 	assert(request.promise);
