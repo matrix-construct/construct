@@ -5585,22 +5585,22 @@ ircd::db::reflect(const op &op)
 ircd::string_view
 ircd::db::reflect(const rocksdb::FlushReason &r)
 {
-	using FlushReason = rocksdb::FlushReason;
+	using Reason = rocksdb::FlushReason;
 
 	switch(r)
 	{
-		case FlushReason::kOthers:                 return "Others";
-		case FlushReason::kGetLiveFiles:           return "GetLiveFiles";
-		case FlushReason::kShutDown:               return "ShutDown";
-		case FlushReason::kExternalFileIngestion:  return "ExternalFileIngestion";
-		case FlushReason::kManualCompaction:       return "ManualCompaction";
-		case FlushReason::kWriteBufferManager:     return "WriteBufferManager";
-		case FlushReason::kWriteBufferFull:        return "WriteBufferFull";
-		case FlushReason::kTest:                   return "Test";
-		case FlushReason::kDeleteFiles:            return "DeleteFiles";
-		case FlushReason::kAutoCompaction:         return "AutoCompaction";
-		case FlushReason::kManualFlush:            return "ManualFlush";
-		case FlushReason::kErrorRecovery:          return "kErrorRecovery";
+		case Reason::kOthers:                       return "Others";
+		case Reason::kGetLiveFiles:                 return "GetLiveFiles";
+		case Reason::kShutDown:                     return "ShutDown";
+		case Reason::kExternalFileIngestion:        return "ExternalFileIngestion";
+		case Reason::kManualCompaction:             return "ManualCompaction";
+		case Reason::kWriteBufferManager:           return "WriteBufferManager";
+		case Reason::kWriteBufferFull:              return "WriteBufferFull";
+		case Reason::kTest:                         return "Test";
+		case Reason::kDeleteFiles:                  return "DeleteFiles";
+		case Reason::kAutoCompaction:               return "AutoCompaction";
+		case Reason::kManualFlush:                  return "ManualFlush";
+		case Reason::kErrorRecovery:                return "kErrorRecovery";
 	}
 
 	return "??????";
@@ -5609,31 +5609,30 @@ ircd::db::reflect(const rocksdb::FlushReason &r)
 ircd::string_view
 ircd::db::reflect(const rocksdb::CompactionReason &r)
 {
-	using CompactionReason = rocksdb::CompactionReason;
+	using Reason = rocksdb::CompactionReason;
 
 	switch(r)
 	{
-		case CompactionReason::kUnknown:                      return "Unknown";
-		case CompactionReason::kLevelL0FilesNum:              return "LevelL0FilesNum";
-		case CompactionReason::kLevelMaxLevelSize:            return "LevelMaxLevelSize";
-		case CompactionReason::kUniversalSizeAmplification:   return "UniversalSizeAmplification";
-		case CompactionReason::kUniversalSizeRatio:           return "UniversalSizeRatio";
-		case CompactionReason::kUniversalSortedRunNum:        return "UniversalSortedRunNum";
-		case CompactionReason::kFIFOMaxSize:                  return "FIFOMaxSize";
-		case CompactionReason::kFIFOReduceNumFiles:           return "FIFOReduceNumFiles";
-		case CompactionReason::kFIFOTtl:                      return "FIFOTtl";
-		case CompactionReason::kManualCompaction:             return "ManualCompaction";
-		case CompactionReason::kFilesMarkedForCompaction:     return "FilesMarkedForCompaction";
-		case CompactionReason::kBottommostFiles:              return "BottommostFiles";
-		case CompactionReason::kTtl:                          return "Ttl";
-		case CompactionReason::kFlush:                        return "Flush";
-		case CompactionReason::kExternalSstIngestion:         return "ExternalSstIngestion";
-
+		case Reason::kUnknown:                      return "Unknown";
+		case Reason::kLevelL0FilesNum:              return "LevelL0FilesNum";
+		case Reason::kLevelMaxLevelSize:            return "LevelMaxLevelSize";
+		case Reason::kUniversalSizeAmplification:   return "UniversalSizeAmplification";
+		case Reason::kUniversalSizeRatio:           return "UniversalSizeRatio";
+		case Reason::kUniversalSortedRunNum:        return "UniversalSortedRunNum";
+		case Reason::kFIFOMaxSize:                  return "FIFOMaxSize";
+		case Reason::kFIFOReduceNumFiles:           return "FIFOReduceNumFiles";
+		case Reason::kFIFOTtl:                      return "FIFOTtl";
+		case Reason::kManualCompaction:             return "ManualCompaction";
+		case Reason::kFilesMarkedForCompaction:     return "FilesMarkedForCompaction";
+		case Reason::kBottommostFiles:              return "BottommostFiles";
+		case Reason::kTtl:                          return "Ttl";
+		case Reason::kFlush:                        return "Flush";
+		case Reason::kExternalSstIngestion:         return "ExternalSstIngestion";
 		#ifdef IRCD_DB_HAS_PERIODIC_COMPACTIONS
-		case CompactionReason::kPeriodicCompaction:           return "kPeriodicCompaction";
+		case Reason::kPeriodicCompaction:           return "kPeriodicCompaction";
 		#endif
 
-		case CompactionReason::kNumOfReasons:
+		case Reason::kNumOfReasons:
 			break;
 	}
 
@@ -5643,16 +5642,16 @@ ircd::db::reflect(const rocksdb::CompactionReason &r)
 ircd::string_view
 ircd::db::reflect(const rocksdb::BackgroundErrorReason &r)
 {
-	using rocksdb::BackgroundErrorReason;
+	using Reason = rocksdb::BackgroundErrorReason;
 
 	switch(r)
 	{
-		case BackgroundErrorReason::kFlush:          return "FLUSH";
-		case BackgroundErrorReason::kCompaction:     return "COMPACTION";
-		case BackgroundErrorReason::kWriteCallback:  return "WRITE";
-		case BackgroundErrorReason::kMemTable:       return "MEMTABLE";
+		case Reason::kFlush:          return "FLUSH";
+		case Reason::kCompaction:     return "COMPACTION";
+		case Reason::kWriteCallback:  return "WRITE";
+		case Reason::kMemTable:       return "MEMTABLE";
 		#if 0 // unreleased
-		case BackgroundErrorReason::kManifestWrite:  return "MANIFESTWRITE";
+		case Reason::kManifestWrite:  return "MANIFESTWRITE";
 		#endif
 	}
 
@@ -5662,13 +5661,13 @@ ircd::db::reflect(const rocksdb::BackgroundErrorReason &r)
 ircd::string_view
 ircd::db::reflect(const rocksdb::WriteStallCondition &c)
 {
-	using rocksdb::WriteStallCondition;
+	using Condition = rocksdb::WriteStallCondition;
 
 	switch(c)
 	{
-		case WriteStallCondition::kNormal:   return "NORMAL";
-		case WriteStallCondition::kDelayed:  return "DELAYED";
-		case WriteStallCondition::kStopped:  return "STOPPED";
+		case Condition::kNormal:   return "NORMAL";
+		case Condition::kDelayed:  return "DELAYED";
+		case Condition::kStopped:  return "STOPPED";
 	}
 
 	return "??????";
@@ -5677,49 +5676,54 @@ ircd::db::reflect(const rocksdb::WriteStallCondition &c)
 ircd::string_view
 ircd::db::reflect(const rocksdb::Env::Priority &p)
 {
+	using Priority = rocksdb::Env::Priority;
+
 	switch(p)
 	{
-		case rocksdb::Env::Priority::BOTTOM:  return "BOTTOM"_sv;
-		case rocksdb::Env::Priority::LOW:     return "LOW"_sv;
-		case rocksdb::Env::Priority::HIGH:    return "HIGH"_sv;
+		case Priority::BOTTOM:  return "BOTTOM";
+		case Priority::LOW:     return "LOW";
+		case Priority::HIGH:    return "HIGH";
 		#ifdef IRCD_DB_HAS_ENV_PRIO_USER
-		case rocksdb::Env::Priority::USER:    return "USER"_sv;
+		case Priority::USER:    return "USER";
 		#endif
-		case rocksdb::Env::Priority::TOTAL:   assert(0); break;
+		case Priority::TOTAL:
+			assert(false);
 	}
 
-	return "????"_sv;
+	return "????";
 }
 
 ircd::string_view
 ircd::db::reflect(const rocksdb::Env::IOPriority &p)
 {
+	using Priority = rocksdb::Env::IOPriority;
+
 	switch(p)
 	{
-		case rocksdb::Env::IOPriority::IO_LOW:     return "IO_LOW"_sv;
-		case rocksdb::Env::IOPriority::IO_HIGH:    return "IO_HIGH"_sv;
-		case rocksdb::Env::IOPriority::IO_TOTAL:   break;
+		case Priority::IO_LOW:     return "IO_LOW";
+		case Priority::IO_HIGH:    return "IO_HIGH";
+		case Priority::IO_TOTAL:   break;
 	}
 
-	return "IO_????"_sv;
+	return "IO_????";
 }
 
 ircd::string_view
 ircd::db::reflect(const rocksdb::Env::WriteLifeTimeHint &h)
 {
-	using WriteLifeTimeHint = rocksdb::Env::WriteLifeTimeHint;
+	using Hint = rocksdb::Env::WriteLifeTimeHint;
 
 	switch(h)
 	{
-		case WriteLifeTimeHint::WLTH_NOT_SET:   return "NOT_SET";
-		case WriteLifeTimeHint::WLTH_NONE:      return "NONE";
-		case WriteLifeTimeHint::WLTH_SHORT:     return "SHORT";
-		case WriteLifeTimeHint::WLTH_MEDIUM:    return "MEDIUM";
-		case WriteLifeTimeHint::WLTH_LONG:      return "LONG";
-		case WriteLifeTimeHint::WLTH_EXTREME:   return "EXTREME";
+		case Hint::WLTH_NOT_SET:   return "NOT_SET";
+		case Hint::WLTH_NONE:      return "NONE";
+		case Hint::WLTH_SHORT:     return "SHORT";
+		case Hint::WLTH_MEDIUM:    return "MEDIUM";
+		case Hint::WLTH_LONG:      return "LONG";
+		case Hint::WLTH_EXTREME:   return "EXTREME";
 	}
 
-	return "WLTH_????"_sv;
+	return "WLTH_????";
 }
 
 ircd::string_view
@@ -5762,10 +5766,7 @@ ircd::db::reflect(const rocksdb::Status::Code &s)
 		case Code::kExpired:               return "Expired";
 		case Code::kTryAgain:              return "TryAgain";
 		case Code::kCompactionTooLarge:    return "CompactionTooLarge";
-
-		#if ROCKSDB_MAJOR > 6 \
-		|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR > 3) \
-		|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR == 3 && ROCKSDB_PATCH >= 6)
+		#ifdef IRCD_DB_HAS_CF_DROPPED
 		case Code::kColumnFamilyDropped:   return "ColumnFamilyDropped";
 		case Code::kMaxCode:               break;
 		#endif
@@ -5777,14 +5778,16 @@ ircd::db::reflect(const rocksdb::Status::Code &s)
 ircd::string_view
 ircd::db::reflect(const rocksdb::RandomAccessFile::AccessPattern &p)
 {
+	using AccessPattern = rocksdb::RandomAccessFile::AccessPattern;
+
 	switch(p)
 	{
-		case rocksdb::RandomAccessFile::AccessPattern::NORMAL:      return "NORMAL"_sv;
-		case rocksdb::RandomAccessFile::AccessPattern::RANDOM:      return "RANDOM"_sv;
-		case rocksdb::RandomAccessFile::AccessPattern::SEQUENTIAL:  return "SEQUENTIAL"_sv;
-		case rocksdb::RandomAccessFile::AccessPattern::WILLNEED:    return "WILLNEED"_sv;
-		case rocksdb::RandomAccessFile::AccessPattern::DONTNEED:    return "DONTNEED"_sv;
+		case AccessPattern::NORMAL:      return "NORMAL";
+		case AccessPattern::RANDOM:      return "RANDOM";
+		case AccessPattern::SEQUENTIAL:  return "SEQUENTIAL";
+		case AccessPattern::WILLNEED:    return "WILLNEED";
+		case AccessPattern::DONTNEED:    return "DONTNEED";
 	}
 
-	return "??????"_sv;
+	return "??????";
 }
