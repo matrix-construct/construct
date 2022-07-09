@@ -11269,15 +11269,14 @@ console_cmd__room__acquire__list(opt &out, const string_view &line)
 	<< " "
 	<< std::endl;
 
-	size_t i(0);
 	for(const auto *const &a : m::acquire::list)
 	{
 		size_t j(0);
 		for(const auto &result : a->fetching)
 			out
-			<< std::right << std::setw(4) << i
+			<< std::right << std::setw(4) << a->id
 			<< " "
-			<< std::right << std::setw(4) << j++
+			<< std::right << std::setw(4) << (a->fetches - j++)
 			<< " "
 			<< std::left << std::setw(50) << trunc(a->opts.room.room_id, 40)
 			<< " "
@@ -11294,8 +11293,6 @@ console_cmd__room__acquire__list(opt &out, const string_view &line)
 			<< std::left << std::setw(50) << trunc(result.event_id, 60)
 			<< " "
 			<< std::endl;
-
-		i++;
 	}
 
 	return true;

@@ -23,12 +23,15 @@ struct ircd::m::acquire
 	struct result;
 
 	static log::log log;
+	static uint64_t ids;
 
+	const uint64_t id {++ids};
 	const struct opts &opts;
 	vm::opts head_vmopts;
 	vm::opts history_vmopts;
 	vm::opts state_vmopts;
 	std::list<result> fetching;
+	uint64_t fetches {0};
 
   private:
 	bool full() const noexcept;

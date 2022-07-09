@@ -14,6 +14,9 @@ ircd::m::acquire::log
 	"m.acquire"
 };
 
+decltype(ircd::m::acquire::ids)
+ircd::m::acquire::ids;
+
 template<>
 decltype(ircd::util::instance_list<ircd::m::acquire>::allocator)
 ircd::util::instance_list<ircd::m::acquire>::allocator
@@ -635,6 +638,7 @@ try
 		.backfill_limit = limit,
 	}));
 
+	fetches++;
 	return true;
 }
 catch(const ctx::interrupted &e)
