@@ -31,6 +31,9 @@ ircd::m::sync::room_unread_notifications
 	"rooms.unread_notifications",
 	room_unread_notifications_polylog,
 	room_unread_notifications_linear,
+	{
+		{ "phased", true },
+	}
 };
 
 bool
@@ -183,9 +186,16 @@ ircd::m::sync::room_unread_notifications_polylog(data &data)
 	if(!marker_idx)
 		return false;
 
+	const bool initial_phase
+	{
+		data.phased && data.range.first == 0
+	};
+
 	const auto notification_count
 	{
-		_notification_count(room, marker_idx, data.range.second)
+		!initial_phase?
+			_notification_count(room, marker_idx, data.range.second):
+			0L
 	};
 
 	json::stack::member
