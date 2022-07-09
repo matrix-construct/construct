@@ -11248,15 +11248,36 @@ console_cmd__room__events__horizon__rebuild(opt &out, const string_view &line)
 bool
 console_cmd__room__acquire__list(opt &out, const string_view &line)
 {
+	out
+	<< std::right << std::setw(4) << "id"
+	<< " "
+	<< std::right << std::setw(4) << "fid"
+	<< " "
+	<< std::left << std::setw(50) << "room"
+	<< " "
+	<< std::right << std::setw(4) << "view"
+	<< " ["
+	<< std::right << std::setw(7) << "depth"
+	<< " "
+	<< std::right << std::setw(7) << "depth"
+	<< " | "
+	<< std::right << std::setw(8) << "ref"
+	<< " "
+	<< std::right << std::setw(8) << "ref"
+	<< "] "
+	<< std::left << std::setw(50) << "event"
+	<< " "
+	<< std::endl;
+
 	size_t i(0);
 	for(const auto *const &a : m::acquire::list)
 	{
 		size_t j(0);
 		for(const auto &result : a->fetching)
 			out
-			<< std::left << std::setw(4) << i
+			<< std::right << std::setw(4) << i
 			<< " "
-			<< std::left << std::setw(4) << j++
+			<< std::right << std::setw(4) << j++
 			<< " "
 			<< std::left << std::setw(50) << trunc(a->opts.room.room_id, 40)
 			<< " "
