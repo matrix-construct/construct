@@ -5601,6 +5601,12 @@ ircd::db::reflect(const rocksdb::FlushReason &r)
 		case Reason::kAutoCompaction:               return "AutoCompaction";
 		case Reason::kManualFlush:                  return "ManualFlush";
 		case Reason::kErrorRecovery:                return "kErrorRecovery";
+		#ifdef IRCD_DB_HAS_FLUSH_RETRY
+		case Reason::kErrorRecoveryRetryFlush:      return "kErrorRecoveryRetryFlush";
+		#endif
+		#ifdef IRCD_DB_HAS_WAL_FULL
+		case Reason::kWalFull:                      return "kWalFull";
+		#endif
 	}
 
 	return "??????";
@@ -5631,6 +5637,12 @@ ircd::db::reflect(const rocksdb::CompactionReason &r)
 		#ifdef IRCD_DB_HAS_PERIODIC_COMPACTIONS
 		case Reason::kPeriodicCompaction:           return "kPeriodicCompaction";
 		#endif
+		#ifdef IRCD_DB_HAS_CHANGE_TEMPERATURE
+		case Reason::kChangeTemperature:            return "kChangeTemperature";
+		#endif
+		#ifdef IRCD_DB_HAS_FORCED_BLOBGC
+		case Reason::kForcedBlobGC:                 return "kForcedBlobGC";
+		#endif
 
 		case Reason::kNumOfReasons:
 			break;
@@ -5646,12 +5658,18 @@ ircd::db::reflect(const rocksdb::BackgroundErrorReason &r)
 
 	switch(r)
 	{
-		case Reason::kFlush:          return "FLUSH";
-		case Reason::kCompaction:     return "COMPACTION";
-		case Reason::kWriteCallback:  return "WRITE";
-		case Reason::kMemTable:       return "MEMTABLE";
-		#if 0 // unreleased
-		case Reason::kManifestWrite:  return "MANIFESTWRITE";
+		case Reason::kFlush:               return "FLUSH";
+		case Reason::kCompaction:          return "COMPACTION";
+		case Reason::kWriteCallback:       return "WRITE";
+		case Reason::kMemTable:            return "MEMTABLE";
+		#ifdef IRCD_DB_HAS_MANIFEST_WRITE
+		case Reason::kManifestWrite:       return "MANIFESTWRITE";
+		#endif
+		#ifdef IRCD_DB_HAS_FLUSH_RETRY
+		case Reason::kFlushNoWAL:          return "FLUSHNOWAL";
+		#endif
+		#ifdef IRCD_DB_HAS_MANIFEST_WRITE_NOWAL
+		case Reason::kManifestWriteNoWAL:  return "MANIFESTWRITENOWAL";
 		#endif
 	}
 
@@ -5701,7 +5719,13 @@ ircd::db::reflect(const rocksdb::Env::IOPriority &p)
 	switch(p)
 	{
 		case Priority::IO_LOW:     return "IO_LOW";
+		#ifdef IRCD_DB_HAS_IO_MID
+		case Priority::IO_MID:     return "IO_MID";
+		#endif
 		case Priority::IO_HIGH:    return "IO_HIGH";
+		#ifdef IRCD_DB_HAS_IO_USER
+		case Priority::IO_USER:    return "IO_USER";
+		#endif
 		case Priority::IO_TOTAL:   break;
 	}
 
