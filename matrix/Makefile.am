@@ -61,9 +61,8 @@ AM_CPPFLAGS += $(EXTRA_CPPFLAGS)
 AM_LDFLAGS += $(EXTRA_LDFLAGS)
 
 libircd_matrixdir = @libdir@
-libircd_matrix_LTLIBRARIES = \
-	libircd_matrix.la \
-	###
+libircd_matrix_LTLIBRARIES =#
+libircd_matrix_LTLIBRARIES += libircd_matrix.la
 
 #
 # Unit list

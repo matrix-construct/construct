@@ -83,47 +83,46 @@ AM_CPPFLAGS += $(EXTRA_CPPFLAGS)
 AM_LDFLAGS += $(EXTRA_LDFLAGS)
 
 libircddir = @libdir@
-libircd_LTLIBRARIES = libircd.la
+libircd_LTLIBRARIES =#
+libircd_LTLIBRARIES += libircd.la
 
-libircd_la_LDFLAGS = \
-	$(AM_LDFLAGS) \
-	@ROCKSDB_LDFLAGS@ \
-	@JS_LDFLAGS@ \
-	@ICU_LDFLAGS@ \
-	@BOOST_LDFLAGS@ \
-	@OPENCL_LDFLAGS@ \
-	@SSL_LDFLAGS@ \
-	@PBC_LDFLAGS@ \
-	@CRYPTO_LDFLAGS@ \
-	@SODIUM_LDFLAGS@ \
-	@MAGIC_LDFLAGS@ \
-	@IMAGEMAGICK_LDFLAGS@ \
-	@PNG_LDFLAGS@ \
-	@ZSTD_LDFLAGS@ \
-	@SNAPPY_LDFLAGS@ \
-	@LZ4_LDFLAGS@ \
-	@Z_LDFLAGS@ \
-	@MALLOC_LDFLAGS@ \
-	###
+libircd_la_LDFLAGS =#
+libircd_la_LDFLAGS += $(AM_LDFLAGS)
+libircd_la_LDFLAGS += @ROCKSDB_LDFLAGS@
+libircd_la_LDFLAGS += @JS_LDFLAGS@
+libircd_la_LDFLAGS += @ICU_LDFLAGS@
+libircd_la_LDFLAGS += @BOOST_LDFLAGS@
+libircd_la_LDFLAGS += @OPENCL_LDFLAGS@
+libircd_la_LDFLAGS += @SSL_LDFLAGS@
+libircd_la_LDFLAGS += @PBC_LDFLAGS@
+libircd_la_LDFLAGS += @CRYPTO_LDFLAGS@
+libircd_la_LDFLAGS += @SODIUM_LDFLAGS@
+libircd_la_LDFLAGS += @MAGIC_LDFLAGS@
+libircd_la_LDFLAGS += @IMAGEMAGICK_LDFLAGS@
+libircd_la_LDFLAGS += @PNG_LDFLAGS@
+libircd_la_LDFLAGS += @ZSTD_LDFLAGS@
+libircd_la_LDFLAGS += @SNAPPY_LDFLAGS@
+libircd_la_LDFLAGS += @LZ4_LDFLAGS@
+libircd_la_LDFLAGS += @Z_LDFLAGS@
+libircd_la_LDFLAGS += @MALLOC_LDFLAGS@
 
-libircd_la_LIBADD = \
-	@ROCKSDB_LIBS@ \
-	@JS_LIBS@ \
-	@ICU_LIBS@ \
-	@BOOST_LIBS@ \
-	@PBC_LIBS@ \
-	@SSL_LIBS@ \
-	@CRYPTO_LIBS@ \
-	@SODIUM_LIBS@ \
-	@MAGIC_LIBS@ \
-	@IMAGEMAGICK_LIBS@ \
-	@PNG_LIBS@ \
-	@ZSTD_LIBS@ \
-	@SNAPPY_LIBS@ \
-	@LZ4_LIBS@ \
-	@Z_LIBS@ \
-	$(EXTRA_LIBS) \
-	###
+libircd_la_LIBADD =#
+libircd_la_LIBADD += @ROCKSDB_LIBS@
+libircd_la_LIBADD += @JS_LIBS@
+libircd_la_LIBADD += @ICU_LIBS@
+libircd_la_LIBADD += @BOOST_LIBS@
+libircd_la_LIBADD += @PBC_LIBS@
+libircd_la_LIBADD += @SSL_LIBS@
+libircd_la_LIBADD += @CRYPTO_LIBS@
+libircd_la_LIBADD += @SODIUM_LIBS@
+libircd_la_LIBADD += @MAGIC_LIBS@
+libircd_la_LIBADD += @IMAGEMAGICK_LIBS@
+libircd_la_LIBADD += @PNG_LIBS@
+libircd_la_LIBADD += @ZSTD_LIBS@
+libircd_la_LIBADD += @SNAPPY_LIBS@
+libircd_la_LIBADD += @LZ4_LIBS@
+libircd_la_LIBADD += @Z_LIBS@
+libircd_la_LIBADD += $(EXTRA_LIBS)
 
 if PROFILE
 if CLANG11
