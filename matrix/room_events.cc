@@ -246,11 +246,14 @@ ircd::m::room::events::events(const m::room &room,
 }
 {
 	assert(room.room_id);
+	const bool found
+	{
+		room.event_id?
+			seek(room.event_id):
+			seek()
+	};
 
-	if(room.event_id)
-		seek(room.event_id);
-	else
-		seek();
+	assert(found == bool(*this));
 }
 
 ircd::m::room::events::events(const m::room &room,
@@ -267,8 +270,12 @@ ircd::m::room::events::events(const m::room &room,
 }
 {
 	assert(room.room_id);
+	const bool found
+	{
+		seek(event_id)
+	};
 
-	seek(event_id);
+	assert(found == bool(*this));
 }
 
 ircd::m::room::events::events(const m::room &room,

@@ -89,14 +89,18 @@ struct ircd::m::room::events
 	bool prefetch(const string_view &event_prop);
 	bool prefetch(); // uses supplied fetch::opts.
 
+	// Seeks to closest event in the room by depth; room.event_id ignored.
 	events(const m::room &,
 	       const uint64_t &depth,
 	       const event::fetch::opts *const & = nullptr);
 
+	// Seeks to event_id; null iteration when not found; seekless when empty.
 	events(const m::room &,
 	       const event::id &,
 	       const event::fetch::opts *const & = nullptr);
 
+	// Seeks to latest event in the room unless room.event_id given. Null
+	// iteration when given and not found.
 	events(const m::room &,
 	       const event::fetch::opts *const & = nullptr);
 
