@@ -890,7 +890,10 @@ ircd::db::prefetcher::wait_pending()
 
 	dock.wait([this, &fetched_target]() noexcept
 	{
-		return this->ticker->fetched >= fetched_target;
+		return false
+		|| this->ticker->fetched >= fetched_target
+		|| !request_workers
+		;
 	});
 
 	assert(fetched_target >= fetched_counter);
