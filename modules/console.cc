@@ -16834,15 +16834,28 @@ console_cmd__fetch(opt &out, const string_view &line)
 	m::fetch::for_each([&out]
 	(const m::fetch::request &request)
 	{
+		const auto request_finished
+		{
+			!!request.finished?
+				request.finished:
+				now<system_point>()
+		};
+
+		const auto elapsed
+		{
+			 request_finished - request.started
+		};
+
+		char abuf[2][48];
 		out
 		<< std::right << std::setw(10) << reflect(request.opts.op) << " "
 		<< std::left << std::setw(64) << trunc(request.event_id, 64) << " "
 		<< std::left << std::setw(40) << trunc(request.room_id, 40) << " "
 		<< std::left << std::setw(32) << trunc(request.origin, 32) << " "
-		<< std::left << "S:" << request.started << " "
-		<< std::left << "A:" << request.attempted.size() << " "
-		<< std::left << "E:" << bool(request.eptr) << " "
-		<< std::left << "F:" << request.finished << " "
+		<< std::left << std::right << std::setw(10) << pretty(abuf[1], elapsed, 1) << " | "
+		<< std::left << std::right << std::setw(14) << ago(abuf[0], request.last, 1) << " "
+		<< std::left << "attempt:" << std::setw(3) << request.attempted.size() << " "
+		<< std::left << "err:" << bool(request.eptr) << " "
 		<< std::endl
 		;
 
