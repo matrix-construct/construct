@@ -34,6 +34,9 @@ ircd::m::sync::room_account_data
 	"rooms.account_data",
 	room_account_data_polylog,
 	room_account_data_linear,
+	{
+		{ "prefetch", true }
+	},
 };
 
 bool
@@ -203,6 +206,7 @@ ircd::m::sync::room_account_data_polylog(data &data)
 	bool ret{false};
 	ret |= room_account_data_polylog_events(data);
 	ret |= room_account_data_polylog_tags(data);
+	assert(!ret || !data.prefetch);
 	return ret;
 }
 
@@ -229,12 +233,18 @@ ircd::m::sync::room_account_data_polylog_events(data &data)
 			event::keys::include {"content"}
 		};
 
+		if(data.prefetch)
+		{
+			m::prefetch(event_idx, fopts);
+			return true;
+		}
+
 		m::event::fetch event
 		{
 			std::nothrow, event_idx, fopts
 		};
 
-		if(!event.valid)
+		if(unlikely(!event.valid))
 			return true;
 
 		json::get<"state_key"_>(event) = state_key;
@@ -298,6 +308,12 @@ ircd::m::sync::room_account_data_polylog_tags(data &data)
 	};
 
 	bool ret{false};
+	if(data.prefetch)
+	{
+		data.user_state.prefetch(type);
+		return ret;
+	}
+
 	data.user_state.for_each(type, [&data, &tags, &ret]
 	(const string_view &type, const string_view &state_key, const m::event::idx &event_idx)
 	{
@@ -310,12 +326,18 @@ ircd::m::sync::room_account_data_polylog_tags(data &data)
 			event::keys::include {"content"}
 		};
 
+		if(data.prefetch)
+		{
+			m::prefetch(event_idx, fopts);
+			return true;
+		}
+
 		const m::event::fetch event
 		{
 			std::nothrow, event_idx, fopts
 		};
 
-		if(!event.valid)
+		if(unlikely(!event.valid))
 			return true;
 
 		json::stack::member
