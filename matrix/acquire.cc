@@ -153,9 +153,6 @@ ircd::m::acquire::fetch_history(event::idx &ref_min)
 	missing.for_each(depth_range, [this, &top, &ref_min, &ref_top, &ret]
 	(const event::id &event_id, const int64_t &ref_depth, const event::idx &ref_idx)
 	{
-		if(ctx::interruption_requested())
-			return false;
-
 		if(ref_idx < opts.ref.first || ref_idx < ref_min)
 			return true;
 
@@ -486,10 +483,6 @@ bool
 ircd::m::acquire::fetch_state(const m::event::id &event_id,
                               const string_view &remote)
 {
-	// Bail if interrupted
-	if(ctx::interruption_requested())
-		return false;
-
 	const auto hint
 	{
 		event_id.host() && !my_host(event_id.host())?
@@ -550,10 +543,6 @@ bool
 ircd::m::acquire::fetch_head(const m::event &result,
                              const int64_t &top_depth)
 {
-	// Bail if interrupted
-	if(ctx::interruption_requested())
-		return false;
-
 	// Bail if the depth is below the window
 	if(json::get<"depth"_>(result) < opts.depth.first)
 		return false;
@@ -599,6 +588,9 @@ ircd::m::acquire::submit(const m::event::id &event_id,
                          const size_t &limit,
                          const vm::opts *const &vmopts)
 {
+	// Bail if interrupted
+	ctx::interruption_point();
+
 	const bool ret
 	{
 		!started(event_id)?
@@ -695,7 +687,6 @@ ircd::m::acquire::handle()
 		full()? 5000: 50
 	};
 
-	ctx::interruption_point();
 	if(!next.wait(timeout, std::nothrow))
 		return full();
 
