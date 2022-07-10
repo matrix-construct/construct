@@ -31,10 +31,14 @@ struct ircd::m::acquire
 	vm::opts history_vmopts;
 	vm::opts state_vmopts;
 	std::list<result> fetching;
-	uint64_t fetches {0};
+	uint32_t fetches {0};
+	uint32_t evals {0};
+	uint32_t acquires {0};
 
   private:
 	bool full() const noexcept;
+	string_view loghead() const;
+
 	bool handle(result &);
 	bool handle();
 

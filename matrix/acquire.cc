@@ -229,17 +229,19 @@ ircd::m::acquire::fetch_history(event::idx &ref_min)
 		};
 
 		if(submitted)
-			log::debug
+			log::logf
 			{
-				log, "Fetch %s miss prev of %s @%lu in %s @%lu sound:%lu twain:%ld fetching:%zu",
+				log, log::level::DEBUG,
+				"fetch %s %s in %s @%lu miss prev %s @%lu sound:%lu twain:%ld hint:%s",
+				loghead(),
 				string_view{event_id},
-				string_view{ref_id},
-				ref_depth,
 				string_view{ref_room.room_id},
 				std::get<int64_t>(top),
+				string_view{ref_id},
+				ref_depth,
 				sound_depth,
 				twain_depth,
-				fetching.size(),
+				opts.hint?: "<none>"_sv,
 			};
 
 		ref_top = std::max(ref_top, ref_idx);
@@ -358,7 +360,7 @@ ircd::m::acquire::fetch_timeline(event::idx &ref_min)
 
 			log::debug
 			{
-				log, "Fetch from %s (%lu) miss prev %s fetch:%zu in %s pe:%zu pq:%zu fetching:%zu",
+				log, "fetch from %s (%lu) miss prev %s fetch:%zu in %s pe:%zu pq:%zu fetching:%zu",
 				string_view{e.event_id},
 				ref_idx,
 				string_view{prev_id[i]},
@@ -434,12 +436,13 @@ ircd::m::acquire::fetch_timeline(event::idx &ref_min)
 
 	log::debug
 	{
-		log, "Round in %s pe:%zu pq:%zu submits:%zu fetching:%zu ref_min:%lu:%lu",
+		log, "Round in %s pe:%zu pq:%zu submits:%zu fetching:%zu fetches:%zu ref_min:%lu:%lu",
 		string_view{opts.room.room_id},
 		pe.size(),
 		pq.size(),
 		submits,
 		fetching.size(),
+		fetches,
 		ref_min,
 		_ref_min,
 	};
@@ -503,12 +506,15 @@ ircd::m::acquire::fetch_state(const m::event::id &event_id,
 	};
 
 	if(submitted)
-		log::debug
+		log::logf
 		{
-			log, "Fetch %s in state of %s fetching:%zu",
+			log, log::level::DEBUG,
+			"fetch %s %s in %s state fetching:%zu hint:%s",
+			loghead(),
 			string_view{event_id},
 			string_view{opts.room.room_id},
 			fetching.size(),
+			hint?: "<none>"_sv,
 		};
 
 	return true;
@@ -570,12 +576,13 @@ ircd::m::acquire::fetch_head(const m::event &result,
 	if(submitted)
 		log::debug
 		{
-			log, "Fetch %s head from '%s' in %s @%lu fetching:%zu",
+			log, "fetch %s head from '%s' in %s @%lu fetching:%zu fetches:%zu",
 			string_view{result.event_id},
 			hint,
 			string_view{opts.room.room_id},
 			top_depth,
 			fetching.size(),
+			fetches,
 		};
 
 	return true;
@@ -641,7 +648,8 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "Fetch %s in %s from '%s' :%s",
+		log, "fetch %s %s in %s from '%s' :%s",
+		loghead(),
 		string_view{event_id},
 		string_view{opts.room.room_id},
 		hint?: "<any>"_sv,
@@ -720,9 +728,10 @@ try
 
 	log::debug
 	{
-		log, "Eval %zu from '%s' for %s in %s",
-		pdus.size(),
+		log, "evals %s from '%s' pdus:%zu for %s in %s",
+		loghead(),
 		string_view{response.origin},
+		pdus.size(),
 		string_view{result.event_id},
 		string_view{opts.room.room_id},
 	};
@@ -739,11 +748,13 @@ try
 	auto vmopts(*result.vmopts);
 	vmopts.node_id = response.origin;
 
+	evals++;
 	m::vm::eval
 	{
 		pdus, vmopts
 	};
 
+	acquires++;
 	return true;
 }
 catch(const ctx::interrupted &e)
@@ -754,13 +765,29 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "Eval %s in %s :%s",
+		log, "evals %s %s in %s :%s",
+		loghead(),
 		string_view{result.event_id},
 		string_view{opts.room.room_id},
 		e.what(),
 	};
 
 	return true;
+}
+
+ircd::string_view
+ircd::m::acquire::loghead()
+const
+{
+	thread_local char buf[64];
+	return fmt::sprintf
+	{
+		buf, "%lu %05u:%05u:%05u",
+		id,
+		fetches,
+		evals,
+		acquires,
+	};
 }
 
 bool
