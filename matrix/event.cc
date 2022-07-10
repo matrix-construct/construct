@@ -694,12 +694,7 @@ try
 		{
 			"content", json::members
 			{
-				{ "join_rule", contents.at("join_rule") },
-				{ "allow",
-					contents.has("allow")?
-						contents.at("allow"):
-						json::value{}
-				},
+				{ "join_rule", contents.at("join_rule") }
 			}
 		}};
 
@@ -711,12 +706,7 @@ try
 		{
 			"content", json::members
 			{
-				{ "membership", contents.at("membership") },
-				{ "join_authorised_via_users_server",
-					contents.has("join_authorised_via_users_server")?
-						contents.at("join_authorised_via_users_server"):
-						json::value{}
-				},
+				{ "membership", contents.at("membership") }
 			}
 		}};
 
@@ -835,8 +825,7 @@ try
 		if(content.has("join_rule"))
 			content = json::stringify(essential, json::members
 			{
-				{ "join_rule", content.at("join_rule") },
-				{ "allow", content.get("allow") }
+				{ "join_rule", content.at("join_rule") }
 			});
 	}
 	else if(type == "m.room.member")
@@ -844,8 +833,7 @@ try
 		if(content.has("membership"))
 			content = json::stringify(essential, json::members
 			{
-				{ "membership", content.at("membership") },
-				{ "join_authorised_via_users_server", content.get("join_authorised_via_users_server") },
+				{ "membership", content.at("membership") }
 			});
 	}
 	else if(type == "m.room.power_levels")
