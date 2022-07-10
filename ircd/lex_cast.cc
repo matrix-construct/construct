@@ -205,7 +205,7 @@ ircd::lex::to_bool
 decltype(ircd::lex::is_bool)
 ircd::lex::is_bool
 {
-	&spirit::qi::bool_ >> spirit::eoi
+	spirit::qi::bool_ >> spirit::eoi
 	,"boolean"
 };
 
@@ -270,7 +270,7 @@ ircd::lex::to_int8_t
 decltype(ircd::lex::is_int8_t)
 ircd::lex::is_int8_t
 {
-	&spirit::qi::ushort_ >> spirit::eoi
+	spirit::qi::ushort_ >> spirit::eoi
 	,"signed byte"
 };
 
@@ -315,7 +315,7 @@ ircd::lex::to_uint8_t
 decltype(ircd::lex::is_uint8_t)
 ircd::lex::is_uint8_t
 {
-	&spirit::qi::ushort_ >> spirit::eoi
+	spirit::qi::ushort_ >> spirit::eoi
 	,"unsigned byte"
 };
 
@@ -360,7 +360,7 @@ ircd::lex::to_short
 decltype(ircd::lex::is_short)
 ircd::lex::is_short
 {
-	&spirit::qi::short_ >> spirit::eoi
+	spirit::qi::short_ >> spirit::eoi
 	,"signed short integer"
 };
 
@@ -405,7 +405,7 @@ ircd::lex::to_ushort
 decltype(ircd::lex::is_ushort)
 ircd::lex::is_ushort
 {
-	&spirit::qi::ushort_ >> spirit::eoi
+	spirit::qi::ushort_ >> spirit::eoi
 	,"unsigned short integer"
 };
 
@@ -450,7 +450,7 @@ ircd::lex::to_int
 decltype(ircd::lex::is_int)
 ircd::lex::is_int
 {
-	&spirit::qi::int_ >> spirit::eoi
+	spirit::qi::int_ >> spirit::eoi
 	,"signed integer"
 };
 
@@ -495,7 +495,7 @@ ircd::lex::to_uint
 decltype(ircd::lex::is_uint)
 ircd::lex::is_uint
 {
-	&spirit::qi::uint_ >> spirit::eoi
+	spirit::qi::uint_ >> spirit::eoi
 	,"unsigned integer"
 };
 
@@ -540,7 +540,7 @@ ircd::lex::to_long
 decltype(ircd::lex::is_long)
 ircd::lex::is_long
 {
-	&spirit::qi::long_ >> spirit::eoi
+	spirit::qi::long_ >> spirit::eoi
 	,"long integer"
 };
 
@@ -585,7 +585,7 @@ ircd::lex::to_ulong
 decltype(ircd::lex::is_ulong)
 ircd::lex::is_ulong
 {
-	&spirit::qi::ulong_ >> spirit::eoi
+	spirit::qi::ulong_ >> spirit::eoi
 	,"long unsigned integer"
 };
 
@@ -647,7 +647,7 @@ ircd::lex::to_float
 decltype(ircd::lex::is_float)
 ircd::lex::is_float
 {
-	&spirit::qi::real_parser<float, to_float_policy>{} >> spirit::eoi
+	spirit::qi::real_parser<float, to_float_policy>{} >> spirit::eoi
 	,"single floating point precision"
 };
 
@@ -709,7 +709,7 @@ ircd::lex::to_double
 decltype(ircd::lex::is_double)
 ircd::lex::is_double
 {
-	&spirit::qi::real_parser<double, to_double_policy>{} >> spirit::eoi
+	spirit::qi::real_parser<double, to_double_policy>{} >> spirit::eoi
 	,"double floating point precision"
 };
 
@@ -771,7 +771,7 @@ ircd::lex::to_long_double
 decltype(ircd::lex::is_long_double)
 ircd::lex::is_long_double
 {
-	&spirit::qi::real_parser<long double, to_long_double_policy>{} >> spirit::eoi
+	spirit::qi::real_parser<long double, to_long_double_policy>{} >> spirit::eoi
 	,"long double floating point precision"
 };
 
