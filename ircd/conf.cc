@@ -8,13 +8,22 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+namespace ircd::conf
+{
+	static string_view make_env_name(const mutable_buffer &, const string_view &) noexcept;
+	static string_view make_env_name(const mutable_buffer &, const item<void> &) noexcept;
+	static string_view make_env_name(const mutable_buffer &, const item<void> &, const string_view &);
+	static void prepend_from_env(item<void> &) noexcept;
+	static void append_from_env(item<void> &) noexcept;
+	static void set_from_env(item<void> &) noexcept;
+	static void set_from_closure(item<void> &) noexcept;
+}
+
 decltype(ircd::conf::items)
-ircd::conf::items
-{};
+ircd::conf::items;
 
 decltype(ircd::conf::on_init)
-ircd::conf::on_init
-{};
+ircd::conf::on_init;
 
 decltype(ircd::defaults)
 ircd::defaults
@@ -193,7 +202,35 @@ catch(const std::out_of_range &e)
 }
 
 bool
+ircd::conf::environ(const string_view &key)
+noexcept try
+{
+	char buf[conf::NAME_MAX_LEN];
+	const auto env_key
+	{
+		make_env_name(buf, key)
+	};
+
+	const auto val
+	{
+		util::getenv(env_key)
+	};
+
+	return bool(val);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"%s", e.what()
+	};
+
+	return false;
+}
+
+bool
 ircd::conf::exists(const string_view &key)
+noexcept
 {
 	return items.count(key);
 }
@@ -339,16 +376,6 @@ ircd::conf::item<void>::on_get(const mutable_buffer &)
 const
 {
 	return {};
-}
-
-namespace ircd::conf
-{
-	static string_view make_env_name(const mutable_buffer &, const item<void> &, const string_view &);
-	static string_view make_env_name(const mutable_buffer &, const item<void> &);
-	static void prepend_from_env(item<void> &) noexcept;
-	static void append_from_env(item<void> &) noexcept;
-	static void set_from_env(item<void> &) noexcept;
-	static void set_from_closure(item<void> &) noexcept;
 }
 
 void
@@ -516,9 +543,18 @@ ircd::conf::make_env_name(const mutable_buffer &buf,
 ircd::string_view
 ircd::conf::make_env_name(const mutable_buffer &buf,
                           const item<void> &item)
+noexcept
 {
-	assert(size(item.name) <= conf::NAME_MAX_LEN);
-	return replace(buf, item.name, '.', '_');
+	return make_env_name(buf, item.name);
+}
+
+ircd::string_view
+ircd::conf::make_env_name(const mutable_buffer &buf,
+                          const string_view &name)
+noexcept
+{
+	assert(size(name) <= conf::NAME_MAX_LEN);
+	return replace(buf, name, '.', '_');
 }
 
 //

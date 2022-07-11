@@ -61,7 +61,8 @@ namespace ircd::conf
 	extern std::map<string_view, item<> *> items;
 	extern callbacks<void (item<> &)> on_init;
 
-	bool exists(const string_view &key);
+	bool exists(const string_view &key) noexcept;
+	bool environ(const string_view &key) noexcept;
 	bool persists(const string_view &key);
 	string_view get(const mutable_buffer &out, const string_view &key);
 	std::string get(const string_view &key);
