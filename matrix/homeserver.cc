@@ -809,6 +809,10 @@ try
 	if(conf::exists(key) && !conf::persists(key))
 		return false;
 
+	// Conf items set by environment variables take precedence over db values.
+	if(conf::environ(key))
+		return false;
+
 	log::debug
 	{
 		"Updating conf [%s] => [%s]", key, value
