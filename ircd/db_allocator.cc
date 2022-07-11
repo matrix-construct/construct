@@ -142,21 +142,20 @@ noexcept
 	assert(their_cache_arena_hooks);
 	const auto &their_hooks(*their_cache_arena_hooks);
 
-	#ifdef RB_DEBUG_DB_ENV
 	assert(zero);
 	assert(commit);
-	log::debug
-	{
-		log, "cache arena:%u alloc addr:%p size:%zu align:%zu z:%b c:%b ind:%u",
-		database::allocator::cache_arena,
-		new_addr,
-		size,
-		alignment,
-		*zero,
-		*commit,
-		arena_ind,
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ALLOCATOR)
+		log::debug
+		{
+			log, "cache arena:%u alloc addr:%p size:%zu align:%zu z:%b c:%b ind:%u",
+			database::allocator::cache_arena,
+			new_addr,
+			size,
+			alignment,
+			*zero,
+			*commit,
+			arena_ind,
+		};
 
 	void *const ret
 	{
@@ -189,17 +188,16 @@ noexcept
 	assert(their_cache_arena_hooks);
 	const auto &their_hooks(*their_cache_arena_hooks);
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "cache arena:%u dalloc addr:%p size:%zu align:%zu z:%b c:%b ind:%u",
-		database::allocator::cache_arena,
-		ptr,
-		size,
-		committed,
-		arena_ind,
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ALLOCATOR)
+		log::debug
+		{
+			log, "cache arena:%u dalloc addr:%p size:%zu align:%zu z:%b c:%b ind:%u",
+			database::allocator::cache_arena,
+			ptr,
+			size,
+			committed,
+			arena_ind,
+		};
 
 	const bool ret
 	{
@@ -231,17 +229,17 @@ noexcept
 	assert(their_cache_arena_hooks);
 	const auto &their_hooks(*their_cache_arena_hooks);
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "cache arena:%u destroy addr:%p size:%zu align:%zu z:%b c:%b ind:%u",
-		database::allocator::cache_arena,
-		ptr,
-		size,
-		committed,
-		arena_ind,
-	};
-	#endif
+
+	if constexpr(RB_DEBUG_DB_ALLOCATOR)
+		log::debug
+		{
+			log, "cache arena:%u destroy addr:%p size:%zu align:%zu z:%b c:%b ind:%u",
+			database::allocator::cache_arena,
+			ptr,
+			size,
+			committed,
+			arena_ind,
+		};
 
 	#if defined(HAVE_MLOCK2)
 	if(database::allocator::mlock_current)
@@ -269,18 +267,17 @@ noexcept
 	assert(their_cache_arena_hooks);
 	const auto &their_hooks(*their_cache_arena_hooks);
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "cache arena:%u commit addr:%p size:%zu offset:%zu length:%zu ind:%u",
-		database::allocator::cache_arena,
-		ptr,
-		size,
-		offset,
-		length,
-		arena_ind,
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ALLOCATOR)
+		log::debug
+		{
+			log, "cache arena:%u commit addr:%p size:%zu offset:%zu length:%zu ind:%u",
+			database::allocator::cache_arena,
+			ptr,
+			size,
+			offset,
+			length,
+			arena_ind,
+		};
 
 	return their_hooks.commit(hooks, ptr, size, offset, length, arena_ind);
 }
@@ -299,18 +296,17 @@ noexcept
 	assert(their_cache_arena_hooks);
 	const auto &their_hooks(*their_cache_arena_hooks);
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "cache arena:%u decommit addr:%p size:%zu offset:%zu length:%zu ind:%u",
-		database::allocator::cache_arena,
-		ptr,
-		size,
-		offset,
-		length,
-		arena_ind,
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ALLOCATOR)
+		log::debug
+		{
+			log, "cache arena:%u decommit addr:%p size:%zu offset:%zu length:%zu ind:%u",
+			database::allocator::cache_arena,
+			ptr,
+			size,
+			offset,
+			length,
+			arena_ind,
+		};
 
 	return their_hooks.decommit(hooks, ptr, size, offset, length, arena_ind);
 }
@@ -329,18 +325,17 @@ noexcept
 	assert(their_cache_arena_hooks);
 	const auto &their_hooks(*their_cache_arena_hooks);
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "cache arena:%u purge lazy addr:%p size:%zu offset:%zu length:%zu ind:%u",
-		database::allocator::cache_arena,
-		ptr,
-		size,
-		offset,
-		length,
-		arena_ind,
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ALLOCATOR)
+		log::debug
+		{
+			log, "cache arena:%u purge lazy addr:%p size:%zu offset:%zu length:%zu ind:%u",
+			database::allocator::cache_arena,
+			ptr,
+			size,
+			offset,
+			length,
+			arena_ind,
+		};
 
 	return their_hooks.purge_lazy(hooks, ptr, size, offset, length, arena_ind);
 }
@@ -359,18 +354,17 @@ noexcept
 	assert(their_cache_arena_hooks);
 	const auto &their_hooks(*their_cache_arena_hooks);
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "cache arena:%u purge forced addr:%p size:%zu offset:%zu length:%zu ind:%u",
-		database::allocator::cache_arena,
-		ptr,
-		size,
-		offset,
-		length,
-		arena_ind,
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ALLOCATOR)
+		log::debug
+		{
+			log, "cache arena:%u purge forced addr:%p size:%zu offset:%zu length:%zu ind:%u",
+			database::allocator::cache_arena,
+			ptr,
+			size,
+			offset,
+			length,
+			arena_ind,
+		};
 
 	return their_hooks.purge_forced(hooks, ptr, size, offset, length, arena_ind);
 }
@@ -390,19 +384,18 @@ noexcept
 	assert(their_cache_arena_hooks);
 	const auto &their_hooks(*their_cache_arena_hooks);
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "cache arena:%u split addr:%p size:%zu size_a:%zu size_b:%zu committed:%b ind:%u",
-		database::allocator::cache_arena,
-		ptr,
-		size,
-		size_a,
-		size_b,
-		committed,
-		arena_ind,
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ALLOCATOR)
+		log::debug
+		{
+			log, "cache arena:%u split addr:%p size:%zu size_a:%zu size_b:%zu committed:%b ind:%u",
+			database::allocator::cache_arena,
+			ptr,
+			size,
+			size_a,
+			size_b,
+			committed,
+			arena_ind,
+		};
 
 	return their_hooks.split(hooks, ptr, size, size_a, size_b, committed, arena_ind);
 }
@@ -422,19 +415,18 @@ noexcept
 	assert(their_cache_arena_hooks);
 	const auto &their_hooks(*their_cache_arena_hooks);
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "cache arena:%u merge a[addr:%p size:%zu] b[addr:%p size:%zu] committed:%b ind:%u",
-		database::allocator::cache_arena,
-		addr_a,
-		size_a,
-		addr_b,
-		size_b,
-		committed,
-		arena_ind,
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ALLOCATOR)
+		log::debug
+		{
+			log, "cache arena:%u merge a[addr:%p size:%zu] b[addr:%p size:%zu] committed:%b ind:%u",
+			database::allocator::cache_arena,
+			addr_a,
+			size_a,
+			addr_b,
+			size_b,
+			committed,
+			arena_ind,
+		};
 
 	return their_hooks.merge(hooks, addr_a, size_a, addr_b, size_b, committed, arena_ind);
 }
@@ -521,18 +513,17 @@ noexcept
 		#endif
 	};
 
-	#ifdef RB_DEBUG_DB_ENV
 	assert(d);
-	log::debug
-	{
-		log, "[%s]'%s' allocate:%zu alignment:%zu %p",
-		db::name(*d),
-		c? string_view(db::name(*c)): string_view{},
-		size,
-		alignment,
-		ptr,
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ALLOCATOR)
+		log::debug
+		{
+			log, "[%s]'%s' allocate:%zu alignment:%zu %p",
+			db::name(*d),
+			c? string_view(db::name(*c)): string_view{},
+			size,
+			alignment,
+			ptr,
+		};
 
 	return ptr;
 }

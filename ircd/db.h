@@ -26,6 +26,7 @@
 #define RB_DEBUG_DB_PREFETCH 0
 #define RB_DEBUG_DB_CACHE 0
 #define RB_DEBUG_DB_CACHE_HIT 0
+#define RB_DEBUG_DB_ALLOCATOR 0
 
 /// Set this #define to 1 or 2 to enable extensive log messages for the
 /// experimental db environment-port implementation. This is only useful
