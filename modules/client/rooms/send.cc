@@ -135,8 +135,16 @@ put__send(client &client,
 			content_max,
 		};
 
-	m::vm::copts copts;
-	copts.client_txnid = transaction_id;
+	const m::vm::copts copts
+	{
+		.client_txnid = transaction_id,
+
+		// Bridges are authorized to set their own time.
+		.ts = request.bridge_id?
+			request.query.get("ts", milliseconds::min()):
+			milliseconds::min(),
+	};
+
 	const room room
 	{
 		room_id, &copts

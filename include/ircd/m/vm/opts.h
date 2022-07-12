@@ -214,6 +214,9 @@ struct ircd::m::vm::copts
 	/// A matrix-spec opaque token from a client identifying this eval.
 	string_view client_txnid;
 
+	/// MSC3316 appservice timestamp massage; passed to `origin_server_ts`.
+	milliseconds ts {milliseconds::min()};
+
 	/// This bitmask covers all of the top-level properties of m::event
 	/// which will be generated internally during injection unless they
 	/// already exist. Clearing any of these bits will prevent the internal

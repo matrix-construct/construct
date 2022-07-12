@@ -53,9 +53,22 @@ put__state(client &client,
 		request.content
 	};
 
+	const m::vm::copts copts
+	{
+		// Bridges are authorized to set their own time.
+		.ts = request.bridge_id?
+			request.query.get("ts", milliseconds::min()):
+			milliseconds::min(),
+	};
+
+	const m::room room
+	{
+		room_id, &copts
+	};
+
 	const auto event_id
 	{
-		m::send(room_id, request.user_id, type, state_key, content)
+		m::send(room, request.user_id, type, state_key, content)
 	};
 
 	return m::resource::response

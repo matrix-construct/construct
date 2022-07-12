@@ -319,9 +319,14 @@ ircd::m::vm::inject(eval &eval,
 	{
 		event, opts.prop_mask.has("origin_server_ts"),
 		{
-			"origin_server_ts", []
+			"origin_server_ts", [&opts]
 			{
-				return json::value{ircd::time<milliseconds>()};
+				return json::value
+				{
+					opts.ts == milliseconds::min()?
+						ircd::time<milliseconds>():
+						opts.ts.count()
+				};
 			}
 		}
 	};
