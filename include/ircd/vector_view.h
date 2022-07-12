@@ -35,9 +35,9 @@ struct ircd::vector_view
 	pointer _stop                                { nullptr                                         };
 
   public:
-	pointer data() const noexcept                { return _data;                                   }
-	size_t size() const noexcept                 { return std::distance(_data, _stop);             }
-	bool empty() const noexcept                  { return !size();                                 }
+	constexpr pointer data() const noexcept      { return _data;                                   }
+	constexpr size_t size() const noexcept       { return std::distance(_data, _stop);             }
+	constexpr bool empty() const noexcept        { return !size();                                 }
 
 	const_iterator begin() const noexcept        { return data();                                  }
 	const_iterator end() const noexcept          { return _stop;                                   }
@@ -75,22 +75,26 @@ struct ircd::vector_view
 		return at(0);
 	}
 
+	constexpr
 	vector_view(const pointer __restrict__ start, const pointer __restrict__ stop)
 	noexcept
 	:_data{start}
 	,_stop{stop}
 	{}
 
+	constexpr
 	vector_view(const pointer __restrict__ start, const size_t size)
 	noexcept
 	:vector_view(start, start + size)
 	{}
 
+	constexpr
 	vector_view(const vector_view<value_type> &start, const size_t &size)
 	noexcept
 	:vector_view(start.data(), std::min(start.size(), size))
 	{}
 
+	constexpr
 	vector_view(const std::initializer_list<value_type> &list)
 	noexcept
 	:vector_view(std::begin(list), std::end(list))
@@ -111,6 +115,7 @@ struct ircd::vector_view
 	{}
 
 	template<size_t SIZE>
+	constexpr
 	vector_view(value_type (&__restrict__ buffer)[SIZE])
 	noexcept
 	:vector_view(buffer, SIZE)
@@ -118,18 +123,21 @@ struct ircd::vector_view
 
 	template<class U,
 	         size_t SIZE>
+	constexpr
 	vector_view(const std::array<U, SIZE> &array)
 	noexcept
 	:vector_view(const_cast<pointer>(array.data()), array.size())
 	{}
 
 	template<size_t SIZE>
+	constexpr
 	vector_view(std::array<value_type, SIZE> &array)
 	noexcept
 	:vector_view(array.data(), array.size())
 	{}
 
 	// Required for reasonable implicit const conversion of value_type.
+	constexpr
 	vector_view(const vector_view<typename std::remove_const<value_type>::type> &v)
 	noexcept
 	:vector_view(v.data(), v.size())
