@@ -427,6 +427,12 @@ const try
 }
 catch(const json::error &e)
 {
+	log::derror
+	{
+		log, "power users :%s",
+		e.what(),
+	};
+
 	return default_user_level;
 }
 
@@ -469,6 +475,13 @@ const try
 }
 catch(const json::error &e)
 {
+	log::derror
+	{
+		log, "power events type=%s :%s",
+		type,
+		e.what(),
+	};
+
 	return default_event_level;
 }
 
@@ -515,6 +528,14 @@ const try
 }
 catch(const json::error &e)
 {
+	log::derror
+	{
+		log, "power events type=%s state_key=%s :%s",
+		type,
+		state_key,
+		e.what(),
+	};
+
 	return default_power_level;
 }
 
@@ -542,6 +563,13 @@ const try
 }
 catch(const json::error &e)
 {
+	log::derror
+	{
+		log, "power level prop=%s :%s",
+		prop,
+		e.what(),
+	};
+
 	return default_power_level;
 }
 
