@@ -37,17 +37,17 @@ struct ircd::json::keys
 /// `include` or `exclude` classes which will set these bits appropriately.
 template<class T>
 struct ircd::json::keys<T>::selection
-:std::bitset<T::size()>
+:util::bitset<T::size()>
 {
 	template<class closure> constexpr bool for_each(closure&&) const;
 	template<class it> constexpr it transform(it, const it end) const;
-	bool has(const string_view &) const;
-	void set(const string_view &, const bool & = true);
-	void set(const size_t &, const bool & = true);
+	constexpr bool has(const string_view &) const;
+	constexpr void set(const string_view &, const bool = true);
+	constexpr void set(const size_t &, const bool = true);
 
 	// Note the default all-bits set.
-	constexpr selection(const uint64_t &val = -1)
-	:std::bitset<T::size()>{val}
+	constexpr selection(const uint128_t val = -1)
+	:util::bitset<T::size()>{val}
 	{}
 
 	static_assert(T::size() <= sizeof(uint64_t) * 8);
@@ -60,16 +60,22 @@ template<class T>
 struct ircd::json::keys<T>::include
 :selection
 {
-	include(const vector_view<const string_view> &list)
+	constexpr include(const vector_view<const string_view> list)
 	:selection{0}
 	{
-		assert(this->none());
-		for(const auto &key : list)
-			this->set(key, true);
+		for(const auto key : list)
+			selection::set(key, true);
 	}
 
-	include(const std::initializer_list<const string_view> &list)
-	:include(vector_view<const string_view>(list))
+	constexpr include(const std::initializer_list<const string_view> list)
+	:selection{0}
+	{
+		for(const auto key : list)
+			selection::set(key, true);
+	}
+
+	constexpr include()
+	:selection{0}
 	{}
 };
 
@@ -80,16 +86,22 @@ template<class T>
 struct ircd::json::keys<T>::exclude
 :selection
 {
-	exclude(const vector_view<const string_view> &list)
+	constexpr exclude(const vector_view<const string_view> list)
 	:selection{}
 	{
-		assert(this->all());
-		for(const auto &key : list)
-			this->set(key, false);
+		for(const auto key : list)
+			selection::set(key, false);
 	}
 
-	exclude(const std::initializer_list<const string_view> &list)
-	:exclude(vector_view<const string_view>(list))
+	constexpr exclude(const std::initializer_list<const string_view> list)
+	:selection{}
+	{
+		for(const auto key : list)
+			selection::set(key, false);
+	}
+
+	constexpr exclude()
+	:selection{}
 	{}
 };
 
@@ -98,27 +110,27 @@ struct ircd::json::keys<T>::exclude
 //
 
 template<class T>
-inline void
+inline constexpr void
 ircd::json::keys<T>::selection::set(const string_view &key,
-                                    const bool &val)
+                                    const bool val)
 {
-	this->set(json::indexof<T>(key), val);
+	selection::set(json::indexof<T>(key), val);
 }
 
 template<class T>
-inline void
+inline constexpr void
 ircd::json::keys<T>::selection::set(const size_t &pos,
-                                    const bool &val)
+                                    const bool val)
 {
-	this->std::bitset<T::size()>::set(pos, val);
+	util::bitset<T::size()>::set(pos, val);
 }
 
 template<class T>
-inline bool
+inline constexpr bool
 ircd::json::keys<T>::selection::has(const string_view &key)
 const
 {
-	return this->test(json::indexof<T>(key));
+	return util::bitset<T::size()>::test(json::indexof<T>(key));
 }
 
 template<class T>
@@ -128,7 +140,7 @@ ircd::json::keys<T>::selection::transform(it i,
                                           const it end)
 const
 {
-	this->for_each([&i, &end](auto&& key)
+	for_each([&i, &end](auto&& key)
 	{
 		if(i == end)
 			return false;
@@ -148,7 +160,7 @@ ircd::json::keys<T>::selection::for_each(closure&& function)
 const
 {
 	for(size_t i(0); i < T::size(); ++i)
-		if(this->test(i))
+		if(util::bitset<T::size()>::test(i))
 			if(!function(key<T>(i)))
 				return false;
 

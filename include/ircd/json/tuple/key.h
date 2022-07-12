@@ -25,7 +25,7 @@ noexcept
 
 template<size_t i,
          class tuple>
-inline enable_if_tuple<tuple, const char *>
+inline constexpr enable_if_tuple<tuple, const char *>
 key(const tuple &t)
 noexcept
 {
@@ -34,7 +34,7 @@ noexcept
 
 template<class tuple,
          size_t i>
-inline typename std::enable_if<i == tuple::size(), const char *>::type
+inline constexpr typename std::enable_if<i == tuple::size(), const char *>::type
 key(const size_t &j)
 noexcept
 {
@@ -43,7 +43,7 @@ noexcept
 
 template<class tuple,
          size_t i = 0>
-inline typename std::enable_if<i < tuple::size(), const char *>::type
+inline constexpr typename std::enable_if<i < tuple::size(), const char *>::type
 key(const size_t &j)
 noexcept
 {

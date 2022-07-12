@@ -41,7 +41,7 @@ noexcept
 template<class tuple,
          size_t i = 0,
          size_t N>
-inline enable_if_tuple<tuple, size_t>
+inline constexpr enable_if_tuple<tuple, size_t>
 indexof(const char (&name)[N])
 noexcept
 {
@@ -54,7 +54,7 @@ noexcept
 
 template<class tuple,
          size_t i = 0>
-inline enable_if_tuple<tuple, size_t>
+inline constexpr enable_if_tuple<tuple, size_t>
 indexof(const string_view &name)
 noexcept
 {
