@@ -682,6 +682,23 @@ ircd::db::prefetcher::cancel(const closure &closure)
 	return canceled;
 }
 
+size_t
+ircd::db::prefetcher::wait_pending()
+{
+	const size_t fetched
+	{
+		ticker->fetched
+	};
+
+	dock.wait([this, &fetched]() noexcept
+	{
+		return this->ticker->fetched >= fetched + this->request_workers;
+	});
+
+	assert(ticker->fetched >= fetched);
+	return ticker->fetched - fetched;
+}
+
 void
 ircd::db::prefetcher::worker()
 try
@@ -873,31 +890,6 @@ catch(...)
 {
 	request.fin = now<steady_point>();
 	throw;
-}
-
-size_t
-ircd::db::prefetcher::wait_pending()
-{
-	const size_t fetched_counter
-	{
-		ticker->fetched
-	};
-
-	const size_t fetched_target
-	{
-		fetched_counter + request_workers
-	};
-
-	dock.wait([this, &fetched_target]() noexcept
-	{
-		return false
-		|| this->ticker->fetched >= fetched_target
-		|| !request_workers
-		;
-	});
-
-	assert(fetched_target >= fetched_counter);
-	return fetched_target - fetched_counter;
 }
 
 //

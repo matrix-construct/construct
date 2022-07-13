@@ -28,7 +28,7 @@ struct ircd::db::prefetcher
 	ctx::context context;
 	size_t request_workers {0};
 
-	size_t wait_pending();
+  private:
 	void request_handle(request &);
 	size_t request_cleanup() noexcept;
 	void request_worker();
@@ -36,6 +36,7 @@ struct ircd::db::prefetcher
 	void worker();
 
   public:
+	size_t wait_pending();
 	size_t cancel(const closure &);
 	size_t cancel(database &);         // Cancel all for db
 	size_t cancel(column &);           // Cancel all for column
