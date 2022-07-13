@@ -173,7 +173,7 @@ try
 	log::logf
 	{
 		log, log::DEBUG,
-		"Query '%s' by %s batch:%ld order_by:%s inc_state:%b rooms:%zu limit:%zu",
+		"Query '%s' by %s batch:%ld order_by:%s inc_state:%b rooms:%zu limit:%zu filter:%s",
 		query.search_term,
 		string_view{query.user_id},
 		query.batch,
@@ -181,6 +181,7 @@ try
 		json::get<"include_state"_>(query.room_events),
 		json::get<"rooms"_>(query.filter).size(),
 		query.limit,
+		string_view{room_event_filter.source},
 	};
 
 	search::result result
@@ -346,7 +347,9 @@ try
 
 	const bool match
 	{
-		has(body, query.search_term)
+		true
+		&& has(body, query.search_term)
+		&& m::match(query.filter, result.event_idx)
 	};
 
 	const bool handled
