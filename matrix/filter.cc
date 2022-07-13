@@ -18,7 +18,6 @@
 bool
 ircd::m::match(const room_event_filter &filter,
                const event &event)
-noexcept
 {
 	if(json::get<"contains_url"_>(filter) == true)
 		if(!json::get<"content"_>(event).has("url"))
@@ -42,7 +41,6 @@ noexcept
 bool
 ircd::m::match(const event_filter &filter,
                const event &event)
-noexcept
 {
 	for(const json::string type : json::get<"not_types"_>(filter))
 		if(json::get<"type"_>(event) == type)
