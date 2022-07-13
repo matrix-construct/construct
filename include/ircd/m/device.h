@@ -159,7 +159,10 @@ struct ircd::m::device
 	json::property<name::keys, json::object>,
 
 	/// (s2s) Optional display name for the device.
-	json::property<name::device_display_name, json::string>
+	json::property<name::device_display_name, json::string>,
+
+	/// (c2s) Event ID of the access token.
+	json::property<name::access_token_id, json::string>
 >
 {
 	using id = m::id::device;
