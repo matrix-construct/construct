@@ -13,6 +13,38 @@
 // m/filter.h
 //
 
+bool
+ircd::m::match(const room_event_filter &filter,
+               const event::idx &event_idx)
+{
+	m::event::keys::include include_keys;
+
+	if(json::get<"contains_url"_>(filter))
+		include_keys.set("content");
+
+	if(json::get<"rooms"_>(filter) || json::get<"not_rooms"_>(filter))
+		include_keys.set("room_id");
+
+	if(json::get<"types"_>(filter) || json::get<"not_types"_>(filter))
+		include_keys.set("type");
+
+	if(json::get<"senders"_>(filter) || json::get<"not_senders"_>(filter))
+		include_keys.set("sender");
+
+	const m::event::fetch event
+	{
+		std::nothrow, event_idx, m::event::fetch::opts
+		{
+			include_keys,
+		}
+	};
+
+	if(unlikely(!event.valid))
+		return false;
+
+	return match(filter, event);
+}
+
 //TODO: globular expression
 //TODO: tribool for contains_url; we currently ignore the false value.
 bool
@@ -35,6 +67,32 @@ ircd::m::match(const room_event_filter &filter,
 			return match(event_filter{filter}, event);
 
 	return false;
+}
+
+bool
+ircd::m::match(const event_filter &filter,
+               const event::idx &event_idx)
+{
+	m::event::keys::include include_keys;
+
+	if(json::get<"types"_>(filter) || json::get<"not_types"_>(filter))
+		include_keys.set("type");
+
+	if(json::get<"senders"_>(filter) || json::get<"not_senders"_>(filter))
+		include_keys.set("sender");
+
+	const m::event::fetch event
+	{
+		std::nothrow, event_idx, m::event::fetch::opts
+		{
+			include_keys,
+		}
+	};
+
+	if(unlikely(!event.valid))
+		return false;
+
+	return match(filter, event);
 }
 
 //TODO: globular expression

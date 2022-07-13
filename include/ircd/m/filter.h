@@ -20,7 +20,10 @@ namespace ircd::m
 	struct state_filter;
 
 	bool match(const event_filter &, const event &);
+	bool match(const event_filter &, const event::idx &);
+
 	bool match(const room_event_filter &, const event &);
+	bool match(const room_event_filter &, const event::idx &);
 }
 
 /// 5.1 "Filter" we use event_filter here
