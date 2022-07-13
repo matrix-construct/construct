@@ -213,6 +213,7 @@ ircd::m::media::file::write(const m::room &room,
                             const m::user::id &user_id,
                             const const_buffer &content,
                             const string_view &content_type)
+try
 {
 	static const size_t BLK_SZ
 	{
@@ -277,9 +278,35 @@ ircd::m::media::file::write(const m::room &room,
 		wrote += size(blk);
 	}
 
+	log::logf
+	{
+		log, log::level::DEBUG,
+		"File written %s by %s type:%s len:%zu pos:%zu wrote:%zu",
+		string_view{room.room_id},
+		string_view{user_id},
+		content_type,
+		size(content),
+		off,
+		wrote,
+	};
+
 	//assert(wrote == b64::encode_size(off));
 	assert(off == size(content));
 	return off;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "File writing %s by %s type:%s len:%zu :%s",
+		string_view{room.room_id},
+		string_view{user_id},
+		content_type,
+		size(content),
+		e.what(),
+	};
+
+	throw;
 }
 
 size_t
