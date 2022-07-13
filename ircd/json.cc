@@ -838,6 +838,53 @@ ircd::json::merge(stack::object &out,
 	top.compose(*out.s);
 }
 
+ircd::json::strung
+ircd::json::prepend(const array &s,
+                    const string_view &val)
+{
+	if(unlikely(!empty(s) && type(s) != type::ARRAY))
+		throw type_error
+		{
+			"Cannot prepend value into JSON of type %s",
+			reflect(type(s))
+		};
+
+	size_t ctr{0}, i{0};
+	auto &b(value_buffer);
+
+	b.at(ctr++) = val;
+	for(const string_view &v : s)
+		b.at(ctr++) = v;
+
+	return strung
+	{
+		b.data(), b.data() + ctr
+	};
+}
+
+ircd::json::strung
+ircd::json::append(const array &s,
+                   const string_view &val)
+{
+	if(unlikely(!empty(s) && type(s) != type::ARRAY))
+		throw type_error
+		{
+			"Cannot append value into JSON of type %s",
+			reflect(type(s))
+		};
+
+	size_t ctr{0}, i{0};
+	auto &b(value_buffer);
+	for(const string_view &v : s)
+		b.at(ctr++) = v;
+
+	b.at(ctr++) = val;
+	return strung
+	{
+		b.data(), b.data() + ctr
+	};
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // json/stack.h

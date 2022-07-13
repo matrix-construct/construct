@@ -43,6 +43,9 @@ namespace ircd::json
 // Convenience toolset for higher level operations.
 namespace ircd::json
 {
+	strung append(const array &, const string_view &val);
+	strung prepend(const array &, const string_view &val);
+
 	void merge(stack::object &out, const vector &);
 	strung remove(const object &, const string_view &key);
 	strung remove(const object &, const size_t &index);
