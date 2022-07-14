@@ -2893,40 +2893,40 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		param["name"]
 	};
 
-	out << " "
+	out << ' '
 	    << std::setw(5)
 	    << "ID"
-	    << " "
+	    << ' '
 	    << std::setw(7)
 	    << "STATE"
-	    << " "
+	    << ' '
 	    << std::setw(8)
 	    << "YIELDS"
-	    << " "
+	    << ' '
 	    << std::setw(5)
 	    << "NOTES"
-	    << " "
+	    << ' '
 	    << std::setw(15)
 	    << "CYCLE COUNT"
-	    << " "
+	    << ' '
 	    << std::setw(6)
 	    << "PCT"
-	    << " "
+	    << ' '
 	    << std::setw(25)
 	    << "STACK"
-	    << " "
+	    << ' '
 	    << std::setw(25)
 	    << "PEAK OBSERVED"
-	    << " "
+	    << ' '
 	    << std::setw(25)
 	    << "IN CORE"
-	    << " "
+	    << ' '
 	    << std::setw(25)
 	    << "LIMIT"
-	    << " "
+	    << ' '
 	    << std::setw(6)
 	    << "PCT"
-	    << " "
+	    << ' '
 	    << ":NAME"
 	    << std::endl;
 
@@ -2938,7 +2938,7 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 				return true;
 
 		out << std::setw(5) << std::right << id(ctx);
-		out << " "
+		out << ' '
 		    << (started(ctx)? 'A' : '-')
 		    << (finished(ctx)? 'F' : '-')
 		    << (termination(ctx)? 'T' : '-')
@@ -2949,13 +2949,13 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		    << (running(ctx)? 'R' : '-')
 		    ;
 
-		out << " "
+		out << ' '
 		    << std::setw(8) << std::right << epoch(ctx);
 
-		out << " "
+		out << ' '
 		    << std::setw(5) << std::right << notes(ctx);
 
-		out << " "
+		out << ' '
 		    << std::setw(15) << std::right << cycles(ctx);
 
 		const long double total_cyc(ctx::prof::get(ctx::prof::event::CYCLES));
@@ -2964,21 +2964,21 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 			total_cyc > 0.0? (cycles(ctx) / total_cyc) : 0.0L
 		};
 
-		out << " "
+		out << ' '
 		    << std::setw(5) << std::right << std::fixed << std::setprecision(2) << (tsc_pct * 100)
-		    << "%";
+		    << '%';
 
 		char pbuf[32];
-		out << " "
+		out << ' '
 		    << std::setw(25) << std::right << pretty(pbuf, iec(ctx::stack::get(ctx).at));
 
-		out << " "
+		out << ' '
 		    << std::setw(25) << std::right << pretty(pbuf, iec(ctx::stack::get(ctx).peak));
 
-		out << " "
+		out << ' '
 		    << std::setw(25) << std::right << pretty(pbuf, iec(allocator::incore(ctx::stack::get(ctx).buf)));
 
-		out << " "
+		out << ' '
 		    << std::setw(25) << std::right << pretty(pbuf, iec(ctx::stack::get(ctx).max));
 
 		const auto stack_pct
@@ -2986,9 +2986,9 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 			ctx::stack::get(ctx).at / (long double)(ctx::stack::get(ctx).max)
 		};
 
-		out << " "
+		out << ' '
 		    << std::setw(5) << std::right << std::fixed << std::setprecision(2) << (stack_pct * 100)
-		    << "%";
+		    << '%';
 
 		out << " :"
 		    << name(ctx);
