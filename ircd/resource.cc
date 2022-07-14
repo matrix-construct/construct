@@ -139,10 +139,10 @@ ircd::resource::resource(const string_view &path,
 		resources, iit.first
 	};
 }()}
-,default_method_head{[this, &opts]
+,default_method_head{[this]
 () -> std::unique_ptr<method>
 {
-	if(opts.flags & flag::OVERRIDE_HEAD)
+	if(this->opts->flags & flag::OVERRIDE_HEAD)
 		return {};
 
 	auto handler
@@ -152,10 +152,10 @@ ircd::resource::resource(const string_view &path,
 
 	return std::make_unique<method>(*this, "HEAD", std::move(handler));
 }()}
-,default_method_options{[this, &opts]
+,default_method_options{[this]
 () -> std::unique_ptr<method>
 {
-	if(opts.flags & flag::OVERRIDE_OPTIONS)
+	if(this->opts->flags & flag::OVERRIDE_OPTIONS)
 		return {};
 
 	auto handler
