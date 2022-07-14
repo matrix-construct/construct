@@ -10,9 +10,9 @@
 
 using namespace ircd;
 
-static resource::response
+static m::resource::response
 put__list_appservice(client &client,
-                     const resource::request &request);
+                     const m::resource::request &request);
 
 mapi::header
 IRCD_MODULE
@@ -20,7 +20,7 @@ IRCD_MODULE
 	"Application Service 2.3.5 :Application service room directories"
 };
 
-resource
+m::resource
 list_appservice_resource
 {
 	"/_matrix/client/r0/directory/list/appservice/",
@@ -30,7 +30,7 @@ list_appservice_resource
 	}
 };
 
-resource::method
+m::resource::method
 list_appservice_put
 {
 	list_appservice_resource, "PUT", put__list_appservice,
@@ -39,9 +39,9 @@ list_appservice_put
 	}
 };
 
-resource::response
+m::resource::response
 put__list_appservice(client &client,
-                     const resource::request &request)
+                     const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS

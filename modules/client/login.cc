@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Client 3.3 :Login"
 };
 
-resource
+m::resource
 login_resource
 {
 	"/_matrix/client/r0/login",
@@ -26,9 +26,9 @@ login_resource
 	}
 };
 
-resource::response
+m::resource::response
 post__login_password(client &client,
-                     const resource::request::object<m::login> &request)
+                     const m::resource::request::object<m::login> &request)
 {
 	const json::object &identifier
 	{
@@ -183,9 +183,9 @@ post__login_password(client &client,
 	};
 }
 
-resource::response
+m::resource::response
 post__login(client &client,
-            const resource::request::object<m::login> &request)
+            const m::resource::request::object<m::login> &request)
 {
 	const auto &type
 	{
@@ -201,15 +201,15 @@ post__login(client &client,
 	};
 }
 
-resource::method
+m::resource::method
 method_post
 {
 	login_resource, "POST", post__login
 };
 
-resource::response
+m::resource::response
 get__login(client &client,
-           const resource::request &request)
+           const m::resource::request &request)
 {
 	const json::member login_password
 	{
@@ -230,7 +230,7 @@ get__login(client &client,
 	};
 }
 
-resource::method
+m::resource::method
 method_get
 {
 	login_resource, "GET", get__login

@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Client (unspecified) :Publicised Groups",
 };
 
-resource
+m::resource
 publicised_groups_resource
 {
 	"/_matrix/client/r0/publicised_groups",
@@ -25,9 +25,9 @@ publicised_groups_resource
 	}
 };
 
-resource::response
+m::resource::response
 get__publicised_groups(client &client,
-                       const resource::request &request)
+                       const m::resource::request &request)
 {
 	return resource::response
 	{
@@ -38,15 +38,15 @@ get__publicised_groups(client &client,
 	};
 }
 
-resource::method
+m::resource::method
 get_method
 {
 	publicised_groups_resource, "GET", get__publicised_groups
 };
 
-resource::response
+m::resource::response
 post__publicised_groups(client &client,
-                        const resource::request &request)
+                        const m::resource::request &request)
 {
 	const json::array &user_ids
 	{
@@ -62,7 +62,7 @@ post__publicised_groups(client &client,
 	};
 }
 
-resource::method
+m::resource::method
 post_method
 {
 	publicised_groups_resource, "POST", post__publicised_groups

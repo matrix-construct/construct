@@ -16,10 +16,10 @@ IRCD_MODULE
 	"Client 3.4.1 :Register Available"
 };
 
-static resource::response
-get__register_available(client &client, const resource::request &request);
+static m::resource::response
+get__register_available(client &client, const m::resource::request &request);
 
-resource
+m::resource
 register_available_resource
 {
 	"/_matrix/client/r0/register/available",
@@ -28,7 +28,7 @@ register_available_resource
 	}
 };
 
-resource::method
+m::resource::method
 method_get
 {
 	register_available_resource, "GET", get__register_available
@@ -52,9 +52,9 @@ register_user_enable
 	"client_register", "register_user_enable"
 };
 
-resource::response
+m::resource::response
 get__register_available(client &client,
-                        const resource::request &request)
+                        const m::resource::request &request)
 {
 	if(!bool(register_enable) || !bool(register_user_enable))
 		throw m::error

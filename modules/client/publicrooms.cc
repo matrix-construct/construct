@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Client 7.5 :Public Rooms"
 };
 
-resource
+m::resource
 publicrooms_resource
 {
 	"/_matrix/client/r0/publicRooms",
@@ -32,25 +32,25 @@ flush_hiwat
 	{ "default",  16384L                                },
 };
 
-static resource::response
+static m::resource::response
 get__publicrooms(client &,
-                 const resource::request &);
+                 const m::resource::request &);
 
-resource::method
+m::resource::method
 post_method
 {
 	publicrooms_resource, "POST", get__publicrooms
 };
 
-resource::method
+m::resource::method
 get_method
 {
 	publicrooms_resource, "GET", get__publicrooms
 };
 
-resource::response
+m::resource::response
 get__publicrooms(client &client,
-                 const resource::request &request)
+                 const m::resource::request &request)
 {
 	char since_buf[m::room::id::buf::SIZE];
 	const string_view &since
@@ -117,7 +117,7 @@ get__publicrooms(client &client,
 		};
 	}
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};

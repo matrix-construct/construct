@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Client (unstable) (no-section) :Third party protocols"
 };
 
-resource
+m::resource
 protocols_resource
 {
 	"/_matrix/client/r0/thirdparty/protocols",
@@ -25,9 +25,9 @@ protocols_resource
 	}
 };
 
-resource::response
+m::resource::response
 get__protocols(client &client,
-               const resource::request &request)
+               const m::resource::request &request)
 {
 	return resource::response
 	{
@@ -35,7 +35,7 @@ get__protocols(client &client,
 	};
 }
 
-resource::method
+m::resource::method
 get_method
 {
 	protocols_resource, "GET", get__protocols
