@@ -360,9 +360,9 @@ ircd::rsplit(const string_view &str,
 	using pair = std::pair<ircd::string_view, ircd::string_view>;
 
 	const auto pos(str.rfind(delim));
-	return pos != string_view::npos?
-		pair { str.substr(0, pos), str.substr(pos + delim.size()) }:
-		pair { str, string_view{} };
+	return pos == string_view::npos?
+		pair { str, string_view{} }:
+		pair { str.substr(std::nothrow, 0, pos), str.substr(std::nothrow, pos + delim.size()) };
 }
 
 /// Split a string on the last match of delim. Delim not included; no match
@@ -374,9 +374,9 @@ ircd::rsplit(const string_view &str,
 	using pair = std::pair<ircd::string_view, ircd::string_view>;
 
 	const auto pos(str.find_last_of(delim));
-	return pos != string_view::npos?
-		pair { str.substr(0, pos), str.substr(pos + 1) }:
-		pair { str, string_view{} };
+	return pos == string_view::npos?
+		pair { str, string_view{} }:
+		pair { str.substr(std::nothrow, 0, pos), str.substr(std::nothrow, pos + 1) };
 }
 
 /// Split a string on the first match of delim. Delim not included; no match
@@ -388,9 +388,9 @@ ircd::split(const string_view &str,
 	using pair = std::pair<ircd::string_view, ircd::string_view>;
 
 	const auto pos(str.find(delim));
-	return pos != string_view::npos?
-		pair { str.substr(0, pos), str.substr(pos + delim.size()) }:
-		pair { str, string_view{} };
+	return pos == string_view::npos?
+		pair { str, string_view{} }:
+		pair { str.substr(std::nothrow, 0, pos), str.substr(std::nothrow, pos + delim.size()) };
 }
 
 /// Split a string on the first match of delim. Delim not included; no match
@@ -402,9 +402,9 @@ ircd::split(const string_view &str,
 	using pair = std::pair<ircd::string_view, ircd::string_view>;
 
 	const auto pos(str.find(delim));
-	return pos != string_view::npos?
-		pair { str.substr(0, pos), str.substr(pos + 1) }:
-		pair { str, string_view{} };
+	return pos == string_view::npos?
+		pair { str, string_view{} }:
+		pair { str.substr(std::nothrow, 0, pos), str.substr(std::nothrow, pos + 1) };
 }
 
 /// Remove n leading and trailing instances of c from the returned view

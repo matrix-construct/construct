@@ -111,6 +111,16 @@ struct ircd::string_view
 		return data() == reinterpret_cast<const char *>(0x1);
 	}
 
+	// (non-standard) Non-throwing substr() which returns empty rather than std::out_of_range.
+	// This avoids generating numerous eh handlers/terminations/unwind blocks etc.
+	using std::string_view::substr;
+	constexpr auto substr(std::nothrow_t, size_t pos = 0, size_t count = npos) const noexcept
+	{
+		pos = std::min(pos, size());
+		count = std::min(count, size() - pos);
+		return std::string_view::substr(pos, count);
+	}
+
 	// (non-standard) our faux insert stub
 	// Tricks boost::spirit into thinking this is mutable string (hint: it's not).
 	// Instead, the raw[] directive in Qi grammar will use the iterator constructor only.
