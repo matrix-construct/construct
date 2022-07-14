@@ -23,14 +23,7 @@ struct ircd::resource::request
 	vector_view<string_view> parv;
 	string_view param[8];
 
-	request(const http::request::head &head,
-	        const string_view &content)
-	:json::object{content}
-	,head{head}
-	,content{content}
-	,query{this->head.query}
-	{}
-
+	request(const http::request::head &, const string_view &content) noexcept;
 	request() = default;
 };
 
@@ -46,14 +39,19 @@ struct ircd::resource::request::object
 	const vector_view<string_view> &parv;
 	const json::object &body;
 
-	object(resource::request &r)
-	:tuple{r}
-	,r{r}
-	,head{r.head}
-	,content{r.content}
-	,query{r.query}
-	,params{r.params}
-	,parv{r.parv}
-	,body{r}
-	{}
+	object(resource::request &) noexcept;
 };
+
+template<class tuple>
+inline
+ircd::resource::request::object<tuple>::object(resource::request &r)
+noexcept
+:tuple{r}
+,r{r}
+,head{r.head}
+,content{r.content}
+,query{r.query}
+,params{r.params}
+,parv{r.parv}
+,body{r}
+{}

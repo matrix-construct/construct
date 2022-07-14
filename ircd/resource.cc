@@ -740,6 +740,33 @@ const
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// resource/request.h
+//
+
+ircd::resource::request::request(const http::request::head &head,
+                                 const string_view &content)
+noexcept
+:json::object
+{
+	content
+}
+,head
+{
+	head
+}
+,content
+{
+	content
+}
+,query
+{
+	this->head.query
+}
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // resource/response.h
 //
 
