@@ -132,9 +132,55 @@ try
 		search_categories["room_events"]
 	};
 
-	const m::room_event_filter room_event_filter
+	const string_view search_input
+	{
+		at<"search_term"_>(room_events)
+	};
+
+	const auto &[keys, term]
+	{
+		split(search_input, " :")
+	};
+
+	m::room_event_filter room_event_filter
 	{
 		json::get<"filter"_>(room_events)
+	};
+
+	json::strung
+	senders(json::get<"senders"_>(room_event_filter)),
+	not_senders(json::get<"not_senders"_>(room_event_filter));
+
+	tokens(keys, ' ', [&senders, &not_senders]
+	(const string_view &kv)
+	{
+		const auto &[key, val]
+		{
+			split(kv, ':')
+		};
+
+		if(key == "senders" || (!key && valid(m::id::USER, val)))
+			senders = json::append(senders, val);
+
+		if(key == "!senders" || (key == "!" && valid(m::id::USER, val)))
+			not_senders = json::append(not_senders, val);
+	});
+
+	json::get<"senders"_>(room_event_filter) = senders;
+	json::get<"not_senders"_>(room_event_filter) = not_senders;
+
+	const string_view search_term
+	{
+		term?: keys
+	};
+
+	// Override the limit to 1 to return a result and appease the user as
+	// quickly as possible. The client can call us again for more results.
+	const size_t limit
+	{
+		limit_override?
+			size_t(limit_override):
+			size_t(json::get<"limit"_>(room_event_filter))
 	};
 
 	const json::object &event_context
@@ -149,25 +195,16 @@ try
 		0
 	};
 
-	// Override the limit to 1 to return a result and appease the user as
-	// quickly as possible. The client can call us again for more results.
-	const size_t limit
-	{
-		limit_override?
-			size_t(limit_override):
-			size_t(json::get<"limit"_>(room_event_filter))
-	};
-
 	const search::query query
 	{
-		request.user_id,
-		request.query.get<size_t>("next_batch", 0UL),
-		room_events,
-		room_event_filter,
-		at<"search_term"_>(room_events),
-		limit,
-		event_context.get("before_limit", context_default),
-		event_context.get("after_limit", context_default),
+		.user_id = request.user_id,
+		.batch = request.query.get<size_t>("next_batch", 0UL),
+		.room_events = room_events,
+		.filter = room_event_filter,
+		.search_term = search_term,
+		.limit = limit,
+		.before_limit = event_context.get("before_limit", context_default),
+		.after_limit = event_context.get("after_limit", context_default),
 	};
 
 	log::logf
