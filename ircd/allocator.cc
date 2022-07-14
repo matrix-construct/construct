@@ -288,6 +288,9 @@ ircd::allocator::incore(const const_buffer &buf)
 		align(begin(buf), info::page_size)
 	};
 
+	if(unlikely(!base))
+		return 0;
+
 	const auto top
 	{
 		align_up(end(buf), info::page_size)
