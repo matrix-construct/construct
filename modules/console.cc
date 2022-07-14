@@ -6910,7 +6910,7 @@ console_cmd__resource(opt &out, const string_view &line)
 		return true;
 	}
 
-	for(const auto &p : resource::resources)
+	for(const auto &p : resource::map)
 	{
 		const auto &r(*p.second);
 		for(const auto &mp : p.second->methods)

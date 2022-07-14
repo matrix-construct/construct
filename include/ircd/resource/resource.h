@@ -20,6 +20,7 @@ namespace ircd
 /// The target of an HTTP request specified by clients with a path.
 ///
 struct ircd::resource
+:instance_map<string_view, resource, iless>
 {
 	IRCD_EXCEPTION(ircd::error, error)
 
@@ -31,12 +32,10 @@ struct ircd::resource
 	struct redirect;
 
 	static log::log log;
-	static std::map<string_view, resource *, iless> resources;
 
 	string_view path;
 	std::unique_ptr<const struct opts> opts;
 	std::map<string_view, method *> methods;
-	unique_const_iterator<decltype(resources)> resources_it;
 	std::unique_ptr<method> default_method_head;
 	std::unique_ptr<method> default_method_options;
 
@@ -52,7 +51,8 @@ struct ircd::resource
 
 	resource(const string_view &path, struct opts);
 	resource(const string_view &path);
-	resource() = default;
+	resource(resource &&) = delete;
+	resource(const resource &) = delete;
 	~resource() noexcept;
 
 	static resource &find(const string_view &path);

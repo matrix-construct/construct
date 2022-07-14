@@ -8,19 +8,15 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// resource/resource.h
-//
-
 decltype(ircd::resource::log)
 ircd::resource::log
 {
 	"resource", 'r'
 };
 
-decltype(ircd::resource::resources)
-ircd::resource::resources
+template<>
+decltype(ircd::util::instance_map<ircd::string_view, ircd::resource, ircd::iless>::map)
+ircd::util::instance_map<ircd::string_view, ircd::resource, ircd::iless>::map
 {};
 
 ircd::resource &
@@ -31,6 +27,7 @@ ircd::resource::find(const string_view &path_)
 		rstrip(path_, '/')
 	};
 
+	auto &resources(instance_map::map);
 	auto it
 	{
 		resources.lower_bound(path)
@@ -113,34 +110,19 @@ ircd::resource::resource(const string_view &path)
 
 ircd::resource::resource(const string_view &path,
                          struct opts opts)
-:path
+:instance_map
 {
 	rstrip(path, '/')
+}
+,path
+{
+	instance_map::it->first
 }
 ,opts
 {
 	std::make_unique<const struct opts>(std::move(opts))
 }
-,resources_it{[this]
-{
-	const auto iit
-	{
-		resources.emplace(this->path, this)
-	};
-
-	if(!iit.second)
-		throw error
-		{
-			"resource \"%s\" already registered", this->path
-		};
-
-	return unique_const_iterator<decltype(resources)>
-	{
-		resources, iit.first
-	};
-}()}
-,default_method_head{[this]
-() -> std::unique_ptr<method>
+,default_method_head{[this]() -> std::unique_ptr<method>
 {
 	if(this->opts->flags & flag::OVERRIDE_HEAD)
 		return {};
@@ -152,8 +134,7 @@ ircd::resource::resource(const string_view &path,
 
 	return std::make_unique<method>(*this, "HEAD", std::move(handler));
 }()}
-,default_method_options{[this]
-() -> std::unique_ptr<method>
+,default_method_options{[this]() -> std::unique_ptr<method>
 {
 	if(this->opts->flags & flag::OVERRIDE_OPTIONS)
 		return {};
