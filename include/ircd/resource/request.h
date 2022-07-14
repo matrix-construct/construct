@@ -19,10 +19,15 @@ struct ircd::resource::request
 	http::request::head head;
 	string_view content;
 	http::query::string query;
+	pair<string_view> agent;
 	string_view params;
 	vector_view<string_view> parv;
 	string_view param[8];
 
+  private:
+	static pair<string_view> parse_agent(const http::request::head &) noexcept;
+
+  public:
 	request(const http::request::head &, const string_view &content) noexcept;
 	request() = default;
 };
@@ -35,6 +40,7 @@ struct ircd::resource::request::object
 	const http::request::head &head;
 	const string_view &content;
 	const http::query::string &query;
+	const pair<string_view> &agent;
 	const string_view &params;
 	const vector_view<string_view> &parv;
 	const json::object &body;
@@ -51,6 +57,7 @@ noexcept
 ,head{r.head}
 ,content{r.content}
 ,query{r.query}
+,agent{r.agent}
 ,params{r.params}
 ,parv{r.parv}
 ,body{r}

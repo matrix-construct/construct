@@ -762,7 +762,37 @@ noexcept
 {
 	this->head.query
 }
+,agent
 {
+	parse_agent(this->head)
+}
+{
+}
+
+[[gnu::visibility("internal")]]
+ircd::pair<ircd::string_view>
+ircd::resource::request::parse_agent(const http::request::head &head)
+noexcept
+{
+	const auto &user_agent
+	{
+		head.user_agent
+	};
+
+	const auto &[primary, info]
+	{
+		split(user_agent, ' ')
+	};
+
+	const auto &[name, agent]
+	{
+		split(primary, '/')
+	};
+
+	return
+	{
+		name, agent
+	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
