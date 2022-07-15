@@ -13,15 +13,6 @@
 using namespace ircd;
 
 m::resource
-upload_resource__legacy
-{
-	"/_matrix/media/v1/upload/",
-	{
-		"(11.7.1.1) upload (legacy compat)",
-	}
-};
-
-m::resource
 upload_resource
 {
 	"/_matrix/media/r0/upload/",
@@ -127,10 +118,4 @@ static m::resource::method
 method_post
 {
 	upload_resource, "POST", post__upload, method_post_opts
-};
-
-static m::resource::method
-method_post__legacy
-{
-	upload_resource__legacy, "POST", post__upload, method_post_opts
 };

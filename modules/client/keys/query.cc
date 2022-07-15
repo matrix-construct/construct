@@ -71,28 +71,10 @@ query_resource
 	}
 };
 
-ircd::m::resource
-query_resource__unstable
-{
-	"/_matrix/client/unstable/keys/query",
-	{
-		"(14.11.5.2.2) Keys query",
-	}
-};
-
 m::resource::method
 method_post
 {
 	query_resource, "POST", post__keys_query,
-	{
-		method_post.REQUIRES_AUTH
-	}
-};
-
-m::resource::method
-method_post__unstable
-{
-	query_resource__unstable, "POST", post__keys_query,
 	{
 		method_post.REQUIRES_AUTH
 	}

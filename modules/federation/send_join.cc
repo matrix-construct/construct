@@ -47,29 +47,10 @@ send_join_resource
 	}
 };
 
-m::resource
-send_join_resource_v2
-{
-	"/_matrix/federation/v2/send_join/",
-	{
-		send_join_description,
-		resource::DIRECTORY
-	}
-};
-
 m::resource::method
 method_put
 {
 	send_join_resource, "PUT", put__send_join,
-	{
-		method_put.VERIFY_ORIGIN
-	}
-};
-
-m::resource::method
-method_put_v2
-{
-	send_join_resource_v2, "PUT", put__send_join,
 	{
 		method_put.VERIFY_ORIGIN
 	}

@@ -13,9 +13,7 @@ namespace ircd::m
 	extern std::string flows;
 	static resource::response post_keys_device_signing_upload(client &, const resource::request &);
 
-	extern resource::method keys_device_signing_upload_post__unstable;
 	extern resource::method keys_device_signing_upload_post;
-	extern resource keys_device_signing_upload__unstable;
 	extern resource keys_device_signing_upload;
 }
 
@@ -34,30 +32,12 @@ ircd::m::keys_device_signing_upload
 	}
 };
 
-decltype(ircd::m::keys_device_signing_upload__unstable)
-ircd::m::keys_device_signing_upload__unstable
-{
-	"/_matrix/client/unstable/keys/device_signing/upload",
-	{
-		"(undocumented) Keys Device Signing Upload"
-	}
-};
-
 decltype(ircd::m::keys_device_signing_upload_post)
 ircd::m::keys_device_signing_upload_post
 {
 	keys_device_signing_upload, "POST", post_keys_device_signing_upload,
 	{
 		keys_device_signing_upload_post.REQUIRES_AUTH
-	}
-};
-
-decltype(ircd::m::keys_device_signing_upload_post__unstable)
-ircd::m::keys_device_signing_upload_post__unstable
-{
-	keys_device_signing_upload__unstable, "POST", post_keys_device_signing_upload,
-	{
-		keys_device_signing_upload_post__unstable.REQUIRES_AUTH
 	}
 };
 

@@ -29,28 +29,10 @@ changes_resource
 	}
 };
 
-ircd::m::resource
-changes_resource__unstable
-{
-	"/_matrix/client/unstable/keys/changes",
-	{
-		"(14.11.5.2.4) Keys changes",
-	}
-};
-
 m::resource::method
 method_get
 {
 	changes_resource, "GET", get__keys_changes,
-	{
-		method_get.REQUIRES_AUTH
-	}
-};
-
-m::resource::method
-method_get__unstable
-{
-	changes_resource__unstable, "GET", get__keys_changes,
 	{
 		method_get.REQUIRES_AUTH
 	}

@@ -38,29 +38,10 @@ send_to_device_resource
 	}
 };
 
-ircd::m::resource
-send_to_device_resource__unstable
-{
-	"/_matrix/client/unstable/sendToDevice/",
-	{
-		"(14.9.3) Protocol definitions",
-		resource::DIRECTORY,
-	}
-};
-
 m::resource::method
 method_put
 {
 	send_to_device_resource, "PUT", put__send_to_device,
-	{
-		method_put.REQUIRES_AUTH
-	}
-};
-
-m::resource::method
-method_put__unstable
-{
-	send_to_device_resource__unstable, "PUT", put__send_to_device,
 	{
 		method_put.REQUIRES_AUTH
 	}

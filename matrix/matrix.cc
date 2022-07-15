@@ -97,7 +97,6 @@ ircd::m::module_names
 	"federation_get_missing_events",
 	"federation_hierarchy",
 	"federation_invite",
-	"federation_invite2",
 	"federation_make_join",
 	"federation_make_leave",
 	"federation_publicrooms",

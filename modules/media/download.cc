@@ -22,16 +22,6 @@ download_resource
 	}
 };
 
-m::resource
-download_resource__legacy
-{
-	"/_matrix/media/v1/download/",
-	{
-		"(11.7.1.2) download (legacy)",
-		resource::DIRECTORY,
-	}
-};
-
 static m::resource::response
 get__download_local(client &client,
                     const m::resource::request &request,
@@ -173,18 +163,6 @@ static m::resource::method
 method_get
 {
 	download_resource,
-	"GET",
-	get__download,
-	{
-		m::resource::method::flag(0),  // flags
-		45s,                           // timeout
-	}
-};
-
-static m::resource::method
-method_get__legacy
-{
-	download_resource__legacy,
 	"GET",
 	get__download,
 	{

@@ -31,28 +31,10 @@ delete_devices_resource
 	}
 };
 
-ircd::m::resource
-delete_devices_resource__unstable
-{
-	"/_matrix/client/unstable/delete_devices/",
-	{
-		"14.10.1.5 :Device Management (redirect)"
-	}
-};
-
 m::resource::method
 method_post
 {
 	delete_devices_resource, "POST", post__delete_devices,
-	{
-		method_post.REQUIRES_AUTH
-	}
-};
-
-m::resource::method
-method_post__unstable
-{
-	delete_devices_resource__unstable, "POST", post__delete_devices,
 	{
 		method_post.REQUIRES_AUTH
 	}

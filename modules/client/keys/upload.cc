@@ -42,29 +42,10 @@ upload_resource
 	}
 };
 
-ircd::m::resource
-upload_resource__unstable
-{
-	"/_matrix/client/unstable/keys/upload",
-	{
-		"(14.11.5.2.1) Keys Upload",
-		resource::DIRECTORY
-	}
-};
-
 m::resource::method
 method_post
 {
 	upload_resource, "POST", post__keys_upload,
-	{
-		method_post.REQUIRES_AUTH
-	}
-};
-
-m::resource::method
-method_post__unstable
-{
-	upload_resource__unstable, "POST", post__keys_upload,
 	{
 		method_post.REQUIRES_AUTH
 	}

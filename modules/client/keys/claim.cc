@@ -70,30 +70,12 @@ claim_resource
 	}
 };
 
-ircd::m::resource
-claim_resource__unstable
-{
-	"/_matrix/client/unstable/keys/claim",
-	{
-		"(14.11.5.2.2) Keys claim",
-	}
-};
-
 m::resource::method
 method_post
 {
 	claim_resource, "POST", post__keys_claim,
 	{
 		method_post.REQUIRES_AUTH
-	}
-};
-
-m::resource::method
-method_post__unstable
-{
-	claim_resource__unstable, "POST", post__keys_claim,
-	{
-		method_post__unstable.REQUIRES_AUTH
 	}
 };
 

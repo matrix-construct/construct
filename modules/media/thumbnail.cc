@@ -77,16 +77,6 @@ ircd::m::media::thumbnail::mime_blacklist
 };
 
 m::resource
-thumbnail_resource__legacy
-{
-	"/_matrix/media/v1/thumbnail/",
-	{
-		"(11.7.1.4) thumbnails (legacy version)",
-		resource::DIRECTORY,
-	}
-};
-
-m::resource
 thumbnail_resource
 {
 	"/_matrix/media/r0/thumbnail/",
@@ -153,18 +143,6 @@ get__thumbnail(client &client,
 
 	return get__thumbnail_local(client, request, mxc, room_id);
 }
-
-static m::resource::method
-method_get__legacy
-{
-	thumbnail_resource__legacy,
-	"GET",
-	get__thumbnail,
-	{
-		m::resource::method::flag(0), // flag
-		45s,                          // timeout
-	}
-};
 
 static m::resource::method
 method_get

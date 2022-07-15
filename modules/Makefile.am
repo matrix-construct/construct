@@ -203,7 +203,6 @@ federation_federation_version_la_SOURCES = federation/version.cc
 federation_federation_sender_la_SOURCES = federation/sender.cc
 federation_federation_query_la_SOURCES = federation/query.cc
 federation_federation_invite_la_SOURCES = federation/invite.cc
-federation_federation_invite2_la_SOURCES = federation/invite2.cc
 federation_federation_make_join_la_SOURCES = federation/make_join.cc
 federation_federation_send_join_la_SOURCES = federation/send_join.cc
 federation_federation_state_la_SOURCES = federation/state.cc
@@ -228,7 +227,6 @@ federation_module_LTLIBRARIES = \
 	federation/federation_sender.la \
 	federation/federation_query.la \
 	federation/federation_invite.la \
-	federation/federation_invite2.la \
 	federation/federation_make_join.la \
 	federation/federation_send_join.la \
 	federation/federation_state.la \
