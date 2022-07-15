@@ -34,6 +34,7 @@ docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-gcc-12 $BASEDIR/ubuntu/22.04
 #docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-clang-13 $BASEDIR/ubuntu/22.04/base-clang-13
 #docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-clang-14 $BASEDIR/ubuntu/22.04/base-clang-14
 docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-clang-14 $BASEDIR/ubuntu/22.04/full-clang-14
+docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-built $BASEDIR/ubuntu/22.04/built
 
 docker push $ACCT/$REPO:ubuntu-22.04-base
 docker push $ACCT/$REPO:ubuntu-22.04-full
@@ -48,3 +49,4 @@ docker push $ACCT/$REPO:ubuntu-22.04-base-gcc-12
 #docker push $ACCT/$REPO:ubuntu-22.04-base-clang-13
 #docker push $ACCT/$REPO:ubuntu-22.04-base-clang-14
 docker push $ACCT/$REPO:ubuntu-22.04-full-clang-14
+docker push $ACCT/$REPO:ubuntu-22.04-built
