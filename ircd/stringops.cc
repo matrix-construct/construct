@@ -178,7 +178,7 @@ ircd::replace(const mutable_buffer &out_,
 
 			consumed += consume(out, after_copied);
 			produced += size(after);
-			in = in.substr(p + size(after));
+			in = in.substr(p + size(before));
 			p = in.find(before);
 		}
 		else break;
