@@ -14,6 +14,27 @@ ircd::m::acquire::log
 	"m.acquire"
 };
 
+decltype(ircd::m::acquire::fetch_max)
+ircd::m::acquire::fetch_max
+{
+	{ "name",     "ircd.m.acquire.fetch.max" },
+	{ "default",  -1L                        },
+};
+
+decltype(ircd::m::acquire::submit_max)
+ircd::m::acquire::submit_max
+{
+	{ "name",     "ircd.m.acquire.submit.max" },
+	{ "default",  256                         },
+};
+
+decltype(ircd::m::acquire::attempt_max)
+ircd::m::acquire::attempt_max
+{
+	{ "name",     "ircd.m.acquire.attempt.max" },
+	{ "default",  16                           },
+};
+
 decltype(ircd::m::acquire::ids)
 ircd::m::acquire::ids;
 
@@ -794,7 +815,7 @@ bool
 ircd::m::acquire::full()
 const noexcept
 {
-	return fetching.size() >= opts.fetch_width;
+	return fetching.size() >= opts.submit_max;
 }
 
 //

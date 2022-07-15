@@ -72,7 +72,7 @@ decltype(ircd::m::fetch::requests_max)
 ircd::m::fetch::requests_max
 {
 	{ "name",     "ircd.m.fetch.requests.max" },
-	{ "default",  1024L                       },
+	{ "default",  2048L                       },
 };
 
 decltype(ircd::m::fetch::backfill_limit_default)

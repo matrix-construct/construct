@@ -23,6 +23,9 @@ struct ircd::m::acquire
 	struct result;
 
 	static log::log log;
+	static conf::item<size_t> fetch_max;
+	static conf::item<size_t> submit_max;
+	static conf::item<size_t> attempt_max;
 	static uint64_t ids;
 
 	const uint64_t id {++ids};
@@ -114,14 +117,14 @@ struct ircd::m::acquire::opts
 	size_t rounds {-1UL};
 
 	/// Total event limit over all operations.
-	size_t fetch_max {-1UL};
+	size_t fetch_max {acquire::fetch_max};
 
 	/// Limit the number of requests in flight at any given time.
-	size_t fetch_width {128};
+	size_t submit_max {acquire::submit_max};
 
 	/// Fetch attempt cap passed to m::fetch, because the default there is
 	/// unlimited and that's usually a waste of time in practice.
-	size_t attempt_max {16};
+	size_t attempt_max {acquire::attempt_max};
 
 	/// Limit on the depth of leafs pursued by the timeline acquisition.
 	size_t leaf_depth {0};
