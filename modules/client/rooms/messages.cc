@@ -225,7 +225,7 @@ try
 	// The maximum number of events to return. Default: 10.
 	// > we limit this to 255 via narrowing cast
 	request.query["limit"]?
-		uint8_t(lex_cast<ushort>(request.query.at("limit"))):
+		uint8_t(lex_cast<ulong>(request.query.at("limit"))):
 		uint8_t(10)
 }
 ,dir
