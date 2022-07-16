@@ -609,6 +609,11 @@ noexcept
 		};
 
 	assert(handler::current == handler);
+
+	#if defined(RB_ASSERT_OPTIMISTIC)
+	ircd::assertion.point();
+	#endif
+
 	handler::current = nullptr;
 }
 

@@ -19,13 +19,13 @@
 #pragma once
 #define HAVE_IRCD_ASSERT_H
 
-/// This file has to be included prior to the standard library assert headers
+// This file has to be included prior to the standard library assert headers
 #if defined(RB_ASSERT) && defined(_ASSERT_H_DECLS) && defined(RB_DEBUG)
 	#error "Do not include <assert.h> or <cassert> first."
 #endif
 
-/// Define an indicator for whether we override standard assert() behavior in
-/// this build if the conditions are appropriate.
+// Define an indicator for whether we override standard assert() behavior in
+// this build if the conditions are appropriate.
 #if defined(RB_ASSERT) && !defined(NDEBUG)
 	#define _ASSERT_H_DECLS
 #endif
@@ -34,57 +34,99 @@
 namespace ircd
 {
 	void debugtrap() noexcept;
-	template<class expr> void always_assert(expr&&) noexcept;
-	[[gnu::cold]] void print_assertion(const char *, const char *, const unsigned, const char *) noexcept;
+
+	template<class expr>
+	void always_assert(expr&&) noexcept;
+
+	[[gnu::cold]]
+	void print_assertion(const char *, const char *, const unsigned, const char *) noexcept;
+
+	#if defined(RB_ASSERT_OPTIMISTIC)
+	struct assertion extern assertion;
+	#endif
 }
 
-/// Override the standard assert behavior to take one of several different
-/// actions as defined in our internal assert.cc unit. When trapping assert
-/// is disabled this path will be used instead.
-///
-#if defined(RB_ASSERT) && !defined(RB_ASSERT_INTRINSIC)
+// Alternative declaration of __assert_fail() which may return; our definitions
+// take on different behaviors depending on the value of RB_ASSERT.
+#if defined(RB_ASSERT)
 extern "C" void
 __attribute__((visibility("default")))
 __assert_fail(const char *__assertion,
               const char *__file,
               unsigned int __line,
-              const char *__function);
+              const char *__function) noexcept;
 #endif
 
 // Custom assert
-#if defined(RB_ASSERT) && defined(RB_ASSERT_INTRINSIC) && !defined(NDEBUG)
+#if defined(RB_ASSERT_INTRINSIC) && !defined(NDEBUG)
 	#undef assert
-	#define assert(expr)                                                 \
-	({                                                                   \
-	    if(__builtin_expect(!static_cast<bool>(expr), 0))                \
-	        __assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__);      \
+	#define assert(expr)                                             \
+	({                                                               \
+	    if(__builtin_expect(!static_cast<bool>(expr), 0))            \
+	        __assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__);  \
+	})
+#elif defined(RB_ASSERT_OPTIMISTIC) && !defined(NDEBUG)
+	#undef assert
+	#define assert(expr)                                \
+	({                                                  \
+	    ircd::assertion.ok &= static_cast<bool>(expr);  \
 	})
 #endif
 
 // Custom addl cases to avoid any trouble w/ clang
-#if defined(RB_ASSERT) && defined(__clang__) && !defined(assert)
-	#ifdef NDEBUG
-		#define assert(expr) (static_cast<void>(0))
-	#endif
+#if defined(RB_ASSERT) && defined(__clang__) && !defined(assert) && defined(NDEBUG)
+	#define assert(expr) (static_cast<void>(0))
 #endif
 
-/// Override the standard assert behavior, if enabled, to trap into the
-/// debugger as close as possible to the offending site.
-///
-#if defined(RB_ASSERT) && defined(RB_ASSERT_INTRINSIC)
+#if defined(RB_ASSERT_OPTIMISTIC)
+/// State structure for optimistic assertion mode.
+struct ircd::assertion
+{
+	bool ok alignas(8) {true};
+	const char *__assertion;
+	const char *__file;
+	unsigned int __line;
+	const char *__function;
+
+	bool point();
+};
+#endif
+
+#if defined(RB_ASSERT_OPTIMISTIC)
+/// Test-and-reset for pending assertion.
+[[gnu::hot]]
+inline bool
+ircd::assertion::point()
+{
+	if(__builtin_expect(!ok, 0))
+	{
+		#if defined(__SSE2__) && defined(__clang__)
+		asm volatile ("lfence");
+		#endif
+		__assert_fail(__assertion, __file, __line, __function);
+		ok = true;
+		return true;
+	}
+	else return false;
+}
+#endif
+
+#if defined(RB_ASSERT_INTRINSIC)
 extern "C" // for clang
 {
+	/// Override the standard assert behavior, if enabled, to trap into the
+	/// debugger as close as possible to the offending site.
 	extern inline void
 	__attribute__((cold, flatten, always_inline, gnu_inline, artificial))
 	__assert_fail(const char *const __assertion,
 	              const char *const __file,
 	              unsigned int __line,
 	              const char *const __function)
+	noexcept
 	{
 		#if defined(__SSE2__) && defined(__clang__)
-			asm volatile ("lfence");
+		asm volatile ("lfence");
 		#endif
-
 		ircd::print_assertion(__assertion, __file, __line, __function);
 		ircd::debugtrap();
 	}

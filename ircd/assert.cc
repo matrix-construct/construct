@@ -10,6 +10,12 @@
 
 #include <RB_INC_SIGNAL_H
 
+#if defined(RB_ASSERT_OPTIMISTIC)
+decltype(ircd::assertion)
+ircd::assertion
+alignas(64);
+#endif
+
 #if defined(RB_ASSERT) && !defined(RB_ASSERT_INTRINSIC)
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -21,6 +27,7 @@ __assert_fail(const char *__assertion,
               const char *__file,
               unsigned int __line,
               const char *__function)
+noexcept
 {
 	ircd::print_assertion(__assertion, __file, __line, __function);
 
@@ -29,6 +36,9 @@ __assert_fail(const char *__assertion,
 
 	if(strcmp(RB_ASSERT, "quit") == 0)
 		ircd::quit();
+
+	else if(strcmp(RB_ASSERT, "opt") == 0)
+		ircd::debugtrap();
 
 	else if(strcmp(RB_ASSERT, "trap") == 0)
 		ircd::debugtrap();
@@ -79,7 +89,7 @@ ircd::print_assertion(const char *const __assertion,
                       const char *const __function)
 noexcept
 {
-	if(strcmp(__assertion, "critical") == 0)
+	if(__assertion && strcmp(__assertion, "critical") == 0)
 		return;
 
 	fprintf(stderr, "\nassertion failed [%s +%u] %s :%s\n",

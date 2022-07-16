@@ -235,6 +235,10 @@ AM_COND_IF(ASSERT,
 			RB_DEFINE([ASSERT_INTRINSIC], [1], [Intrinsic assertion behavior])
 		fi
 
+		if [[ "$assert_type" == "opt" ]]; then
+			RB_DEFINE([ASSERT_OPTIMISTIC], [1], [Optimistic assertion behavior])
+		fi
+
 	fi
 ])
 
