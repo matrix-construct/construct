@@ -546,17 +546,17 @@ noexcept
 		false
 	};
 
-	if constexpr(profile::logging)
-		log::logf
-		{
-			log, log::level::DEBUG,
-			"FAULT %5u %-30s [%11lu] faults[%9lu] q:%-4lu",
-			descriptor.id,
-			trunc(descriptor.name, 30),
-			uint64_t(stats.calls),
-			uint64_t(stats.faults),
-			uint64_t(stats.queued),
-		};
+	log::logf
+	{
+		log, log::level::DERROR,
+		"FAULT %5u %-30s [%11lu] faults[%9lu] q:%-4lu :%s",
+		descriptor.id,
+		trunc(descriptor.name, 30),
+		uint64_t(stats.calls),
+		uint64_t(stats.faults),
+		uint64_t(stats.queued),
+		what(std::current_exception()),
+	};
 
 	// Our API sez if this function returns true, caller is responsible for
 	// calling leave(), otherwise they must not call leave().
