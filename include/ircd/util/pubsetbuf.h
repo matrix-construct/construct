@@ -18,8 +18,16 @@
 namespace ircd {
 inline namespace util {
 
+inline std::stringbuf &
+pubsetbuf(std::stringbuf &sb,
+          const mutable_buffer &buf)
+{
+	sb.pubsetbuf(data(buf), size(buf));
+	return sb;
+}
+
 template<class stringstream>
-stringstream &
+inline stringstream &
 pubsetbuf(stringstream &ss,
           const mutable_buffer &buf)
 {
@@ -28,7 +36,7 @@ pubsetbuf(stringstream &ss,
 }
 
 template<class stringstream>
-stringstream &
+inline stringstream &
 pubsetbuf(stringstream &ss,
           std::string &s)
 {
@@ -42,7 +50,7 @@ pubsetbuf(stringstream &ss,
 }
 
 template<class stringstream>
-stringstream &
+inline stringstream &
 pubsetbuf(stringstream &ss,
           std::string &s,
           const size_t &size)
@@ -52,7 +60,7 @@ pubsetbuf(stringstream &ss,
 }
 
 template<class stringstream>
-stringstream &
+inline stringstream &
 resizebuf(stringstream &ss,
           std::string &s)
 {
@@ -62,9 +70,25 @@ resizebuf(stringstream &ss,
 	return ss;
 }
 
+#if RB_CXX_EPOCH >= 11 || defined(__clang__)
+/// since c++20
+inline string_view
+view(std::stringbuf &sb,
+     const const_buffer &buf = {})
+{
+	const string_view ret
+	{
+		sb.view()
+	};
+
+	assert(!buf || data(ret) == data(buf));
+	return ret;
+}
+#endif
+
 /// buf has to match the rdbuf you gave the stringstream
 template<class stringstream>
-string_view
+inline string_view
 view(stringstream &ss,
      const const_buffer &buf)
 {
