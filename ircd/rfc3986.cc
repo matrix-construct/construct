@@ -411,7 +411,7 @@ namespace ircd::rfc3986::parser
 ircd::rfc3986::uri::uri(const string_view &input)
 {
 	const char *start(begin(input)), *const stop(end(input));
-	ircd::parse(start, stop, parser::parse_uri, *this);
+	ircd::parse<error>(start, stop, parser::parse_uri, *this);
 
 	//TODO: XXX Can this go?
 	this->user = rstrip(this->user, '@');
