@@ -122,7 +122,7 @@ construct::console::active()
 construct::console::console()
 :outbuf
 {
-	1_MiB
+	128_KiB
 }
 ,context
 {
@@ -300,9 +300,87 @@ construct::console::handle_line_bymodule()
 		*module, "console_command"
 	};
 
-	std::ostringstream out;
+	// If this string is set, the user wants to log a copy of the output
+	// to the file at this path.
+	const fs::fd record_fd
+	{
+		!record_path? fs::fd{-1}: fs::fd
+		{
+			string_view{record_path}, fs::fd::opts
+			{
+				.mode = std::ios::out | std::ios::app,
+			}
+		}
+	};
+
+	struct buf
+	:std::stringbuf
+	{
+		size_t syncs {0};
+		size_t wrote {0};
+		string_view cmdline;
+		const fs::fd *record_fd {nullptr};
+
+		void record_append(const string_view &str) const
+		{
+			if(!record_fd || !*record_fd)
+				return;
+
+			if(syncs == 0 && this->cmdline)
+			{
+				// Generate a copy of the command line to give some context
+				// to the output following it.
+				const std::string cmdline
+				{
+					"\n> "s + std::string(this->cmdline) + "\n\n"s
+				};
+
+				append(*record_fd, string_view(cmdline));
+			}
+
+			append(*record_fd, str);
+		}
+
+		int sync() override
+		{
+			// Console logs are suppressed starting from the first output.
+			if(!syncs)
+				ircd::log::console_disable();
+
+			const string_view str
+			{
+				pbase(), pptr()
+			};
+
+			record_append(str);
+			std::cout << str;
+			wrote += size(str);
+			if(wrote >= size_t(ratelimit_bytes))
+			{
+				std::cout << std::flush;
+				ctx::sleep(milliseconds(ratelimit_sleep));
+				wrote = 0;
+			}
+
+			setp(pbase(), epptr());
+			syncs++;
+			return 0;
+		}
+
+		~buf()
+		{
+			// Console logs are permitted again after the command completes.
+			if(syncs)
+				ircd::log::console_enable();
+		}
+	}
+	buf;
+	buf.cmdline = line;
+	buf.record_fd = &record_fd;
+	pubsetbuf((std::stringbuf &)buf, outbuf);
+
+	std::ostream out(&buf);
 	out.exceptions(out.badbit | out.failbit | out.eofbit);
-	pubsetbuf(out, outbuf);
 
 	int ret;
 	static const string_view opts;
@@ -311,59 +389,10 @@ construct::console::handle_line_bymodule()
 		case 0:
 		case 1:
 		{
-			// For this scope we have to suppress again because there's some
-			// yielding business going on below where log messages can break
-			// into the command output.
-			const log::console_quiet quiet{false};
-
 			const string_view str
 			{
 				view(out, outbuf)
 			};
-
-			// If this string is set, the user wants to log a copy of the output
-			// to the file at this path.
-			if(!empty(record_path))
-			{
-				const fs::fd fd
-				{
-					record_path, fs::fd::opts
-					{
-						.mode = std::ios::out | std::ios::app,
-					},
-				};
-
-				// Generate a copy of the command line to give some context
-				// to the output following it.
-				const std::string cmdline
-				{
-					"\n> "s + line + "\n\n"
-				};
-
-				append(fd, string_view(cmdline));
-				append(fd, string_view(str));
-			}
-
-			// The string is iterated for rate-limiting. After a configured
-			// number of bytes sent to stdout we sleep the ircd::ctx for a
-			// configured number of milliseconds. If these settings are too
-			// aggressive then the output heading to stdout won't appear in
-			// the terminal after the buffers are filled.
-			size_t off(0); if(off < str.size()) do
-			{
-				const string_view substr
-				{
-					str.data() + off, std::min(str.size() - off, size_t(ratelimit_bytes))
-				};
-
-				std::cout << substr << std::flush;
-				off += size_t(ratelimit_bytes);
-				if(off >= str.size())
-					break;
-
-				ctx::sleep(milliseconds(ratelimit_sleep));
-			}
-			while(1);
 
 			if(!endswith(str, '\n'))
 				std::cout << std::endl;
