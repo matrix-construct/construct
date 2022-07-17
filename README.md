@@ -2,17 +2,10 @@
 
 [![Chat in #construct:zemos.net](https://img.shields.io/matrix/construct:zemos.net.svg?label=Chat%20in%20%23construct%3Azemos.net&logo=matrix&server_fqdn=matrix.org&style=for-the-badge&color=brightgreen)](https://matrix.to/#/#construct:zemos.net) [![](https://img.shields.io/badge/License-BSD-brightgreen.svg?label=%20license&style=for-the-badge&color=brightgreen)]() [![](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?label=contributions&style=for-the-badge&color=brightgreen)]()
 
-The community's own Matrix server. It is designed to be fast and highly scalable,
-and to be developed by volunteer contributors over the internet. This mission
-strives to make the software easy to understand, modify, audit, and extend.
-
-Matrix is about giving you control over your communication; Construct is about
-giving you control over Matrix. Your privacy and security matters. We encourage
-you to contribute new ideas and are liberal in accepting experimental features.
-
 ### Getting Started
 
-1. `git clone https://github.com/matrix-construct/construct`. The latest commit on the master branch should be tagged for release. Please checkout the latest tag to be sure; in case of serious regression, we may delete a tag until it is fixed.
+1. `git clone https://github.com/matrix-construct/construct` or
+`docker pull jevolk/construct:ubuntu-22.04-built`
 
 2. See the [BUILD](https://github.com/matrix-construct/construct/wiki/BUILD) instructions to compile Construct from source.
 
@@ -35,28 +28,10 @@ perplexities.
 Generate doxygen using `doxygen ./Doxyfile` the target
 directory is `doc/html`. Browse to `doc/html/index.html`.
 
-##### ARCHITECTURE GUIDE
-
-See the [ARCHITECTURE](https://github.com/matrix-construct/construct/wiki/ARCHITECTURE) summary for design choices and
-things to know when starting out.
-
-##### DEVELOPMENT STYLE GUIDE
-
-See the [STYLE](https://github.com/matrix-construct/construct/wiki/STYLE) guide for an admittedly tongue-in-cheek lecture on
-the development approach.
-
-## Roadmap
-
-##### TECHNOLOGY
-
-- [x] Phase Zero: **Core libircd**: Utils; Modules; Contexts; JSON; Database; HTTP; etc...
-- [x] Phase One: **Matrix Protocol**: Core VM; Core modules; Protocol endpoints; etc...
-- [ ] Phase Two: **Construct Cluster**: Kademlia sharding of events; Maymounkov's erasure codes.
-
-##### DEPLOYMENT
+##### DEPLOYMENT ROADMAP
 
 ```
-Operating a Construct server which is open to public user registration is unsafe. Local users may
+🛑 Operating a Construct server which is open to public user registration is unsafe. Local users may
 be able to exceed resource limitations and deny service to other users.
 ```
 
