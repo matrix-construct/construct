@@ -22,78 +22,31 @@ ircd::util::instance_map<ircd::string_view, ircd::resource, ircd::iless>::map
 ircd::resource &
 ircd::resource::find(const string_view &path_)
 {
+	const auto &resources{instance_map::map};
+	auto it
+	{
+		resources.begin()
+	};
+
+	if(unlikely(it == resources.end()))
+		throw http::error
+		{
+			http::code::NOT_FOUND
+		};
+
+	auto &resource
+	{
+		it->second
+	};
+
 	const string_view path
 	{
 		rstrip(path_, '/')
 	};
 
-	auto &resources(instance_map::map);
-	auto it
-	{
-		resources.lower_bound(path)
-	};
-
-	if(it == end(resources)) try
-	{
-		--it;
-		if(it == begin(resources) || !startswith(path, it->first))
-			return *resources.at("/");
-	}
-	catch(const std::out_of_range &e)
-	{
-		throw http::error
-		{
-			http::code::NOT_FOUND
-		};
-	}
-
-	auto rpath{it->first};
-	//assert(!endswith(rpath, '/'));
-
-	// Exact file or directory match
-	if(path == rpath)
-		return *it->second;
-
-	// Directories handle all paths under them.
-	while(!startswith(path, rpath))
-	{
-		// Walk the iterator back to find if there is a directory prefixing this path.
-		if(it == begin(resources))
-			throw http::error
-			{
-				http::code::NOT_FOUND
-			};
-
-		--it;
-		rpath = it->first;
-		if(~it->second->opts->flags & it->second->DIRECTORY)
-			continue;
-
-		// If the closest directory still doesn't match hand this off to the
-		// webroot which can then service or 404 this itself.
-		if(!startswith(path, rpath))
-			return *resources.at("/");
-	}
-
-	// Check if the resource is a directory; if not, it can only
-	// handle exact path matches.
-	if(~it->second->opts->flags & it->second->DIRECTORY && path != rpath)
-		throw http::error
-		{
-			http::code::NOT_FOUND
-		};
-
-	if(it->second->opts->flags & it->second->DIRECTORY)
-	{
-		const auto rem(lstrip(path, rpath));
-		if(!empty(rem) && !startswith(rem, '/'))
-			throw http::error
-			{
-				http::code::NOT_FOUND
-			};
-	}
-
-	return *it->second;
+	return path && path != "/"?
+		resource->route(path):
+		*resource;
 }
 
 //
@@ -166,6 +119,54 @@ noexcept
 			string_view{"/"}:
 			path
 	};
+}
+
+ircd::string_view
+ircd::resource::params(const string_view &path)
+const
+{
+	const auto prefix_tokens
+	{
+		token_count(this->path, '/')
+	};
+
+	const auto params_after
+	{
+		prefix_tokens? prefix_tokens - 1: 0
+	};
+
+	const auto ret
+	{
+		tokens_after(path, '/', params_after)
+	};
+
+	return ret;
+}
+
+ircd::resource &
+ircd::resource::route(const string_view &path)
+const
+{
+	if(this->path != "/" && startswith(path, this->path))
+		if(path == this->path || opts->flags & flag::DIRECTORY)
+			return mutable_cast(*this);
+
+	const auto &resources{instance_map::map};
+	assert(!resources.empty());
+	auto it
+	{
+		resources.lower_bound(path)
+	};
+
+	if(it == end(resources) || it->first > path)
+		--it;
+
+	if(it->second != this)
+		return it->second->route(path);
+
+	it = begin(resources);
+	assert(it != end(resources));
+	return mutable_cast(*it->second);
 }
 
 ircd::resource::method &
@@ -580,7 +581,9 @@ try
 		}
 	};
 
-	client.request.params = lstrip(head.path, resource->path);
+	// The path components after the resource->path become the parameter
+	// vector (or parv[]) passed to the resource as its arguments.
+	client.request.params = resource->params(head.path);
 	client.request.params = strip(client.request.params, '/');
 	client.request.parv =
 	{

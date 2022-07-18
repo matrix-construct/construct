@@ -39,6 +39,123 @@ ircd::m::x_matrix_verify_destination
 };
 
 //
+// m::resource
+//
+
+ircd::m::resource::resource(const string_view &path)
+:m::resource
+{
+	path, {},
+}
+{
+}
+
+ircd::m::resource::resource(const string_view &path,
+                            struct opts opts)
+:ircd::resource
+{
+	path_canonize(path_buf, path), opts
+}
+{
+}
+
+ircd::m::resource::~resource()
+noexcept
+{
+}
+
+ircd::string_view
+ircd::m::resource::params(const string_view &path)
+const
+{
+	const auto prefix_tokens
+	{
+		token_count(this->path, '/')
+	};
+
+	const auto version
+	{
+		path_version(path)
+	};
+
+	const auto params_after
+	{
+		prefix_tokens? prefix_tokens - 1 + bool(version): 0
+	};
+
+	const auto ret
+	{
+		tokens_after(path, '/', params_after)
+	};
+
+	return ret;
+}
+
+ircd::resource &
+ircd::m::resource::route(const string_view &path)
+const
+{
+	thread_local char canon_buf[1024];
+	const string_view canon_path
+	{
+		path_canonize(canon_buf, path)
+	};
+
+	return mutable_cast(ircd::resource::route(canon_path));
+}
+
+ircd::string_view
+ircd::m::resource::path_canonize(const mutable_buffer &buf,
+                                 const string_view &path)
+{
+	const auto version
+	{
+		path_version(path)
+	};
+
+	if(!version)
+		return path;
+
+	const auto &[before, after]
+	{
+		tokens_split(path, '/', 2, 1)
+	};
+
+	mutable_buffer out{buf};
+	consume(out, copy(out, '/'));
+	consume(out, copy(out, before));
+	if(likely(after))
+	{
+		consume(out, copy(out, '/'));
+		consume(out, copy(out, after));
+	}
+
+	return string_view
+	{
+		data(buf), data(out)
+	};
+}
+
+ircd::string_view
+ircd::m::resource::path_version(const string_view &path)
+{
+	const auto version
+	{
+		token(path, '/', 2, {})
+	};
+
+	const bool pass
+	{
+		true
+		&& version.size() >= 2
+		&& (version[0] == 'v' || version[0] == 'r')
+		&& (version[1] >= '0' && version[1] <= '9')
+	};
+
+	return pass? version: string_view{};
+}
+
+//
 // m::resource::method
 //
 
@@ -86,10 +203,11 @@ try
 	if(ident)
 		log::debug
 		{
-			log, "%s %s %s `%s'",
+			log, "%s %s %s %s `%s'",
 			client.loghead(),
 			ident,
 			request.head.method,
+			request.version?: "??"_sv,
 			request.head.path,
 		};
 
@@ -159,6 +277,10 @@ ircd::m::resource::request::request(const method &method,
 :ircd::resource::request
 {
 	r
+}
+,version
+{
+	path_version(head.path)
 }
 ,authorization
 {

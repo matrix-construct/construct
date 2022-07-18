@@ -39,21 +39,23 @@ struct ircd::resource
 	std::unique_ptr<method> default_method_head;
 	std::unique_ptr<method> default_method_options;
 
+  private:
 	using method_closure = std::function<bool (const method &)>;
 	string_view method_list(const mutable_buffer &buf, const method_closure &) const;
 	string_view method_list(const mutable_buffer &buf) const;
-
 	response handle_options(client &, const request &) const;
 	response handle_head(client &, const request &) const;
 
   public:
 	method &operator[](const string_view &name) const;
+	virtual resource &route(const string_view &path) const;
+	virtual string_view params(const string_view &path) const;
 
 	resource(const string_view &path, struct opts);
 	resource(const string_view &path);
 	resource(resource &&) = delete;
 	resource(const resource &) = delete;
-	~resource() noexcept;
+	virtual ~resource() noexcept;
 
 	static resource &find(const string_view &path);
 };

@@ -25,7 +25,19 @@ struct ircd::m::resource
 
 	static log::log log;
 
-	using ircd::resource::resource;
+	static string_view path_version(const string_view &);
+	static string_view path_canonize(const mutable_buffer &, const string_view &);
+
+  private:
+	char path_buf[512];
+
+	ircd::resource &route(const string_view &path) const override;
+	string_view params(const string_view &path) const override;
+
+  public:
+	resource(const string_view &path, struct opts);
+	resource(const string_view &path);
+	~resource() noexcept override;
 };
 
 struct ircd::m::resource::method
@@ -46,6 +58,7 @@ struct ircd::m::resource::request
 {
 	template<class> struct object;
 
+	string_view version;               // api version
 	pair<string_view> authorization;   // proffering any
 	string_view access_token;          // proffering user
 	m::request::x_matrix x_matrix;     // proferring server
@@ -65,6 +78,11 @@ struct ircd::m::resource::request::object
 :ircd::resource::request::object<tuple>
 {
 	const m::resource::request &request;
+
+	const decltype(request.version) &version
+	{
+		request.version
+	};
 
 	const decltype(request.access_token) &access_token
 	{
