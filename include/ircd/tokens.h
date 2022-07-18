@@ -104,6 +104,9 @@ namespace ircd
 
 	string_view tokens_before(const string_view &str, const char sep, const size_t at = 0) noexcept;
 	string_view tokens_before(const string_view &str, const string_view &sep, const size_t at = 0) noexcept;
+
+	pair<string_view> tokens_split(const string_view &str, const char sep, const size_t at = 0, const size_t skip = 0) noexcept;
+	pair<string_view> tokens_split(const string_view &str, const string_view &sep, const size_t at = 0, const size_t skip = 0) noexcept;
 }
 
 template<size_t N,

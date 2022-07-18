@@ -48,6 +48,46 @@ ircd::char_separator
 // interface
 //
 
+ircd::pair<ircd::string_view>
+ircd::tokens_split(const string_view &str,
+                   const char sep,
+                   const size_t at,
+                   const size_t skip)
+noexcept
+{
+	const ssize_t before(at);
+	const ssize_t after
+	{
+		(before - 1) + ssize_t(skip)
+	};
+
+	return pair<string_view>
+	{
+		tokens_before(str, sep, before),
+		tokens_after(str, sep, after)
+	};
+}
+
+ircd::pair<ircd::string_view>
+ircd::tokens_split(const string_view &str,
+                   const string_view &sep,
+                   const size_t at,
+                   const size_t skip)
+noexcept
+{
+	const ssize_t before(at);
+	const ssize_t after
+	{
+		(before - 1) + ssize_t(skip)
+	};
+
+	return pair<string_view>
+	{
+		tokens_before(str, sep, before),
+		tokens_after(str, sep, after)
+	};
+}
+
 ircd::string_view
 ircd::tokens_before(const string_view &str,
                     const char sep,
