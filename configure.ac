@@ -749,6 +749,25 @@ AM_COND_IF([DEBUG],
 	])
 ])
 
+AM_COND_IF([BUILD_PCH],
+[
+	AM_COND_IF([GCC],
+	[
+		RB_VAR_PREPEND([CXXFLAGS], ["-fpch-deps"])
+	])
+
+	AM_COND_IF([CLANG],
+	[
+		RB_VAR_PREPEND([CPPFLAGS], ["-fpch-preprocess"])
+		RB_VAR_PREPEND([CXXFLAGS], ["-Xclang -verify-pch"])
+	])
+
+	AM_COND_IF([CLANG10],
+	[
+		RB_VAR_PREPEND([CXXFLAGS], ["-fpch-validate-input-files-content"])
+	])
+])
+
 dnl
 dnl Runtime intrumentation
 dnl

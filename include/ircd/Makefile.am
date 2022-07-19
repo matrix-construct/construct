@@ -6,18 +6,6 @@ AM_CPPFLAGS += -I$(top_srcdir)/include
 AM_CXXFLAGS =#
 AM_CXXFLAGS += -x c++-header
 
-if GCC
-AM_CXXFLAGS += -fpch-deps
-endif
-
-if CLANG
-AM_CPPFLAGS += -fpch-preprocess
-endif
-
-if CLANG10
-AM_CXXFLAGS += -fpch-validate-input-files-content
-endif
-
 if CLANG11
 AM_CXXFLAGS += -fpch-instantiate-templates
 endif
