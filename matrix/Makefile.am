@@ -8,8 +8,6 @@ DEFS += -DIRCD_MATRIX_UNIT
 
 AM_CPPFLAGS =#
 AM_CPPFLAGS += -I$(top_srcdir)/include
-AM_CPPFLAGS += -include ircd/matrix.pic.h
-AM_CPPFLAGS += -include ircd/mods/mapi.h
 
 AM_CXXFLAGS =#
 
@@ -22,6 +20,14 @@ AM_LDFLAGS += -Wl,--unresolved-symbols=ignore-in-shared-libs
 AM_LDFLAGS += -Wl,-z,lazy
 AM_LDFLAGS += -L$(top_srcdir)/ircd
 AM_LDFLAGS += $(PLATFORM_LDFLAGS)
+
+if CLANG_PCH
+AM_CPPFLAGS += -include-pch $(top_srcdir)/include/ircd/matrix.pic.h.gch
+AM_CPPFLAGS += -include ircd/mods/mapi.h
+else
+AM_CPPFLAGS += -include ircd/matrix.pic.h
+AM_CPPFLAGS += -include ircd/mods/mapi.h
+endif
 
 if GCC
 AM_CXXFLAGS += -ftls-model=local-dynamic
@@ -186,8 +192,15 @@ libircd_matrix_la_SOURCES += matrix.cc
 # Unit configurations
 #
 
-id.lo: AM_CPPFLAGS   := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-id.lo: CXXFLAGS      += ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
+if CLANG_PCH
+SPIRIT_UNIT_CPPFLAGS += -include ircd/spirit.h
+#SPIRIT_UNIT_CPPFLAGS += -include-pch $(top_srcdir)/include/ircd/spirit.h.gch
+else
+SPIRIT_UNIT_CPPFLAGS += -include ircd/spirit.h
+endif
+
+id.lo: AM_CPPFLAGS   := ${AM_CPPFLAGS} ${SPIRIT_UNIT_CPPFLAGS}
+id.lo: CXXFLAGS      += ${AM_CXXFLAGS} ${SPIRIT_UNIT_CXXFLAGS}
 
 #
 # Other recipes

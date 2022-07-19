@@ -469,6 +469,7 @@ AC_ARG_ENABLE(pch, RB_HELP_STRING([--disable-pch], [Disable precompiled header g
 ])
 
 AM_CONDITIONAL([BUILD_PCH], [[[[ "$build_pch" = "yes" ]]]])
+AM_CONDITIONAL([CLANG_PCH], [[[[ "$build_pch" = "yes" ]] && [[ $CXX = clang* ]]]])
 
 dnl
 dnl Generic Mode compilation
@@ -2693,7 +2694,6 @@ AC_SUBST(ASIO_UNIT_CPPFLAGS)
 ASIO_UNIT_CPPFLAGS+=" $BOOST_CPPFLAGS"
 ASIO_UNIT_CPPFLAGS+=" $SSL_CPPFLAGS"
 ASIO_UNIT_CPPFLAGS+=" $CRYPTO_CPPFLAGS"
-ASIO_UNIT_CPPFLAGS+=" -include ircd/asio.h"
 
 dnl Units defining spirit grammars may benefit from special compiler flags due
 dnl to their various complexities. The ./configure may have generated flags
@@ -2701,10 +2701,8 @@ dnl in $GRAMMAR_UNIT_CXXFLAGS to improve compile time and reduce debug symbol.
 AC_SUBST(SPIRIT_UNIT_CPPFLAGS)
 SPIRIT_UNIT_CPPFLAGS+=" $ICU_CPPFLAGS"
 SPIRIT_UNIT_CPPFLAGS+=" $BOOST_CPPFLAGS"
-SPIRIT_UNIT_CPPFLAGS+=" -include ircd/spirit.h"
 
 AC_SUBST(SPIRIT_UNIT_CXXFLAGS)
-
 AM_COND_IF([GCC],
 [
 	SPIRIT_UNIT_CXXFLAGS+=" -fno-var-tracking"

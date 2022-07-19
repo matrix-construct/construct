@@ -7,7 +7,6 @@ DEFS += -DIRCD_UNIT
 
 AM_CPPFLAGS =#
 AM_CPPFLAGS += -I$(top_srcdir)/include
-AM_CPPFLAGS += -include ircd/ircd.pic.h
 
 AM_CXXFLAGS =#
 AM_CXXFLAGS += -ftls-model=initial-exec
@@ -31,8 +30,16 @@ AM_LDFLAGS += -Wl,-z,nodlopen
 AM_LDFLAGS += -Wl,-z,lazy
 AM_LDFLAGS += $(PLATFORM_LDFLAGS)
 
+if CLANG_PCH
+AM_CPPFLAGS += -include-pch $(top_srcdir)/include/ircd/ircd.pic.h.gch
+else
+AM_CPPFLAGS += -include ircd/ircd.pic.h
+endif
+
 if CLANG
+if !CLANG_PCH
 AM_CXXFLAGS += -fno-c++-static-destructors
+endif
 endif
 
 if LTO
@@ -266,6 +273,8 @@ ROCKSDB_SRC_CPPFLAGS += -isystem $(top_srcdir)/deps/rocksdb/include
 ROCKSDB_SRC_CPPFLAGS += -isystem $(top_srcdir)/deps/rocksdb
 
 GPT_FP_CXXFLAGS =#
+#TODO: XXX
+if !CLANG_PCH
 GPT_FP_CXXFLAGS += -fno-math-errno
 GPT_FP_CXXFLAGS += -fno-trapping-math
 GPT_FP_CXXFLAGS += -ffinite-math-only
@@ -277,42 +286,51 @@ if CLANG
 GPT_FP_CXXFLAGS += -fdenormal-fp-math=positive-zero
 GPT_FP_CXXFLAGS += -ffp-model=fast
 endif
+endif
 
-client.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+if CLANG_PCH
+ASIO_UNIT_CPPFLAGS += -include-pch $(top_srcdir)/include/ircd/asio.h.gch
+SPIRIT_UNIT_CPPFLAGS += -include-pch $(top_srcdir)/include/ircd/spirit.h.gch
+else
+ASIO_UNIT_CPPFLAGS += -include ircd/asio.h
+SPIRIT_UNIT_CPPFLAGS += -include ircd/spirit.h
+endif
+
+client.lo:            AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
 ctx_x86_64.lo:        AM_CPPFLAGS := -I$(top_srcdir)/include
-ctx.lo:               AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-ctx_ole.lo:           AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-ctx_eh.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-db.lo:                AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-db_allocator.lo:      AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-db_database.lo:       AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-db_env.lo:            AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-db_fixes.lo:          AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+ctx.lo:               AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
+ctx_ole.lo:           AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
+ctx_eh.lo:            AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
+db.lo:                AM_CPPFLAGS := ${AM_CPPFLAGS} ${ROCKSDB_UNIT_CPPFLAGS}
+db_allocator.lo:      AM_CPPFLAGS := ${AM_CPPFLAGS} ${ROCKSDB_UNIT_CPPFLAGS}
+db_database.lo:       AM_CPPFLAGS := ${AM_CPPFLAGS} ${ROCKSDB_UNIT_CPPFLAGS}
+db_env.lo:            AM_CPPFLAGS := ${AM_CPPFLAGS} ${ROCKSDB_UNIT_CPPFLAGS}
+db_fixes.lo:          AM_CPPFLAGS := ${AM_CPPFLAGS} ${ROCKSDB_UNIT_CPPFLAGS}
 db_fixes.lo:          AM_CPPFLAGS += ${ROCKSDB_SRC_CPPFLAGS}
-db_port.lo:           AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-exception.lo:         AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-exec.lo:              AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-fmt.lo:               AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-fmt.lo:               AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
-fs.lo:                AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-fs_path.lo:           AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+db_port.lo:           AM_CPPFLAGS := ${AM_CPPFLAGS} ${ROCKSDB_UNIT_CPPFLAGS}
+exception.lo:         AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
+exec.lo:              AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
+fmt.lo:               AM_CPPFLAGS := ${AM_CPPFLAGS} ${SPIRIT_UNIT_CPPFLAGS}
+fmt.lo:               AM_CXXFLAGS := ${AM_CXXFLAGS} ${SPIRIT_UNIT_CXXFLAGS}
+fs.lo:                AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
+fs_path.lo:           AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
 if AIO
-fs_aio.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+fs_aio.lo:            AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
 endif
 if IOU
-fs_iou.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+fs_iou.lo:            AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
 endif
 gpt_cpu.lo:           AM_CXXFLAGS := ${AM_CXXFLAGS} ${GPT_FP_CXXFLAGS}
-http.lo:              AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-http.lo:              AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
-ios.lo:               AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+http.lo:              AM_CPPFLAGS := ${AM_CPPFLAGS} ${SPIRIT_UNIT_CPPFLAGS}
+http.lo:              AM_CXXFLAGS := ${AM_CXXFLAGS} ${SPIRIT_UNIT_CXXFLAGS}
+ios.lo:               AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
 if JS
 js.lo:                AM_CPPFLAGS := @JS_CPPFLAGS@ ${AM_CPPFLAGS}
 endif
-json.lo:              AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-json.lo:              AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
-lex_cast.lo:          AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-lex_cast.lo:          AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
+json.lo:              AM_CPPFLAGS := ${AM_CPPFLAGS} ${SPIRIT_UNIT_CPPFLAGS}
+json.lo:              AM_CXXFLAGS := ${AM_CXXFLAGS} ${SPIRIT_UNIT_CXXFLAGS}
+lex_cast.lo:          AM_CPPFLAGS := ${AM_CPPFLAGS} ${SPIRIT_UNIT_CPPFLAGS}
+lex_cast.lo:          AM_CXXFLAGS := ${AM_CXXFLAGS} ${SPIRIT_UNIT_CXXFLAGS}
 if OPENCL
 cl.lo:                AM_CPPFLAGS := @OPENCL_CPPFLAGS@ ${AM_CPPFLAGS}
 endif
@@ -324,27 +342,27 @@ endif
 if IMAGEMAGICK
 magick.lo:            AM_CPPFLAGS := @IMAGEMAGICK_CPPFLAGS@ ${AM_CPPFLAGS}
 endif IMAGEMAGICK
-mods.lo:              AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-net.lo:               AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-net_addrs.lo:         AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-net_dns.lo:           AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-net_dns_resolver.lo:  AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-net_listener.lo:      AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-net_listener_udp.lo:  AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+mods.lo:              AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
+net.lo:               AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
+net_addrs.lo:         AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
+net_dns.lo:           AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
+net_dns_resolver.lo:  AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
+net_listener.lo:      AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
+net_listener_udp.lo:  AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
 openssl.lo:           AM_CPPFLAGS := @SSL_CPPFLAGS@ @CRYPTO_CPPFLAGS@ ${AM_CPPFLAGS}
-parse.lo:             AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-parse.lo:             AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
+parse.lo:             AM_CPPFLAGS := ${AM_CPPFLAGS} ${SPIRIT_UNIT_CPPFLAGS}
+parse.lo:             AM_CXXFLAGS := ${AM_CXXFLAGS} ${SPIRIT_UNIT_CXXFLAGS}
 if PBC
 pbc.lo:               AM_CPPFLAGS := @PBC_CPPFLAGS@ ${AM_CPPFLAGS}
 endif
 if PNG
 png.o:                AM_CPPFLAGS := @PNG_CPPFLAGS@ ${AM_CPPFLAGS}
 endif PNG
-rfc1459.lo:           AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-rfc1459.lo:           AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
-rfc3986.lo:           AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
-rfc3986.lo:           AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
-server.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+rfc1459.lo:           AM_CPPFLAGS := ${AM_CPPFLAGS} ${SPIRIT_UNIT_CPPFLAGS}
+rfc1459.lo:           AM_CXXFLAGS := ${AM_CXXFLAGS} ${SPIRIT_UNIT_CXXFLAGS}
+rfc3986.lo:           AM_CPPFLAGS := ${AM_CPPFLAGS} ${SPIRIT_UNIT_CPPFLAGS}
+rfc3986.lo:           AM_CXXFLAGS := ${AM_CXXFLAGS} ${SPIRIT_UNIT_CXXFLAGS}
+server.lo:            AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
 if SODIUM
 sodium.lo:            AM_CPPFLAGS := @SODIUM_CPPFLAGS@ ${AM_CPPFLAGS}
 endif

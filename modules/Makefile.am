@@ -5,8 +5,6 @@ DEFS += -DIRCD_UNIT_MODULE
 
 AM_CPPFLAGS =#
 AM_CPPFLAGS += -I$(top_srcdir)/include
-AM_CPPFLAGS += -include $(top_srcdir)/include/ircd/matrix.pic.h
-AM_CPPFLAGS += -include $(top_srcdir)/include/ircd/mods/mapi.h
 
 AM_CXXFLAGS =#
 AM_CXXFLAGS += -ftls-model=global-dynamic
@@ -19,6 +17,14 @@ AM_LDFLAGS += -Wl,-z,lazy
 AM_LDFLAGS += -L$(top_srcdir)/ircd
 AM_LDFLAGS += -L$(top_srcdir)/matrix
 AM_LDFLAGS += $(PLATFORM_LDFLAGS)
+
+if CLANG_PCH
+AM_CPPFLAGS += -include-pch $(top_srcdir)/include/ircd/matrix.pic.h.gch
+AM_CPPFLAGS += -include $(top_srcdir)/include/ircd/mods/mapi.h
+else
+AM_CPPFLAGS += -include $(top_srcdir)/include/ircd/matrix.pic.h
+AM_CPPFLAGS += -include $(top_srcdir)/include/ircd/mods/mapi.h
+endif
 
 if GOLD
 AM_LDFLAGS += -Wl,--no-gnu-unique
