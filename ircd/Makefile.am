@@ -7,10 +7,10 @@ DEFS += -DIRCD_UNIT
 
 AM_CPPFLAGS =#
 AM_CPPFLAGS += -I$(top_srcdir)/include
+AM_CPPFLAGS += -include ircd/ircd.pic.h
 
 AM_CXXFLAGS =#
 AM_CXXFLAGS += -ftls-model=initial-exec
-AM_CXXFLAGS += -include ircd/ircd.pic.h
 
 AM_LDFLAGS =#
 AM_LDFLAGS += -version-info 3:2:0
@@ -371,8 +371,10 @@ GPU_CPPFLAGS =#
 GPU_CPPFLAGS += -D__OPENCL_VERSION__=110
 GPU_CPPFLAGS += -Dcl_clang_storage_class_specifiers
 GPU_CPPFLAGS += -DNOFP64
-GPU_CPPFLAGS += $(AM_CPPFLAGS)
+GPU_CPPFLAGS += -I$(top_srcdir)/include
+GPU_CPPFLAGS += -include "ircd/config.h"
 GPU_CPPFLAGS += $(CPPFLAGS)
+GPU_CPPFLAGS += $(CWARNS)
 GPU_CPPFLAGS += $(DEFS)
 
 GPU_CFLAGS =#

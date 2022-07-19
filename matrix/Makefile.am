@@ -8,10 +8,10 @@ DEFS += -DIRCD_MATRIX_UNIT
 
 AM_CPPFLAGS =#
 AM_CPPFLAGS += -I$(top_srcdir)/include
+AM_CPPFLAGS += -include ircd/matrix.pic.h
+AM_CPPFLAGS += -include ircd/mods/mapi.h
 
 AM_CXXFLAGS =#
-AM_CXXFLAGS += -include ircd/matrix.pic.h
-AM_CXXFLAGS += -include ircd/mods/mapi.h
 
 AM_LDFLAGS =#
 AM_LDFLAGS += -version-info 0:1:0
