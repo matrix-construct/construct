@@ -43,11 +43,14 @@ endif
 endif
 
 if LTO
-AM_CXXFLAGS += -flto=thin
+if GCC
+AM_CXXFLAGS += -flto=auto
+endif
 endif
 
 if LTO
 if CLANG
+AM_CXXFLAGS += -flto=thin
 AM_CXXFLAGS += -fstrict-vtable-pointers
 AM_CXXFLAGS += -fwhole-program-vtables
 #AM_LDFLAGS += -Wl,-plugin-opt,-pass-remarks='.*'
