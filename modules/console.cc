@@ -5072,7 +5072,7 @@ try
 {
 	const params param{line, " ",
 	{
-		"dbname", "seqnum", "limit"
+		"dbname", "limit", "seqnum"
 	}};
 
 	const auto dbname
