@@ -23,6 +23,7 @@ ircd::m::event::max_size
 	{ "default",   65507L            },
 };
 
+[[gnu::tls_model("global-dynamic")]]
 decltype(ircd::m::event::buf)
 thread_local
 ircd::m::event::buf;

@@ -16,10 +16,10 @@ namespace ircd::m
 	}};
 }
 
+[[gnu::tls_model("global-dynamic")]]
 thread_local
 decltype(ircd::m::error::fmtbuf)
-ircd::m::error::fmtbuf
-{};
+ircd::m::error::fmtbuf;
 
 //
 // error::error
