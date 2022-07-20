@@ -4972,7 +4972,8 @@ try
 			db::bytes(database)
 		};
 
-		out << bytes << std::endl;
+		char pbuf[48];
+		out << pretty(pbuf, iec(bytes)) << std::endl;
 		return true;
 	}
 
@@ -5018,14 +5019,15 @@ try
 			db::bytes(column, {key[0], key[1]})
 		};
 
+		char pbuf[48];
 		out << param["column"]
 		    << (is_integer_key? "[(binary)" : "[") << param["key"] << "] "
-		    << ": " << value << " (uncompressed value)"
+		    << "  " << pretty(pbuf, iec(value)) << " (uncompressed value)"
 		    << std::endl;
 
 		out << param["column"]
 		    << (is_integer_key? "[(binary)" : "[") << param["key"] << "] "
-		    << ": " << value_compressed
+		    << "  " << pretty(pbuf, iec(value_compressed))
 		    << std::endl;
 
 		return true;
@@ -5044,8 +5046,9 @@ try
 			db::bytes(column)
 		};
 
-		out << std::setw(16) << std::right << colname
-		    << " : " << value
+		char pbuf[48];
+		out << std::setw(24) << std::right << colname
+		    << "  " << pretty(pbuf, iec(value))
 		    << std::endl;
 	}};
 
