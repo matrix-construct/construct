@@ -7,8 +7,7 @@ AM_CXXFLAGS =#
 AM_CXXFLAGS += -x c++-header
 
 if CLANG11
-#TODO: XXX
-#AM_CXXFLAGS += -fpch-instantiate-templates
+AM_CXXFLAGS += -fpch-instantiate-templates
 endif
 
 if GCC

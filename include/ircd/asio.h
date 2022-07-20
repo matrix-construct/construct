@@ -68,6 +68,20 @@ namespace boost
 #pragma GCC visibility pop
 #endif
 
+// Template-specializations for some functions we may redefine (interpose).
+// Declarations are needed for template instantiation in PCH and with LTO.
+#if defined(BOOST_ASIO_HAS_EPOLL)
+namespace boost::asio::detail
+{
+	using epoll_time_traits = asio::time_traits<posix_time::ptime>;
+
+	template<> std::size_t
+	epoll_reactor::cancel_timer(timer_queue<epoll_time_traits> &,
+	                            typename timer_queue<epoll_time_traits>::per_timer_data &,
+	                            std::size_t max);
+}
+#endif
+
 // Boost version dependent behavior for getting the io_service/io_context
 // abstract executor (recent versions) or the derived instance (old versions).
 namespace ircd::ios
