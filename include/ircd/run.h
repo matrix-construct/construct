@@ -131,6 +131,17 @@ struct ircd::run::changed
 	static void wait(const std::initializer_list<enum level> &);
 };
 
+namespace ircd
+{
+	template<>
+	decltype(run::changed::allocator)
+	instance_list<run::changed>::allocator;
+
+	template<>
+	decltype(run::changed::list)
+	instance_list<run::changed>::list;
+}
+
 /// Tool to yield a context until the run::level is RUN or QUIT. Once either is
 /// satisfied (or if already satisfied) the run::level is checked to be RUN
 /// otherwise an exception is thrown.

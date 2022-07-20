@@ -41,6 +41,17 @@ struct ircd::cl::work
 	~work() noexcept;
 };
 
+namespace ircd
+{
+	template<>
+	decltype(cl::work::allocator)
+	instance_list<cl::work>::allocator;
+
+	template<>
+	decltype(cl::work::list)
+	instance_list<cl::work>::list;
+}
+
 /// Queue profiling convenience
 struct ircd::cl::work::prof
 :std::array<nanoseconds, 5>
