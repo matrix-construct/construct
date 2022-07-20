@@ -125,6 +125,9 @@ struct ircd::string_view
 	// Tricks boost::spirit into thinking this is mutable string (hint: it's not).
 	// Instead, the raw[] directive in Qi grammar will use the iterator constructor only.
 	// __attribute__((error("string_view is not insertable (hint: use raw[] directive)")))
+	#if !defined(NDEBUG) && !defined(RB_ASSERT)
+	[[noreturn]]
+	#endif
 	void insert(const iterator &, const char &)
 	{
 		assert(0);
