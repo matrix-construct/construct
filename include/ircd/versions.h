@@ -59,19 +59,30 @@ struct ircd::versions
 	         const enum type &type                = type::API,
 	         const long &monotonic                = 0,
 	         const std::array<long, 3> &semantic  = {0L},
-	         const string_view &string            = {});
+	         const string_view &string            = {}) noexcept;
 
 	versions(const string_view &name,
 	         const enum type &type,
 	         const long &monotonic,
 	         const std::array<long, 3> &semantic,
-	         const std::function<void (versions &, const mutable_buffer &)> &generator);
+	         const std::function<void (versions &, const mutable_buffer &)> &generator) noexcept;
 
 	versions() = default;
 	versions(versions &&) = delete;
 	versions(const versions &) = delete;
 	~versions() noexcept;
 };
+
+namespace ircd
+{
+	template<>
+	decltype(versions::allocator)
+	instance_list<versions>::allocator;
+
+	template<>
+	decltype(versions::list)
+	instance_list<versions>::list;
+}
 
 inline ircd::versions::operator
 const long &()

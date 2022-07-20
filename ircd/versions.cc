@@ -21,7 +21,7 @@ template<>
 decltype(ircd::util::instance_list<ircd::versions>::list)
 ircd::util::instance_list<ircd::versions>::list
 {
-    allocator
+	allocator
 };
 
 /// Straightforward construction of versions members; string is copied
@@ -31,10 +31,11 @@ ircd::versions::versions(const string_view &name,
                          const long &monotonic,
                          const std::array<long, 3> &semantic,
                          const string_view &string)
+noexcept
 :versions
 {
 	name, type, monotonic, semantic, [&string]
-	(auto &that, const mutable_buffer &buf)
+	(auto &that, const mutable_buffer &buf) noexcept
 	{
 		strlcpy(buf, string);
 	}
@@ -49,6 +50,7 @@ ircd::versions::versions(const string_view &name,
                          const long &monotonic,
                          const std::array<long, 3> &semantic,
                          const std::function<void (versions &, const mutable_buffer &)> &closure)
+noexcept
 :name{name}
 ,type{type}
 ,monotonic{monotonic}
@@ -61,7 +63,7 @@ ircd::versions::versions(const string_view &name,
 	}
 	catch(const std::exception &e)
 	{
-		log::error
+		log::critical
 		{
 			"Querying %s version of '%s' :%s",
 			type == type::ABI? "ABI"_sv : "API"_sv,
