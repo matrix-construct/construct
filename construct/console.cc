@@ -344,7 +344,7 @@ construct::console::handle_line_bymodule()
 		int sync() override
 		{
 			// Console logs are suppressed starting from the first output.
-			if(!syncs)
+			if(syncs++ == 0)
 				ircd::log::console_disable();
 
 			const string_view str
@@ -363,7 +363,6 @@ construct::console::handle_line_bymodule()
 			}
 
 			setp(pbase(), epptr());
-			syncs++;
 			return 0;
 		}
 
