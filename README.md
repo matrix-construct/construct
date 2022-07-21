@@ -1,6 +1,6 @@
 # This — is The **Construct**
 
-[![Chat in #construct:zemos.net](https://img.shields.io/matrix/construct:zemos.net.svg?label=Chat%20in%20%23construct%3Azemos.net&logo=matrix&server_fqdn=matrix.org&style=for-the-badge&color=8891CD)](https://matrix.to/#/#construct:zemos.net) [![](https://img.shields.io/badge/License-BSD-8891CD.svg?label=%20license&style=for-the-badge)]() [![](https://img.shields.io/badge/PRs-welcome-8891CD.svg?label=contributions&style=for-the-badge)]()
+[![Chat in #construct:zemos.net](https://img.shields.io/matrix/construct:zemos.net.svg?label=Chat%20in%20%23construct%3Azemos.net&logo=matrix&server_fqdn=matrix.org&style=for-the-badge&color=5965AF)](https://matrix.to/#/#construct:zemos.net) [![](https://img.shields.io/badge/License-BSD-5965AF.svg?label=%20license&style=for-the-badge)]() [![](https://img.shields.io/badge/PRs-welcome-5965AF.svg?label=contributions&style=for-the-badge)]()
 
 ### Getting Started
 
@@ -23,6 +23,9 @@ problems.
 See the [FREQUENTLY ASKED QUESTIONS](https://github.com/matrix-construct/construct/wiki/FAQ) for answers to the most common
 perplexities.
 
+>🛑 Operating a Construct server which is open to public user registration is unsafe.
+Local users may be able to exceed resource limitations and deny service to other users.
+
 ## Developers
 
 [![](https://ci.appveyor.com/api/projects/status/qck2bpb57704jmtf?svg=true)]()
@@ -33,11 +36,6 @@ Generate doxygen using `doxygen ./Doxyfile` the target
 directory is `doc/html`. Browse to `doc/html/index.html`.
 
 ##### DEPLOYMENT ROADMAP
-
-```
-🛑 Operating a Construct server which is open to public user registration is unsafe. Local users may
-be able to exceed resource limitations and deny service to other users.
-```
 
 - [x] **Personal**: Dozens of users. Few default restrictions; higher log output.
 - [ ] **Company**: Hundreds of users. Moderate default restrictions.
