@@ -57,7 +57,7 @@ ircd::m::search::search_post
 	{
 		search_post.REQUIRES_AUTH |
 		search_post.RATE_LIMITED,
- 
+
 		// Some queries can take a really long time, especially under
 		// development. We don't need the default request timer getting
 		// in the way for now.
@@ -138,41 +138,60 @@ try
 		at<"search_term"_>(room_events)
 	};
 
-	const auto &[keys, term]
+	const pair<string_view> kvs
 	{
 		split(search_input, " :")
 	};
+
+	const auto when{[&kvs]
+	(const std::initializer_list<string_view> &names, auto&& closure)
+	{
+		tokens(kvs.first, ' ', [&names, &closure]
+		(const string_view &kv)
+		{
+			const auto &[key, val]
+			{
+				split(kv, ':')
+			};
+
+			if(std::find(begin(names), end(names), key) == end(names))
+				return true;
+
+			closure(key, val);
+			return false;
+		});
+	}};
 
 	m::room_event_filter room_event_filter
 	{
 		json::get<"filter"_>(room_events)
 	};
 
-	json::strung
-	senders(json::get<"senders"_>(room_event_filter)),
-	not_senders(json::get<"not_senders"_>(room_event_filter));
-
-	tokens(keys, ' ', [&senders, &not_senders]
-	(const string_view &kv)
+	json::strung senders;
+	when({"senders", ""}, [&](const auto &key, const auto &val)
 	{
-		const auto &[key, val]
-		{
-			split(kv, ':')
-		};
+		if(!valid(m::id::USER, val))
+			return;
 
-		if(key == "senders" || (!key && valid(m::id::USER, val)))
-			senders = json::append(senders, val);
-
-		if(key == "!senders" || (key == "!" && valid(m::id::USER, val)))
-			not_senders = json::append(not_senders, val);
+		senders = json::get<"senders"_>(room_event_filter);
+		senders = json::append(senders, val);
+		json::get<"senders"_>(room_event_filter) = senders;
 	});
 
-	json::get<"senders"_>(room_event_filter) = senders;
-	json::get<"not_senders"_>(room_event_filter) = not_senders;
+	json::strung not_senders;
+	when({"!senders", "!"}, [&](const auto &key, const auto &val)
+	{
+		if(!valid(m::id::USER, val))
+			return;
+
+		not_senders = json::get<"not_senders"_>(room_event_filter);
+		not_senders = json::append(not_senders, val);
+		json::get<"not_senders"_>(room_event_filter) = not_senders;
+	});
 
 	const string_view search_term
 	{
-		term?: keys
+		kvs.second?: kvs.first
 	};
 
 	// Override the limit to 1 to return a result and appease the user as
