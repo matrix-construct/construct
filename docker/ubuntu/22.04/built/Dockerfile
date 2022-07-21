@@ -15,8 +15,8 @@ shtool \
 "
 
 RUN true \
-&& git clone https://github.com/jevolk/charybdis.git \
-&& cd charybdis \
+&& git clone https://github.com/matrix-construct/construct \
+&& cd construct \
 && rmdir -v deps/rocksdb \
 && ln -sv /usr/src/rocksdb deps \
 && ./autogen.sh \
@@ -24,7 +24,7 @@ RUN true \
 && make -j `nproc` \
 && make install \
 && cd .. \
-&& rm -rf charybdis \
+&& rm -rf construct \
 && apt-get purge -y ${purges} \
 && apt-get autoremove --purge -y \
 && apt-get clean -y \
