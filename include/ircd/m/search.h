@@ -60,6 +60,7 @@ struct ircd::m::search::query
 	size_t limit {-1UL};
 	ushort before_limit {0};
 	ushort after_limit {0};
+	bool case_sensitive {false};
 };
 
 struct ircd::m::search::result

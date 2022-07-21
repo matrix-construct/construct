@@ -189,6 +189,12 @@ try
 		json::get<"not_senders"_>(room_event_filter) = not_senders;
 	});
 
+	bool case_sensitive {false};
+	when({"case", "ci"}, [&](const auto &key, const auto &val)
+	{
+		case_sensitive = key == "case";
+	});
+
 	const string_view search_term
 	{
 		kvs.second?: kvs.first
@@ -225,6 +231,7 @@ try
 		.limit = limit,
 		.before_limit = event_context.get("before_limit", context_default),
 		.after_limit = event_context.get("after_limit", context_default),
+		.case_sensitive = case_sensitive,
 	};
 
 	log::logf
@@ -402,10 +409,17 @@ try
 		content["body"]
 	};
 
+	const bool match_term
+	{
+		false
+		|| (query.case_sensitive && has(body, query.search_term))
+		|| (!query.case_sensitive && ihas(body, query.search_term))
+	};
+
 	const bool match
 	{
 		true
-		&& has(body, query.search_term)
+		&& match_term
 		&& m::match(query.filter, result.event_idx)
 	};
 
