@@ -5766,11 +5766,16 @@ try
 		if(peer.op_resolve)  ircd::strlcat(flags, "RESOLVING ");
 		if(peer.op_fini)     ircd::strlcat(flags, "FINISHED ");
 
+		const auto expires
+		{
+			duration_cast<seconds>(peer.remote_expires - now<system_point>()).count()
+		};
+
 		char pbuf[32];
 		out
 		<< std::setw(4) << std::left << peer.id << ' '
 		<< std::setw(40) << std::right << net::ipport{peer.remote} << ' '
-		<< std::setw(7) << std::right << duration_cast<seconds>(peer.remote_expires - now<system_point>()).count() << ' '
+		<< std::setw(7) << std::right << std::max(expires, -1L) << ' '
 		<< std::setw(50) << std::left << trunc(host, 50) << ' '
 		<< std::setw(23) << std::left << pretty(pbuf, iec(peer.read_total())) << ' '
 		<< std::setw(23) << std::left << pretty(pbuf, iec(peer.write_total())) << ' '
