@@ -34,7 +34,7 @@ cmake \
 curl \
 "
 
-ENV rocks_version=6.11.4
+ENV rocks_version=7.4.3
 ENV rocks_cmake="\
 -DCMAKE_RULE_MESSAGES:BOOL=OFF \
 -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
