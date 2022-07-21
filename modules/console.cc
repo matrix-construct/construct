@@ -17922,10 +17922,20 @@ console_cmd__gpt__label(opt &out, const string_view &line)
 		param["label"], true
 	};
 
-	const auto text
+	auto text
 	{
 		tokens_after(line, ' ', 0)
 	};
+
+	std::string content;
+	if(m::valid(m::id::EVENT, text))
+		content = m::get(std::nothrow, m::event::id{text}, "content");
+
+	if(!content.empty())
+		content = json::object(content).get<json::string>("body");
+
+	if(!content.empty())
+		text = content;
 
 	gpt::opts opts alignas(4096);
 	opts.limit = 0;
