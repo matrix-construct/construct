@@ -57,29 +57,50 @@ struct ircd::util::instance_list
 template<class T>
 ircd::util::instance_list<T>::instance_list()
 {
+	const auto &alloc(list.get_allocator().s);
 	const auto &address(reinterpret_cast<uint8_t *>(&node));
-	list.get_allocator().s->next = reinterpret_cast<T **>(address);
+
+	assert(alloc);
+	assert(!alloc->next);
+	const scope_restore next
+	{
+		alloc->next, reinterpret_cast<T **>(address)
+	};
+
 	it = list.emplace(end(list), static_cast<T *>(this));
-	list.get_allocator().s->next = nullptr;
 }
 
 template<class T>
 ircd::util::instance_list<T>::instance_list(instance_list &&other)
 noexcept
 {
+	const auto &alloc(list.get_allocator().s);
 	const auto &address(reinterpret_cast<uint8_t *>(&node));
-	list.get_allocator().s->next = reinterpret_cast<T **>(address);
+
+	assert(alloc);
+	assert(!alloc->next);
+	const scope_restore next
+	{
+		alloc->next, reinterpret_cast<T **>(address)
+	};
+
 	it = list.emplace(end(list), static_cast<T *>(this));
-	list.get_allocator().s->next = nullptr;
 }
 
 template<class T>
 ircd::util::instance_list<T>::instance_list(const instance_list &other)
 {
+	const auto &alloc(list.get_allocator().s);
 	const auto &address(reinterpret_cast<uint8_t *>(&node));
-	list.get_allocator().s->next = reinterpret_cast<T **>(address);
+
+	assert(alloc);
+	assert(!alloc->next);
+	const scope_restore next
+	{
+		alloc->next, reinterpret_cast<T **>(address)
+	};
+
 	it = list.emplace(end(list), static_cast<T *>(this));
-	list.get_allocator().s->next = nullptr;
 }
 
 template<class T>
