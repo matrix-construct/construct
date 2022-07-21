@@ -268,7 +268,7 @@ dnl Explicit link-time-optimization switch
 dnl
 
 AC_MSG_CHECKING(whether to enable link-time optimization)
-AC_ARG_ENABLE(lto, RB_HELP_STRING([--disable-lto], [Enable link-time optimization]),
+AC_ARG_ENABLE(lto, RB_HELP_STRING([--enable-lto], [Enable link-time optimization]),
 [
 	lto=$enableval
 ], [
