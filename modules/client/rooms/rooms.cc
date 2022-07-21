@@ -133,7 +133,8 @@ method_put
 {
 	rooms_resource, "PUT", put_rooms,
 	{
-		method_put.REQUIRES_AUTH
+		method_put.REQUIRES_AUTH |
+		method_put.RATE_LIMITED
 	}
 };
 
@@ -204,6 +205,7 @@ method_post
 {
 	rooms_resource, "POST", post_rooms,
 	{
-		method_post.REQUIRES_AUTH
+		method_post.REQUIRES_AUTH |
+		method_post.RATE_LIMITED
 	}
 };

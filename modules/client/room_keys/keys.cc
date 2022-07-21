@@ -48,7 +48,8 @@ ircd::m::room_keys_keys_delete
 {
 	room_keys_keys, "DELETE", delete_room_keys_keys,
 	{
-		room_keys_keys_delete.REQUIRES_AUTH
+		room_keys_keys_delete.REQUIRES_AUTH |
+		room_keys_keys_delete.RATE_LIMITED
 	}
 };
 
@@ -73,7 +74,8 @@ ircd::m::room_keys_keys_put
 	room_keys_keys, "PUT", put_room_keys_keys,
 	{
 		// Flags
-		room_keys_keys_put.REQUIRES_AUTH,
+		room_keys_keys_put.REQUIRES_AUTH |
+		room_keys_keys_put.RATE_LIMITED,
 
 		// timeout //TODO: XXX designated
 		30s,
@@ -198,7 +200,8 @@ ircd::m::room_keys_keys_get
 {
 	room_keys_keys, "GET", get_room_keys_keys,
 	{
-		room_keys_keys_get.REQUIRES_AUTH
+		room_keys_keys_get.REQUIRES_AUTH |
+		room_keys_keys_get.RATE_LIMITED
 	}
 };
 

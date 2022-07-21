@@ -43,7 +43,10 @@ register_resource
 m::resource::method
 method_post
 {
-	register_resource, "POST", post__register
+	register_resource, "POST", post__register,
+	{
+		method_post.RATE_LIMITED
+	}
 };
 
 ircd::conf::item<bool>

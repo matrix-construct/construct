@@ -31,7 +31,10 @@ register_available_resource
 m::resource::method
 method_get
 {
-	register_available_resource, "GET", get__register_available
+	register_available_resource, "GET", get__register_available,
+	{
+		method_get.RATE_LIMITED
+	}
 };
 
 mods::import<void (const m::id::user &)>

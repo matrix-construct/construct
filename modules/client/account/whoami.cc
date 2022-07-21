@@ -39,6 +39,7 @@ get_whoami
 {
 	account_whoami, "GET", get__whoami,
 	{
-		get_whoami.REQUIRES_AUTH
+		get_whoami.REQUIRES_AUTH |
+		get_whoami.RATE_LIMITED
 	}
 };

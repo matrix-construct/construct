@@ -61,6 +61,7 @@ post_deactivate
 {
 	account_deactivate, "POST", post__deactivate,
 	{
-		post_deactivate.REQUIRES_AUTH
+		post_deactivate.REQUIRES_AUTH |
+		post_deactivate.RATE_LIMITED
 	}
 };

@@ -64,6 +64,7 @@ post_3pid
 {
 	account_3pid, "POST", post__3pid,
 	{
-		post_3pid.REQUIRES_AUTH
+		post_3pid.REQUIRES_AUTH |
+		post_3pid.RATE_LIMITED // revisit this? some of these require rate limiting, some don't
 	}
 };

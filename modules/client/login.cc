@@ -204,7 +204,10 @@ post__login(client &client,
 m::resource::method
 method_post
 {
-	login_resource, "POST", post__login
+	login_resource, "POST", post__login,
+	{
+		method_post.RATE_LIMITED
+	}
 };
 
 m::resource::response
@@ -233,5 +236,8 @@ get__login(client &client,
 m::resource::method
 method_get
 {
-	login_resource, "GET", get__login
+	login_resource, "GET", get__login,
+	{
+		method_get.RATE_LIMITED
+	}
 };
