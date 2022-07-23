@@ -2759,7 +2759,10 @@ RB_HELP_STRING([--with-included-rocksdb[[[=version]]]], [Use the RocksDB sources
 		rocksdb_version="$ROCKSDB_VERSION_DEFAULT"
 	fi
 
-	bash tools/buildrocks.sh $rocksdb_linkage $rocksdb_version
+	if [[ $rocksdb_version != "built" ]]; then
+		bash tools/buildrocks.sh $rocksdb_linkage $rocksdb_version
+	fi
+
 	AS_IF([ test $? != 0 ],
 	[
 		AC_MSG_ERROR([Failed to build RocksDB])
