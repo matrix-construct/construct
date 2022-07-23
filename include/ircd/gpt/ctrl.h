@@ -57,7 +57,7 @@ struct ircd_gpt_ctrl_clk
 	uint step;
 
 	/// Master clock. Epoch consists of one or more steps; epoch count is
-	/// incremented by one after every backward propagation.
+	/// incremented monotonically by one after every repetition of the corpus.
 	uint epoch;
 };
 
