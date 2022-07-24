@@ -5723,12 +5723,26 @@ try
 
 	const params param{line, " ",
 	{
-		"[hostport]", "[all]"
+		"[expression]", "..."
 	}};
 
-	const auto &hostport
+	const auto args
 	{
-		param[0]
+		tokens_after(line, ' ', 0)
+	};
+
+	const bool all(has(args, "all"));
+	const bool active(has(args, "active"));
+	const bool conn(has(args, "conn"));
+	const bool count(has(args, "count"));
+	const bool expr
+	{
+		param["[expression]"] && param["[expression]"] != "*"
+	};
+
+	const globular_imatch match
+	{
+		param["[expression]"]
 	};
 
 	const auto print_head{[&out]
@@ -5789,30 +5803,10 @@ try
 		<< std::endl;
 	}};
 
-	const bool all(has(line, "all"));
-	const bool active(has(line, "active"));
-	const bool conn(has(line, "conn"));
-	if(hostport && !all && !active && !conn)
-	{
-		char buf[rfc3986::DOMAIN_BUFSIZE];
-		const auto remote
-		{
-			net::service(net::hostport(hostport)) == "matrix"?
-				m::fed::server(buf, hostport):
-				m::fed::matrix_service(hostport)
-		};
-
-		auto &peer
-		{
-			server::find(remote)
-		};
-
+	if(!count)
 		print_head();
-		print(peer.hostcanon, peer);
-		return true;
-	}
 
-	print_head();
+	size_t i(0);
 	for(const auto &p : server::peers)
 	{
 		const auto &host{p.first};
@@ -5826,8 +5820,28 @@ try
 		if(active && !peer.tag_count())
 			continue;
 
-		print(host, peer);
+		if(expr)
+		{
+			char rembuf[128];
+			const bool matched
+			{
+				false
+				|| match(host)
+				|| match(string(rembuf, peer.remote))
+			};
+
+			if(!matched)
+				continue;
+		}
+
+		if(!count)
+			print(host, peer);
+
+		++i;
 	}
+
+	if(count)
+		out << i << std::endl;
 
 	return true;
 }
@@ -5837,22 +5851,6 @@ catch(const std::out_of_range &)
 	{
 		"Peer not found"
 	};
-}
-
-bool
-console_cmd__peer__count(opt &out, const string_view &line)
-{
-	size_t i{0};
-	for(const auto &pair : ircd::server::peers)
-	{
-		assert(bool(pair.second));
-		const auto &peer{*pair.second};
-		if(!peer.err_has())
-			++i;
-	}
-
-	out << i << std::endl;
-	return true;
 }
 
 bool
