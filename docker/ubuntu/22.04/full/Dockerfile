@@ -3,6 +3,7 @@ FROM jevolk/construct:ubuntu-22.04-base
 ENV packages="\
 opencl-headers \
 libgraphicsmagick1-dev \
+libgraphicsmagick-q16-3 \
 libicu-dev \
 libjemalloc-dev \
 libopencl-clang-dev \

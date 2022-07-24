@@ -25,8 +25,13 @@ RUN true \
 && make install \
 && cd .. \
 && rm -rf construct \
+&& rm -rf /usr/src/rocksdb* \
 && apt-get purge -y ${purges} \
 && apt-get autoremove --purge -y \
 && apt-get clean -y \
 && rm -rf /var/lib/apt/lists/* \
+true
+
+RUN true \
+&& construct -smoketest -debug -nomatrix \
 && true
