@@ -53,7 +53,7 @@
 #include <boost/proto/make_expr.hpp>
 #include <boost/proto/transform.hpp>
 #include <boost/proto/deep_copy.hpp>
-#include <boost/spirit/include/phoenix.hpp>
+#include <boost/phoenix.hpp>
 #include "expr.h"
 #pragma clang attribute pop
 #pragma GCC visibility pop
