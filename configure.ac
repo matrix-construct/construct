@@ -1631,13 +1631,13 @@ AC_SUBST(ICU_LIBS, [])
 AC_ARG_WITH(icu-includes,
 RB_HELP_STRING([--with-icu-includes=[[[DIR]]]], [Path to unicode include directory]),
 [
-	ICU_CPPFLAGS+="-isystem $withval"
+	RB_VAR_APPEND([ICU_CPPFLAGS], ["-isystem $withval"])
 ])
 
 AC_ARG_WITH(icu-libs,
 RB_HELP_STRING([--with-icu-libs=[[[DIR]]]], [Path to unicode libraries directory]),
 [
-	ICU_LDFLAGS+=" -L$withval"
+	RB_VAR_APPEND([ICU_LDFLAGS], ["-L$withval"])
 ])
 
 dnl RB_CHK_SYSHEADER(unicode/utypes.h, [UNICODE_UTYPES_H])
@@ -1674,13 +1674,13 @@ PKG_CHECK_MODULES(icuuc, [icuuc],
 [
 	have_icu="yes"
 	have_icuuc="yes"
-	ICU_LIBS+=" -licuuc"
+	RB_VAR_APPEND([ICU_LIBS], ["-licuuc"])
 ], [
 	AC_CHECK_LIB([icuuc], [_init],
 	[
 		have_icu="yes"
 		have_icuuc="yes"
-		ICU_LIBS+=" -licuuc"
+		RB_VAR_APPEND([ICU_LIBS], ["-licuuc"])
 	], [
 		have_icuuc="no"
 	])
@@ -1709,13 +1709,13 @@ AC_SUBST(SODIUM_LIBS, [])
 AC_ARG_WITH(sodium-includes,
 RB_HELP_STRING([--with-sodium-includes=[[[DIR]]]], [Path to sodium include directory]),
 [
-	SODIUM_CPPFLAGS+=" -I$withval"
+	RB_VAR_APPEND([SODIUM_CPPFLAGS], ["-I$withval"])
 ], [])
 
 AC_ARG_WITH(sodium-libs,
 RB_HELP_STRING([--with-sodium-libs=[[[DIR]]]], [Path to sodium library directory]),
 [
-	SODIUM_LDFLAGS+=" -L$withval"
+	RB_VAR_APPEND([SODIUM_LDFLAGS], ["-L$withval"])
 ], [])
 
 PKG_CHECK_MODULES(sodium, libsodium,
@@ -1738,7 +1738,7 @@ AM_COND_IF([SODIUM],
 [
 	RB_CHK_SYSHEADER(sodium.h, [SODIUM_H])
 	AC_DEFINE([HAVE_SODIUM], [1], [Have libsodium])
-	SODIUM_LIBS+=" -lsodium"
+	RB_VAR_APPEND([SODIUM_LIBS], ["-lsodium"])
 ], [
 	AC_MSG_ERROR([libsodium is required but not found. Try apt-get install libsodium-dev])
 ])
@@ -2169,28 +2169,26 @@ AC_SUBST(PNG_LIBS, [])
 AC_ARG_WITH(png-includes,
 RB_HELP_STRING([--with-png-includes=[[[DIR]]]], [Path to PNG include directory]),
 [
-	PNG_CPPFLAGS+="-I$withval"
-], [
-	PNG_CPPFLAGS+="-isystem /usr/include/GraphicsMagick/"
+	RB_VAR_APPEND([PNG_CPPFLAGS], ["-I$withval"])
 ])
 
 AC_ARG_WITH(png-libs,
 RB_HELP_STRING([--with-png-libs=[[[DIR]]]], [Path to PNG library directory]),
 [
-	PNG_LDFLAGS+="-L$withval"
+	RB_VAR_APPEND([PNG_LDFLAGS], ["-L$withval"])
 ], [])
 
 RB_CHK_SYSHEADER([png.h], [PNG_H])
 PKG_CHECK_MODULES(PNG, [png],
 [
 	dnl May not be DT_NEEDED in actual library since Magick loads it dynamically.
-	PNG_LIBS+="-lpng"
+	RB_VAR_APPEND([PNG_LIBS], ["-lpng"])
 	have_png="yes"
 ], [
 	AC_CHECK_LIB([png], [png_access_version_number],
 	[
 		have_png="yes"
-		PNG_LIBS+="-lpng"
+		RB_VAR_APPEND([PNG_LIBS], ["-lpng"])
 	], [
 		have_png="no"
 		AC_MSG_WARN([Unable to find libpng for portable network graphics on this system.])
@@ -2213,34 +2211,34 @@ dnl ImageMagick support
 dnl
 dnl
 
-AC_SUBST(IMAGEMAGICK_CPPFLAGS, [])
-AC_SUBST(IMAGEMAGICK_LDFLAGS, [])
-AC_SUBST(IMAGEMAGICK_LIBS, [])
+AC_SUBST(IMAGEMAGICK_CPPFLAGS)
+AC_SUBST(IMAGEMAGICK_LDFLAGS)
+AC_SUBST(IMAGEMAGICK_LIBS)
 
 AC_ARG_WITH(imagemagick-includes,
 RB_HELP_STRING([--with-imagemagick-includes=[[[DIR]]]], [Path to imagemagick include directory]),
 [
-	IMAGEMAGICK_CPPFLAGS+="-I$withval"
+	RB_VAR_APPEND([IMAGEMAGICK_CPPFLAGS], ["-I$withval"])
 ], [
-	IMAGEMAGICK_CPPFLAGS+="-isystem /usr/include/GraphicsMagick/"
+	RB_VAR_APPEND([IMAGEMAGICK_CPPFLAGS], [-isystem /usr/include/GraphicsMagick/])
 ])
 
 AC_ARG_WITH(imagemagick-libs,
 RB_HELP_STRING([--with-imagemagick-libs=[[[DIR]]]], [Path to imagemagick library directory]),
 [
-	IMAGEMAGICK_LDFLAGS+="-L$withval"
+	RB_VAR_APPEND([IMAGEMAGICK_LDFLAGS], ["-L$withval"])
 ], [])
 
 dnl push
 restore_cppflags=$CPPFLAGS
 restore_ldflags=$LDFLAGS
-RB_VAR_PREPEND([CPPFLAGS], ["${IMAGEMAGICK_CPPFLAGS}"])
-RB_VAR_PREPEND([LDFLAGS], ["${IMAGEMAGICK_LDFLAGS}"])
+RB_VAR_PREPEND([CPPFLAGS], [$IMAGEMAGICK_CPPFLAGS])
+RB_VAR_PREPEND([LDFLAGS], [$IMAGEMAGICK_LDFLAGS])
 
 RB_CHK_SYSHEADER([Magick++.h], [MAGICKPP_H])
 PKG_CHECK_MODULES(GraphicsMagickPP, [GraphicsMagick++],
 [
-	IMAGEMAGICK_LIBS+=" -lGraphicsMagick++"
+	RB_VAR_APPEND([IMAGEMAGICK_LIBS], ["-lGraphicsMagick++"])
 	have_imagemagickpp="yes"
 ], [
 	have_imagemagickpp="no"
@@ -2249,7 +2247,7 @@ PKG_CHECK_MODULES(GraphicsMagickPP, [GraphicsMagick++],
 RB_CHK_SYSHEADER([wand/wand_api.h], [MAGICK_WAND_API_H])
 PKG_CHECK_MODULES(GraphicsMagickWand, [GraphicsMagickWand],
 [
-	IMAGEMAGICK_LIBS+=" -lGraphicsMagickWand"
+	RB_VAR_APPEND([IMAGEMAGICK_LIBS], ["-lGraphicsMagickWand"])
 	have_imagemagickwand="yes"
 ], [
 	have_imagemagickwand="no"
@@ -2258,7 +2256,7 @@ PKG_CHECK_MODULES(GraphicsMagickWand, [GraphicsMagickWand],
 RB_CHK_SYSHEADER([magick/api.h], [MAGICK_API_H])
 PKG_CHECK_MODULES(GraphicsMagick, [GraphicsMagick],
 [
-	IMAGEMAGICK_LIBS+=" -lGraphicsMagick"
+	RB_VAR_APPEND([IMAGEMAGICK_LIBS], ["-lGraphicsMagick"])
 	have_imagemagick="yes"
 ], [
 	have_imagemagick="no"
@@ -2434,7 +2432,7 @@ AM_COND_IF([DRM],
 [
 	AC_MSG_RESULT([yes])
 	IRCD_DEFINE(USE_DRM, [1], [DRM support is available and enabled])
-	DRM_LIBS+="-ldrm"
+	RB_VAR_APPEND([DRM_LIBS], ["-ldrm"])
 ], [
 	IRCD_DEFINE(USE_DRM, [0], [DRM support is not available])
 ])
@@ -2507,12 +2505,12 @@ AM_COND_IF([OPENCL],
 [
 	AC_MSG_RESULT([yes])
 	IRCD_DEFINE(USE_OPENCL, [1], [OpenCL support is available and enabled])
-	OPENCL_LIBS+="-lOpenCL"
+	RB_VAR_APPEND([OPENCL_LIBS], ["-lOpenCL"])
 
 	AM_COND_IF([MESA_OPENCL],
 	[
 		IRCD_DEFINE(USE_MESA_OPENCL, [1], [MesaOpenCL support is available and enabled])
-		OPENCL_LIBS+=" -lMesaOpenCL"
+		RB_VAR_APPEND([OPENCL_LIBS], ["-lMesaOpenCL"])
 	], [
 		IRCD_DEFINE(USE_MESA_OPENCL, [0], [MesaOpenCL support is not available and disabled])
 	])
@@ -2572,7 +2570,7 @@ AM_CONDITIONAL([ARMNN], [test "x$have_armnn" = "xyes" && test "x$enable_armnn" =
 AM_COND_IF([ARMNN],
 [
 	IRCD_DEFINE(USE_ARMNN, [1], [Arm NN support is available and enabled])
-	ARMNN_LIBS+="-larmnn"
+	RB_VAR_APPEND([ARMNN_LIBS], ["-larmnn"])
 ], [
 	IRCD_DEFINE(USE_ARMNN, [0], [Arm NN support is not available])
 ])
@@ -2639,7 +2637,7 @@ RB_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 		withval="static"
 	else
 		AC_MSG_RESULT([yes])
-		BOOST_LDFLAGS+=" -Wl,-rpath=$boost_libdir"
+		RB_VAR_APPEND([BOOST_LDFLAGS], ["-Wl,-rpath=$boost_libdir"])
 		withval="shared"
 	fi
 
@@ -2691,28 +2689,28 @@ fi
 dnl Units which require boost::asio use these flags. This includes the
 dnl ircd/asio.h PCH, which includes ircd.h upstream in the precompile.
 AC_SUBST(ASIO_UNIT_CPPFLAGS)
-ASIO_UNIT_CPPFLAGS+=" $BOOST_CPPFLAGS"
-ASIO_UNIT_CPPFLAGS+=" $SSL_CPPFLAGS"
-ASIO_UNIT_CPPFLAGS+=" $CRYPTO_CPPFLAGS"
+RB_VAR_APPEND([ASIO_UNIT_CPPFLAGS], ["$BOOST_CPPFLAGS"])
+RB_VAR_APPEND([ASIO_UNIT_CPPFLAGS], ["$SSL_CPPFLAGS"])
+RB_VAR_APPEND([ASIO_UNIT_CPPFLAGS], ["$CRYPTO_CPPFLAGS"])
 
 dnl Units defining spirit grammars may benefit from special compiler flags due
 dnl to their various complexities. The ./configure may have generated flags
 dnl in $GRAMMAR_UNIT_CXXFLAGS to improve compile time and reduce debug symbol.
 AC_SUBST(SPIRIT_UNIT_CPPFLAGS)
-SPIRIT_UNIT_CPPFLAGS+=" $ICU_CPPFLAGS"
-SPIRIT_UNIT_CPPFLAGS+=" $BOOST_CPPFLAGS"
+RB_VAR_APPEND([SPIRIT_UNIT_CPPFLAGS], ["$ICU_CPPFLAGS"])
+RB_VAR_APPEND([SPIRIT_UNIT_CPPFLAGS], ["$BOOST_CPPFLAGS"])
 
 AC_SUBST(SPIRIT_UNIT_CXXFLAGS)
 AM_COND_IF([GCC],
 [
-	SPIRIT_UNIT_CXXFLAGS+=" -fno-var-tracking"
-	SPIRIT_UNIT_CXXFLAGS+=" -fno-var-tracking-assignments"
-	SPIRIT_UNIT_CXXFLAGS+=" -femit-struct-debug-baseonly"
+	RB_VAR_APPEND([SPIRIT_UNIT_CXXFLAGS], ["-fno-var-tracking"])
+	RB_VAR_APPEND([SPIRIT_UNIT_CXXFLAGS], ["-fno-var-tracking-assignments"])
+	RB_VAR_APPEND([SPIRIT_UNIT_CXXFLAGS], ["-femit-struct-debug-baseonly"])
 
 	AM_COND_IF([LOWMEM_COMPILE],
 	[
-		SPIRIT_UNIT_CXXFLAGS+=" --param ggc-min-expand=1"
-		SPIRIT_UNIT_CXXFLAGS+=" -fno-ipa-pta"
+		RB_VAR_APPEND([SPIRIT_UNIT_CXXFLAGS], ["--param ggc-min-expand=1"])
+		RB_VAR_APPEND([SPIRIT_UNIT_CXXFLAGS], ["-fno-ipa-pta"])
 	])
 ])
 
@@ -2750,7 +2748,7 @@ RB_HELP_STRING([--with-included-rocksdb[[[=version]]]], [Use the RocksDB sources
 	AC_MSG_NOTICE([Shared RocksDB linkage requires running charybdis with an intact build directory])
 	ROCKSDB_CPPFLAGS="-isystem $PWD/deps/rocksdb/include"
 	ROCKSDB_LDFLAGS="-L$PWD/deps/rocksdb/"
-	ROCKSDB_LDFLAGS+=" -Wl,-rpath=$PWD/deps/rocksdb"
+	RB_VAR_APPEND([ROCKSDB_LDFLAGS], ["-Wl,-rpath=$PWD/deps/rocksdb"])
 	ROCKSDB_LIBS="-lrocksdb"
 
 	rocksdb_linkage="shared_lib"
@@ -2786,11 +2784,11 @@ RB_HELP_STRING([--with-included-rocksdb[[[=version]]]], [Use the RocksDB sources
 
 dnl Units which include rocksdb headers use these flags.
 AC_SUBST(ROCKSDB_UNIT_CPPFLAGS)
-ROCKSDB_UNIT_CPPFLAGS+=" $ROCKSDB_CPPFLAGS"
-ROCKSDB_UNIT_CPPFLAGS+=" $ZSTD_CPPFLAGS"
-ROCKSDB_UNIT_CPPFLAGS+=" $SNAPPY_CPPFLAGS"
-ROCKSDB_UNIT_CPPFLAGS+=" $LZ4_CPPFLAGS"
-ROCKSDB_UNIT_CPPFLAGS+=" $Z_CPPFLAGS"
+RB_VAR_APPEND([ROCKSDB_UNIT_CPPFLAGS], ["$ROCKSDB_CPPFLAGS"])
+RB_VAR_APPEND([ROCKSDB_UNIT_CPPFLAGS], ["$ZSTD_CPPFLAGS"])
+RB_VAR_APPEND([ROCKSDB_UNIT_CPPFLAGS], ["$SNAPPY_CPPFLAGS"])
+RB_VAR_APPEND([ROCKSDB_UNIT_CPPFLAGS], ["$LZ4_CPPFLAGS"])
+RB_VAR_APPEND([ROCKSDB_UNIT_CPPFLAGS], ["$Z_CPPFLAGS"])
 
 dnl
 dnl
@@ -2806,36 +2804,36 @@ RB_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonk
 	with_included_js="yes"
 
 	AC_SUBST(JS_CPPFLAGS)
-	JS_CPPFLAGS+=" -isystem $PWD/deps/gecko-dev/js/src/build_OPT.OBJ/dist/include"
+	RB_VAR_APPEND([JS_CPPFLAGS], ["-isystem $PWD/deps/gecko-dev/js/src/build_OPT.OBJ/dist/include"])
 	#JS_CPPFLAGS+=" -I$PWD/deps/gecko-dev/js/src/build_OPT.OBJ/dist/include"
 
 	AC_SUBST(JS_LDFLAGS)
-	JS_LDFLAGS+=" -L$PWD/deps/gecko-dev/js/src/build_OPT.OBJ/dist/sdk/lib"
-	JS_LDFLAGS+=" -L$PWD/deps/gecko-dev/js/src/build_OPT.OBJ/intl/icu/target/lib"
-	JS_LDFLAGS+=" -L$PWD/deps/gecko-dev/js/src/build_OPT.OBJ/js/src"
+	RB_VAR_APPEND([JS_LDFLAGS], ["-L$PWD/deps/gecko-dev/js/src/build_OPT.OBJ/dist/sdk/lib"])
+	RB_VAR_APPEND([JS_LDFLAGS], ["-L$PWD/deps/gecko-dev/js/src/build_OPT.OBJ/intl/icu/target/lib"])
+	RB_VAR_APPEND([JS_LDFLAGS], ["-L$PWD/deps/gecko-dev/js/src/build_OPT.OBJ/js/src"])
 
 	AC_SUBST(JS_LIBS)
-	JS_LIBS+=" -lmozjs-68"
-	JS_LIBS+=" -lmozglue"
+	RB_VAR_APPEND([JS_LIBS], ["-lmozjs-68"])
+	RB_VAR_APPEND([JS_LIBS], ["-lmozglue"])
 
 	dnl !!!!
 	dnl HACK BUG-WORKAROUND - Mozilla forgot to include this in their lib?
 	dnl Runtime segfault (unresolved dynamic function address) if this is not specified
 	#JS_LIBS+=" $PWD/deps/gecko-dev/js/src/build_OPT.OBJ/mfbt/Unified_cpp_mfbt0.o"
 	#JS_LIBS+=" $PWD/deps/gecko-dev/js/src/build_OPT.OBJ/mfbt/Unified_cpp_mfbt1.o"
-	JS_LIBS+=" $PWD/deps/gecko-dev/js/src/build_OPT.OBJ/mozglue/misc/TimeStamp.o"
+	RB_VAR_APPEND([JS_LIBS], ["$PWD/deps/gecko-dev/js/src/build_OPT.OBJ/mozglue/misc/TimeStamp.o"])
 
 	AC_MSG_CHECKING([whether to use shared JS engine])
 	if [[ $withval = "shared" ]]; then
 		AC_MSG_RESULT([yes])
 		AC_MSG_NOTICE([Shared SpiderMonkey linkage requires running charybdis with an intact build directory])
 		js_linkage="shared"
-		JS_LDFLAGS+=" -Wl,-rpath=$PWD/deps/gecko-dev/js/src/build_OPT.OBJ/dist/sdk/lib"
-		JS_LDFLAGS+=" -Wl,-rpath=$PWD/deps/gecko-dev/js/src/build_OPT.OBJ/intl/icu/target/lib"
+		RB_VAR_APPEND([JS_LDFLAGS], ["-Wl,-rpath=$PWD/deps/gecko-dev/js/src/build_OPT.OBJ/dist/sdk/lib"])
+		RB_VAR_APPEND([JS_LDFLAGS], ["-Wl,-rpath=$PWD/deps/gecko-dev/js/src/build_OPT.OBJ/intl/icu/target/lib"])
 	else
 		AC_MSG_RESULT([no])
 		js_linkage="static"
-		JS_LIBS+=" -ljs_static"
+		RB_VAR_APPEND([JS_LIBS], ["-ljs_static"])
 	fi
 
 	js_branch="esr68"
