@@ -50,3 +50,13 @@ docker push $ACCT/$REPO:ubuntu-22.04-base-gcc-12
 #docker push $ACCT/$REPO:ubuntu-22.04-base-clang-14
 docker push $ACCT/$REPO:ubuntu-22.04-full-clang-14
 docker push $ACCT/$REPO:ubuntu-22.04-built
+
+docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base $BASEDIR/alpine/3.16/base
+docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full $BASEDIR/alpine/3.16/full
+docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base-built $BASEDIR/alpine/3.16/base-built
+docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full-built $BASEDIR/alpine/3.16/full-built
+
+docker push $ACCT/$REPO:alpine-3.16-base
+docker push $ACCT/$REPO:alpine-3.16-full
+docker push $ACCT/$REPO:alpine-3.16-base-built
+docker push $ACCT/$REPO:alpine-3.16-full-built
