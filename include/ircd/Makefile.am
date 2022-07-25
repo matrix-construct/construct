@@ -95,8 +95,14 @@ install-mkdirs: $(DEPS) $(BUILT_SOURCES)
 install: install-mkdirs
 	@echo "ircd: installing headers"
 	@for i in $(srcdir)/*; do \
-		if [[ "$$i" != "./Makefile"* ]] && [[ "$$i" != *.h.gch ]]; then \
-			echo "installing $$i to $(DESTDIR)$(includedir)"; \
-			cp -u -r $$i $(DESTDIR)$(includedir); \
-		fi \
+		case "$$i" in \
+			"./Makefile"*) \
+				;; \
+			*".h.gch") \
+				;; \
+			*) \
+				echo "installing $$i to $(DESTDIR)$(includedir)"; \
+				cp -u -r $$i $(DESTDIR)$(includedir); \
+				;; \
+		esac \
 	done

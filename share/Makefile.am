@@ -14,8 +14,14 @@ install-mkdirs:
 install: install-mkdirs
 	@echo "ircd: installing shared assets"
 	@for i in $(srcdir)/*; do \
-		if [[ "$$i" != "./Makefile"* ]] && [[ "$$i" != "README.md" ]]; then \
-			echo "installing $$i to $(DESTDIR)$(datadir)"; \
-			cp -r $$i $(DESTDIR)$(datadir); \
-		fi \
+		case "$$i" in \
+			"./Makefile"*) \
+				;; \
+			"README.md") \
+				;; \
+			*) \
+				echo "installing $$i to $(DESTDIR)$(datadir)"; \
+				cp -u -r $$i $(DESTDIR)$(datadir); \
+				;; \
+		esac \
 	done
