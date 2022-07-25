@@ -3474,7 +3474,11 @@ boost::asio::detail::epoll_reactor::cancel_timer(timer_queue<epoll_time_traits> 
 
 	auto *const thread_info
 	{
-		static_cast<scheduler_thread_info *>(scheduler::thread_call_stack::top())
+		#if BOOST_VERSION >= 107600
+			static_cast<scheduler_thread_info *>(scheduler::top_of_thread_call_stack())
+		#else
+			static_cast<scheduler_thread_info *>(scheduler::thread_call_stack::top())
+		#endif
 	};
 
 	std::size_t ret;
@@ -3484,6 +3488,7 @@ boost::asio::detail::epoll_reactor::cancel_timer(timer_queue<epoll_time_traits> 
 		ret = queue.cancel_timer(t, ops, max);
 	}
 
+	assert(thread_info);
 	if constexpr(post_priv)
 		thread_info->private_op_queue.push(ops);
 
