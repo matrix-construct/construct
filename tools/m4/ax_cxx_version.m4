@@ -29,7 +29,7 @@ AC_DEFUN([AX_CXX_EPOCH],
 	[
 		AM_COND_IF(GCC,
 		[
-			ax_cv_cxx_epoch="`$CXX -dumpversion`"
+			ax_cv_cxx_epoch="`$CXX -dumpversion | cut -d'.' -f1`"
 		])
 
 		AM_COND_IF(CLANG,
