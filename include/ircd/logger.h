@@ -459,6 +459,7 @@ struct ircd::log::error
 struct ircd::log::critical
 {
 	template<class... args>
+	[[gnu::cold]]
 	critical(const log &log, const string_view &fmt, args&&... a)
 	{
 		vlog(log, level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
@@ -470,6 +471,7 @@ struct ircd::log::critical
 	}
 
 	template<class... args>
+	[[gnu::cold]]
 	critical(const string_view &fmt, args&&... a)
 	{
 		vlog(general, level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
@@ -484,12 +486,14 @@ struct ircd::log::critical
 struct ircd::log::critical
 {
 	template<class... args>
+	[[gnu::cold]]
 	critical(const log &log, const string_view &fmt, args&&... a)
 	{
 		vlog(log, level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
+	[[gnu::cold]]
 	critical(const string_view &fmt, args&&... a)
 	{
 		vlog(general, level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
@@ -499,11 +503,13 @@ struct ircd::log::critical
 struct ircd::log::critical
 {
 	template<class... args>
+	[[gnu::cold]]
 	critical(const log &log, const string_view &fmt, args&&... a)
 	{
 	}
 
 	template<class... args>
+	[[gnu::cold]]
 	critical(const string_view &fmt, args&&... a)
 	{
 	}
@@ -511,11 +517,13 @@ struct ircd::log::critical
 #else
 struct ircd::log::critical
 {
+	[[gnu::cold]]
 	critical(const log &, const string_view &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
 
+	[[gnu::cold]]
 	critical(const string_view &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
