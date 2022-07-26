@@ -1845,6 +1845,7 @@ appveyor_handle(client &client,
 
 static void
 dockerhub_handle_push(std::ostream &out,
+                      std::ostream &alt,
                       client &client,
                       const resource::request &request);
 
@@ -1864,16 +1865,18 @@ try
 		request["callback_url"]
 	};
 
-	const unique_buffer<mutable_buffer> buf
+	const unique_buffer<mutable_buffer> buf[2]
 	{
-		48_KiB
+		{ 48_KiB },
+		{ 4_KiB  },
 	};
 
-	std::stringstream out;
-	pubsetbuf(out, buf);
+	std::stringstream out, alt;
+	pubsetbuf(out, buf[0]);
+	pubsetbuf(alt, buf[1]);
 
 	if(request.has("push_data"))
-		dockerhub_handle_push(out, client, request);
+		dockerhub_handle_push(out, alt, client, request);
 
 	const auto room_id
 	{
@@ -1887,12 +1890,17 @@ try
 
 	const auto msg
 	{
-		view(out, buf)
+		view(out, buf[0])
+	};
+
+	const auto alt_msg
+	{
+		view(alt, buf[1])
 	};
 
 	const auto evid
 	{
-		m::msghtml(room_id, user_id, msg, "dockerhub shot", "m.notice")
+		m::msghtml(room_id, user_id, msg, alt_msg, "m.notice")
 	};
 
 	log::info
@@ -1916,6 +1924,7 @@ catch(const std::exception &e)
 
 void
 dockerhub_handle_push(std::ostream &out,
+                      std::ostream &alt,
                       client &client,
                       const resource::request &request)
 {
@@ -1957,5 +1966,13 @@ dockerhub_handle_push(std::ostream &out,
 	<< "</b> to <b>"
 	<< tag
 	<< "</b>"
+	;
+
+	alt
+	<< json::string(repository["repo_name"])
+	<< " push by "
+	<< pusher
+	<< " to "
+	<< tag
 	;
 }
