@@ -806,30 +806,62 @@ dnl
 dnl Machine Tuning
 dnl
 
+TUNE_FLAGS=""
 AM_COND_IF([UNTUNED],
 [
 	machine_tuning="generic ${host_cpu} and untuned"
-	RB_VAR_PREPEND([CXXFLAGS], ["-mno-default"])
+	RB_VAR_PREPEND([TUNE_FLAGS], ["-mno-default"])
 ], [
 	AM_COND_IF([GENERIC],
 	[
-		machine_tuning="generic ${host_cpu} instruction set"
-		RB_VAR_PREPEND([CXXFLAGS], ["-mtune=generic"])
+		machine_tuning="generic ${host_cpu}"
+		RB_VAR_PREPEND([TUNE_FLAGS], ["-mtune=generic"])
 	], [
-		machine_tuning="${host_cpu} native instruction set"
+		machine_tuning="${host_cpu} native"
 
 		AS_CASE([$host_cpu],
 		[x86_64],
 		[
 			dnl AMD K10's SSE4a doesn't work with valgrind
-			RB_VAR_PREPEND([CXXFLAGS], ["-mno-sse4a"])
+			RB_VAR_PREPEND([TUNE_FLAGS], ["-mno-sse4a"])
 
 			dnl Not accepted by clang on aarch64
-			RB_VAR_PREPEND([CXXFLAGS], ["-march=native"])
+			RB_VAR_PREPEND([TUNE_FLAGS], ["-march=native"])
 		])
 
-		RB_VAR_PREPEND([CXXFLAGS], ["-mtune=native"])
+		RB_VAR_PREPEND([TUNE_FLAGS], ["-mtune=native"])
 	])
+])
+
+RB_VAR_PREPEND([CXXFLAGS], ["$TUNE_FLAGS"])
+
+dnl Get the target features for this build from gcc into a readable string
+AM_COND_IF([GCC],
+[
+	_cxx=$(echo "${CXX}" | cut -d' ' -f1)
+	_cmd="${_cxx} -Q --help=target ${TUNE_FLAGS}"
+	machine_features=$(${_cmd} | grep enabled | grep -v 'mno-')
+	machine_features=$(printf "\n${machine_features}")
+])
+
+dnl Get the target features for this build from clang into a readable string
+AM_COND_IF([CLANG],
+[
+	_flag=0
+	_cxx=$(echo "${CXX}" | cut -d' ' -f1)
+	_str=$(${_cxx} -E ${TUNE_FLAGS} - -### 2>&1)
+	machine_features=""
+	for i in $_str; do
+		if [[ $i == '"-target-feature"' ]]; then
+			_flag=1
+		elif [[ $_flag == 1 ]]; then
+			_flag=0
+			attr=$(echo $i | sed -e 's/^"//' -e 's/"$//')
+			if [[ ${attr:0:1} == '+' ]]; then
+				machine_features="${machine_features}${attr} "
+			fi
+		fi
+	done
 ])
 
 dnl
@@ -3002,17 +3034,18 @@ echo
 echo "Linker ............................ $LD"
 echo "Linker flags (LDFLAGS) ............ $LDFLAGS"
 echo
-echo "Target platform (host) ............ $host_cpu $host_vendor $host_os"
 echo "Developer platform (build) ........ $build_cpu $build_vendor $build_os"
+echo "Target platform (host) ............ $host_cpu $host_vendor $host_os"
+echo "Target features ................... $machine_tuning $machine_features"
+echo
+echo "Precompile headers ................ $build_pch"
+echo "Developer warnings ................ $warnings"
 echo "Developer debugging ............... $debug"
 echo "Developer assertions .............. $assert ($assert_type)"
-echo "Developer warnings ................ $warnings"
 echo "Optimized compile ................. $optimize (-O$optimize_level)"
 echo "Optimized linking ................. $lto"
 echo "Optimized runtime ................. $profile_use"
 echo "Profiling runtime ................. $profiling"
-echo "Precompile headers ................ $build_pch"
-echo "Machine tuned ..................... $machine_tuning"
 echo
 echo "Magic support ..................... $have_magic"
 echo "ImageMagick support ............... $have_imagemagick"
