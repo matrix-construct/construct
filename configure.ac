@@ -830,72 +830,118 @@ dnl
 dnl Compiler warnings
 dnl
 
+AC_MSG_CHECKING(whether to disable warnings)
+AC_ARG_ENABLE(warnings,
+RB_HELP_STRING([--disable-warnings], [Disable all sorts of warnings like a rockstar]),
+[
+	AC_MSG_RESULT([$enableval])
+	warnings="$enableval"
+], [
+	AC_MSG_RESULT([no])
+	warnings="yes"
+])
+
+AC_DEFUN([RB_MAYBE_CWARN],
+[
+	if test x"$warnings" == x"yes"; then
+		RB_MAYBE_CXXFLAG([$1], [$2])
+	fi
+])
+
 STACK_USAGE_WARNING=16384
 FRAME_SIZE_WARNING=8192
 CWARNS=""
 
-RB_MAYBE_CXXFLAG([-Wall], charybdis_cv_c_gcc_w_all)
-RB_MAYBE_CXXFLAG([-Wextra], charybdis_cv_c_gcc_w_extra)
-RB_MAYBE_CXXFLAG([-Wpointer-arith], charybdis_cv_c_gcc_w_pointer_arith)
-RB_MAYBE_CXXFLAG([-Wcast-align], charybdis_cv_c_gcc_w_cast_align)
-RB_MAYBE_CXXFLAG([-Wcast-qual], charybdis_cv_c_gcc_w_cast_qual)
-RB_MAYBE_CXXFLAG([-Wfloat-equal], charybdis_cv_c_gcc_w_float_equal)
-RB_MAYBE_CXXFLAG([-Wwrite-strings], charybdis_cv_c_gcc_w_write_strings)
-RB_MAYBE_CXXFLAG([-Wparentheses], charybdis_cv_c_gcc_parentheses)
-RB_MAYBE_CXXFLAG([-Wundef], charybdis_cv_c_gcc_w_undef)
-RB_MAYBE_CXXFLAG([-Wpacked], charybdis_cv_c_gcc_w_packed)
-RB_MAYBE_CXXFLAG([-Wformat -Wformat-y2k -Wformat-nonliteral], charybdis_cv_c_gcc_w_format)
-RB_MAYBE_CXXFLAG([-Wstrict-aliasing=2 -Wstrict-overflow=5], charybdis_cv_c_gcc_w_strict)
-RB_MAYBE_CXXFLAG([-Wdisabled-optimization], charybdis_cv_c_gcc_w_disabled_optimization)
-RB_MAYBE_CXXFLAG([-Winvalid-pch], charybdis_cv_c_gcc_w_invalid_pch)
-RB_MAYBE_CXXFLAG([-Winit-self], charybdis_cv_c_gcc_w_init_self)
-RB_MAYBE_CXXFLAG([-Wuninitialized], charybdis_cv_c_gcc_w_uninitialized)
-RB_MAYBE_CXXFLAG([-Wunreachable-code], charybdis_cv_c_gcc_w_unreachable_code)
-RB_MAYBE_CXXFLAG([-Wno-overloaded-virtual], charybdis_cv_c_gcc_w_overloaded_virtual)
-RB_MAYBE_CXXFLAG([-Wnon-virtual-dtor], charybdis_cv_c_gcc_w_non_virtual_dtor)
-RB_MAYBE_CXXFLAG([-Wnoexcept], charybdis_cv_c_gcc_w_noexcept)
-RB_MAYBE_CXXFLAG([-Wsized-deallocation], charybdis_cv_c_gcc_w_sized_deallocation)
-RB_MAYBE_CXXFLAG([-Wctor-dtor-privacy], charybdis_cv_c_gcc_w_ctor_dtor_privacy)
-RB_MAYBE_CXXFLAG([-Wsign-promo], charybdis_cv_c_gcc_w_sign_promo)
-RB_MAYBE_CXXFLAG([-Wtrampolines], charybdis_cv_c_gcc_w_trampolines)
-RB_MAYBE_CXXFLAG([-Wduplicated-cond], charybdis_cv_c_gcc_w_duplicated_cond)
-RB_MAYBE_CXXFLAG([-Wduplicate-branches], charybdis_cv_c_gcc_w_duplicate_branches)
-RB_MAYBE_CXXFLAG([-Wrestrict], charybdis_cv_c_gcc_w_restrict)
-RB_MAYBE_CXXFLAG([-Wnull-dereference], charybdis_cv_c_gcc_w_null_dereference)
-RB_MAYBE_CXXFLAG([-Wplacement-new=2], charybdis_cv_c_gcc_w_placement_new)
-RB_MAYBE_CXXFLAG([-Wundef], charybdis_cv_c_gcc_w_undef)
-RB_MAYBE_CXXFLAG([-Wodr], charybdis_cv_c_gcc_w_odr)
+dnl Compatible warnings
+RB_MAYBE_CWARN([-Wall], charybdis_cv_c_gcc_w_all)
+RB_MAYBE_CWARN([-Wextra], charybdis_cv_c_gcc_w_extra)
+RB_MAYBE_CWARN([-Wpointer-arith], charybdis_cv_c_gcc_w_pointer_arith)
+RB_MAYBE_CWARN([-Wcast-align], charybdis_cv_c_gcc_w_cast_align)
+RB_MAYBE_CWARN([-Wcast-qual], charybdis_cv_c_gcc_w_cast_qual)
+RB_MAYBE_CWARN([-Wfloat-equal], charybdis_cv_c_gcc_w_float_equal)
+RB_MAYBE_CWARN([-Wwrite-strings], charybdis_cv_c_gcc_w_write_strings)
+RB_MAYBE_CWARN([-Wparentheses], charybdis_cv_c_gcc_parentheses)
+RB_MAYBE_CWARN([-Wundef], charybdis_cv_c_gcc_w_undef)
+RB_MAYBE_CWARN([-Wpacked], charybdis_cv_c_gcc_w_packed)
+RB_MAYBE_CWARN([-Wformat -Wformat-y2k -Wformat-nonliteral], charybdis_cv_c_gcc_w_format)
+RB_MAYBE_CWARN([-Wstrict-aliasing=2 -Wstrict-overflow=5], charybdis_cv_c_gcc_w_strict)
+RB_MAYBE_CWARN([-Wdisabled-optimization], charybdis_cv_c_gcc_w_disabled_optimization)
+RB_MAYBE_CWARN([-Winvalid-pch], charybdis_cv_c_gcc_w_invalid_pch)
+RB_MAYBE_CWARN([-Winit-self], charybdis_cv_c_gcc_w_init_self)
+RB_MAYBE_CWARN([-Wuninitialized], charybdis_cv_c_gcc_w_uninitialized)
+RB_MAYBE_CWARN([-Wunreachable-code], charybdis_cv_c_gcc_w_unreachable_code)
+RB_MAYBE_CWARN([-Wno-overloaded-virtual], charybdis_cv_c_gcc_w_overloaded_virtual)
+RB_MAYBE_CWARN([-Wnon-virtual-dtor], charybdis_cv_c_gcc_w_non_virtual_dtor)
+RB_MAYBE_CWARN([-Wnoexcept], charybdis_cv_c_gcc_w_noexcept)
+RB_MAYBE_CWARN([-Wsized-deallocation], charybdis_cv_c_gcc_w_sized_deallocation)
+RB_MAYBE_CWARN([-Wctor-dtor-privacy], charybdis_cv_c_gcc_w_ctor_dtor_privacy)
+RB_MAYBE_CWARN([-Wsign-promo], charybdis_cv_c_gcc_w_sign_promo)
+RB_MAYBE_CWARN([-Wtrampolines], charybdis_cv_c_gcc_w_trampolines)
+RB_MAYBE_CWARN([-Wduplicated-cond], charybdis_cv_c_gcc_w_duplicated_cond)
+RB_MAYBE_CWARN([-Wduplicate-branches], charybdis_cv_c_gcc_w_duplicate_branches)
+RB_MAYBE_CWARN([-Wrestrict], charybdis_cv_c_gcc_w_restrict)
+RB_MAYBE_CWARN([-Wnull-dereference], charybdis_cv_c_gcc_w_null_dereference)
+RB_MAYBE_CWARN([-Wplacement-new=2], charybdis_cv_c_gcc_w_placement_new)
+RB_MAYBE_CWARN([-Wundef], charybdis_cv_c_gcc_w_undef)
+RB_MAYBE_CWARN([-Wodr], charybdis_cv_c_gcc_w_odr)
+
+RB_MAYBE_CWARN([-Werror=return-type], charybdis_cv_c_gcc_w_error_return_type)
+
+dnl Compiler specific
+AM_COND_IF([GCC],
+[
+	RB_MAYBE_CWARN([-Wlogical-op], charybdis_cv_c_gcc_w_logical_op)
+	RB_MAYBE_CWARN([-Wformat-security], charybdis_cv_c_gcc_w_format_security)
+	RB_MAYBE_CWARN([-Wstack-usage=$STACK_USAGE_WARNING], charybdis_cv_c_gcc_w_stack_usage)
+	RB_MAYBE_CWARN([-Wframe-larger-than=$FRAME_SIZE_WARNING], charybdis_cv_c_gcc_w_frame_larger_than)
+	RB_MAYBE_CWARN([-Walloca], charybdis_cv_c_gcc_w_alloca)
+	RB_MAYBE_CWARN([-Wvector-operation-performance], charybdis_cv_c_gcc_w_vector_operation_performance)
+
+	AM_COND_IF([DEBUG],
+	[
+		RB_MAYBE_CWARN([-Wsuggest-attribute=format], charybdis_cv_c_gcc_w_suggest_attribute_format)
+		RB_MAYBE_CWARN([-Wsuggest-attribute=noreturn], charybdis_cv_c_gcc_w_suggest_attribute_noreturn)
+		RB_MAYBE_CWARN([-Wsuggest-attribute=malloc], charybdis_cv_c_gcc_w_suggest_attribute_malloc)
+		RB_MAYBE_CWARN([-Wsuggest-attribute=cold], charybdis_cv_c_gcc_w_suggest_attribute_cold)
+		dnl RB_MAYBE_CWARN([-Wsuggest-attribute=pure], charybdis_cv_c_gcc_w_suggest_attribute_pure)
+		dnl RB_MAYBE_CWARN([-Wsuggest-attribute=const], charybdis_cv_c_gcc_w_suggest_attribute_const)
+	])
+])
+
+dnl Compiler specific
+AM_COND_IF([CLANG],
+[
+	RB_MAYBE_CWARN([-Wundefined-reinterpret-cast], charybdis_cv_c_gcc_w_undefined_reinterpret_cast)
+	RB_MAYBE_CWARN([-Wconditional-uninitialized], charybdis_cv_c_gcc_w_conditional_uninitialized)
+
+	RB_MAYBE_CWARN([-Wno-mismatched-tags], charybdis_cv_c_gcc_w_mismatched_tags)
+	RB_MAYBE_CWARN([-Wno-format-security], charybdis_cv_c_gcc_w_format_security)
+	RB_MAYBE_CWARN([-Wno-unknown-warning-option], charybdis_cv_c_gcc_w_unknown_warning_option)
+	RB_MAYBE_CWARN([-Wno-profile-instr-unprofiled], charybdis_cv_c_gcc_w_profile_instr_unprofiled)
+])
 
 dnl
-dnl List of warnings treated as errors
-dnl
-
-dnl Uninitialized return values are not useful in this project; forgetting
-dnl to return from a function is always a developer mistake here.
-RB_MAYBE_CXXFLAG([-Werror=return-type], charybdis_cv_c_gcc_w_error_return_type)
-
-dnl
-dnl List of warnings we suppress:
+dnl Warnings we suppress:
 dnl
 
 dnl Missing field initializers should have default init or some zero-extension as per std, this
 dnl warning is only useful if you want to gauge where that's happening for a specific reason
-RB_MAYBE_CXXFLAG([-Wno-missing-field-initializers], charybdis_cv_c_gcc_w_missing_field_initializers)
+RB_MAYBE_CWARN([-Wno-missing-field-initializers], charybdis_cv_c_gcc_w_missing_field_initializers)
 
 dnl Unused variables, functions, labels, etc are just fine as long as they get optimized
 dnl away. These warnings can be re-enabled during a code cleanup, otherwise shut up.
-RB_MAYBE_CXXFLAG([-Wno-unused], charybdis_cv_c_gcc_w_unused)
-RB_MAYBE_CXXFLAG([-Wno-unused-function], charybdis_cv_c_gcc_w_unused_function)
-RB_MAYBE_CXXFLAG([-Wno-unused-label], charybdis_cv_c_gcc_w_unused_label)
-RB_MAYBE_CXXFLAG([-Wno-unused-value], charybdis_cv_c_gcc_w_unused_value)
-RB_MAYBE_CXXFLAG([-Wno-unused-variable], charybdis_cv_c_gcc_w_unused_variable)
-RB_MAYBE_CXXFLAG([-Wno-unused-parameter], charybdis_cv_c_gcc_w_unused_parameter)
+RB_MAYBE_CWARN([-Wno-unused], charybdis_cv_c_gcc_w_unused)
+RB_MAYBE_CWARN([-Wno-unused-function], charybdis_cv_c_gcc_w_unused_function)
+RB_MAYBE_CWARN([-Wno-unused-label], charybdis_cv_c_gcc_w_unused_label)
+RB_MAYBE_CWARN([-Wno-unused-value], charybdis_cv_c_gcc_w_unused_value)
+RB_MAYBE_CWARN([-Wno-unused-variable], charybdis_cv_c_gcc_w_unused_variable)
+RB_MAYBE_CWARN([-Wno-unused-parameter], charybdis_cv_c_gcc_w_unused_parameter)
 
 dnl This warning is disabled to allow preprocessor statements like #endif to
 dnl contain text on the same line. This is used for example to write the
 dnl identifier in the matching prior #ifdef, which has no actual effect except
 dnl clarity.
-RB_MAYBE_CXXFLAG([-Wno-endif-labels], charybdis_cv_c_gcc_w_endif_labels)
+RB_MAYBE_CWARN([-Wno-endif-labels], charybdis_cv_c_gcc_w_endif_labels)
 
 dnl
 dnl Suppressed unless in debug mode
@@ -903,23 +949,23 @@ dnl
 
 AM_COND_IF([DEBUG],
 [
-	RB_MAYBE_CXXFLAG([-Wsuggest-final-types], charybdis_cv_c_gcc_w_suggest_final_types)
-	RB_MAYBE_CXXFLAG([-Wsuggest-final-methods], charybdis_cv_c_gcc_w_suggest_final_methods)
-	RB_MAYBE_CXXFLAG([-Wsuggest-override], charybdis_cv_c_gcc_w_suggest_override)
-	RB_MAYBE_CXXFLAG([-Wmissing-noreturn], charybdis_cv_c_gcc_w_missing_noreturn)
+	RB_MAYBE_CWARN([-Wsuggest-final-types], charybdis_cv_c_gcc_w_suggest_final_types)
+	RB_MAYBE_CWARN([-Wsuggest-final-methods], charybdis_cv_c_gcc_w_suggest_final_methods)
+	RB_MAYBE_CWARN([-Wsuggest-override], charybdis_cv_c_gcc_w_suggest_override)
+	RB_MAYBE_CWARN([-Wmissing-noreturn], charybdis_cv_c_gcc_w_missing_noreturn)
 ], [
-	RB_MAYBE_CXXFLAG([-Wno-unknown-pragmas], charybdis_cv_c_gcc_w_no_unknown_pragmas)
+	RB_MAYBE_CWARN([-Wno-unknown-pragmas], charybdis_cv_c_gcc_w_no_unknown_pragmas)
 
 	AM_COND_IF([CLANG],
 	[
-		RB_MAYBE_CXXFLAG([-Wno-unknown-attributes], charybdis_cv_c_gcc_w_no_unknown_attributes)
+		RB_MAYBE_CWARN([-Wno-unknown-attributes], charybdis_cv_c_gcc_w_no_unknown_attributes)
 	])
 
 	AM_COND_IF([GCC],
 	[
-		RB_MAYBE_CXXFLAG([-Wno-ignored-attributes], charybdis_cv_c_gcc_w_no_ignored_attributes)
-		RB_MAYBE_CXXFLAG([-Wno-attributes], charybdis_cv_c_gcc_w_no_attributes)
-		RB_MAYBE_CXXFLAG([-Wno-pragmas], charybdis_cv_c_gcc_w_no_pragmas)
+		RB_MAYBE_CWARN([-Wno-ignored-attributes], charybdis_cv_c_gcc_w_no_ignored_attributes)
+		RB_MAYBE_CWARN([-Wno-attributes], charybdis_cv_c_gcc_w_no_attributes)
+		RB_MAYBE_CWARN([-Wno-pragmas], charybdis_cv_c_gcc_w_no_pragmas)
 	])
 ])
 
@@ -927,96 +973,54 @@ dnl
 dnl List of compiler-specific / incompatible warning options
 dnl
 
-AM_COND_IF([GCC],
-[
-	RB_MAYBE_CXXFLAG([-Wlogical-op], charybdis_cv_c_gcc_w_logical_op)
-	RB_MAYBE_CXXFLAG([-Wformat-security], charybdis_cv_c_gcc_w_format_security)
-	RB_MAYBE_CXXFLAG([-Wstack-usage=$STACK_USAGE_WARNING], charybdis_cv_c_gcc_w_stack_usage)
-	RB_MAYBE_CXXFLAG([-Wframe-larger-than=$FRAME_SIZE_WARNING], charybdis_cv_c_gcc_w_frame_larger_than)
-	RB_MAYBE_CXXFLAG([-Walloca], charybdis_cv_c_gcc_w_alloca)
-	RB_MAYBE_CXXFLAG([-Wvector-operation-performance], charybdis_cv_c_gcc_w_vector_operation_performance)
-
-	AM_COND_IF([DEBUG],
-	[
-		RB_MAYBE_CXXFLAG([-Wsuggest-attribute=format], charybdis_cv_c_gcc_w_suggest_attribute_format)
-		RB_MAYBE_CXXFLAG([-Wsuggest-attribute=noreturn], charybdis_cv_c_gcc_w_suggest_attribute_noreturn)
-		RB_MAYBE_CXXFLAG([-Wsuggest-attribute=malloc], charybdis_cv_c_gcc_w_suggest_attribute_malloc)
-		RB_MAYBE_CXXFLAG([-Wsuggest-attribute=cold], charybdis_cv_c_gcc_w_suggest_attribute_cold)
-		dnl RB_MAYBE_CXXFLAG([-Wsuggest-attribute=pure], charybdis_cv_c_gcc_w_suggest_attribute_pure)
-		dnl RB_MAYBE_CXXFLAG([-Wsuggest-attribute=const], charybdis_cv_c_gcc_w_suggest_attribute_const)
-	])
-])
-
-AM_COND_IF([CLANG],
-[
-	RB_MAYBE_CXXFLAG([-Wundefined-reinterpret-cast], charybdis_cv_c_gcc_w_undefined_reinterpret_cast)
-	RB_MAYBE_CXXFLAG([-Wconditional-uninitialized], charybdis_cv_c_gcc_w_conditional_uninitialized)
-
-	RB_MAYBE_CXXFLAG([-Wno-mismatched-tags], charybdis_cv_c_gcc_w_mismatched_tags)
-	RB_MAYBE_CXXFLAG([-Wno-format-security], charybdis_cv_c_gcc_w_format_security)
-	RB_MAYBE_CXXFLAG([-Wno-unknown-warning-option], charybdis_cv_c_gcc_w_unknown_warning_option)
-	RB_MAYBE_CXXFLAG([-Wno-profile-instr-unprofiled], charybdis_cv_c_gcc_w_profile_instr_unprofiled)
-])
-
 dnl Warning discovery section
 AC_MSG_CHECKING(whether to enable warning discovery)
 AC_ARG_ENABLE(every-warning,
 RB_HELP_STRING([--enable-every-warning], [Enable warning discovery (-Weverything)]),
 [
-	RB_MAYBE_CXXFLAG([-Weverything], charybdis_cv_c_gcc_w_everything)
+	RB_MAYBE_CWARN([-Weverything], charybdis_cv_c_gcc_w_everything)
 
 	dnl Ignored a priori
-	RB_MAYBE_CXXFLAG([-Wno-c++98-compat], charybdis_cv_c_gcc_w_no_cxx98_compat)
-	RB_MAYBE_CXXFLAG([-Wno-c++98-compat-pedantic], charybdis_cv_c_gcc_w_no_cxx98_compat_pedantic)
-	RB_MAYBE_CXXFLAG([-Wno-c++98-compat-extra-semi], charybdis_cv_c_gcc_w_no_cxx98_compat_extra_semi)
-	RB_MAYBE_CXXFLAG([-Wno-pre-c++14-compat], charybdis_cv_c_gcc_w_no_pre_cxx14_compat)
-	RB_MAYBE_CXXFLAG([-Wno-pre-c++17-compat], charybdis_cv_c_gcc_w_no_pre_cxx17_compat)
+	RB_MAYBE_CWARN([-Wno-c++98-compat], charybdis_cv_c_gcc_w_no_cxx98_compat)
+	RB_MAYBE_CWARN([-Wno-c++98-compat-pedantic], charybdis_cv_c_gcc_w_no_cxx98_compat_pedantic)
+	RB_MAYBE_CWARN([-Wno-c++98-compat-extra-semi], charybdis_cv_c_gcc_w_no_cxx98_compat_extra_semi)
+	RB_MAYBE_CWARN([-Wno-pre-c++14-compat], charybdis_cv_c_gcc_w_no_pre_cxx14_compat)
+	RB_MAYBE_CWARN([-Wno-pre-c++17-compat], charybdis_cv_c_gcc_w_no_pre_cxx17_compat)
 
 	dnl Ignored by design
-	RB_MAYBE_CXXFLAG([-Wno-comma], charybdis_cv_c_gcc_w_no_comma)
-	RB_MAYBE_CXXFLAG([-Wno-shadow], charybdis_cv_c_gcc_w_no_shadow)
-	RB_MAYBE_CXXFLAG([-Wno-shadow-field], charybdis_cv_c_gcc_w_no_shadow_field)
-	RB_MAYBE_CXXFLAG([-Wno-shadow-field-in-constructor], charybdis_cv_c_gcc_w_no_shadow_field_in_constructor)
-	RB_MAYBE_CXXFLAG([-Wno-shadow-uncaptured-local], charybdis_cv_c_gcc_w_no_shadow_uncaptured_local)
-	RB_MAYBE_CXXFLAG([-Wno-gnu-conditional-omitted-operand], charybdis_cv_c_gcc_w_no_gnu_conditional_omitted_operand)
-	RB_MAYBE_CXXFLAG([-Wno-ctad-maybe-unsupported], charybdis_cv_c_gcc_w_no_ctad_maybe_unsupported)
-	RB_MAYBE_CXXFLAG([-Wno-disabled-macro-expansion], charybdis_cv_c_gcc_w_no_disabled_macro_expansion)
+	RB_MAYBE_CWARN([-Wno-comma], charybdis_cv_c_gcc_w_no_comma)
+	RB_MAYBE_CWARN([-Wno-shadow], charybdis_cv_c_gcc_w_no_shadow)
+	RB_MAYBE_CWARN([-Wno-shadow-field], charybdis_cv_c_gcc_w_no_shadow_field)
+	RB_MAYBE_CWARN([-Wno-shadow-field-in-constructor], charybdis_cv_c_gcc_w_no_shadow_field_in_constructor)
+	RB_MAYBE_CWARN([-Wno-shadow-uncaptured-local], charybdis_cv_c_gcc_w_no_shadow_uncaptured_local)
+	RB_MAYBE_CWARN([-Wno-gnu-conditional-omitted-operand], charybdis_cv_c_gcc_w_no_gnu_conditional_omitted_operand)
+	RB_MAYBE_CWARN([-Wno-ctad-maybe-unsupported], charybdis_cv_c_gcc_w_no_ctad_maybe_unsupported)
+	RB_MAYBE_CWARN([-Wno-disabled-macro-expansion], charybdis_cv_c_gcc_w_no_disabled_macro_expansion)
 
 	dnl Ignored for now
-	RB_MAYBE_CXXFLAG([-Wno-padded], charybdis_cv_c_gcc_w_no_padded)
-	RB_MAYBE_CXXFLAG([-Wno-sign-conversion], charybdis_cv_c_gcc_w_no_sign_conversion)
-	RB_MAYBE_CXXFLAG([-Wno-unused-exception-parameter], charybdis_cv_c_gcc_w_no_unused_exception_parameter)
-	RB_MAYBE_CXXFLAG([-Wno-extra-semi], charybdis_cv_c_gcc_w_no_extra_semi)
-	RB_MAYBE_CXXFLAG([-Wno-extra-semi-stmt], charybdis_cv_c_gcc_w_no_extra_semi_stmt)
-	RB_MAYBE_CXXFLAG([-Wno-weak-vtables], charybdis_cv_c_gcc_w_no_weak_vtables)
-	RB_MAYBE_CXXFLAG([-Wno-global-constructors], charybdis_cv_c_gcc_w_no_global_constructors)
-	RB_MAYBE_CXXFLAG([-Wno-dtor-name], charybdis_cv_c_gcc_w_no_dtor_name)
+	RB_MAYBE_CWARN([-Wno-padded], charybdis_cv_c_gcc_w_no_padded)
+	RB_MAYBE_CWARN([-Wno-sign-conversion], charybdis_cv_c_gcc_w_no_sign_conversion)
+	RB_MAYBE_CWARN([-Wno-unused-exception-parameter], charybdis_cv_c_gcc_w_no_unused_exception_parameter)
+	RB_MAYBE_CWARN([-Wno-extra-semi], charybdis_cv_c_gcc_w_no_extra_semi)
+	RB_MAYBE_CWARN([-Wno-extra-semi-stmt], charybdis_cv_c_gcc_w_no_extra_semi_stmt)
+	RB_MAYBE_CWARN([-Wno-weak-vtables], charybdis_cv_c_gcc_w_no_weak_vtables)
+	RB_MAYBE_CWARN([-Wno-global-constructors], charybdis_cv_c_gcc_w_no_global_constructors)
+	RB_MAYBE_CWARN([-Wno-dtor-name], charybdis_cv_c_gcc_w_no_dtor_name)
 
 	dnl Ignored with issue low priority
-	RB_MAYBE_CXXFLAG([-Wno-old-style-cast], charybdis_cv_c_gcc_w_no_old_style_cast)
-	RB_MAYBE_CXXFLAG([-Wno-float-conversion], charybdis_cv_c_gcc_w_no_implicit_int_conversion)
-	RB_MAYBE_CXXFLAG([-Wno-implicit-int-conversion], charybdis_cv_c_gcc_w_no_implicit_int_conversion)
+	RB_MAYBE_CWARN([-Wno-old-style-cast], charybdis_cv_c_gcc_w_no_old_style_cast)
+	RB_MAYBE_CWARN([-Wno-float-conversion], charybdis_cv_c_gcc_w_no_implicit_int_conversion)
+	RB_MAYBE_CWARN([-Wno-implicit-int-conversion], charybdis_cv_c_gcc_w_no_implicit_int_conversion)
 
 	dnl Ignored with issue high priority
-	RB_MAYBE_CXXFLAG([-Wno-reserved-identifier], charybdis_cv_c_gcc_w_no_reserved_identifier)
-	RB_MAYBE_CXXFLAG([-Wno-reserved-macro-identifier], charybdis_cv_c_gcc_w_no_reserved_macro_identifier)
+	RB_MAYBE_CWARN([-Wno-reserved-identifier], charybdis_cv_c_gcc_w_no_reserved_identifier)
+	RB_MAYBE_CWARN([-Wno-reserved-macro-identifier], charybdis_cv_c_gcc_w_no_reserved_macro_identifier)
 ])
 
 AM_COND_IF_NOT([UNTUNED],
 [
 	dnl When tuning for a specific target ignore the ABI compat warnings
-	RB_MAYBE_CXXFLAG([-Wno-psabi], charybdis_cv_c_gcc_w_psabi)
-])
-
-dnl Truncate warning flags if disabled
-AC_MSG_CHECKING(whether to disable warnings)
-AC_ARG_ENABLE(warnings,
-RB_HELP_STRING([--disable-warnings], [Disable all sorts of warnings like a rockstar]),
-[
-	AC_MSG_RESULT([yes])
-	CWARNS=""
-], [
-	AC_MSG_RESULT([no])
+	RB_MAYBE_CWARN([-Wno-psabi], charybdis_cv_c_gcc_w_psabi)
 ])
 
 dnl assume the warning flags
@@ -2990,14 +2994,14 @@ echo "Linker flags (LDFLAGS) ............ $LDFLAGS"
 echo
 echo "Target platform (host) ............ $host_cpu $host_vendor $host_os"
 echo "Developer platform (build) ........ $build_cpu $build_vendor $build_os"
-echo "Developer debug ................... $debug"
-echo "Developer assert .................. $assert ($assert_type)"
-echo "Developer profiling ............... $profiling"
-echo "Precompiled headers ............... $build_pch"
-echo "Optimized compile ................. $optimize"
+echo "Developer debugging ............... $debug"
+echo "Developer assertions .............. $assert ($assert_type)"
+echo "Developer warnings ................ $warnings"
+echo "Optimized compile ................. $optimize (-O$optimize_level)"
 echo "Optimized linking ................. $lto"
-echo "Optimized runtime ................. $profiling_used"
-echo "Optimization level ................ $optimize_level"
+echo "Optimized runtime ................. $profiling_use"
+echo "Profiling runtime ................. $profiling"
+echo "Precompile headers ................ $build_pch"
 echo "Machine tuned ..................... $machine_tuning"
 echo
 echo "Magic support ..................... $have_magic"
