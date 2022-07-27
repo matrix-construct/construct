@@ -52,10 +52,10 @@ ircd::mods::mod
 	string_view &operator[](const string_view &s);
 
 	// Convenience accessors
-	auto &name() const                           { return _name;                                   }
-	auto &location() const                       { return _location;                               }
-	auto &version() const                        { return header->version;                         }
-	auto &description() const                    { return (*this)["description"];                  }
+	auto &name() const                 { return _name;                         }
+	auto &location() const             { return _location;                     }
+	auto &description() const          { return (*this)["description"];        }
+	auto version() const               { return header->version;               }
 
 	explicit mod(std::string path, const load_mode::type &);
 
