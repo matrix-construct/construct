@@ -17,6 +17,7 @@ AM_LDFLAGS += -Wl,--sort-section=name
 AM_LDFLAGS += -Wl,--no-undefined-version
 AM_LDFLAGS += -Wl,--allow-shlib-undefined
 AM_LDFLAGS += -Wl,--unresolved-symbols=ignore-in-shared-libs
+AM_LDFLAGS += -Wl,-Bsymbolic
 AM_LDFLAGS += -Wl,-z,lazy
 AM_LDFLAGS += -L$(top_srcdir)/ircd
 AM_LDFLAGS += $(PLATFORM_LDFLAGS)

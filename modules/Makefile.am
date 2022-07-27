@@ -13,6 +13,7 @@ AM_LDFLAGS =#
 AM_LDFLAGS += -module
 AM_LDFLAGS += -avoid-version
 AM_LDFLAGS += -Wl,--allow-shlib-undefined
+AM_LDFLAGS += -Wl,-Bsymbolic
 AM_LDFLAGS += -Wl,-z,lazy
 AM_LDFLAGS += -L$(top_srcdir)/ircd
 AM_LDFLAGS += -L$(top_srcdir)/matrix

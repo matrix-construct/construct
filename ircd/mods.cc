@@ -909,8 +909,13 @@ try
 {
 	static const load_mode::type flags
 	{
-		load_mode::rtld_global |
-		load_mode::rtld_deepbind
+		load_mode::rtld_global
+
+		// Use deepbind if modules can't be linked with -Bsymbolic
+		// Note: deepbind is trouble on alpine.
+		#if 0
+		| load_mode::rtld_deepbind
+		#endif
 	};
 
 	// Search for loaded module and increment the reference counter for this handle if loaded.
