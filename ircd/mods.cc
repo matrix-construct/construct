@@ -19,6 +19,8 @@ namespace ircd::mods
 	static void handle_ebadf(const string_view &what);
 	static void handle_stuck(mod &);
 	static bool unload(mod &) noexcept;
+
+	extern conf::item<bool> mapi_check;
 }
 
 ircd::log::log
@@ -41,6 +43,13 @@ ircd::mods::autoload
 	{ "name",     "ircd.mods.autoload"  },
 	{ "default",  true                  },
 	{ "persist",  false                 },
+};
+
+decltype(ircd::mods::mapi_check)
+ircd::mods::mapi_check
+{
+	{ "name",     "ircd.mods.mapi.check"  },
+	{ "default",  true                    },
 };
 
 decltype(ircd::mods::mod::loading)
@@ -298,19 +307,19 @@ try
 			"Unexpected null header"
 		};
 
-	if(header->magic != IRCD_MAPI_MAGIC)
+	if(mapi_check && header->magic != IRCD_MAPI_MAGIC)
 		throw error
 		{
 			"Bad magic [%04X] need: [%04X]", header->magic, IRCD_MAPI_MAGIC
 		};
 
-	if(header->version != IRCD_MAPI_VERSION)
+	if(mapi_check && header->version != IRCD_MAPI_VERSION)
 		throw error
 		{
 			"Unknown MAPI version [%u] expecting: [%u]", header->version, IRCD_MAPI_VERSION
 		};
 
-	if(header->serial < IRCD_MAPI_SERIAL)
+	if(mapi_check && header->serial < IRCD_MAPI_SERIAL)
 		throw error
 		{
 			"Module '%s' serial=%u is expired; expecting serial >= %u. This module was probably removed"
