@@ -10,7 +10,7 @@
 
 |     |    |
 |:---:|:---|
-| [![](https://img.shields.io/docker/image-size/jevolk/construct/alpine-3.16-base-built.svg?label=alpine3.16-base&logo=Docker&style=flat-square&color=5965AF&logoWidth=38)](https://registry.hub.docker.com/r/jevolk/construct/tags) | `docker pull jevolk/construct:alpine-3.16-base-built` |
+| [![](https://img.shields.io/docker/image-size/jevolk/construct/alpine-3.16-base-built.svg?label=alpine3.16-mini&logo=Docker&style=flat-square&color=5965AF&logoWidth=38)](https://registry.hub.docker.com/r/jevolk/construct/tags) | `docker pull jevolk/construct:alpine-3.16-base-built` |
 | [![](https://img.shields.io/docker/image-size/jevolk/construct/alpine-3.16-full-built.svg?label=alpine-3.16-full&logo=Docker&style=flat-square&color=5965AF&logoWidth=32)](https://registry.hub.docker.com/r/jevolk/construct/tags) | `docker pull jevolk/construct:alpine-3.16-full-built` |
 | [![](https://img.shields.io/docker/image-size/jevolk/construct/ubuntu-22.04-built.svg?label=ubuntu-22.04&logo=Docker&style=flat-square&color=5965AF&logoWidth=46)](https://registry.hub.docker.com/r/jevolk/construct/tags) | `docker pull jevolk/construct:ubuntu-22.04-built` |
 

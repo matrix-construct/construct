@@ -8,6 +8,7 @@ boost-system \
 boost-thread \
 ca-certificates \
 icu \
+libatomic \
 libmagic \
 libsodium \
 libstdc++ \
@@ -30,7 +31,4 @@ zstd-dev \
 
 RUN true \
 && apk add --no-cache ${packages} \
-&& mkdir /build \
 && true
-
-WORKDIR /build

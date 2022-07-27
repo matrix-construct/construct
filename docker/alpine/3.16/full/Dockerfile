@@ -1,4 +1,7 @@
-FROM jevolk/construct:alpine-3.16-base
+ARG acct
+ARG repo
+
+FROM ${acct}/${repo}:alpine-3.16-base
 
 ENV packages="\
 freetype \
