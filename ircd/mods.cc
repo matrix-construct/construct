@@ -85,6 +85,9 @@ noexcept
 	if(mods::unloading(mod.name()))
 		return false;
 
+	if(!mod.header || !mod.header->meta)
+		return false;
+
 	const ctx::uninterruptible::nothrow ui;
 	log::debug
 	{
