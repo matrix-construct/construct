@@ -446,6 +446,7 @@ dnl	])
 AM_CONDITIONAL([PROFILE], [[[[ "$profiling" = "yes" ]]]])
 
 dnl Provide the correct target to the Makefiles
+AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata)
 AM_COND_IF(CLANG14, [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-14) ])
 AM_COND_IF(CLANG13, [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-13) ])
 AM_COND_IF(CLANG12, [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-12) ])
@@ -760,7 +761,6 @@ AM_COND_IF([BUILD_PCH],
 	AM_COND_IF([CLANG],
 	[
 		RB_VAR_PREPEND([CPPFLAGS], ["-fpch-preprocess"])
-		RB_VAR_PREPEND([CXXFLAGS], ["-Xclang -verify-pch"])
 	])
 
 	AM_COND_IF([CLANG10],
