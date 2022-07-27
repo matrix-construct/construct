@@ -90,6 +90,19 @@ lgetopt opts[]
 	{ nullptr,      nullptr,        lgetopt::STRING,  nullptr },
 };
 
+ircd::conf::item<std::string>
+construct_origin
+{
+	{ "name", "construct.origin" },
+};
+
+ircd::conf::item<std::string>
+construct_server_name
+{
+	{ "name",     "construct.server.name"             },
+	{ "default",  ircd::string_view{construct_origin} },
+};
+
 const char *const fatalerrstr
 {R"(
 ***
@@ -160,8 +173,19 @@ noexcept try
 	// the server.
 	const ircd::string_view origin
 	{
+		// origin given on command line
 		argc > 0?
 			argv[0]:
+
+		// origin given by environment
+		construct_origin?
+			ircd::string_view{construct_origin}:
+
+		// origin not given, try server_name for origin.
+		construct_server_name?
+			ircd::string_view{construct_server_name}:
+
+		// invalid argument
 			nullptr
 	};
 
@@ -172,10 +196,23 @@ noexcept try
 	// server_names must be different.
 	const ircd::string_view server_name
 	{
-		argc > 1?     // server_name given on command line
+		// server_name given on command line
+		argc > 1?
 			argv[1]:
-		argc > 0?     // server_name matches origin
+
+		// server_name matches origin
+		argc > 0?
 			argv[0]:
+
+		// server_name given by environment
+		construct_server_name?
+			ircd::string_view{construct_server_name}:
+
+		// server_name not given, try origin for server_name.
+		construct_origin?
+			ircd::string_view{construct_server_name}:
+
+		// invalid argument
 			nullptr
 	};
 
