@@ -890,6 +890,8 @@ RB_MAYBE_CWARN([-Werror=return-type], charybdis_cv_c_gcc_w_error_return_type)
 dnl Compiler specific
 AM_COND_IF([GCC],
 [
+	RB_MAYBE_CWARN([-Werror=return-local-addr], charybdis_cv_c_gcc_w_error_return_local_addr)
+
 	RB_MAYBE_CWARN([-Wlogical-op], charybdis_cv_c_gcc_w_logical_op)
 	RB_MAYBE_CWARN([-Wformat-security], charybdis_cv_c_gcc_w_format_security)
 	RB_MAYBE_CWARN([-Wstack-usage=$STACK_USAGE_WARNING], charybdis_cv_c_gcc_w_stack_usage)
@@ -911,6 +913,8 @@ AM_COND_IF([GCC],
 dnl Compiler specific
 AM_COND_IF([CLANG],
 [
+	RB_MAYBE_CWARN([-Werror=return-stack-address], charybdis_cv_c_gcc_w_error_return_stack_address)
+
 	RB_MAYBE_CWARN([-Wundefined-reinterpret-cast], charybdis_cv_c_gcc_w_undefined_reinterpret_cast)
 	RB_MAYBE_CWARN([-Wconditional-uninitialized], charybdis_cv_c_gcc_w_conditional_uninitialized)
 
