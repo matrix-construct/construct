@@ -47,8 +47,8 @@ AM_CXXFLAGS += -fwhole-program-vtables
 endif
 endif
 
-if !PROFILE
 if CLANG
+if PROFILE_USE
 AM_CXXFLAGS += -fprofile-use
 BUILT_SOURCES += default.profdata
 CLEANFILES += default.profdata
@@ -210,5 +210,7 @@ id.lo: CXXFLAGS      += ${AM_CXXFLAGS} ${SPIRIT_UNIT_CXXFLAGS}
 #
 
 # LLVM PGO text to binary for -fprofile-use
+if CLANG
 default.profdata:
 	-$(LLVM_PROFDATA) merge -output=default.profdata default.proftext
+endif

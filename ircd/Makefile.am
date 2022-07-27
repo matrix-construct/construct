@@ -57,16 +57,16 @@ AM_CXXFLAGS += -fwhole-program-vtables
 endif
 endif
 
-if !PROFILE
 if CLANG
+if PROFILE_USE
 AM_CXXFLAGS += -fprofile-use
 BUILT_SOURCES += default.profdata
 CLEANFILES += default.profdata
 endif
 endif
 
-if PROFILE
 if CLANG
+if PROFILE
 AM_CXXFLAGS += -fprofile-generate
 AM_LDFLAGS += -Wl,-fprofile-generate
 #TODO: XXX
