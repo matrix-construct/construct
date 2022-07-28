@@ -21,6 +21,7 @@ namespace ircd::mods
 	static bool unload(mod &) noexcept;
 
 	extern conf::item<bool> mapi_check;
+	extern conf::item<bool> unload_check;
 }
 
 ircd::log::log
@@ -50,6 +51,13 @@ ircd::mods::mapi_check
 {
 	{ "name",     "ircd.mods.mapi.check"  },
 	{ "default",  true                    },
+};
+
+decltype(ircd::mods::unload_check)
+ircd::mods::unload_check
+{
+	{ "name",     "ircd.mods.unload.check"  },
+	{ "default",  true                      },
 };
 
 decltype(ircd::mods::mod::loading)
@@ -135,7 +143,7 @@ noexcept
 		children.size(),
 	};
 
-	if(unlikely(!mapi::static_destruction))
+	if(unlikely(!mapi::static_destruction && unload_check))
 	{
 		handle_stuck(mod);
 		return false;
@@ -149,17 +157,6 @@ noexcept
 	};
 
 	assert(!mod.handle.is_loaded());
-
-	log::debug
-	{
-		log, "Static unload for '%s' @ `%s' children:%zu loaded:%zu unloading:%zu attempting...",
-		mod.name(),
-		mod.location(),
-		children.size(),
-		mod.loaded.size(),
-		std::distance(begin(mod.unloading), end(mod.unloading)),
-	};
-
 	return true;
 }
 
