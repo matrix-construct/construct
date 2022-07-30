@@ -72,6 +72,13 @@ ircd::m::dbs::desc::event_json__file__size__max
 	{ "default",  long(512_MiB)                             },
 };
 
+decltype(ircd::m::dbs::desc::event_json__compaction_trigger)
+ircd::m::dbs::desc::event_json__compaction_trigger
+{
+	{ "name",     "ircd.m.dbs._event_json.compaction.trigger" },
+	{ "default",  8                                           },
+};
+
 const ircd::db::descriptor
 ircd::m::dbs::desc::event_json
 {
@@ -96,6 +103,7 @@ ircd::m::dbs::desc::event_json
 	.compression = string_view{event_json__comp},
 	.compaction_pri = "Universal"s,
 	.target_file_size = { size_t(event_json__file__size__max), 1L, },
+	.compaction_trigger = size_t(event_json__compaction_trigger),
 };
 
 //

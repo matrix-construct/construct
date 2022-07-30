@@ -257,6 +257,13 @@ ircd::m::dbs::desc::content__file__size__max
 	{ "default",  long(256_MiB)                       },
 };
 
+decltype(ircd::m::dbs::desc::content__compaction_trigger)
+ircd::m::dbs::desc::content__compaction_trigger
+{
+	{ "name",     "ircd.m.dbs.content.compaction.trigger" },
+	{ "default",  4                                       },
+};
+
 const ircd::db::descriptor
 ircd::m::dbs::desc::content
 {
@@ -288,6 +295,7 @@ ircd::m::dbs::desc::content
 	.compression = string_view{content__comp},
 	.compaction_pri = "Universal"s,
 	.target_file_size = { size_t(content__file__size__max), 1L, },
+	.compaction_trigger = size_t(content__compaction_trigger),
 };
 
 //

@@ -28,5 +28,6 @@ namespace ircd::m::dbs::desc
 	extern conf::item<size_t> event_json__cache_comp__size;
 	extern conf::item<size_t> event_json__bloom__bits;
 	extern conf::item<size_t> event_json__file__size__max;
+	extern conf::item<size_t> event_json__compaction_trigger;
 	extern const db::descriptor event_json;
 }
