@@ -1,4 +1,4 @@
-FROM alpine:3.16.1
+FROM --platform=$TARGETPLATFORM alpine:3.16.1
 
 ENV packages="\
 boost-chrono \

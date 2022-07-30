@@ -1,7 +1,7 @@
 ARG acct
 ARG repo
 
-FROM ${acct}/${repo}:alpine-3.16-base
+FROM ${acct}/${repo}:alpine-3.16-base-${TARGETARCH}
 
 ENV packages="\
 freetype \

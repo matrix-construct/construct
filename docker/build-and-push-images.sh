@@ -9,6 +9,9 @@ ARGS_="$ARGS_ --compress=true"
 ARGS_="$ARGS_ --build-arg acct=$ACCT"
 ARGS_="$ARGS_ --build-arg repo=$REPO"
 
+export DOCKER_BUILDKIT=1
+#export BUILDKIT_PROGRESS=plain
+
 ###############################################################################
 #
 # Alpine 3.16
@@ -19,91 +22,92 @@ ARGS_="$ARGS_ --build-arg repo=$REPO"
 #
 
 ARGS="$ARGS_"
-docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base $BASEDIR/alpine/3.16/base
+ARGS="$ARGS --platform linux/amd64"
+docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base-amd64 $BASEDIR/alpine/3.16/base
 
 #
 # L1 - Fully featured image
 #
 
 ARGS="$ARGS_"
-docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full $BASEDIR/alpine/3.16/full
+ARGS="$ARGS --platform linux/amd64"
+docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full-amd64 $BASEDIR/alpine/3.16/full
 
 #
-# L3 - Built images
+# L2 - Built images
 #
 
 ARGS="$ARGS_"
+ARGS="$ARGS --platform linux/amd64"
 ARGS="$ARGS --build-arg feature=base"
 ARGS="$ARGS --build-arg extra_packages_dev=gcc"
 ARGS="$ARGS --build-arg extra_packages_dev1=g++"
 ARGS="$ARGS --build-arg cc=gcc --build-arg cxx=g++"
-docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base-built-gcc $BASEDIR/alpine/3.16/built
+docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base-built-gcc-amd64 $BASEDIR/alpine/3.16/built
 
 ARGS="$ARGS_"
+ARGS="$ARGS --platform linux/amd64"
 ARGS="$ARGS --build-arg feature=base"
 ARGS="$ARGS --build-arg extra_packages_dev=clang"
 ARGS="$ARGS --build-arg extra_packages_dev1=llvm"
 ARGS="$ARGS --build-arg extra_packages_dev2=llvm-dev"
 ARGS="$ARGS --build-arg cc=clang --build-arg cxx=clang++"
-ARGS="$ARGS -t $ACCT/$REPO:alpine-3.16-base-built"
-docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base-built-clang $BASEDIR/alpine/3.16/built
+docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base-built-clang-amd64 $BASEDIR/alpine/3.16/built
 
 ARGS="$ARGS_"
+ARGS="$ARGS --platform linux/amd64"
 ARGS="$ARGS --build-arg feature=full"
 ARGS="$ARGS --build-arg extra_packages_dev=gcc"
 ARGS="$ARGS --build-arg extra_packages_dev1=g++"
 ARGS="$ARGS --build-arg cc=gcc --build-arg cxx=g++"
-docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full-built-gcc $BASEDIR/alpine/3.16/built
+docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full-built-gcc-amd64 $BASEDIR/alpine/3.16/built
 
 ARGS="$ARGS_"
+ARGS="$ARGS --platform linux/amd64"
 ARGS="$ARGS --build-arg feature=full"
 ARGS="$ARGS --build-arg extra_packages_dev=clang"
 ARGS="$ARGS --build-arg extra_packages_dev1=llvm"
 ARGS="$ARGS --build-arg extra_packages_dev2=llvm-dev"
 ARGS="$ARGS --build-arg cc=clang --build-arg cxx=clang++"
-ARGS="$ARGS -t $ACCT/$REPO:alpine-3.16-full-built"
-docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full-built-clang $BASEDIR/alpine/3.16/built
+docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full-built-clang-amd64 $BASEDIR/alpine/3.16/built
 
 #
-# L4 - Test images
+# L3 - Test images
 #
 
 ARGS="$ARGS_"
+ARGS="$ARGS --platform linux/amd64"
 ARGS="$ARGS --build-arg feature=base"
 ARGS="$ARGS --build-arg cc=gcc --build-arg cxx=g++"
-#docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base-test-gcc $BASEDIR/alpine/3.16/test
+docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base-test-gcc-amd64 $BASEDIR/alpine/3.16/test
 
 ARGS="$ARGS_"
+ARGS="$ARGS --platform linux/amd64"
 ARGS="$ARGS --build-arg feature=base"
 ARGS="$ARGS --build-arg cc=clang --build-arg cxx=clang++"
-#docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base-test-clang $BASEDIR/alpine/3.16/test
+docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base-test-clang-amd64 $BASEDIR/alpine/3.16/test
 
 ARGS="$ARGS_"
+ARGS="$ARGS --platform linux/amd64"
 ARGS="$ARGS --build-arg feature=full"
 ARGS="$ARGS --build-arg cc=gcc --build-arg cxx=g++"
-ARGS="$ARGS -t $ACCT/$REPO:alpine-3.16-full-test"
-#docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full-test-gcc $BASEDIR/alpine/3.16/test
+docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full-test-gcc-amd64 $BASEDIR/alpine/3.16/test
 
 ARGS="$ARGS_"
+ARGS="$ARGS --platform linux/amd64"
 ARGS="$ARGS --build-arg feature=full"
 ARGS="$ARGS --build-arg cc=clang --build-arg cxx=clang++"
-#docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full-test-clang $BASEDIR/alpine/3.16/test
+docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full-test-clang-amd64 $BASEDIR/alpine/3.16/test
 
 #
 # Pushed images
 #
 
-#docker push $ACCT/$REPO:alpine-3.16-base
-#docker push $ACCT/$REPO:alpine-3.16-base-dev
-docker push $ACCT/$REPO:alpine-3.16-base-built-gcc
-docker push $ACCT/$REPO:alpine-3.16-base-built-clang
-docker push $ACCT/$REPO:alpine-3.16-base-built
+docker push $ACCT/$REPO:alpine-3.16-base-built-gcc-amd64
+docker push $ACCT/$REPO:alpine-3.16-base-built-clang-amd64
 
-#docker push $ACCT/$REPO:alpine-3.16-full
-#docker push $ACCT/$REPO:alpine-3.16-full-dev
-docker push $ACCT/$REPO:alpine-3.16-full-built-gcc
-docker push $ACCT/$REPO:alpine-3.16-full-built-clang
-docker push $ACCT/$REPO:alpine-3.16-full-built
+docker push $ACCT/$REPO:alpine-3.16-full-built-gcc-amd64
+docker push $ACCT/$REPO:alpine-3.16-full-built-clang-amd64
 
 ###############################################################################
 #

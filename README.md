@@ -8,12 +8,6 @@
 
 [![](https://img.shields.io/badge/github-source-8891CD.svg?logo=GitHub&style=for-the-badge)](https://github.com/matrix-construct/construct) [![](https://img.shields.io/badge/docker-images-8891CD.svg?logo=Docker&style=for-the-badge)](https://registry.hub.docker.com/r/jevolk/construct)
 
-|     |    |
-|:---:|:---|
-| [![](https://img.shields.io/docker/image-size/jevolk/construct/alpine-3.16-base-built.svg?label=alpine3.16-mini&logo=Docker&style=flat-square&color=5965AF&logoWidth=38)](https://registry.hub.docker.com/r/jevolk/construct/tags) | `docker pull jevolk/construct:alpine-3.16-base-built` |
-| [![](https://img.shields.io/docker/image-size/jevolk/construct/alpine-3.16-full-built.svg?label=alpine-3.16-full&logo=Docker&style=flat-square&color=5965AF&logoWidth=32)](https://registry.hub.docker.com/r/jevolk/construct/tags) | `docker pull jevolk/construct:alpine-3.16-full-built` |
-| [![](https://img.shields.io/docker/image-size/jevolk/construct/ubuntu-22.04-built.svg?label=ubuntu-22.04&logo=Docker&style=flat-square&color=5965AF&logoWidth=46)](https://registry.hub.docker.com/r/jevolk/construct/tags) | `docker pull jevolk/construct:ubuntu-22.04-built` |
-
 - `git clone https://github.com/matrix-construct/construct`
 
 	[![](https://img.shields.io/github/repo-size/matrix-construct/construct.svg?logo=GitHub&style=flat-square&color=5965AF)](https://github.com/matrix-construct/construct)
@@ -21,6 +15,11 @@
 	[![](https://img.shields.io/github/directory-file-count/matrix-construct/construct.svg?type=dir&label=directories&logo=GitHub&style=flat-square&color=5965AF)](https://github.com/matrix-construct/construct)
 	[![](https://img.shields.io/github/directory-file-count/matrix-construct/construct.svg?type=file&label=files&logo=GitHub&style=flat-square&color=5965AF)](https://github.com/matrix-construct/construct)
 
+| Fully Featured Builds | Minimal Dependencies |
+|:---|:---|
+| [![](https://img.shields.io/docker/image-size/jevolk/construct/alpine-3.16-full-built-clang-amd64.svg?logoWidth=25&label=alpine%203.16%20clang%20amd64&logo=Docker&style=flat-square&color=5965AF)](https://registry.hub.docker.com/r/jevolk/construct/tags) | [![](https://img.shields.io/docker/image-size/jevolk/construct/alpine-3.16-base-built-clang-amd64.svg?logoWidth=25&label=alpine%203.16%20clang%20amd64&logo=Docker&style=flat-square&color=5965AF)](https://registry.hub.docker.com/r/jevolk/construct/tags)
+| [![](https://img.shields.io/docker/image-size/jevolk/construct/alpine-3.16-full-built-gcc-amd64.svg?logoWidth=25&label=alpine%203.16%20gcc%20amd64&logo=Docker&style=flat-square&color=5965AF)](https://registry.hub.docker.com/r/jevolk/construct/tags) | [![](https://img.shields.io/docker/image-size/jevolk/construct/alpine-3.16-base-built-gcc-amd64.svg?logoWidth=25&label=alpine%203.16%20gcc%20amd64&logo=Docker&style=flat-square&color=5965AF)](https://registry.hub.docker.com/r/jevolk/construct/tags)
+| [![](https://img.shields.io/docker/image-size/jevolk/construct/ubuntu-22.04-built.svg?logoWidth=25&label=ubuntu%2022.04%20amd64&logo=Docker&style=flat-square&color=5965AF)](https://registry.hub.docker.com/r/jevolk/construct/tags) | |
 
 ### 🗒️ INSTRUCTIONS
 

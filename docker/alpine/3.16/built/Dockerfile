@@ -2,7 +2,7 @@ ARG acct
 ARG repo
 ARG feature
 
-FROM ${acct}/${repo}:alpine-3.16-${feature}
+FROM ${acct}/${repo}:alpine-3.16-${feature}-${TARGETARCH}
 
 ARG cc
 ARG cxx
