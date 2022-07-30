@@ -144,12 +144,19 @@ ircd::m::resource::path_version(const string_view &path)
 		token(path, '/', 2, {})
 	};
 
-	const bool pass
+	const bool is_version
 	{
 		true
 		&& version.size() >= 2
 		&& (version[0] == 'v' || version[0] == 'r')
 		&& (version[1] >= '0' && version[1] <= '9')
+	};
+
+	const bool pass
+	{
+		false
+		|| is_version
+		|| version == "unstable"
 	};
 
 	return pass? version: string_view{};
