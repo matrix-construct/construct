@@ -85,11 +85,8 @@ ircd::m::dbs::desc::event_id__cache_comp__size
 const ircd::db::descriptor
 ircd::m::dbs::desc::event_id
 {
-	// name
-	"event_id",
-
-	// explanation
-	R"(Stores the event_id property of an event.
+	.name = "event_id",
+	.explain = R"(Stores the event_id property of an event.
 
 	As with all direct event columns the key is an event_idx and the value
 	is the data for the event. It should be mentioned for this column
@@ -102,43 +99,18 @@ ircd::m::dbs::desc::event_id
 
 	)",
 
-	// typing (key, value)
+	.type =
 	{
 		typeid(uint64_t), typeid(string_view)
 	},
 
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// drop column
-	false,
-
-	// cache size
-	bool(cache_enable)? -1 : 0,
-
-	// cache size for compressed assets
-	bool(cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	size_t(_event__bloom__bits),
-
-	// expect queries hit
-	true,
-
-	// block size
-	size_t(event_id__block__size),
-
-	// meta_block size
-	size_t(event_id__meta_block__size),
-
-	// compression
-	string_view{event_id__comp},
+	.cache_size = bool(cache_enable)? -1 : 0,
+	.cache_size_comp = bool(cache_comp_enable)? -1 : 0,
+	.bloom_bits = size_t(_event__bloom__bits),
+	.expect_queries_hit = true,
+	.block_size = size_t(event_id__block__size),
+	.meta_block_size = size_t(event_id__meta_block__size),
+	.compression = string_view{event_id__comp},
 };
 
 //
@@ -197,11 +169,8 @@ ircd::m::dbs::desc::type__cache_comp__size
 const ircd::db::descriptor
 ircd::m::dbs::desc::type
 {
-	// name
-	"type",
-
-	// explanation
-	R"(Stores the type property of an event.
+	.name = "type",
+	.explain = R"(Stores the type property of an event.
 
 	10.1
 	The type of event. This SHOULD be namespaced similar to Java package naming conventions
@@ -214,43 +183,18 @@ ircd::m::dbs::desc::type
 	key is event_idx number.
 	)",
 
-	// typing (key, value)
+	.type =
 	{
 		typeid(uint64_t), typeid(string_view)
 	},
 
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// drop column
-	false,
-
-	// cache size
-	bool(cache_enable)? -1 : 0,
-
-	// cache size for compressed assets
-	bool(cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	size_t(_event__bloom__bits),
-
-	// expect queries hit
-	true,
-
-	// block size
-	size_t(type__block__size),
-
-	// meta_block size
-	size_t(type__meta_block__size),
-
-	// compression
-	string_view{type__comp},
+	.cache_size = bool(cache_enable)? -1 : 0,
+	.cache_size_comp = bool(cache_comp_enable)? -1 : 0,
+	.bloom_bits = size_t(_event__bloom__bits),
+	.expect_queries_hit = true,
+	.block_size = size_t(type__block__size),
+	.meta_block_size = size_t(type__meta_block__size),
+	.compression = string_view{type__comp},
 };
 
 //
@@ -316,11 +260,8 @@ ircd::m::dbs::desc::content__file__size__max
 const ircd::db::descriptor
 ircd::m::dbs::desc::content
 {
-	// name
-	"content",
-
-	// explanation
-	R"(Stores the content property of an event.
+	.name = "content",
+	.explain = R"(Stores the content property of an event.
 
 	10.1
 	The fields in this object will vary depending on the type of event. When interacting
@@ -333,55 +274,20 @@ ircd::m::dbs::desc::content
 	key is event_idx number.
 	)",
 
-	// typing (key, value)
+	.type =
 	{
 		typeid(uint64_t), typeid(string_view)
 	},
 
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// drop column
-	false,
-
-	// cache size
-	bool(cache_enable)? -1 : 0,
-
-	// cache size for compressed assets
-	bool(cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	size_t(_event__bloom__bits),
-
-	// expect queries hit
-	true,
-
-	// block size
-	size_t(content__block__size),
-
-	// meta_block size
-	size_t(content__meta_block__size),
-
-	// compression
-	string_view{content__comp},
-
-	// compactor
-	{},
-
-	// compaction priority algorithm,
-	"Universal"s,
-
-	// target_file_size
-	{
-		size_t(content__file__size__max),
-		1L,
-	},
+	.cache_size = bool(cache_enable)? -1 : 0,
+	.cache_size_comp = bool(cache_comp_enable)? -1 : 0,
+	.bloom_bits = size_t(_event__bloom__bits),
+	.expect_queries_hit = true,
+	.block_size = size_t(content__block__size),
+	.meta_block_size = size_t(content__meta_block__size),
+	.compression = string_view{content__comp},
+	.compaction_pri = "Universal"s,
+	.target_file_size = { size_t(content__file__size__max), 1L, },
 };
 
 //
@@ -440,11 +346,8 @@ ircd::m::dbs::desc::room_id__cache_comp__size
 const ircd::db::descriptor
 ircd::m::dbs::desc::room_id
 {
-	// name
-	"room_id",
-
-	// explanation
-	R"(Stores the room_id property of an event.
+	.name = "room_id",
+	.explain = R"(Stores the room_id property of an event.
 
 	10.2 (apropos room events)
 	Required. The ID of the room associated with this event.
@@ -456,43 +359,18 @@ ircd::m::dbs::desc::room_id
 	key is event_idx number.
 	)",
 
-	// typing (key, value)
+	.type =
 	{
 		typeid(uint64_t), typeid(string_view)
 	},
 
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// drop column
-	false,
-
-	// cache size
-	bool(cache_enable)? -1 : 0,
-
-	// cache size for compressed assets
-	bool(cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	size_t(_event__bloom__bits),
-
-	// expect queries hit
-	true,
-
-	// block size
-	size_t(room_id__block__size),
-
-	// meta_block size
-	size_t(room_id__meta_block__size),
-
-	// compression
-	string_view{room_id__comp},
+	.cache_size = bool(cache_enable)? -1 : 0,
+	.cache_size_comp = bool(cache_comp_enable)? -1 : 0,
+	.bloom_bits = size_t(_event__bloom__bits),
+	.expect_queries_hit = true,
+	.block_size = size_t(room_id__block__size),
+	.meta_block_size = size_t(room_id__meta_block__size),
+	.compression = string_view{room_id__comp},
 };
 
 //
@@ -551,11 +429,8 @@ ircd::m::dbs::desc::sender__cache_comp__size
 const ircd::db::descriptor
 ircd::m::dbs::desc::sender
 {
-	// name
-	"sender",
-
-	// explanation
-	R"(Stores the sender property of an event.
+	.name = "sender",
+	.explain = R"(Stores the sender property of an event.
 
 	10.2 (apropos room events)
 	Required. Contains the fully-qualified ID of the user who sent this event.
@@ -567,43 +442,18 @@ ircd::m::dbs::desc::sender
 	key is event_idx number.
 	)",
 
-	// typing (key, value)
+	.type =
 	{
 		typeid(uint64_t), typeid(string_view)
 	},
 
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// drop column
-	false,
-
-	// cache size
-	bool(cache_enable)? -1 : 0,
-
-	// cache size for compressed assets
-	bool(cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	size_t(_event__bloom__bits),
-
-	// expect queries hit
-	true,
-
-	// block size
-	size_t(sender__block__size),
-
-	// meta_block size
-	size_t(sender__meta_block__size),
-
-	// compression
-	string_view{sender__comp},
+	.cache_size = bool(cache_enable)? -1 : 0,
+	.cache_size_comp = bool(cache_comp_enable)? -1 : 0,
+	.bloom_bits = size_t(_event__bloom__bits),
+	.expect_queries_hit = true,
+	.block_size = size_t(sender__block__size),
+	.meta_block_size = size_t(sender__meta_block__size),
+	.compression = string_view{sender__comp},
 };
 
 //
@@ -662,11 +512,8 @@ ircd::m::dbs::desc::state_key__cache_comp__size
 const ircd::db::descriptor
 ircd::m::dbs::desc::state_key
 {
-	// name
-	"state_key",
-
-	// explanation
-	R"(Stores the state_key property of an event.
+	.name = "state_key",
+	.explain = R"(Stores the state_key property of an event.
 
 	10.3 (apropos room state events)
 	A unique key which defines the overwriting semantics for this piece of room state.
@@ -680,43 +527,18 @@ ircd::m::dbs::desc::state_key
 	key is event_idx number.
 	)",
 
-	// typing (key, value)
+	.type =
 	{
 		typeid(uint64_t), typeid(string_view)
 	},
 
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// drop column
-	false,
-
-	// cache size
-	bool(cache_enable)? -1 : 0,
-
-	// cache size for compressed assets
-	bool(cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	size_t(_event__bloom__bits),
-
-	// expect queries hit
-	true,
-
-	// block size
-	size_t(state_key__block__size),
-
-	// meta_block size
-	size_t(state_key__meta_block__size),
-
-	// compression
-	string_view{state_key__comp},
+	.cache_size = bool(cache_enable)? -1 : 0,
+	.cache_size_comp = bool(cache_comp_enable)? -1 : 0,
+	.bloom_bits = size_t(_event__bloom__bits),
+	.expect_queries_hit = true,
+	.block_size = size_t(state_key__block__size),
+	.meta_block_size = size_t(state_key__meta_block__size),
+	.compression = string_view{state_key__comp},
 };
 
 //
@@ -775,11 +597,8 @@ ircd::m::dbs::desc::origin_server_ts__cache_comp__size
 const ircd::db::descriptor
 ircd::m::dbs::desc::origin_server_ts
 {
-	// name
-	"origin_server_ts",
-
-	// explanation
-	R"(Stores the origin_server_ts property of an event.
+	.name = "origin_server_ts",
+	.explain = R"(Stores the origin_server_ts property of an event.
 
 	FEDERATION 4.1
 	Timestamp in milliseconds on origin homeserver when this PDU was created.
@@ -792,43 +611,18 @@ ircd::m::dbs::desc::origin_server_ts
 
 	)",
 
-	// typing (key, value)
+	.type =
 	{
 		typeid(uint64_t), typeid(time_t)
 	},
 
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// drop column
-	false,
-
-	// cache size
-	bool(cache_enable)? -1 : 0,
-
-	// cache size for compressed assets
-	bool(cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	size_t(_event__bloom__bits),
-
-	// expect queries hit
-	true,
-
-	// block size
-	size_t(origin_server_ts__block__size),
-
-	// meta_block size
-	size_t(origin_server_ts__meta_block__size),
-
-	// compression
-	string_view{origin_server_ts__comp},
+	.cache_size = bool(cache_enable)? -1 : 0,
+	.cache_size_comp = bool(cache_comp_enable)? -1 : 0,
+	.bloom_bits = size_t(_event__bloom__bits),
+	.expect_queries_hit = true,
+	.block_size = size_t(origin_server_ts__block__size),
+	.meta_block_size = size_t(origin_server_ts__meta_block__size),
+	.compression = string_view{origin_server_ts__comp},
 };
 
 //
@@ -887,53 +681,25 @@ ircd::m::dbs::desc::depth__cache_comp__size
 const ircd::db::descriptor
 ircd::m::dbs::desc::depth
 {
-	// name
-	"depth",
-
-	// explanation
-	R"(Stores the depth property of an event.
+	.name = "depth",
+	.explain = R"(Stores the depth property of an event.
 
 	### developer note:
 	key is event_idx number. value is long integer
 	)",
 
-	// typing (key, value)
+	.type =
 	{
 		typeid(uint64_t), typeid(int64_t)
 	},
 
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// drop column
-	false,
-
-	// cache size
-	bool(cache_enable)? -1 : 0,
-
-	// cache size for compressed assets
-	bool(cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	size_t(_event__bloom__bits),
-
-	// expect queries hit
-	true,
-
-	// block size
-	size_t(depth__block__size),
-
-	// meta_block size
-	size_t(depth__meta_block__size),
-
-	// compression
-	string_view{depth__comp},
+	.cache_size = bool(cache_enable)? -1 : 0,
+	.cache_size_comp = bool(cache_comp_enable)? -1 : 0,
+	.bloom_bits = size_t(_event__bloom__bits),
+	.expect_queries_hit = true,
+	.block_size = size_t(depth__block__size),
+	.meta_block_size = size_t(depth__meta_block__size),
+	.compression = string_view{depth__comp},
 };
 
 void

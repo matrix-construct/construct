@@ -89,10 +89,8 @@ const ircd::db::descriptor
 ircd::m::dbs::desc::event_sender
 {
 	// name
-	"_event_sender",
-
-	// explanation
-	R"(Index of senders to their events.
+	.name = "_event_sender",
+	.explain = R"(Index of senders to their events.
 
 	mxid | event_idx => --
 	origin | localpart, event_idx => --
@@ -113,49 +111,20 @@ ircd::m::dbs::desc::event_sender
 	of an event. Only the "sender" data is used here.
 	)",
 
-	// typing (key, value)
+	.type =
 	{
 		typeid(string_view), typeid(string_view)
 	},
 
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	event_sender__pfx,
-
-	// drop column
-	false,
-
-	// cache size
-	bool(cache_enable)? -1 : 0, //uses conf item
-
-	// cache size for compressed assets
-	bool(cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	0,
-
-	// expect queries hit
-	false,
-
-	// block size
-	size_t(event_sender__block__size),
-
-	// meta_block size
-	size_t(event_sender__meta_block__size),
-
-	// compression
-	string_view{event_sender__comp},
-
-	// compactor
-	{},
-
-	// compaction priority algorithm
-	"kOldestSmallestSeqFirst"s,
+	.prefix = event_sender__pfx,
+	.cache_size = bool(cache_enable)? -1 : 0, //uses conf item
+	.cache_size_comp = bool(cache_comp_enable)? -1 : 0,
+	.bloom_bits = 0,
+	.expect_queries_hit = false,
+	.block_size = size_t(event_sender__block__size),
+	.meta_block_size = size_t(event_sender__meta_block__size),
+	.compression = string_view{event_sender__comp},
+	.compaction_pri = "kOldestSmallestSeqFirst"s,
 };
 
 //

@@ -75,65 +75,27 @@ ircd::m::dbs::desc::event_json__file__size__max
 const ircd::db::descriptor
 ircd::m::dbs::desc::event_json
 {
-	// name
-	"_event_json",
-
-	// explanation
-	R"(Full JSON object of an event.
+	.name = "_event_json",
+	.explain = R"(Full JSON object of an event.
 
 	event_idx => event_json
 
 	)",
 
-	// typing (key, value)
+	.type =
 	{
 		typeid(uint64_t), typeid(string_view)
 	},
 
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// drop column
-	false,
-
-	// cache size
-	bool(cache_enable)? -1 : 0, //uses conf item
-
-	// cache size for compressed assets
-	bool(cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	size_t(event_json__bloom__bits),
-
-	// expect queries hit
-	true,
-
-	// block size
-	size_t(event_json__block__size),
-
-	// meta_block size
-	size_t(event_json__meta_block__size),
-
-	// compression
-	string_view{event_json__comp},
-
-	// compactor
-	{},
-
-	// compaction priority algorithm
-	"Universal"s,
-
-	// target_file_size
-	{
-		size_t(event_json__file__size__max),  // base
-		1L,                                   // multiplier
-	},
+	.cache_size = bool(cache_enable)? -1 : 0,
+	.cache_size_comp = bool(cache_comp_enable)? -1 : 0,
+	.bloom_bits = size_t(event_json__bloom__bits),
+	.expect_queries_hit = true,
+	.block_size = size_t(event_json__block__size),
+	.meta_block_size = size_t(event_json__meta_block__size),
+	.compression = string_view{event_json__comp},
+	.compaction_pri = "Universal"s,
+	.target_file_size = { size_t(event_json__file__size__max), 1L, },
 };
 
 //

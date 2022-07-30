@@ -74,11 +74,8 @@ ircd::m::dbs::desc::event_state__cmp
 const ircd::db::descriptor
 ircd::m::dbs::desc::event_state
 {
-	// name
-	"_event_state",
-
-	// explanation
-	R"(Index of states of events.
+	.name = "_event_state",
+	.explain = R"(Index of states of events.
 
 	state_key, type, room_id, depth, event_idx => --
 
@@ -87,49 +84,20 @@ ircd::m::dbs::desc::event_state
 
 	)",
 
-	// typing (key, value)
+	.type =
 	{
 		typeid(string_view), typeid(string_view)
 	},
 
-	// options
-	{},
-
-	// comparator
-	event_state__cmp,
-
-	// prefix transform
-	{},
-
-	// drop column
-	false,
-
-	// cache size
-	bool(cache_enable)? -1 : 0, //uses conf item
-
-	// cache size for compressed assets
-	bool(cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	0,
-
-	// expect queries hit
-	false,
-
-	// block size
-	size_t(event_state__block__size),
-
-	// meta_block size
-	size_t(event_state__meta_block__size),
-
-	// compression
-	string_view{event_state__comp},
-
-	// compactor
-	{},
-
-	// compaction priority algorithm
-	"kOldestSmallestSeqFirst"s,
+	.cmp = event_state__cmp,
+	.cache_size = bool(cache_enable)? -1 : 0, //uses conf item
+	.cache_size_comp = bool(cache_comp_enable)? -1 : 0,
+	.bloom_bits = 0,
+	.expect_queries_hit = false,
+	.block_size = size_t(event_state__block__size),
+	.meta_block_size = size_t(event_state__meta_block__size),
+	.compression = string_view{event_state__comp},
+	.compaction_pri = "kOldestSmallestSeqFirst"s,
 };
 
 //
