@@ -1784,11 +1784,8 @@ ircd::db::database::column::column(database &d,
 			(this->options.max_write_buffer_number * 6):
 			48;
 
-	this->options.level0_file_num_compaction_trigger = 2;
-	//TODO: for bulk ingest/bootstrap:
-	//	this->options.compaction_style == rocksdb::kCompactionStyleUniversal?
-	//		(this->options.max_write_buffer_number * 2):
-	//		4;
+	//TODO: bulk ingest/bootstrap: (this->options.max_write_buffer_number * 2):
+	this->options.level0_file_num_compaction_trigger = this->descriptor->compaction_trigger;
 
 	// Universal compaction mode options
 	auto &universal(this->options.compaction_options_universal);

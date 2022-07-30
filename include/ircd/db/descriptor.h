@@ -131,4 +131,12 @@ struct ircd::db::descriptor
 	{
 		8192
 	};
+
+	/// The number of level0 files allowed to buffer before compacting. Too
+	/// much data at level0 will slow down queries, but too much compaction
+	/// will increase IOPS for the server with constant reorganization.
+	size_t compaction_trigger
+	{
+		2
+	};
 };
