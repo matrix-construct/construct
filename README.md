@@ -6,8 +6,6 @@
 
 ### 📦 RUN YOUR OWN
 
-[![](https://img.shields.io/badge/github-source-8891CD.svg?logo=GitHub&style=for-the-badge)](https://github.com/matrix-construct/construct) [![](https://img.shields.io/badge/docker-images-8891CD.svg?logo=Docker&style=for-the-badge)](https://registry.hub.docker.com/r/jevolk/construct)
-
 - `git clone https://github.com/matrix-construct/construct`
 
 	[![](https://img.shields.io/github/repo-size/matrix-construct/construct.svg?logo=GitHub&style=flat-square&color=5965AF)](https://github.com/matrix-construct/construct)
