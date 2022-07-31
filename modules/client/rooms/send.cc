@@ -158,15 +158,31 @@ put__send(client &client,
 			content
 		};
 
-		const bool command
+		const bool command_regular
 		{
 			json::get<"msgtype"_>(message) == "m.text"
 			&& startswith(json::get<"body"_>(message), "\\\\")
 		};
 
+		const bool command_replying
+		{
+			json::get<"msgtype"_>(message) == "m.text"
+			&& startswith(json::get<"body"_>(message), ">")
+			&& has(json::get<"body"_>(message), "\\n\\n\\\\")
+		};
+
 		const bool echo
 		{
-			startswith(lstrip(json::get<"body"_>(message), "\\\\"), '!')
+			command_regular?
+				startswith(lstrip(json::get<"body"_>(message), "\\\\"), '!'):
+			command_replying?
+				has(json::get<"body"_>(message), "\\n\\n\\\\!"):
+				false
+		};
+
+		const bool command
+		{
+			command_regular || command_replying
 		};
 
 		if(command && !echo)
@@ -222,6 +238,27 @@ handle_command(client &client,
 		request.user_id, room.copts
 	};
 
+	const json::object content
+	{
+		request
+	};
+
+	const json::object m_relates_to
+	{
+		content["m.relates_to"]
+	};
+
+	const json::object m_in_reply_to
+	{
+		m_relates_to["m.in_reply_to"]
+	};
+
+	const json::string reply_id
+	{
+		m_in_reply_to["event_id"]?:
+			m_relates_to["event_id"]
+	};
+
 	const auto event_id
 	{
 		send(user_room, request.user_id, "ircd.cmd",
@@ -230,6 +267,7 @@ handle_command(client &client,
 			{ "body",     request["body"]  },
 			{ "room_id",  room.room_id     },
 			{ "event_id", echo_id          },
+			{ "reply_id", reply_id         },
 		})
 	};
 

@@ -44,7 +44,8 @@ static command_result
 execute_command(const mutable_buffer &buf,
                 const m::user &user,
                 const m::room &room,
-                const string_view &cmd);
+                const string_view &cmd,
+                const m::event::id &reply_to);
 
 void
 handle_command(const m::event &event,
@@ -82,17 +83,32 @@ try
 		content["event_id"]
 	};
 
-	const json::string &input_
+	const json::string &body
 	{
 		content.at("body")
 	};
 
-	if(!startswith(input_, "\\\\"))
+	const bool is_command
+	{
+		startswith(body, "\\\\")
+	};
+
+	const bool is_command_replying
+	{
+		startswith(body, ">")
+		&& has(body, "\\n\\n\\\\")
+	};
+
+	if(!is_command && !is_command_replying)
 		return;
 
 	// View of the command string without prefix
-	string_view input{input_};
-	input = lstrip(input, "\\\\");
+	string_view input
+	{
+		is_command_replying?
+			lstrip(split(body, "\\n\\n\\\\").second, "\\\\"):
+			lstrip(body, "\\\\")
+	};
 
 	// Determine if there's a bang after the prefix; if so the response's
 	// sender will be the user, and will be broadcast publicly to the room.
@@ -103,15 +119,30 @@ try
 		startswith(input, '!')
 	};
 
-	string_view cmd{input};
-	cmd = lstrip(cmd, '!');
+	const string_view cmd
+	{
+		lstrip(input, '!')
+	};
+
+	const json::string reply_to
+	{
+		content["reply_id"]
+	};
+
+	const auto reply_id
+	{
+		reply_to?
+			m::event::id{reply_to}:
+			m::event::id{}
+	};
 
 	log::debug
 	{
-		m::log, "Server command from %s in %s public:%b :%s",
+		m::log, "Server command from %s in %s public:%b replying:%s :%s",
 		string_view{room_id},
 		string_view{user.user_id},
 		public_response,
+		string_view{reply_id}?: "false"_sv,
 		cmd
 	};
 
@@ -122,7 +153,7 @@ try
 
 	const auto &[html, alt, msgtype]
 	{
-		execute_command(buf, user, room_id, cmd)
+		execute_command(buf, user, room_id, cmd, reply_id)
 	};
 
 	if(!html && !alt)
@@ -275,7 +306,8 @@ command_result
 execute_command(const mutable_buffer &buf,
                 const m::user &user,
                 const m::room &room,
-                const string_view &cmd)
+                const string_view &cmd,
+                const m::event::id &reply_id)
 try
 {
 	if(startswith(cmd, '#'))
