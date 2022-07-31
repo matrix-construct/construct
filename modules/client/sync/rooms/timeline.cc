@@ -224,9 +224,27 @@ ircd::m::sync::room_timeline_linear(data &data)
 bool
 ircd::m::sync::_room_timeline_linear_command(data &data)
 {
+	const auto content
+	{
+		json::get<"content"_>(*data.event)
+	};
+
+	const json::string body
+	{
+		content["body"]
+	};
+
+	// Don't re-echo already public commands
+	if(startswith(lstrip(body, "\\\\"), '!'))
+		return false;
+
+	// Don't re-echo already public command-replyings
+	if(has(body, "\\n\\n\\\\!"))
+		return false;
+
 	const m::room &room
 	{
-		unquote(json::get<"content"_>(*data.event).get("room_id"))
+		unquote(content.get("room_id"))
 	};
 
 	const scope_restore _room
