@@ -135,6 +135,9 @@ struct ircd::m::room::events::missing
 
 	m::room room;
 
+  private:
+	bool _each(m::room::events &, const closure &) const;
+
   public:
 	bool rfor_each(const pair<int64_t> &depth, const closure &) const;
 	bool for_each(const pair<int64_t> &depth, const closure &) const;

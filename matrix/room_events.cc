@@ -471,27 +471,16 @@ const
 		room, uint64_t(depth.first)
 	};
 
-	bool ret{true};
-	for(; it && ret; ++it)
+	for(; it; ++it)
 	{
 		if(depth.second && int64_t(it.depth()) > depth.second)
 			break;
 
-		const m::event &event{*it};
-		const m::event::prev prev{event};
-		ret = m::for_each(prev, [&](const m::event::id &event_id)
-		{
-			if(m::exists(event_id))
-				return true;
-
-			if(!closure(event_id, it.depth(), it.event_idx()))
-				return false;
-
-			return true;
-		});
+		if(!_each(it, closure))
+			return false;
 	}
 
-	return ret;
+	return true;
 }
 
 bool
@@ -504,8 +493,7 @@ const
 		room, depth.second?: -1UL
 	};
 
-	bool ret{true};
-	for(; it && ret; --it)
+	for(; it; --it)
 	{
 		if(depth.second && int64_t(it.depth()) > depth.second)
 			continue;
@@ -513,21 +501,44 @@ const
 		if(int64_t(it.depth()) < depth.first)
 			break;
 
-		const m::event &event{*it};
-		const m::event::prev prev{event};
-		ret = m::for_each(prev, [&](const m::event::id &event_id)
-		{
-			if(m::exists(event_id))
-				return true;
-
-			if(!closure(event_id, it.depth(), it.event_idx()))
-				return false;
-
-			return true;
-		});
+		if(!_each(it, closure))
+			return false;
 	}
 
-	return ret;
+	return true;
+}
+
+bool
+ircd::m::room::events::missing::_each(m::room::events &it,
+                                      const closure &closure)
+const
+{
+	const m::event event
+	{
+		*it
+	};
+
+	const event::prev prev
+	{
+		event
+	};
+
+	event::idx idx_buf[event::prev::MAX];
+	const auto idx
+	{
+		prev.idxs(idx_buf)
+	};
+
+	for(size_t i(0); i < idx.size(); ++i)
+	{
+		if(idx[i])
+			continue;
+
+		if(!closure(prev.prev_event(i), it.depth(), it.event_idx()))
+			return false;
+	}
+
+	return true;
 }
 
 //
