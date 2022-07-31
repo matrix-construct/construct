@@ -94,14 +94,16 @@ struct ircd_gpt_ctrl
 	/// commanded by the host. Effectively minimum distance until next accept.
 	uint dispatch;
 
-	/// Token counter. The counter indicates the number of valid tokens in
-	/// the context buffer. This value must not exceed the opts.buffer_size.
-	/// This value should not exceed the opts.context_size at least for now.
+	/// Token counter. The counter indicates the number of tokens in the
+	/// context buffer, the last token residing at `buffer[count-1]`. Each
+	/// cycle produces the next token at `buffer[count]`; increments count.
 	uint count;
 
-	/// Token counter. The counter indicates the number of valid tokens in
-	/// the context buffer. This value must not exceed the opts.buffer_size.
-	/// This value should not exceed the opts.context_size at least for now.
+	/// Token counter. The counter indicates the actual number of valid tokens
+	/// in the context buffer. The value is always `>= count`. Tokens are only
+	/// generated to `buffer[count]` when `tokens == count` and both are
+	/// incremented in unison. When `tokens > count` generated tokens are only
+	/// evaluated against the existing context buffer and `tokens` not incr.
 	uint tokens;
 
 	/// Master clock.
