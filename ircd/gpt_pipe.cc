@@ -16,6 +16,9 @@ namespace ircd::gpt::pipe
 	extern const ircd::run::changed quit_handler;
 }
 
+decltype(ircd::gpt::pipe::default_code)
+ircd::gpt::pipe::default_code;
+
 decltype(ircd::gpt::pipe::queue_cycles)
 ircd::gpt::pipe::queue_cycles
 {
@@ -51,6 +54,7 @@ noexcept
 
 	cl::sync();
 	ctx::yield();
+	pipe::default_code.reset();
 }
 
 //

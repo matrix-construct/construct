@@ -34,7 +34,7 @@ struct ircd::gpt::task
 	gpt::ctrl *ctrl {nullptr};
 
 	/// Pipe code
-	std::unique_ptr<pipe::code> code;
+	std::shared_ptr<pipe::code> code;
 
 	/// Pipe model
 	std::unique_ptr<pipe::model> model;

@@ -251,7 +251,8 @@ try
 }
 ,code
 {
-	std::make_unique<pipe::code>()
+	pipe::default_code?:
+		(pipe::default_code = std::make_shared<pipe::code>())
 }
 ,model
 {
