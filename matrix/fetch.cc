@@ -982,6 +982,30 @@ ircd::m::fetch::_check_event(const request &request,
 			&& json::get<"origin"_>(event) == request.origin
 		};
 
+		if(mismatch_hashes && !authoritative_redaction)
+		{
+			const json::object _unsigned
+			{
+				event.source["unsigned"]
+			};
+
+			const json::string redacted_by
+			{
+				_unsigned["redacted_by"]
+			};
+
+			if(valid(id::EVENT, redacted_by))
+				log::dwarning
+				{
+					log, "%s claims %s redacted by %s",
+					request.origin,
+					string_view{request.opts.event_id},
+					redacted_by,
+				};
+
+			//TODO: XXX
+		}
+
 		if(authoritative_redaction || !mismatch_hashes)
 			conforms.del(m::event::conforms::MISMATCH_HASHES);
 
