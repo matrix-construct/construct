@@ -40,12 +40,20 @@ struct command_result
 	string_view msgtype {"m.notice"};
 };
 
+conf::item<bool>
+command_typing
+{
+	{ "name",     "ircd.m.command.typing" },
+	{ "default",  false                   },
+};
+
 static command_result
 execute_command(const mutable_buffer &buf,
                 const m::user &user,
                 const m::room &room,
                 const string_view &cmd,
-                const m::event::id &reply_to);
+                const m::event::id &reply_to,
+                const bool public_response);
 
 void
 handle_command(const m::event &event,
@@ -153,7 +161,7 @@ try
 
 	const auto &[html, alt, msgtype]
 	{
-		execute_command(buf, user, room_id, cmd, reply_id)
+		execute_command(buf, user, room_id, cmd, reply_id, public_response)
 	};
 
 	if(!html && !alt)
@@ -307,9 +315,30 @@ execute_command(const mutable_buffer &buf,
                 const m::user &user,
                 const m::room &room,
                 const string_view &cmd,
-                const m::event::id &reply_id)
+                const m::event::id &reply_id,
+                const bool public_response)
 try
 {
+	m::typing::edu typing
+	{
+		{ "room_id",  room.room_id       },
+		{ "typing",   true               },
+		{ "user_id",  user.user_id       },
+		{ "timeout",  (30000ms).count()  },
+	};
+
+	if(public_response && command_typing)
+		m::typing::commit{typing};
+
+	const unwind done_typing{[&]
+	{
+		if(public_response && command_typing)
+		{
+			json::get<"typing"_>(typing) = false;
+			m::typing::commit{typing};
+		}
+	}};
+
 	if(startswith(cmd, '#'))
 		return command__control(buf, user, room, lstrip(cmd, '#'));
 
