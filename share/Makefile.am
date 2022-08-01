@@ -3,7 +3,7 @@
 # IRCd read-only data (share) assets.
 #
 
-datadir = @datadir@/$(PACKAGE_TARNAME)
+datadir = @datadir@
 
 install-mkdirs:
 	-@if test ! -d $(DESTDIR)$(datadir); then \
