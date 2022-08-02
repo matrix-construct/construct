@@ -209,6 +209,7 @@ struct ircd::m::name
 	static constexpr const char *const msgtype {"msgtype"};
 	static constexpr const char *const format {"format"};
 	static constexpr const char *const formatted_body {"formatted_body"};
+	static constexpr const char *const m_relates_to {"m.relates_to"};
 
 	static constexpr const char *const usage {"usage"};
 	static constexpr const char *const master_key {"master_key"};

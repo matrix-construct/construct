@@ -23,6 +23,9 @@ struct ircd::m::room::message
 	/// Required. The body of the message.
 	json::property<name::body, json::string>,
 
+	/// m.relates_to
+	json::property<name::m_relates_to, json::object>,
+
 	/// Required. enum.
 	json::property<name::msgtype, json::string>,
 
