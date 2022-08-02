@@ -17958,3 +17958,61 @@ console_cmd__gpt__label(opt &out, const string_view &line)
 	<< std::endl;
 	return true;
 }
+
+bool
+console_cmd__gpt__tldr(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id", "top_k", "top_p", "limit"
+	}};
+
+	const m::event::id event_id
+	{
+		param["event_id"]
+	};
+
+	const unique_mutable_buffer buf
+	{
+		16_KiB
+	};
+
+	const json::object content
+	{
+		m::get(event_id, "content", buf)
+	};
+
+	const m::room::message msg
+	{
+		content
+	};
+
+	const auto body
+	{
+		msg.body()
+	};
+
+	std::string text(body);
+	text += "\n\nTL;DR:"s;
+
+	gpt::opts opts alignas(4096);
+	opts.top_k = param.at("top_k", opts.top_k);
+	opts.top_p = param.at("top_p", opts.top_p);
+	opts.limit = param.at("limit", opts.limit);
+
+	gpt::ctrl ctrl alignas(4096) {0};
+	gpt::task task
+	{
+		&opts, &ctrl
+	};
+
+	const auto output
+	{
+		task(buf, text)
+	};
+
+	out
+	<< output
+	<< std::endl;
+	return true;
+}
