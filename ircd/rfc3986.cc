@@ -435,22 +435,22 @@ namespace ircd::rfc3986::parser::decoder
 
 	static const auto is_safe
 	{
-		[](const char val, auto &c, bool &pass)
+		[](const int8_t val, auto &c, bool &pass)
 		{
 			pass = (val > 0x1F) | (val < 0x00);
 			attr_at<0>(c) = val;
 		}
 	};
 
-	const expr decode_char
+	const rule<char()> decode_char_safe
 	{
-		lit('%') >> qi::int_parser<char, 16, 2, 2>{}
+		lit('%') > qi::int_parser<uint8_t, 16, 2, 2>{}[is_safe]
 		,"url decodable character"
 	};
 
-	const rule<char()> decode_char_safe
+	const expr decode_char
 	{
-		lit('%') > qi::int_parser<char, 16, 2, 2>{}[is_safe]
+		lit('%') >> qi::int_parser<uint8_t, 16, 2, 2>{}
 		,"url decodable character"
 	};
 
