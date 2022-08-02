@@ -704,43 +704,18 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 	if(json::get<"type"_>(event) != "m.room.message")
 		return;
 
-	const auto &content
+	const m::room::message content
 	{
 		json::get<"content"_>(event)
 	};
 
-	if(!content.has("m.relates_to", json::OBJECT))
-		return;
-
-	const json::object &m_relates_to
+	const m::event::id event_id
 	{
-		content["m.relates_to"]
+		content.reply_to_event()
 	};
 
-	if(!m_relates_to.has("m.in_reply_to", json::OBJECT))
+	if(!event_id)
 		return;
-
-	const json::object &m_in_reply_to
-	{
-		m_relates_to["m.in_reply_to"]
-	};
-
-	const json::string &event_id
-	{
-		m_in_reply_to["event_id"]
-	};
-
-	if(unlikely(!valid(m::id::EVENT, event_id)))
-	{
-		log::derror
-		{
-			log, "Cannot index m.in_reply_to in %s; '%s' is not an event_id.",
-			string_view{event.event_id},
-			string_view{event_id}
-		};
-
-		return;
-	}
 
 	const event::idx &event_idx
 	{
@@ -791,33 +766,17 @@ ircd::m::dbs::_prefetch_event_refs_m_relates_m_reply(const event &event,
 	if(json::get<"type"_>(event) != "m.room.message")
 		return false;
 
-	const auto &content
+	const m::room::message content
 	{
 		json::get<"content"_>(event)
 	};
 
-	if(!content.has("m.relates_to", json::OBJECT))
-		return false;
-
-	const json::object &m_relates_to
+	const m::event::id event_id
 	{
-		content["m.relates_to"]
+		content.reply_to_event()
 	};
 
-	if(!m_relates_to.has("m.in_reply_to", json::OBJECT))
-		return false;
-
-	const json::object &m_in_reply_to
-	{
-		m_relates_to["m.in_reply_to"]
-	};
-
-	const json::string &event_id
-	{
-		m_in_reply_to["event_id"]
-	};
-
-	if(unlikely(!valid(m::id::EVENT, event_id)))
+	if(!event_id)
 		return false;
 
 	return prefetch_event_idx(event_id, opts);
