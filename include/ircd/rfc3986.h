@@ -46,7 +46,7 @@ namespace ircd::rfc3986
 
 	// Decode percent-encoded strings. N.B. this decodes into any character
 	// including control codes like %00 into '\0' etc. Use with caution.
-	const_buffer decode_unsafe(const mutable_buffer &, const string_view &url);
+	const_buffer decode_unsafe(const mutable_buffer &, const string_view &url) noexcept;
 
 	// extractor suite
 	uint16_t port(const string_view &remote); // get portnum from valid remote

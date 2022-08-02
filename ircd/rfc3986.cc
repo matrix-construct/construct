@@ -444,7 +444,7 @@ namespace ircd::rfc3986::parser::decoder
 
 	const expr decode_char
 	{
-		lit('%') > qi::int_parser<char, 16, 2, 2>{}
+		lit('%') >> qi::int_parser<char, 16, 2, 2>{}
 		,"url decodable character"
 	};
 
@@ -479,6 +479,7 @@ namespace ircd::rfc3986::parser::decoder
 ircd::const_buffer
 ircd::rfc3986::decode_unsafe(const mutable_buffer &buf,
                              const string_view &url)
+noexcept
 {
 	const char *start(url.data()), *const stop
 	{
