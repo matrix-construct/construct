@@ -182,7 +182,7 @@ try
 		json::get(event, top, json::object{})
 	};
 
-	tokens(path, ".", [&value]
+	tokens(path, '.', [&value]
 	(const string_view &key)
 	{
 		if(!json::type(value, json::OBJECT))

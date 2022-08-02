@@ -295,7 +295,7 @@ ircd::m::get_room_keys_keys(client &client,
 		{
 			string_view part[4]; const auto parts
 			{
-				tokens(state_key, ":", part)
+				tokens(state_key, ':', part)
 			};
 
 			const auto &_version{part[3]};

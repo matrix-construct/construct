@@ -17813,7 +17813,7 @@ console_cmd__gpt__raw(opt &out, const string_view &line)
 
 	const auto text
 	{
-		tokens_after(line, " ", skips)
+		tokens_after(line, ' ', skips)
 	};
 
 	const unique_mutable_buffer buf
@@ -17866,7 +17866,7 @@ console_cmd__gpt__query(opt &out, const string_view &line)
 	};
 
 	std::string text {"Q: "s};
-	text += tokens_after(line, " ", skips);
+	text += tokens_after(line, ' ', skips);
 	text += "\n\nA:";
 
 	const unique_mutable_buffer buf
