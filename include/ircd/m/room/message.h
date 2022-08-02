@@ -37,5 +37,23 @@ struct ircd::m::room::message
 	json::property<name::formatted_body, json::string>
 >
 {
+	/// The event ID of the message being replied to; empty if malformed or
+	/// not a reply. If malformed, the message is not considered a reply.
+	id::event reply_to_event() const noexcept;
+
+	/// The user who sent the message being replied to; empty if not a reply
+	/// or the username was missing or malformed.
+	id::user reply_to_user() const noexcept;
+
+	/// The message being replied to, cut to quoted content, which may include
+	/// multiple pseudo-newlines and leading '>' interrupting the text; caller
+	/// must clean that up if required. Empty if not a reply or malformed.
+	string_view reply_to_body() const noexcept;
+
+	/// C2S v1.3 11.3.1 message body stripped of any reply fallback. This is
+	/// the proper way to read the message rather than reading "body" direct;
+	/// returns "body" if not reply.
+	string_view body() const noexcept;
+
 	using super_type::tuple;
 };

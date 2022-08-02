@@ -126,6 +126,7 @@ libircd_matrix_la_SOURCES += room_members.cc
 libircd_matrix_la_SOURCES += room_origins.cc
 libircd_matrix_la_SOURCES += room_type.cc
 libircd_matrix_la_SOURCES += room_content.cc
+libircd_matrix_la_SOURCES += room_message.cc
 libircd_matrix_la_SOURCES += room_power.cc
 libircd_matrix_la_SOURCES += room_state.cc
 libircd_matrix_la_SOURCES += room_state_history.cc
