@@ -218,7 +218,7 @@ ircd::m::vm::execute(eval &eval,
 	const size_t prefetched_keys
 	{
 		prefetch_keys?
-			fetch_keys(eval): 0UL
+			keys::fetch(eval.pdus): 0UL
 	};
 
 	const bool prefetch_refs

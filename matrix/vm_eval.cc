@@ -38,47 +38,6 @@ decltype(ircd::m::vm::eval::injecting)
 ircd::m::vm::eval::injecting;
 
 size_t
-ircd::m::vm::fetch_keys(const eval &eval)
-{
-	using m::fed::key::server_key;
-
-	std::vector<server_key> queries;
-	for(const auto &event : eval.pdus)
-		for(const auto &[server_name, signatures] : json::get<"signatures"_>(event))
-			for(const auto &[key_id, signature] : json::object(signatures))
-			{
-				const server_key query
-				{
-					json::get<"origin"_>(event), key_id
-				};
-
-				// Check if we're already making a query.
-				if(std::binary_search(begin(queries), end(queries), query))
-					continue;
-
-				// Check if we already have the key.
-				if(m::keys::cache::has(json::get<"origin"_>(event), key_id))
-					continue;
-
-				// If there's a cached error on the host we can skip here.
-				if(m::fed::errant(json::get<"origin"_>(event)))
-					continue;
-
-				queries.emplace_back(json::get<"origin"_>(event), key_id);
-				std::sort(begin(queries), end(queries));
-			}
-
-	const size_t fetched
-	{
-		!queries.empty()?
-			m::keys::fetch(queries):
-			0UL
-	};
-
-	return fetched;
-}
-
-size_t
 ircd::m::vm::prefetch_refs(const eval &eval)
 {
 	assert(eval.opts);
@@ -97,38 +56,6 @@ ircd::m::vm::prefetch_refs(const eval &eval)
 	}
 
 	return prefetched;
-}
-
-ircd::string_view
-ircd::m::vm::loghead(const eval &eval)
-{
-	thread_local char buf[128];
-	return loghead(buf, eval);
-}
-
-ircd::string_view
-ircd::m::vm::loghead(const mutable_buffer &buf,
-                     const eval &eval)
-{
-	return fmt::sprintf
-	{
-		buf, "vm:%lu:%lu:%lu parent:%lu %s eval:%lu %s seq:%lu %s",
-		sequence::retired,
-		sequence::committed,
-		sequence::uncommitted,
-		eval.parent?
-			eval.parent->id:
-			0UL,
-		eval.parent?
-			reflect(eval.parent->phase):
-			reflect(phase::NONE),
-		eval.id,
-		reflect(eval.phase),
-		sequence::get(eval),
-		eval.event_?
-			string_view{eval.event_->event_id}:
-			"<unidentified>"_sv,
-	};
 }
 
 ircd::m::vm::eval *
@@ -183,6 +110,38 @@ noexcept
 	}
 
 	return ret;
+}
+
+ircd::string_view
+ircd::m::vm::loghead(const eval &eval)
+{
+	thread_local char buf[128];
+	return loghead(buf, eval);
+}
+
+ircd::string_view
+ircd::m::vm::loghead(const mutable_buffer &buf,
+                     const eval &eval)
+{
+	return fmt::sprintf
+	{
+		buf, "vm:%lu:%lu:%lu parent:%lu %s eval:%lu %s seq:%lu %s",
+		sequence::retired,
+		sequence::committed,
+		sequence::uncommitted,
+		eval.parent?
+			eval.parent->id:
+			0UL,
+		eval.parent?
+			reflect(eval.parent->phase):
+			reflect(phase::NONE),
+		eval.id,
+		reflect(eval.phase),
+		sequence::get(eval),
+		eval.event_?
+			string_view{eval.event_->event_id}:
+			"<unidentified>"_sv,
+	};
 }
 
 //

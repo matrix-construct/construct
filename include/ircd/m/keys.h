@@ -55,6 +55,7 @@ struct ircd::m::keys
 {
 	struct cache;
 
+	using pdus = vector_view<const event>;
 	using queries = vector_view<const fed::key::server_key>; // <server, key_id>
 	using closure = std::function<void (const json::object &)>;
 	using closure_bool = std::function<bool (const json::object &)>;
@@ -64,6 +65,7 @@ struct ircd::m::keys
 	static bool get(const string_view &server_name, const string_view &key_id, const closure &);
 	static bool query(const string_view &query_server, const queries &, const closure_bool &);
 	static size_t fetch(const queries &);
+	static size_t fetch(const pdus &);
 
 	using super_type::tuple;
 	using super_type::operator=;
