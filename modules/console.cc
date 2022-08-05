@@ -8690,9 +8690,81 @@ console_cmd__event__refs__auth(opt &out, const string_view &line)
 	return true;
 }
 
-//
-// commit
-//
+bool
+console_cmd__event__relates(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id", "rel_type"
+	}};
+
+	const m::event::id &event_id
+	{
+		param.at("event_id")
+	};
+
+	const string_view &rel_type
+	{
+		param["rel_type"]
+	};
+
+	const m::event::refs refs
+	{
+		index(event_id)
+	};
+
+	const m::dbs::ref type
+	{
+		m::dbs::ref::M_RELATES
+	};
+
+	refs.for_each(type, [&out, &refs, &event_id, &rel_type]
+	(const auto &ref, const auto &type)
+	{
+		const auto ref_id
+		{
+			m::event_id(std::nothrow, ref)
+		};
+
+		const auto content
+		{
+			m::get(std::nothrow, ref, "content")
+		};
+
+		if(!content || !ref_id)
+			return true;
+
+		const m::relates_to relates
+		{
+			json::object(content)["m.relates_to"]
+		};
+
+		const auto ref_rel_type
+		{
+			json::get<"m.in_reply_to"_>(relates)?
+				"<m.in_reply_to>"_sv:
+			json::get<"rel_type"_>(relates)?
+				string_view(json::get<"rel_type"_>(relates)):
+				"<none>"_sv
+		};
+
+		if(rel_type && ref_rel_type != rel_type)
+			return true;
+
+		out
+		<< " " << std::right << std::setw(10) << refs.idx
+		<< " " << std::left << std::setw(45) << trunc(event_id, 45)
+		<< " <- " << std::left << std::setw(36) << ref_rel_type
+		<< " " << std::right << std::setw(10) << ref
+		<< " " << std::left << std::setw(45) << trunc(ref_id? string_view{ref_id}: "<index error>"_sv, 45)
+		<< std::endl
+		;
+
+		return true;
+	});
+
+	return true;
+}
 
 //
 // eval
