@@ -16644,36 +16644,35 @@ console_cmd__vm(opt &out, const string_view &line)
 	<< std::left << std::setw(20) << "STATE_KEY" << " "
 	<< std::endl;
 
-	for(const auto *const &eval : m::vm::eval::list)
+	m::vm::eval::for_each([&out](const auto &eval)
 	{
-		assert(eval);
-		assert(eval->ctx);
+		assert(eval.ctx);
 
 		out
-		<< std::right << std::setw(8) << eval->id << " "
-		<< std::right << std::setw(4) << (eval->ctx? ctx::id(*eval->ctx) : 0UL) << " "
-		<< std::left << std::setw(8) << (eval->ctx? trunc(ctx::name(*eval->ctx), 8) : string_view{}) << " "
-		<< std::left << std::setw(24) << trunc(eval->opts->node_id?: eval->opts->user_id, 24) << " "
-		<< std::right << std::setw(4) << eval->pdus.size() << " "
-		<< std::right << std::setw(4) << eval->evaluated << " "
-		<< std::right << std::setw(4) << eval->accepted << " "
-		<< std::right << std::setw(4) << eval->faulted << " "
-		<< std::right << std::setw(8) << (eval->parent? eval->parent->id : 0UL) << " "
-		<< std::right << std::setw(9) << eval->sequence << " "
-		<< std::right << std::setw(4) << (eval->hook? eval->hook->id(): 0U)  << " "
-		<< std::left << std::setw(10) << trunc(reflect(eval->phase), 10) << " "
-		<< std::right << std::setw(6) << (eval->txn? eval->txn->bytes() : 0UL) << "  "
-		<< std::right << std::setw(5) << (eval->txn? eval->txn->size() : 0UL) << " "
-		<< std::right << std::setw(8) << (eval->event_ && eval->event_id? long(json::get<"depth"_>(*eval->event_)) : -1L) << " "
-		<< std::right << std::setw(5) << eval->room_version << " "
-		<< std::left << std::setw(40) << trunc(eval->room_id, 40) << " "
-		<< std::left << std::setw(60) << trunc(eval->event_id, 60) << " "
-		<< std::left << std::setw(20) << trunc(eval->event_? json::get<"sender"_>(*eval->event_) : json::string{}, 20) << " "
-		<< std::left << std::setw(20) << trunc(eval->event_? json::get<"type"_>(*eval->event_) : json::string{}, 20) << " "
-		<< std::left << std::setw(20) << trunc(eval->event_? json::get<"state_key"_>(*eval->event_) : json::string{}, 20) << " "
+		<< std::right << std::setw(8) << eval.id << " "
+		<< std::right << std::setw(4) << (eval.ctx? ctx::id(*eval.ctx) : 0UL) << " "
+		<< std::left << std::setw(8) << (eval.ctx? trunc(ctx::name(*eval.ctx), 8) : string_view{}) << " "
+		<< std::left << std::setw(24) << trunc(eval.opts->node_id?: eval.opts->user_id, 24) << " "
+		<< std::right << std::setw(4) << eval.pdus.size() << " "
+		<< std::right << std::setw(4) << eval.evaluated << " "
+		<< std::right << std::setw(4) << eval.accepted << " "
+		<< std::right << std::setw(4) << eval.faulted << " "
+		<< std::right << std::setw(8) << (eval.parent? eval.parent->id : 0UL) << " "
+		<< std::right << std::setw(9) << eval.sequence << " "
+		<< std::right << std::setw(4) << (eval.hook? eval.hook->id(): 0U)  << " "
+		<< std::left << std::setw(10) << trunc(reflect(eval.phase), 10) << " "
+		<< std::right << std::setw(6) << (eval.txn? eval.txn->bytes() : 0UL) << "  "
+		<< std::right << std::setw(5) << (eval.txn? eval.txn->size() : 0UL) << " "
+		<< std::right << std::setw(8) << (eval.event_ && eval.event_id? long(json::get<"depth"_>(*eval.event_)) : -1L) << " "
+		<< std::right << std::setw(5) << eval.room_version << " "
+		<< std::left << std::setw(40) << trunc(eval.room_id, 40) << " "
+		<< std::left << std::setw(60) << trunc(eval.event_id, 60) << " "
+		<< std::left << std::setw(20) << trunc(eval.event_? json::get<"sender"_>(*eval.event_) : json::string{}, 20) << " "
+		<< std::left << std::setw(20) << trunc(eval.event_? json::get<"type"_>(*eval.event_) : json::string{}, 20) << " "
+		<< std::left << std::setw(20) << trunc(eval.event_? json::get<"state_key"_>(*eval.event_) : json::string{}, 20) << " "
 		<< std::endl
 		;
-	}
+	});
 
 	out << std::endl;
 

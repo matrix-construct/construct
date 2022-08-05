@@ -36,6 +36,9 @@ namespace ircd::m::vm
 struct ircd::m::vm::eval
 :instance_list<eval>
 {
+	using each_eval = closure_bool<std::function, eval &>;
+	using each_pdu = closure_bool<std::function, const event &>;
+
 	static uint64_t id_ctr;
 	static uint executing;
 	static uint injecting;
@@ -84,11 +87,9 @@ struct ircd::m::vm::eval
 	~eval() noexcept;
 
 	// Tools for all evals
-	static bool for_each(const std::function<bool (eval &)> &);
-	static bool for_each_pdu(const std::function<bool (const event &)> &);
-
-	// Tools for all evals sharing this ircd::context
-	static bool for_each(const ctx::ctx *const &, const std::function<bool (eval &)> &);
+	static bool for_each(const each_eval &);
+	static bool for_each_pdu(const each_pdu &);
+	static bool for_each(const ctx::ctx *const &, const each_eval &);
 	static size_t count(const ctx::ctx *const &);
 
 	// Event snoop interface

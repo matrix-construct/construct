@@ -395,18 +395,20 @@ ircd::m::vm::eval::count(const ctx::ctx *const &c)
 
 bool
 ircd::m::vm::eval::for_each(const ctx::ctx *const &c,
-                            const std::function<bool (eval &)> &closure)
+                            const each_eval &closure)
 {
-	for(eval *const &eval : eval::list)
-		if(eval->ctx == c)
-			if(!closure(*eval))
+	return for_each([&c, &closure](eval &e)
+	{
+		if(e.ctx == c)
+			if(!closure(e))
 				return false;
 
-	return true;
+		return true;
+	});
 }
 
 bool
-ircd::m::vm::eval::for_each_pdu(const std::function<bool (const event &)> &closure)
+ircd::m::vm::eval::for_each_pdu(const each_pdu &closure)
 {
 	return for_each([&closure](eval &e)
 	{
@@ -427,7 +429,7 @@ ircd::m::vm::eval::for_each_pdu(const std::function<bool (const event &)> &closu
 }
 
 bool
-ircd::m::vm::eval::for_each(const std::function<bool (eval &)> &closure)
+ircd::m::vm::eval::for_each(const each_eval &closure)
 {
 	for(eval *const &eval : eval::list)
 		if(!closure(*eval))
