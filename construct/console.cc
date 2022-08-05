@@ -33,6 +33,13 @@ construct::console::input_max
 	{ "default",  long(64_KiB)                  },
 };
 
+decltype(construct::console::buffer_size)
+construct::console::buffer_size
+{
+	{ "name",     "construct.console.buffer.size" },
+	{ "default",  long(96_KiB)                    },
+};
+
 decltype(construct::console::ratelimit_sleep)
 construct::console::ratelimit_sleep
 {
@@ -122,7 +129,7 @@ construct::console::active()
 construct::console::console()
 :outbuf
 {
-	128_KiB
+	size_t(buffer_size)
 }
 ,context
 {

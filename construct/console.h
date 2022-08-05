@@ -12,6 +12,7 @@ struct construct::console
 {
 	static ircd::conf::item<size_t> stack_sz;
 	static ircd::conf::item<size_t> input_max;
+	static ircd::conf::item<size_t> buffer_size;
 	static ircd::conf::item<size_t> ratelimit_bytes;
 	static ircd::conf::item<ircd::milliseconds> ratelimit_sleep;
 
