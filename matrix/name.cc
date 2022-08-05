@@ -160,8 +160,6 @@ constexpr const char *const ircd::m::name::include_state;
 constexpr const char *const ircd::m::name::groupings;
 constexpr const char *const ircd::m::name::filter;
 
-constexpr const char *const ircd::m::name::rel_type;
-
 constexpr const char *const ircd::m::name::kind;
 constexpr const char *const ircd::m::name::key;
 constexpr const char *const ircd::m::name::pattern;
@@ -189,6 +187,9 @@ constexpr const char *const ircd::m::name::msgtype;
 constexpr const char *const ircd::m::name::format;
 constexpr const char *const ircd::m::name::formatted_body;
 constexpr const char *const ircd::m::name::m_relates_to;
+
+constexpr const char *const ircd::m::name::rel_type;
+constexpr const char *const ircd::m::name::m_in_reply_to;
 
 constexpr const char *const ircd::m::name::usage;
 constexpr const char *const ircd::m::name::master_key;

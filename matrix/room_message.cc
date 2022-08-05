@@ -112,17 +112,14 @@ ircd::m::event::id
 ircd::m::room::message::reply_to_event()
 const noexcept try
 {
-	const json::object &m_relates_to
+	const m::relates_to &m_relates_to
 	{
 		json::get<"m.relates_to"_>(*this)
 	};
 
-	if(!m_relates_to || !json::type(m_relates_to, json::OBJECT))
-		return {};
-
 	const json::object &m_in_reply_to
 	{
-		m_relates_to["m.in_reply_to"]
+		json::get<"m.in_reply_to"_>(m_relates_to)
 	};
 
 	const auto &event_id
@@ -136,6 +133,16 @@ const noexcept try
 		return {};
 
 	return event_id;
+}
+catch(const json::error &e)
+{
+	log::derror
+	{
+		log, "Failed to extract m.relates_to m.in_reply_to event_id :%s",
+		e.what(),
+	};
+
+	return {};
 }
 catch(const std::exception &e)
 {

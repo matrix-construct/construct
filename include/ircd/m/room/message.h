@@ -24,7 +24,7 @@ struct ircd::m::room::message
 	json::property<name::body, json::string>,
 
 	/// m.relates_to
-	json::property<name::m_relates_to, json::object>,
+	json::property<name::m_relates_to, m::relates_to>,
 
 	/// Required. enum.
 	json::property<name::msgtype, json::string>,

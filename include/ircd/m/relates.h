@@ -20,7 +20,8 @@ struct ircd::m::relates_to
 :json::tuple
 <
 	json::property<name::event_id, json::string>,
-	json::property<name::rel_type, json::string>
+	json::property<name::rel_type, json::string>,
+	json::property<name::m_in_reply_to, json::object>
 >
 {
 	using super_type::tuple;

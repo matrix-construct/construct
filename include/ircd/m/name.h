@@ -181,8 +181,6 @@ struct ircd::m::name
 	static constexpr const char *const groupings {"groupings"};
 	static constexpr const char *const filter {"filter"};
 
-	static constexpr const char *const rel_type {"rel_type"};
-
 	static constexpr const char *const kind {"kind"};
 	static constexpr const char *const key {"key"};
 	static constexpr const char *const pattern {"pattern"};
@@ -210,6 +208,9 @@ struct ircd::m::name
 	static constexpr const char *const format {"format"};
 	static constexpr const char *const formatted_body {"formatted_body"};
 	static constexpr const char *const m_relates_to {"m.relates_to"};
+
+	static constexpr const char *const m_in_reply_to {"m.in_reply_to"};
+	static constexpr const char *const rel_type {"rel_type"};
 
 	static constexpr const char *const usage {"usage"};
 	static constexpr const char *const master_key {"master_key"};
