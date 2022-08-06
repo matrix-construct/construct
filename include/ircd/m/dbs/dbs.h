@@ -59,6 +59,7 @@ namespace ircd::m::dbs::appendix
 #include "room_state_space.h"       // room_id | type, state_key, depth, event_idx
 #include "room_joined.h"            // room_id | origin, member => event_idx
 #include "room_head.h"              // room_id | event_id => event_idx
+#include "init.h"
 
 /// Options that affect the dbs::write() of an event to the transaction.
 struct ircd::m::dbs::write_opts
@@ -191,16 +192,6 @@ enum ircd::m::dbs::appendix::index
 
 	/// Take branch to handle room redaction events.
 	ROOM_REDACT,
-};
-
-struct ircd::m::dbs::init
-{
-	std::string our_dbpath;
-	std::string their_dbpath;
-
-  public:
-	init(const string_view &servername, std::string dbopts = {});
-	~init() noexcept;
 };
 
 // Internal utils (here for now)

@@ -98,6 +98,7 @@ libircd_matrix_la_SOURCES += dbs_room_state_space.cc
 libircd_matrix_la_SOURCES += dbs_room_joined.cc
 libircd_matrix_la_SOURCES += dbs_room_head.cc
 libircd_matrix_la_SOURCES += dbs_desc.cc
+libircd_matrix_la_SOURCES += dbs_init.cc
 libircd_matrix_la_SOURCES += hook.cc
 libircd_matrix_la_SOURCES += event.cc
 libircd_matrix_la_SOURCES += event_cached.cc
