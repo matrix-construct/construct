@@ -15,9 +15,10 @@
 ///
 struct ircd::m::room::content
 {
-	using closure = std::function
+	using entry = pair<uint64_t, m::event::idx>;
+	using closure = util::closure_bool
 	<
-		bool (const json::object &, const uint64_t &, const event::idx &)
+		std::function, const json::object &, const uint64_t &, const event::idx &
 	>;
 
 	static const size_t prefetch_max;
@@ -25,12 +26,17 @@ struct ircd::m::room::content
 
 	m::room room;
 	std::pair<uint64_t, int64_t> range; // highest (inclusive) to lowest (exclusive)
+	size_t queue_max;
+	std::unique_ptr<entry[]> buf;
 
   public:
 	bool for_each(const closure &) const;
 
 	content(const m::room &,
 	        const decltype(range) &  = { -1UL, -1L });
+
+	content(const content &) = delete;
+	content(content &&) = delete;
 };
 
 inline
@@ -38,4 +44,12 @@ ircd::m::room::content::content(const m::room &room,
                                 const decltype(range) &range)
 :room{room}
 ,range{range}
+,queue_max{prefetch}
+,buf
+{
+	new entry[queue_max]
+	{
+		{ 0UL, 0UL }
+	}
+}
 {}

@@ -19,18 +19,6 @@ bool
 ircd::m::room::content::for_each(const closure &closure)
 const
 {
-	using entry = pair<uint64_t, m::event::idx>;
-	const size_t queue_max
-	{
-		size_t(content::prefetch)
-	};
-
-	// ring queue buffer
-	const std::unique_ptr<entry[]> buf
-	{
-		new entry[queue_max] {{0UL, 0UL}}
-	};
-
 	entry *const __restrict__ queue
 	{
 		buf.get()
