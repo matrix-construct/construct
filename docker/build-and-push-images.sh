@@ -94,32 +94,68 @@ docker push $ACCT/$REPO:alpine-3.16-full-built-clang-amd64
 # Ubuntu 22.04
 #
 
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base $BASEDIR/ubuntu/22.04/base
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full $BASEDIR/ubuntu/22.04/full
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-gcc-9 $BASEDIR/ubuntu/22.04/base-gcc-9
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-gcc-10 $BASEDIR/ubuntu/22.04/base-gcc-10
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-gcc-11 $BASEDIR/ubuntu/22.04/base-gcc-11
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-gcc-12 $BASEDIR/ubuntu/22.04/base-gcc-12
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-clang-10 $BASEDIR/ubuntu/22.04/base-clang-10
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-clang-11 $BASEDIR/ubuntu/22.04/base-clang-11
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-clang-12 $BASEDIR/ubuntu/22.04/base-clang-12
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-clang-13 $BASEDIR/ubuntu/22.04/base-clang-13
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-clang-14 $BASEDIR/ubuntu/22.04/base-clang-14
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-clang-14 -t $ACCT/$REPO:ubuntu-22.04-built $BASEDIR/ubuntu/22.04/full-clang-14
+#
+# L0 - Base featured image
+#
 
-docker push $ACCT/$REPO:ubuntu-22.04-base
-docker push $ACCT/$REPO:ubuntu-22.04-full
-docker push $ACCT/$REPO:ubuntu-22.04-base-gcc-9
-docker push $ACCT/$REPO:ubuntu-22.04-base-gcc-10
-docker push $ACCT/$REPO:ubuntu-22.04-base-gcc-11
-docker push $ACCT/$REPO:ubuntu-22.04-base-gcc-12
-docker push $ACCT/$REPO:ubuntu-22.04-base-clang-10
-docker push $ACCT/$REPO:ubuntu-22.04-base-clang-11
-docker push $ACCT/$REPO:ubuntu-22.04-base-clang-12
-docker push $ACCT/$REPO:ubuntu-22.04-base-clang-13
-docker push $ACCT/$REPO:ubuntu-22.04-base-clang-14
-docker push $ACCT/$REPO:ubuntu-22.04-full-clang-14
-docker push $ACCT/$REPO:ubuntu-22.04-built
+ARGS="$ARGS_"
+ARGS="$ARGS --platform linux/amd64"
+docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-amd64 $BASEDIR/ubuntu/22.04/base
+
+#
+# L1 - Fully featured image
+#
+
+ARGS="$ARGS_"
+ARGS="$ARGS --platform linux/amd64"
+docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-amd64 $BASEDIR/ubuntu/22.04/full
+
+#
+# L2/L3 - Build/Built/Test
+#
+
+ARGS="$ARGS_"
+ARGS="$ARGS --platform linux/amd64"
+ARGS="$ARGS --build-arg feature=base"
+ARGS="$ARGS --build-arg extra_packages_dev=gcc-9"
+ARGS="$ARGS --build-arg extra_packages_dev1=g++-9"
+ARGS="$ARGS --build-arg cc=gcc-9 --build-arg cxx=g++-9"
+docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-build-gcc-9-amd64 $BASEDIR/ubuntu/22.04/build
+docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-built-gcc-9-amd64 $BASEDIR/ubuntu/22.04/built
+docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-test-gcc-9-amd64 $BASEDIR/ubuntu/22.04/test
+
+ARGS="$ARGS_"
+ARGS="$ARGS --platform linux/amd64"
+ARGS="$ARGS --build-arg feature=base"
+ARGS="$ARGS --build-arg extra_packages_dev=gcc-12"
+ARGS="$ARGS --build-arg extra_packages_dev1=g++-12"
+ARGS="$ARGS --build-arg cc=gcc-12 --build-arg cxx=g++-12"
+docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-build-gcc-12-amd64 $BASEDIR/ubuntu/22.04/build
+docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-built-gcc-12-amd64 $BASEDIR/ubuntu/22.04/built
+docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-test-gcc-12-amd64 $BASEDIR/ubuntu/22.04/test
+
+ARGS="$ARGS_"
+ARGS="$ARGS --platform linux/amd64"
+ARGS="$ARGS --build-arg feature=full"
+ARGS="$ARGS --build-arg extra_packages_dev=clang-14"
+ARGS="$ARGS --build-arg extra_packages_dev1=llvm-14-dev"
+ARGS="$ARGS --build-arg cc=clang-14 --build-arg cxx=clang++-14"
+docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-build-clang-14-amd64 $BASEDIR/ubuntu/22.04/build
+docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-built-clang-14-amd64 $BASEDIR/ubuntu/22.04/built
+docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-test-clang-14-amd64 $BASEDIR/ubuntu/22.04/test
+
+#
+# Pushed images
+#
+
+docker push $ACCT/$REPO:ubuntu-22.04-base-build-gcc-9-amd64
+docker push $ACCT/$REPO:ubuntu-22.04-base-built-gcc-9-amd64
+
+docker push $ACCT/$REPO:ubuntu-22.04-base-build-gcc-12-amd64
+docker push $ACCT/$REPO:ubuntu-22.04-base-built-gcc-12-amd64
+
+docker push $ACCT/$REPO:ubuntu-22.04-full-build-clang-14-amd64
+docker push $ACCT/$REPO:ubuntu-22.04-full-built-clang-14-amd64
 
 ###############################################################################
 #

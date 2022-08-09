@@ -1,19 +1,20 @@
-FROM jevolk/construct:ubuntu-22.04-base
+ARG acct
+ARG repo
+
+FROM ${acct}/${repo}:ubuntu-22.04-base-${TARGETARCH}
 
 ENV packages="\
-opencl-headers \
-libgraphicsmagick1-dev \
 libgraphicsmagick-q16-3 \
-libicu-dev \
-libjemalloc-dev \
-libopencl-clang-dev \
+libpng16-16 \
+"
+
+ENV packages_dev="\
+${packages_dev} \
+libgraphicsmagick1-dev \
 libpng-dev \
 "
 
 RUN true \
-&& apt-get update \
-&& apt-get install --no-install-recommends -y ${packages} \
-&& apt-get clean \
-&& apt-get autoremove --purge -y \
-&& rm -rf /var/lib/apt/lists/* \
+&& eval ${do_install} ${packages} \
+&& eval ${do_clean} \
 && true

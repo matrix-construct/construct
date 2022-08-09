@@ -31,17 +31,5 @@ ${extra_packages_dev2} \
 
 RUN true \
 && eval ${do_install} ${packages_dev} \
-&& git clone ${ctor_url} construct \
-&& cd construct \
-&& rmdir -v deps/rocksdb \
-&& ln -sv /usr/src/rocksdb deps \
-&& ./autogen.sh \
-&& ./configure \
-&& make -j `nproc` \
-&& make install \
-&& cd .. \
-&& rm -rf construct \
-&& rm -rf /usr/src/rocksdb* \
-&& eval ${do_purge} ${packages_dev} \
 && eval ${do_clean} \
 && true

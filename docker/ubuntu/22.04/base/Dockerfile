@@ -1,41 +1,54 @@
 FROM ubuntu:22.04
 
-ENV DEBIAN_FRONTEND=noninteractive
+ARG skiprocks
+ARG rocksdb_version 7.4.3
+ARG rocksdb_url
+
+ENV rocksdb_version ${rocksdb_version}
+ENV rocksdb_url https://codeload.github.com/facebook/rocksdb/tar.gz/refs/tags/v${rocksdb_version}
 
 ENV packages="\
-autoconf \
-autoconf-archive \
-autoconf2.13 \
-automake \
-autotools-dev \
-build-essential \
 ca-certificates \
+libjemalloc2 \
+libboost-chrono1.74 \
+libboost-context1.74 \
+libboost-coroutine1.74 \
+libboost-system1.74 \
+libboost-thread1.74 \
+libicu70 \
+libnss-db \
+libsodium23 \
+libssl3 \
+liblz4-1 \
+libmagic1 \
+libzstd1 \
+"
+
+ENV packages_rocksdb_dev="\
+build-essential \
 cmake \
 curl \
 git \
+libjemalloc-dev \
+liblz4-dev \
+libzstd-dev \
+xz-utils \
+"
+
+ENV packages_dev="\
+${packages_rocksdb_dev} \
 libboost-chrono1.74-dev \
 libboost-context1.74-dev \
 libboost-coroutine1.74-dev \
 libboost-system1.74-dev \
 libboost-thread1.74-dev \
-liblz4-dev \
-libnss-db \
+libicu-dev \
 libmagic-dev \
 libsodium-dev \
 libssl-dev \
-libtool \
-libzstd-dev \
-shtool \
-xz-utils \
 "
 
-ENV purges="\
-cmake \
-curl \
-"
-
-ENV rocks_version=7.4.3
-ENV rocks_cmake="\
+ENV rocksdb_cmake="\
 -DCMAKE_RULE_MESSAGES:BOOL=OFF \
 -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
 -DWITH_JNI=0 \
@@ -46,43 +59,54 @@ ENV rocks_cmake="\
 -DCMAKE_BUILD_TYPE=Release \
 -DWITH_GFLAGS=0 \
 -DWITH_LIBURING=0 \
+-DWITH_JEMALLOC=1 \
 -DWITH_LZ4=1 \
 -DWITH_ZSTD=1 \
 -DUSE_RTTI=1 \
 -DBUILD_SHARED_LIBS=1 \
 "
 
-RUN true \
+ENV do_install true \
+&& export DEBIAN_FRONTEND=noninteractive \
 && apt-get update \
-&& apt-get install --no-install-recommends -y ${packages}\
-&& update-ca-certificates \
+&& apt-get install --no-install-recommends -y -f
+
+ENV do_purge true \
+&& export DEBIAN_FRONTEND=noninteractive \
+&& apt-get purge -y
+
+ENV do_clean true \
+&& export DEBIAN_FRONTEND=noninteractive \
 && apt-get clean \
 && apt-get autoremove --purge -y \
 && rm -rf /var/lib/apt/lists/* \
+&& true
+
+RUN true \
+&& eval ${do_install} ${packages} \
+&& update-ca-certificates \
+&& eval ${do_clean} \
 && mkdir /build \
 && true
 
-ARG skiprocks
+WORKDIR /build
 RUN true \
 && if test -n "$skiprocks"; then \
 	exit 0; \
 fi \
+&& eval ${do_install} ${packages_rocksdb_dev} \
 && cd /usr/src \
-&& curl -sL https://codeload.github.com/facebook/rocksdb/tar.gz/refs/tags/v${rocks_version} -o rocksdb-${rocks_version}.tar.gz \
-&& tar xfvz rocksdb-${rocks_version}.tar.gz \
-&& rm rocksdb-${rocks_version}.tar.gz \
-&& ln -s /usr/src/rocksdb-${rocks_version} /usr/src/rocksdb \
-&& cd /usr/src/rocksdb-${rocks_version} \
+&& curl -sL ${rocksdb_url} -o rocksdb-${rocksdb_version}.tar.gz \
+&& tar xfvz rocksdb-${rocksdb_version}.tar.gz \
+&& rm rocksdb-${rocksdb_version}.tar.gz \
+&& ln -s /usr/src/rocksdb-${rocksdb_version} /usr/src/rocksdb \
+&& cd /usr/src/rocksdb-${rocksdb_version} \
 && \
-CFLAGS="-g0" \
+CFLAGS="-g0 -ftls-model=initial-exec" \
 LDFLAGS="-Wl,--strip-all" \
-cmake -H. -Bbuild ${rocks_cmake} \
+cmake -H. -Bbuild ${rocksdb_cmake} \
 && cmake --build build --target install --parallel `nproc` \
 && rm -rf build \
-&& apt-get purge -y ${purges} \
-&& apt-get clean \
-&& apt-get autoremove --purge -y \
-&& rm -rf /var/lib/apt/lists/* \
+&& eval ${do_purge} ${packages_rocksdb_dev} \
+&& eval ${do_clean} \
 && true
-
-WORKDIR /build
