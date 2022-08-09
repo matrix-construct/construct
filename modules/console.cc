@@ -11519,7 +11519,7 @@ console_cmd__room__messages(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "depth|-limit", "order", "limit"
+		"room_id", "limit", "start_depth", "end_depth"
 	}};
 
 	const auto &room_id
@@ -11527,48 +11527,43 @@ console_cmd__room__messages(opt &out, const string_view &line)
 		m::room_id(param.at(0))
 	};
 
-	const int64_t depth
+	const auto limit
 	{
-		param.at<int64_t>(1, std::numeric_limits<int64_t>::max())
+		param.at("limit", 64U)?: -1U
 	};
 
-	const char order_
+	const int64_t start_depth
 	{
-		param.at(2, "B"_sv).at(0)
+		param.at<int64_t>("start_depth", std::numeric_limits<int64_t>::max())
 	};
 
-	const char order
-	(
-		std::tolower(order_)
-	);
-
-	const bool text_only
+	const int64_t end_depth
 	{
-		false
-		|| order_ == 'B'
-		|| order_ == 'F'
+		param.at<int64_t>("end_depth", -1)
 	};
 
-	ssize_t limit
+	const m::room::type events
 	{
-		depth < 0?
-			std::abs(depth):
-			param.at(3, ssize_t(32))
+		room_id,
+		"m.room.message",
+		{ start_depth, end_depth },
+		false,
 	};
 
-	const m::room room
+	size_t i(0);
+	m::event::fetch event;
+	events.for_each([&out, &event, &i, &limit]
+	(const string_view &type, const uint64_t &depth, const m::event::idx &event_idx)
 	{
-		room_id
-	};
+		assert(type == "m.room.message");
+		if(!seek(std::nothrow, event, event_idx))
+			return true;
 
-	m::room::events it{room};
-	if(depth >= 0 && depth < std::numeric_limits<int64_t>::max())
-		it.seek(depth);
-
-	for(; it && limit >= 0; order == 'b'? --it : ++it, --limit)
 		out
-		<< pretty_msgline(*it, text_only? 1: 0)
+		<< pretty_msgline(event)
 		<< std::endl;
+		return ++i < limit;
+	});
 
 	return true;
 }
