@@ -446,6 +446,9 @@ try
 	if(!result)
 		result = req.target;
 
+	if(!rfc3986::valid_remote(std::nothrow, result))
+		result = req.target;
+
 	if(result != req.target)
 		log::debug
 		{
@@ -454,12 +457,6 @@ try
 			req.target,
 			result,
 		};
-
-	// This construction validates we didn't get a junk string
-	volatile const net::hostport ret
-	{
-		result
-	};
 
 	const bool cache_expired
 	{
