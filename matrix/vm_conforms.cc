@@ -161,7 +161,8 @@ ircd::m::vm::conform_report
 				true:
 
 			// allowed by options
-			non_conform.has(event::conforms::MISMATCH_HASHES)?
+			non_conform.has(event::conforms::MISMATCH_HASHES)
+			|| opts.require_content == 0?
 				true:
 
 			// allowed by room auth
