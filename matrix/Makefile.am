@@ -163,6 +163,7 @@ libircd_matrix_la_SOURCES += fed.cc
 libircd_matrix_la_SOURCES += fed_well_known.cc
 libircd_matrix_la_SOURCES += feds.cc
 libircd_matrix_la_SOURCES += fetch.cc
+libircd_matrix_la_SOURCES += fetch_check.cc
 libircd_matrix_la_SOURCES += gossip.cc
 libircd_matrix_la_SOURCES += groups.cc
 libircd_matrix_la_SOURCES += request.cc
