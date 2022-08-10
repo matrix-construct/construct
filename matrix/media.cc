@@ -17,8 +17,8 @@ ircd::m::media::log
 decltype(ircd::m::media::events_prefetch)
 ircd::m::media::events_prefetch
 {
-	{ "name",     "ircd.media.file.prefetch.events" },
-	{ "default",  16L                               },
+	{ "name",     "ircd.m.media.file.prefetch.events" },
+	{ "default",  16L                                 },
 };
 
 decltype(ircd::m::media::downloading)
@@ -146,8 +146,8 @@ catch(const ircd::server::unavailable &e)
 decltype(ircd::m::media::download_timeout)
 ircd::m::media::download_timeout
 {
-	{ "name",     "ircd.media.download.timeout" },
-	{ "default",  30L                           },
+	{ "name",     "ircd.m.media.download.timeout" },
+	{ "default",  30L                             },
 };
 
 std::pair
