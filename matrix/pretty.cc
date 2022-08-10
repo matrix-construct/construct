@@ -663,22 +663,27 @@ ircd::m::pretty_msgline(std::ostream &s,
 	{
 		case "m.room.message"_:
 		{
-			const json::string msgtype
+			const room::message msg
 			{
-				content["msgtype"]
+				content
 			};
 
-			const json::string body
+			const auto &type
 			{
-				content["body"]
+				json::get<"msgtype"_>(msg)
+			};
+
+			const auto &body
+			{
+				msg.body()
 			};
 
 			if(!text_only)
-				s << msgtype << ' ';
-			else if(msgtype != "m.text")
+				s << type << ' ';
+			else if(type != "m.text")
 				break;
 
-			s << body;
+			s << msg.body();
 			break;
 		}
 
