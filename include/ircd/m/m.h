@@ -53,6 +53,7 @@ namespace ircd::m
 #include "self.h"
 #include "init.h"
 #include "event/event.h"
+#include "pretty.h"
 #include "get.h"
 #include "query.h"
 #include "dbs/dbs.h"

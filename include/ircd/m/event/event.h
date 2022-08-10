@@ -166,7 +166,6 @@ struct ircd::m::event
 #include "cached.h"
 #include "prefetch.h"
 #include "conforms.h"
-#include "pretty.h"
 #include "append.h"
 
 inline ircd::m::event::operator
