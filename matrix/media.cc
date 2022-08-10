@@ -21,6 +21,13 @@ ircd::m::media::events_prefetch
 	{ "default",  16L                                 },
 };
 
+decltype(ircd::m::media::journal_threshold)
+ircd::m::media::journal_threshold
+{
+	{ "name",     "ircd.m.media.journal.threshold" },
+	{ "default",  0L                               },
+};
+
 decltype(ircd::m::media::downloading)
 ircd::m::media::downloading;
 
@@ -112,6 +119,11 @@ try
 		};
 
 	m::vm::copts vmopts;
+
+	// Disable the WAL for file rooms
+	if(size(content) >= size_t(journal_threshold))
+		vmopts.wopts.sopts.journal = false;
+
 	const m::room room
 	{
 		room_id, &vmopts

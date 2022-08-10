@@ -18,6 +18,7 @@ namespace ircd::m::media
 	extern log::log log;
 	extern conf::item<size_t> events_prefetch;
 	extern conf::item<seconds> download_timeout;
+	extern conf::item<size_t> journal_threshold;
 	extern std::set<m::room::id> downloading;
 	extern ctx::dock downloading_dock;
 }
