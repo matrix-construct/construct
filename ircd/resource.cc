@@ -456,6 +456,11 @@ noexcept
 			uint64_t(stats->pending),
 		};
 
+	// No point in waiting without a context...
+	if(unlikely(!ctx::current))
+		return;
+
+	// Wait until the method has completed requests in progress.
 	const ctx::uninterruptible::nothrow ui;
 	idle_dock.wait([this]() noexcept
 	{
