@@ -11559,8 +11559,15 @@ console_cmd__room__messages(opt &out, const string_view &line)
 		if(!seek(std::nothrow, event, event_idx))
 			return true;
 
+		const m::pretty_opts opts
+		{
+			.event_idx = event_idx,
+			.show_event_id = false,
+			.show_state_key = false,
+		};
+
 		out
-		<< pretty_msgline(event)
+		<< pretty_msgline(event, opts)
 		<< std::endl;
 		return ++i < limit;
 	});

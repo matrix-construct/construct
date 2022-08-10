@@ -610,12 +610,12 @@ ircd::m::pretty_oneline(std::ostream &s,
 
 std::string
 ircd::m::pretty_msgline(const event &event,
-                        const int &fmt)
+                        const pretty_opts &opts)
 {
 	std::string ret;
 	std::stringstream s;
 	pubsetbuf(s, ret, 4096);
-	pretty_msgline(s, event, fmt);
+	pretty_msgline(s, event, opts);
 	resizebuf(s, ret);
 	return ret;
 }
@@ -623,24 +623,29 @@ ircd::m::pretty_msgline(const event &event,
 std::ostream &
 ircd::m::pretty_msgline(std::ostream &s,
                         const event &event,
-                        const int &fmt)
+                        const pretty_opts &opts)
 {
-	const bool text_only
-	(
-		fmt & 1
-	);
+	if(opts.show_event_idx)
+		s << opts.event_idx << ' ';
 
-	if(!text_only)
-	{
+	if(opts.show_depth)
 		s << json::get<"depth"_>(event) << ' ';
 
+	if(opts.show_origin_server_ts)
+	{
 		char sdbuf[48];
 		if(json::get<"origin_server_ts"_>(event) != json::undefined_number)
 			s << smalldate(sdbuf, json::get<"origin_server_ts"_>(event) / 1000L) << ' ';
+	}
 
+	if(opts.show_event_id)
 		s << event.event_id << ' ';
+
+	if(opts.show_sender)
 		s << json::get<"sender"_>(event) << ' ';
 
+	if(opts.show_state_key)
+	{
 		const auto &state_key
 		{
 			json::get<"state_key"_>(event)
@@ -659,7 +664,7 @@ ircd::m::pretty_msgline(std::ostream &s,
 		json::get<"content"_>(event)
 	};
 
-	switch(hash(json::get<"type"_>(event)))
+	if(opts.show_content) switch(hash(json::get<"type"_>(event)))
 	{
 		case "m.room.message"_:
 		{
@@ -678,7 +683,7 @@ ircd::m::pretty_msgline(std::ostream &s,
 				msg.body()
 			};
 
-			if(!text_only)
+			if(opts.show_msgtype)
 				s << type << ' ';
 			else if(type != "m.text")
 				break;
@@ -688,9 +693,6 @@ ircd::m::pretty_msgline(std::ostream &s,
 		}
 
 		default:
-			if(text_only)
-				break;
-
 			s << string_view{content};
 			break;
 	}

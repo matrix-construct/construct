@@ -13,6 +13,8 @@
 
 namespace ircd::m
 {
+	struct pretty_opts;
+
 	// Informational pretty string condensed to single line.
 	// fmt = 0: w/o content keys, w/ hashes/sigs
 	// fmt = 1: w/ content keys w/ hashes/sigs
@@ -25,8 +27,8 @@ namespace ircd::m
 	std::string pretty(const event &);
 
 	// Informational content-oriented
-	std::ostream &pretty_msgline(std::ostream &, const event &, const int &fmt = 0);
-	std::string pretty_msgline(const event &, const int &fmt = 0);
+	std::ostream &pretty_msgline(std::ostream &, const event &, const pretty_opts &);
+	std::string pretty_msgline(const event &, const pretty_opts &);
 
 	// Informational pretty for state
 	// io=true will run db queries to enhance w/ more information.
@@ -36,3 +38,17 @@ namespace ircd::m
 	// note: lots of queries.
 	std::ostream &pretty_detailed(std::ostream &, const event &, const event::idx &);
 }
+
+struct ircd::m::pretty_opts
+{
+	event::idx event_idx {0};
+
+	bool show_event_idx {true};
+	bool show_depth {true};
+	bool show_origin_server_ts {true};
+	bool show_event_id {true};
+	bool show_sender {true};
+	bool show_state_key {true};
+	bool show_content {true};
+	bool show_msgtype {true};
+};
