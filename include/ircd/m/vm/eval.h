@@ -55,6 +55,7 @@ struct ircd::m::vm::eval
 	size_t evaluated {0};
 	size_t accepted {0};
 	size_t faulted {0};
+	system_point start;
 
 	vector_view<const m::event> pdus;
 	const json::iov *issue {nullptr};

@@ -193,6 +193,11 @@ ircd::m::vm::execute(eval &eval,
 		*eval.opts
 	};
 
+	const scope_restore start_time
+	{
+		eval.start, now<system_point>()
+	};
+
 	const scope_restore eval_pdus
 	{
 		eval.pdus, events

@@ -16626,21 +16626,22 @@ console_cmd__vm(opt &out, const string_view &line)
 	<< std::right << std::setw(8) << "ID" << " "
 	<< std::right << std::setw(4) << "CTX" << " "
 	<< std::left << std::setw(8) << " " << " "
-	<< std::left << std::setw(24) << "USER" << " "
+	<< std::left << std::setw(23) << "USER" << " "
 	<< std::right << std::setw(4) << "PDUS" << " "
 	<< std::right << std::setw(4) << "EVAL" << " "
 	<< std::right << std::setw(4) << "EXEC" << " "
 	<< std::right << std::setw(4) << "ERRS" << " "
+	<< std::right << std::setw(8) << "ELAPSED" << " "
 	<< std::right << std::setw(8) << "PARENT" << " "
 	<< std::right << std::setw(9) << "SEQUENCE" << " "
 	<< std::left << std::setw(4) << "HOOK" << " "
-	<< std::left << std::setw(10) << "PHASE" << " "
+	<< std::left << std::setw(11) << "PHASE" << " "
 	<< std::right << std::setw(6) << "SIZE" << "  "
 	<< std::right << std::setw(5) << "CELLS" << " "
 	<< std::right << std::setw(8) << "DEPTH" << " "
-	<< std::right << std::setw(5) << "VER" << " "
+	<< std::right << std::setw(3) << "VER" << " "
 	<< std::left << std::setw(40) << "ROOM ID" << " "
-	<< std::left << std::setw(60) << "EVENT ID" << " "
+	<< std::left << std::setw(53) << "EVENT ID" << " "
 	<< std::left << std::setw(20) << "SENDER" << " "
 	<< std::left << std::setw(20) << "TYPE" << " "
 	<< std::left << std::setw(20) << "STATE_KEY" << " "
@@ -16650,25 +16651,34 @@ console_cmd__vm(opt &out, const string_view &line)
 	{
 		assert(eval.ctx);
 
+		const auto elapsed
+		{
+			eval.start != system_point()?
+				duration_cast<seconds>(now<system_point>() - eval.start):
+				0s
+		};
+
+		char pbuf[1][48];
 		out
 		<< std::right << std::setw(8) << eval.id << " "
 		<< std::right << std::setw(4) << (eval.ctx? ctx::id(*eval.ctx) : 0UL) << " "
 		<< std::left << std::setw(8) << (eval.ctx? trunc(ctx::name(*eval.ctx), 8) : string_view{}) << " "
-		<< std::left << std::setw(24) << trunc(eval.opts->node_id?: eval.opts->user_id, 24) << " "
+		<< std::left << std::setw(23) << trunc(eval.opts->node_id?: eval.opts->user_id, 23) << " "
 		<< std::right << std::setw(4) << eval.pdus.size() << " "
 		<< std::right << std::setw(4) << eval.evaluated << " "
 		<< std::right << std::setw(4) << eval.accepted << " "
 		<< std::right << std::setw(4) << eval.faulted << " "
+		<< std::right << std::setw(8) << pretty(pbuf[0], elapsed, 1) << " "
 		<< std::right << std::setw(8) << (eval.parent? eval.parent->id : 0UL) << " "
 		<< std::right << std::setw(9) << eval.sequence << " "
 		<< std::right << std::setw(4) << (eval.hook? eval.hook->id(): 0U)  << " "
-		<< std::left << std::setw(10) << trunc(reflect(eval.phase), 10) << " "
+		<< std::left << std::setw(11) << trunc(reflect(eval.phase), 11) << " "
 		<< std::right << std::setw(6) << (eval.txn? eval.txn->bytes() : 0UL) << "  "
 		<< std::right << std::setw(5) << (eval.txn? eval.txn->size() : 0UL) << " "
 		<< std::right << std::setw(8) << (eval.event_ && eval.event_id? long(json::get<"depth"_>(*eval.event_)) : -1L) << " "
-		<< std::right << std::setw(5) << eval.room_version << " "
+		<< std::right << std::setw(3) << eval.room_version << " "
 		<< std::left << std::setw(40) << trunc(eval.room_id, 40) << " "
-		<< std::left << std::setw(60) << trunc(eval.event_id, 60) << " "
+		<< std::left << std::setw(53) << trunc(eval.event_id, 53) << " "
 		<< std::left << std::setw(20) << trunc(eval.event_? json::get<"sender"_>(*eval.event_) : json::string{}, 20) << " "
 		<< std::left << std::setw(20) << trunc(eval.event_? json::get<"type"_>(*eval.event_) : json::string{}, 20) << " "
 		<< std::left << std::setw(20) << trunc(eval.event_? json::get<"state_key"_>(*eval.event_) : json::string{}, 20) << " "
