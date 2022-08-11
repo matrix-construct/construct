@@ -26,8 +26,6 @@ AC_PATH_PROG(LDLLD, ld.lld)
 AC_PATH_PROG(LD, ld.gold)
 AC_PATH_PROG(XXD, xxd)
 AC_PATH_PROG(TOUCH, touch)
-AC_PATH_PROG(INSTALL, install)
-INSTALL="$INSTALL -C"
 
 AC_SUBST(CFLAGS, "-pipe $CFLAGS")
 AC_SUBST(CXXFLAGS, "-pipe $CXXFLAGS")
@@ -1508,6 +1506,26 @@ AM_COND_IF([IOU],
 
 
 dnl ***************************************************************************
+dnl
+dnl Installation
+dnl
+
+AC_PATH_PROGS_FEATURE_CHECK([INSTALL], [install],
+[
+	$ac_path_INSTALL -B --version > /dev/null 2>&1 \
+	&& ac_cv_path_INSTALL="$ac_path_INSTALL -C"
+])
+
+AC_MSG_CHECKING([if any install supports the -C flag])
+if test -n "$ac_cv_path_INSTALL"; then
+	AC_MSG_RESULT([yes])
+	INSTALL=$ac_cv_path_INSTALL
+else
+	AC_MSG_RESULT([no])
+	AC_MSG_WARN([Application should not be running during make install.])
+	AC_PATH_PROG(INSTALL, install)
+fi
+
 dnl
 dnl Installation Layout
 dnl
