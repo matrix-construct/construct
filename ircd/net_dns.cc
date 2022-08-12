@@ -239,24 +239,29 @@ bool
 ircd::net::dns::expired(const json::object &rr,
                         const time_t &rr_ts)
 {
-	const seconds &min_seconds
-	{
-		cache::min_ttl
-	};
-
-	const seconds &err_seconds
-	{
-		cache::error_ttl
-	};
-
-	const time_t &min
+	const seconds base
 	{
 		is_error(rr)?
-			err_seconds.count():
-			min_seconds.count()
+			seconds(cache::error_ttl):
+			seconds(cache::min_ttl)
 	};
 
-	return expired(rr, rr_ts, min);
+	const pair<u64> perturb_range
+	{
+		1, base.count() / 3
+	};
+
+	const seconds perturb
+	{
+		rand::integer(perturb_range.first, perturb_range.second)
+	};
+
+	const seconds min
+	{
+		base + perturb
+	};
+
+	return expired(rr, rr_ts, min.count());
 }
 
 bool
