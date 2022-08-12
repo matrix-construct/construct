@@ -405,18 +405,17 @@ try
 
 	send_query(ep, tag);
 
-	#ifdef RB_DEBUG
 	char buf[128];
-	log::debug
+	log::logf
 	{
-		log, "send tag:%u qtype:%u t:%u `%s' to %s",
+		log, log::level::DEBUG,
+		"send tag:%u qtype:%u t:%u `%s' to %s",
 		tag.id,
 		tag.opts.qtype,
 		tag.tries,
 		host(tag.hp),
 		string(buf, make_ipport(ep)),
 	};
-	#endif
 }
 catch(const std::out_of_range &)
 {
@@ -666,9 +665,10 @@ ircd::net::dns::resolver::handle_reply(const ipport &from,
 			string(strbuf[1], tag.server)
 		};
 
-	log::debug
+	log::logf
 	{
-		log, "recv tag:%u qtype:%u t:%u from %s in %s qd:%u an:%u ns:%u ar:%u",
+		log, log::level::DEBUG,
+		"recv tag:%u qtype:%u t:%u from %s in %s qd:%u an:%u ns:%u ar:%u",
 		tag.id,
 		tag.opts.qtype,
 		tag.tries,
