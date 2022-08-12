@@ -9,6 +9,7 @@ ENV rocksdb_url https://codeload.github.com/facebook/rocksdb/tar.gz/refs/tags/v$
 
 ENV packages="\
 ca-certificates \
+libatomic1 \
 libjemalloc2 \
 libboost-chrono1.74 \
 libboost-context1.74 \
