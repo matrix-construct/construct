@@ -26,7 +26,7 @@ decltype(ircd::net::dns::cache::nxdomain_ttl)
 ircd::net::dns::cache::nxdomain_ttl
 {
 	{ "name",     "ircd.net.dns.cache.nxdomain_ttl" },
-	{ "default",  86400L                            },
+	{ "default",  604800L                           },
 };
 
 decltype(ircd::net::dns::cache::waiting)
