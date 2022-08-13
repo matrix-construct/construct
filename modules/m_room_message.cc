@@ -10,8 +10,8 @@
 
 namespace ircd::m
 {
-	static void room_message_notify(const event &, vm::eval &);
-	extern hookfn<vm::eval &> room_message_notify_hook;
+	static void room_message_info(const event &, vm::eval &);
+	extern hookfn<vm::eval &> room_message_info_hook;
 	extern log::log room_message_log;
 }
 
@@ -27,10 +27,10 @@ ircd::m::room_message_log
 	"m.message"
 };
 
-decltype(ircd::m::room_message_notify_hook)
-ircd::m::room_message_notify_hook
+decltype(ircd::m::room_message_info_hook)
+ircd::m::room_message_info_hook
 {
-	room_message_notify,
+	room_message_info,
 	{
 		{ "_site",  "vm.notify"       },
 		{ "type",   "m.room.message"  },
@@ -38,22 +38,22 @@ ircd::m::room_message_notify_hook
 };
 
 void
-ircd::m::room_message_notify(const event &event,
-                             vm::eval &eval)
+ircd::m::room_message_info(const event &event,
+                           vm::eval &eval)
 {
-	const auto &content
+	const m::room::message msg
 	{
 		json::get<"content"_>(event)
 	};
 
-	const json::string &body
+	const auto &body
 	{
-		content.get("body")
+		msg.body()
 	};
 
-	const json::string &msgtype
+	const auto &msgtype
 	{
-		content.get("msgtype")
+		json::get<"msgtype"_>(msg)
 	};
 
 	log::info
