@@ -23,18 +23,21 @@ struct ircd::m::room::message
 	/// Required. The body of the message.
 	json::property<name::body, json::string>,
 
+	/// The format used in the formatted_body.
+	json::property<name::format, json::string>,
+
+	/// The formatted version of the body. This is required if format
+	/// is specified.
+	json::property<name::formatted_body, json::string>,
+
 	/// m.relates_to
 	json::property<name::m_relates_to, m::relates_to>,
 
 	/// Required. enum.
 	json::property<name::msgtype, json::string>,
 
-	/// The format used in the formatted_body.
-	json::property<name::format, json::string>,
-
-	/// The formatted version of the body. This is required if format
-	/// is specified.
-	json::property<name::formatted_body, json::string>
+	/// mxc:// for media.
+	json::property<name::url, json::string>
 >
 {
 	/// The event ID of the message being replied to; empty if malformed or
