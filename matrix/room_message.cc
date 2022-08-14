@@ -57,13 +57,6 @@ const noexcept
 		reply_to_user.end(), body.end()
 	};
 
-	body = lstrip(body, '>', 1);
-	body = lstrip(body, ' ', 1);
-	body = string_view
-	{
-		body.begin(), token(body, "\\n", 0).end()
-	};
-
 	tokens(body, "\\n", [&body]
 	(const string_view &line) noexcept
 	{
