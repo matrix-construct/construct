@@ -53,6 +53,12 @@ struct ircd::m::room::message
 	/// must clean that up if required. Empty if not a reply or malformed.
 	string_view reply_to_body() const noexcept;
 
+	/// The event ID of the replaced event; empty if not a replace
+	id::event replace_event() const noexcept;
+
+	/// The new content body; empty if not a replace or replace was empty!
+	string_view replace_body() const noexcept;
+
 	/// C2S v1.3 11.3.1 message body stripped of any reply fallback. This is
 	/// the proper way to read the message rather than reading "body" direct;
 	/// returns "body" if not reply.

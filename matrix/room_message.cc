@@ -36,6 +36,77 @@ const noexcept
 }
 
 ircd::string_view
+ircd::m::room::message::replace_body()
+const noexcept
+{
+	const auto replace_event
+	{
+		this->replace_event()
+	};
+
+	if(!replace_event)
+		return {};
+
+	const json::object m_new_content
+	{
+		this->source["m.new_content"]
+	};
+
+	if(!json::type(m_new_content, json::OBJECT))
+		return {};
+
+	const json::string body
+	{
+		m_new_content["body"]
+	};
+
+	return body;
+}
+
+ircd::m::event::id
+ircd::m::room::message::replace_event()
+const noexcept try
+{
+	const m::relates_to &m_relates_to
+	{
+		json::get<"m.relates_to"_>(*this)
+	};
+
+	if(json::get<"rel_type"_>(m_relates_to) != "m.replace")
+		return {};
+
+	const auto &event_id
+	{
+		json::get<"event_id"_>(m_relates_to)
+	};
+
+	if(!event_id || !valid(m::id::EVENT, event_id))
+		return {};
+
+	return event_id;
+}
+catch(const json::error &e)
+{
+	log::derror
+	{
+		log, "Failed to extract m.relates_to m.replace event_id :%s",
+		e.what(),
+	};
+
+	return {};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Failed to extract m.relates_to m.replace event_id :%s",
+		e.what(),
+	};
+
+	return {};
+}
+
+ircd::string_view
 ircd::m::room::message::reply_to_body()
 const noexcept
 {
