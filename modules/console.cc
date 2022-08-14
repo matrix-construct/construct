@@ -11504,7 +11504,7 @@ console_cmd__room__messages(opt &out, const string_view &line)
 
 	const auto limit
 	{
-		param.at("limit", 64U)?: -1U
+		param.at("limit", 48U)?: -1U
 	};
 
 	const int64_t start_depth
@@ -11517,23 +11517,20 @@ console_cmd__room__messages(opt &out, const string_view &line)
 		param.at<int64_t>("end_depth", -1)
 	};
 
-	const m::room::type events
+	const m::room::messages messages
 	{
-		room_id,
-		"m.room.message",
-		{ start_depth, end_depth },
-		false,
+		room_id, { start_depth, end_depth },
 	};
 
 	size_t i(0);
 	m::event::fetch event;
-	events.for_each([&out, &event, &i, &limit]
-	(const string_view &type, const uint64_t &depth, const m::event::idx &event_idx)
+	messages.for_each([&out, &i, &limit, &event]
+	(const m::room::message &msg, const uint64_t &depth, m::event::idx event_idx)
 	{
-		assert(type == "m.room.message");
 		if(!seek(std::nothrow, event, event_idx))
 			return true;
 
+		json::get<"content"_>(event) = msg.source;
 		const m::pretty_opts opts
 		{
 			.event_idx = event_idx,

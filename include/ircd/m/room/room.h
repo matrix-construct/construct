@@ -123,6 +123,7 @@ struct ircd::m::room
 	struct stats;
 	struct server_acl;
 	struct message;
+	struct messages;
 	struct bootstrap;
 	struct content;
 
@@ -206,6 +207,7 @@ struct ircd::m::room
 #include "stats.h"
 #include "server_acl.h"
 #include "message.h"
+#include "messages.h"
 #include "bootstrap.h"
 
 inline
