@@ -1512,7 +1512,7 @@ dnl
 
 AC_PATH_PROGS_FEATURE_CHECK([INSTALL], [install],
 [
-	$ac_path_INSTALL -B --version > /dev/null 2>&1 \
+	$ac_path_INSTALL -C --version > /dev/null 2>&1 \
 	&& ac_cv_path_INSTALL="$ac_path_INSTALL -C"
 ])
 
