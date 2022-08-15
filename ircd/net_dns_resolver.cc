@@ -680,6 +680,42 @@ ircd::net::dns::resolver::handle_reply(const ipport &from,
 		header.arcount,
 	};
 
+	if(unlikely(header.qr != 1))
+		throw rfc1035::error
+		{
+			"Response header is marked as 'Query' and not 'Response'"
+		};
+
+	if(header.qdcount > MAX_COUNT || header.ancount > MAX_COUNT)
+		throw error
+		{
+			"Response contains too many sections..."
+		};
+
+	if(header.qdcount < 1)
+		throw error
+		{
+			"Response does not contain the question."
+		};
+
+	const_buffer buffer
+	{
+		body
+	};
+
+	// Questions are regurgitated back to us so they must be parsed first
+	thread_local std::array<rfc1035::question, MAX_COUNT> qd;
+	for(size_t i(0); i < header.qdcount; ++i)
+		consume(buffer, size(qd.at(i).parse(buffer)));
+
+	// Question must match or this is the mist of a packet spray with
+	// matching tag and source ip.
+	if(unlikely(!has(qd.at(0).name, host(tag.hp))))
+		throw error
+		{
+			"Response contains the wrong question."
+		};
+
 	// Handle ServFail as a special case here. We can try again without
 	// handling this tag or propagating this error any further yet.
 	if(header.rcode == 2 && tag.tries < size_t(server.size()))
@@ -711,33 +747,15 @@ ircd::net::dns::resolver::handle_reply(const ipport &from,
 	assert(tag.tries > 0);
 	tag.last = steady_point::min(); // tag ignored by the timeout worker during handling.
 	tag.rcode = header.rcode;
-	handle_reply(header, body, tag);
+	handle_reply(header, buffer, tag);
 }
 
 void
 ircd::net::dns::resolver::handle_reply(const header &header,
-                                       const const_buffer &body,
+                                       const_buffer buffer,
                                        tag &tag)
 try
 {
-	if(unlikely(header.qr != 1))
-		throw rfc1035::error
-		{
-			"Response header is marked as 'Query' and not 'Response'"
-		};
-
-	if(header.qdcount > MAX_COUNT || header.ancount > MAX_COUNT)
-		throw error
-		{
-			"Response contains too many sections..."
-		};
-
-	if(header.qdcount < 1)
-		throw error
-		{
-			"Response does not contain the question."
-		};
-
 	if(!handle_error(header, tag))
 		throw rfc1035::error
 		{
@@ -745,16 +763,6 @@ try
 			header.rcode,
 			rfc1035::rcode.at(header.rcode)
 		};
-
-	const_buffer buffer
-	{
-		body
-	};
-
-	// Questions are regurgitated back to us so they must be parsed first
-	thread_local std::array<rfc1035::question, MAX_COUNT> qd;
-	for(size_t i(0); i < header.qdcount; ++i)
-		consume(buffer, size(qd.at(i).parse(buffer)));
 
 	// Answers are parsed into this buffer
 	thread_local std::array<rfc1035::answer, MAX_COUNT> an;

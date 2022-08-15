@@ -66,7 +66,7 @@ ircd::net::dns::resolver
 
 	// reception
 	bool handle_error(const header &, tag &);
-	void handle_reply(const header &, const const_buffer &body, tag &);
+	void handle_reply(const header &, const_buffer, tag &);
 	void handle_reply(const ipport &, const header &, const const_buffer &body);
 	void handle(const ipport &, const mutable_buffer &);
 	void handle_interrupt(ctx::ctx *const &) noexcept;
