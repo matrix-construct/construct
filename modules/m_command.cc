@@ -259,6 +259,13 @@ catch(const std::exception &e)
 }
 
 static command_result
+command__summarize(const mutable_buffer &buf,
+                   const m::user &user,
+                   const m::room &room,
+                   const string_view &cmd,
+                   const m::event::id &reply_id);
+
+static command_result
 command__caption(const mutable_buffer &buf,
                  const m::user &user,
                  const m::room &room,
@@ -351,6 +358,9 @@ try
 
 		case "caption"_:
 			return command__caption(buf, user, room, cmd);
+
+		case "summarize"_:
+			return command__summarize(buf, user, room, cmd, reply_id);
 
 		case "control"_:
 		{
@@ -1272,5 +1282,81 @@ command__control(const mutable_buffer &buf,
 	return
 	{
 		html, alt
+	};
+}
+
+command_result
+command__summarize(const mutable_buffer &buf,
+                   const m::user &user,
+                   const m::room &room,
+                   const string_view &cmd,
+                   const m::event::id &reply_id)
+{
+	const params param{cmd, " ",
+	{
+		"cmd", "top_p", "top_k"
+	}};
+
+	const auto reply_idx
+	{
+		index(reply_id)
+	};
+
+	const m::relates relates
+	{
+		.refs = reply_idx,
+		.match_sender = true,
+	};
+
+	const auto replace_idx
+	{
+		relates.latest("m.replace")
+	};
+
+	const auto content_idx
+	{
+		replace_idx?: reply_idx
+	};
+
+	const json::object content
+	{
+		m::get(content_idx, "content", buf)
+	};
+
+	const m::room::message msg
+	{
+		content
+	};
+
+	const auto body
+	{
+		msg.body()
+	};
+
+	std::string text(body);
+	text += "\n\nTL;DR:"s;
+
+	gpt::opts opts alignas(4096);
+	opts.top_k = param.at("top_k", opts.top_k);
+	opts.top_p = param.at("top_p", opts.top_p);
+	opts.debug |= 0x1;
+	opts.debug |= 0x2;
+
+	gpt::ctrl ctrl alignas(4096) {0};
+	gpt::task task
+	{
+		&opts, &ctrl
+	};
+
+	auto output
+	{
+		task(buf, text)
+	};
+
+	output = lstrip(output, ": "_sv);
+	output = rstrip(output, '\n', 2);
+	return
+	{
+		output, output
 	};
 }
