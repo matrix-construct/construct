@@ -96,8 +96,9 @@ ircd::ago(const mutable_buffer &buf,
 	char tmp[64];
 	return fmt::sprintf
 	{
-		buf, "%s ago",
-		pretty(tmp, diff, fmt),
+		buf, "%s%s",
+		pretty(tmp, diff, fmt & 0x01),
+		(fmt & 0x2)? string_view{}: " ago"_sv,
 	};
 }
 
