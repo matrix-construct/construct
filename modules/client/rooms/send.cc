@@ -25,6 +25,7 @@ static m::event::id::buf
 handle_command(client &,
                const m::resource::request &,
                const m::room &,
+               const m::room::message &,
                const string_view & = {});
 
 m::hookfn<m::vm::eval &>
@@ -158,38 +159,27 @@ put__send(client &client,
 			content
 		};
 
-		const bool command_regular
+		const auto body
 		{
-			json::get<"msgtype"_>(message) == "m.text"
-			&& startswith(json::get<"body"_>(message), "\\\\")
-		};
-
-		const bool command_replying
-		{
-			json::get<"msgtype"_>(message) == "m.text"
-			&& startswith(json::get<"body"_>(message), ">")
-			&& has(json::get<"body"_>(message), "\\n\\n\\\\")
-		};
-
-		const bool echo
-		{
-			command_regular?
-				startswith(lstrip(json::get<"body"_>(message), "\\\\"), '!'):
-			command_replying?
-				has(json::get<"body"_>(message), "\\n\\n\\\\!"):
-				false
+			message.body()
 		};
 
 		const bool command
 		{
-			command_regular || command_replying
+			json::get<"msgtype"_>(message) == "m.text"
+			&& startswith(body, "\\\\")
+		};
+
+		const bool echo
+		{
+			startswith(lstrip(body, "\\\\"), '!')
 		};
 
 		if(command && !echo)
 		{
 			const auto event_id
 			{
-				handle_command(client, request, room)
+				handle_command(client, request, room, message)
 			};
 
 			return m::resource::response
@@ -214,7 +204,7 @@ put__send(client &client,
 	{
 		const auto cmd_event_id
 		{
-			handle_command(client, request, room, event_id)
+			handle_command(client, request, room, content, event_id)
 		};
 	}
 
@@ -231,6 +221,7 @@ m::event::id::buf
 handle_command(client &client,
                const m::resource::request &request,
                const m::room &room,
+               const m::room::message &msg,
                const string_view &echo_id)
 {
 	const user::room user_room
@@ -238,25 +229,14 @@ handle_command(client &client,
 		request.user_id, room.copts
 	};
 
-	const json::object content
+	const string_view reply_id
 	{
-		request
+		msg.reply_to_event()
 	};
 
-	const json::object m_relates_to
+	const string_view body
 	{
-		content["m.relates_to"]
-	};
-
-	const json::object m_in_reply_to
-	{
-		m_relates_to["m.in_reply_to"]
-	};
-
-	const json::string reply_id
-	{
-		m_in_reply_to["event_id"]?:
-			m_relates_to["event_id"]
+		msg.body()
 	};
 
 	const auto event_id
@@ -264,7 +244,7 @@ handle_command(client &client,
 		send(user_room, request.user_id, "ircd.cmd",
 		{
 			{ "msgtype",  "m.text"         },
-			{ "body",     request["body"]  },
+			{ "body",     body             },
 			{ "room_id",  room.room_id     },
 			{ "event_id", echo_id          },
 			{ "reply_id", reply_id         },

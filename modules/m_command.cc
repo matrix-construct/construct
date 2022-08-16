@@ -98,24 +98,17 @@ try
 
 	const bool is_command
 	{
-		startswith(body, "\\\\")
+		!content.has("input")
+		&& startswith(body, '\\')
 	};
 
-	const bool is_command_replying
-	{
-		startswith(body, ">")
-		&& has(body, "\\n\\n\\\\")
-	};
-
-	if(!is_command && !is_command_replying)
+	if(!is_command)
 		return;
 
 	// View of the command string without prefix
 	string_view input
 	{
-		is_command_replying?
-			lstrip(split(body, "\\n\\n\\\\").second, "\\\\"):
-			lstrip(body, "\\\\")
+		lstrip(body, '\\')
 	};
 
 	// Determine if there's a bang after the prefix; if so the response's
@@ -209,25 +202,22 @@ try
 		"org.matrix.custom.html", json::STRING
 	};
 
-	char reply_buf[288];
-	const json::object in_reply_to
+	char relates_buf[576], reply_buf[288];
+	json::object in_reply_to, relates_to {json::empty_object};
+	if(event_id)
 	{
-		json::stringify(reply_buf, json::members
+		in_reply_to = json::stringify(reply_buf, json::members
 		{
 			{ "event_id",  event_id },
-		})
-	};
+		});
 
-	char relates_buf[576];
-	const json::object relates_to
-	{
-		json::stringify(relates_buf, json::members
+		relates_to = json::stringify(relates_buf, json::members
 		{
 			{ "event_id",       event_id      },
 			{ "rel_type",       "ircd.cmd"    },
 			{ "m.in_reply_to",  in_reply_to   },
-		})
-	};
+		});
+	}
 
 	m::send(response_room, response_sender, response_type,
 	{
