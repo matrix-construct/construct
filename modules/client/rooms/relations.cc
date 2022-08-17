@@ -16,7 +16,7 @@ static void
 relations_chunk_append(client &client,
                        const m::resource::request &request,
                        const m::event::idx &event_idx,
-                       const m::event &event,
+                       m::event::fetch &event,
                        json::stack::array &chunk);
 
 static void
@@ -133,18 +133,13 @@ try
 	};
 
 	m::event::fetch event;
-	relates.for_each(rel_type, [&client, &request, &event, &chunk]
+	relates.rfor_each(rel_type, [&client, &request, &event, &chunk]
 	(const m::event::idx &event_idx, const json::object &, const m::relates_to &)
 	{
-		if(unlikely(!seek(std::nothrow, event, event_idx)))
-			return true;
-
 		relations_chunk_append(client, request, event_idx, event, chunk);
-		return true;
 	});
 
-	if(likely(seek(std::nothrow, event, event_idx)))
-		relations_chunk_append(client, request, event_idx, event, chunk);
+	relations_chunk_append(client, request, event_idx, event, chunk);
 }
 catch(const std::exception &e)
 {
@@ -163,10 +158,13 @@ void
 relations_chunk_append(client &client,
                        const m::resource::request &request,
                        const m::event::idx &event_idx,
-                       const m::event &event,
+                       m::event::fetch &event,
                        json::stack::array &chunk)
 
 {
+	if(unlikely(!seek(std::nothrow, event, event_idx)))
+		return;
+
 	if(!visible(event, request.user_id))
 		return;
 
