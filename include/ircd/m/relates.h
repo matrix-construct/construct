@@ -39,6 +39,9 @@ struct ircd::m::relates_to
 struct ircd::m::relates
 {
 	event::refs refs;
+	bool match_sender {false};
+	bool prefetch_depth {false};
+	bool prefetch_sender {false};
 
   public:
 	using closure = util::closure_bool
@@ -58,9 +61,5 @@ struct ircd::m::relates
 	bool has(const event::idx &) const;
 
 	size_t count(const string_view &type = {}) const;
-	bool prefetch(const string_view &type = {}, const bool depth = false) const;
-
-	relates(const event::refs &refs)
-	:refs{refs}
-	{}
+	bool prefetch(const string_view &type = {}) const;
 };

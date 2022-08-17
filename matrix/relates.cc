@@ -9,8 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 bool
-ircd::m::relates::prefetch(const string_view &type,
-                           const bool depth)
+ircd::m::relates::prefetch(const string_view &type)
 const
 {
 	// If the prefetch was launched, bail here without blocking below.
@@ -19,11 +18,14 @@ const
 
 	// The iteration is cached so we can prefetch the content now
 	bool ret{false};
-	refs.for_each(dbs::ref::M_RELATES, [&ret, &depth]
+	refs.for_each(dbs::ref::M_RELATES, [this, &ret]
 	(const auto &event_idx, const auto &)
 	{
-		if(depth)
+		if(this->prefetch_depth)
 			ret |= m::prefetch(event_idx, "depth");
+
+		if(this->prefetch_sender || this->match_sender)
+			ret |= m::prefetch(event_idx, "sender");
 
 		ret |= m::prefetch(event_idx, "content");
 		return true;
@@ -145,7 +147,7 @@ ircd::m::relates::for_each(const string_view &rel_type,
                            const closure &closure)
 const
 {
-	return refs.for_each(dbs::ref::M_RELATES, [&rel_type, &closure]
+	return refs.for_each(dbs::ref::M_RELATES, [this, &rel_type, &closure]
 	(const auto &event_idx, const auto &type)
 	{
 		thread_local char buf[event::MAX_SIZE];
@@ -169,6 +171,18 @@ const
 		if(rel_type)
 			if(json::get<"rel_type"_>(relates) != rel_type)
 				return true;
+
+		if(this->match_sender)
+		{
+			const pair<event::idx> idx
+			{
+				refs.idx, event_idx
+			};
+
+			const std::equal_to<string_view> equal_to;
+			if(!m::query(std::nothrow, idx, "sender", equal_to))
+				return true;
+		}
 
 		return closure(event_idx, content, relates);
 	});
