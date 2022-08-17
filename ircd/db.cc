@@ -3414,6 +3414,63 @@ ircd::db::column::operator()(const string_view &key,
 	return true;
 }
 
+uint64_t
+ircd::db::column::operator()(const keys &key,
+                             const std::nothrow_t,
+                             const views_closure &func,
+                             const gopts &gopts)
+{
+	static const auto MAX
+	{
+		64UL
+	};
+
+	const auto num
+	{
+		key.size()
+	};
+
+	if(unlikely(num > MAX))
+		throw std::out_of_range
+		{
+			"column() :too many keys for parallel fetch."
+		};
+
+	if(!num)
+		return 0;
+
+	_read_op op[num];
+	for(size_t i(0); i < num; ++i)
+		op[i] =
+		{
+			*this, key[i]
+		};
+
+	string_view buf[num];
+	uint64_t i(0), ret(0);
+	auto opts(make_opts(gopts));
+	_read({op, num}, opts, [&func, &num, &i, &ret, &buf]
+	(column &, const column::delta &d, const rocksdb::Status &s)
+	{
+		const auto &val
+		{
+			std::get<column::delta::VAL>(d)
+		};
+
+		buf[i] = val;
+		ret |= (uint64_t(s.ok()) << i);
+
+		// All results are available until _read() returns. The user is called
+		// here with all results after the last result is set.
+		if(++i == num)
+			func({buf, num});
+
+		return true;
+	});
+
+	return ret;
+}
+
 ircd::db::cell
 ircd::db::column::operator[](const string_view &key)
 const

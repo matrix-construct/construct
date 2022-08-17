@@ -153,6 +153,11 @@ struct ircd::db::column
 	// [GET] Get cell
 	cell operator[](const string_view &key) const;
 
+	// [GET] Perform a parallel get into the closure.
+	using views_closure = std::function<void (const vector_view<const string_view> &)>;
+	uint64_t operator()(const keys &, std::nothrow_t, const views_closure &func, const gopts & = {});
+	uint64_t operator()(const keys &, std::nothrow_t, const gopts &, const views_closure &func);
+
 	// [GET] Perform a get into a closure. This offers a reference to the data with zero-copy.
 	using view_closure = std::function<void (const string_view &)>;
 	bool operator()(const string_view &key, std::nothrow_t, const view_closure &func, const gopts & = {});
@@ -238,6 +243,15 @@ ircd::db::column::operator()(const string_view &key,
                              const std::nothrow_t,
                              const gopts &gopts,
                              const view_closure &func)
+{
+	return operator()(key, std::nothrow, func, gopts);
+}
+
+inline uint64_t
+ircd::db::column::operator()(const keys &key,
+                             const std::nothrow_t,
+                             const gopts &gopts,
+                             const views_closure &func)
 {
 	return operator()(key, std::nothrow, func, gopts);
 }
