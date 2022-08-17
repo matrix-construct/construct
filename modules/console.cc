@@ -672,51 +672,53 @@ console_cmd__log__level(opt &out, const string_view &line)
 		"level",
 	}};
 
-	if(!param.count())
-	{
-		for(auto i(0U); i < num_of<log::level>(); ++i)
-			if(i > RB_LOG_LEVEL)
-				out << "[\033[1;40m-\033[0m] " << reflect(log::level(i)) << std::endl;
-			else if(console_enabled(log::level(i)))
-				out << "[\033[1;42m+\033[0m] " << reflect(log::level(i)) << std::endl;
-			else
-				out << "[\033[1;41m-\033[0m] " << reflect(log::level(i)) << std::endl;
-
-		return true;
-	}
-
 	const auto level_string
 	{
 		param["level"]
 	};
 
-	uint level;
-	switch(hash(level_string))
+	uint level {-1U};
+	if(level_string) switch(hash(level_string))
 	{
 		case "CRITICAL"_:  level = 0U;   break;
 		case "ERROR"_:     level = 1U;   break;
 		case "WARNING"_:   level = 2U;   break;
 		case "NOTICE"_:    level = 3U;   break;
 		case "INFO"_:      level = 4U;   break;
-		case "DWARNING"_:  level = 5U;   break;
-		case "DERROR"_:    level = 6U;   break;
+		case "DERROR"_:    level = 5U;   break;
+		case "DWARNING"_:  level = 6U;   break;
 		case "DEBUG"_:     level = 7U;   break;
-		default:           level = -1U;  break;
 	};
 
+	if(level != -1U)
+	{
+		for(auto i(0U); i < num_of<log::level>(); ++i)
+			if(i > level && log::console_enabled(log::level(i)))
+				console_disable(log::level(i));
+			else if(i <= level)
+				console_enable(log::level(i));
+	}
+
+	bool enabled[num_of<log::level>()];
 	for(auto i(0U); i < num_of<log::level>(); ++i)
-		if(i > RB_LOG_LEVEL)
-		{
-			out << "[\033[1;40m-\033[0m] " << reflect(log::level(i)) << std::endl;
-		}
-		else if(i <= level)
-		{
-			console_enable(log::level(i));
-			out << "[\033[1;42m+\033[0m] " << reflect(log::level(i)) << std::endl;
-		} else {
-			console_disable(log::level(i));
-			out << "[\033[1;41m-\033[0m] " << reflect(log::level(i)) << std::endl;
-		}
+		enabled[i] = log::console_enabled(log::level(i));
+
+	// console log levels must be sampled before the first output.
+	for(auto i(0U); i < num_of<log::level>(); ++i)
+	{
+		out << '[';
+		if(enabled[i])
+			out << "\033[1;42m" << '+';
+		else if(i > RB_LOG_LEVEL)
+			out << "\033[1;40m" << ' ';
+		else
+			out << "\033[1;41m" << '-';
+
+		out
+		<< "\033[0m" << ']'
+		<< ' ' << reflect(log::level(i))
+		<< std::endl;
+	}
 
 	return true;
 }
