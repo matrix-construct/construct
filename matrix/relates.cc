@@ -82,13 +82,6 @@ const
 	});
 }
 
-bool
-ircd::m::relates::for_each(const closure &closure)
-const
-{
-	return for_each(string_view{}, closure);
-}
-
 ircd::m::event::idx
 ircd::m::relates::latest(const string_view &type,
                          uint *const at)
@@ -143,47 +136,44 @@ const
 }
 
 bool
-ircd::m::relates::for_each(const string_view &rel_type,
-                           const closure &closure)
+ircd::m::relates::_each(const string_view &rel_type,
+                        const closure &closure,
+                        const event::idx &event_idx)
 const
 {
-	return refs.for_each(dbs::ref::M_RELATES, [this, &rel_type, &closure]
-	(const auto &event_idx, const auto &type)
+	thread_local char buf[event::MAX_SIZE];
+	const json::object content
 	{
-		thread_local char buf[event::MAX_SIZE];
-		const json::object content
-		{
-			m::get(std::nothrow, event_idx, "content", buf)
-		};
+		m::get(std::nothrow, event_idx, "content", buf)
+	};
 
-		if(!content)
+	if(!content)
+		return true;
+
+	m::relates_to relates
+	{
+		content["m.relates_to"]
+	};
+
+	if(!json::get<"rel_type"_>(relates))
+		if(json::get<"m.in_reply_to"_>(relates))
+			json::get<"rel_type"_>(relates) = "m.in_reply_to";
+
+	if(rel_type)
+		if(json::get<"rel_type"_>(relates) != rel_type)
 			return true;
 
-		m::relates_to relates
+	if(match_sender)
+	{
+		const pair<event::idx> idx
 		{
-			content["m.relates_to"]
+			refs.idx, event_idx
 		};
 
-		if(!json::get<"rel_type"_>(relates))
-			if(json::get<"m.in_reply_to"_>(relates))
-				json::get<"rel_type"_>(relates) = "m.in_reply_to";
+		const std::equal_to<string_view> equal_to;
+		if(!m::query(std::nothrow, idx, "sender", equal_to))
+			return true;
+	}
 
-		if(rel_type)
-			if(json::get<"rel_type"_>(relates) != rel_type)
-				return true;
-
-		if(this->match_sender)
-		{
-			const pair<event::idx> idx
-			{
-				refs.idx, event_idx
-			};
-
-			const std::equal_to<string_view> equal_to;
-			if(!m::query(std::nothrow, idx, "sender", equal_to))
-				return true;
-		}
-
-		return closure(event_idx, content, relates);
-	});
+	return closure(event_idx, content, relates);
 }
