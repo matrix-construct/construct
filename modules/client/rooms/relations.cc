@@ -13,12 +13,19 @@
 using namespace ircd;
 
 static void
+relations_chunk_append(client &client,
+                       const m::resource::request &request,
+                       const m::event::idx &event_idx,
+                       const m::event &event,
+                       json::stack::array &chunk);
+
+static void
 relations_chunk(client &client,
                 const m::resource::request &request,
                 const m::room::id &room_id,
                 const m::event::id &event_id,
+                const m::event::idx &event_idx,
                 const string_view &rel_type,
-                const string_view &type,
                 json::stack::array &chunk);
 
 m::resource::response
@@ -43,13 +50,6 @@ get__relations(client &client,
 	{
 		url::decode(event_id, request.parv[2])
 	};
-
-	if(!m::exists(event_id))
-		throw m::NOT_FOUND
-		{
-			"Cannot get relations about %s which is not found.",
-			string_view{event_id}
-		};
 
 	// Get the rel_type path parameter.
 	// Note: Not requiring path parameter; empty will mean all types.
@@ -80,6 +80,11 @@ get__relations(client &client,
 		url::decode(type_buf, request.parv[4])
 	};
 
+	const auto event_idx
+	{
+		m::index(event_id)
+	};
+
 	m::resource::response::chunked response
 	{
 		client, http::OK
@@ -100,7 +105,11 @@ get__relations(client &client,
 		top, "chunk"
 	};
 
-	relations_chunk(client, request, room_id, event_id, rel_type, type, chunk);
+	relations_chunk
+	(
+		client, request, room_id, event_id, event_idx, rel_type, chunk
+	);
+
 	return response;
 }
 
@@ -109,84 +118,65 @@ relations_chunk(client &client,
                 const m::resource::request &request,
                 const m::room::id &room_id,
                 const m::event::id &event_id,
+                const m::event::idx &event_idx,
                 const string_view &rel_type,
-                const string_view &type,
                 json::stack::array &chunk)
 try
 {
-	const auto append{[&chunk, &request]
-	(const auto &event_idx, const m::event &event)
+	const m::relates relates
 	{
-		m::event::append
-		{
-			chunk, event,
-			{
-				.event_idx = &event_idx,
-				.user_id = &request.user_id,
-				.query_txnid = false,
-			}
-		};
-	}};
+		// Find relations to this event
+		.refs = event_idx,
 
-	m::event::idx event_idx
-	{
-		index(std::nothrow, event_id)
+		// Relations may require the same sender as event_idx.
+		.match_sender = rel_type == "m.replace"
 	};
 
-	m::event::fetch event
+	m::event::fetch event;
+	relates.for_each(rel_type, [&client, &request, &event, &chunk]
+	(const m::event::idx &event_idx, const json::object &, const m::relates_to &)
 	{
-		std::nothrow, event_idx
-	};
-
-	const auto each_ref{[&event, &append, &rel_type, &request]
-	(const m::event::idx &event_idx, const m::dbs::ref &)
-	{
-		if(!seek(std::nothrow, event, event_idx))
+		if(unlikely(!seek(std::nothrow, event, event_idx)))
 			return true;
 
-		const json::object &m_relates_to
-		{
-			at<"content"_>(event).get("m.relates_to")
-		};
-
-		const json::string &_rel_type
-		{
-			m_relates_to.get("rel_type")
-		};
-
-		if(_rel_type != rel_type)
-			return true;
-
-		if(!visible(event, request.user_id))
-			return true;
-
-		append(event_idx, event);
+		relations_chunk_append(client, request, event_idx, event, chunk);
 		return true;
-	}};
+	});
 
-	if(!event.valid)
-		return;
-
-	if(!visible(event, request.user_id))
-		return;
-
-	// Send the original event
-	append(event_idx, event);
-
-	// Send all the referencees
-	const m::event::refs refs{event_idx};
-	refs.for_each(m::dbs::ref::M_RELATES, each_ref);
+	if(likely(seek(std::nothrow, event, event_idx)))
+		relations_chunk_append(client, request, event_idx, event, chunk);
 }
 catch(const std::exception &e)
 {
 	log::error
 	{
-		m::log, "relations in %s for %s rel_type:%s type:%s by %s :%s",
+		m::log, "relations in %s for %s rel_type:%s by %s :%s",
 		string_view{room_id},
 		string_view{event_id},
 		rel_type,
-		type,
 		string_view{request.user_id},
 		e.what(),
+	};
+}
+
+void
+relations_chunk_append(client &client,
+                       const m::resource::request &request,
+                       const m::event::idx &event_idx,
+                       const m::event &event,
+                       json::stack::array &chunk)
+
+{
+	if(!visible(event, request.user_id))
+		return;
+
+	m::event::append
+	{
+		chunk, event,
+		{
+			.event_idx = &event_idx,
+			.user_id = &request.user_id,
+			.query_txnid = false,
+		}
 	};
 }
