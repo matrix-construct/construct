@@ -45,6 +45,7 @@ struct ircd::m::event::fetch
 
 	using keys = event::keys;
 	using view_closure = std::function<void (const string_view &)>;
+	using views_closure = std::function<void (const vector_view<const string_view> &)>;
 
 	static const opts default_opts;
 

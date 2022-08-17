@@ -227,3 +227,79 @@ ircd::m::get(std::nothrow_t,
 
 	return ret;
 }
+
+void
+ircd::m::get(const vector_view<const event::idx> &event_idx,
+             const string_view &key,
+             const event::fetch::views_closure &closure)
+{
+	const auto mask
+	{
+		get(std::nothrow, event_idx, key, closure)
+	};
+
+	const auto found
+	{
+		__builtin_popcountl(mask)
+	};
+
+	if(unlikely(found < event_idx.size()))
+		throw m::NOT_FOUND
+		{
+			"Only %zu/%zu for %s found in database",
+			found,
+			event_idx.size(),
+			key,
+		};
+}
+
+uint64_t
+ircd::m::get(std::nothrow_t,
+             const vector_view<const event::idx> &event_idx,
+             const string_view &key,
+             const event::fetch::views_closure &closure)
+{
+	const auto &column_idx
+	{
+		json::indexof<event>(key)
+	};
+
+	auto &column
+	{
+		dbs::event_column.at(column_idx)
+	};
+
+	if(unlikely(!column))
+		throw panic
+		{
+			"Parallel fetch not yet supported for key '%s'",
+			key,
+		};
+
+	if(!event_idx.size())
+		return 0;
+
+	static const auto MAX {64UL};
+	const auto &num
+	{
+		std::min(event_idx.size(), MAX)
+	};
+
+	string_view column_key[num];
+	for(uint i(0); i < num; ++i)
+		column_key[i] = byte_view<string_view>
+		{
+			event_idx[i]
+		};
+
+	const vector_view<const string_view> keys
+	{
+		column_key, num
+	};
+
+	return column(keys, std::nothrow, [&closure]
+	(const vector_view<const string_view> &res)
+	{
+		closure(res);
+	});
+}
