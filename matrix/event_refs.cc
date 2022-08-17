@@ -174,19 +174,12 @@ const
 }
 
 bool
-ircd::m::event::refs::for_each(const closure &closure)
+ircd::m::event::refs::_for_each(const dbs::ref &type,
+                                const closure &closure,
+                                const bool ascending)
 const
 {
-	return for_each(dbs::ref(-1), closure);
-}
-
-bool
-ircd::m::event::refs::for_each(const dbs::ref &type,
-                               const closure &closure)
-const
-{
-	if(!idx)
-		return true;
+	assume(idx != 0);
 
 	// Allow -1 to iterate through all types by starting
 	// the iteration at type value 0 and then ignoring the
@@ -205,15 +198,11 @@ const
 	char buf[dbs::EVENT_REFS_KEY_MAX_SIZE];
 	const string_view key
 	{
-		dbs::event_refs_key(buf, idx, _type, 0)
+		dbs::event_refs_key(buf, idx, _type, 0UL)
 	};
 
-	auto it
-	{
-		dbs::event_refs.begin(key)
-	};
-
-	for(; it; ++it)
+	const auto _each{[this, &all_type, &_type, &type, &closure]
+	(const auto &it) -> int
 	{
 		const auto parts
 		{
@@ -226,7 +215,7 @@ const
 		};
 
 		if(!all_type && type != _type)
-			break;
+			return -1;
 
 		const auto &ref
 		{
@@ -234,8 +223,19 @@ const
 		};
 
 		assert(idx != ref);
-		if(!closure(ref, type))
-			return false;
+		return closure(ref, type);
+	}};
+
+	int res(true);
+	if(ascending)
+	{
+		for(auto it(dbs::event_refs.begin(key)); it && res > 0; ++it)
+			if(!(res = _each(it)))
+				return false;
+	} else {
+		for(auto it(dbs::event_refs.rbegin(key)); it && res > 0; ++it)
+			if(!(res = _each(it)))
+				return false;
 	}
 
 	return true;

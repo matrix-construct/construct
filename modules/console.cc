@@ -8511,7 +8511,7 @@ console_cmd__event__refs(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"event_id", "type"
+		"event_id", "type", "dir"
 	}};
 
 	const m::event::id &event_id
@@ -8541,7 +8541,7 @@ console_cmd__event__refs(opt &out, const string_view &line)
 			if(reflect(type) == typestr)
 				break;
 
-	refs.for_each(type, [&out, &event_id, &refs]
+	const auto closure{[&out, &event_id, &refs]
 	(const auto &tgt, const auto &type)
 	{
 		const auto tgt_id
@@ -8559,7 +8559,17 @@ console_cmd__event__refs(opt &out, const string_view &line)
 		;
 
 		return true;
-	});
+	}};
+
+	const bool asc
+	{
+		param["dir"] != "b"
+	};
+
+	if(asc)
+		refs.for_each(type, closure);
+	else
+		refs.rfor_each(type, closure);
 
 	return true;
 }

@@ -26,13 +26,23 @@ namespace ircd::m::dbs
 /// scan when using this interface, etc).
 struct ircd::m::event::refs
 {
+	using closure = util::closure_bool
+	<
+		std::function,
+		const event::idx &, const dbs::ref &
+	>;
+
 	event::idx idx;
 
-  public:
-	using closure = std::function<bool (const event::idx &, const dbs::ref &)>;
+  private:
+	bool _for_each(const dbs::ref &type, const closure &, const bool ascending) const;
 
+  public:
 	bool for_each(const dbs::ref &type, const closure &) const;
 	bool for_each(const closure &) const;
+
+	bool rfor_each(const dbs::ref &type, const closure &) const;
+	bool rfor_each(const closure &) const;
 
 	bool has(const dbs::ref &type, const event::idx &) const;
 	bool has(const dbs::ref &type) const;
@@ -54,3 +64,37 @@ ircd::m::event::refs::refs(const event::idx &idx)
 noexcept
 :idx{idx}
 {}
+
+inline bool
+ircd::m::event::refs::rfor_each(const closure &closure)
+const
+{
+	return rfor_each(dbs::ref(-1), closure);
+}
+
+inline bool
+ircd::m::event::refs::rfor_each(const dbs::ref &type,
+                                const closure &closure)
+const
+{
+	return idx?
+		_for_each(type, closure, false):
+		true;
+}
+
+inline bool
+ircd::m::event::refs::for_each(const closure &closure)
+const
+{
+	return for_each(dbs::ref(-1), closure);
+}
+
+inline bool
+ircd::m::event::refs::for_each(const dbs::ref &type,
+                               const closure &closure)
+const
+{
+	return idx?
+		_for_each(type, closure, true):
+		true;
+}
