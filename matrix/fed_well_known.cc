@@ -14,6 +14,7 @@ namespace ircd::m::fed::well_known
 	static void submit(request &);
 	static void receive(request &);
 	static void finish(request &);
+	static bool redirect(request &);
 	static bool handle(request &);
 	static void worker();
 
@@ -377,20 +378,35 @@ catch(const std::exception &e)
 	};
 }
 
+/// Returns true if the request is done with either success or error; false
+/// if the request resubmitted itself.
 bool
 ircd::m::fed::well_known::handle(request &req)
 try
 {
 	receive(req);
 
-	// Successful result
-	if(likely(req.code < 300))
-		return true;
+	// Handle redirection.
+	if(http::category(req.code) == http::category::REDIRECT)
+		return redirect(req);
 
-	// Successful error; bail
-	if(req.code >= 400)
-		return true;
+	return true;
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		log, "%s handling :%s",
+		req.target,
+		e.what(),
+	};
 
+	return true;
+}
+
+bool
+ircd::m::fed::well_known::redirect(request &req)
+{
 	// Indirection code, but no location response header
 	if(!req.location)
 		return true;
@@ -410,17 +426,6 @@ try
 	// Redirect
 	submit(req);
 	return false;
-}
-catch(const std::exception &e)
-{
-	log::derror
-	{
-		log, "%s handling :%s",
-		req.target,
-		e.what(),
-	};
-
-	return true;
 }
 
 void
