@@ -363,8 +363,9 @@ try
 
 	log::debug
 	{
-		log, "Keys for %s not cached; querying network...",
-		server_name
+		log, "Key '%s' for %s not cached; querying network...",
+		key_id?: "<all>"_sv,
+		server_name,
 	};
 
 	const unique_buffer<mutable_buffer> buf
