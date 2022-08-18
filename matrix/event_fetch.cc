@@ -258,6 +258,12 @@ ircd::m::event::fetch::fetch(const opts &opts)
 {
 }
 
+// array of db::cell::~cell()
+ircd::m::event::fetch::~fetch()
+noexcept
+{
+}
+
 [[gnu::visibility("hidden")]]
 bool
 ircd::m::event::fetch::assign_from_json(const string_view &key)

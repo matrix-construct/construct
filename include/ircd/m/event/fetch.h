@@ -69,6 +69,7 @@ struct ircd::m::event::fetch
 	fetch(const id &, const opts & = default_opts);
 	fetch(const idx &, const opts & = default_opts);
 	fetch(const opts & = default_opts);
+	~fetch() noexcept;
 };
 
 /// Event Fetch Options.
