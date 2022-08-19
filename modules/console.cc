@@ -12724,13 +12724,13 @@ console_cmd__user__rooms(opt &out, const string_view &line)
 		user
 	};
 
-	rooms.for_each(membership, m::user::rooms::closure{[&out]
+	rooms.for_each(membership, [&out]
 	(const m::room &room, const string_view &membership)
 	{
 		out << room.room_id
 		    << " " << membership
 		    << std::endl;
-	}});
+	});
 
 	return true;
 }
@@ -13697,7 +13697,7 @@ console_cmd__user__room_tags(opt &out, const string_view &line)
 		user_id
 	};
 
-	rooms.for_each(m::user::rooms::closure{[&user_id, &tag, &out]
+	rooms.for_each([&user_id, &tag, &out]
 	(const m::room &room, const string_view &membership)
 	{
 		const auto output
@@ -13718,7 +13718,7 @@ console_cmd__user__room_tags(opt &out, const string_view &line)
 			room_tags.get(tag, output);
 		else
 			room_tags.for_each(output);
-	}});
+	});
 
 	return true;
 }

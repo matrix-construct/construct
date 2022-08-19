@@ -67,36 +67,11 @@ const
 	return ret;
 }
 
-void
-ircd::m::user::rooms::for_each(const closure &closure)
-const
-{
-	for_each(closure_bool{[&closure]
-	(const m::room &room, const string_view &membership)
-	{
-		closure(room, membership);
-		return true;
-	}});
-}
-
 bool
 ircd::m::user::rooms::for_each(const closure_bool &closure)
 const
 {
 	return for_each(string_view{}, closure);
-}
-
-void
-ircd::m::user::rooms::for_each(const string_view &membership,
-                               const closure &closure)
-const
-{
-	for_each(membership, closure_bool{[&closure]
-	(const m::room &room, const string_view &membership)
-	{
-		closure(room, membership);
-		return true;
-	}});
 }
 
 bool

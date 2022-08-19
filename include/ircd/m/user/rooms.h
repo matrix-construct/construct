@@ -16,19 +16,17 @@ struct ircd::m::user::rooms
 {
 	struct origins;
 
-	using closure = std::function<void (const m::room &, const string_view &)>;
-	using closure_bool = std::function<bool (const m::room &, const string_view &)>;
+	using closure_bool = util::closure_bool
+	<
+		std::function,
+		const m::room &, const string_view &
+	>;
 
 	m::user user;
 
   public:
-	// All rooms with specific membership
 	bool for_each(const string_view &membership, const closure_bool &) const;
-	void for_each(const string_view &membership, const closure &) const;
-
-	// All rooms with any membership
 	bool for_each(const closure_bool &) const;
-	void for_each(const closure &) const;
 
 	size_t count(const string_view &membership) const;
 	size_t count() const;
