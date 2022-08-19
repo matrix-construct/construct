@@ -638,6 +638,14 @@ ircd::m::pretty_msgline(std::ostream &s,
 			s << smalldate(sdbuf, json::get<"origin_server_ts"_>(event) / 1000L) << ' ';
 	}
 
+	if(opts.show_origin_server_ts_ago)
+	{
+		char buf[48];
+		const system_point p(milliseconds(json::get<"origin_server_ts"_>(event)));
+		if(json::get<"origin_server_ts"_>(event) != json::undefined_number)
+			s << ago(buf, p, 0x3) << ' ';
+	}
+
 	if(opts.show_event_id)
 		s << event.event_id << ' ';
 
@@ -685,8 +693,9 @@ ircd::m::pretty_msgline(std::ostream &s,
 
 			if(opts.show_msgtype)
 				s << type << ' ';
-			else if(type != "m.text")
-				break;
+
+			if(opts.body_delim)
+				s << opts.body_delim;
 
 			s << msg.body();
 			break;

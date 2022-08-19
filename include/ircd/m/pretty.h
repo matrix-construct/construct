@@ -46,9 +46,11 @@ struct ircd::m::pretty_opts
 	bool show_event_idx {true};
 	bool show_depth {true};
 	bool show_origin_server_ts {true};
+	bool show_origin_server_ts_ago {false};
 	bool show_event_id {true};
 	bool show_sender {true};
 	bool show_state_key {true};
 	bool show_content {true};
 	bool show_msgtype {true};
+	char body_delim {':'};
 };
