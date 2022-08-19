@@ -11506,64 +11506,6 @@ console_cmd__room__messages(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "limit", "start_depth", "end_depth"
-	}};
-
-	const auto &room_id
-	{
-		m::room_id(param.at(0))
-	};
-
-	const auto limit
-	{
-		param.at("limit", 48U)?: -1U
-	};
-
-	const int64_t start_depth
-	{
-		param.at<int64_t>("start_depth", std::numeric_limits<int64_t>::max())
-	};
-
-	const int64_t end_depth
-	{
-		param.at<int64_t>("end_depth", -1)
-	};
-
-	const m::room::messages messages
-	{
-		room_id, { start_depth, end_depth },
-	};
-
-	size_t i(0);
-	m::event::fetch event;
-	messages.for_each([&out, &i, &limit, &event]
-	(const m::room::message &msg, const uint64_t &depth, m::event::idx event_idx)
-	{
-		if(!seek(std::nothrow, event, event_idx))
-			return true;
-
-		json::get<"content"_>(event) = msg.source;
-		const m::pretty_opts opts
-		{
-			.event_idx = event_idx,
-			.show_event_id = false,
-			.show_state_key = false,
-		};
-
-		out
-		<< pretty_msgline(event, opts)
-		<< std::endl;
-		return ++i < limit;
-	});
-
-	return true;
-}
-
-bool
-console_cmd__room__text(opt &out, const string_view &line)
-{
-	const params param{line, " ",
-	{
 		"room_id", "start_depth", "end_depth", "limit"
 	}};
 
@@ -11594,26 +11536,26 @@ console_cmd__room__text(opt &out, const string_view &line)
 	};
 
 	size_t i(0);
-	messages.for_each([&out, &i, &limit]
+	m::event::fetch event;
+	messages.for_each([&out, &i, &limit, &event]
 	(const m::room::message &msg, const uint64_t &depth, m::event::idx event_idx)
 	{
-		if(json::get<"msgtype"_>(msg) != "m.text")
+		if(!seek(std::nothrow, event, event_idx))
 			return true;
 
-		long ots {0};
-		m::get<long>(event_idx, "origin_server_ts", ots);
+		json::get<"content"_>(event) = msg.source;
+		const m::pretty_opts opts
+		{
+			.event_idx = event_idx,
+			.show_origin_server_ts = false,
+			.show_origin_server_ts_ago = true,
+			.show_event_id = false,
+			.show_state_key = false,
+			.show_msgtype = false,
+		};
 
-		char buf[1][48];
 		out
-		<< std::setw(9) << std::right << event_idx
-		<< ' '
-		<< std::setw(7) << std::right << depth
-		<< ' '
-		<< std::setw(8) << ago(buf[0], system_point(milliseconds(ots)), 0x3)
-		<< " <"
-		<< m::get(std::nothrow, event_idx, "sender")
-		<< ">  "
-		<< msg.body()
+		<< pretty_msgline(event, opts)
 		<< std::endl;
 		return ++i < limit;
 	});
