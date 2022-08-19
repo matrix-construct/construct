@@ -24,6 +24,7 @@ namespace ircd::m::sync
 	extern conf::item<size_t> buffer_size;
 	extern conf::item<size_t> linear_buffer_size;
 	extern conf::item<size_t> linear_delta_max;
+	extern conf::item<size_t> polylog_prefetch;
 	extern conf::item<bool> longpoll_enable;
 	extern conf::item<bool> polylog_phased;
 	extern conf::item<bool> polylog_only;
@@ -131,6 +132,13 @@ ircd::m::sync::linear_delta_max
 	{ "name",     "ircd.client.sync.linear.delta.max"  },
 	{ "default",  1024                                 },
 	{ "help",     linear_delta_max_help                },
+};
+
+decltype(ircd::m::sync::polylog_prefetch)
+ircd::m::sync::polylog_prefetch
+{
+	{ "name",     "ircd.client.sync.polylog.prefetch"  },
+	{ "default",  8192                                 },
 };
 
 decltype(ircd::m::sync::polylog_phased)
@@ -1036,8 +1044,15 @@ try
 		*data.out
 	};
 
-	// Prefetch loop
-	if(data.range.first == 0)
+	const bool prefetch
+	{
+		false
+		|| (data.range.first == 0 && bool(polylog_prefetch))
+		|| (data.range.second - data.range.first > size_t(polylog_prefetch))
+	};
+
+	// Branch to run a prefetch loop.
+	if(prefetch)
 	{
 		const scope_restore prefetching
 		{

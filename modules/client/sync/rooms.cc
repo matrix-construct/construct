@@ -141,6 +141,9 @@ ircd::m::sync::rooms_polylog(data &data)
 	bool ret{false};
 	int64_t phase(0);
 
+	if(data.prefetch)
+		data.user_rooms.prefetch();
+
 	ret |= _rooms_polylog(data, "join", phase);
 	if(data.phased && ret)
 		return ret;
