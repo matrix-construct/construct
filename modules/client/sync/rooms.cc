@@ -13,6 +13,7 @@ namespace ircd::m::sync
 	static bool should_ignore(const data &);
 
 	static bool _rooms_polylog_room(data &, const m::room &);
+	static bool _rooms_polylog_each(data &, const m::room &, const string_view &, int64_t &, bool &);
 	static bool _rooms_polylog(data &, const string_view &membership, int64_t &phase);
 	static bool rooms_polylog(data &);
 
@@ -175,57 +176,65 @@ ircd::m::sync::_rooms_polylog(data &data,
 	};
 
 	bool ret{false};
-	const user::rooms::closure_bool closure{[&data, &ret, &phase]
-	(const m::room &room, const string_view &membership_)
-	{
-		if(data.phased)
-		{
-			if(phase < int64_t(data.range.first) && ret)
-				return false;
-
-			if(int64_t(data.range.first) < 0L)
-				--phase;
-
-			if(phase > int64_t(data.range.first))
-				return true;
-		}
-
-		#if defined(RB_DEBUG)
-		sync::stats stats
-		{
-			data.stats && rooms.stats_debug?
-				*data.stats:
-				sync::stats{}
-		};
-
-		if(data.stats)
-			stats.timer = timer{};
-		#endif
-
-		ret |= _rooms_polylog_room(data, room);
-
-		#if defined(RB_DEBUG)
-		thread_local char tmbuf[32];
-		if(data.stats && rooms.stats_debug)
-			log::debug
-			{
-				log, "polylog %s %s %s in %s",
-				loghead(data),
-				membership_,
-				string_view{room.room_id},
-				ircd::pretty(tmbuf, stats.timer.at<milliseconds>(), true)
-			};
-		#endif
-
-		return true;
-	}};
-
 	const bool done
 	{
-		data.user_rooms.for_each(membership, closure)
+		data.user_rooms.for_each(membership, [&data, &ret, &phase]
+		(const m::room &room, const string_view &membership)
+		{
+			return _rooms_polylog_each(data, room, membership, phase, ret);
+		})
 	};
 
 	return ret;
+}
+
+bool
+ircd::m::sync::_rooms_polylog_each(data &data,
+                                   const m::room &room,
+                                   const string_view &membership,
+                                   int64_t &phase,
+                                   bool &ret)
+{
+	if(data.phased)
+	{
+		if(phase < int64_t(data.range.first) && ret)
+			return false;
+
+		if(int64_t(data.range.first) < 0L)
+			--phase;
+
+		if(phase > int64_t(data.range.first))
+			return true;
+	}
+
+	#if defined(RB_DEBUG)
+	sync::stats stats
+	{
+		data.stats && rooms.stats_debug?
+			*data.stats:
+			sync::stats{}
+	};
+
+	if(data.stats)
+		stats.timer = timer{};
+	#endif
+
+	ret |= _rooms_polylog_room(data, room);
+
+	#if defined(RB_DEBUG)
+	thread_local char tmbuf[32];
+	if(data.stats && rooms.stats_debug)
+		log::debug
+		{
+			log, "polylog %s %s %s in %s",
+			loghead(data),
+			membership,
+			string_view{room.room_id},
+			ircd::pretty(tmbuf, stats.timer.at<milliseconds>(), true)
+		};
+	#endif
+
+	return true;
 }
 
 bool
