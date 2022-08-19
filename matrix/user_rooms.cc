@@ -8,6 +8,37 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+bool
+ircd::m::user::rooms::prefetch()
+const
+{
+	const m::events::state::tuple query
+	{
+		user,
+		"m.room.member"_sv,
+		m::room::id{},
+		-1L,
+		0UL
+	};
+
+	bool ret{false};
+	return m::events::state::for_each(query, [this, &ret]
+	(const auto &tuple)
+	{
+		const auto &[state_key, type, room_id, depth, event_idx]
+		{
+			tuple
+		};
+
+		assert(type == "m.room.member");
+		assert(state_key == user);
+		ret |= m::membership_prefetch(event_idx);
+		return true;
+	});
+
+	return ret;
+}
+
 size_t
 ircd::m::user::rooms::count()
 const
