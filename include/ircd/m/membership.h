@@ -41,10 +41,36 @@ namespace ircd::m
 	bool membership(const event::idx &, const vector_view<const string_view> &);
 	bool membership(const room &, const id::user &, const vector_view<const string_view> &);
 
+	// Prefetch suite
+	bool membership_prefetch(const event::idx &);
+	bool membership_prefetch(const room::state &, const id::user &);
+
 	// Convenience definitions of membership states for atomic queries.
 	extern const std::initializer_list<const string_view>
 	membership_positive, // join, invite
 	membership_negative; // leave, ban, knock, [non-membership]
+}
+
+inline bool
+ircd::m::membership_prefetch(const room::state &state,
+                             const user::id &user_id)
+{
+	if(state.prefetch("m.room.member", user_id))
+		return true;
+
+	// The above prefetch didn't launch; this query is cached.
+	const auto event_idx
+	{
+		state.get(std::nothrow, "m.room.member", user_id)
+	};
+
+	return membership_prefetch(event_idx);
+}
+
+inline bool
+ircd::m::membership_prefetch(const event::idx &event_idx)
+{
+	return m::prefetch(event_idx, "content");
 }
 
 inline bool
