@@ -88,6 +88,11 @@ const
 		if(!desc && int64_t(depth) >= range.second)
 			break;
 
+		//XXX this column's comparator can cause a seek to be off by one in
+		// the wrong direction when ascending.
+		if(!desc && depth < range.first)
+			continue;
+
 		if(this->_type && !prefixing && this->_type != _type)
 			break;
 
