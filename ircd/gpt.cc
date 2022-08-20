@@ -332,6 +332,11 @@ ircd::gpt::task::operator()(const vector_view<u16> &out,
 		}
 		else ctrl.token[ctrl.count++] = in[in_i];
 
+	const auto in_count
+	{
+		ctrl.count
+	};
+
 	gpt::epoch epoch
 	{
 		*this,
@@ -354,8 +359,8 @@ ircd::gpt::task::operator()(const vector_view<u16> &out,
 	while(!halt);
 
 	size_t out_i(0);
-	for(; out_i < out.size() && in_i + out_i < ctrl.count; out_i++)
-		out[out_i] = ctrl.token[in_i + out_i];
+	for(; out_i < out.size() && in_count + out_i < ctrl.count; out_i++)
+		out[out_i] = ctrl.token[in_count + out_i];
 
 	return vector_view<u16>
 	{
