@@ -10,8 +10,10 @@
 
 #include <RB_INC_UNISTD_H
 #include <RB_INC_CPUID_H
+#include <RB_INC_ASM_PRCTL_H
 #include <RB_INC_SYS_AUXV_H
 #include <RB_INC_SYS_SYSINFO_H
+#include <RB_INC_SYS_SYSCALL_H
 #include <RB_INC_GNU_LIBC_VERSION_H
 
 namespace ircd::info
@@ -275,6 +277,16 @@ ircd::info::dump_cpu_info_x86()
 // x86::x86
 //
 
+decltype(ircd::info::hardware::x86::cpuid_enabled)
+ircd::info::hardware::x86::cpuid_enabled
+{
+	#if defined(__x86_64__) && defined(HAVE_ASM_PRCTL_H)
+		sys::call<SYS_arch_prctl, sys::call::NOTHROW>(ARCH_GET_CPUID, nullptr) == 1
+	#else
+		false
+	#endif
+};
+
 decltype(ircd::info::hardware::x86::manufact)
 ircd::info::hardware::x86::manufact
 {
@@ -430,17 +442,18 @@ ircd::info::hardware::x86::cpuid(const uint &leaf,
                                  const uint &subleaf)
 noexcept
 {
-	uint32_t reg[4];
-	asm volatile
-	(
-		"cpuid" "\n\t"
-		: "=a"  (reg[0]),
-		  "=b"  (reg[1]),
-		  "=c"  (reg[2]),
-		  "=d"  (reg[3])
-		: "0"  (leaf),
-		  "2"  (subleaf)
-	);
+	uint32_t reg[4] {0};
+	if(likely(cpuid_enabled))
+		asm volatile
+		(
+			"cpuid" "\n\t"
+			: "=a"  (reg[0]),
+			  "=b"  (reg[1]),
+			  "=c"  (reg[2]),
+			  "=d"  (reg[3])
+			: "0"  (leaf),
+			  "2"  (subleaf)
+		);
 
 	return uint128_t
 	{

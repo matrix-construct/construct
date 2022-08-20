@@ -1313,6 +1313,7 @@ RB_CHK_SYSHEADER(gnu/libc-version.h, [GNU_LIBC_VERSION_H])
 RB_CHK_SYSHEADER(gnu/lib-names.h, [GNU_LIB_NAMES_H])
 
 dnl linux platform
+RB_CHK_SYSHEADER(asm/prctl.h, [ASM_PRCTL_H])
 RB_CHK_SYSHEADER(sys/auxv.h, [SYS_AUXV_H])
 RB_CHK_SYSHEADER(sys/sysinfo.h, [SYS_SYSINFO_H])
 RB_CHK_SYSHEADER(sys/eventfd.h, [SYS_EVENTFD_H])

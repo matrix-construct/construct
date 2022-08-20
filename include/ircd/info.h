@@ -110,6 +110,7 @@ namespace ircd::info::hardware::x86
 	uint8_t llc_assoc(const uint8_t) noexcept;
 	uint128_t cpuid(const uint &leaf, const uint &subleaf) noexcept;
 
+	extern const bool cpuid_enabled;
 	extern const uint128_t manufact;
 	extern const uint128_t features;
 	extern const uint128_t extended_features;
