@@ -842,7 +842,7 @@ bool
 ircd::gpt::samp::done()
 const noexcept
 {
-	return accept >= 0;
+	return accept >= 0 || !dispatch;
 }
 
 uint
