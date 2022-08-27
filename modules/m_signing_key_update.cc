@@ -66,6 +66,17 @@ try
 		user_id
 	};
 
+	if(!exists(room))
+	{
+		log::derror
+		{
+			m::log, "Refusing signing key update for unknown %s",
+			json::get<"user_id"_>(update),
+		};
+
+		return;
+	}
+
 	const auto master_id
 	{
 		msk?
