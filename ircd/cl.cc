@@ -233,18 +233,39 @@ ircd::cl::init::init()
 
 	// Link the libraries.
 	if(!init_libs())
+	{
+		log::warning
+		{
+			log, "OpenCL hardware acceleration runtime failed to link."
+		};
+
 		return;
+	}
 
 	// Get the platforms.
 	if(!init_platforms())
+	{
+		log::warning
+		{
+			log, "OpenCL hardware acceleration platform not found."
+		};
+
 		return;
+	}
 
 	// Report the platforms.
 	log_platform_info();
 
 	// Get the devices.
 	if(!init_devices())
+	{
+		log::warning
+		{
+			log, "OpenCL hardware acceleration device not found."
+		};
+
 		return;
+	}
 
 	// Various other inits.
 	init_ctxs();
@@ -1081,7 +1102,8 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "Exec Write Closure :%s",
+		log, "Exec Map order:%d :%s",
+		int(order),
 		e.what(),
 	};
 
