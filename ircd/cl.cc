@@ -359,7 +359,9 @@ ircd::cl::init::init_devices()
 			CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_ACCELERATOR
 		};
 
-		call(clGetDeviceIDs, platform[i], type, DEVICE_MAX, device[i], devices + i);
+		// OpenCL sez 0 devices throws an error but we log a warning for now.
+		constexpr auto ignore(CL_DEVICE_NOT_FOUND);
+		call<ignore>(clGetDeviceIDs, platform[i], type, DEVICE_MAX, device[i], devices + i);
 		devices_total += devices[i];
 	}
 
