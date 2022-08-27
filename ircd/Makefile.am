@@ -443,7 +443,7 @@ GPU_ASFLAGS += -Rpass-analysis=asm-printer
 
 BUILT_SOURCES += gpt_gpu.spv.bc
 gpt_gpu.spv.bc: gpt_gpu.cl
-	clang-13 -target spir-- $(GPU_CPPFLAGS) -O0 -emit-llvm -o $@ -x cl -c $^
+	$(CC) -target spir-- $(GPU_CPPFLAGS) -O0 -emit-llvm -o $@ -x cl -c $^
 
 BUILT_SOURCES += gpt_gpu.spv
 gpt_gpu.spv: gpt_gpu.spv.bc

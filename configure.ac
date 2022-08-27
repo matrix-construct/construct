@@ -2541,18 +2541,6 @@ PKG_CHECK_MODULES(OpenCL, [OpenCL],
 	])
 ])
 
-PKG_CHECK_MODULES(MesaOpenCL, [MesaOpenCL],
-[
-	have_mesa_opencl="yes"
-], [
-	AC_CHECK_LIB(MesaOpenCL, clGetPlatformInfo,
-	[
-		have_mesa_opencl="yes"
-	], 	[
-		have_mesa_opencl="no"
-	])
-])
-
 AC_MSG_CHECKING(whether to disable use of any found OpenCL)
 AC_ARG_ENABLE(opencl, RB_HELP_STRING([--disable-opencl], [Disable OpenCL support]),
 [
@@ -2565,21 +2553,12 @@ AC_ARG_ENABLE(opencl, RB_HELP_STRING([--disable-opencl], [Disable OpenCL support
 
 AC_MSG_CHECKING(whether to enable use of any found OpenCL)
 AM_CONDITIONAL([OPENCL], [test "x$have_opencl" = "xyes" && test "x$enable_opencl" = "xyes" ])
-AM_CONDITIONAL([MESA_OPENCL], [test "x$have_mesa_opencl" = "xyes"])
 
 AM_COND_IF([OPENCL],
 [
 	AC_MSG_RESULT([yes])
 	IRCD_DEFINE(USE_OPENCL, [1], [OpenCL support is available and enabled])
 	RB_VAR_APPEND([OPENCL_LIBS], ["-lOpenCL"])
-
-	AM_COND_IF([MESA_OPENCL],
-	[
-		IRCD_DEFINE(USE_MESA_OPENCL, [1], [MesaOpenCL support is available and enabled])
-		RB_VAR_APPEND([OPENCL_LIBS], ["-lMesaOpenCL"])
-	], [
-		IRCD_DEFINE(USE_MESA_OPENCL, [0], [MesaOpenCL support is not available and disabled])
-	])
 ], [
 	IRCD_DEFINE(USE_OPENCL, [0], [OpenCL support is not available])
 ])
@@ -3084,7 +3063,6 @@ echo "LLVM library support .............. $have_libllvm"
 echo "DRM support ....................... $have_drm"
 echo "ARM NN support .................... $have_armnn"
 echo "OpenCL support .................... $have_opencl"
-echo "MesaOpenCL support ................ $have_mesa_opencl"
 echo "Linux AIO support ................. $aio"
 echo "Linux io_uring support ............ $io_uring"
 echo "Memory allocator .................. $alloc_lib"
