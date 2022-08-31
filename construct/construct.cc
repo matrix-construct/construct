@@ -131,6 +131,7 @@ const char *const usererrstr
 [[noreturn]] static void do_restart(char *const *const &argv, char *const *const &envp);
 static void smoketest_handler(const enum ircd::run::level &);
 static void nobanner_handler(const enum ircd::run::level &);
+static void muslexit_handler(const enum ircd::run::level &);
 static bool startup_checks();
 static void applyargs();
 static void enable_coredumps();
@@ -257,6 +258,7 @@ noexcept try
 	{
 		{ smoketest_handler  },
 		{ nobanner_handler   },
+		{ muslexit_handler   },
 	};
 
 	// This is the sole io_context for Construct, and the ios.run() below is the
@@ -513,6 +515,24 @@ nobanner_handler(const enum ircd::run::level &level)
 		case ircd::run::level::QUIT:
 			ircd::log::console_disable();
 			break;
+
+		default:
+			break;
+	}
+}
+
+/// Musl our way out by calling exit() since all module .dtors are
+/// attached to atexit.
+void
+muslexit_handler(const enum ircd::run::level &level)
+{
+	switch(level)
+	{
+		#if !defined(__GNU_LIBRARY__) //TODO: musl?
+		case ircd::run::level::HALT:
+			exit(0);
+			__builtin_unreachable();
+		#endif
 
 		default:
 			break;
