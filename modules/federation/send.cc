@@ -16,6 +16,12 @@ IRCD_MODULE
 	"federation send"
 };
 
+log::log
+txn_log
+{
+	"m.txn"
+};
+
 m::resource
 send_resource
 {
@@ -147,7 +153,7 @@ catch(const m::vm::error &e)
 
 	log::error
 	{
-		m::log, "Unhandled error processing txn '%s' from '%s' :%s :%s :%s",
+		txn_log, "Unhandled error processing txn '%s' from '%s' :%s :%s :%s",
 		txn_id,
 		request.node_id,
 		e.what(),
@@ -161,7 +167,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		m::log, "Unhandled error processing txn '%s' from '%s' :%s",
+		txn_log, "Unhandled error processing txn '%s' from '%s' :%s",
 		txn_id,
 		request.node_id,
 		e.what(),
@@ -189,17 +195,6 @@ handle_put(client &client,
 	const string_view &origin
 	{
 		json::at<"origin"_>(request)
-	};
-
-	char rembuf[64];
-	log::debug
-	{
-		m::log, "%s :%s | %s --> edus:%zu pdus:%zu",
-		txn_id,
-		origin,
-		string(rembuf, remote(client)),
-		json::get<"edus"_>(request).count(),
-		json::get<"pdus"_>(request).count(),
 	};
 
 	if(origin && origin != request.node_id)
@@ -254,6 +249,21 @@ handle_put(client &client,
 		{
 			client, http::ACCEPTED
 		};
+
+	char rembuf[96];
+	log::logf
+	{
+		txn_log, log::level::DEBUG,
+		"%s %zu$B pdu:%zu %zu$B edu:%zu %zu %s :%s",
+		txn_id,
+		size(string_view(json::get<"pdus"_>(request))),
+		json::get<"pdus"_>(request).count(),
+		size(string_view(json::get<"edus"_>(request))),
+		json::get<"edus"_>(request).count(),
+		evals,
+		string(rembuf, remote(client)),
+		origin,
+	};
 
 	char chunk[1536];
 	m::resource::response::chunked response
