@@ -151,7 +151,7 @@ try
 		{
 			const auto &[key, val]
 			{
-				split(kv, ':')
+				split(kv, '=')
 			};
 
 			if(std::find(begin(names), end(names), key) == end(names))
@@ -168,7 +168,7 @@ try
 	};
 
 	json::strung senders;
-	when({"senders", ""}, [&](const auto &key, const auto &val)
+	when({"sender", ""}, [&](const auto &key, const auto &val)
 	{
 		if(!valid(m::id::USER, val))
 			return;
@@ -179,7 +179,7 @@ try
 	});
 
 	json::strung not_senders;
-	when({"!senders", "!"}, [&](const auto &key, const auto &val)
+	when({"!sender", "!"}, [&](const auto &key, const auto &val)
 	{
 		if(!valid(m::id::USER, val))
 			return;
