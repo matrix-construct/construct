@@ -97,6 +97,7 @@ USERDIR=$PWD
 run cd $TOPDIR
 run git submodule update --init deps/boost
 run cd deps/boost
+run git checkout $BVER
 
 ### Build toolsy
 run git submodule update --init --recursive --checkout tools/build

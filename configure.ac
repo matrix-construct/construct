@@ -2629,7 +2629,7 @@ dnl
 
 BOOST_VERSION_MIN="1.66"
 BOOST_VERSION_MIN_PATCH="0"
-BOOST_BUILT_LIBS="system,context,coroutine,chrono"
+BOOST_BUILT_LIBS="coroutine,context,thread,chrono,system"
 
 AC_SUBST(BOOST_CPPFLAGS, [])
 AC_SUBST(BOOST_LDFLAGS, [])
@@ -2651,7 +2651,7 @@ RB_HELP_STRING([--with-boost-libs=[[[DIR]]]], [Path to boost library directory])
 
 AC_MSG_CHECKING([whether you asked to use boost sources included here])
 AC_ARG_WITH(included-boost,
-RB_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from included submodule]),
+RB_HELP_STRING([--with-included-boost[[[=built]]]], [Use the boost sources from included submodule]),
 [
 	AC_MSG_RESULT([yes])
 	AC_MSG_NOTICE([Bootstrapping boost])
@@ -2677,27 +2677,25 @@ RB_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 	BOOST_LDFLAGS="-L$boost_libdir"
 	BOOST_CPPFLAGS="-isystem $PWD/deps/boost/include"
 
-	AC_MSG_CHECKING([whether to use shared boost])
-	if [[ $withval = "static" ]]; then
-		AC_MSG_RESULT([no])
-		withval="static"
-	else
-		AC_MSG_RESULT([yes])
-		RB_VAR_APPEND([BOOST_LDFLAGS], ["-Wl,-rpath=$boost_libdir"])
-		withval="shared"
+	boost_version="$withval"
+	if test x"$boost_version" == x"yes"; then
+		boost_version="${BOOST_VERSION_MIN}.${BOOST_VERSION_MIN_PATCH}"
 	fi
 
-	boost_linkage="$withval"
-	boost_version="boost-${BOOST_VERSION_MIN}.${BOOST_VERSION_MIN_PATCH}"
+	boost_linkage="shared"
+	boost_version="boost-${boost_version}"
 	boost_cxxflags="-std=gnu++20"
-	bash tools/boostrap.sh $BTOOLSET $BOOST_BUILT_LIBS $boost_variant $withval multi $boost_version $boost_cxxflags
-	AS_IF([ test $? != 0 ],
-	[
-		AC_MSG_ERROR([Failed to build included boost.])
-	])
 
-	AC_DEFINE(RB_INCLUDED_BOOST, 1, [Defined if configured with included boost])
-	AC_MSG_NOTICE([Bootstrapping boost: done])
+	if [[ $boost_version != "boost-built" ]]; then
+		bash tools/boostrap.sh $BTOOLSET $BOOST_BUILT_LIBS $boost_variant $boost_linkage multi $boost_version $boost_cxxflags
+		AS_IF([ test $? != 0 ],
+		[
+			AC_MSG_ERROR([Failed to build included boost.])
+		])
+
+		AC_DEFINE(RB_INCLUDED_BOOST, 1, [Defined if configured with included boost])
+		AC_MSG_NOTICE([Bootstrapping boost: done])
+	fi
 ],[
 	AC_MSG_RESULT([no])
 	AX_BOOST_BASE([$BOOST_VERSION_MIN],
