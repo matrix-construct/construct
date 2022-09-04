@@ -245,6 +245,8 @@ ircd::ctx::ctx::jump()
 	assert(this->yc);
 	assert(current != this);                  // can't jump to self
 
+	//TODO: XXX
+	#if BOOST_VERSION < 108000
 	auto &yc(*this->yc);
 	auto &target(*yc.coro_.lock());
 
@@ -259,6 +261,7 @@ ircd::ctx::ctx::jump()
 			target();
 		}
 	};
+	#endif
 
 	assert(current != this);
 	assert(current->notes == 1); // notes = 1; set by continuation dtor on wakeup
@@ -3353,6 +3356,7 @@ ircd::ctx::stack::allocator::deallocate(stack_context &c)
 // (internal) boost::asio
 //
 
+#if BOOST_VERSION < 108000
 template<class Function>
 struct [[gnu::visibility("hidden")]]
 boost::asio::detail::spawn_data
@@ -3381,7 +3385,9 @@ boost::asio::detail::spawn_data
 		assert(ctrl);
 	}
 };
+#endif
 
+#if BOOST_VERSION < 108000
 template<class Function>
 struct [[gnu::visibility("hidden")]]
 boost::asio::detail::coro_entry_point
@@ -3411,7 +3417,9 @@ boost::asio::detail::coro_entry_point
 
 	shared_ptr<spawn_data<Handler, Function>> data;
 };
+#endif
 
+#if BOOST_VERSION < 108000
 // Hooks the first push phase of coroutine spawn to supply our own stack
 // allocator.
 template<class Function>
@@ -3444,6 +3452,7 @@ boost::asio::detail::spawn_helper
 	shared_ptr<spawn_data<Handler, Function>> data_;
 	boost::coroutines::attributes attributes_;
 };
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //
