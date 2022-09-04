@@ -15,6 +15,7 @@ AM_CPPFLAGS = \
 	@BOOST_CPPFLAGS@ \
 	@SSL_CPPFLAGS@ \
 	@CRYPTO_CPPFLAGS@ \
+	@URING_CPPFLAGS@ \
 	$(EXTRA_CPPFLAGS) \
 	###
 
@@ -50,6 +51,7 @@ construct_LDFLAGS = \
 	@BOOST_LDFLAGS@ \
 	@SSL_LDFLAGS@ \
 	@CRYPTO_LDFLAGS@ \
+	@URING_LDFLAGS@ \
 	###
 
 construct_LDADD = \
@@ -57,6 +59,7 @@ construct_LDADD = \
 	@BOOST_LIBS@ \
 	@SSL_LIBS@ \
 	@CRYPTO_LIBS@ \
+	@URING_LIBS@ \
 	$(EXTRA_LIBS) \
 	###
 

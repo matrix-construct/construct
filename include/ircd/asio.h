@@ -44,6 +44,7 @@ namespace boost
 #include <RB_INC_SYS_EPOLL_H
 #include <RB_INC_SYS_TIMERFD_H
 #include <RB_INC_SYS_EVENTFD_H
+#include <RB_INC_LIBURING_H
 
 #pragma GCC visibility push(internal)
 #include <boost/throw_exception.hpp>
@@ -51,22 +52,32 @@ namespace boost
 
 #include <boost/system/system_error.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
+
+#if defined(HAVE_LIBURING_H) \
+&& IRCD_USE_URING == 1 \
+&& BOOST_VERSION >= 107800
+#define BOOST_ASIO_HAS_IO_URING
+#define BOOST_ASIO_DISABLE_EPOLL
+#endif
+
 #include <boost/asio/detail/config.hpp>
 #include <boost/asio/detail/socket_types.hpp>
 #include <boost/asio/ssl/detail/openssl_types.hpp>
 #include <boost/coroutine/coroutine.hpp>
 
-#if defined(BOOST_ASIO_HAS_EPOLL) || defined(BOOST_ASIO_HAS_KQUEUE)
+#if defined(BOOST_ASIO_HAS_EPOLL) \
+|| defined(BOOST_ASIO_HAS_KQUEUE) \
+|| defined(BOOST_ASIO_HAS_IO_URING)
 #pragma GCC visibility push(protected)
+#else
+#pragma GCC visibility push(default)
 #endif
 #include <boost/asio.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl.hpp>
-#if defined(BOOST_ASIO_HAS_EPOLL) || defined(BOOST_ASIO_HAS_KQUEUE)
 #pragma GCC visibility pop
-#endif
 
 // Template-specializations for some functions we may redefine (interpose).
 // Declarations are needed for template instantiation in PCH and with LTO.

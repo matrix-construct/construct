@@ -115,6 +115,7 @@ libircd_la_LDFLAGS += @SNAPPY_LDFLAGS@
 libircd_la_LDFLAGS += @LZ4_LDFLAGS@
 libircd_la_LDFLAGS += @Z_LDFLAGS@
 libircd_la_LDFLAGS += @MALLOC_LDFLAGS@
+libircd_la_LDFLAGS += @URING_LDFLAGS@
 
 libircd_la_LIBADD =#
 libircd_la_LIBADD += @ROCKSDB_LIBS@
@@ -132,6 +133,7 @@ libircd_la_LIBADD += @ZSTD_LIBS@
 libircd_la_LIBADD += @SNAPPY_LIBS@
 libircd_la_LIBADD += @LZ4_LIBS@
 libircd_la_LIBADD += @Z_LIBS@
+libircd_la_LIBADD += @URING_LIBS@
 libircd_la_LIBADD += $(EXTRA_LIBS)
 
 if PROFILE

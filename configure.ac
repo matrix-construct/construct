@@ -1474,15 +1474,16 @@ AM_COND_IF(LINUX,
 	], [
 		aio=yes
 	])
-], [])
+])
 
-if test "$aio" = "yes"; then
-	IRCD_DEFINE(USE_AIO, [1], [Linux AIO is supported and will be used])
-else
-	IRCD_DEFINE(USE_AIO, [0], [Linux AIO is not supported and won't be used])
-fi
+AM_CONDITIONAL([AIO], [test "x$aio" = "xyes" ])
 
-AM_CONDITIONAL([AIO], [[[[ $aio = yes ]]]])
+AM_COND_IF([AIO],
+[
+	IRCD_DEFINE(USE_AIO, [1], [Linux AIO is enabled and may be used])
+], [
+	IRCD_DEFINE(USE_AIO, [0], [Linux AIO is disabled and will not be used])
+])
 
 dnl
 dnl Linux io_uring support
@@ -1490,21 +1491,21 @@ dnl
 
 AM_COND_IF(LINUX,
 [
-	AC_ARG_ENABLE(io_uring, RB_HELP_STRING([--disable-io_uring], [Disable kernel io_uring support]),
+	AC_ARG_ENABLE(iou, RB_HELP_STRING([--disable-iou], [Disable kernel io_uring support]),
 	[
-		io_uring=$enableval
+		iou=$enableval
 	], [
-		io_uring="$ac_cv_header_linux_io_uring_h"
+		iou=yes
 	])
 ])
 
-AM_CONDITIONAL([IOU], [[[[ $io_uring = yes ]]]])
+AM_CONDITIONAL([IOU], [test "x$iou" = "xyes" ])
 
 AM_COND_IF([IOU],
 [
-	IRCD_DEFINE(USE_IOU, [1], [Linux io_uring is supported and may be used])
+	IRCD_DEFINE(USE_IOU, [1], [Linux io_uring is enabled for use if available])
 ], [
-	IRCD_DEFINE(USE_IOU, [0], [Linux io_uring is not available])
+	IRCD_DEFINE(USE_IOU, [0], [Linux io_uring is disabled and will not be used])
 ])
 
 
@@ -2625,6 +2626,63 @@ AM_COND_IF([ARMNN],
 
 dnl
 dnl
+dnl liburing
+dnl
+dnl
+
+AC_SUBST(URING_CPPFLAGS, [])
+AC_SUBST(URING_LDFLAGS, [])
+AC_SUBST(URING_LIBS, [])
+
+AC_ARG_WITH(uring-includes,
+RB_HELP_STRING([--with-uring-includes=[[[DIR]]]], [Path to uring include directory]),
+[
+	RB_VAR_APPEND([URING_CPPFLAGS], ["-isystem $withval"])
+])
+
+AC_ARG_WITH(uring-libs,
+RB_HELP_STRING([--with-uring-libs=[[[DIR]]]], [Path to uring libraries directory]),
+[
+	RB_VAR_APPEND([URING_LDFLAGS], ["-L$withval"])
+])
+
+dnl push
+restore_cppflags=$CPPFLAGS
+restore_ldflags=$LDFLAGS
+RB_VAR_PREPEND([CPPFLAGS], [$URING_CPPFLAGS])
+RB_VAR_PREPEND([LDFLAGS], [$URING_LDFLAGS])
+
+RB_CHK_SYSHEADER(liburing.h, [LIBURING_H])
+
+have_uring="no"
+PKG_CHECK_MODULES(uring, [uring],
+[
+	have_uring="$iou"
+], [
+	AC_CHECK_LIB([uring], [io_uring_queue_init],
+	[
+		have_uring="$iou"
+	], [
+		have_uring="no"
+	])
+])
+
+dnl pop
+CPPFLAGS=$restore_cppflags
+LDFLAGS=$restore_ldflags
+
+AM_CONDITIONAL([URING], [test "x$have_uring" = "xyes"])
+
+AM_COND_IF([URING],
+[
+	RB_VAR_APPEND([LIBS], ["-luring"])
+	IRCD_DEFINE(USE_URING, [1], [liburing's availability for use.])
+], [
+	IRCD_DEFINE(USE_URING, [0], [liburing's availability for use.])
+])
+
+dnl
+dnl
 dnl boost support
 dnl
 dnl
@@ -2738,6 +2796,7 @@ AC_SUBST(ASIO_UNIT_CPPFLAGS)
 RB_VAR_APPEND([ASIO_UNIT_CPPFLAGS], ["$BOOST_CPPFLAGS"])
 RB_VAR_APPEND([ASIO_UNIT_CPPFLAGS], ["$SSL_CPPFLAGS"])
 RB_VAR_APPEND([ASIO_UNIT_CPPFLAGS], ["$CRYPTO_CPPFLAGS"])
+RB_VAR_APPEND([ASIO_UNIT_CPPFLAGS], ["$URING_CPPFLAGS"])
 
 dnl Units defining spirit grammars may benefit from special compiler flags due
 dnl to their various complexities. The ./configure may have generated flags
@@ -3064,8 +3123,7 @@ echo "LLVM library support .............. $have_libllvm"
 echo "DRM support ....................... $have_drm"
 echo "ARM NN support .................... $have_armnn"
 echo "OpenCL support .................... $have_opencl"
-echo "Linux AIO support ................. $aio"
-echo "Linux io_uring support ............ $io_uring"
+echo "Liburing support .................. $have_uring"
 echo "Memory allocator .................. $alloc_lib"
 echo
 echo "Using bundled Boost ............... $with_included_boost"

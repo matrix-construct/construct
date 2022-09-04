@@ -12,6 +12,7 @@ libatomic \
 libmagic \
 libsodium \
 libstdc++ \
+liburing \
 lz4 \
 openssl \
 rocksdb \
@@ -23,6 +24,7 @@ boost-dev \
 file-dev \
 icu-dev \
 libsodium-dev \
+liburing-dev \
 lz4-dev \
 openssl-dev \
 rocksdb-dev \
