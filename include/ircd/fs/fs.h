@@ -45,7 +45,6 @@ namespace ircd::fs
 #include "write.h"
 #include "sync.h"
 #include "aio.h"
-#include "iou.h"
 #include "select.h"
 #include "stdin.h"
 #include "support.h"
@@ -73,7 +72,6 @@ namespace ircd::fs
 struct [[gnu::visibility("hidden")]]
 ircd::fs::init
 {
-	iou::init _iou_;
 	aio::init _aio_;
 
 	init();

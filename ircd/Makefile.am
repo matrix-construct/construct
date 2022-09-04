@@ -204,9 +204,6 @@ libircd_la_SOURCES += fs_dev.cc
 if AIO
 libircd_la_SOURCES += fs_aio.cc
 endif
-if IOU
-libircd_la_SOURCES += fs_iou.cc
-endif
 libircd_la_SOURCES += sys.cc
 libircd_la_SOURCES += mods.cc
 if LINUX
@@ -319,9 +316,6 @@ fs.lo:                AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
 fs_path.lo:           AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
 if AIO
 fs_aio.lo:            AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
-endif
-if IOU
-fs_iou.lo:            AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
 endif
 gpt_cpu.lo:           AM_CXXFLAGS := ${AM_CXXFLAGS} ${GPT_FP_CXXFLAGS}
 http.lo:              AM_CPPFLAGS := ${AM_CPPFLAGS} ${SPIRIT_UNIT_CPPFLAGS}

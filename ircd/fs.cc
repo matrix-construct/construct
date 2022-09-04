@@ -18,14 +18,6 @@
 	#include "fs_aio.h"
 #endif
 
-#if IRCD_USE_IOU > 0
-	#include "fs_iou.h"
-#endif
-
-// TODO: prevents use until io_uring support implemented
-#undef IRCD_USE_IOU
-#define IRCD_USE_IOU 0
-
 namespace ircd::fs
 {
 	extern conf::item<ulong> rlimit_nofile;
@@ -71,7 +63,7 @@ ircd::fs::init_dump_info()
 {
 	const bool support_async
 	{
-		false || iou::system || aio::system
+		false || aio::system
 	};
 
 	if(!support_async)
@@ -236,7 +228,7 @@ ircd::fs::support::aio
 void
 ircd::fs::support::dump_info()
 {
-	#if IRCD_USE_AIO || IRCD_USE_IOU
+	#if IRCD_USE_AIO
 		const bool support_async {true};
 	#else
 		const bool support_async {false};
@@ -730,10 +722,6 @@ ircd::fs::flush(const fd &fd,
 {
 	assert(opts.op == op::SYNC);
 
-	if constexpr(IRCD_USE_IOU)
-		if(iou::system && opts.aio)
-			return void(iou::fsync(fd, opts));
-
 	if constexpr(IRCD_USE_AIO)
 		if(aio::system && opts.aio)
 		{
@@ -988,10 +976,6 @@ ircd::fs::_read(const fd &fd,
                 const read_opts &opts)
 {
 	assert(opts.op == op::READ);
-
-	if constexpr(IRCD_USE_IOU)
-		if(likely(iou::system && opts.aio))
-			return iou::read(fd, iov, opts);
 
 	if constexpr(IRCD_USE_AIO)
 		if(likely(aio::system && opts.aio))
@@ -1367,10 +1351,6 @@ ircd::fs::_write(const fd &fd,
                  const write_opts &opts)
 {
 	assert(opts.op == op::WRITE);
-
-	if constexpr(IRCD_USE_IOU)
-		if(likely(iou::system && opts.aio))
-			return iou::write(fd, iov, opts);
 
 	if constexpr(IRCD_USE_AIO)
 		if(likely(aio::system && opts.aio))
@@ -1821,60 +1801,6 @@ ircd::fs::aio::stats::stats()
 {
 	assert(items <= (sizeof(value) / sizeof(value[0])));
 }
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// fs/iou.h
-//
-
-decltype(ircd::fs::iou::support)
-ircd::fs::iou::support
-{
-	IRCD_USE_IOU &&
-	(info::kernel_version[0] > 5 ||
-	(info::kernel_version[0] >= 5 && info::kernel_version[1] >= 1))
-};
-
-/// Conf item to control whether iou is enabled or bypassed.
-decltype(ircd::fs::iou::enable)
-ircd::fs::iou::enable
-{
-	{ "name",     "ircd.fs.iou.enable"  },
-	{ "default",  false                 },
-	{ "persist",  false                 },
-};
-
-/// Global stats structure
-decltype(ircd::fs::iou::stats)
-ircd::fs::iou::stats
-{
-	fs::aio::stats
-};
-
-/// Non-null when iou is available for use
-decltype(ircd::fs::iou::system)
-ircd::fs::iou::system;
-
-//
-// init
-//
-
-#if IRCD_USE_IOU == 0
-[[gnu::weak]]
-ircd::fs::iou::init::init()
-{
-	assert(!system);
-}
-#endif
-
-#if IRCD_USE_IOU == 0
-[[gnu::weak]]
-ircd::fs::iou::init::~init()
-noexcept
-{
-	assert(!system);
-}
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -2661,15 +2587,6 @@ ircd::fs::reflect(const op &op)
 [[gnu::weak]]
 ircd::fs::op
 ircd::fs::aio::translate(const int &val)
-{
-	return op::NOOP;
-}
-#endif
-
-#if IRCD_USE_IOU == 0
-[[gnu::weak]]
-ircd::fs::op
-ircd::fs::iou::translate(const int &val)
 {
 	return op::NOOP;
 }
