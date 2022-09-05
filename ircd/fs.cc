@@ -65,16 +65,10 @@ noexcept
 void
 ircd::fs::init_dump_info()
 {
-	const bool support_async
-	{
-		false || aio::system
-	};
-
-	if(!support_async)
+	if(unlikely(!support::aio && !support::iou))
 		log::warning
 		{
-			log, "Support for asynchronous filesystem IO has not been"
-			" established. Filesystem IO is degraded to synchronous system calls."
+			log, "Filesystem IO is degraded to synchronous system calls."
 		};
 }
 
@@ -234,15 +228,20 @@ ircd::fs::support::aio
 	#endif
 };
 
+decltype(ircd::fs::support::iou)
+ircd::fs::support::iou
+{
+	#if IRCD_USE_ASIO_IO_URING == 1
+		info::kernel_version[0] > 5 ||
+		(info::kernel_version[0] >= 5 && info::kernel_version[1] >= 1)
+	#else
+		false
+	#endif
+};
+
 void
 ircd::fs::support::dump_info()
 {
-	#if IRCD_USE_AIO
-		const bool support_async {true};
-	#else
-		const bool support_async {false};
-	#endif
-
 	char support[128] {0};
 	const auto _append{[&support]
 	(const string_view &name, const bool &avail, const int &enable)
@@ -256,7 +255,8 @@ ircd::fs::support::dump_info()
 		});
 	}};
 
-	_append("async", support_async, -1);
+	_append("iou", iou, IRCD_USE_ASIO_READ);
+	_append("aio", aio, -1);
 	_append("preadv2", preadv2, -1);
 	_append("pwritev2", pwritev2, -1);
 	_append("SYNC", sync, -1);
@@ -763,9 +763,18 @@ ircd::fs::flush(const fd &fd,
 // fs/read.h
 //
 
-ircd::fs::read_opts
-const ircd::fs::read_opts_default
-{};
+namespace ircd::fs
+{
+	static int flags(const read_opts &);
+	static size_t _read_preadv2(const fd &, const const_iovec_view &, const read_opts &);
+	static size_t _read_preadv(const fd &, const const_iovec_view &, const read_opts &);
+	static size_t _read_asio(const fd &, const const_iovec_view &, const read_opts &);
+	static size_t _read(const fd &, const const_iovec_view &, const read_opts &);
+	static size_t _read_asio(const vector_view<read_op> &);
+}
+
+decltype(ircd::fs::read_opts_default)
+ircd::fs::read_opts_default;
 
 size_t
 ircd::fs::prefetch(const fd &fd,
@@ -888,10 +897,13 @@ ircd::fs::read(const vector_view<read_op> &op)
 			};
 	}
 
-	#ifdef IRCD_USE_AIO
-	if(likely(aio::system && aio && !all))
-		return aio::read(op);
-	#endif
+	if constexpr(IRCD_USE_ASIO_READ)
+		if(likely(support::iou && aio && !all))
+			return _read_asio(op);
+
+	if constexpr(IRCD_USE_AIO)
+		if(likely(aio::system && aio && !all))
+			return aio::read(op);
 
 	// Fallback to sequential read operations
 	size_t ret(0);
@@ -911,13 +923,43 @@ ircd::fs::read(const vector_view<read_op> &op)
 	return ret;
 }
 
-namespace ircd::fs
+#if IRCD_USE_ASIO_READ
+size_t
+ircd::fs::_read_asio(const vector_view<read_op> &op)
 {
-	static int flags(const read_opts &opts);
-	static size_t _read_preadv2(const fd &, const const_iovec_view &, const read_opts &);
-	static size_t _read_preadv(const fd &, const const_iovec_view &, const read_opts &);
-	static size_t _read(const fd &, const const_iovec_view &, const read_opts &);
+	const auto &ops(op.size());
+	std::optional<asio::random_access_file> d[ops];
+	const unwind release{[&d]
+	{
+		for(auto &_d : d)
+			if(likely(_d))
+				_d->release();
+	}};
+
+	for(uint i(0); i < ops; ++i)
+	{
+		assert(op[i].fd);
+		d[i].emplace(ios::get(), int(*op[i].fd));
+	}
+
+	size_t ret {0};
+	ctx::latch latch {ops};
+	for(uint i(0); i < ops; ++i)
+		d[i]->async_read_some_at(op[i].opts->offset, op[i].bufs, [i, &op, &ret, &latch]
+		(const auto &ec, const size_t &bytes)
+		{
+			if(ec && ec != net::eof)
+				op[i].eptr = make_system_eptr(ec);
+
+			op[i].ret = bytes;
+			ret += bytes;
+			latch.count_down();
+		});
+
+	latch.wait();
+	return ret;
 }
+#endif
 
 /// Read from file descriptor fd into buffers. The number of bytes read into
 /// the buffers is returned. By default (via read_opts.all) this call will
@@ -988,6 +1030,10 @@ ircd::fs::_read(const fd &fd,
 {
 	assert(opts.op == op::READ);
 
+	if constexpr(IRCD_USE_ASIO_READ)
+		if(likely(support::iou && opts.aio))
+			return _read_asio(fd, iov, opts);
+
 	if constexpr(IRCD_USE_AIO)
 		if(likely(aio::system && opts.aio))
 			return aio::read(fd, iov, opts);
@@ -1000,6 +1046,56 @@ ircd::fs::_read(const fd &fd,
 	return _read_preadv(fd, iov, opts);
 	#endif
 }
+
+#if IRCD_USE_ASIO_READ
+size_t
+ircd::fs::_read_asio(const fd &fd,
+                     const const_iovec_view &iov,
+                     const read_opts &opts)
+{
+	assert(bytes(iov) > 0);
+	assert(opts.offset >= 0);
+
+	asio::mutable_buffer buf[iov.size()];
+	const auto bufs
+	{
+		make_iov(buf, iov)
+	};
+
+	asio::random_access_file d
+	{
+		ios::get(), int(fd)
+	};
+
+	const unwind release{[&d]
+	{
+		d.release();
+	}};
+
+	const auto interruption{[&d, &opts]
+	(ctx::ctx *const &interruptor)
+	{
+		if(opts.interruptible)
+			d.cancel();
+	}};
+
+	boost::system::error_code ec;
+	size_t ret {0}; continuation
+	{
+		continuation::asio_predicate, interruption, [&ret, &d, &opts, &bufs, &ec]
+		(auto &yield)
+		{
+			ret = d.async_read_some_at(opts.offset, bufs, yield[ec]);
+		}
+	};
+
+	assert(ret || ec == net::eof);
+	if(unlikely(ec && ec != net::eof))
+		throw_system_error(ec);
+
+	return ret;
+}
+#endif
 
 size_t
 ircd::fs::_read_preadv(const fd &fd,
@@ -1073,9 +1169,8 @@ ircd::fs::flags(const read_opts &opts)
 // fs/write.h
 //
 
-ircd::fs::write_opts
-const ircd::fs::write_opts_default
-{};
+decltype(ircd::fs::write_opts_default)
+ircd::fs::write_opts_default;
 
 void
 ircd::fs::allocate(const fd &fd,
@@ -1254,6 +1349,15 @@ ircd::fs::append(const fd &fd,
 // write
 //
 
+namespace ircd::fs
+{
+	static int flags(const write_opts &opts);
+	static size_t _write_pwritev2(const fd &, const const_iovec_view &, const write_opts &);
+	static size_t _write_pwritev(const fd &, const const_iovec_view &, const write_opts &);
+	static size_t _write_asio(const fd &, const const_iovec_view &, const write_opts &);
+	static size_t _write(const fd &, const const_iovec_view &, const write_opts &);
+}
+
 ircd::const_buffer
 ircd::fs::write(const string_view &path,
                 const const_buffer &buf,
@@ -1300,14 +1404,6 @@ ircd::fs::write(const string_view &path,
 	};
 
 	return write(fd, bufs, opts);
-}
-
-namespace ircd::fs
-{
-	static int flags(const write_opts &opts);
-	static size_t _write_pwritev2(const fd &, const const_iovec_view &, const write_opts &);
-	static size_t _write_pwritev(const fd &, const const_iovec_view &, const write_opts &);
-	static size_t _write(const fd &, const const_iovec_view &, const write_opts &);
 }
 
 #pragma GCC diagnostic push
@@ -1363,6 +1459,10 @@ ircd::fs::_write(const fd &fd,
 {
 	assert(opts.op == op::WRITE);
 
+	if constexpr(IRCD_USE_ASIO_WRITE)
+		if(likely(support::iou && opts.aio))
+			return _write_asio(fd, iov, opts);
+
 	if constexpr(IRCD_USE_AIO)
 		if(likely(aio::system && opts.aio))
 			return aio::write(fd, iov, opts);
@@ -1375,6 +1475,55 @@ ircd::fs::_write(const fd &fd,
 	return _write_pwritev(fd, iov, opts);
 	#endif
 }
+
+#if IRCD_USE_ASIO_WRITE
+size_t
+ircd::fs::_write_asio(const fd &fd,
+                      const const_iovec_view &iov,
+                      const write_opts &opts)
+{
+	assert(bytes(iov) > 0);
+	assert(opts.offset >= 0 || opts.offset == -1);
+
+	asio::const_buffer buf[iov.size()];
+	const auto bufs
+	{
+		make_iov(buf, iov)
+	};
+
+	asio::random_access_file d
+	{
+		ios::get(), int(fd)
+	};
+
+	const unwind release{[&d]
+	{
+		d.release();
+	}};
+
+	const auto interruption{[&d, &opts]
+	(ctx::ctx *const &interruptor)
+	{
+		if(opts.interruptible)
+			d.cancel();
+	}};
+
+	boost::system::error_code ec;
+	size_t ret {0}; continuation
+	{
+		continuation::asio_predicate, interruption, [&ret, &d, &opts, &bufs, &ec]
+		(auto &yield)
+		{
+			ret = d.async_write_some_at(opts.offset, bufs, yield[ec]);
+		}
+	};
+
+	if(unlikely(ec))
+		throw_system_error(ec);
+
+	return ret;
+}
+#endif
 
 size_t
 ircd::fs::_write_pwritev(const fd &fd,
@@ -2607,6 +2756,23 @@ ircd::fs::aio::translate(const int &val)
 //
 // fs/iov.h
 //
+
+template<class T>
+ircd::vector_view<const T>
+ircd::fs::make_iov(T *const buf,
+                   const const_iovec_view &iov)
+{
+	for(size_t i(0); i < iov.size(); ++i)
+		buf[i] = T
+		{
+			iov[i].iov_base, iov[i].iov_len
+		};
+
+	return vector_view<const T>
+	{
+		buf, iov.size()
+	};
+}
 
 ircd::fs::const_iovec_view
 ircd::fs::make_iov(const iovec_view &iov,

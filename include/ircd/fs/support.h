@@ -26,6 +26,7 @@ namespace ircd::fs::support
 	extern const bool aio;
 	extern const bool aio_fsync;
 	extern const bool aio_fdsync;
+	extern const bool iou;
 
 	// Test if O_DIRECT supported at target path
 	bool direct_io(const string_view &path);

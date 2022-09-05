@@ -53,11 +53,26 @@ namespace boost
 #include <boost/system/system_error.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 
+// In boost 1.78+ io_uring(7) becomes the core event loop replacing epoll(7)
+// and used for network operations.
 #if defined(HAVE_LIBURING_H) \
 && IRCD_USE_URING == 1 \
 && BOOST_VERSION >= 107800
 #define BOOST_ASIO_HAS_IO_URING
 #define BOOST_ASIO_DISABLE_EPOLL
+#define IRCD_USE_ASIO_IO_URING 1
+#else
+#define IRCD_USE_ASIO_IO_URING 0
+#endif
+
+// In boost 1.79+ asio implements some filesystem operations we can use. While
+// these are available in 1.78 they were buggy for our purposes until 1.79.
+#if BOOST_VERSION >= 107900
+#define IRCD_USE_ASIO_READ 1
+#define IRCD_USE_ASIO_WRITE 1
+#else
+#define IRCD_USE_ASIO_READ 0
+#define IRCD_USE_ASIO_WRITE 0
 #endif
 
 #include <boost/asio/detail/config.hpp>
