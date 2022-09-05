@@ -700,10 +700,12 @@ ircd::fs::sync(const fd &fd,
 		"fs::sync(fd:%d)", int(fd)
 	};
 
-	#ifdef __linux__
+	#if defined(HAVE_SYNCFS)
 		syscall(::syncfs, fd);
-	#else
+	#elif defined(HAVE_SYNC)
 		syscall(::sync);
+	#else
+		#error "Missing sync(2) on this platform."
 	#endif
 }
 

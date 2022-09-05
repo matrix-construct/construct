@@ -1382,6 +1382,8 @@ AC_CHECK_FUNCS([          \
 	pwritev2              \
 	strlcat               \
 	strlcpy               \
+	sync                  \
+	syncfs                \
 ])
 
 AC_SEARCH_LIBS(dlinfo, dl, AC_DEFINE(HAVE_DLINFO, 1, [Define if you have dlinfo]))
