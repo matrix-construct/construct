@@ -48,7 +48,11 @@ ircd::fs::rlimit_nofile
 //
 
 ircd::fs::init::init()
+:_aio_{std::nullopt}
 {
+	if(support::aio)
+		_aio_.emplace();
+
 	init_dump_info();
 }
 
@@ -222,7 +226,12 @@ ircd::fs::support::rwf_write_life
 decltype(ircd::fs::support::aio)
 ircd::fs::support::aio
 {
-	IRCD_USE_AIO
+	#if IRCD_USE_AIO == 1
+		info::kernel_version[0] > 2 ||
+		(info::kernel_version[0] >= 2 && info::kernel_version[1] >= 5)
+	#else
+		false
+	#endif
 };
 
 void

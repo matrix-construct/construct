@@ -72,7 +72,7 @@ namespace ircd::fs
 struct [[gnu::visibility("hidden")]]
 ircd::fs::init
 {
-	aio::init _aio_;
+	std::optional<aio::init> _aio_;
 
 	init();
 	~init() noexcept;
