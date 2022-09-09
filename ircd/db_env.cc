@@ -2952,7 +2952,7 @@ noexcept try
 	opts.offset = offset;
 	opts.priority = ionice;
 	opts.aio = this->aio;
-	opts.all = false;
+	opts.all = true;
 	const mutable_buffer buf
 	{
 		scratch, length
