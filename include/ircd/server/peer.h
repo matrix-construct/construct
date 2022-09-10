@@ -22,7 +22,7 @@ struct ircd::server::peer
 {
 	struct err;
 
-	static const size_t LINK_MAX;
+	static const size_t MAX_LINK;
 	static net::sock_opts sock_opts;
 	static ios::descriptor close_desc;
 	static conf::item<size_t> link_min_default;

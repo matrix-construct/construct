@@ -704,8 +704,8 @@ ircd::server::peers
 // server::peer
 //
 
-decltype(ircd::server::peer::LINK_MAX)
-ircd::server::peer::LINK_MAX
+decltype(ircd::server::peer::MAX_LINK)
+ircd::server::peer::MAX_LINK
 {
 	16
 };
@@ -889,7 +889,7 @@ ircd::server::peer::close(const net::close_opts &opts)
 		return;
 
 	op_fini = true;
-	link *links[LINK_MAX];
+	link *links[MAX_LINK];
 	const auto end(pointers(this->links, links));
 	for(link **link(links); link != end; ++link)
 		(*link)->close(opts);
@@ -1850,7 +1850,7 @@ try
 	// The hostname in open_opts should still reference this object's string.
 	assert(host(open_opts.hostport).data() == this->hostcanon.data());
 
-	link *links[LINK_MAX];
+	link *links[MAX_LINK];
 	const auto end(pointers(this->links, links));
 	for(link **link(links); link != end; ++link)
 		(*link)->open(open_opts);
