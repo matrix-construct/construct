@@ -1,7 +1,7 @@
 FROM ubuntu:22.04
 
 ARG skiprocks
-ARG rocksdb_version 7.4.3
+ARG rocksdb_version 7.4.5
 ARG rocksdb_url
 
 ENV rocksdb_version ${rocksdb_version}
