@@ -48,6 +48,7 @@ class ircd::ctx::queue
 
 template<class T,
          class A>
+inline
 ircd::ctx::queue<T, A>::queue()
 :q(std::allocator<T>())
 {
@@ -55,6 +56,7 @@ ircd::ctx::queue<T, A>::queue()
 
 template<class T,
          class A>
+inline
 ircd::ctx::queue<T, A>::queue(A&& alloc)
 :q(std::forward<A>(alloc))
 {
@@ -62,6 +64,7 @@ ircd::ctx::queue<T, A>::queue(A&& alloc)
 
 template<class T,
          class A>
+inline
 ircd::ctx::queue<T, A>::~queue()
 noexcept
 {
@@ -70,7 +73,7 @@ noexcept
 
 template<class T,
          class A>
-void
+inline void
 ircd::ctx::queue<T, A>::push(T&& t)
 noexcept
 {
@@ -80,7 +83,7 @@ noexcept
 
 template<class T,
          class A>
-void
+inline void
 ircd::ctx::queue<T, A>::push(const T &t)
 {
 	q.push_back(t);
@@ -90,7 +93,7 @@ ircd::ctx::queue<T, A>::push(const T &t)
 template<class T,
          class A>
 template<class... args>
-void
+inline void
 ircd::ctx::queue<T, A>::emplace(args&&... a)
 {
 	q.emplace(std::forward<args>(a)...);
@@ -99,7 +102,7 @@ ircd::ctx::queue<T, A>::emplace(args&&... a)
 
 template<class T,
          class A>
-T
+inline T
 ircd::ctx::queue<T, A>::pop()
 {
 	const scope_count w
@@ -121,7 +124,7 @@ ircd::ctx::queue<T, A>::pop()
 template<class T,
          class A>
 template<class duration>
-T
+inline T
 ircd::ctx::queue<T, A>::pop_for(const duration &dur)
 {
 	const scope_count w
@@ -149,7 +152,7 @@ ircd::ctx::queue<T, A>::pop_for(const duration &dur)
 template<class T,
          class A>
 template<class time_point>
-T
+inline T
 ircd::ctx::queue<T, A>::pop_until(time_point&& tp)
 {
 	const scope_count w
@@ -176,7 +179,7 @@ ircd::ctx::queue<T, A>::pop_until(time_point&& tp)
 
 template<class T,
          class A>
-size_t
+inline size_t
 ircd::ctx::queue<T, A>::waiting()
 const
 {
@@ -185,7 +188,7 @@ const
 
 template<class T,
          class A>
-size_t
+inline size_t
 ircd::ctx::queue<T, A>::size()
 const
 {
@@ -194,7 +197,7 @@ const
 
 template<class T,
          class A>
-size_t
+inline size_t
 ircd::ctx::queue<T, A>::empty()
 const
 {
