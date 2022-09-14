@@ -624,7 +624,7 @@ ircd::cl::log_dev_info(const uint i,
 	log::logf
 	{
 		log, log::level::DEBUG,
-		"%s char%u short%u half%u int%u float%u long%u double%u; argc:%u cargc:%u",
+		"%s char%u short%u half%u int%u float%u long%u double%u; consts:%u param %s",
 		string_view{head},
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR, buf[0]),
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT, buf[1]),
@@ -633,8 +633,8 @@ ircd::cl::log_dev_info(const uint i,
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NATIVE_VECTOR_WIDTH_FLOAT, buf[4]),
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG, buf[5]),
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NATIVE_VECTOR_WIDTH_DOUBLE, buf[6]),
-		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_PARAMETER_SIZE, buf[7]),
-		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_CONSTANT_ARGS, buf[8]),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_CONSTANT_ARGS, buf[7]),
+		pretty(pbuf[0], iec(info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_PARAMETER_SIZE, buf[8]))),
 	};
 
 	const bool native_kernel
