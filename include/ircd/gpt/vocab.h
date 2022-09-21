@@ -42,8 +42,14 @@ namespace ircd::gpt::vocab
 	// Tokenize one token. Error thrown if input is not exactly one token.
 	u16 tokenize(const string_view &in, const bool prefix_space = false);
 
+	// Return the number of tokens which would be output by a tokenize().
+	size_t count(const string_view &in) noexcept;
+
 	// Decode token values to build output text string.
 	string_view detokenize(const mutable_buffer &out, const vector_view<const u16> &in) noexcept;
+
+	// Return the length of the string which would be output by a detokenize().
+	size_t count(const vector_view<const u16> &in) noexcept;
 
 	// Other tools
 	string_view debug(const mutable_buffer &buf, const u16 token, const uint fmt_msk = -1U);

@@ -213,9 +213,29 @@ ircd::gpt::vocab::debug(const mutable_buffer &out,
 	};
 }
 
-//
-// detokenize
-//
+size_t
+ircd::gpt::vocab::count(const vector_view<const u16> &in)
+noexcept
+{
+	static const size_t max
+	{
+		32_KiB
+	};
+
+	thread_local char buf[max];
+	const auto res
+	{
+		detokenize(buf, in)
+	};
+
+	const auto ret
+	{
+		res.size()
+	};
+
+	assert(ret < max);
+	return ret;
+}
 
 ircd::string_view
 ircd::gpt::vocab::detokenize(const mutable_buffer &out,
@@ -252,9 +272,29 @@ noexcept
 	};
 }
 
-//
-// tokenize
-//
+size_t
+ircd::gpt::vocab::count(const string_view &in)
+noexcept
+{
+	static const size_t max
+	{
+		2048
+	};
+
+	thread_local u16 buf[max];
+	const auto res
+	{
+		tokenize(buf, in)
+	};
+
+	const auto ret
+	{
+		res.size()
+	};
+
+	assert(ret < max);
+	return ret;
+}
 
 uint16_t
 ircd::gpt::vocab::tokenize(const string_view &in,
