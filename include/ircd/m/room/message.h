@@ -45,6 +45,10 @@ struct ircd::m::room::message
 	id::event reply_to_event() const noexcept;
 
 	/// The user who sent the message being replied to; empty if not a reply
+	/// or the name was missing.
+	string_view reply_to_name() const noexcept;
+
+	/// The user who sent the message being replied to; empty if not a reply
 	/// or the username was missing or malformed.
 	id::user reply_to_user() const noexcept;
 

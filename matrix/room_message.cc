@@ -110,12 +110,12 @@ ircd::string_view
 ircd::m::room::message::reply_to_body()
 const noexcept
 {
-	const auto reply_to_user
+	const auto reply_to_name
 	{
-		this->reply_to_user()
+		this->reply_to_name()
 	};
 
-	if(likely(!reply_to_user))
+	if(likely(!reply_to_name))
 		return {};
 
 	string_view body
@@ -125,7 +125,7 @@ const noexcept
 
 	body = string_view
 	{
-		reply_to_user.end(), body.end()
+		reply_to_name.end(), body.end()
 	};
 
 	tokens(body, "\\n", [&body]
@@ -149,6 +149,21 @@ ircd::m::user::id
 ircd::m::room::message::reply_to_user()
 const noexcept
 {
+	const auto reply_to_name
+	{
+		this->reply_to_name()
+	};
+
+	if(!valid(m::id::USER, reply_to_name))
+		return {};
+
+	return reply_to_name;
+}
+
+ircd::string_view
+ircd::m::room::message::reply_to_name()
+const noexcept
+{
 	string_view body
 	{
 		json::get<"body"_>(*this)
@@ -165,9 +180,6 @@ const noexcept
 	{
 		between(body, '<', '>')
 	};
-
-	if(!valid(m::id::USER, ret))
-		return {};
 
 	return ret;
 }
