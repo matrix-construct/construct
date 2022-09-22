@@ -58,8 +58,24 @@ handle_edu_m_receipt(const m::event &event,
 		at<"content"_>(event)
 	};
 
-	for(const auto &[room_id, content] : content)
+	for(const auto &[room_id, content] : content) try
+	{
 		handle_m_receipt(event, room_id, content);
+	}
+	catch(const ctx::interrupted &)
+	{
+		throw;
+	}
+	catch(const std::exception &e)
+	{
+		log::derror
+		{
+			m::receipt::log, "Failed to handle '%s' from %s :%s",
+			room_id,
+			json::get<"origin"_>(event),
+			e.what(),
+		};
+	}
 }
 
 void
