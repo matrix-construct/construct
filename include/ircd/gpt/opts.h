@@ -11,13 +11,6 @@
 #pragma once
 #define HAVE_IRCD_GPT_OPTS_H
 
-#if defined(__cplusplus)
-namespace ircd::gpt::model
-{
-	struct decoder;
-}
-#endif
-
 /// Task Options Page
 ///
 /// The option block is directly shared with task software as constant data.

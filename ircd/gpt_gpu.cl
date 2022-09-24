@@ -8,27 +8,12 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-//#pragma OPENCL EXTENSION cl_amd_device_attribute_query : enable
-//#pragma OPENCL EXTENSION cl_khr_byte_addressable_store :enable
-//#pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable
-//#pragma OPENCL EXTENSION cl_khr_local_int32_base_atomics : enable
-//#pragma OPENCL EXTENSION cl_khr_global_int32_extended_atomics : enable
-//#pragma OPENCL EXTENSION cl_khr_local_int32_extended_atomics : enable
-
-#pragma OPENCL EXTENSION cl_clang_storage_class_specifiers : enable
-#pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable
-#pragma OPENCL EXTENSION cl_khr_global_int32_extended_atomics : enable
-#pragma OPENCL EXTENSION cl_khr_local_int32_base_atomics : enable
-#pragma OPENCL EXTENSION cl_khr_local_int32_extended_atomics : enable
-
 #pragma clang fp exceptions(ignore)
 #pragma clang fp reassociate(on)
 #pragma clang fp contract(fast)
 
 #include <ircd/config.h>
 #include <clc/clc.h>
-
-#define __region __attribute__((address_space(0x02)))
 
 #if !defined(assume)
 	#define assume(x) __builtin_assume(x)
@@ -67,8 +52,6 @@
 
 __kernel void
 __attribute__((visibility("protected")))
-__attribute__((reqd_work_group_size(192, 1, 1)))
-__attribute__((amdgpu_flat_work_group_size(192, 192)))
 ircd_gpt_alloc(__global const void *const restrict model,
                __global void *const restrict master,
                __constant const void *const opts,
@@ -86,8 +69,6 @@ ircd_gpt_alloc(__global const void *const restrict model,
 
 __kernel void
 __attribute__((visibility("protected")))
-__attribute__((reqd_work_group_size(192, 1, 1)))
-__attribute__((amdgpu_flat_work_group_size(192, 192)))
 ircd_gpt_enter(__global const void *const restrict model,
                __global void *const restrict state,
                __global void *const restrict master,
@@ -105,9 +86,6 @@ ircd_gpt_enter(__global const void *const restrict model,
 }
 
 __kernel void
-__attribute__((vec_type_hint(float4)))
-__attribute__((reqd_work_group_size(192, 1, 1)))
-__attribute__((amdgpu_flat_work_group_size(192, 192)))
 ircd_gpt_lm_embed(__global const struct ircd_gpt_ctrl *const ctrl,
                   __constant const struct ircd_gpt_opts *const opts,
                   __global ircd_gpt_vectorv *const restrict accum,
@@ -467,9 +445,6 @@ ircd_gpt_attn_proj_tmul(__constant const struct ircd_gpt_opts *const opts,
 }
 
 __kernel void
-__attribute__((vec_type_hint(float4)))
-__attribute__((reqd_work_group_size(192, 1, 1)))
-__attribute__((amdgpu_flat_work_group_size(192, 192)))
 __attribute__((visibility("protected")))
 ircd_gpt_coil(__global struct ircd_gpt_ctrl *const ctrl,
               __constant const struct ircd_gpt_opts *const opts,
@@ -619,9 +594,6 @@ ircd_gpt_attn_fcon_tmul(__constant const struct ircd_gpt_opts *const opts,
 }
 
 __kernel void
-__attribute__((vec_type_hint(float4)))
-__attribute__((reqd_work_group_size(192, 1, 1)))
-__attribute__((amdgpu_flat_work_group_size(192, 192)))
 ircd_gpt_attn_fcon(__global const struct ircd_gpt_ctrl *const ctrl,
                    __constant const struct ircd_gpt_opts *const opts,
                    __private const uint layer,
@@ -674,9 +646,6 @@ ircd_gpt_attn_fcon(__global const struct ircd_gpt_ctrl *const ctrl,
 }
 
 __kernel void
-__attribute__((vec_type_hint(float4)))
-__attribute__((reqd_work_group_size(192, 1, 1)))
-__attribute__((amdgpu_flat_work_group_size(192, 192)))
 ircd_gpt_lm_norm(__global const struct ircd_gpt_ctrl *const ctrl,
                  __constant const struct ircd_gpt_opts *const opts,
                  __global ircd_gpt_vectorv *const restrict accum,
@@ -741,7 +710,6 @@ ircd_gpt_lm_logit(__global const struct ircd_gpt_ctrl *const ctrl,
 
 __kernel void
 __attribute__((reqd_work_group_size(256, 1, 1)))
-__attribute__((amdgpu_flat_work_group_size(256, 256)))
 ircd_gpt_lm_logsm(__global struct ircd_gpt_ctrl *const ctrl,
                   __constant const struct ircd_gpt_opts *const opts,
                   __global float logit[restrict 65536])
@@ -950,9 +918,8 @@ ircd_gpt_lm_result_attns(__local struct ircd_gpt_ctrl *const ctrl,
 }
 
 __kernel void
-__attribute__((reqd_work_group_size(256, 1, 1)))
-__attribute__((amdgpu_flat_work_group_size(256, 256)))
 __attribute__((visibility("protected")))
+__attribute__((reqd_work_group_size(256, 1, 1)))
 ircd_gpt_lm_select(__global struct ircd_gpt_ctrl *const restrict ctrl_,
                    __constant const struct ircd_gpt_opts *const opts,
                    __global const float logsm[restrict 65536],
@@ -1022,7 +989,6 @@ ircd_gpt_lm_select(__global struct ircd_gpt_ctrl *const restrict ctrl_,
 __kernel void
 __attribute__((visibility("protected")))
 __attribute__((reqd_work_group_size(256, 1, 1)))
-__attribute__((amdgpu_flat_work_group_size(256, 256)))
 ircd_gpt_leave(__global const void *const restrict model,
                __global void *const restrict state,
                __global void *const restrict master,
@@ -1228,9 +1194,6 @@ ircd_gpt_prop_elem(__global const struct ircd_gpt_ctrl *const ctrl,
 
 __kernel void
 __attribute__((always_inline))
-//__attribute__((vec_type_hint(float4)))
-//__attribute__((reqd_work_group_size(192, 1, 1)))
-//__attribute__((amdgpu_flat_work_group_size(192, 192)))
 ircd_gpt_norm_prop(__global const struct ircd_gpt_ctrl *const ctrl,
                    __constant const struct ircd_gpt_opts *const opts,
                    __global ircd_gpt_vectorv *const restrict bias,
@@ -1258,9 +1221,6 @@ ircd_gpt_norm_prop(__global const struct ircd_gpt_ctrl *const ctrl,
 }
 
 __kernel void
-//__attribute__((vec_type_hint(float4)))
-//__attribute__((reqd_work_group_size(192, 1, 1)))
-//__attribute__((amdgpu_flat_work_group_size(192, 192)))
 ircd_gpt_coil_prop_attn(__global const struct ircd_gpt_ctrl *const ctrl,
                         __constant const struct ircd_gpt_opts *const opts,
                         __global ircd_gpt_vectorv *const restrict norm_bias,
@@ -1336,9 +1296,6 @@ ircd_gpt_coil_prop_attn(__global const struct ircd_gpt_ctrl *const ctrl,
 }
 
 __kernel void
-//__attribute__((vec_type_hint(float4)))
-//__attribute__((reqd_work_group_size(192, 1, 1)))
-//__attribute__((amdgpu_flat_work_group_size(192, 192)))
 ircd_gpt_coil_prop_ffnn(__global const struct ircd_gpt_ctrl *const ctrl,
                         __constant const struct ircd_gpt_opts *const opts,
                         __global ircd_gpt_vectorv *const restrict norm_bias,
@@ -1414,9 +1371,6 @@ ircd_gpt_coil_prop_ffnn(__global const struct ircd_gpt_ctrl *const ctrl,
 }
 
 __kernel void
-//__attribute__((vec_type_hint(float4)))
-//__attribute__((reqd_work_group_size(192, 1, 1)))
-//__attribute__((amdgpu_flat_work_group_size(192, 192)))
 ircd_gpt_lm_embed_prop(__global const struct ircd_gpt_ctrl *const ctrl,
                        __constant const struct ircd_gpt_opts *const opts,
                        __global ircd_gpt_vectorv *const restrict pos,
