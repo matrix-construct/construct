@@ -40,7 +40,7 @@ namespace ircd::cl
 	extern conf::item<bool> enable;
 	extern conf::item<bool> profile_queue;
 	extern conf::item<uint64_t> watchdog_tsc;
-	extern conf::item<milliseconds> nice_rate;
+	extern conf::item<uint64_t> intensity;
 	extern conf::item<std::string> path;
 	extern conf::item<std::string> envs[];
 }

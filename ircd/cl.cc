@@ -141,11 +141,11 @@ ircd::cl::profile_queue
 	{ "persist",   false                    },
 };
 
-decltype(ircd::cl::nice_rate)
-ircd::cl::nice_rate
+decltype(ircd::cl::intensity)
+ircd::cl::intensity
 {
-	{ "name",      "ircd.cl.nice.rate"  },
-	{ "default",   1L                   },
+	{ "name",      "ircd.cl.intensity"  },
+	{ "default",   0L                   },
 };
 
 decltype(ircd::cl::watchdog_tsc)
@@ -854,13 +854,13 @@ catch(const std::exception &e)
 }
 
 ircd::cl::exec::exec(kern &kern,
-                     const kern::range &work,
+                     const kern::range &range,
                      const opts &opts)
 try
 {
 	size_t dim(0);
-	for(size_t i(0); i < work.global.size(); ++i)
-		dim += work.global[i] > 0 && dim == i;
+	for(size_t i(0); i < range.global.size(); ++i)
+		dim += range.global[i] > 0 && dim == i;
 
 	if(!dim)
 		return;
@@ -886,32 +886,67 @@ try
 	assert(!this->object);
 	this->object = &kern;
 
+	size_t global_size(range.global[0]);
+	size_t local_size(range.local[0]);
+	for(size_t d(1); d < dim; ++d)
+	{
+		global_size *= range.global[d];
+		local_size *= range.local[d];
+	}
+
+	assert(global_size % local_size == 0);
+	const size_t groups
+	{
+		global_size / local_size
+	};
+
+	assert(groups > 0);
+	size_t intensity
+	{
+		cl::intensity?
+			std::max(opts.intensity, uint(cl::intensity)):
+			opts.intensity
+	};
+
+	if(intensity < groups)
+		while(intensity > 1 && groups % intensity != 0)
+			intensity--;
+
+	const size_t tasks
+	{
+		intensity && intensity < groups?
+			groups / intensity:
+			1
+	};
+
 	assert(!this->handle);
-	call
-	(
-		clEnqueueNDRangeKernel,
-		q,
-		cl_kernel(kern.handle),
-		dim,
-		work.offset.data(),
-		work.global.data(),
-		work.local.data(),
-		deps.size(),
-		deps.size()? deps.data(): nullptr,
-		addressof_handle(this)
-	);
+	for(size_t i(0); i < tasks; ++i)
+	{
+		kern::range sub_range(range);
+		for(size_t d(0); d < dim; ++d)
+		{
+			sub_range.global[d] /= tasks;
+			sub_range.offset[d] += sub_range.global[d] * i;
+		}
 
-	size_t global_size(work.global[0]);
-	for(size_t i(1); i < dim; ++i)
-		global_size *= work.global[i];
+		call
+		(
+			clEnqueueNDRangeKernel,
+			q,
+			cl_kernel(kern.handle),
+			dim,
+			sub_range.offset.data(),
+			sub_range.global.data(),
+			sub_range.local.data(),
+			deps.size(),
+			deps.size()? deps.data(): nullptr,
+			i == tasks - 1? addressof_handle(this): nullptr
+		);
+	}
 
-	size_t local_size(work.local[0]);
-	for(size_t i(1); i < dim; ++i)
-		local_size *= work.local[i];
-
-	primary_stats.exec_kern_tasks += 1;
+	primary_stats.exec_kern_tasks += tasks;
 	primary_stats.exec_kern_threads += global_size;
-	primary_stats.exec_kern_groups += global_size / local_size;
+	primary_stats.exec_kern_groups += groups;
 	handle_submitted(this, opts);
 }
 catch(const std::exception &e)
@@ -1136,12 +1171,6 @@ ircd::cl::handle_submitted(cl::exec *const &exec,
 
 	if(likely(!opts.blocking))
 		check_submit_blocking(exec, opts);
-
-	if(opts.nice == 0)
-		ctx::yield();
-
-	if(opts.nice > 0)
-		ctx::sleep(opts.nice * milliseconds(nice_rate));
 }
 
 /// Checks if the OpenCL runtime blocked this thread to sound the alarms.

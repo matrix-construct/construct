@@ -65,11 +65,14 @@ struct ircd::cl::exec::opts
 	/// For operations which have an offset (or two); otherwise ignored.
 	off_t offset[2] {0};
 
-	/// Tune the intensity of the execution. For headless deployments the
-	/// maximum intensity is advised. Lesser values are more intense. The
-	/// default of -1 is the maximum. The value of zero yields the ircd::ctx
-	/// after submission, but does not otherwise decrease the intensity.
-	int nice {-1};
+	/// Tune the intensity of the execution. The value is intended to correlate
+	/// with parallel resource consumption on the device by shaping the work
+	/// groups submitted over the range. The minimum value of 1 will serialize
+	/// execution. Values greater than the number of CU's will not increase
+	/// concurrency but may still partition a large range with multiple command
+	/// submissions to increase niceness. The default of zero will maximize
+	/// intensity and minimize command submissions (to one).
+	uint intensity {0};
 
 	/// Starts a new dependency chain; allowing empty deps without implicit
 	/// dependency on the last work item constructed on the ircd::ctx.
