@@ -56,6 +56,9 @@ namespace ircd::cl
 	}
 	api[PLATFORM_MAX][DEVICE_MAX];
 
+	static uint
+	warp_size[PLATFORM_MAX][DEVICE_MAX];
+
 	static cl_context
 	primary;
 
@@ -442,6 +445,11 @@ ircd::cl::init::init_ctxs()
 	// For any inits in the work subsystem.
 	work::init();
 
+	// Save the warp/wavefront size.
+	for(size_t i(0); i < platforms; ++i)
+		for(size_t j(0); j < devices[i]; ++j)
+			warp_size[i][j] = query_warp_size(primary, device[i][j]);
+
 	#pragma GCC diagnostic pop
 	return _devs;
 }
@@ -584,7 +592,7 @@ ircd::cl::log_dev_info(const uint i,
 		string_view{head},
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_CLOCK_FREQUENCY, buf[0]),
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_COMPUTE_UNITS, buf[1]),
-		primary? query_warp_size(primary, dev): 0UL,
+		warp_size[i][j],
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_WORK_GROUP_SIZE, buf[2]),
 		info<int>(clGetDeviceInfo, dev, CL_DEVICE_PARTITION_PROPERTIES, buf[3]),
 		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, buf[4]),
