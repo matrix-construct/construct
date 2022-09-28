@@ -93,6 +93,21 @@ namespace ircd::m::events::refs
 	bool for_each(const range &, const closure &);
 }
 
+/// Interface to scan the rel_type of the M_RELATES refs type
+namespace ircd::m::events::relates
+{
+	// (source, rel_type, target)
+	using closure = util::closure_bool
+	<
+		std::function,
+		const event::idx &, const m::relates_to &, const event::idx &
+	>;
+
+	// Iterate events in range
+	bool for_each(const range &, const string_view &rel_type, const closure &);
+	bool for_each(const range &, const closure &);
+}
+
 /// Interface to scan the content of events
 namespace ircd::m::events::content
 {
@@ -127,6 +142,13 @@ struct ircd::m::events::range
 	,fopts{fopts}
 	{}
 };
+
+inline bool
+ircd::m::events::relates::for_each(const range &range,
+                                   const closure &closure)
+{
+	return for_each(range, string_view{}, closure);
+}
 
 inline bool
 ircd::m::events::origin::for_each(const closure_name &closure)

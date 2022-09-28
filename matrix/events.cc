@@ -408,6 +408,41 @@ ircd::m::events::content::for_each(const closure &closure)
 }
 
 //
+// events::relates
+//
+
+bool
+ircd::m::events::relates::for_each(const range &range,
+                                   const string_view &rel_type,
+                                   const closure &closure)
+{
+	return refs::for_each(range, [&rel_type, &closure]
+	(const event::idx &src, const dbs::ref &type, const event::idx &tgt)
+	{
+		if(type != dbs::ref::M_RELATES)
+			return true;
+
+		const m::relates rels
+		{
+			src
+		};
+
+		bool ret(true);
+		rels.for_each(rel_type, [&closure, &rel_type, &src, &tgt, &ret]
+		(const event::idx &_tgt, const json::object &, const m::relates_to &relates_to)
+		{
+			if(_tgt != tgt)
+				return true;
+
+			ret = closure(src, relates_to, tgt);
+			return false;
+		});
+
+		return ret;
+	});
+}
+
+//
 // events::refs
 //
 
