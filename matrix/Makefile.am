@@ -179,6 +179,7 @@ libircd_matrix_la_SOURCES += rooms.cc
 libircd_matrix_la_SOURCES += membership.cc
 libircd_matrix_la_SOURCES += rooms_summary.cc
 libircd_matrix_la_SOURCES += sync.cc
+libircd_matrix_la_SOURCES += trace.cc
 libircd_matrix_la_SOURCES += typing.cc
 libircd_matrix_la_SOURCES += users.cc
 libircd_matrix_la_SOURCES += users_servers.cc

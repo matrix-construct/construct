@@ -66,6 +66,7 @@ namespace ircd::m
 #include "txn.h"
 #include "relates.h"
 #include "room/room.h"
+#include "trace.h"
 #include "user/user.h"
 #include "users.h"
 #include "rooms.h"

@@ -8876,6 +8876,56 @@ console_cmd__event__relates(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__event__trace(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id", "limit"
+	}};
+
+	const m::event::id &event_id
+	{
+		param.at("event_id")
+	};
+
+	ssize_t limit
+	{
+		param.at("limit", 48L)
+	};
+
+	const auto event_idx
+	{
+		index(event_id)
+	};
+
+	m::event::fetch event;
+	m::trace::for_each(event_idx, [&out, &limit, &event]
+	(const m::event::idx &event_idx, const uint64_t &depth, const m::room::message &msg)
+	{
+		if(!seek(std::nothrow, event, event_idx))
+			return true;
+
+		json::get<"content"_>(event) = msg.source;
+		const m::pretty_opts opts
+		{
+			.event_idx = event_idx,
+			.show_origin_server_ts = false,
+			.show_origin_server_ts_ago = true,
+			.show_event_id = false,
+			.show_state_key = false,
+			.show_msgtype = false,
+		};
+
+		out
+		<< pretty_msgline(event, opts)
+		<< std::endl;
+		return --limit > 0;
+	});
+
+	return true;
+}
+
 //
 // eval
 //
