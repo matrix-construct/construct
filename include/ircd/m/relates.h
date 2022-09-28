@@ -23,11 +23,12 @@ struct ircd::m::relates_to
 	/// Target event_id
 	json::property<name::event_id, json::string>,
 
-	/// Relation type
-	json::property<name::rel_type, json::string>,
-
 	/// m.in_reply_to object
-	json::property<name::m_in_reply_to, json::object>
+	json::property<name::m_in_reply_to, json::object>,
+
+	/// Relation type
+	json::property<name::rel_type, json::string>
+
 >
 {
 	using super_type::tuple;
