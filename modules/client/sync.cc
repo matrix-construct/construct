@@ -1076,6 +1076,12 @@ try
 			checkpoint.committing(false);
 			return true;
 		});
+
+		log::debug
+		{
+			log, "request %s polylog prefetch complete",
+			loghead(data),
+		};
 	}
 
 	// Output loop
