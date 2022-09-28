@@ -29,22 +29,29 @@ struct ircd::m::room::messages
 	static const event::fetch::opts fopts;
 
 	room::type events;
+	bool redacted {false};
 
   public:
 	bool for_each(const closure &) const;
 
 	messages(const m::room &,
-	         const decltype(room::type::range) &  = { -1UL, -1L });
+	         const decltype(room::type::range) &  = { -1UL, -1L },
+	         const bool redacted = false);
 };
 
 inline
 ircd::m::room::messages::messages(const m::room &room,
-                                  const decltype(room::type::range) &range)
+                                  const decltype(room::type::range) &range,
+                                  const bool redacted)
 :events
 {
 	room.room_id,
 	"m.room.message",
 	range,
 	false,
+}
+,redacted
+{
+	redacted
 }
 {}

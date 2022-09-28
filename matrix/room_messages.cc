@@ -26,7 +26,7 @@ const
 	(const string_view &type, const uint64_t &depth, event::idx event_idx)
 	{
 		assert(type == "m.room.message");
-		if(redacted(event_idx))
+		if(!redacted && m::redacted(event_idx))
 			return true;
 
 		if(!seek(std::nothrow, event, event_idx))
