@@ -11,6 +11,12 @@
 #pragma once
 #define HAVE_IRCD_M_ROOM_MESSAGES_H
 
+namespace ircd::m
+{
+	/// Returns `true` if `msg` reassigned with content from fetched `buf`.
+	bool replace(room::message &msg, event::fetch &buf, const event::idx &);
+}
+
 /// Rendering
 ///
 struct ircd::m::room::messages
@@ -24,17 +30,11 @@ struct ircd::m::room::messages
 
 	room::type events;
 
-  private:
-	bool m_replace(event &, const event::idx &) const;
-
   public:
 	bool for_each(const closure &) const;
 
 	messages(const m::room &,
 	         const decltype(room::type::range) &  = { -1UL, -1L });
-
-	messages(messages &&) = delete;
-	messages(const messages &) = delete;
 };
 
 inline

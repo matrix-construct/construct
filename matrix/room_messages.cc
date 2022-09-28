@@ -21,12 +21,8 @@ bool
 ircd::m::room::messages::for_each(const closure &closure)
 const
 {
-	event::fetch event
-	{
-		fopts
-	};
-
-	return events.for_each([this, &closure, &event]
+	event::fetch event{fopts}, replace{fopts};
+	return events.for_each([this, &closure, &event, &replace]
 	(const string_view &type, const uint64_t &depth, event::idx event_idx)
 	{
 		assert(type == "m.room.message");
@@ -47,18 +43,15 @@ const
 		if(msg.replace_event())
 			return true;
 
-		// If the content was replaced msg has to be updated.
-		if(m_replace(event, event_idx))
-			msg = json::get<"content"_>(event);
-
+		m::replace(msg, replace, event_idx);
 		return closure(msg, depth, event_idx);
 	});
 }
 
 bool
-ircd::m::room::messages::m_replace(event &event,
-                                   const event::idx &event_idx)
-const
+ircd::m::replace(room::message &msg,
+                 event::fetch &replace,
+                 const event::idx &event_idx)
 {
 	// Find the latest edit of this; otherwise stick with the original.
 	const m::relates relates
@@ -75,12 +68,7 @@ const
 	if(!replace_idx)
 		return false;
 
-	const event::fetch replace
-	{
-		std::nothrow, replace_idx, fopts
-	};
-
-	if(!replace.valid)
+	if(!seek(std::nothrow, replace, replace_idx))
 		return false;
 
 	const json::object replace_content
@@ -97,6 +85,7 @@ const
 	if(!new_content && !replace_content.has("m.new_content"))
 		return false;
 
-	json::get<"content"_>(event) = new_content;
+	// If the content was replaced msg has to be updated.
+	msg = new_content;
 	return true;
 }
