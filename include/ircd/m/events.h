@@ -108,6 +108,20 @@ namespace ircd::m::events::relates
 	bool for_each(const range &, const closure &);
 }
 
+/// Interface to scan the keys of the m.annotation rel_type of the M_RELATES ref type
+namespace ircd::m::events::annotates
+{
+	// (source, key, target)
+	using closure = util::closure_bool
+	<
+		std::function, const event::idx &, const string_view &, const event::idx &
+	>;
+
+	// Iterate events in range
+	bool for_each(const range &, const string_view &key, const closure &);
+	bool for_each(const range &, const closure &);
+}
+
 /// Interface to scan the content of events
 namespace ircd::m::events::content
 {
@@ -142,6 +156,13 @@ struct ircd::m::events::range
 	,fopts{fopts}
 	{}
 };
+
+inline bool
+ircd::m::events::annotates::for_each(const range &range,
+                                     const closure &closure)
+{
+	return for_each(range, string_view{}, closure);
+}
 
 inline bool
 ircd::m::events::relates::for_each(const range &range,

@@ -8037,6 +8037,65 @@ console_cmd__events__relates(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__events__annotates(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"start", "stop", "key"
+	}};
+
+	const m::event::idx start
+	{
+		param.at("start", 0UL)
+	};
+
+	const m::event::idx stop
+	{
+		param.at("stop", m::vm::sequence::retired + 1)
+	};
+
+	const string_view &keystr
+	{
+		param.at("key", "*"_sv)
+	};
+
+	const string_view &key
+	{
+		keystr == "*"?
+			string_view{}:
+			keystr
+	};
+
+	m::events::annotates::for_each({start, stop}, key, [&out]
+	(const m::event::idx &src, const string_view &key, const m::event::idx &tgt)
+	{
+		const auto src_id
+		{
+			m::event_id(std::nothrow, src)
+		};
+
+		const auto tgt_id
+		{
+			m::event_id(std::nothrow, tgt)
+		};
+
+		out
+		<< ' ' << std::right << std::setw(10) << src
+		<< ' ' << std::left << std::setw(45) << trunc(src_id? string_view{src_id}: "<index error>"_sv, 45)
+		<< " <-" << std::right << std::setw(10) << tgt
+		<< ' ' << std::left << std::setw(45) << trunc(tgt_id? string_view{tgt_id}: "<index error>"_sv, 45)
+		<< " (" << key.size() << ')'
+		<< " :" << key
+		<< std::endl
+		;
+
+		return true;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__events__dump(opt &out, const string_view &line)
 {
 	const params param{line, " ",

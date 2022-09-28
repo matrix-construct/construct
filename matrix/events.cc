@@ -408,6 +408,33 @@ ircd::m::events::content::for_each(const closure &closure)
 }
 
 //
+// events::annotates
+//
+
+bool
+ircd::m::events::annotates::for_each(const range &range,
+                                     const string_view &key,
+                                     const closure &closure)
+{
+	return relates::for_each(range, [&key, &closure]
+	(const event::idx &src, const m::relates_to &relates, const event::idx &tgt)
+	{
+		if(json::get<"rel_type"_>(relates) != "m.annotation")
+			return true;
+
+		const json::string _key
+		{
+			relates.source["key"]
+		};
+
+		if(key && key != _key)
+			return true;
+
+		return closure(src, _key, tgt);
+	});
+}
+
+//
 // events::relates
 //
 
