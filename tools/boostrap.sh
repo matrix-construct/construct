@@ -177,6 +177,7 @@ run git submodule update --init --recursive --checkout libs/intrusive
 run git submodule update --init --recursive --checkout libs/tuple
 run git submodule update --init --recursive --checkout libs/exception
 run git submodule update --init --recursive --checkout libs/algorithm
+run git submodule update --init --recursive --checkout libs/endian
 
 run git submodule update --init --recursive --checkout libs/locale
 
