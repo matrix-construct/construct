@@ -342,6 +342,9 @@ if IMAGEMAGICK
 magick.lo:            AM_CPPFLAGS := @IMAGEMAGICK_CPPFLAGS@ ${AM_CPPFLAGS}
 endif IMAGEMAGICK
 mods.lo:              AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
+if LINUX
+mods_ldso.lo:         AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
+endif
 net.lo:               AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
 net_addrs.lo:         AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
 net_dns.lo:           AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
