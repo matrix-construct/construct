@@ -234,6 +234,8 @@ ircd::cl::init::init()
 		return;
 	}
 
+	const ctx::posix::enable_pthread enable_pthread;
+
 	// Link the libraries.
 	if(!init_libs())
 	{
@@ -289,6 +291,7 @@ noexcept
 		log, "Shutting down OpenCL...",
 	};
 
+	const ctx::posix::enable_pthread enable_pthread;
 	fini_ctxs();
 	fini_libs();
 }
@@ -296,8 +299,6 @@ noexcept
 bool
 ircd::cl::init::init_libs()
 {
-	const ctx::posix::enable_pthread enable_pthread;
-
 	const string_view path
 	{
 		cl::path
@@ -331,8 +332,6 @@ ircd::cl::init::init_libs()
 void
 ircd::cl::init::fini_libs()
 {
-	const ctx::posix::enable_pthread enable_pthread;
-
 	if(likely(linkage))
 		dlclose(linkage);
 }
