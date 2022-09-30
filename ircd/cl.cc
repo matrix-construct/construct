@@ -2038,6 +2038,18 @@ ircd::cl::data::data(const size_t size,
 	flags |= !host_read && host_write? CL_MEM_HOST_WRITE_ONLY: 0;
 	flags |= !host_read && !host_write? CL_MEM_HOST_NO_ACCESS: 0;
 
+	char pbuf[48];
+	log::debug
+	{
+		log, "data(%p) device %s %lu@ host[read:%b write:%b] flags:%08x",
+		this,
+		pretty(pbuf, iec(size)),
+		alignment(size),
+		host_read,
+		host_write,
+		flags,
+	};
+
 	int err {CL_SUCCESS};
 	handle = clCreateBuffer
 	(
@@ -2072,6 +2084,19 @@ ircd::cl::data::data(const mutable_buffer &buf,
 	cl_mem_flags flags {0};
 	flags |= CL_MEM_USE_HOST_PTR;
 	flags |= wonly? CL_MEM_WRITE_ONLY: CL_MEM_READ_WRITE;
+
+	char pbuf[48];
+	log::debug
+	{
+		log, "data(%p) mutable %p %lu@ %s %lu@ wonly:%b flags:%08x",
+		this,
+		ptr,
+		alignment(ptr),
+		pretty(pbuf, iec(size)),
+		alignment(size),
+		wonly,
+		flags,
+	};
 
 	assert(!ptr || aligned(buf, size_t(gart_page_size)));
 	assert(padded(size, size_t(gart_page_size)));
@@ -2109,6 +2134,18 @@ ircd::cl::data::data(const const_buffer &buf)
 	cl_mem_flags flags {0};
 	flags |= CL_MEM_USE_HOST_PTR;
 	flags |= CL_MEM_READ_ONLY;
+
+	char pbuf[48];
+	log::debug
+	{
+		log, "data(%p) immutable %p %lu@ %s %lu@ flags:%08x",
+		this,
+		ptr,
+		alignment(ptr),
+		pretty(pbuf, iec(size)),
+		alignment(size),
+		flags,
+	};
 
 	assert(!ptr || aligned(buf, size_t(gart_page_size)));
 	assert(padded(size, size_t(gart_page_size)));
@@ -2150,6 +2187,19 @@ ircd::cl::data::data(data &master,
 	{
 		master.master()?: master.handle
 	};
+
+	char pbuf[48];
+	if constexpr((false))
+		log::debug
+		{
+			log, "data(%p) master(%p) region offset:%zu %lu@ %s %lu@",
+			this,
+			root,
+			region.origin,
+			alignment(region.origin),
+			pretty(pbuf, iec(region.size)),
+			alignment(region.size),
+		};
 
 	assert(aligned(region.origin, size_t(gart_page_size)));
 	assert(padded(region.size, size_t(gart_page_size)));
