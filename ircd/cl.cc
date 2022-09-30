@@ -561,10 +561,11 @@ ircd::cl::log_dev_info(const uint i,
 		j,
 	};
 
+	constexpr auto ignore(CL_INVALID_VALUE);
 	const uint numeric_ver[]
 	{
-		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_NUMERIC_VERSION, buf[0]),
-		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_OPENCL_C_NUMERIC_VERSION_KHR, buf[1]),
+		info<uint, ignore>(clGetDeviceInfo, dev, CL_DEVICE_NUMERIC_VERSION, buf[0]),
+		info<uint, ignore>(clGetDeviceInfo, dev, CL_DEVICE_OPENCL_C_NUMERIC_VERSION_KHR, buf[1]),
 	};
 
 	log::info
@@ -722,7 +723,7 @@ catch(const std::exception &e)
 {
 	log::logf
 	{
-		log, log::level::DWARNING,
+		log, log::level::WARNING,
 		"context(%p): device(%p): Failed to query warp size :%s",
 		static_cast<const void *>(context),
 		static_cast<const void *>(device),
@@ -1289,7 +1290,7 @@ try
 	const std::array<size_t, 3> cgs
 	{
 		#ifdef RB_DEBUG
-		compile_group_size()
+		compile_group_size(device[0][0]) //TODO: XXX
 		#else
 		0, 0, 0
 		#endif
