@@ -21,6 +21,7 @@ inline namespace util
 	constexpr size_t pad_to(const size_t size, const size_t alignment);
 	constexpr uintptr_t align(uintptr_t, size_t alignment);
 	constexpr uintptr_t align_up(uintptr_t, size_t alignment);
+	constexpr ulong alignment(const uintptr_t);
 
 	// Alignment inline tools
 	bool aligned(const void *const &, const size_t &alignment);
@@ -29,7 +30,15 @@ inline namespace util
 	template<class T = char> T *align(void *const &, const size_t &alignment);
 	template<class T = char> const T *align_up(const void *const &, const size_t &alignment);
 	template<class T = char> T *align_up(void *const &, const size_t &alignment);
+	ulong alignment(const void *const &);
 }}
+
+[[gnu::always_inline]]
+inline ulong
+ircd::util::alignment(const void *const &ptr)
+{
+	return alignment(uintptr_t(ptr));
+}
 
 template<class T>
 [[gnu::always_inline]]
@@ -93,6 +102,12 @@ ircd::util::aligned(const volatile void *const &ptr,
                     const size_t &alignment)
 {
 	return aligned(uintptr_t(ptr), alignment);
+}
+
+constexpr ulong
+ircd::util::alignment(const uintptr_t ptr)
+{
+	return 1UL << __builtin_ctzl(ptr);
 }
 
 constexpr uintptr_t
