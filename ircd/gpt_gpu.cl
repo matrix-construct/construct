@@ -27,7 +27,7 @@
 
 #if __OPENCL_VERSION__ < 120
 	#define static __attribute__((internal_linkage))
-#else
+#elif __OPENCL_VERSION__ < 200
 	#define static __constant static
 #endif
 
