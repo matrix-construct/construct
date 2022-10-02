@@ -26,10 +26,10 @@ ircd::gpt::pipe::code::default_compile_opts
 	{ "name",     "ircd.gpt.pipe.code.opts.comp" },
 	{ "default",  string_view
 	{
-		" -fident"
-		" -fno-builtin"
-		" -ffast-math"
-		" -O3"
+		//" -fident"
+		//" -fno-builtin"
+		//" -ffast-math"
+		//" -O3"
 
 		" -cl-no-signed-zeros"
 		" -cl-finite-math-only"
@@ -46,15 +46,15 @@ ircd::gpt::pipe::code::default_link_opts
 	{ "name",     "ircd.gpt.pipe.code.opts.link" },
 	{ "default",  string_view
 	{
-		" -fident"
-		" -fno-builtin"
-		" -ffast-math"
-		" -O3"
+		//" -fident"
+		//" -fno-builtin"
+		//" -ffast-math"
+		//" -O3"
 
-		" -cl-no-signed-zeros"
-		" -cl-finite-math-only"
-		" -cl-fp32-correctly-rounded-divide-sqrt"
-		" -cl-single-precision-constant"
+		//" -cl-no-signed-zeros"
+		//" -cl-finite-math-only"
+		//" -cl-fp32-correctly-rounded-divide-sqrt"
+		//" -cl-single-precision-constant"
 	}}
 };
 
@@ -86,10 +86,10 @@ ircd::gpt::pipe::code::code()
 		ret = from_cache();
 
 	if(!ret)
-		ret = from_bitcode(link_opts);
+		ret = from_source(comp_opts, link_opts);
 
 	if(!ret)
-		ret = from_source(comp_opts, link_opts);
+		ret = from_bitcode(link_opts);
 
 	return ret;
 }()}
