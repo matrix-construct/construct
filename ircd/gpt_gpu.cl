@@ -742,11 +742,13 @@ ircd_gpt_lm_logsm(__global struct ircd_gpt_ctrl *const ctrl,
 	if(li == 0)
 		samax.mu = mu[li];
 
+	ircd_simt_broadcast_flldr(mu, ln, li);
+
 	sum[li] = 0.0f;
 	for(uint ti = start; ti < stop; ++ti)
 	{
 		const float
-		sub = logit[ti] - samax.mu,
+		sub = logit[ti] - mu[li],
 		res = native_exp(sub);
 
 		sum[li] += res;
@@ -764,7 +766,7 @@ ircd_gpt_lm_logsm(__global struct ircd_gpt_ctrl *const ctrl,
 	for(uint ti = start; ti < stop; ++ti)
 	{
 		const float
-		sub = logit[ti] - samax.mu,
+		sub = logit[ti] - mu[li],
 		res = lambda[li] * native_exp(sub);
 
 		logit[ti] = res;
