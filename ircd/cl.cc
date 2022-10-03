@@ -414,30 +414,35 @@ ircd::cl::init::init_ctxs()
 	primary = clCreateContext(&ctxprop, _devs, _dev, handle_notify, nullptr, &err);
 	throw_on_error(err);
 
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+	// Queue properties
+	char tmp[4];
+	bool dev_queue(true);
+	for(size_t i(0); i < _devs; ++i)
+		dev_queue &= info<uint>(clGetDeviceInfo, _dev[i], CL_DEVICE_MAX_ON_DEVICE_QUEUES, tmp);
 
-	// Setup legacy queue properties
-	cl_command_queue_properties legacy_qprop {0};
-	legacy_qprop |= (profile_queue? CL_QUEUE_PROFILING_ENABLE: cl_command_queue_properties{0});
-	//legacy_qprop |= CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+	uint dev_queue_size(1_MiB); //XXX
+	const uint prop[][2]
+	{
+		{ CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE & boolmask<uint>(profile_queue) },
+		{ CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE & boolmask<uint>(dev_queue) },
+		{ CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE & boolmask<uint>(dev_queue) },
+		{ CL_QUEUE_SIZE, dev_queue_size },
+		{ 0, 0 },
+	};
 
-	// Setup modern queue properties
-	cl_queue_properties qprop {0};
-	qprop |= (profile_queue? CL_QUEUE_PROFILING_ENABLE: cl_queue_properties{0});
-	//qprop |= CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
-	//qprop |= CL_QUEUE_ON_DEVICE;
-	//qprop |= CL_QUEUE_ON_DEVICE_DEFAULT;
+	cl_queue_properties qprop[8] {0};
+	for(size_t i(0), j(0); i < 8 && prop[i][0]; ++i)
+		if(prop[i][1])
+		{
+			qprop[j++] = prop[i][0];
+			qprop[j++] = prop[i][1];
+		}
 
 	// Create a queue for each device.
 	for(size_t i(0); i < platforms; ++i)
 		for(size_t j(0); j < devices[i]; ++j)
 		{
-			queue[i][j] = profile_queue?
-				clCreateCommandQueue(primary, device[i][j], legacy_qprop, &err):
-				clCreateCommandQueueWithProperties(primary, device[i][j], &qprop, &err);
-				//clCreateCommandQueue(primary, device[i][j], legacy_qprop, &err);
-
+			queue[i][j] = clCreateCommandQueueWithProperties(primary, device[i][j], qprop, &err);
 			throw_on_error(err);
 		}
 
@@ -449,7 +454,6 @@ ircd::cl::init::init_ctxs()
 		for(size_t j(0); j < devices[i]; ++j)
 			warp_size[i][j] = query_warp_size(primary, device[i][j]);
 
-	#pragma GCC diagnostic pop
 	return _devs;
 }
 
@@ -660,12 +664,16 @@ ircd::cl::log_dev_info(const uint i,
 	log::logf
 	{
 		log, log::level::DEBUG,
-		"%s SPIR-V:%b:%u printf:%lu :%s",
+		"%s SPIR-V:%b:%u queues:%u events:%u pref:%u max:%u printf:%lu :%s",
 		string_view{head},
 		native_kernel,
 		il_version,
-		info<size_t>(clGetDeviceInfo, dev, CL_DEVICE_PRINTF_BUFFER_SIZE, buf[2]),
-		info(clGetDeviceInfo, dev, CL_DEVICE_OPENCL_C_VERSION, buf[3])
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_ON_DEVICE_QUEUES, buf[0]),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_MAX_ON_DEVICE_EVENTS, buf[1]),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_QUEUE_ON_DEVICE_PREFERRED_SIZE, buf[2]),
+		info<uint>(clGetDeviceInfo, dev, CL_DEVICE_QUEUE_ON_DEVICE_MAX_SIZE, buf[3]),
+		info<size_t>(clGetDeviceInfo, dev, CL_DEVICE_PRINTF_BUFFER_SIZE, buf[4]),
+		info(clGetDeviceInfo, dev, CL_DEVICE_OPENCL_C_VERSION, buf[5])
 	};
 
 	char extensions_buf[2048];
@@ -1213,8 +1221,7 @@ ircd::vector_view<cl_event>
 ircd::cl::make_deps(cl::work *const &work,
                     const exec::opts &opts)
 {
-	//TODO: for out-of-order queue
-	if((false) && empty(opts.deps) && !opts.indep)
+	if(empty(opts.deps) && !opts.indep)
 		return make_deps_default(work, opts);
 
 	if(empty(opts.deps))
