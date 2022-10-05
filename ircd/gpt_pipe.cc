@@ -88,16 +88,17 @@ ircd::gpt::pipe::debug(const mutable_buffer &buf,
 	assert(i < p.info.size());
 	assert(i < p.ts.size());
 
-	char tbuf[4][32];
+	char tbuf[5][32];
 	return fmt::sprintf
 	{
-		buf, "%-20s %04x [ %10s %10s %10s %10s ]",
+		buf, "%-20s %04x [ %10s %10s %10s %10s %10s ]",
 		std::get<0>(p.info[i]),
 		std::get<1>(p.info[i]),
 		pretty(tbuf[0], p.ts[i][phase::QUEUE], 1),
 		pretty(tbuf[1], p.ts[i][phase::SUBMIT], 1),
 		pretty(tbuf[2], p.ts[i][phase::START], 1),
 		pretty(tbuf[3], p.ts[i][phase::END], 1),
+		pretty(tbuf[4], p.ts[i][phase::COMPLETE], 1),
 	};
 }
 
@@ -138,10 +139,20 @@ ircd::gpt::pipe::prof::prof(const cycle &c)
 			c.stage[i]
 		};
 
-		ts[i][phase::QUEUE] = p[phase::SUBMIT] - p[phase::QUEUE];
-		ts[i][phase::SUBMIT] = p[phase::START] - p[phase::SUBMIT];
-		ts[i][phase::START] = p[phase::END] - p[phase::START];
-		ts[i][phase::END] = p[phase::END] - p[phase::QUEUE];
+		ts[i][phase::QUEUE] = p[phase::SUBMIT] > p[phase::QUEUE]?
+			p[phase::SUBMIT] - p[phase::QUEUE]: 0ns;
+
+		ts[i][phase::SUBMIT] = p[phase::START] > p[phase::SUBMIT]?
+			p[phase::START] - p[phase::SUBMIT]: 0ns;
+
+		ts[i][phase::START] = p[phase::END] > p[phase::START]?
+			p[phase::END] - p[phase::START]: 0ns;
+
+		ts[i][phase::END] = p[phase::END] > p[phase::QUEUE]?
+			p[phase::END] - p[phase::QUEUE]: 0ns;
+
+		ts[i][phase::COMPLETE] = p[phase::COMPLETE] > p[phase::QUEUE]?
+			p[phase::COMPLETE] - p[phase::QUEUE]: 0ns;
 	}
 }
 
