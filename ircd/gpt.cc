@@ -818,9 +818,13 @@ noexcept
 bool
 ircd::gpt::samp::operator()()
 {
+	ctx::interruption_point();
+
 	if(dispatch > 0)
 	{
-		ctx::interruption_point();
+		if(!cycle)
+			ctrl.prof.released = prof::cycles();
+
 		queue.emplace_back(*this);
 		desc.cached = tokens;
 		tokens += count >= tokens;
@@ -979,6 +983,7 @@ ircd::gpt::samp::evaluate(pipe::cycle &cycle)
 	assert(ctrl.magic != 0xDEADBEEF);
 	assert(ctrl.magic == 0xC7012C70UL);
 
+	ctrl.prof.acquired = prof::cycles();
 	ctrl.clk.cycle += cycling;
 	ctrl.clk.samp += sampling;
 	ctrl.clk.step += stepping;
@@ -1151,7 +1156,7 @@ ircd::gpt::debug(const mutable_buffer &out,
 
 	return fmt::sprintf
 	{
-		out, "%s %s %c T%02d %4u %6.2f%% %10.7f$L %c %s %s",
+		out, "%s %s %c T%02d %3u %6.2f%% %10.7f$L %c %s %s %s",
 		vocab::debug(buf[0], ctrl.select.logit.token, 1),
 		debug(buf[1], opts, ctrl.select),
 		ctrl.target.logit.token == ctrl.top[0].token? '=' : ' ',
@@ -1162,6 +1167,7 @@ ircd::gpt::debug(const mutable_buffer &out,
 		ctrl.target.logit.token == ctrl.select.logit.token? '=' : ' ',
 		debug(buf[2], opts, ctrl.target),
 		vocab::debug(buf[3], ctrl.target.logit.token, 1),
+		debug(buf[4], opts, ctrl.prof),
 	};
 }
 
@@ -1212,10 +1218,38 @@ ircd::gpt::debug(const mutable_buffer &out,
 {
 	return fmt::sprintf
 	{
-		out, "%6.2f%% %10.7f$L %5.1f$P",
+		out, "%6.2f%% %10.7f$L %4.1f$P",
 		logit.samax * 100.0f,
 		+0.0f - logf(logit.samax),
 		(1.0f - logit.samax) * log2f(opts.logits),
+	};
+}
+
+ircd::string_view
+ircd::gpt::debug(const mutable_buffer &out,
+                 const opts &opts,
+                 const ctrl_prof &prof)
+{
+	thread_local char buf[1][32];
+
+	const auto kern_cycles
+	{
+		prof.finished - prof.entered
+	};
+
+	const auto host_cycles
+	{
+		prof.acquired - prof.released
+	};
+
+	return fmt::sprintf
+	{
+		out, "%s",
+		kern_cycles > 0?
+			pretty(buf[0], si(kern_cycles), 1):
+		host_cycles > 0?
+			pretty(buf[0], si(host_cycles), 1):
+			string_view{},
 	};
 }
 
@@ -1226,11 +1260,12 @@ ircd::gpt::debug_head(const mutable_buffer &out,
 {
 	thread_local char head[64];
 
+	assert(ctrl.count > 0);
 	return fmt::sprintf
 	{
 		out, "%s[%4u]-%1u",
 		debug_head(head, opts, ctrl.clk),
-		ctrl.count,
+		ctrl.count - 1,
 		ctrl.dispatch,
 	};
 }

@@ -161,6 +161,7 @@ namespace ircd::gpt
 	string_view debug_token(const mutable_buffer &, const opts &, const ctrl &, const uint fmt = -1U);
 	string_view debug_head(const mutable_buffer &, const opts &, const ctrl_clk &);
 	string_view debug_head(const mutable_buffer &, const opts &, const ctrl &);
+	string_view debug(const mutable_buffer &, const opts &, const ctrl_prof &);
 	string_view debug(const mutable_buffer &, const opts &, const ctrl_logit &, const uint fmt = 0);
 	string_view debug(const mutable_buffer &, const opts &, const ctrl_label &, const uint fmt = 0);
 	string_view debug(const mutable_buffer &, const opts &, const ctrl &);

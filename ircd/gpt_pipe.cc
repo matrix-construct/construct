@@ -270,7 +270,7 @@ ircd::gpt::pipe::cycle::cycle(gpt::samp &samp)
 	},
 	cl::exec // Initial cycle kernel
 	{
-		desc.enter, range.embed,
+		desc.enter, range.select,
 	},
 	cl::exec // Compute token and positional embeddings.
 	{
