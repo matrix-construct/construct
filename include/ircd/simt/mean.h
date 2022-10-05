@@ -29,6 +29,21 @@ struct ircd_math_mean
 };
 
 #ifdef __OPENCL_VERSION__
+/// Clear the `ircd_math_mean` state to zero.
+inline void
+ircd_simt_math_mean_clear(__local struct ircd_math_mean *const mean)
+{
+    mean->sum[0] = 0.0f;
+    mean->sum[1] = 0.0f;
+    mean->sum[2] = 0.0f;
+    mean->sum[3] = 0.0f;
+    mean->div = 0;
+    mean->last = 0.0f;
+    mean->mean = 0.0f;
+}
+#endif
+
+#ifdef __OPENCL_VERSION__
 /// Compute average of all elements in the input. The result is broadcast
 /// to all elements of the output.
 ///
