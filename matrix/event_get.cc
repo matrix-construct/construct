@@ -243,7 +243,7 @@ ircd::m::get(const vector_view<const event::idx> &event_idx,
 		__builtin_popcountl(mask)
 	};
 
-	if(unlikely(found < event_idx.size()))
+	if(unlikely(size_t(found) < event_idx.size()))
 		throw m::NOT_FOUND
 		{
 			"Only %zu/%zu for %s found in database",
