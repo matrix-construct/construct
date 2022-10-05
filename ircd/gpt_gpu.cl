@@ -528,7 +528,9 @@ ircd_gpt_coil(__global struct ircd_gpt_ctrl *const ctrl,
 		accum[wi].elem[li] = result;
 	}
 
-	// Backend mlp; layer-norm acquires any pending writes, no fence required.
+	barrier(CLK_GLOBAL_MEM_FENCE);
+
+	// Backend mlp
 	ircd_gpt_ffnn
 	(
 		ctrl,
