@@ -937,11 +937,6 @@ ircd::gpt::samp::tokenize()
 bool
 ircd::gpt::samp::evaluate(pipe::cycle &cycle)
 {
-	cl::exec
-	{
-		desc.frame[cycle.frame], std::memory_order_consume
-	};
-
 	const auto &frame
 	{
 		acquire(cycle)

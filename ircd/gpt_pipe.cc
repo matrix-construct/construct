@@ -179,15 +179,18 @@ ircd::gpt::pipe::acquire(cycle &cycle)
 			return work.handle;
 		})
 	};
-
 	assert(last_exec != std::rend(cycle.stage));
+
+	// Block here for results; the ircd::ctx will yield.
 	last_exec->wait();
 
+	// Get the pointer to the output buffer.
 	const auto ctrl
 	{
 		reinterpret_cast<const gpt::ctrl *>(cycle.desc.frame[cycle.frame].ptr())
 	};
 
+	// Check the output is a valid control page and return to user.
 	assert(ctrl);
 	assert(ctrl->magic != 0xDEADBEEF);
 	assert(ctrl->magic == 0xC7012C70UL);
@@ -339,6 +342,10 @@ ircd::gpt::pipe::cycle::cycle(gpt::samp &samp)
 	cl::exec // Final kernel
 	{
 		desc.leave[frame], range.select
+	},
+	cl::exec // Frame out
+	{
+		desc.frame[frame], std::memory_order_consume
 	},
 }
 {

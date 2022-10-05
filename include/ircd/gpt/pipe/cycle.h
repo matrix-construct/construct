@@ -31,7 +31,7 @@ struct ircd::gpt::pipe::cycle
 
 	static constexpr size_t stages
 	{
-		4 + 3 + (12 * 2) + 4 + 2 + (12 * 2) + 1
+		4 + 3 + (12 * 2) + 4 + 2 + (12 * 2) + 1 + 1
 	};
 
 	pipe::desc &desc;
