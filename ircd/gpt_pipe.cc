@@ -493,9 +493,9 @@ ircd::gpt::pipe::desc::desc(const gpt::opts *const &opt,
 }
 ,ctrl
 {
-	const_buffer
+	mutable_buffer
 	{
-		reinterpret_cast<const char *>(ctrl_),
+		reinterpret_cast<char *>(ctrl_),
 		sizeof(gpt::ctrl)
 	},
 }

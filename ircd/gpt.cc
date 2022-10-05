@@ -794,10 +794,16 @@ noexcept
 	if(run::level != run::level::RUN)
 		return;
 
-	cl::exec
+	if(!desc.ctrl.mapped)
 	{
-		desc.ctrl, std::memory_order_acq_rel
-	};
+		cl::exec
+		{
+			desc.ctrl, std::memory_order_acq_rel
+		};
+
+		assert(ctrl.magic != 0xC7012C70UL);
+		assert(ctrl.magic == 0xDEADBEEF);
+	}
 
 	if(opts.debug & 0x04)
 		log_debug(opts, ctrl);
@@ -945,8 +951,6 @@ ircd::gpt::samp::evaluate(pipe::cycle &cycle)
 	if(!retire(cycle, frame))
 		return false;
 
-	memcpy(&ctrl, &frame, sizeof(gpt::ctrl));
-
 	const uint
 	batch_size = opts.batch_size,
 	samps = opts.training_steps + opts.validation_steps + opts.testing_steps,
@@ -959,17 +963,26 @@ ircd::gpt::samp::evaluate(pipe::cycle &cycle)
 	stepping = sampling && (frame.clk.samp + 1) >= batch_size,
 	epoching = stepping && (frame.clk.step + 1) >= steps;
 
-	//ctrl.token[ctrl.count] = ctrl.select.logit.token;
-	//ctrl.count++;
+	if(!accepting)
+		return true;
 
-	if(accepting)
+	cl::exec
 	{
-		ctrl.clk.cycle += cycling;
-		ctrl.clk.samp += sampling;
-		ctrl.clk.step += stepping;
-		ctrl.clk.epoch += epoching;
-	}
+		desc.ctrl, std::memory_order_acq_rel
+	};
 
+	// Workaround buggy drivers which flake on write-back to user ptrs.
+	// We manually copy the last frame out to ctrl. On working systems ctrl
+	// can be acquired by changing the fence to std::memory_order_acquire.
+	memcpy(&ctrl, &frame, sizeof(gpt::ctrl));
+
+	assert(ctrl.magic != 0xDEADBEEF);
+	assert(ctrl.magic == 0xC7012C70UL);
+
+	ctrl.clk.cycle += cycling;
+	ctrl.clk.samp += sampling;
+	ctrl.clk.step += stepping;
+	ctrl.clk.epoch += epoching;
 	return true;
 }
 

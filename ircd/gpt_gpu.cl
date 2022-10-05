@@ -1035,15 +1035,30 @@ ircd_gpt_leave(__global const void *const restrict model,
 		;//ctrl->prof.finished = __builtin_readcyclecounter();
 
 	if(li == 0)
-		*frame = *ctrl;
+	{
+		// BARTS won't update the scalar after the copy. In this case we'll
+		// be setting magic for all remaining frames :/
+		#if defined(__R600__)
+		ctrl->magic = 0xC7012C70UL;
+		#endif
 
-	if(!accepting && li == 0)
+		*frame = *ctrl;
+		frame->magic = 0xC7012C70UL;
+	}
+
+	if(li == 0 && !accepting)
 	{
 		ctrl->clk.cycle += cycling;
 		ctrl->clk.samp += sampling;
 		ctrl->clk.step += stepping;
 		ctrl->clk.epoch += epoching;
 	}
+
+	if(li == 0 && accepting)
+		ctrl->magic = 0xC7012C70UL;
+
+	if(li == 0)
+		*ctrl_ = *ctrl;
 }
 
 void
@@ -1082,8 +1097,6 @@ ircd_gpt_accept(__local struct ircd_gpt_ctrl *const ctrl,
 
 	ctrl->accept = accept;
 	ctrl->dispatch = dispatch;
-
-	ctrl->magic = 0xC7012C70UL;
 }
 
 int
