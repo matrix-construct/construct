@@ -20,7 +20,6 @@ namespace ircd::gpt::pipe
 	struct cycle;
 	struct prof;
 
-	extern conf::item<size_t> queue_cycles;
 	extern std::shared_ptr<code> default_code;
 };
 
