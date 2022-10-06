@@ -31,6 +31,10 @@
 	#define static __constant static
 #endif
 
+#if __OPENCL_VERSION__ < 200
+	#define printf(...)
+#endif
+
 #pragma clang attribute push(__attribute__((always_inline)), apply_to = function)
 #pragma clang attribute push(__attribute__((internal_linkage)), apply_to = function)
 #include <ircd/simt/simt.h>
