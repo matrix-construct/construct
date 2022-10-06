@@ -820,19 +820,8 @@ ircd::gpt::samp::operator()()
 {
 	ctx::interruption_point();
 
-	if(dispatch > 0)
-	{
-		if(!cycle)
-			ctrl.prof.released = prof::cycles();
-
-		queue.emplace_back(*this);
-		desc.cached = tokens;
-		tokens += count >= tokens;
-		++cycle;
-		++count;
-		--dispatch;
+	if(dispatche())
 		return false;
-	}
 
 	while(!queue.empty())
 	{
@@ -942,6 +931,33 @@ ircd::gpt::samp::tokenize()
 	assert(count > 0);
 	assert(count <= opts.context_tokens);
 	return count;
+}
+
+bool
+ircd::gpt::samp::dispatche()
+{
+	if(!dispatch)
+		return false;
+
+	assert(accept < 0);
+	assert(count > 0);
+	assert(tokens >= count);
+	assert(cycle < count);
+	assert(dispatch > 0);
+
+	if(cycle == 0)
+	{
+		ctrl.prof.acquired = 0;
+		ctrl.prof.released = prof::cycles();
+	}
+
+	queue.emplace_back(*this);
+	desc.cached = tokens;
+	tokens += count >= tokens;
+	count += 1;
+	cycle += 1;
+	dispatch -= 1;
+	return true;
 }
 
 bool

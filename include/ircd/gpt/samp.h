@@ -38,6 +38,7 @@ struct ircd::gpt::samp
 	void profile_accumulate(const pipe::prof &);
 	bool retire(pipe::cycle &, const gpt::ctrl &);
 	bool evaluate(pipe::cycle &);
+	bool dispatche();
 	uint tokenize();
 
   public:
