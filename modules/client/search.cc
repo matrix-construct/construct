@@ -162,6 +162,7 @@ try
 		});
 	}};
 
+	uint filter_keys {0};
 	m::room_event_filter room_event_filter
 	{
 		json::get<"filter"_>(room_events)
@@ -176,6 +177,7 @@ try
 		senders = json::get<"senders"_>(room_event_filter);
 		senders = json::append(senders, val);
 		json::get<"senders"_>(room_event_filter) = senders;
+		filter_keys += 1;
 	});
 
 	json::strung not_senders;
@@ -187,17 +189,28 @@ try
 		not_senders = json::get<"not_senders"_>(room_event_filter);
 		not_senders = json::append(not_senders, val);
 		json::get<"not_senders"_>(room_event_filter) = not_senders;
+		filter_keys += 1;
 	});
 
 	bool case_sensitive {false};
 	when({"case", "ci"}, [&](const auto &key, const auto &val)
 	{
 		case_sensitive = key == "case";
+		filter_keys += 0; // doesn't count; no case-insensitive wildcard.
 	});
 
 	const string_view search_term
 	{
-		kvs.second?: kvs.first
+		// Any string after the separator is the search term.
+		kvs.second?
+			kvs.second:
+
+		// When only filter keys are given the search term is wildcard.
+		filter_keys?
+			string_view{}:
+
+		// No filter keys or separator; it is the search term.
+			kvs.first
 	};
 
 	// Override the limit to 1 to return a result and appease the user as
@@ -419,7 +432,7 @@ try
 	const bool match
 	{
 		true
-		&& match_term
+		&& (!query.search_term || match_term)
 		&& m::match(query.filter, result.event_idx)
 	};
 
