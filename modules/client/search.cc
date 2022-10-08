@@ -320,7 +320,7 @@ try
 		result.elapsed.pretty(tmbuf),
 	};
 }
-catch(const std::system_error &)
+catch(const ctx::interrupted &)
 {
 	throw;
 }
@@ -331,6 +331,8 @@ catch(const std::exception &e)
 		log, "search :%s",
 		e.what()
 	};
+
+	throw;
 }
 
 bool
