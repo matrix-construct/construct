@@ -219,14 +219,15 @@ ircd::lex_cast(bool i,
 template<> bool
 ircd::lex_cast(const string_view &s)
 {
-	const bool literal[2]
+	const bool literal[]
 	{
 		s == "true",
 		s == "false",
+		s == "null",
 	};
 
 	// Handle the common cases early in this frame before call.
-	if(likely(literal[0] | literal[1]))
+	if(likely(literal[0] | literal[1] | literal[2]))
 		return literal[0];
 
 	return lex::cast<bool, lex::to_bool>(s);
@@ -236,14 +237,15 @@ template<> bool
 ircd::lex_castable<bool>(const string_view &s)
 noexcept
 {
-	const bool literal[2]
+	const bool literal[]
 	{
 		s == "true",
 		s == "false",
+		s == "null",
 	};
 
 	// Handle the common cases early in this frame before call.
-	if(likely(literal[0] | literal[1]))
+	if(likely(literal[0] | literal[1] | literal[2]))
 		return true;
 
 	return lex::test<bool, lex::is_bool>(s);
