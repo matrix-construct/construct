@@ -199,6 +199,35 @@ try
 		filter_keys += 0; // doesn't count; no case-insensitive wildcard.
 	});
 
+	// Override the limit to 1 to return a result and appease the user as
+	// quickly as possible. The client can call us again for more results.
+	size_t limit
+	{
+		limit_override?
+			size_t(limit_override):
+			size_t(json::get<"limit"_>(room_event_filter))
+	};
+
+	// Key command for the user to override the limit to workaround pagination
+	// bugs in riot which don't properly request next batch to fill viewport.
+	when({"limit"}, [&](const auto &key, const auto &val)
+	{
+		// limit=-1 is unlimited
+		// limit=0 is unchanged
+		// limit=n is overriding
+		limit = lex_cast<ssize_t>(val)?: limit;
+		filter_keys += 0; // doesn't count for wildcard.
+	});
+
+	// The limit value is limited to the viewport size so we can force
+	// pagination rather than search the whole room with one giant result.
+	limit = std::clamp
+	(
+		limit,
+		1UL,
+		size_t(m::room::events::viewport_size)
+	);
+
 	const string_view search_term
 	{
 		// Any string after the separator is the search term.
@@ -211,15 +240,6 @@ try
 
 		// No filter keys or separator; it is the search term.
 			kvs.first
-	};
-
-	// Override the limit to 1 to return a result and appease the user as
-	// quickly as possible. The client can call us again for more results.
-	const size_t limit
-	{
-		limit_override?
-			size_t(limit_override):
-			size_t(json::get<"limit"_>(room_event_filter))
 	};
 
 	const json::object &event_context
