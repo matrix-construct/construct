@@ -18,15 +18,15 @@ namespace ircd
 	// to allocate and copy the token with null termination.
 	using token_view = closure_bool<std::function, const string_view &>;
 
-	bool tokens(const string_view &, const char sep, const token_view &) noexcept;
-	bool tokens(const string_view &, const string_view &sep, const token_view &) noexcept;
+	bool tokens(const string_view &, const char sep, const token_view &);
+	bool tokens(const string_view &, const string_view &sep, const token_view &);
 
-	size_t tokens(const string_view &, const char sep, const size_t lim, const token_view &) noexcept;
-	size_t tokens(const string_view &, const string_view &sep, const size_t lim, const token_view &) noexcept;
+	size_t tokens(const string_view &, const char sep, const size_t lim, const token_view &);
+	size_t tokens(const string_view &, const string_view &sep, const size_t lim, const token_view &);
 
 	// Copies tokens into your buffer and null terminates strtok() style. Returns BYTES of buf consumed.
-	size_t tokens(const string_view &, const char sep, const mutable_buffer &, const token_view &) noexcept;
-	size_t tokens(const string_view &, const string_view &sep, const mutable_buffer &, const token_view &) noexcept;
+	size_t tokens(const string_view &, const char sep, const mutable_buffer &, const token_view &);
+	size_t tokens(const string_view &, const string_view &sep, const mutable_buffer &, const token_view &);
 
 	// Receive token view into iterator range
 	template<class it,
