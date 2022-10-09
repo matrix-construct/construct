@@ -31,24 +31,32 @@
 // Common branch prediction macros
 //
 
-#ifndef likely
-	#define likely(x) __builtin_expect(!!(x), 1)
+#if !defined(likely)
+	#if __has_builtin(__builtin_expect)
+		#define likely(x) __builtin_expect(!!(x), 1)
+	#else
+		#define likely(x) (x)
+	#endif
 #endif
 
-#ifndef unlikely
-	#define unlikely(x) __builtin_expect(!!(x), 0)
+#if !defined(unlikely)
+	#if __has_builtin(__builtin_expect)
+		#define unlikely(x) __builtin_expect(!!(x), 0)
+	#else
+		#define unlikely(x) (x)
+	#endif
 #endif
 
 //
 // Assume
 //
 
-#ifndef assume
-    #if __has_builtin(__builtin_assume)
-        #define assume(x) assert(x); __builtin_assume(x);
-    #else
-        #define assume(x) assert(x);
-    #endif
+#if !defined(assume)
+	#if __has_builtin(__builtin_assume)
+		#define assume(x) assert(x); __builtin_assume(x);
+	#else
+		#define assume(x) assert(x);
+	#endif
 #endif
 
 //
@@ -77,8 +85,8 @@ namespace ircd
 #if defined(__cplusplus)
 namespace ircd
 {
-    using longlong = long long;
-    using ulonglong = unsigned long long;
+	using longlong = long long;
+	using ulonglong = unsigned long long;
 }
 #endif
 
