@@ -13,10 +13,17 @@
 #pragma clang fp contract(fast)
 
 #include <ircd/config.h>
+#include <ircd/portable.h>
 #include <clc/clc.h>
 
-#if !defined(assume)
-	#define assume(x) __builtin_assume(x)
+#if !defined(assert) \
+&& !defined(NDEBUG) \
+&& defined(RB_ASSERT_INTRINSIC) \
+&& __has_builtin(__builtin_trap) \
+&& __OPENCL_VERSION__ >= 200
+	#define assert(x) ((void)(unlikely(!(bool)(x))? __builtin_trap(): 0))
+#else
+	#define assert(x)
 #endif
 
 #if defined(__SPIR)
