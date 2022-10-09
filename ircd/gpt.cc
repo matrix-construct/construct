@@ -755,13 +755,11 @@ ircd::gpt::samp::samp(gpt::step &step)
 }
 ,count
 {
-	opts.limit > 0?
-		tokens - opts.limit:
 	opts.limit < 0?
-		std::abs(opts.limit):
-	!ctrl.count?
+		std::min(std::abs(opts.limit), int(tokens)):
+	opts.limit > 0?
 		tokens:
-		1
+		1U
 }
 {
 	desc.cached = 0;

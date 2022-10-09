@@ -888,10 +888,9 @@ ircd_gpt_lm_result(__local struct ircd_gpt_ctrl *const ctrl,
 
 	// Update the token context.
 	if(ctrl->count == ctrl->tokens)
-	{
-		ctrl->token[ctrl->count] = ctrl->select.logit.token;
-		ctrl->tokens++;
-	}
+		ctrl->token[ctrl->tokens++] = ctrl->select.logit.token;
+	else
+		ctrl->accept = -2;
 
 	ctrl->miss += !hit;
 	ctrl->hit += hit;
@@ -1074,34 +1073,43 @@ ircd_gpt_accept(__local struct ircd_gpt_ctrl *const ctrl,
                 __constant const struct ircd_gpt_opts *const opts)
 {
 	const bool
-	unlimited = opts->limit < 0;
+	unlimited = opts->limit < 0,
+	unprocessed = ctrl->accept == -2,
+	acceptable = ctrl->accept < 0 && !unprocessed;
 
 	const uint
 	batch_size = opts->batch_size,
 	samps = opts->training_steps + opts->validation_steps + opts->testing_steps,
 	steps = samps / batch_size,
-	limit_ = opts->limit,
-	unproc = ctrl->tokens - ctrl->count;
+	unproc = ctrl->tokens - ctrl->count,
+	limit = opts->limit;
 
 	const int
-	limit = min(limit_?: unproc, opts->context_tokens),
-	cycle_remain = limit - (ctrl->clk.cycle + 1),    // cycle not yet incr
+	cycle_remain = opts->context_tokens - (ctrl->clk.cycle + 1), // cycle not yet incr
 	token_remain = opts->context_tokens - ctrl->count, // but count already incr
-	remain_ = min(cycle_remain, token_remain),
-	accept_ = ircd_gpt_accept_check(ctrl, opts),
-	accept_abs = abs(accept_),
-	remain = accept_ < 0 && accept_abs < remain_? accept_abs: remain_,
-	_accept = accept_ >= 0? accept_: -remain;
+	remain = min(cycle_remain, token_remain);
 
-	const bool
-	accepting = _accept >= 0,
-	dispatching = _accept < 0,
-	limiting = remain <= 0;
+	int
+	accept = ircd_gpt_accept_check(ctrl, opts),
+	dispatch = accept < 0? min(abs(accept), (uint)remain): 0;
 
-	const int
-	accept_num = 4,
-	accept = limiting? accept_num: _accept,
-	dispatch = accept >= 0? 0: remain;
+	if(opts->limit > 0 && ctrl->clk.cycle >= limit - 1)
+	{
+		accept = accept >= 0? accept: -1;
+		dispatch = 0;
+	}
+
+	if(opts->limit == 0 && unprocessed)
+	{
+		accept = -1;
+		dispatch = min((uint)remain, unproc);
+	}
+
+	if(opts->limit != 0 && !acceptable)
+	{
+		accept = -1;
+		dispatch = max(dispatch, 1);
+	}
 
 	ctrl->accept = accept;
 	ctrl->dispatch = dispatch;
