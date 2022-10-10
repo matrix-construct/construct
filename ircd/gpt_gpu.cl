@@ -15,46 +15,10 @@
 #include <ircd/config.h>
 #include <ircd/portable.h>
 #include <clc/clc.h>
-
-#if !defined(assert) \
-&& !defined(NDEBUG) \
-&& defined(RB_ASSERT_INTRINSIC) \
-&& __has_builtin(__builtin_trap) \
-&& __OPENCL_VERSION__ >= 200
-	#define assert(x) ((void)(unlikely(!(bool)(x))? __builtin_trap(): 0))
-#else
-	#define assert(x)
-#endif
-
-#if defined(__SPIR)
-	#define restrict
-#elif defined(__cplusplus)
-	#define restrict __restrict
-#endif
-
-#if __OPENCL_VERSION__ < 120
-	#define static __attribute__((internal_linkage))
-#elif __OPENCL_VERSION__ < 200
-	#define static __constant static
-#endif
-
-#if __OPENCL_VERSION__ < 200
-	#define printf(...)
-#endif
-
-#pragma clang attribute push(__attribute__((always_inline)), apply_to = function)
-#pragma clang attribute push(__attribute__((internal_linkage)), apply_to = function)
 #include <ircd/simt/simt.h>
 #include <ircd/gpt/vector.h>
 #include <ircd/gpt/opts.h>
 #include <ircd/gpt/ctrl.h>
-#pragma clang attribute pop
-#pragma clang attribute pop
-
-#if __OPENCL_VERSION__ >= 120
-	#undef static
-#endif
-
 #include <ircd/gpt/gpu.h>
 
 //

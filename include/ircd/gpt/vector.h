@@ -11,22 +11,6 @@
 #pragma once
 #define HAVE_IRCD_GPT_VECTOR_H
 
-#if !defined(__SIZEOF_FLOAT4__) && defined(__OPENCL_VERSION__)
-	#define __SIZEOF_FLOAT4__ 16
-#endif
-
-#if !defined(__SIZEOF_FLOAT8__) && defined(__OPENCL_VERSION__)
-	#define __SIZEOF_FLOAT8__ 32
-#endif
-
-#if !defined(__SIZEOF_FLOAT16__) && defined(__OPENCL_VERSION__)
-	#define __SIZEOF_FLOAT16__ 64
-#endif
-
-#ifndef __OPENCL_VERSION__
-	#define __constant
-#endif
-
 static __constant const uint
 ircd_gpt_context_tokens = 512, // 1024,
 ircd_gpt_vector_elems = 768,

@@ -11,6 +11,8 @@
 #pragma once
 #define HAVE_IRCD_SIMT_H
 
+#include "portable.h"
+#include "assert.h"
 #include "broadcast.h"
 #include "reduce_add.h"
 #include "reduce_max.h"
