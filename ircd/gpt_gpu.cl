@@ -56,10 +56,8 @@ ircd_gpt_enter(__global const void *const restrict model,
 	ln = get_local_size(0),
 	cycle = ctrl->clk.cycle;
 
-	#if defined(__clang__) && !defined(__SPIR)
 	if(li == 0)
-		ctrl->prof.entered = __builtin_readcyclecounter();
-	#endif
+		ctrl->prof.entered = ircd_simt_cycles();
 }
 
 __kernel void
@@ -1007,10 +1005,8 @@ ircd_gpt_leave(__global const void *const restrict model,
 	stepping = sampling && (ctrl->clk.samp + 1) >= batch_size,
 	epoching = stepping && (ctrl->clk.step + 1) >= steps;
 
-	#if defined(__clang__) && !defined(__SPIR)
 	if(li == 0)
-		ctrl->prof.finished = __builtin_readcyclecounter();
-	#endif
+		ctrl->prof.finished = ircd_simt_cycles();
 
 	if(li == 0)
 	{
