@@ -1601,7 +1601,8 @@ ircd::server::peer::handle_resolve_SRV(const hostport &hp,
 try
 {
 	assert(op_resolve);
-	op_resolve = false;
+	if(unlikely(!std::exchange(op_resolve, false)))
+		return;
 
 	if(unlikely(ircd::run::level != ircd::run::level::RUN))
 		op_fini = true;
@@ -1684,7 +1685,8 @@ ircd::server::peer::handle_resolve_AAAA(const hostport &target,
 try
 {
 	assert(op_resolve);
-	op_resolve = false;
+	if(unlikely(!std::exchange(op_resolve, false)))
+		return;
 
 	if(unlikely(ircd::run::level != ircd::run::level::RUN))
 		op_fini = true;
@@ -1768,8 +1770,10 @@ ircd::server::peer::handle_resolve_A(const hostport &target,
 try
 {
 	const ctx::critical_assertion ca;
+
 	assert(op_resolve);
-	op_resolve = false;
+	if(unlikely(!std::exchange(op_resolve, false)))
+		return;
 
 	if(unlikely(ircd::run::level != ircd::run::level::RUN))
 		op_fini = true;
