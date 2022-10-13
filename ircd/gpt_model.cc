@@ -42,6 +42,7 @@ namespace ircd::gpt::model
 	manifest_h[];
 
 	extern conf::item<bool>
+	cache_mapped,
 	cache_locked,
 	cache_shared,
 	cache_hugepage;
@@ -86,6 +87,13 @@ ircd::gpt::model::manifest
 	{ "ln_f.bias.json",     init_f_bias,    },
 	{ "wpe.weight.json",    init_wpe_weight },
 	{ "wte.weight.json",    init_wte_weight },
+};
+
+decltype(ircd::gpt::model::cache_mapped)
+ircd::gpt::model::cache_mapped
+{
+	{ "name",     "ircd.gpt.model.cache.mapped" },
+	{ "default",  false                         },
 };
 
 decltype(ircd::gpt::model::cache_locked)
@@ -179,6 +187,9 @@ noexcept
 	default_moment[1] = nullptr;
 	default_moment[0] = nullptr;
 
+	if(!cache_mapped)
+		delete default_model;
+
 	default_model = nullptr;
 	default_model_shm = {};
 
@@ -271,7 +282,9 @@ ircd::gpt::model::init_from_cache(const string_view &cache_path)
 
 	default_model = reinterpret_cast<decoder *>
 	(
-		data(default_model_shm)
+		cache_mapped?
+			data(default_model_shm):
+			allocator::allocate(info::page_size, map_size)
 	);
 
 	if(map_moments)
@@ -283,15 +296,25 @@ ircd::gpt::model::init_from_cache(const string_view &cache_path)
 		default_checkpoint[2] = reinterpret_cast<float *>(default_model + 5);
 	}
 
-	allocator::lock({(const char *)default_model, sizeof(decoder)});
-	fs::prefetch(default_model_shm, sizeof(decoder));
+	if(cache_mapped)
+		fs::prefetch(default_model_shm, sizeof(decoder));
+
+	if(!cache_mapped)
+		memcpy(default_model, data(default_model_shm), map_size);
+
+	if(!cache_mapped && !cache_shared)
+		default_model_shm = {};
 
 	char pbuf[48];
 	log::info
 	{
-		log, "model(%p) mapped cached model `%s' params:%b moments:%b align:%u %s",
-		data(default_model_shm),
+		log, "model(%p) %s cached model `%s' shared:%b params:%b moments:%b align:%u %s",
+		default_model,
+		cache_mapped?
+			"mapped"_sv:
+			"loaded"_sv,
 		cache_path,
+		bool(cache_shared),
 		has_params,
 		has_moments,
 		map_opts.alignment,
