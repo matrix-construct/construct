@@ -600,7 +600,7 @@ github_handle__push(std::ostream &out,
 	if(content["forced"] == "true")
 		out << " (rebase)";
 
-	out << "<pre><code>";
+	out << "<pre>";
 	for(ssize_t i(count - 1); i >= 0; --i)
 	{
 		const json::object &commit(commits.at(i));
@@ -634,10 +634,10 @@ github_handle__push(std::ostream &out,
 		    << summary
 		    ;
 
-		out << "<br />";
+		out << "\n";
 	}
 
-	out << "</code></pre>";
+	out << "</pre>";
 	return true;
 }
 
