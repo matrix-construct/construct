@@ -30,7 +30,8 @@ struct ircd::gpt::pipe::range
 	prop_attn,
 	prop_ffnn;
 
-	range(const uint tick,
+	range(const opts &opts,
+	      const uint tick,
 	      const uint count,
 	      const uint tokens,
 	      const uint cached,

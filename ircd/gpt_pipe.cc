@@ -232,6 +232,7 @@ ircd::gpt::pipe::cycle::cycle(gpt::samp &samp)
 }
 ,range
 {
+	samp.opts,
 	tick,
 	count,
 	tokens,
@@ -365,7 +366,8 @@ noexcept
 // pipe::range
 //
 
-ircd::gpt::pipe::range::range(const uint tick,
+ircd::gpt::pipe::range::range(const opts &opts,
+                              const uint tick,
                               const uint count,
                               const uint tokens,
                               const uint cached,
@@ -374,20 +376,20 @@ ircd::gpt::pipe::range::range(const uint tick,
 noexcept
 :_full
 {
-	{ (tokens - cached) * 192UL, 0 },
-	{                     192UL, 0 },
-	{            cached * 192UL, 0 },
+	{ opts.embed_width * (tokens - cached)  },
+	{ opts.embed_width                      },
+	{ opts.embed_width * cached             },
 }
 ,_last
 {
-	{            1 * 192UL, 0 },
-	{                192UL, 0 },
-	{  (count - 1) * 192UL, 0 },
+	{ opts.embed_width * 1            },
+	{ opts.embed_width                },
+	{ opts.embed_width * (count - 1)  },
 }
 ,alloc
 {
-	{  (tick == 0) * 192UL, 0 },
-	{                192UL, 0 },
+	{ opts.embed_width * (tick == 0)  },
+	{ opts.embed_width                },
 }
 ,embed
 {
@@ -421,40 +423,40 @@ noexcept
 		_last:
 		cl::kern::range{},
 }
-,logit // TODO: align_up(50257) / 64|256
+,logit
 {
-	{ int(fwd) * 50432UL, 0 },
-	{                64L, 0 },
+	{ pad_to(opts.logits, 64L) * int(fwd)  },
+	{ 64L                                  },
 }
 ,logsm
 {
-	{ int(fwd) * 1 * 256UL, 0 },
-	{                256UL, 0 },
+	{ 256UL * int(fwd)  },
+	{ 256UL             },
 }
 ,select
 {
-	{ int(fwd) * 1 * 256UL, 0 },
-	{                256UL, 0 },
+	{ 256UL * int(fwd)  },
+	{ 256UL             },
 }
 ,prop_embed
 {
-	{ int(rev) * 0 * 192UL, 0 },
-	{                192UL, 0 },
+	{ opts.embed_width * int(rev)  },
+	{ opts.embed_width             },
 }
 ,prop_norm
 {
-	{ int(rev) * 0 * 192UL, 0 },
-	{                192UL, 0 },
+	{ opts.embed_width * int(rev)  },
+	{ opts.embed_width             },
 }
 ,prop_attn
 {
-	{ int(rev) * 0 * 192UL, 0 },
-	{                192UL, 0 },
+	{ opts.embed_width * int(rev)  },
+	{ opts.embed_width             },
 }
 ,prop_ffnn
 {
-	{ int(rev) * 0 * 192UL, 0 },
-	{                192UL, 0 },
+	{ opts.embed_width * int(rev)  },
+	{ opts.embed_width             },
 }
 {
 }
