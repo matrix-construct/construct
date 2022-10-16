@@ -93,7 +93,7 @@ decltype(ircd::gpt::model::cache_mapped)
 ircd::gpt::model::cache_mapped
 {
 	{ "name",     "ircd.gpt.model.cache.mapped" },
-	{ "default",  false                         },
+	{ "default",  true                          },
 };
 
 decltype(ircd::gpt::model::cache_locked)
@@ -273,8 +273,13 @@ ircd::gpt::model::init_from_cache(const string_view &cache_path)
 		.locked = bool(cache_locked),
 		.huge2mb = bool(cache_hugepage),
 	};
-
 	map_opts.mode = mode;
+
+	// amdgpu requires both anon and shms to be read-write even if we
+	// open the fd read-only and use read-only cl_mems.
+	if(cache_mapped)
+		map_opts.mode |= std::ios::out;
+
 	default_model_shm = fs::map
 	{
 		fd, map_size, map_opts,
