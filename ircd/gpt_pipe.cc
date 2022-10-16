@@ -238,7 +238,7 @@ ircd::gpt::pipe::cycle::cycle(gpt::samp &samp)
 	tokens,
 	cached,
 	true,
-	false,
+	((false) && gpt::model::cache_shared)
 }
 ,stage
 {

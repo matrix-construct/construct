@@ -256,10 +256,15 @@ try
 }
 ,model
 {
-	std::make_unique<pipe::model>
-	(
-		*const_cast<const gpt::model::decoder *>(gpt::model::default_model)
-	)
+	!gpt::model::cache_shared?
+		std::make_unique<pipe::model>
+		(
+			*const_cast<const gpt::model::decoder *>(gpt::model::default_model)
+		):
+		std::make_unique<pipe::model>
+		(
+			*const_cast<gpt::model::decoder *>(gpt::model::default_model)
+		)
 }
 ,desc
 {

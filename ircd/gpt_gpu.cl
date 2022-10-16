@@ -1167,7 +1167,7 @@ ircd_gpt_prop_elem(__global const struct ircd_gpt_ctrl *const ctrl,
 
 	const float4
 	param = param_[li],
-	grad = ctrl->label[0].loss.mean,
+	grad = ctrl->target.loss.mean,
 	alpha[2] = { 1.0f - opts->beta[0], 1.0f - opts->beta[1], },
 	exp_avg = ts? exp_avg_[li]: 0.0f,
 	exp_avg_sqr = ts? exp_avg_sqr_[li]: 0.0f,
@@ -1179,13 +1179,9 @@ ircd_gpt_prop_elem(__global const struct ircd_gpt_ctrl *const ctrl,
 	delta = opts->alpha * (exp_avg_dot / denom),
 	update = param - delta;
 
-	param_[li] = param + FLT_EPSILON;
-	exp_avg_[li] = exp_avg + FLT_EPSILON;
-	exp_avg_sqr_[li] = exp_avg_sqr + FLT_EPSILON;
-
-	//param_[li] = update;
-	//exp_avg_[li] = exp_avg_dot;
-	//exp_avg_sqr_[li] = exp_avg_sqr_dot;
+	param_[li] = update;
+	exp_avg_[li] = exp_avg_dot;
+	exp_avg_sqr_[li] = exp_avg_sqr_dot;
 }
 
 //

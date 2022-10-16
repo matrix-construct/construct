@@ -30,6 +30,7 @@ namespace ircd::gpt::model
 	extern std::vector<json::object> default_data;
 
 	constexpr auto alignment {4096};
+	extern conf::item<bool> cache_shared;
 }
 
 /// Layer normalization
