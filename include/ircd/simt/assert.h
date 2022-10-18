@@ -15,17 +15,23 @@
 // Trapping assert() on supporting platforms.
 //
 
-#if defined(__OPENCL_VERSION__)
+// assert macro is ignored/untouched unless outer conditions met
+#if defined(__OPENCL_VERSION__) \
+&& !defined(assert) \
+&& true
+
+	// assert expression is enabled or elided
 	#if __OPENCL_VERSION__ >= 200 \
-	&& !defined(assert) \
+	&& __has_builtin(__builtin_trap) \
 	&& !defined(NDEBUG) \
-	&& __has_builtin(__builtin_trap)
-		#define assert(expr)            \
-		({                              \
-			if(unlikely(!(bool)(x)))    \
-				__builtin_trap();       \
+	&& true
+		#define assert(expr) \
+		({ \
+			if(unlikely(!(bool)(expr))) \
+				__builtin_trap(); \
 		})
 	#else
-		#define assert(x)
+		#define assert(expr)
 	#endif
+
 #endif
