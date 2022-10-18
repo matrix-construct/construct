@@ -939,14 +939,9 @@ ircd::gpt::samp::tokenize()
 bool
 ircd::gpt::samp::dispatche()
 {
-	if(!dispatch)
-		return false;
-
 	assert(accept < 0);
-	assert(count > 0);
-	assert(tokens >= count);
-	assert(cycle < count);
-	assert(dispatch > 0);
+	if(queue.size() >= dispatch)
+		return false;
 
 	if(cycle == 0)
 	{
@@ -954,11 +949,20 @@ ircd::gpt::samp::dispatche()
 		ctrl.prof.released = prof::cycles();
 	}
 
+	assert(queue.size() < opts.frames);
 	queue.emplace_back(*this);
+
+	assert(tokens >= count);
 	desc.cached = tokens;
 	tokens += count >= tokens;
+
+	assert(count > 0);
 	count += 1;
+
+	assert(cycle < count);
 	cycle += 1;
+
+	assert(dispatch > 0);
 	dispatch -= 1;
 	return true;
 }

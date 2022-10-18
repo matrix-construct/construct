@@ -1068,25 +1068,25 @@ ircd_gpt_accept(__local struct ircd_gpt_ctrl *const ctrl,
 
 	if(opts->limit == 0 && unprocessed)
 	{
-		accept = -1;
+		accept = accept >= 0? accept: -1;
 		dispatch = min((uint)remain, unproc);
 	}
 
 	if(opts->limit != 0 && !acceptable)
 	{
-		accept = -1;
+		accept = accept >= 0? accept: -1;
 		dispatch = max(dispatch, 1);
 	}
 
 	ctrl->accept = accept;
-	ctrl->dispatch = dispatch;
+	ctrl->dispatch = min((uint)dispatch, opts->frames);
 }
 
 int
 ircd_gpt_accept_check(__local struct ircd_gpt_ctrl *const ctrl,
                       __constant const struct ircd_gpt_opts *const opts)
 {
-	int best = 8;
+	int best = opts->frames;
 	for(uint i = 0; i < 4; ++i)
 	{
 		const int
@@ -1110,7 +1110,7 @@ ircd_gpt_accept_match(__local struct ircd_gpt_ctrl *const ctrl,
 	const uint
 	len = ircd_gpt_accept_len(ctrl, opts, i),
 	n = min(ctrl->count, len),
-	maxlen = 8;
+	maxlen = opts->frames;
 
 	uint ret = len?: maxlen;
 	for(uint j = 1; j <= n; ++j)
