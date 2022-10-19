@@ -459,6 +459,44 @@ gpt_gpu.spv.cc: gpt_gpu.spv
 	xxd -i $^ $@
 
 #
+# GCN-HSA
+#
+
+GCN_HSA_TARGET = amdgcn--amdhsa
+
+GCN_HSA_CPPFLAGS = $(GPU_CPPFLAGS)
+GCN_HSA_CPPFLAGS += -D__OPENCL_VERSION__=200
+
+GCN_HSA_CFLAGS = $(GPU_CFLAGS)
+GCN_HSA_CFLAGS += -std=cl2.0
+GCN_HSA_CFLAGS += -target $(GCN_HSA_TARGET)
+GCN_HSA_CFLAGS += -nogpulib
+GCN_HSA_CFLAGS += -march=amdgcn
+GCN_HSA_CFLAGS += -Xclang -mlink-bitcode-file -Xclang /usr/lib/clc/amdgcn--amdhsa.bc
+
+BUILT_SOURCES += gpt_gpu.gcn_hsa.bc
+gpt_gpu.gcn_hsa.bc: gpt_gpu.cl
+	$(CC) $(GCN_HSA_CFLAGS) $(GCN_HSA_CPPFLAGS) -emit-llvm -o $@ -x cl -c $^
+
+BUILT_SOURCES += gpt_gpu.gcn_hsa.link.bc
+gpt_gpu.gcn_hsa.link.bc: gpt_gpu.gcn_hsa.bc
+	llvm-link-14 $(GPU_LINKFLAGS) -o $@ $^ /usr/lib/clc/amdgcn--amdhsa.bc
+	opt-14 $(GPU_OPTFLAGS) -o $@ $@
+
+#BUILT_SOURCES += gpt_gpu.gcn_hsa.s
+gpt_gpu.gcn_hsa.s: gpt_gpu.gcn_hsa.link.bc
+	$(CC) -cc1 $(GPU_ASFLAGS) -triple $(GCN_HSA_TARGET) -emit-obj -S -o $@ -x ir $^
+
+#BUILT_SOURCES += gpt_gpu.gcn_hsa.o
+gpt_gpu.gcn_hsa.o: gpt_gpu.gcn_hsa.link.bc
+	$(CC) -cc1 $(GPU_ASFLAGS) -triple $(GCN_HSA_TARGET) -emit-obj -o $@ -x ir $^
+
+CLEANFILES += gpt_gpu.gcn_hsa.bc.cc
+libircd_la_SOURCES += gpt_gpu.gcn_hsa.bc.cc
+gpt_gpu.gcn_hsa.bc.cc: gpt_gpu.gcn_hsa.bc
+	xxd -i $^ $@
+
+#
 # R600
 #
 
