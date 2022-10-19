@@ -44,6 +44,16 @@
 #endif
 
 //
+// OpenCL wants __asm__ but also allow asm
+//
+
+#if defined(__OPENCL_VERSION__)
+	#if !defined(asm)
+		#define asm __asm__
+	#endif
+#endif
+
+//
 // Silently drop calls to printf() on unsupporting platforms; this way we can
 // leave the same code unmodified and quietly discard the output.
 //
