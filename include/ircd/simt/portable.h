@@ -30,8 +30,6 @@
 #if defined(__OPENCL_VERSION__)
 	#if __OPENCL_VERSION__ < 120
 		#define static __attribute__((internal_linkage))
-	#elif __OPENCL_VERSION__ < 200
-		#define static __constant static
 	#endif
 #endif
 
@@ -42,7 +40,7 @@
 //
 
 #if !defined(__OPENCL_VERSION__)
-	#define __constant
+	#define __constant static
 #endif
 
 //

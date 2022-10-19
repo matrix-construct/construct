@@ -388,7 +388,6 @@ if CLANG
 if OPENCL
 
 GPU_CPPFLAGS =#
-GPU_CPPFLAGS += -D__OPENCL_VERSION__=110
 GPU_CPPFLAGS += -Dcl_clang_storage_class_specifiers
 GPU_CPPFLAGS += -DNOFP64
 GPU_CPPFLAGS += -I$(top_srcdir)/include
@@ -398,7 +397,6 @@ GPU_CPPFLAGS += $(CWARNS)
 GPU_CPPFLAGS += $(DEFS)
 
 GPU_CFLAGS =#
-GPU_CFLAGS += -std=cl1.1
 GPU_CFLAGS += -fident
 GPU_CFLAGS += -fno-builtin
 GPU_CFLAGS += -fverbose-asm
@@ -440,9 +438,16 @@ GPU_ASFLAGS += -Rpass-analysis=asm-printer
 # SPV
 #
 
+SPV_CPPFLAGS = $(GPU_CPPFLAGS)
+SPV_CPPFLAGS += -D__OPENCL_VERSION__=120
+
+SPV_CFLAGS = $(GPU_CFLAGS)
+SPV_CFLAGS += -std=cl2.0
+SPV_CFLAGS += -target spir--
+
 BUILT_SOURCES += gpt_gpu.spv.bc
 gpt_gpu.spv.bc: gpt_gpu.cl
-	$(CC) -target spir-- $(GPU_CPPFLAGS) -O0 -emit-llvm -o $@ -x cl -c $^
+	$(CC) $(SPV_CFLAGS) $(SPV_CPPFLAGS) -O0 -emit-llvm -o $@ -x cl -c $^
 
 BUILT_SOURCES += gpt_gpu.spv
 gpt_gpu.spv: gpt_gpu.spv.bc
@@ -463,14 +468,18 @@ R600_TARGET = r600--
 # R600 Saint Barthélemy
 #
 
+R600_BARTS_CPPFLAGS = $(GPU_CPPFLAGS)
+R600_BARTS_CPPFLAGS += -D__OPENCL_VERSION__=110
+
 R600_BARTS_CFLAGS = $(GPU_CFLAGS)
+R600_BARTS_CFLAGS += -std=cl1.1
 R600_BARTS_CFLAGS += -target $(R600_TARGET)
 R600_BARTS_CFLAGS += -mcpu=barts
 R600_BARTS_CFLAGS += -Xclang -mlink-bitcode-file -Xclang /usr/lib/clc/barts-r600--.bc
 
 BUILT_SOURCES += gpt_gpu.r600_barts.bc
 gpt_gpu.r600_barts.bc: gpt_gpu.cl
-	$(CC) $(R600_BARTS_CFLAGS) $(GPU_CPPFLAGS) -emit-llvm -o $@ -x cl -c $^
+	$(CC) $(R600_BARTS_CFLAGS) $(R600_BARTS_CPPFLAGS) -emit-llvm -o $@ -x cl -c $^
 
 #BUILT_SOURCES += gpt_gpu.r600_barts.link.bc
 gpt_gpu.r600_barts.link.bc: gpt_gpu.r600_barts.bc

@@ -11,14 +11,14 @@
 #pragma once
 #define HAVE_IRCD_GPT_VECTOR_H
 
-static __constant const uint
+__constant const uint
 ircd_gpt_context_tokens = 512, // 1024,
 ircd_gpt_vector_elems = 768,
 ircd_gpt_attn_rank = 12,
 ircd_gpt_attn_segs = 3,
 ircd_gpt_ffnn_segs = 4;
 
-static __constant const uint
+__constant const uint
 ircd_gpt_vector_attn_elems = ircd_gpt_vector_elems / ircd_gpt_attn_rank,
 ircd_gpt_attn_fcon_elems = ircd_gpt_vector_elems * ircd_gpt_attn_segs,
 ircd_gpt_ffnn_fcon_elems = ircd_gpt_vector_elems * ircd_gpt_ffnn_segs;
