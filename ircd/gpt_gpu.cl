@@ -761,7 +761,7 @@ ircd_gpt_lm_result_top(__local struct ircd_gpt_ctrl *const ctrl,
 	token = idx[i];
 
 	const float
-	samax = logsm[token] + FLT_EPSILON;
+	samax = logsm[token];
 
 	ctrl->top[i].token = token;
 	ctrl->top[i].samax = samax;
@@ -797,7 +797,7 @@ ircd_gpt_lm_result_label(__local struct ircd_gpt_ctrl *const ctrl,
 	token = label->logit.token;
 
 	const float
-	samax = logsm[token] + FLT_EPSILON,
+	samax = logsm[token],
 	loss = 0.0f - native_log(samax),
 	ppl = (1.0f - samax) * native_log2(opts->logits);
 

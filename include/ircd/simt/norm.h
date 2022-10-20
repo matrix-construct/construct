@@ -36,6 +36,9 @@ ircd_simt_math_norm_f4lldr(__local float4 *const out,
 	s = native_sqrt(out[li] + epsilon),
 	res = sub_mean / s;
 
+	if(out == in)
+		barrier(CLK_LOCAL_MEM_FENCE);
+
 	out[li] = res;
 }
 #endif
