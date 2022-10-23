@@ -42,7 +42,7 @@ ircd::fs::PATH_MAX_LEN
 namespace ircd::fs
 {
 	static thread_local char _name_scratch[2][NAME_MAX_LEN];
-	static thread_local char _path_scratch[2][PATH_MAX_LEN];
+	static thread_local char _path_scratch[3][PATH_MAX_LEN];
 }
 
 // External mutable_buffer to the scratch
@@ -232,6 +232,27 @@ ircd::fs::base::db
 //
 // tools
 //
+
+bool
+ircd::fs::is_parent(const string_view &path,
+                    const string_view &str)
+{
+	return parent(_path_scratch[2], path) == str;
+}
+
+bool
+ircd::fs::is_filename(const string_view &path,
+                      const string_view &str)
+{
+	return filename(_path_scratch[2], path) == str;
+}
+
+bool
+ircd::fs::is_extension(const string_view &path,
+                       const string_view &str)
+{
+	return extension(_path_scratch[2], path) == str;
+}
 
 ircd::string_view
 ircd::fs::canonical(const mutable_buffer &buf,

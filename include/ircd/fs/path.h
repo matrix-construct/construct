@@ -67,6 +67,10 @@ namespace ircd::fs
 	string_view canonical(const mutable_buffer &, const string_view &root, const string_view &path);
 	string_view relative(const mutable_buffer &, const string_view &root, const string_view &path);
 	string_view absolute(const mutable_buffer &, const string_view &root, const string_view &path);
+
+	bool is_extension(const string_view &path, const string_view &str);
+	bool is_filename(const string_view &path, const string_view &str);
+	bool is_parent(const string_view &path, const string_view &str);
 }
 
 /// Configuration items storing the base paths used at runtime for program
