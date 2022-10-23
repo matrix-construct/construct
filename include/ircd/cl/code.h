@@ -37,10 +37,13 @@ struct ircd::cl::code
 	void create(const vector_view<const string_view> &srcs);
 
   public:
+	IRCD_OVERLOAD(path);
 	explicit code(const const_buffer &bc);
 	explicit code(const vector_view<const const_buffer> &bins);
 	code(const vector_view<const string_view> &srcs);
 	code(const string_view &src);
+	code(path_t, const vector_view<const string_view> &paths);
+	code(path_t, const string_view &path);
 	code() = default;
 	code(code &&) noexcept;
 	code(const code &) = delete;

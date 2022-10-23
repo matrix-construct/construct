@@ -1463,6 +1463,54 @@ ircd::cl::code::iov_max
 // code::code
 //
 
+ircd::cl::code::code(path_t,
+                     const string_view &paths)
+:code
+{
+	path,
+	vector_view<const string_view>(&paths, 1),
+}
+{
+}
+
+ircd::cl::code::code(path_t,
+                     const vector_view<const string_view> &paths_)
+{
+	static const auto is_cl
+	{
+		[](const auto &path)
+		{
+			return fs::is_reg(path) && fs::is_extension(path, ".cl");
+		}
+	};
+
+	std::vector<std::string> buf;
+	for(const auto &path : paths_)
+		if(fs::is_dir(path))
+		{
+			for(const auto &file : fs::ls(path))
+				if(is_cl(file))
+					buf.emplace_back(fs::read(fs::fd(file)));
+		}
+		else if(is_cl(path))
+			buf.emplace_back(fs::read(fs::fd(path)));
+
+	const auto count(buf.size());
+	if(unlikely(count > iov_max))
+		throw error
+		{
+			"Maximum number of sources exceeded: lim:%zu got:%zu",
+			iov_max,
+			count,
+		};
+
+	string_view src[count];
+	for(uint i(0); i < count; ++i)
+		src[i] = buf[i];
+
+	create(vector_view<const string_view>(src, count));
+}
+
 ircd::cl::code::code(const string_view &src)
 :code
 {
