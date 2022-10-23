@@ -14,9 +14,10 @@
 /// cl_program wrapping
 struct ircd::cl::code
 {
+	static const size_t iov_max;
+
 	void *handle {nullptr};
 
-  public:
 	explicit operator bool() const;
 
 	long status() const;
@@ -31,6 +32,11 @@ struct ircd::cl::code
 	void link(const string_view &opts = {});
 	void build(const string_view &opts = {});
 
+  private:
+	void create(const vector_view<const const_buffer> &bins);
+	void create(const vector_view<const string_view> &srcs);
+
+  public:
 	explicit code(const const_buffer &bc);
 	explicit code(const vector_view<const const_buffer> &bins);
 	code(const vector_view<const string_view> &srcs);

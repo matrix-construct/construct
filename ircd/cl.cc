@@ -1453,6 +1453,12 @@ namespace ircd::cl
 	static void build_handle(cl_program program, void *priv);
 }
 
+decltype(ircd::cl::code::iov_max)
+ircd::cl::code::iov_max
+{
+	64
+};
+
 //
 // code::code
 //
@@ -1467,92 +1473,12 @@ ircd::cl::code::code(const string_view &src)
 
 ircd::cl::code::code(const vector_view<const string_view> &srcs)
 {
-	static const size_t iov_max
-	{
-		64 //TODO: ???
-	};
-
-	const auto count(srcs.size());
-	if(unlikely(count > iov_max))
-		throw error
-		{
-			"Maximum number of sources exceeded: lim:%zu got:%zu",
-			iov_max,
-			srcs.size(),
-		};
-
-	size_t len[count];
-	const char *src[count];
-	for(size_t i(0); i < count; ++i)
-		src[i] = ircd::data(srcs[i]),
-		len[i] = ircd::size(srcs[i]);
-
-	char pbuf[1][48];
-	log::logf
-	{
-		log, log::level::DEBUG,
-		"code(%p) creating %s srcs:%zu",
-		this,
-		pretty(pbuf[0], si(std::accumulate(len, len + count, 0))),
-		count,
-	};
-
-	assert(!handle);
-
-	int err {CL_SUCCESS};
-	handle = clCreateProgramWithSource(primary, count, src, len, &err);
-	throw_on_error(err);
+	create(srcs);
 }
 
 ircd::cl::code::code(const vector_view<const const_buffer> &bins)
 {
-	static const size_t iov_max
-	{
-		64 //TODO: ???
-	};
-
-	const auto count(bins.size());
-	if(unlikely(count > iov_max))
-		throw error
-		{
-			"Maximum number of binaries exceeded: lim:%zu got:%zu",
-			iov_max,
-			count,
-		};
-
-	size_t len[iov_max + 1] {0};
-	const uint8_t *bin[iov_max + 1] {nullptr};
-	for(size_t i(0); i < count; ++i)
-		bin[i] = reinterpret_cast<const uint8_t *>(ircd::data(bins[i])),
-		len[i] = ircd::size(bins[i]);
-
-	size_t devs {0};
-	cl_device_id dev[DEVICE_MAX] {0};
-	for(size_t i(0); i < platforms; ++i)
-		for(size_t j(0); j < devices[i]; ++j)
-			dev[devs++] = device[i][j];
-
-	char pbuf[1][48];
-	log::logf
-	{
-		log, log::level::DEBUG,
-		"code(%p) loading %s bins:%zu devs:%zu",
-		this,
-		pretty(pbuf[0], si(std::accumulate(len, len + count, 0))),
-		count,
-		devs,
-	};
-
-	assert(len);
-	assert(devs);
-	assert(!handle);
-
-	int err {CL_SUCCESS};
-	int binerr[iov_max + 1] {CL_SUCCESS};
-	handle = clCreateProgramWithBinary(primary, devs, dev, len, bin, binerr, &err);
-	throw_on_error(err);
-	for(size_t i(0); i < count; ++i)
-		throw_on_error(binerr[i]);
+	create(bins);
 }
 
 ircd::cl::code::code(const const_buffer &bc)
@@ -1596,6 +1522,88 @@ catch(const std::exception &e)
 	};
 
 	return;
+}
+
+void
+ircd::cl::code::create(const vector_view<const string_view> &srcs)
+{
+	const auto count(srcs.size());
+	if(unlikely(count > iov_max))
+		throw error
+		{
+			"Maximum number of sources exceeded: lim:%zu got:%zu",
+			iov_max,
+			srcs.size(),
+		};
+
+	size_t len[count];
+	const char *src[count];
+	for(size_t i(0); i < count; ++i)
+		src[i] = ircd::data(srcs[i]),
+		len[i] = ircd::size(srcs[i]);
+
+	char pbuf[1][48];
+	log::logf
+	{
+		log, log::level::DEBUG,
+		"code(%p) creating %s srcs:%zu",
+		this,
+		pretty(pbuf[0], si(std::accumulate(len, len + count, 0))),
+		count,
+	};
+
+	assert(!handle);
+
+	int err {CL_SUCCESS};
+	handle = clCreateProgramWithSource(primary, count, src, len, &err);
+	throw_on_error(err);
+}
+
+void
+ircd::cl::code::create(const vector_view<const const_buffer> &bins)
+{
+	const auto count(bins.size());
+	if(unlikely(count > iov_max))
+		throw error
+		{
+			"Maximum number of binaries exceeded: lim:%zu got:%zu",
+			iov_max,
+			count,
+		};
+
+	size_t len[iov_max + 1] {0};
+	const uint8_t *bin[iov_max + 1] {nullptr};
+	for(size_t i(0); i < count; ++i)
+		bin[i] = reinterpret_cast<const uint8_t *>(ircd::data(bins[i])),
+		len[i] = ircd::size(bins[i]);
+
+	size_t devs {0};
+	cl_device_id dev[DEVICE_MAX] {0};
+	for(size_t i(0); i < platforms; ++i)
+		for(size_t j(0); j < devices[i]; ++j)
+			dev[devs++] = device[i][j];
+
+	char pbuf[1][48];
+	log::logf
+	{
+		log, log::level::DEBUG,
+		"code(%p) loading %s bins:%zu devs:%zu",
+		this,
+		pretty(pbuf[0], si(std::accumulate(len, len + count, 0))),
+		count,
+		devs,
+	};
+
+	assert(len);
+	assert(devs);
+	assert(!handle);
+
+	int err {CL_SUCCESS};
+	int binerr[iov_max + 1] {CL_SUCCESS};
+	handle = clCreateProgramWithBinary(primary, devs, dev, len, bin, binerr, &err);
+	throw_on_error(err);
+	for(size_t i(0); i < count; ++i)
+		throw_on_error(binerr[i]);
 }
 
 void
