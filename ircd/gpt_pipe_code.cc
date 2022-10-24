@@ -205,43 +205,18 @@ ircd::gpt::pipe::code::from_source(const string_view &comp_opts,
 	if(!code_path)
 		return {};
 
-	if(!fs::is_reg(code_path))
-		return {};
-
-	const fs::fd fd
-	{
-		code_path
-	};
-
-	const std::string read
-	{
-		fs::read(fd)
-	};
-
-	const string_view src
-	{
-		read
-	};
-
-	const vector_view<const string_view> srcs
-	(
-		&src, 1
-	);
-
-	char pbuf[1][48];
 	log::logf
 	{
 		log, log::level::DEBUG,
-		"source code `%s' %s comp_opts:%zu link_opts:%zu attempting...",
+		"source code `%s'comp_opts:%zu link_opts:%zu attempting...",
 		code_path,
-		pretty(pbuf[0], si(size(read))),
 		size(comp_opts),
 		size(link_opts),
 	};
 
 	cl::code ret
 	{
-		srcs
+		cl::code::path, code_path
 	};
 
 	ret.compile(comp_opts);
