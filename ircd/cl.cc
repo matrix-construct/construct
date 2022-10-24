@@ -416,22 +416,24 @@ ircd::cl::init::init_ctxs()
 
 	// Queue properties
 	char tmp[4];
-	bool dev_queue(true);
+	bool dev_queue(!profile_queue);
 	for(size_t i(0); i < _devs; ++i)
 		dev_queue &= info<uint>(clGetDeviceInfo, _dev[i], CL_DEVICE_MAX_ON_DEVICE_QUEUES, tmp);
 
+	bool dev_ooe(dev_queue);
 	uint dev_queue_size(1_MiB); //XXX
 	const uint prop[][2]
 	{
-		{ CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE & boolmask<uint>(profile_queue) },
-		{ CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE & boolmask<uint>(dev_queue) },
-		{ CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE & boolmask<uint>(dev_queue) },
 		{ CL_QUEUE_SIZE, dev_queue_size },
+		{ CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE & boolmask<uint>(dev_queue) },
+		{ CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE & boolmask<uint>(dev_ooe) },
+		{ CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE & boolmask<uint>(profile_queue) },
 		{ 0, 0 },
 	};
 
 	cl_queue_properties qprop[8] {0};
-	for(size_t i(0), j(0); i < 8 && prop[i][0]; ++i)
+	const auto qprops(sizeof(qprop) / sizeof(cl_queue_properties));
+	for(size_t i(0), j(0); j < qprops && (prop[i][0] || prop[i][1]); ++i)
 		if(prop[i][1])
 		{
 			qprop[j++] = prop[i][0];
