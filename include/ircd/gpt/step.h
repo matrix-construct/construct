@@ -29,7 +29,6 @@ struct ircd::gpt::step
 	pipe::prof profile;
 
 	void profile_accumulate(const pipe::prof &);
-	bool backpropagate();
 
   public:
 	bool done() const noexcept;
