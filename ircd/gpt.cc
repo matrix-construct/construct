@@ -945,6 +945,8 @@ ircd::gpt::samp::dispatche()
 
 	if(cycle == 0)
 	{
+		ctrl.prof.entered = 0;
+		ctrl.prof.finished = 0;
 		ctrl.prof.acquired = 0;
 		ctrl.prof.released = prof::cycles();
 	}
@@ -1257,20 +1259,30 @@ ircd::gpt::debug(const mutable_buffer &out,
 
 	const auto kern_cycles
 	{
-		prof.finished - prof.entered
+		prof.finished && prof.entered?
+			prof.finished - prof.entered: 0
 	};
 
 	const auto host_cycles
 	{
-		prof.acquired - prof.released
+		prof.acquired && prof.released?
+			prof.acquired - prof.released: 0
+	};
+
+	const auto cust_cycles
+	{
+		prof.custom[1] && prof.custom[0]?
+			prof.custom[1] - prof.custom[0]: 0
 	};
 
 	return fmt::sprintf
 	{
 		out, "%s",
-		kern_cycles > 0?
+		cust_cycles?
+			pretty(buf[0], si(cust_cycles), 1):
+		kern_cycles?
 			pretty(buf[0], si(kern_cycles), 1):
-		host_cycles > 0?
+		host_cycles?
 			pretty(buf[0], si(host_cycles), 1):
 			string_view{},
 	};

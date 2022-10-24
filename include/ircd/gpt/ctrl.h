@@ -75,6 +75,9 @@ struct ircd_gpt_ctrl_prof
 
 	/// Device timestamp at end of cycle.
 	ulong finished;
+
+	/// Device timestamps manually placed by developer.
+	ulong custom[2];
 };
 
 /// Task Control Page
