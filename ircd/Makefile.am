@@ -298,6 +298,9 @@ ASIO_UNIT_CPPFLAGS += -include ircd/asio.h
 SPIRIT_UNIT_CPPFLAGS += -include ircd/spirit.h
 endif
 
+if OPENCL
+cl.lo:                AM_CPPFLAGS := @OPENCL_CPPFLAGS@ ${AM_CPPFLAGS}
+endif
 client.lo:            AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
 ctx_x86_64.lo:        AM_CPPFLAGS := -I$(top_srcdir)/include
 ctx.lo:               AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
@@ -330,11 +333,6 @@ json.lo:              AM_CPPFLAGS := ${AM_CPPFLAGS} ${SPIRIT_UNIT_CPPFLAGS}
 json.lo:              AM_CXXFLAGS := ${AM_CXXFLAGS} ${SPIRIT_UNIT_CXXFLAGS}
 lex_cast.lo:          AM_CPPFLAGS := ${AM_CPPFLAGS} ${SPIRIT_UNIT_CPPFLAGS}
 lex_cast.lo:          AM_CXXFLAGS := ${AM_CXXFLAGS} ${SPIRIT_UNIT_CXXFLAGS}
-if OPENCL
-cl.lo:                AM_CPPFLAGS := @OPENCL_CPPFLAGS@ ${AM_CPPFLAGS}
-endif
-tokens.lo:            AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
-prof.lo:              AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
 if MAGIC
 magic.lo:             AM_CPPFLAGS := @MAGIC_CPPFLAGS@ ${AM_CPPFLAGS}
 endif
@@ -360,6 +358,7 @@ endif
 if PNG
 png.o:                AM_CPPFLAGS := @PNG_CPPFLAGS@ ${AM_CPPFLAGS}
 endif PNG
+prof.lo:              AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
 rfc1459.lo:           AM_CPPFLAGS := ${AM_CPPFLAGS} ${SPIRIT_UNIT_CPPFLAGS}
 rfc1459.lo:           AM_CXXFLAGS := ${AM_CXXFLAGS} ${SPIRIT_UNIT_CXXFLAGS}
 rfc3986.lo:           AM_CPPFLAGS := ${AM_CPPFLAGS} ${SPIRIT_UNIT_CPPFLAGS}
@@ -367,6 +366,7 @@ rfc3986.lo:           AM_CXXFLAGS := ${AM_CXXFLAGS} ${SPIRIT_UNIT_CXXFLAGS}
 server.lo:            AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
 if SODIUM
 sodium.lo:            AM_CPPFLAGS := @SODIUM_CPPFLAGS@ ${AM_CPPFLAGS}
+tokens.lo:            AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
 endif
 
 #
