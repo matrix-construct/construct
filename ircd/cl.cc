@@ -22,6 +22,7 @@ namespace ircd::cl
 	template<class T = string_view, int maybe = CL_SUCCESS, class F, class id0, class id1, class param> static T info(F&&, const id0 &, const id1 &, const param &, const mutable_buffer &, T default_ = {});
 
 	static string_view version_str(const mutable_buffer &, const cl_version);
+	static uint query_warp_size_amd(cl_device_id);
 	static uint query_warp_size(cl_context, cl_device_id);
 }
 
@@ -699,13 +700,19 @@ ircd::cl::log_dev_info(const uint i,
 /// properties directly.
 uint
 ircd::cl::query_warp_size(cl_context context,
-                          cl_device_id device)
+                          cl_device_id dev)
 try
 {
-	//TODO: XXX
-	assert(primary);
-	assert(context == primary);
+	// Attempt to get this value the easy way from a device API.
+	uint ret(0);
+	if((ret = query_warp_size_amd(dev)))
+		return ret;
 
+	assert(primary);
+	assert(context == primary); //TODO: XXX
+
+	// Get this value the hard way from the cl_kernel API which requires
+	// building a program first and querying its properties.
 	cl::code code
 	{
 		"__kernel void ircd_test() {}"_sv
@@ -719,7 +726,8 @@ try
 		code, "ircd_test"
 	};
 
-	return kern.preferred_group_size_multiple(device);
+	ret = kern.preferred_group_size_multiple(device);
+	return ret;
 }
 catch(const ctx::interrupted &)
 {
@@ -734,9 +742,29 @@ catch(const std::exception &e)
 	log::logf
 	{
 		log, log::level::WARNING,
-		"context(%p): device(%p): Failed to query warp size :%s",
+		"context(%p) device(%p) query warp size :%s",
 		static_cast<const void *>(context),
-		static_cast<const void *>(device),
+		static_cast<const void *>(dev),
+		e.what(),
+	};
+
+	return 0;
+}
+
+uint
+ircd::cl::query_warp_size_amd(cl_device_id dev)
+try
+{
+	char buf[4];
+	constexpr auto ign(CL_INVALID_VALUE);
+	return info<uint, ign>(clGetDeviceInfo, dev, CL_DEVICE_WAVEFRONT_WIDTH_AMD, buf, 0);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "device(%p) query warp size (AMD) :%s",
+		static_cast<const void *>(dev),
 		e.what(),
 	};
 
