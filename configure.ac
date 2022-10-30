@@ -2509,6 +2509,72 @@ AM_COND_IF([DRM],
 
 dnl
 dnl
+dnl AMD ROCm
+dnl
+dnl
+
+AC_SUBST(ROCM_CPPFLAGS, [])
+AC_SUBST(ROCM_LDFLAGS, [])
+AC_SUBST(ROCM_LIBS, [])
+
+AC_ARG_WITH(rocm-includes,
+RB_HELP_STRING([--with-rocm-includes=[[[DIR]]]], [Path to ROCm include directory]),
+[
+	rocm_incdir="$withval"
+	ROCM_CPPFLAGS="-isystem $withval -isystem ${withval}/hsa"
+], [])
+
+AC_ARG_WITH(rocm-libs,
+RB_HELP_STRING([--with-rocm-libs=[[[DIR]]]], [Path to ROCm library directory]),
+[
+	rocm_libdir="$withval"
+	ROCM_LDFLAGS="-L$withval"
+], [])
+
+dnl push
+restore_cppflags=$CPPFLAGS
+restore_ldflags=$LDFLAGS
+RB_VAR_PREPEND([CPPFLAGS], [$ROCM_CPPFLAGS])
+RB_VAR_PREPEND([LDFLAGS], [$ROCM_LDFLAGS])
+
+RB_CHK_SYSHEADER(rocm_version.h, [ROCM_VERSION_H])
+PKG_CHECK_MODULES(rocm, [rocm-core],
+[
+	have_rocm="yes"
+], [
+	AC_CHECK_LIB(rocm-core, getROCmVersion,
+	[
+		have_rocm="yes"
+	], 	[
+		have_rocm="no"
+	])
+])
+
+dnl pop
+CPPFLAGS=$restore_cppflags
+LDFLAGS=$restore_ldflags
+
+AC_MSG_CHECKING(whether to disable use of any found ROCm)
+AC_ARG_ENABLE(rocm, RB_HELP_STRING([--disable-rocm], [Disable ROCm support]),
+[
+	AC_MSG_RESULT([$enableval])
+	enable_rocm=$enableval
+], [
+	AC_MSG_RESULT([no])
+	enable_rocm="yes"
+])
+
+AM_CONDITIONAL([ROCM], [test "x$have_rocm" = "xyes" && test "x$enable_rocm" = "xyes" ])
+
+AM_COND_IF([ROCM],
+[
+	IRCD_DEFINE(USE_ROCM, [1], [ROCm support is available and enabled])
+], [
+	IRCD_DEFINE(USE_ROCM, [0], [ROCm support is not available])
+])
+
+dnl
+dnl
 dnl OpenCL
 dnl
 dnl
@@ -3122,6 +3188,7 @@ echo "PBC support ....................... $have_pbc"
 echo "LLVM library support .............. $have_libllvm"
 echo "DRM support ....................... $have_drm"
 echo "ARM NN support .................... $have_armnn"
+echo "AMD ROCm support .................. $have_rocm"
 echo "OpenCL support .................... $have_opencl"
 echo "Liburing support .................. $have_uring"
 echo "Memory allocator .................. $alloc_lib"
