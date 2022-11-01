@@ -2575,6 +2575,72 @@ AM_COND_IF([ROCM],
 
 dnl
 dnl
+dnl GPU Perf API (GPA)
+dnl
+dnl
+
+AC_SUBST(GPA_CPPFLAGS, [])
+AC_SUBST(GPA_LDFLAGS, [])
+AC_SUBST(GPA_LIBS, [])
+
+AC_ARG_WITH(gpa-includes,
+RB_HELP_STRING([--with-gpa-includes=[[[DIR]]]], [Path to GPA include directory]),
+[
+	gpa_incdir="$withval"
+	GPA_CPPFLAGS="-isystem $withval"
+], [])
+
+AC_ARG_WITH(gpa-libs,
+RB_HELP_STRING([--with-gpa-libs=[[[DIR]]]], [Path to GPA library directory]),
+[
+	gpa_libdir="$withval"
+	GPA_LDFLAGS="-L$withval"
+], [])
+
+dnl push
+restore_cppflags=$CPPFLAGS
+restore_ldflags=$LDFLAGS
+RB_VAR_PREPEND([CPPFLAGS], [$GPA_CPPFLAGS])
+RB_VAR_PREPEND([LDFLAGS], [$GPA_LDFLAGS])
+
+RB_CHK_SYSHEADER(gpu_performance_api/gpu_perf_api.h, [GPU_PERF_API_H])
+PKG_CHECK_MODULES(gpa, [GPUPerfAPIVK],
+[
+	have_gpa="yes"
+], [
+	AC_CHECK_LIB(GPUPerfAPIVK, GpaGetVersion,
+	[
+		have_gpa="yes"
+	], 	[
+		have_gpa="no"
+	])
+])
+
+dnl pop
+CPPFLAGS=$restore_cppflags
+LDFLAGS=$restore_ldflags
+
+AC_MSG_CHECKING(whether to disable use of any found GPA)
+AC_ARG_ENABLE(gpa, RB_HELP_STRING([--disable-gpa], [Disable GPA support]),
+[
+	AC_MSG_RESULT([$enableval])
+	enable_gpa=$enableval
+], [
+	AC_MSG_RESULT([no])
+	enable_gpa="yes"
+])
+
+AM_CONDITIONAL([GPA], [test "x$have_gpa" = "xyes" && test "x$enable_gpa" = "xyes" ])
+
+AM_COND_IF([GPA],
+[
+	IRCD_DEFINE(USE_GPA, [1], [GPA support is available and enabled])
+], [
+	IRCD_DEFINE(USE_GPA, [0], [GPA support is not available])
+])
+
+dnl
+dnl
 dnl OpenCL
 dnl
 dnl
@@ -3189,6 +3255,7 @@ echo "LLVM library support .............. $have_libllvm"
 echo "DRM support ....................... $have_drm"
 echo "ARM NN support .................... $have_armnn"
 echo "AMD ROCm support .................. $have_rocm"
+echo "AMD GPA support ................... $have_gpa"
 echo "OpenCL support .................... $have_opencl"
 echo "Liburing support .................. $have_uring"
 echo "Memory allocator .................. $alloc_lib"
