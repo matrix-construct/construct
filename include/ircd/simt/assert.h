@@ -35,3 +35,19 @@
 	#endif
 
 #endif
+
+//
+// Compile-time assertion alias
+//
+
+#if defined(__OPENCL_VERSION__) \
+&& !defined(static_assert) \
+&& true
+
+	#if (__has_feature(c_static_assert) || __has_extension(c_static_assert))
+		#define static_assert(...) _Static_assert(__VA_ARGS__)
+	#else
+		#define static_assert(...)
+	#endif
+
+#endif
