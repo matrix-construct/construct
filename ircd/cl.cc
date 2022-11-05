@@ -925,6 +925,11 @@ try
 		queue[0][0]
 	};
 
+	auto &dev
+	{
+		device[0][0]
+	};
+
 	const auto deps
 	{
 		make_deps(this, opts)
@@ -933,12 +938,34 @@ try
 	assert(!this->object);
 	this->object = &kern;
 
-	size_t global_size(range.global[0]);
-	size_t local_size(range.local[0]);
+	const auto max_local_size
+	{
+		kern.group_size(dev)
+	};
+
+	const auto reqd_local_size
+	{
+		kern.compile_group_size(dev)
+	};
+
+	const auto hint_local_size
+	{
+		kern.preferred_group_size_multiple(dev)
+	};
+
+	size_t local[dim];
+	for(size_t d(0); d < dim; ++d)
+	{
+		local[d] = reqd_local_size[d]?: range.local[d]?: hint_local_size;
+		local[d] = std::min(local[d], max_local_size);
+	}
+
+	size_t global_size{range.global[0]};
+	size_t local_size{local[0]};
 	for(size_t d(1); d < dim; ++d)
 	{
 		global_size *= range.global[d];
-		local_size *= range.local[d];
+		local_size *= local[d];
 	}
 
 	assert(global_size % local_size == 0);
@@ -984,7 +1011,7 @@ try
 			dim,
 			sub_range.offset.data(),
 			sub_range.global.data(),
-			sub_range.local.data(),
+			local + 0,
 			deps.size(),
 			deps.size()? deps.data(): nullptr,
 			i == tasks - 1? addressof_handle(this): nullptr
