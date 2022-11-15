@@ -137,9 +137,25 @@ ircd::cl::enable
 decltype(ircd::cl::profile_queue)
 ircd::cl::profile_queue
 {
-	{ "name",      "ircd.cl.profile.queue"  },
+	{ "name",      "ircd.cl.queue.profile"  },
 	{ "default",   false                    },
 	{ "persist",   false                    },
+};
+
+decltype(ircd::cl::device_queue)
+ircd::cl::device_queue
+{
+	{ "name",      "ircd.cl.queue.device"  },
+	{ "default",   true                    },
+	{ "persist",   false                   },
+};
+
+decltype(ircd::cl::queue_size)
+ircd::cl::queue_size
+{
+	{ "name",      "ircd.cl.queue.size"  },
+	{ "default",   long(1_MiB)           },
+	{ "persist",   false                 },
 };
 
 decltype(ircd::cl::intensity)
@@ -415,14 +431,42 @@ ircd::cl::init::init_ctxs()
 	primary = clCreateContext(&ctxprop, _devs, _dev, handle_notify, nullptr, &err);
 	throw_on_error(err);
 
-	// Queue properties
+	// Device queue enabler
+	bool dev_queue
+	{
+		true
+		&& cl::device_queue     // If enabled by conf
+		&& !cl::profile_queue   // And not profiling (for now)
+	};
+
+	// Device queue support
 	char tmp[4];
-	bool dev_queue(!profile_queue);
 	for(size_t i(0); i < _devs; ++i)
 		dev_queue &= info<uint>(clGetDeviceInfo, _dev[i], CL_DEVICE_MAX_ON_DEVICE_QUEUES, tmp);
 
-	bool dev_ooe(dev_queue);
-	uint dev_queue_size(1_MiB); //XXX
+	// Queue out-of-order execution
+	bool dev_ooe
+	{
+		dev_queue // tied to dev_queue
+	};
+
+	// Queue size in bytes
+	uint dev_queue_size
+	{
+		uint(cl::queue_size)
+	};
+
+	// Queue size limited by devices
+	for(size_t i(0); i < _devs; ++i)
+	{
+		const auto max_queue_size
+		{
+			info<uint>(clGetDeviceInfo, _dev[i], CL_DEVICE_QUEUE_ON_DEVICE_MAX_SIZE, tmp)
+		};
+
+		dev_queue_size = std::min(dev_queue_size, max_queue_size);
+	}
+
 	const uint prop[][2]
 	{
 		{ CL_QUEUE_SIZE, dev_queue_size },
