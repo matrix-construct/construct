@@ -76,6 +76,9 @@ m::resource::response
 put__invite(client &client,
             const m::resource::request &request)
 {
+	if(request.version != "v1")
+		return put__invite2(client, request);
+
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
 		{
