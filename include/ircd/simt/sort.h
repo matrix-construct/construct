@@ -66,6 +66,8 @@ ircd_simt_sort_idx16_flldr(__local ushort *const idx,
                            const uint ln,
                            const uint li)
 {
+	assert(ircd_math_is_pow2(ln));
+
 	#pragma clang loop unroll(disable)
 	for(uint up = 1; up < ln; up <<= 1)
 	{

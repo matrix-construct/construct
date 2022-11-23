@@ -12,14 +12,6 @@
 #define HAVE_IRCD_SIMT_REDUCE_ADD_H
 
 #ifdef __OPENCL_VERSION__
-inline bool
-ircd_math_is_pow2(const uint val)
-{
-	return val > 0 && (val & (val - 1)) == 0;
-}
-#endif
-
-#ifdef __OPENCL_VERSION__
 /// Sum all elements in the buffer. All threads in the group participate;
 /// result is placed in index [0], the rest of the buffer is trashed.
 inline void
