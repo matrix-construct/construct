@@ -12,6 +12,7 @@
 #define HAVE_IRCD_MATH_MATH_H
 
 #include "log2.h"
+#include "diff.h"
 #include "inv.h"
 #include "mean.h"
 #include "tanh.h"
