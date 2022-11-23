@@ -19,6 +19,15 @@ inline void
 ircd_simt_reduce_max_flldr(__local float *const buf,
                            const uint ln,
                            const uint li)
+#if defined(cl_khr_subgroups)
+{
+	const float
+	ret = work_group_reduce_max(buf[li]);
+
+	if(li == 0)
+		buf[li] = ret;
+}
+#else
 {
 	for(uint stride = ln >> 1; stride > 0; stride >>= 1)
 	{
@@ -33,6 +42,7 @@ ircd_simt_reduce_max_flldr(__local float *const buf,
 		if(buf[li] < buf[li + 2])
 			buf[li] = buf[li + 2];
 }
+#endif
 #endif
 
 #ifdef __OPENCL_VERSION__

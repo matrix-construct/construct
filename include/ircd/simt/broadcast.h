@@ -33,10 +33,19 @@ inline void
 ircd_simt_broadcast_flldr(__local float *const buf,
                           const uint ln,
                           const uint li)
+#if defined(cl_khr_subgroups)
+{
+	const float
+	ret = work_group_broadcast(buf[0], 0);
+
+	buf[li] = ret;
+}
+#else
 {
 	barrier(CLK_LOCAL_MEM_FENCE);
 
 	if(li > 0)
 		buf[li] = buf[0];
 }
+#endif
 #endif

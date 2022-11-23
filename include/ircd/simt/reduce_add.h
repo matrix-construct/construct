@@ -39,6 +39,15 @@ inline void
 ircd_simt_reduce_add_flldr(__local float *const buf,
                            const uint ln,
                            const uint li)
+#if defined(cl_khr_subgroups)
+{
+	const float
+	ret = work_group_reduce_add(buf[li]);
+
+	if(li == 0)
+		buf[li] = ret;
+}
+#else
 {
 	for(uint stride = ln >> 1; stride > 0; stride >>= 1)
 	{
@@ -51,6 +60,7 @@ ircd_simt_reduce_add_flldr(__local float *const buf,
 	if(!ircd_math_is_pow2(ln) && li == 0)
 		buf[li] += buf[li + 2];
 }
+#endif
 #endif
 
 #ifdef __OPENCL_VERSION__
