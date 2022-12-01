@@ -24,3 +24,29 @@ ircd_simt_cycles()
 	#endif
 }
 #endif
+
+#if defined(__OPENCL_VERSION__)
+/// Read the realtime-clock cycle counting timestamp `s_memrealtime` otherwise
+/// falls back to the default cycle counter (which defaults to zero if also not
+/// supported).
+///
+/// This is more consistent than `s_memtime` but slightly less granular; it is
+/// probably provided by a control unit rather than directly in an SIMD/ALU.
+inline ulong
+__attribute__((always_inline))
+ircd_simt_cycles_rtc()
+{
+	ulong ret;
+	#if defined(__AMDGCN__)
+		asm volatile
+		(
+			"s_memrealtime %0"
+			: "=s" (ret)
+		);
+	#else
+		ret = ircd_simt_cycles();
+	#endif
+
+	return ret;
+}
+#endif
