@@ -15,6 +15,7 @@
 #include "assert.h"
 #include "cycles.h"
 #include "math.h"
+#include "hadd.h"
 #include "broadcast.h"
 #include "reduce_add.h"
 #include "reduce_max.h"

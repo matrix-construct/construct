@@ -88,16 +88,3 @@ ircd_simt_reduce_add_ulldr(__local uint *const buf,
 		atomic_add(buf + 0, buf[li]);
 }
 #endif
-
-#ifdef __OPENCL_VERSION__
-inline float
-__attribute__((always_inline))
-ircd_simt_reduce_add_f4(const float4 in)
-{
-	float ret = 0.0f;
-	for(uint i = 0; i < 4; ++i)
-		ret += in[i];
-
-	return ret;
-}
-#endif

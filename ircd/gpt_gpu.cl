@@ -303,7 +303,7 @@ ircd_gpt_attn_self_keys(__global const struct ircd_gpt_ctrl *const ctrl,
 		key = token[i].key.attn[li][k],
 		res = qry * key;
 
-		self[i][li] += ircd_simt_reduce_add_f4(res);
+		self[i][li] += ircd_simt_hadd_f4(res);
 	}
 
 	self[i][li] /= 8.0f;
@@ -679,7 +679,7 @@ ircd_gpt_lm_logit(__global const struct ircd_gpt_ctrl *const ctrl,
 		wpe = pos[wi].elem[j],
 		res = in * token + wpe;
 
-		acc += ircd_simt_reduce_add_f4(res);
+		acc += ircd_simt_hadd_f4(res);
 	}
 
 	logit[gi] = acc;

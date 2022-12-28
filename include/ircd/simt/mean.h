@@ -61,7 +61,7 @@ ircd_simt_math_mean_f4lldr(__local float4 *const buf,
 	if(li == 0)
 	{
 		const float
-		sum = ircd_simt_reduce_add_f4(buf[li]),
+		sum = ircd_simt_hadd_f4(buf[li]),
 		div = ln * 4,
 		res = sum / div;
 
