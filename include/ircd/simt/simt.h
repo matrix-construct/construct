@@ -13,6 +13,7 @@
 
 #include "portable.h"
 #include "assert.h"
+#include "hwid.h"
 #include "cycles.h"
 #include "mem.h"
 #include "math.h"
