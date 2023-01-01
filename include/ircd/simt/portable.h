@@ -85,3 +85,13 @@
 		#define __SIZEOF_FLOAT16__ 64
 	#endif
 #endif
+
+//
+// Differentiate RDNA over GCN
+//
+
+#if defined(__AMDGCN__) && !defined(__AMDDNA__)
+	#if __AMDGCN_WAVEFRONT_SIZE == 32
+		#define __AMDDNA__ 1
+	#endif
+#endif
