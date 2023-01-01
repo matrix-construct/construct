@@ -14,6 +14,7 @@
 #include "portable.h"
 #include "assert.h"
 #include "cycles.h"
+#include "mem.h"
 #include "math.h"
 #include "hadd.h"
 #include "broadcast.h"
