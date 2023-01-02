@@ -346,8 +346,7 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 	// toxic as soon as it becomes invalid. As a result we have to copy the
 	// event_idx on the way down in case of renewing the iterator for the
 	// way back. This is not a big deal but rocksdb should fix their shit.
-	m::event::id::buf event_id;
-	m::event::idx event_idx {data.room_head};
+	m::event::idx batch_idx {data.room_head};
 	m::room::events it
 	{
 		room
@@ -363,48 +362,50 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 	ssize_t i(0), prefetched(0);
 	for(; it && i <= limit; --it)
 	{
-		event_idx = it.event_idx();
-		if(!i && event_idx >= data.range.second)
+		batch_idx = it.event_idx();
+		if(!i && batch_idx >= data.range.second)
 			continue;
 
-		if(event_idx < data.range.first)
+		if(batch_idx < data.range.first)
 		{
 			limited = false;
 			break;
 		}
 
-		prefetched += limit > 1 && m::prefetch(event_idx);
+		prefetched += limit > 1 && m::prefetch(batch_idx);
 		++i;
 	}
 
 	if(i > 1 && !it)
-		it.seek(event_idx);
+		it.seek(batch_idx);
 
 	if(i > 1 && it)
 		--i, ++it;
 
-	if(i > 0 && it)
-		for(++it; i > 0 && it; --i, ++it)
+	for(; i >= 0 && it; --i, ++it)
+	{
+		const auto event_idx
 		{
-			const auto event_idx
-			{
-				it.event_idx()
-			};
+			it.event_idx()
+		};
 
-			ret |= m::event::append
-			{
-				array, *it,
-				{
-					.event_idx = &event_idx,
-					.client_txnid = &data.client_txnid,
-					.user_id = &data.user.user_id,
-					.user_room = &data.user_room,
-					.room_depth = &data.room_depth,
-				}
-			};
-		}
+		if(event_idx == batch_idx)
+			continue;
 
-	assert(i >= 0);
-	event_idx &= boolmask<event::idx>(ret);
-	return m::event_id(std::nothrow, event_idx);
+		ret |= m::event::append
+		{
+			array, *it,
+			{
+				.event_idx = &event_idx,
+				.client_txnid = &data.client_txnid,
+				.user_id = &data.user.user_id,
+				.user_room = &data.user_room,
+				.room_depth = &data.room_depth,
+			}
+		};
+	}
+
+	assert(i >= -1);
+	batch_idx &= boolmask<event::idx>(ret);
+	return m::event_id(std::nothrow, batch_idx);
 }
