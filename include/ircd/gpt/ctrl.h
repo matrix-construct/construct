@@ -183,3 +183,23 @@ static_assert(sizeof(struct ircd_gpt_ctrl) % 4096 == 0);
 static_assert(offsetof(struct ircd_gpt_ctrl, token) == 2048);
 static_assert(std::is_standard_layout<struct ircd_gpt_ctrl>::value);
 #endif
+
+#ifdef __OPENCL_VERSION__
+inline void
+ircd_gpt_prof_start(__global struct ircd_gpt_ctrl *const ctrl,
+                    const bool cond)
+{
+	if(cond)
+		ctrl->prof.custom[0] = ircd_simt_cycles();
+}
+#endif
+
+#ifdef __OPENCL_VERSION__
+inline void
+ircd_gpt_prof_stop(__global struct ircd_gpt_ctrl *const ctrl,
+                   const bool cond)
+{
+	if(cond)
+		ctrl->prof.custom[1] = ircd_simt_cycles();
+}
+#endif
