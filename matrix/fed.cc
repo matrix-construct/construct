@@ -459,7 +459,7 @@ ircd::m::fed::backfill::backfill(const room::id &room_id,
 		thread_local char ridbuf[768], eidbuf[768];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			buf, "/_matrix/federation/v1/backfill/%s/?limit=%zu&v=%s",
+			buf, "/_matrix/federation/v1/backfill/%s?limit=%zu&v=%s",
 			url::encode(ridbuf, room_id),
 			opts.limit,
 			url::encode(eidbuf, opts.event_id),
@@ -507,7 +507,7 @@ ircd::m::fed::state::state(const room::id &room_id,
 		thread_local char ridbuf[768];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			buf, "/_matrix/federation/v1/%s/%s/?%s%s%s",
+			buf, "/_matrix/federation/v1/%s/%s?%s%s%s",
 			opts.ids_only? "state_ids"_sv : "state"_sv,
 			url::encode(ridbuf, room_id),
 			opts.event_id?
@@ -603,7 +603,7 @@ ircd::m::fed::event_auth::event_auth(const m::room::id &room_id,
 		if(opts.ids_only)
 			json::get<"uri"_>(opts.request) = fmt::sprintf
 			{
-				buf, "/_matrix/federation/v1/state_ids/%s/?event_id=%s&pdu_ids=0",
+				buf, "/_matrix/federation/v1/state_ids/%s?event_id=%s&pdu_ids=0",
 				url::encode(ridbuf, room_id),
 				url::encode(eidbuf, event_id),
 			};
@@ -705,7 +705,7 @@ ircd::m::fed::event::event(const m::event::id &event_id,
 		thread_local char eidbuf[768];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			buf, "/_matrix/federation/v1/event/%s/",
+			buf, "/_matrix/federation/v1/event/%s",
 			url::encode(eidbuf, event_id),
 		};
 
