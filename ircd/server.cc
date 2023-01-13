@@ -4350,7 +4350,8 @@ const
 	if(unlikely(empty(buffer)))
 		throw buffer_overrun
 		{
-			"Content buffer too small; size:%zu content_length:%zu content_read:%zu",
+			"Content buffer too small; "
+			"size:%zu content_length:%zu content_read:%zu",
 			size(content),
 			state.content_length,
 			state.content_read,
@@ -4386,7 +4387,8 @@ const
 	if(unlikely(empty(buffer)))
 		throw buffer_overrun
 		{
-			"Content buffer too small to read next chunk header; size:%zu content_read:%zu",
+			"Content buffer too small to read next chunk header; "
+			"size:%zu content_read:%zu",
 			size(content),
 			state.content_read,
 		};
@@ -4422,7 +4424,8 @@ const
 	if(unlikely(empty(buffer)))
 		throw buffer_overrun
 		{
-			"Chunk dynamic content buffer too small content[size:%zu read:%zu] chunk[size:%zu remain:%zu]",
+			"Chunk content buffer too small; "
+			"content[size:%zu read:%zu] chunk[size:%zu remain:%zu]",
 			size(content),
 			state.content_read,
 			state.chunk_length,
@@ -4463,8 +4466,10 @@ const
 	if(unlikely(size(buffer) < 16))
 		throw buffer_overrun
 		{
-			"Chunk dynamic head buffer too small size:%zu chunk_read:%zu head_read:%zu head_rem:%zu",
+			"Chunk dynamic head buffer too small; "
+			"size:%zu chunk:%zu chunk_read:%zu head_read:%zu head_rem:%zu",
 			size(buffer),
+			req.in.chunks.size(),
 			state.chunk_read,
 			state.head_read,
 			state.head_rem,
@@ -4500,8 +4505,10 @@ const
 	if(unlikely(empty(ret)))
 		throw buffer_overrun
 		{
-			"Chunk dynamic content buffer too small size:%zu chunk_read:%zu chunk_length:%zu",
+			"Chunk dynamic content buffer too small; "
+			"size:%zu chunk:%zu chunk_read:%zu chunk_length:%zu",
 			size(buffer),
+			req.in.chunks.size(),
 			state.chunk_read,
 			state.chunk_length,
 		};
