@@ -21,7 +21,8 @@ check_event(const m::resource::request &request,
 static void
 process(client &,
         const m::resource::request &,
-        const m::event &);
+        const m::event &,
+        const string_view &room_version);
 
 static m::resource::response
 put__invite2(client &client,
@@ -101,6 +102,11 @@ put__invite(client &client,
 		url::decode(event_id, request.parv[1])
 	};
 
+	const json::string &room_version
+	{
+		request.get("room_version", "1")
+	};
+
 	const m::event event
 	{
 		request
@@ -171,40 +177,8 @@ put__invite(client &client,
 	// complete before this response arrives for them and is processed.
 	ctx::sleep(milliseconds(stream_cross_sleeptime));
 
-	// Eval the dual-signed invite event. This will write it locally. This will
-	// also try to sync the room as best as possible. The invitee will then be
-	// presented with this invite request in their rooms list.
-	m::vm::opts vmopts;
-	vmopts.node_id = request.node_id;
-
-	// Synapse may 403 a fetch of the prev_event of the invite event.
-	vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
-	vmopts.phase.set(m::vm::phase::EMPTION, false);
-
-	// We don't want this eval throwing an exception because the response has
-	// already been made for this request.
-	const unwind_nominal_assertion na;
-	vmopts.nothrows = -1;
-
-	m::vm::eval
-	{
-		signed_event, vmopts
-	};
-
-	// The remote maybe gave us some events they purport to be the room's
-	// state. If so, we can try to evaluate them to give our client more info.
-	const json::array &invite_room_state
-	{
-		json::object(request["unsigned"]).get("invite_room_state")
-	};
-
-	if(!empty(invite_room_state))
-	{
-		m::vm::eval
-		{
-			invite_room_state, vmopts
-		};
-	};
+	// Process the event
+	process(client, request, signed_event, room_version);
 
 	// note: returning a resource response is a symbolic/indicator action to
 	// the caller and has no real effect at the point of return.
@@ -428,7 +402,7 @@ put__invite2(client &client,
 	ctx::sleep(milliseconds(stream_cross_sleeptime));
 
 	// Post processing, does not throw.
-	process(client, request, signed_event);
+	process(client, request, signed_event, room_version);
 
 	// note: returning a resource response is a symbolic/indicator action to
 	// the caller and has no real effect at the point of return.
@@ -438,7 +412,8 @@ put__invite2(client &client,
 void
 process(client &client,
         const m::resource::request &request,
-        const m::event &event)
+        const m::event &event,
+        const string_view &room_version)
 try
 {
 	// Eval the dual-signed invite event. This will write it locally. This will
@@ -449,11 +424,39 @@ try
 
 	// Synapse may 403 a fetch of the prev_event of the invite event.
 	vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
-	vmopts.phase.set(m::vm::phase::EMPTION, false);
 
 	// Don't throw an exception for a re-evaluation; this will just be a no-op
 	vmopts.nothrows |= m::vm::fault::EXISTS;
-	vmopts.room_version = unquote(request.get("room_version", "1"));
+	vmopts.room_version = room_version;
+
+	// Find any "unsigned" field robust to any version of the specapse
+	const json::object _unsigned
+	{
+		request["unsigned"]?:
+			json::object(request["event"]).get("unsigned")
+	};
+
+	// Find any "invite_room_state" robust to any version of the synspec
+	const json::array &invite_room_state
+	{
+		request["invite_room_state"]?:
+			_unsigned["invite_room_state"]
+	};
+
+	// The remote maybe gave us some events they purport to be the room's
+	// state. If so, we can try to evaluate them to give our client more info.
+	if((false) && !empty(invite_room_state))
+	{
+		// Chances are these are incomplete/malformed events which will fail
+		// conformity checks and not be used, so this will likely do nothing.
+		auto irs_vmopts(vmopts);
+		irs_vmopts.nothrows = -1;
+		irs_vmopts.phase.set(m::vm::phase::EMPTION, false);
+		m::vm::eval
+		{
+			invite_room_state, irs_vmopts
+		};
+	}
 
 	m::vm::eval
 	{
