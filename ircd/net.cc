@@ -2107,29 +2107,30 @@ noexcept try
 	if(unlikely(!ec && fini))
 		ec = make_error_code(errc::not_connected);
 
-	#ifdef IRCD_DEBUG_NET_SOCKET_READY
-	const auto has_pending
+	if constexpr((false)) // manual debug; large nr syscalls
 	{
-		#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-			SSL_has_pending(ssl.native_handle())
-		#else
-			0
-		#endif
-	};
+		const auto has_pending
+		{
+			#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+				SSL_has_pending(ssl.native_handle())
+			#else
+				0
+			#endif
+		};
 
-	char ecbuf[64];
-	log::debug
-	{
-		log, "%s ready %s %s avail:%zu:%zu:%d:%d",
-		loghead(*this),
-		reflect(type),
-		string(ecbuf, ec),
-		type == ready::READ? bytes : 0UL,
-		type == ready::READ? available(*this) : 0UL,
-		has_pending,
-		SSL_pending(ssl.native_handle()),
-	};
-	#endif
+		char ecbuf[64];
+		log::debug
+		{
+			log, "%s ready %s %s avail:%zu:%zu:%d:%d",
+			loghead(*this),
+			reflect(type),
+			string(ecbuf, ec),
+			type == ready::READ? bytes : 0UL,
+			type == ready::READ? available(*this) : 0UL,
+			has_pending,
+			SSL_pending(ssl.native_handle()),
+		};
+	}
 
 	call_user(callback, ec);
 }
