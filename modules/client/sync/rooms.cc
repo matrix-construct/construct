@@ -82,9 +82,15 @@ ircd::m::sync::rooms_linear(data &data)
 		&& membership == "join"
 	};
 
+	const bool is_own_positive
+	{
+		is_own_membership
+		&& (membership == "join" || membership == "invite")
+	};
+
 	//assert(!is_own_join || m::membership(*data.event) == "join");
 	assert(!is_own_join || !!m::membership(membuf, room, data.user));
-	assert(is_own_join || !json::get<"room_id"_>(*data.event) || m::exists(room));
+	assert(is_own_positive || !json::get<"room_id"_>(*data.event) || m::exists(room));
 
 	if(should_ignore(data))
 		return false;
