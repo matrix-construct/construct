@@ -38,12 +38,6 @@ AM_LDFLAGS = \
 	$(EXTRA_LDFLAGS) \
 	###
 
-if PROFILE
-if CLANG
-AM_CXXFLAGS += -fprofile-generate
-endif
-endif
-
 bin_PROGRAMS = construct
 
 construct_LDFLAGS = \

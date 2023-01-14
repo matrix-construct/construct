@@ -48,14 +48,6 @@ AM_CXXFLAGS += -fwhole-program-vtables
 endif
 endif
 
-if CLANG
-if PROFILE_USE
-AM_CXXFLAGS += -fprofile-use
-BUILT_SOURCES += default.profdata
-CLEANFILES += default.profdata
-endif
-endif
-
 if GOLD
 AM_LDFLAGS += -Wl,--no-gnu-unique
 AM_LDFLAGS += -Wl,--no-text-reorder
@@ -79,7 +71,6 @@ libircd_matrix_LTLIBRARIES += libircd_matrix.la
 #
 
 libircd_matrix_la_SOURCES =#
-libircd_matrix_la_SOURCES += default.profdata
 libircd_matrix_la_SOURCES += name.cc
 libircd_matrix_la_SOURCES += id.cc
 libircd_matrix_la_SOURCES += dbs.cc
@@ -212,13 +203,3 @@ endif
 
 id.lo: AM_CPPFLAGS   := ${AM_CPPFLAGS} ${SPIRIT_UNIT_CPPFLAGS}
 id.lo: CXXFLAGS      += ${AM_CXXFLAGS} ${SPIRIT_UNIT_CXXFLAGS}
-
-#
-# Other recipes
-#
-
-# LLVM PGO text to binary for -fprofile-use
-if CLANG
-default.profdata:
-	-$(LLVM_PROFDATA) merge -output=default.profdata default.proftext
-endif

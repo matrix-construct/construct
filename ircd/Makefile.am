@@ -57,26 +57,6 @@ AM_CXXFLAGS += -fwhole-program-vtables
 endif
 endif
 
-if CLANG
-if PROFILE_USE
-AM_CXXFLAGS += -fprofile-use
-BUILT_SOURCES += default.profdata
-CLEANFILES += default.profdata
-endif
-endif
-
-if CLANG
-if PROFILE
-AM_CXXFLAGS += -fprofile-generate
-AM_LDFLAGS += -Wl,-fprofile-generate
-#TODO: XXX
-#AM_CXXFLAGS += -fprofile-instr-generate
-#AM_CXXFLAGS += -fcoverage-mapping
-#AM_LDFLAGS += -Wl,-fprofile-instr-generate
-#AM_LDFLAGS += -Wl,-fcoverage-mapping
-endif
-endif
-
 if GOLD
 AM_LDFLAGS += -Wl,--no-text-reorder
 AM_LDFLAGS += -Wl,--weak-unresolved-symbols
@@ -136,13 +116,6 @@ libircd_la_LIBADD += @Z_LIBS@
 libircd_la_LIBADD += @URING_LIBS@
 libircd_la_LIBADD += $(EXTRA_LIBS)
 
-if PROFILE
-if CLANG11
-#TODO: XXX
-libircd_la_LIBADD += /usr/lib/llvm-11/lib/clang/11.0.0/lib/linux/libclang_rt.profile-x86_64.a
-endif
-endif
-
 #
 # Unit list
 #
@@ -154,7 +127,6 @@ endif
 #
 
 libircd_la_SOURCES =#
-libircd_la_SOURCES += default.profdata
 libircd_la_SOURCES += assert.cc
 libircd_la_SOURCES += vg.cc
 libircd_la_SOURCES += exception.cc
@@ -367,16 +339,6 @@ server.lo:            AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
 if SODIUM
 sodium.lo:            AM_CPPFLAGS := @SODIUM_CPPFLAGS@ ${AM_CPPFLAGS}
 tokens.lo:            AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
-endif
-
-#
-# Other recipes
-#
-
-# LLVM PGO text to binary for -fprofile-use
-if CLANG
-default.profdata:
-	-$(LLVM_PROFDATA) merge -output=default.profdata default.proftext
 endif
 
 ###############################################################################

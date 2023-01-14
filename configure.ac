@@ -394,73 +394,6 @@ AC_ARG_WITH(log-level, RB_HELP_STRING([--with-log-level[[[=INFO]]]], [Explicitly
 ])
 
 dnl
-dnl Profiling mode
-dnl
-
-AC_MSG_CHECKING(whether to instrument build for runtime profile generation)
-AC_ARG_ENABLE(profile, RB_HELP_STRING([--enable-profile], [Generate profile at runtime]),
-[
-	profiling="yes"
-	AC_DEFINE(CHARYBDIS_PROFILE, 1, [Define this if you are profiling.])
-
-	AM_COND_IF(GCC,
-	[
-		AC_MSG_RESULT([yes, adding -pg])
-		RB_VAR_PREPEND([CXXFLAGS], ["-pg"])
-	])
-
-	AM_COND_IF(CLANG,
-	[
-		AC_MSG_RESULT([yes, adding profiling flags])
-
-		#RB_VAR_PREPEND([CXXFLAGS], ["-fprofile-generate"])
-		#RB_VAR_PREPEND([LDFLAGS], ["-Wl,-fprofile-generate"])
-
-		dnl TODO: $enableval=instr?
-		dnl RB_VAR_PREPEND([CXXFLAGS], ["-fprofile-instr-generate"])
-		dnl RB_VAR_PREPEND([CXXFLAGS], ["-fcoverage-mapping"])
-		dnl RB_VAR_PREPEND([LDFLAGS], ["-Wl,-fprofile-instr-generate"])
-	])
-
-], [
-	AC_MSG_RESULT([no])
-	profiling="no"
-])
-
-AM_CONDITIONAL([PROFILE], [[[[ "$profiling" = "yes" ]]]])
-
-AC_MSG_CHECKING(whether to use a specific runtime profile)
-AC_ARG_WITH(profile, RB_HELP_STRING([--with-profile[[[=$PWD]]]], [Path to profdata]),
-[
-	profile_use=$withval
-	AC_MSG_RESULT([yes, "$profile_use"])
-	AC_SUBST(PROFILE_USE, $profile_use)
-], [
-	AM_COND_IF([CLANG],
-	[
-		profile_use="yes"
-		AC_MSG_RESULT([yes, if default.profdata is found])
-	], [
-		profile_use="no"
-		AC_MSG_RESULT([no])
-	])
-])
-
-AM_CONDITIONAL([PROFILE_USE], [[[[ "$profile_use" != "no" ]] && [[ "$profiling" == "no" ]]]])
-
-AM_COND_IF([PROFILE_USE],
-[
-	dnl Provide the correct target to the Makefiles
-	AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata)
-	AM_COND_IF(CLANG14, [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-14) ])
-	AM_COND_IF(CLANG13, [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-13) ])
-	AM_COND_IF(CLANG12, [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-12) ])
-	AM_COND_IF(CLANG11, [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-11) ])
-	AM_COND_IF(CLANG10, [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-10) ])
-	AM_COND_IF(CLANG9,  [ AC_PATH_PROG(LLVM_PROFDATA, llvm-profdata-9)  ])
-])
-
-dnl
 dnl Precompiled headers
 dnl
 
@@ -3235,8 +3168,6 @@ echo "Developer debugging ............... $debug"
 echo "Developer assertions .............. $assert ($assert_type)"
 echo "Optimized compile ................. $optimize (-O$optimize_level)"
 echo "Optimized linking ................. $lto"
-echo "Optimized runtime ................. $profile_use"
-echo "Profiling runtime ................. $profiling"
 echo
 echo "Magic support ..................... $have_magic"
 echo "ImageMagick support ............... $have_imagemagick"
