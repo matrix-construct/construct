@@ -106,6 +106,7 @@ AM_CONDITIONAL([GCC9],     [[[[ $CXX = g\+\+* ]] && [[ $CXX_EPOCH -ge 9 ]]]])
 AM_CONDITIONAL([GCC10],    [[[[ $CXX = g\+\+* ]] && [[ $CXX_EPOCH -ge 10 ]]]])
 AM_CONDITIONAL([GCC11],    [[[[ $CXX = g\+\+* ]] && [[ $CXX_EPOCH -ge 11 ]]]])
 AM_CONDITIONAL([GCC12],    [[[[ $CXX = g\+\+* ]] && [[ $CXX_EPOCH -ge 12 ]]]])
+
 AM_CONDITIONAL([CLANG8],   [[[[ $CXX = clang* ]] && [[ $CXX_EPOCH -ge 8 ]]]])
 AM_CONDITIONAL([CLANG9],   [[[[ $CXX = clang* ]] && [[ $CXX_EPOCH -ge 9 ]]]])
 AM_CONDITIONAL([CLANG10],  [[[[ $CXX = clang* ]] && [[ $CXX_EPOCH -ge 10 ]]]])
@@ -113,6 +114,8 @@ AM_CONDITIONAL([CLANG11],  [[[[ $CXX = clang* ]] && [[ $CXX_EPOCH -ge 11 ]]]])
 AM_CONDITIONAL([CLANG12],  [[[[ $CXX = clang* ]] && [[ $CXX_EPOCH -ge 12 ]]]])
 AM_CONDITIONAL([CLANG13],  [[[[ $CXX = clang* ]] && [[ $CXX_EPOCH -ge 13 ]]]])
 AM_CONDITIONAL([CLANG14],  [[[[ $CXX = clang* ]] && [[ $CXX_EPOCH -ge 14 ]]]])
+AM_CONDITIONAL([CLANG15],  [[[[ $CXX = clang* ]] && [[ $CXX_EPOCH -ge 15 ]]]])
+AM_CONDITIONAL([CLANG16],  [[[[ $CXX = clang* ]] && [[ $CXX_EPOCH -ge 16 ]]]])
 
 dnl
 dnl Coarse operating system test macros
