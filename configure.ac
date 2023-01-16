@@ -872,6 +872,7 @@ AM_COND_IF([GCC],
 	RB_MAYBE_CWARN([-Wframe-larger-than=$FRAME_SIZE_WARNING], charybdis_cv_c_gcc_w_frame_larger_than)
 	RB_MAYBE_CWARN([-Walloca], charybdis_cv_c_gcc_w_alloca)
 	RB_MAYBE_CWARN([-Wvector-operation-performance], charybdis_cv_c_gcc_w_vector_operation_performance)
+	RB_MAYBE_CWARN([-Wstringop-overflow=4], charybdis_cv_c_gcc_w_stringop_overflow)
 
 	AM_COND_IF([DEBUG],
 	[
