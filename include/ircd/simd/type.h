@@ -44,8 +44,7 @@ namespace ircd                                                \
 {                                                             \
     namespace simd                                            \
     {                                                         \
-        using _T_ = _U_                                       \
-        __attribute__((aligned((_V_))));                      \
+        using _T_ = _U_;                                      \
                                                               \
         template<>                                            \
         constexpr size_t sizeof_lane<_T_, _U_>()              \
@@ -63,7 +62,7 @@ namespace ircd                                                \
     namespace simd                                            \
     {                                                         \
         using _T_ = _U_                                       \
-        __attribute__((vector_size((_V_)), aligned((_V_))));  \
+        __attribute__((vector_size((_V_))));                  \
                                                               \
         template<>                                            \
         constexpr size_t sizeof_lane<_T_, _U_>()              \

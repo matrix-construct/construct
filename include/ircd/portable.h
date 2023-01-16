@@ -75,11 +75,11 @@
 namespace ircd
 {
 	#if defined(HAVE___INT128_T) && defined(HAVE__UINT128_T)
-		using int128_t = __int128_t __attribute__((aligned(16)));
-		using uint128_t = __uint128_t __attribute__((aligned(16)));
+		using int128_t = __int128_t;
+		using uint128_t = __uint128_t;
 	#elif defined(HAVE___INT128)
-		using int128_t = signed __int128 __attribute__((aligned(16)));
-		using uint128_t = unsigned __int128 __attribute__((aligned(16)));
+		using int128_t = signed __int128;
+		using uint128_t = unsigned __int128;
 	#else
 		#error "Missing 128 bit integer types on this platform."
 	#endif
