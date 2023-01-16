@@ -36,6 +36,9 @@ struct ircd::util::bitset
   private:
 	word buf[words] {0};
 
+	constexpr size_t byte(const size_t pos) const;
+	constexpr size_t bit(const size_t pos) const;
+
   public:
 	constexpr size_t size() const
 	{
@@ -88,7 +91,7 @@ template<size_t N>
 constexpr void
 ircd::util::bitset<N>::flip(const size_t pos)
 {
-	buf[pos / 8] ^= word(1) << (pos % 8);
+	buf[byte(pos)] ^= word(1) << bit(pos);
 }
 
 template<size_t N>
@@ -104,7 +107,7 @@ constexpr void
 ircd::util::bitset<N>::set(const size_t pos,
                            const bool val)
 {
-	buf[pos / 8] |= word(val) << (pos % 8);
+	buf[byte(pos)] |= word(val) << bit(pos);
 }
 
 template<size_t N>
@@ -119,7 +122,7 @@ template<size_t N>
 constexpr void
 ircd::util::bitset<N>::reset(const size_t pos)
 {
-	buf[pos / 8] &= ~(word(1) << (pos % 8));
+	buf[byte(pos)] &= ~(word(1) << bit(pos));
 }
 
 template<size_t N>
@@ -139,5 +142,24 @@ constexpr bool
 ircd::util::bitset<N>::test(const size_t pos)
 const
 {
-	return buf[pos / 8] & (word(1) << (pos % 8));
+	return buf[byte(pos)] & (word(1) << bit(pos));
+}
+
+template<size_t N>
+constexpr size_t
+ircd::util::bitset<N>::byte(const size_t pos)
+const
+{
+	constexpr auto max(words - 1);
+	const auto off(pos / 8);
+	assert(off <= max);
+	return std::min(off, max);
+}
+
+template<size_t N>
+constexpr size_t
+ircd::util::bitset<N>::bit(const size_t pos)
+const
+{
+	return pos % 8;
 }
