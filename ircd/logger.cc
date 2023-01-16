@@ -559,7 +559,7 @@ noexcept
 
 	// Compose the prefix sequence into the buffer.
 	std::stringstream s;
-	pubsetbuf(s, buf);
+	pubsetbuf(s, mutable_buffer(buf, max));
 	s
 	<< microdate(date)
 	<< ' '
@@ -595,6 +595,7 @@ noexcept
 	// Compose the newline after user message.
 	size_t len{pos + sb.consumed()};
 	assert(len + 2 <= sizeof(buf));
+	len = std::min(len, max);
 	buf[len++] = '\r';
 	buf[len++] = '\n';
 
