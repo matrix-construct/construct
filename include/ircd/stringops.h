@@ -401,7 +401,7 @@ ircd::split(const string_view &str,
 {
 	using pair = std::pair<ircd::string_view, ircd::string_view>;
 
-	const auto pos(str.find(delim));
+	const auto pos(str? str.find(delim): string_view::npos);
 	return pos == string_view::npos?
 		pair { str, string_view{} }:
 		pair { str.substr(std::nothrow, 0, pos), str.substr(std::nothrow, pos + 1) };
@@ -529,7 +529,7 @@ inline ircd::string_view
 ircd::lstrip(const string_view &str,
              const char &c)
 {
-	const auto pos(str.find_first_not_of(c));
+	const auto pos(str? str.find_first_not_of(c): string_view::npos);
 	return pos != string_view::npos?
 		string_view{str.substr(pos)}:
 		string_view{str.data(), size_t{0}};
