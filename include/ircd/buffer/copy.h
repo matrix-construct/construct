@@ -85,7 +85,18 @@ ircd::buffer::copy(char *&__restrict__ dest,
 	assert(!overlap(const_buffer(dest, cpsz), src));
 	assert(cpsz <= size(src));
 	assert(cpsz <= remain);
+
+	// Suppress warnings which present from the __builtin_memcpy() but these
+	// are actually caused by the overlap assertion above which should have no
+	// side-effects; this is very likely a bug in gcc.
+	#pragma GCC diagnostic push
+	#ifdef RB_ASSERT
+	#pragma GCC diagnostic ignored "-Warray-bounds"
+	#pragma GCC diagnostic ignored "-Wstringop-overflow"
+	#endif
 	__builtin_memcpy(dest, srcp, cpsz);
+	#pragma GCC diagnostic pop
+
 	dest += cpsz;
 	assert(dest <= stop);
 	return dest;
