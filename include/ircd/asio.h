@@ -87,11 +87,14 @@ namespace boost
 #else
 #pragma GCC visibility push(default)
 #endif
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
 #include <boost/asio.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl.hpp>
+#pragma GCC diagnostic pop
 #pragma GCC visibility pop
 
 // Template-specializations for some functions we may redefine (interpose).
