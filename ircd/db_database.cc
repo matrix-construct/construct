@@ -2716,7 +2716,6 @@ noexcept
 	};
 
 	char pbuf[8][48];
-	size_t i(0);
 	if(!bytes_same)
 		log::info
 		{
@@ -2725,15 +2724,14 @@ noexcept
 			info.stats.num_input_records,
 			info.stats.num_output_records,
 			info.stats.num_records_replaced,
-			pretty(pbuf[i++], iec(info.stats.total_input_bytes)),
-			bytes_same? "same": pretty(pbuf[i++], iec(info.stats.total_output_bytes)),
-			pretty(pbuf[i++], nanoseconds(info.stats.file_prepare_write_nanos), true),
-			pretty(pbuf[i++], nanoseconds(info.stats.file_write_nanos), true),
-			pretty(pbuf[i++], nanoseconds(info.stats.file_range_sync_nanos), true),
-			pretty(pbuf[i++], nanoseconds(info.stats.file_fsync_nanos), true),
-			pretty(pbuf[i++], microseconds(info.stats.elapsed_micros), true),
+			pretty(pbuf[0], iec(info.stats.total_input_bytes)),
+			bytes_same? "same": pretty(pbuf[1], iec(info.stats.total_output_bytes)),
+			pretty(pbuf[2], nanoseconds(info.stats.file_prepare_write_nanos), true),
+			pretty(pbuf[3], nanoseconds(info.stats.file_write_nanos), true),
+			pretty(pbuf[4], nanoseconds(info.stats.file_range_sync_nanos), true),
+			pretty(pbuf[5], nanoseconds(info.stats.file_fsync_nanos), true),
+			pretty(pbuf[6], microseconds(info.stats.elapsed_micros), true),
 		};
-	assert(i <= 8);
 
 	if(info.stats.num_corrupt_keys > 0)
 		log::critical
