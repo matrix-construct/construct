@@ -55,7 +55,7 @@ get__context(client &client,
 		url::decode(event_id, request.parv[2])
 	};
 
-	const auto &limit
+	const auto limit
 	{
 		std::min(request.query.get<size_t>("limit", default_limit), size_t(limit_max))
 	};
