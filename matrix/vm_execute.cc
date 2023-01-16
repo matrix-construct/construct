@@ -254,7 +254,7 @@ ircd::m::vm::execute(eval &eval,
 				0UL
 		};
 
-		for(k = 0; k < j; ++k, ++eval.evaluated) try
+		for(k = 0; k < j; ++k, ++eval.evaluated)
 		{
 			const bool exists
 			(
@@ -281,21 +281,6 @@ ircd::m::vm::execute(eval &eval,
 			// If handle_fault() was not previously called about this eval
 			if(likely(fault == fault::ACCEPT || exists))
 				handle_fault(opts, fault, event.event_id?: eval.event_id, string_view{});
-		}
-		catch(const ctx::interrupted &)
-		{
-			++eval.faulted;
-			throw;
-		}
-		catch(const std::exception &)
-		{
-			++eval.faulted;
-			continue;
-		}
-		catch(...)
-		{
-			++eval.faulted;
-			throw;
 		}
 	}
 
