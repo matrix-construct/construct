@@ -68,9 +68,13 @@ AM_LDFLAGS += -Wl,--enable-runtime-pseudo-reloc
 AM_LDFLAGS += -export-symbols-regex '*'
 endif
 
-AM_CXXFLAGS += $(EXTRA_CXXFLAGS)
-AM_CPPFLAGS += $(EXTRA_CPPFLAGS)
-AM_LDFLAGS += $(EXTRA_LDFLAGS)
+CXXFLAGS += $(EXTRA_CXXFLAGS)
+CPPFLAGS += $(EXTRA_CPPFLAGS)
+LDFLAGS += $(EXTRA_LDFLAGS)
+
+#
+# libircd
+#
 
 libircddir = @libdir@
 libircd_LTLIBRARIES =#

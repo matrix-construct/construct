@@ -32,9 +32,9 @@ AM_LDFLAGS += -Wl,--no-gnu-unique
 AM_LDFLAGS += -Wl,--sort-common=descending
 endif
 
-AM_CXXFLAGS += $(EXTRA_CXXFLAGS)
-AM_CPPFLAGS += $(EXTRA_CPPFLAGS)
-AM_LDFLAGS += $(EXTRA_LDFLAGS)
+CPPFLAGS += $(EXTRA_CPPFLAGS)
+CXXFLAGS += $(EXTRA_CXXFLAGS)
+LDFLAGS += $(EXTRA_LDFLAGS)
 
 ###############################################################################
 #

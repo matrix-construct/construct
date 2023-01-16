@@ -16,8 +16,8 @@ LOWMEM_FLAGS= --param ggc-min-expand=1
 endif
 endif
 
-AM_CPPFLAGS += $(EXTRA_CPPFLAGS)
-AM_CXXFLAGS += $(EXTRA_CXXFLAGS)
+CPPFLAGS += $(EXTRA_CPPFLAGS)
+CXXFLAGS += $(EXTRA_CXXFLAGS)
 
 # includedir = @includedir@/$(PACKAGE_TARNAME)
 includedir = @includedir@/ircd

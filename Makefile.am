@@ -1,7 +1,8 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I tools/m4
 
-SUBDIRS = include/ircd
+SUBDIRS =#
+SUBDIRS += include/ircd
 SUBDIRS += ircd
 SUBDIRS += matrix
 SUBDIRS += modules

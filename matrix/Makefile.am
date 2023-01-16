@@ -58,17 +58,17 @@ if MINGW
 AM_LDFLAGS += -Wl,--enable-runtime-pseudo-reloc
 endif
 
-AM_CXXFLAGS += $(EXTRA_CXXFLAGS)
-AM_CPPFLAGS += $(EXTRA_CPPFLAGS)
-AM_LDFLAGS += $(EXTRA_LDFLAGS)
+CXXFLAGS += $(EXTRA_CXXFLAGS)
+CPPFLAGS += $(EXTRA_CPPFLAGS)
+LDFLAGS += $(EXTRA_LDFLAGS)
+
+#
+# libircd_matrix
+#
 
 libircd_matrixdir = @libdir@
 libircd_matrix_LTLIBRARIES =#
 libircd_matrix_LTLIBRARIES += libircd_matrix.la
-
-#
-# Unit list
-#
 
 libircd_matrix_la_SOURCES =#
 libircd_matrix_la_SOURCES += name.cc
