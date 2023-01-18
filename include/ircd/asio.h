@@ -25,7 +25,6 @@
 #include <ircd/ircd.h>
 
 // Boost preambles
-#define BOOST_COROUTINES_NO_DEPRECATION_WARNING
 #include <boost/version.hpp>
 #include <boost/config.hpp>
 
