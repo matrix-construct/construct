@@ -8,6 +8,16 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+namespace boost::context
+{
+	struct stack_context;
+}
+
+namespace boost::coroutines
+{
+	struct stack_context;
+}
+
 namespace ircd::ctx
 {
 	struct stack;
@@ -27,4 +37,17 @@ struct ircd::ctx::stack
 
 	static const stack &get(const ctx &) noexcept;
 	static stack &get(ctx &) noexcept;
+};
+
+struct [[gnu::visibility("hidden")]]
+ircd::ctx::stack::allocator
+{
+	mutable_buffer &buf;
+	bool owner {false};
+
+	void deallocate(boost::coroutines::stack_context &) noexcept;
+	void allocate(boost::coroutines::stack_context &, size_t size);
+
+	void deallocate(boost::context::stack_context &) noexcept;
+	boost::context::stack_context allocate();
 };

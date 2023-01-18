@@ -77,6 +77,7 @@ namespace boost
 #include <boost/asio/detail/config.hpp>
 #include <boost/asio/detail/socket_types.hpp>
 #include <boost/asio/ssl/detail/openssl_types.hpp>
+#include <boost/context/stack_context.hpp>
 #include <boost/coroutine/coroutine.hpp>
 
 #if defined(BOOST_ASIO_HAS_EPOLL) \

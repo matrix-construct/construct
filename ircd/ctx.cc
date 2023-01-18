@@ -143,7 +143,24 @@ ircd::ctx::ctx::spawn(context::function func)
 		ios::handler::leave(parent_handler);
 
 		assert(!ircd::ctx::current && !ios::handler::current);
-		boost::asio::spawn(ios::get(), ios::handle(ios_desc, std::move(bound)), attrs);
+
+		#if BOOST_VERSION >= 108000
+			boost::asio::spawn
+			(
+				ios::get(),
+				asio::allocator_arg_t{},
+				stack::allocator{stack.buf},
+				ios::handle{ios_desc, std::move(bound)},
+				asio::detached
+			);
+		#else
+			boost::asio::spawn
+			(
+				ios::get(),
+				ios::handle{ios_desc, std::move(bound)},
+				attrs
+			);
+		#endif
 
 		assert(!ircd::ctx::current && !ios::handler::current);
 		ios::handler::enter(parent_handler);
@@ -3289,20 +3306,40 @@ noexcept
 // stack::allocator
 //
 
-struct [[gnu::visibility("hidden")]]
-ircd::ctx::stack::allocator
+boost::context::stack_context
+ircd::ctx::stack::allocator::allocate()
 {
-	using stack_context = boost::coroutines::stack_context;
+	boost::coroutines::stack_context c;
+	allocate(c, std::distance(begin(buf), end(buf)));
 
-	mutable_buffer &buf;
-	bool owner {false};
+	return boost::context::stack_context
+	{
+		.size = c.size,
+		.sp = c.sp,
 
-	void allocate(stack_context &, size_t size);
-	void deallocate(stack_context &);
-};
+		#if defined(BOOST_USE_VALGRIND)
+		.valgrind_stack_id = c.valgrind_stack_id,
+		#endif
+	};
+}
 
 void
-ircd::ctx::stack::allocator::allocate(stack_context &c,
+ircd::ctx::stack::allocator::deallocate(boost::context::stack_context &c)
+noexcept
+{
+	boost::coroutines::stack_context _c;
+	_c.size = c.size;
+	_c.sp = c.sp;
+
+	#if defined(BOOST_USE_VALGRIND)
+	_c.valgrind_stack_id = c.valgrind_stack_id;
+	#endif
+
+	deallocate(_c);
+}
+
+void
+ircd::ctx::stack::allocator::allocate(boost::coroutines::stack_context &c,
                                       size_t size)
 {
 	static const auto &alignment
@@ -3312,13 +3349,14 @@ ircd::ctx::stack::allocator::allocate(stack_context &c,
 
 	unique_mutable_buffer umb
 	{
-		null(this->buf)? size: 0, alignment
+		null(buf)? size: 0, alignment
 	};
 
-	const mutable_buffer &buf
+	if(umb)
 	{
-		umb? umb: this->buf
-	};
+		buf = umb.release();
+		this->owner = true;
+	}
 
 	c.size = ircd::size(buf);
 	c.sp = ircd::data(buf) + c.size;
@@ -3327,13 +3365,11 @@ ircd::ctx::stack::allocator::allocate(stack_context &c,
 	if(vg::active)
 		c.valgrind_stack_id = vg::stack::add(buf);
 	#endif
-
-	this->owner = bool(umb);
-	this->buf = umb? umb.release(): this->buf;
 }
 
 void
-ircd::ctx::stack::allocator::deallocate(stack_context &c)
+ircd::ctx::stack::allocator::deallocate(boost::coroutines::stack_context &c)
+noexcept
 {
 	assert(c.sp);
 
