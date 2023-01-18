@@ -278,7 +278,7 @@ if OPENCL
 cl.lo:                AM_CPPFLAGS := @OPENCL_CPPFLAGS@ ${AM_CPPFLAGS}
 endif
 client.lo:            AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
-ctx_x86_64.lo:        AM_CPPFLAGS := -I$(top_srcdir)/include
+ctx_x86_64.lo:        AM_CPPFLAGS := -I$(top_srcdir)/include ${BOOST_CPPFLAGS}
 ctx.lo:               AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
 ctx_ole.lo:           AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}
 ctx_eh.lo:            AM_CPPFLAGS := ${AM_CPPFLAGS} ${ASIO_UNIT_CPPFLAGS}

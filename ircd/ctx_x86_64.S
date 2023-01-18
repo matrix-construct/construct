@@ -13,10 +13,23 @@
 //
 
 #include <ircd/config.h>
+#include <boost/version.hpp>
 #if defined(__x86_64__) && defined(__ELF__)
 
 .file "ctx_x86_64.S"
 .globl jump_fcontext
+
+// Sizes of additional items saved on context switch
+.equiv x87_ctrl_sz, 0x04
+.equiv mmx_ctrl_sz, 0x04
+.equiv stack_prot_sz, 0x08
+
+// Total size of all additional items
+.if BOOST_VERSION >= 108100
+.equiv alloc_sz, x87_ctrl_sz + mmx_ctrl_sz + stack_prot_sz
+.else
+.equiv alloc_sz, x87_ctrl_sz + mmx_ctrl_sz
+.endif
 
 .text
 .type jump_fcontext, @function
@@ -32,15 +45,15 @@ jump_fcontext:
 	push      %r14                     // store r14 0x18
 	push      %r13                     // store r13 0x10
 	push      %r12                     // store r12 0x08
-	subq      $0x08, %rsp              // alloc fc_mxcsr | fc_x87_cw
-//	fnstcw    0x04(%rsp)               // store x87 control-word
-//	stmxcsr   0x00(%rsp)               // store MMX control- and status-word
+	subq      $alloc_sz, %rsp          // additional allocation
+	fnstcw    0x04(%rsp)               // store x87 control-word
+	stmxcsr   0x00(%rsp)               // store MMX control- and status-word
 	xchgq     %rsp, %rdi               // swap stack
 	movq      %rsi, %rdx               // store transfer_t.data (retval)
 	movq      %rdi, %rax               // store transfer_t.fctx (retval)
-//	ldmxcsr   0x00(%rsp)               // load MMX control- and status-word
-//	fldcw     0x04(%rsp)               // load x87 control-word
-	addq      $0x08, %rsp              // free fc_mxcsr | fc_x87_cw
+	ldmxcsr   0x00(%rsp)               // load MMX control- and status-word
+	fldcw     0x04(%rsp)               // load x87 control-word
+	addq      $alloc_sz, %rsp          // free allocation
 	pop       %r12                     // load r12                    <-- LLd miss
 	pop       %r13                     // load r13
 	pop       %r14                     // load r14
