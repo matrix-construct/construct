@@ -10,6 +10,11 @@
 
 namespace ircd::m
 {
+	extern conf::item<bool> room_member_invite_autojoin_dmonly;
+	extern conf::item<bool> room_member_invite_autojoin_enable;
+	static void room_member_invite_autojoin(const event &, vm::eval &);
+	extern m::hookfn<vm::eval &> room_member_invite_autojoin_hookfn;
+
 	static void auth_room_member_knock(const event &, room::auth::hookdata &);
 	extern m::hookfn<room::auth::hookdata &> auth_room_member_knock_hookfn;
 
@@ -516,4 +521,65 @@ ircd::m::auth_room_member_knock(const m::event &event,
 	{
 		"m.room.member membership=knock fails authorization."
 	};
+}
+
+decltype(ircd::m::room_member_invite_autojoin_hookfn)
+ircd::m::room_member_invite_autojoin_hookfn
+{
+	room_member_invite_autojoin,
+	{
+		{ "_site",       "vm.effect"     },
+		{ "type",        "m.room.member" },
+		{ "content",
+		{
+			{ "membership",  "invite" },
+		}},
+	}
+};
+
+decltype(ircd::m::room_member_invite_autojoin_enable)
+ircd::m::room_member_invite_autojoin_enable
+{
+	{ "name",     "ircd.m.room.member.invite.autojoin.enable"  },
+	{ "default",  true                                         },
+};
+
+decltype(ircd::m::room_member_invite_autojoin_dmonly)
+ircd::m::room_member_invite_autojoin_dmonly
+{
+	{ "name",     "ircd.m.room.member.invite.autojoin.dmonly"  },
+	{ "default",  true                                         },
+};
+
+void
+ircd::m::room_member_invite_autojoin(const event &event,
+                                     vm::eval &eval)
+{
+	if(!room_member_invite_autojoin_enable)
+		return;
+
+	const m::user::id &target
+	{
+		at<"state_key"_>(event)
+	};
+
+	if(!my(target))
+		return;
+
+	if(room_member_invite_autojoin_dmonly)
+		if(!at<"content"_>(event).get("is_direct", false))
+			return;
+
+	const m::room room
+	{
+		at<"room_id"_>(event)
+	};
+
+	assert(eval.opts);
+	const string_view remotes[]
+	{
+		eval.opts->node_id
+	};
+
+	m::join(room, target, remotes);
 }
