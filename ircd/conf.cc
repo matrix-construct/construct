@@ -155,6 +155,36 @@ catch(const std::out_of_range &e)
 	};
 }
 
+template<>
+bool
+ircd::conf::as(const string_view &key)
+{
+	char buf[5]; // "true" or "false"
+	const auto val
+	{
+		get(buf, key)
+	};
+
+	return lex_cast<bool>(val);
+}
+
+template<>
+bool
+ircd::conf::as(const string_view &key,
+               bool def)
+{
+	char buf[5]; // "true" or "false"
+	const auto val
+	{
+		get(std::nothrow, buf, key)
+	};
+
+	if(val && ircd::lex_castable<bool>(val))
+		def = lex_cast<bool>(val);
+
+	return def;
+}
+
 std::string
 ircd::conf::get(const string_view &key)
 try
