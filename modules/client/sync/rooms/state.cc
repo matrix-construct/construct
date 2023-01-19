@@ -107,7 +107,13 @@ ircd::m::sync::room_state_linear_events(data &data)
 		&& data.membership == "join"
 	};
 
-	if(is_own_join)
+	const bool is_own_room_join
+	{
+		is_own_join
+		&& m::creator(*data.room, data.user)
+	};
+
+	if(is_own_join && !is_own_room_join)
 	{
 		// Special case gimmick; this effectively stops the linear-sync at this
 		// event and has /sync respond with a token containing a flag. When the
