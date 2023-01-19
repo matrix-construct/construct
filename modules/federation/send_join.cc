@@ -133,11 +133,25 @@ put__send_join(client &client,
 			"You are not permitted by the room's server access control list."
 		};
 
+	// Sign the event for the latest spec; should be backwards compat.
+	// Re-stringify the result so we're not relying on the thread_local.
+	thread_local char sigs[4_KiB];
+	const json::strung signed_event_json
+	{
+		signatures(sigs, event, my_host())
+	};
+
+	const m::event signed_event
+	{
+		signed_event_json
+	};
+
 	m::vm::opts vmopts;
 	vmopts.fetch = false;
+	vmopts.json_source = true;
 	m::vm::eval eval
 	{
-		event, vmopts
+		signed_event, vmopts
 	};
 
 	const m::room::state state
@@ -176,7 +190,7 @@ put__send_join(client &client,
 			top
 		};
 
-		send_join__response(client, request, event, state, auth_chain, data);
+		send_join__response(client, request, signed_event, state, auth_chain, data);
 		return response;
 	}
 
@@ -186,7 +200,7 @@ put__send_join(client &client,
 	};
 
 	// Top element is the object
-	send_join__response(client, request, event, state, auth_chain, top);
+	send_join__response(client, request, signed_event, state, auth_chain, top);
 	return response;
 }
 
@@ -198,10 +212,9 @@ send_join__response(client &client,
                     const m::room::auth::chain &auth_chain,
                     json::stack::object &data)
 {
-	// Required. The resident server's DNS name.
-	json::stack::member
+	const bool omit_members
 	{
-		data, "origin", my_host()
+		request.query.get("omit_members", false)
 	};
 
 	// auth_chain
@@ -250,6 +263,42 @@ send_join__response(client &client,
 		}});
 	}
 
+	// Maybe required. Might as well...
+	json::stack::member
+	{
+		data, "event", event.source
+	};
+
+	json::stack::member
+	{
+		data, "members_omitted", json::value{omit_members}
+	};
+
+	// Required. The resident server's DNS name.
+	json::stack::member
+	{
+		data, "origin", my_host()
+	};
+
+	if(request.query.get<bool>("servers_in_room", true))
+	{
+		json::stack::array servers_a
+		{
+			data, "servers_in_room"
+		};
+
+		const m::room::origins origins
+		{
+			state.room_id
+		};
+
+		origins.for_each([&servers_a]
+		(const string_view &origin)
+		{
+			servers_a.append(origin);
+		});
+	}
+
 	// state
 	if(request.query.get<bool>("state", true))
 	{
@@ -258,9 +307,12 @@ send_join__response(client &client,
 			data, "state"
 		};
 
-		state.for_each([&state_a]
+		state.for_each([&state_a, &omit_members]
 		(const m::event &event)
 		{
+			if(omit_members && json::get<"type"_>(event) == "m.room.member")
+				return;
+
 			state_a.append(event);
 		});
 	}
