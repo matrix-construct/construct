@@ -236,6 +236,11 @@ ircd::m::room::power::compose_content(const mutable_buffer &buf,
 
 	json::stack::member
 	{
+		content, "historical", json::value(default_creator_level)
+	};
+
+	json::stack::member
+	{
 		content, "invite", json::value(default_power_level)
 	};
 
