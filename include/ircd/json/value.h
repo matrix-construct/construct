@@ -102,8 +102,10 @@ struct ircd::json::value
 
 	value(const members &); // alloc = true
 	value(const struct member *const &, const size_t &len);
+	template<size_t N> value(const struct member (&)[N]);
 	value(std::unique_ptr<const struct member[]> &&, const size_t &len); // alloc = true
 	value(const struct value *const &, const size_t &len);
+	template<size_t N> value(const struct value (&)[N]);
 	value(std::unique_ptr<const struct value[]> &&, const size_t &len); // alloc = true
 	template<size_t N> value(const char (&)[N], const enum type &);
 	template<size_t N> value(const char (&)[N]);
@@ -316,14 +318,28 @@ noexcept
 }
 
 template<size_t N>
+inline
 ircd::json::value::value(const char (&str)[N])
 :value{string_view{str, strnlen(str, N)}}
 {}
 
 template<size_t N>
+inline
 ircd::json::value::value(const char (&str)[N],
                          const enum type &type)
 :value{string_view{str, strnlen(str, N)}, type}
+{}
+
+template<size_t N>
+inline
+ircd::json::value::value(const struct value (&val)[N])
+:value{val, N}
+{}
+
+template<size_t N>
+inline
+ircd::json::value::value(const struct member (&val)[N])
+:value{val, N}
 {}
 
 inline bool
