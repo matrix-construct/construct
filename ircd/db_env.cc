@@ -39,17 +39,16 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] new sequential file '%s' options:%p [mm:%b direct:%b]",
-		d.name,
-		name,
-		&options,
-		options.use_mmap_reads,
-		options.use_direct_reads,
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] new sequential file '%s' options:%p [mm:%b direct:%b]",
+			d.name,
+			name,
+			&options,
+			options.use_mmap_reads,
+			options.use_direct_reads,
+		};
 
 	*r = std::make_unique<sequential_file>(&d, name, options);
 	return Status::OK();
@@ -71,19 +70,18 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] new random access file '%s' options:%p [mm:%b direct:%b bufsz:%zu readahead:%zu]",
-		d.name,
-		name,
-		&options,
-		options.use_mmap_reads,
-		options.use_direct_reads,
-		options.random_access_max_buffer_size,
-		options.compaction_readahead_size,
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] new random access file '%s' options:%p [mm:%b direct:%b bufsz:%zu readahead:%zu]",
+			d.name,
+			name,
+			&options,
+			options.use_mmap_reads,
+			options.use_direct_reads,
+			options.random_access_max_buffer_size,
+			options.compaction_readahead_size,
+		};
 
 	*r = std::make_unique<random_access_file>(&d, name, options);
 	return Status::OK();
@@ -105,20 +103,19 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] new writable file '%s' options:%p [mm:%b direct:%b rl:%p bufsz:%zu syncsz:%zu]",
-		d.name,
-		name,
-		&options,
-		options.use_mmap_writes,
-		options.use_direct_writes,
-		options.rate_limiter,
-		options.writable_file_max_buffer_size,
-		options.bytes_per_sync,
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] new writable file '%s' options:%p [mm:%b direct:%b rl:%p bufsz:%zu syncsz:%zu]",
+			d.name,
+			name,
+			&options,
+			options.use_mmap_writes,
+			options.use_direct_writes,
+			options.rate_limiter,
+			options.writable_file_max_buffer_size,
+			options.bytes_per_sync,
+		};
 
 	if(options.use_direct_writes)
 		*r = std::make_unique<writable_file_direct>(&d, name, options, true, false);
@@ -144,15 +141,14 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] reopen writable file '%s' options:%p",
-		d.name,
-		name,
-		&options
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] reopen writable file '%s' options:%p",
+			d.name,
+			name,
+			&options
+		};
 
 	if(options.use_direct_writes)
 		*r = std::make_unique<writable_file_direct>(&d, name, options, false, true);
@@ -180,16 +176,15 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] reuse writable file '%s' old '%s' options:%p",
-		d.name,
-		name,
-		old_name,
-		&options
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] reuse writable file '%s' old '%s' options:%p",
+			d.name,
+			name,
+			old_name,
+			&options
+		};
 
 	throw ircd::not_implemented
 	{
@@ -219,15 +214,14 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] new random read/write file '%s' options:%p",
-		d.name,
-		name,
-		&options
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] new random read/write file '%s' options:%p",
+			d.name,
+			name,
+			&options
+		};
 
 	*result = std::make_unique<random_rw_file>(&d, name, options);
 	return Status::OK();
@@ -248,14 +242,13 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] new directory '%s'",
-		d.name,
-		name
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] new directory '%s'",
+			d.name,
+			name
+		};
 
 	std::unique_ptr<Directory> defaults;
 	const auto ret
@@ -281,14 +274,13 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] file exists '%s'",
-		d.name,
-		f
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] file exists '%s'",
+			d.name,
+			f
+		};
 
 	return defaults.FileExists(f);
 }
@@ -308,14 +300,13 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] get children of directory '%s'",
-		d.name,
-		dir
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] get children of directory '%s'",
+			d.name,
+			dir
+		};
 
 	return defaults.GetChildren(dir, r);
 }
@@ -335,14 +326,13 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] get children file attributes of directory '%s'",
-		d.name,
-		dir
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] get children file attributes of directory '%s'",
+			d.name,
+			dir
+		};
 
 	return defaults.GetChildrenFileAttributes(dir, result);
 }
@@ -361,14 +351,13 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] delete file '%s'",
-		d.name,
-		name
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] delete file '%s'",
+			d.name,
+			name
+		};
 
 	return defaults.DeleteFile(name);
 }
@@ -387,14 +376,13 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] create directory '%s'",
-		d.name,
-		name
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] create directory '%s'",
+			d.name,
+			name
+		};
 
 	return defaults.CreateDir(name);
 }
@@ -413,14 +401,13 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] create directory if missing '%s'",
-		d.name,
-		name
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] create directory if missing '%s'",
+			d.name,
+			name
+		};
 
 	return defaults.CreateDirIfMissing(name);
 }
@@ -439,14 +426,13 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] delete directory '%s'",
-		d.name,
-		name
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] delete directory '%s'",
+			d.name,
+			name
+		};
 
 	return defaults.DeleteDir(name);
 }
@@ -466,14 +452,13 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] get file size '%s'",
-		d.name,
-		name
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] get file size '%s'",
+			d.name,
+			name
+		};
 
 	assert(s);
 	*s = fs::size(name);
@@ -495,14 +480,13 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] get file mtime '%s'",
-		d.name,
-		name
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] get file mtime '%s'",
+			d.name,
+			name
+		};
 
 	return defaults.GetFileModificationTime(name, file_mtime);
 }
@@ -522,15 +506,14 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] rename file '%s' to '%s'",
-		d.name,
-		s,
-		t
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] rename file '%s' to '%s'",
+			d.name,
+			s,
+			t
+		};
 
 	return defaults.RenameFile(s, t);
 }
@@ -550,15 +533,14 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] link file '%s' to '%s'",
-		d.name,
-		s,
-		t
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] link file '%s' to '%s'",
+			d.name,
+			s,
+			t
+		};
 
 	return defaults.LinkFile(s, t);
 }
@@ -578,14 +560,13 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] lock file '%s'",
-		d.name,
-		name
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] lock file '%s'",
+			d.name,
+			name
+		};
 
 	return defaults.LockFile(name, l);
 }
@@ -604,14 +585,13 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] unlock file lock:%p",
-		d.name,
-		l
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] unlock file lock:%p",
+			d.name,
+			l
+		};
 
 	return defaults.UnlockFile(l);
 }
@@ -648,15 +628,14 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] get absolute path from '%s' ret:%p",
-		d.name,
-		db_path,
-		output_path
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] get absolute path from '%s' ret:%p",
+			d.name,
+			db_path,
+			output_path
+		};
 
 	return defaults.GetAbsolutePath(db_path, output_path);
 }
@@ -676,15 +655,14 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] new logger '%s' result:%p",
-		d.name,
-		name,
-		(const void *)result
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] new logger '%s' result:%p",
+			d.name,
+			name,
+			(const void *)result
+		};
 
 	return defaults.NewLogger(name, result);
 }
@@ -700,15 +678,14 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] get host name name:%p len:%lu",
-		d.name,
-		name,
-		len
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] get host name name:%p len:%lu",
+			d.name,
+			name,
+			len
+		};
 
 	return defaults.GetHostName(name, len);
 }
@@ -768,14 +745,13 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		"[%s] sleep for %d microseconds",
-		d.name,
-		micros
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			"[%s] sleep for %d microseconds",
+			d.name,
+			micros
+		};
 
 	ctx::sleep(microseconds(micros));
 }
@@ -800,18 +776,17 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	//#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] schedule func:%p a:%p tag:%p u:%p prio:%s",
-		d.name,
-		f,
-		a,
-		tag,
-		u,
-		reflect(prio)
-	};
-	//#endif
+	if constexpr(RB_DEBUG_DB_ENV || (true))
+		log::debug
+		{
+			log, "[%s] schedule func:%p a:%p tag:%p u:%p prio:%s",
+			d.name,
+			f,
+			a,
+			tag,
+			u,
+			reflect(prio)
+		};
 
 	assert(st);
 	auto &pool
@@ -845,15 +820,14 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	//#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] unschedule tag:%p prio:%s",
-		d.name,
-		tag,
-		reflect(prio)
-	};
-	//#endif
+	if constexpr(RB_DEBUG_DB_ENV || (true))
+		log::debug
+		{
+			log, "[%s] unschedule tag:%p prio:%s",
+			d.name,
+			tag,
+			reflect(prio)
+		};
 
 	assert(st);
 	auto &pool
@@ -884,15 +858,14 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	//#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] start thread func:%p a:%p",
-		d.name,
-		f,
-		a
-	};
-	//#endif
+	if constexpr(RB_DEBUG_DB_ENV || (true))
+		log::debug
+		{
+			log, "[%s] start thread func:%p a:%p",
+			d.name,
+			f,
+			a
+		};
 
 	throw ircd::not_implemented
 	{
@@ -915,13 +888,12 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wait for all ctx to join",
-		d.name
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wait for all ctx to join",
+			d.name
+		};
 
 	assert(st);
 	for(auto &pool : st->pool)
@@ -944,14 +916,13 @@ const noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] get thread pool queue len prio:%s",
-		d.name,
-		reflect(prio)
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] get thread pool queue len prio:%s",
+			d.name,
+			reflect(prio)
+		};
 
 	assert(st);
 	const auto &pool
@@ -978,15 +949,14 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] set background threads prio:%s num:%d",
-		d.name,
-		reflect(prio),
-		num
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] set background threads prio:%s num:%d",
+			d.name,
+			reflect(prio),
+			num
+		};
 
 	assert(st);
 	auto &pool
@@ -1015,15 +985,14 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] increase background threads num:%d prio:%s",
-		d.name,
-		num,
-		reflect(prio)
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] increase background threads num:%d prio:%s",
+			d.name,
+			num,
+			reflect(prio)
+		};
 
 	assert(st);
 	auto &pool
@@ -1051,14 +1020,13 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] lower thread pool priority prio:%s",
-		d.name,
-		reflect(prio)
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] lower thread pool priority prio:%s",
+			d.name,
+			reflect(prio)
+		};
 
 	assert(st);
 	auto &pool
@@ -1093,15 +1061,14 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] get thread list %p (%zu)",
-		d.name,
-		list,
-		list? list->size() : 0UL
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] get thread list %p (%zu)",
+			d.name,
+			list,
+			list? list->size() : 0UL
+		};
 
 	throw ircd::not_implemented
 	{
@@ -1129,13 +1096,12 @@ const noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] get thread status updater",
-		d.name,
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] get thread status updater",
+			d.name,
+		};
 
 	return defaults.GetThreadStatusUpdater();
 }
@@ -1158,13 +1124,12 @@ const noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] get thread ID",
-		d.name,
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] get thread ID",
+			d.name,
+		};
 
 	return ctx::this_ctx::id();
 }
@@ -1184,14 +1149,13 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] get background threads prio:%s",
-		d.name,
-		reflect(prio)
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] get background threads prio:%s",
+			d.name,
+			reflect(prio)
+		};
 
 	assert(st);
 	const auto &pool
@@ -1276,16 +1240,15 @@ try
 	ircd::info::page_size
 }
 {
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] opened wfile:%p fd:%d '%s'",
-		d->name,
-		this,
-		int(fd),
-		name
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] opened wfile:%p fd:%d '%s'",
+			d->name,
+			this,
+			int(fd),
+			name
+		};
 
 	// Workaround a RocksDB bug which doesn't propagate EnvOptions properly
 	// on some constructions of WritableFile early on during db open. We'll
@@ -1313,15 +1276,14 @@ noexcept
 {
 	Close();
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] closed wfile:%p fd:%d",
-		d.name,
-		this,
-		int(fd)
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] closed wfile:%p fd:%d",
+			d.name,
+			this,
+			int(fd)
+		};
 }
 
 rocksdb::Status
@@ -1334,15 +1296,14 @@ noexcept try
 	if(!fd)
 		return Status::OK();
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wfile:%p fd:%d close",
-		d.name,
-		this,
-		int(fd)
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wfile:%p fd:%d close",
+			d.name,
+			this,
+			int(fd)
+		};
 
 	fd = fs::fd{};
 	return Status::OK();
@@ -1379,15 +1340,14 @@ noexcept try
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard lock{mutex};
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wfile:%p fd:%d flush",
-		d.name,
-		this,
-		int(fd),
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wfile:%p fd:%d flush",
+			d.name,
+			this,
+			int(fd),
+		};
 
 	fs::sync_opts opts;
 	opts.metadata = false;
@@ -1430,15 +1390,14 @@ noexcept try
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard lock{mutex};
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wfile:%p fd:%d sync",
-		d.name,
-		this,
-		int(fd),
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wfile:%p fd:%d sync",
+			d.name,
+			this,
+			int(fd),
+		};
 
 	fs::sync_opts opts;
 	opts.priority = ionice;
@@ -1480,15 +1439,14 @@ noexcept try
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard lock{mutex};
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wfile:%p fd:%d fsync",
-		d.name,
-		this,
-		int(fd),
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wfile:%p fd:%d fsync",
+			d.name,
+			this,
+			int(fd),
+		};
 
 	fs::sync_opts opts;
 	opts.priority = ionice;
@@ -1531,17 +1489,16 @@ noexcept try
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard lock{mutex};
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		"[%s] wfile:%p fd:%d range sync offset:%lu length:%lu",
-		d.name,
-		this,
-		int(fd),
-		offset,
-		length
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			"[%s] wfile:%p fd:%d range sync offset:%lu length:%lu",
+			d.name,
+			this,
+			int(fd),
+			offset,
+			length
+		};
 
 	// RocksDB sez they want us to initiate flushing of dirty pages
 	// asynchronously without waiting for completion. RocksDB allows
@@ -1597,16 +1554,15 @@ noexcept try
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard lock{mutex};
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		"[%s] wfile:%p fd:%d truncate to %lu bytes",
-		d.name,
-		this,
-		int(fd),
-		size
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			"[%s] wfile:%p fd:%d truncate to %lu bytes",
+			d.name,
+			this,
+			int(fd),
+			size
+		};
 
 	fs::write_opts wopts;
 	wopts.priority = ionice;
@@ -1652,17 +1608,16 @@ noexcept try
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard lock{mutex};
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wfile:%p fd:%d invalidate cache offset:%zu length:%zu",
-		d.name,
-		this,
-		int(fd),
-		offset,
-		length
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wfile:%p fd:%d invalidate cache offset:%zu length:%zu",
+			d.name,
+			this,
+			int(fd),
+			offset,
+			length
+		};
 
 	if(opts.direct)
 		return Status::OK();
@@ -1707,17 +1662,16 @@ noexcept try
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard lock{mutex};
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wfile:%p fd:%d append:%p bytes:%zu",
-		d.name,
-		this,
-		int(fd),
-		data(s),
-		size(s),
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wfile:%p fd:%d append:%p bytes:%zu",
+			d.name,
+			this,
+			int(fd),
+			data(s),
+			size(s),
+		};
 
 	fs::write_opts wopts;
 	wopts.priority = ionice;
@@ -1771,18 +1725,17 @@ noexcept try
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard lock{mutex};
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		"[%s] wfile:%p fd:%d append:%p bytes:%zu offset:%lu",
-		d.name,
-		this,
-		int(fd),
-		data(s),
-		size(s),
-		offset
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			"[%s] wfile:%p fd:%d append:%p bytes:%zu offset:%lu",
+			d.name,
+			this,
+			int(fd),
+			data(s),
+			size(s),
+			offset
+		};
 
 	fs::write_opts wopts;
 	wopts.priority = ionice;
@@ -1838,19 +1791,18 @@ noexcept try
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard lock{mutex};
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wfile:%p fd:%d allocate offset:%lu length:%lu%s%s",
-		d.name,
-		this,
-		int(fd),
-		offset,
-		length,
-		env_opts.fallocate_with_keep_size? " KEEP_SIZE" : "",
-		env_opts.allow_fallocate? "" : " (DISABLED)"
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wfile:%p fd:%d allocate offset:%lu length:%lu%s%s",
+			d.name,
+			this,
+			int(fd),
+			offset,
+			length,
+			env_opts.fallocate_with_keep_size? " KEEP_SIZE" : "",
+			env_opts.allow_fallocate? "" : " (DISABLED)"
+		};
 
 	if(!env_opts.allow_fallocate)
 		return Status::NotSupported();
@@ -1897,16 +1849,15 @@ noexcept
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard lock{mutex};
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wfile:%p prepare write offset:%zu length:%zu",
-		d.name,
-		this,
-		offset,
-		length
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wfile:%p prepare write offset:%zu length:%zu",
+			d.name,
+			this,
+			offset,
+			length
+		};
 
 	if(!env_opts.allow_fallocate)
 		return;
@@ -1960,20 +1911,19 @@ ircd::db::database::env::writable_file::_allocate(const size_t &offset,
 	wopts.nodelay = nodelay;
 	wopts.keep_size = env_opts.fallocate_with_keep_size;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wfile:%p fd:%d allocating %zd blocks after block:%zu offset:%lu length:%lu%s",
-		d.name,
-		this,
-		int(fd),
-		missing_blocks,
-		start_block,
-		allocate_offset,
-		allocate_length,
-		wopts.keep_size? " KEEP_SIZE" : ""
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wfile:%p fd:%d allocating %zd blocks after block:%zu offset:%lu length:%lu%s",
+			d.name,
+			this,
+			int(fd),
+			missing_blocks,
+			start_block,
+			allocate_offset,
+			allocate_length,
+			wopts.keep_size? " KEEP_SIZE" : ""
+		};
 
 	assert(env_opts.allow_fallocate);
 	assert(bool(d.opts));
@@ -1994,18 +1944,17 @@ noexcept
 	*block_size = this->preallocation_block_size;
 	*last_allocated_block = this->preallocation_last_block;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wfile:%p get preallocation block_size(%p):%zu last_block(%p):%zu",
-		d.name,
-		this,
-		block_size,
-		*block_size,
-		last_allocated_block,
-		*last_allocated_block
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wfile:%p get preallocation block_size(%p):%zu last_block(%p):%zu",
+			d.name,
+			this,
+			block_size,
+			*block_size,
+			last_allocated_block,
+			*last_allocated_block
+		};
 }
 
 void
@@ -2015,15 +1964,14 @@ noexcept
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard lock{mutex};
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wfile:%p set preallocation block size:%zu",
-		d.name,
-		this,
-		size
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wfile:%p set preallocation block size:%zu",
+			d.name,
+			this,
+			size
+		};
 
 	this->preallocation_block_size = size;
 }
@@ -2035,15 +1983,14 @@ noexcept try
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard lock{mutex};
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wfile:%p fd:%d get file size",
-		d.name,
-		this,
-		int(fd)
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wfile:%p fd:%d get file size",
+			d.name,
+			this,
+			int(fd)
+		};
 
 	return fs::size(fd);
 }
@@ -2065,15 +2012,14 @@ void
 ircd::db::database::env::writable_file::SetIOPriority(Env::IOPriority prio)
 noexcept
 {
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wfile:%p IO priority %s",
-		d.name,
-		this,
-		reflect(prio)
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wfile:%p IO priority %s",
+			d.name,
+			this,
+			reflect(prio)
+		};
 
 	this->prio = prio;
 	this->ionice = make_nice(prio);
@@ -2101,16 +2047,15 @@ void
 ircd::db::database::env::writable_file::SetWriteLifeTimeHint(WriteLifeTimeHint hint)
 noexcept try
 {
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wfile:%p hint:%d %s",
-		d.name,
-		this,
-		int(hint),
-		reflect(hint),
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wfile:%p hint:%d %s",
+			d.name,
+			this,
+			int(hint),
+			reflect(hint),
+		};
 
 	this->hint = hint;
 	fs::write_life(fd, this->hint);
@@ -2143,16 +2088,15 @@ const noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		"[%s] wfile:%p get unique id:%p max_size:%zu",
-		d.name,
-		this,
-		id,
-		max_size
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			"[%s] wfile:%p get unique id:%p max_size:%zu",
+			d.name,
+			this,
+			id,
+			max_size
+		};
 
 	const mutable_buffer buf
 	{
@@ -2232,15 +2176,14 @@ noexcept try
 	if(!fd)
 		return Status::OK();
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wfile:%p DIRECT fd:%d close",
-		d.name,
-		this,
-		int(fd)
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wfile:%p DIRECT fd:%d close",
+			d.name,
+			this,
+			int(fd)
+		};
 
 	if(logical_offset > 0 && fs::size(fd) != logical_offset)
 	{
@@ -2286,16 +2229,15 @@ noexcept try
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard lock{mutex};
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		"[%s] wfile:%p DIRECT fd:%d truncate to %lu bytes",
-		d.name,
-		this,
-		int(fd),
-		size
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			"[%s] wfile:%p DIRECT fd:%d truncate to %lu bytes",
+			d.name,
+			this,
+			int(fd),
+			size
+		};
 
 	fs::write_opts wopts;
 	wopts.priority = this->ionice;
@@ -2355,21 +2297,20 @@ noexcept try
 			aligned(logical_offset)? "" : "#AC"
 		};
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wfile:%p DIRECT fd:%d append:%p%s bytes:%zu%s logical_offset:%zu%s",
-		d.name,
-		this,
-		int(fd),
-		data(s),
-		aligned(data(s))? "" : "#AC",
-		size(s),
-		aligned(size(s))? "" : "#AC",
-		logical_offset,
-		aligned(logical_offset)? "" : "#AC"
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wfile:%p DIRECT fd:%d append:%p%s bytes:%zu%s logical_offset:%zu%s",
+			d.name,
+			this,
+			int(fd),
+			data(s),
+			aligned(data(s))? "" : "#AC",
+			size(s),
+			aligned(size(s))? "" : "#AC",
+			logical_offset,
+			aligned(logical_offset)? "" : "#AC"
+		};
 
 	const auto logical_check
 	{
@@ -2426,21 +2367,20 @@ noexcept
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard lock{mutex};
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wfile:%p DIRECT fd:%d append:%p%s bytes:%zu%s offset:%zu%s",
-		d.name,
-		this,
-		int(fd),
-		data(s),
-		aligned(data(s))? "" : "#AC",
-		size(s),
-		aligned(size(s))? "" : "#AC",
-		offset,
-		aligned(offset)? "" : "#AC"
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wfile:%p DIRECT fd:%d append:%p%s bytes:%zu%s offset:%zu%s",
+			d.name,
+			this,
+			int(fd),
+			data(s),
+			aligned(data(s))? "" : "#AC",
+			size(s),
+			aligned(size(s))? "" : "#AC",
+			offset,
+			aligned(offset)? "" : "#AC"
+		};
 
 	return rocksdb::Status::NotSupported();
 }
@@ -2452,15 +2392,14 @@ noexcept try
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard lock{mutex};
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wfile:%p DIRECT fd:%d get file size",
-		d.name,
-		this,
-		int(fd)
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wfile:%p DIRECT fd:%d get file size",
+			d.name,
+			this,
+			int(fd)
+		};
 
 	const auto &ret
 	{
@@ -2712,22 +2651,21 @@ ircd::const_buffer
 ircd::db::database::env::writable_file_direct::_write__aligned(const const_buffer &buf,
                                                                const uint64_t &offset)
 {
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] wfile:%p DIRECT fd:%d write:%p%s bytes:%zu%s offset:%zu%s (logical:%zu)",
-		d.name,
-		this,
-		int(fd),
-		data(buf),
-		aligned(data(buf))? "" : "#AC",
-		size(buf),
-		aligned(size(buf))? "" : "#AC",
-		offset,
-		aligned(offset)? "" : "#AC",
-		logical_offset
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] wfile:%p DIRECT fd:%d write:%p%s bytes:%zu%s offset:%zu%s (logical:%zu)",
+			d.name,
+			this,
+			int(fd),
+			data(buf),
+			aligned(data(buf))? "" : "#AC",
+			size(buf),
+			aligned(size(buf))? "" : "#AC",
+			offset,
+			aligned(offset)? "" : "#AC",
+			logical_offset
+		};
 
 	assert(aligned(buf));
 	assert(aligned(offset));
@@ -2852,17 +2790,16 @@ try
 	!startswith(name, "/proc/")
 }
 {
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] opened seqfile:%p fd:%d bs:%zu '%s'",
-		d->name,
-		this,
-		int(fd),
-		_buffer_align,
-		name
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] opened seqfile:%p fd:%d bs:%zu '%s'",
+			d->name,
+			this,
+			int(fd),
+			_buffer_align,
+			name
+		};
 }
 catch(const std::system_error &e)
 {
@@ -2900,15 +2837,14 @@ catch(const std::exception &e)
 ircd::db::database::env::sequential_file::~sequential_file()
 noexcept
 {
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] close seqfile:%p fd:%d",
-		d.name,
-		this,
-		int(fd)
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] close seqfile:%p fd:%d",
+			d.name,
+			this,
+			int(fd)
+		};
 }
 
 rocksdb::Status
@@ -2935,18 +2871,17 @@ noexcept try
 
 	assert(result);
 	assert(scratch);
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] seqfile:%p read:%p offset:%zu length:%zu scratch:%p",
-		d.name,
-		this,
-		result,
-		offset,
-		length,
-		scratch
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] seqfile:%p read:%p offset:%zu length:%zu scratch:%p",
+			d.name,
+			this,
+			result,
+			offset,
+			length,
+			scratch
+		};
 
 	fs::read_opts opts;
 	opts.offset = offset;
@@ -3023,19 +2958,18 @@ noexcept try
 
 	assert(result);
 	assert(scratch);
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] seqfile:%p offset:%zu positioned read:%p offset:%zu length:%zu scratch:%p",
-		d.name,
-		this,
-		this->offset,
-		result,
-		offset,
-		length,
-		scratch
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] seqfile:%p offset:%zu positioned read:%p offset:%zu length:%zu scratch:%p",
+			d.name,
+			this,
+			this->offset,
+			result,
+			offset,
+			length,
+			scratch
+		};
 
 	fs::read_opts opts;
 	opts.offset = offset;
@@ -3109,16 +3043,15 @@ noexcept try
 			this
 		};
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		"[%s] seqfile:%p offset:zu skip:%zu",
-		d.name,
-		this,
-		offset,
-		size
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			"[%s] seqfile:%p offset:zu skip:%zu",
+			d.name,
+			this,
+			offset,
+			size
+		};
 
 	offset += size;
 	return Status::OK();
@@ -3143,16 +3076,15 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		"[%s] seqfile:%p invalidate cache offset:%zu length:%zu",
-		d.name,
-		this,
-		offset,
-		length
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			"[%s] seqfile:%p invalidate cache offset:%zu length:%zu",
+			d.name,
+			this,
+			offset,
+			length
+		};
 
 	if(opts.direct)
 		return Status::OK();
@@ -3255,17 +3187,16 @@ try
 	!startswith(name, "/proc/")
 }
 {
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] opened rfile:%p fd:%d bs:%zu '%s'",
-		d->name,
-		this,
-		int(fd),
-		_buffer_align,
-		name
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] opened rfile:%p fd:%d bs:%zu '%s'",
+			d->name,
+			this,
+			int(fd),
+			_buffer_align,
+			name
+		};
 }
 catch(const std::exception &e)
 {
@@ -3282,15 +3213,14 @@ catch(const std::exception &e)
 ircd::db::database::env::random_access_file::~random_access_file()
 noexcept
 {
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] close rfile:%p fd:%d",
-		d.name,
-		this,
-		int(fd)
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] close rfile:%p fd:%d",
+			d.name,
+			this,
+			int(fd)
+		};
 }
 
 rocksdb::Status
@@ -3300,16 +3230,15 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] rfile:%p prefetch offset:%zu length:%zu",
-		d.name,
-		this,
-		offset,
-		length
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] rfile:%p prefetch offset:%zu length:%zu",
+			d.name,
+			this,
+			offset,
+			length
+		};
 
 	// Note RocksDB does not call our prefetch() when using direct IO.
 	assert(!this->opts.direct);
@@ -3366,19 +3295,18 @@ noexcept try
 			buf + i, 1
 		};
 
-		#ifdef RB_DEBUG_DB_ENV
-		log::debug
-		{
-			log, "[%s] rfile:%p multiread:%zu:%zu offset:%zu length:%zu scratch:%p",
-			d.name,
-			this,
-			i,
-			num,
-			req[i].offset,
-			req[i].len,
-			req[i].scratch,
-		};
-		#endif
+		if constexpr(RB_DEBUG_DB_ENV)
+			log::debug
+			{
+				log, "[%s] rfile:%p multiread:%zu:%zu offset:%zu length:%zu scratch:%p",
+				d.name,
+				this,
+				i,
+				num,
+				req[i].offset,
+				req[i].len,
+				req[i].scratch,
+			};
 
 		assert(!this->opts.direct || buffer::aligned(buf[i], _buffer_align));
 	}
@@ -3465,18 +3393,17 @@ const noexcept try
 
 	assert(result);
 	assert(scratch);
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] rfile:%p read:%p offset:%zu length:%zu scratch:%p",
-		d.name,
-		this,
-		result,
-		offset,
-		length,
-		scratch
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] rfile:%p read:%p offset:%zu length:%zu scratch:%p",
+			d.name,
+			this,
+			result,
+			offset,
+			length,
+			scratch
+		};
 
 	fs::read_opts opts;
 	opts.offset = offset;
@@ -3537,16 +3464,15 @@ noexcept
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] rfile:%p invalidate cache offset:%zu length:%zu",
-		d.name,
-		this,
-		offset,
-		length
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] rfile:%p invalidate cache offset:%zu length:%zu",
+			d.name,
+			this,
+			offset,
+			length
+		};
 
 	if(opts.direct)
 		return Status::OK();
@@ -3562,16 +3488,15 @@ const noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] rfile:%p get unique id:%p max_size:%zu",
-		d.name,
-		this,
-		id,
-		max_size
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] rfile:%p get unique id:%p max_size:%zu",
+			d.name,
+			this,
+			id,
+			max_size
+		};
 
 	const mutable_buffer buf
 	{
@@ -3602,15 +3527,14 @@ noexcept
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] rfile:%p hint %s",
-		d.name,
-		this,
-		reflect(pattern)
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] rfile:%p hint %s",
+			d.name,
+			this,
+			reflect(pattern)
+		};
 }
 
 bool
@@ -3676,17 +3600,16 @@ try
 	true
 }
 {
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] opened rwfile:%p fd:%d bs:%zu '%s'",
-		d->name,
-		this,
-		int(fd),
-		_buffer_align,
-		name
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] opened rwfile:%p fd:%d bs:%zu '%s'",
+			d->name,
+			this,
+			int(fd),
+			_buffer_align,
+			name
+		};
 }
 catch(const std::exception &e)
 {
@@ -3703,15 +3626,14 @@ catch(const std::exception &e)
 ircd::db::database::env::random_rw_file::~random_rw_file()
 noexcept
 {
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] close rwfile:%p fd:%d '%s'",
-		d.name,
-		this,
-		int(fd)
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] close rwfile:%p fd:%d '%s'",
+			d.name,
+			this,
+			int(fd)
+		};
 }
 
 rocksdb::Status
@@ -3720,15 +3642,14 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] close rwfile:%p fd:%d '%s'",
-		d.name,
-		this,
-		int(fd)
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] close rwfile:%p fd:%d '%s'",
+			d.name,
+			this,
+			int(fd)
+		};
 
 	this->fd = fs::fd{};
 	return Status::OK();
@@ -3764,15 +3685,14 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] rwfile:%p fd:%d fsync",
-		d.name,
-		int(fd),
-		this
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] rwfile:%p fd:%d fsync",
+			d.name,
+			int(fd),
+			this
+		};
 
 	fs::sync_opts opts;
 	opts.priority = ionice;
@@ -3813,15 +3733,14 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] rwfile:%p fd:%d sync",
-		d.name,
-		int(fd),
-		this
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] rwfile:%p fd:%d sync",
+			d.name,
+			int(fd),
+			this
+		};
 
 	fs::sync_opts opts;
 	opts.priority = ionice;
@@ -3862,15 +3781,14 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] rwfile:%p fd:%d flush",
-		d.name,
-		int(fd),
-		this
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] rwfile:%p fd:%d flush",
+			d.name,
+			int(fd),
+			this
+		};
 
 	fs::sync_opts opts;
 	opts.metadata = false;
@@ -3917,18 +3835,17 @@ const noexcept try
 
 	assert(result);
 	assert(scratch);
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] rwfile:%p read:%p offset:%zu length:%zu scratch:%p",
-		d.name,
-		this,
-		result,
-		offset,
-		length,
-		scratch
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] rwfile:%p read:%p offset:%zu length:%zu scratch:%p",
+			d.name,
+			this,
+			result,
+			offset,
+			length,
+			scratch
+		};
 
 	fs::read_opts opts;
 	opts.offset = offset;
@@ -3988,18 +3905,17 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] rwfile:%p fd:%d write:%p length:%zu offset:%zu",
-		d.name,
-		this,
-		int(fd),
-		data(slice),
-		size(slice),
-		offset
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] rwfile:%p fd:%d write:%p length:%zu offset:%zu",
+			d.name,
+			this,
+			int(fd),
+			data(slice),
+			size(slice),
+			offset
+		};
 
 	const const_buffer buf
 	{
@@ -4086,14 +4002,13 @@ noexcept
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] directory:%p fsync",
-		d.name,
-		this
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] directory:%p fsync",
+			d.name,
+			this
+		};
 
 	return defaults->Fsync();
 }

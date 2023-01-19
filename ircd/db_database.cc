@@ -3339,7 +3339,6 @@ const noexcept
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
 	const auto typestr
 	{
 		type == kValue?
@@ -3348,7 +3347,6 @@ const noexcept
 			"MERGE"_sv:
 			"BLOB"_sv
 	};
-	#endif
 
 	static const compactor::callback empty;
 	const db::compactor::callback &callback
@@ -3365,22 +3363,21 @@ const noexcept
 	if(!callback)
 		return Decision::kKeep;
 
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s]'%s': compaction level:%d key:%zu@%p type:%s old:%zu@%p new:%p skip:%p",
-		d->name,
-		c->name,
-		level,
-		size(key),
-		data(key),
-		typestr,
-		size(oldval),
-		data(oldval),
-		(const void *)newval,
-		(const void *)skip
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s]'%s': compaction level:%d key:%zu@%p type:%s old:%zu@%p new:%p skip:%p",
+			d->name,
+			c->name,
+			level,
+			size(key),
+			data(key),
+			typestr,
+			size(oldval),
+			data(oldval),
+			(const void *)newval,
+			(const void *)skip
+		};
 
 	const compactor::args args
 	{
@@ -3538,21 +3535,20 @@ ircd::db::database::rate_limiter::RequestToken(size_t bytes,
                                                OpType type)
 noexcept
 {
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		log, "[%s] Rate Limiter request bytes:%zu alignment:%zu prio:%s type:%s",
-		db::name(*d),
-		bytes,
-		alignment,
-		reflect(prio),
-		type == OpType::kWrite?
-			"WRITE"_sv:
-		type == OpType::kRead?
-			"READ"_sv:
-			"????"_sv,
-	};
-	#endif
+	if constexpr(RB_DEBUG_DB_ENV)
+		log::debug
+		{
+			log, "[%s] Rate Limiter request bytes:%zu alignment:%zu prio:%s type:%s",
+			db::name(*d),
+			bytes,
+			alignment,
+			reflect(prio),
+			type == OpType::kWrite?
+				"WRITE"_sv:
+			type == OpType::kRead?
+				"READ"_sv:
+				"????"_sv,
+		};
 
 	assert(prio <= IOPriority::IO_TOTAL);
 	{
