@@ -64,12 +64,18 @@ namespace ircd::conf
 	bool exists(const string_view &key) noexcept;
 	bool environ(const string_view &key) noexcept;
 	bool persists(const string_view &key);
+
+	string_view get(std::nothrow_t, const mutable_buffer &out, const string_view &key);
+	std::string get(std::nothrow_t, const string_view &key);
 	string_view get(const mutable_buffer &out, const string_view &key);
 	std::string get(const string_view &key);
+
 	bool set(const string_view &key, const string_view &value);
 	bool set(std::nothrow_t, const string_view &key, const string_view &value);
+
 	bool fault(std::nothrow_t, const string_view &key) noexcept;
 	void fault(const string_view &key);
+
 	bool reset(std::nothrow_t, const string_view &key);
 	bool reset(const string_view &key);
 	size_t reset();

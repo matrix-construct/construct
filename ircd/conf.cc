@@ -186,6 +186,31 @@ catch(const std::out_of_range &e)
 	};
 }
 
+std::string
+ircd::conf::get(std::nothrow_t,
+                const string_view &key)
+{
+	const auto it(items.find(key));
+	if(it == end(items))
+		return {};
+
+	const auto &item(*it->second);
+	return item.get();
+}
+
+ircd::string_view
+ircd::conf::get(std::nothrow_t,
+                const mutable_buffer &out,
+                const string_view &key)
+{
+	const auto it(items.find(key));
+	if(it == end(items))
+		return {};
+
+	const auto &item(*it->second);
+	return item.get(out);
+}
+
 bool
 ircd::conf::persists(const string_view &key)
 try
