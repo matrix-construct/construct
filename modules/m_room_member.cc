@@ -10,8 +10,10 @@
 
 namespace ircd::m
 {
+	extern conf::item<bool> room_member_invite_autodirect_enable;
 	extern conf::item<bool> room_member_invite_autojoin_dmonly;
 	extern conf::item<bool> room_member_invite_autojoin_enable;
+	static void room_member_invite_autodirect(const event &, vm::eval &);
 	static void room_member_invite_autojoin(const event &, vm::eval &);
 	extern m::hookfn<vm::eval &> room_member_invite_autojoin_hookfn;
 
@@ -551,6 +553,13 @@ ircd::m::room_member_invite_autojoin_dmonly
 	{ "default",  true                                         },
 };
 
+decltype(ircd::m::room_member_invite_autodirect_enable)
+ircd::m::room_member_invite_autodirect_enable
+{
+	{ "name",     "ircd.m.room.member.invite.autodirect.enable" },
+	{ "default",  true                                          },
+};
+
 void
 ircd::m::room_member_invite_autojoin(const event &event,
                                      vm::eval &eval)
@@ -566,9 +575,13 @@ ircd::m::room_member_invite_autojoin(const event &event,
 	if(!my(target))
 		return;
 
-	if(room_member_invite_autojoin_dmonly)
-		if(!at<"content"_>(event).get("is_direct", false))
-			return;
+	const bool is_direct
+	{
+		at<"content"_>(event).get("is_direct", false)
+	};
+
+	if(room_member_invite_autojoin_dmonly && !is_direct)
+		return;
 
 	const m::room room
 	{
@@ -581,5 +594,40 @@ ircd::m::room_member_invite_autojoin(const event &event,
 		eval.opts->node_id
 	};
 
-	m::join(room, target, remotes);
+	const auto room_id
+	{
+		m::join(room, target, remotes)
+	};
+
+	if(room_member_invite_autodirect_enable && is_direct)
+		room_member_invite_autodirect(event, eval);
+}
+
+void
+ircd::m::room_member_invite_autodirect(const event &event,
+                                       vm::eval &eval)
+{
+	const m::user::account_data account_data
+	{
+		m::user(at<"state_key"_>(event))
+	};
+
+	account_data.get(std::nothrow, "m.direct", [&]
+	(const auto &, const json::object &existing)
+	{
+		const json::value rooms_list[]
+		{
+			at<"room_id"_>(event)
+		};
+
+		const auto direct_rooms
+		{
+			json::replace(existing, json::member
+			{
+				at<"sender"_>(event), rooms_list
+			})
+		};
+
+		account_data.set("m.direct", direct_rooms);
+	});
 }
