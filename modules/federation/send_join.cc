@@ -14,8 +14,6 @@ static void
 send_join__response(client &,
                     const m::resource::request &,
                     const m::event &,
-                    const m::room::state &,
-                    const m::room::auth::chain &,
                     json::stack::object &out);
 
 static m::resource::response
@@ -143,25 +141,18 @@ put__send_join(client &client,
 
 	const m::event signed_event
 	{
-		signed_event_json
+		signed_event_json, event_id
 	};
 
-	m::vm::opts vmopts;
-	vmopts.fetch = false;
-	vmopts.json_source = true;
+	m::vm::opts vmopts
+	{
+		.node_id = request.node_id,
+		.fetch = false,
+	};
+
 	m::vm::eval eval
 	{
 		signed_event, vmopts
-	};
-
-	const m::room::state state
-	{
-		room_id
-	};
-
-	const m::room::auth::chain auth_chain
-	{
-		m::head_idx(room_id)
 	};
 
 	m::resource::response::chunked response
@@ -190,7 +181,7 @@ put__send_join(client &client,
 			top
 		};
 
-		send_join__response(client, request, signed_event, state, auth_chain, data);
+		send_join__response(client, request, signed_event, data);
 		return response;
 	}
 
@@ -200,7 +191,7 @@ put__send_join(client &client,
 	};
 
 	// Top element is the object
-	send_join__response(client, request, signed_event, state, auth_chain, top);
+	send_join__response(client, request, signed_event, top);
 	return response;
 }
 
@@ -208,13 +199,37 @@ void
 send_join__response(client &client,
                     const m::resource::request &request,
                     const m::event &event,
-                    const m::room::state &state,
-                    const m::room::auth::chain &auth_chain,
                     json::stack::object &data)
 {
 	const bool omit_members
 	{
 		request.query.get("omit_members", false)
+	};
+
+	const auto prev_state_idx
+	{
+		m::room::state::prev(m::index(event.event_id))
+	};
+
+	const auto prev_state_id
+	{
+		m::event_id(prev_state_idx)
+	};
+
+	// The room prior to this join.
+	const m::room room
+	{
+		at<"room_id"_>(event), prev_state_id
+	};
+
+	const m::room::state state
+	{
+		room
+	};
+
+	const m::room::auth::chain auth_chain
+	{
+		prev_state_idx
 	};
 
 	// auth_chain
@@ -289,7 +304,7 @@ send_join__response(client &client,
 
 		const m::room::origins origins
 		{
-			state.room_id
+			room
 		};
 
 		origins.for_each([&servers_a]
