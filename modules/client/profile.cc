@@ -214,6 +214,13 @@ get__profile(client &client,
 	if(empty && eptr && !my(user))
 		rethrow(eptr, user, param);
 
+	// Riot throws uncaught exceptions when its own empty profile 404's.
+	if(empty && request.user_id == user_id)
+		return resource::response
+		{
+			client, http::OK
+		};
+
 	// Otherwise if there's no profile data we 404 our client.
 	if(empty)
 		throw m::NOT_FOUND
