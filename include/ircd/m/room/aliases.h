@@ -30,6 +30,7 @@ struct ircd::m::room::aliases
   public:
 	bool for_each(const string_view &server, const closure_bool &) const;
 	bool for_each(const closure_bool &) const;
+	bool has_server(const string_view &) const;
 	bool has(const alias &) const;
 	size_t count(const string_view &server) const;
 	size_t count() const;

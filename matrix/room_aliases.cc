@@ -67,6 +67,17 @@ const
 }
 
 bool
+ircd::m::room::aliases::has_server(const string_view &server)
+const
+{
+	return !for_each(server, []
+	(const id::room_alias &a) noexcept
+	{
+		return false;
+	});
+}
+
+bool
 ircd::m::room::aliases::for_each(const closure_bool &closure)
 const
 {
