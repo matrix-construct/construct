@@ -113,6 +113,7 @@ handle_get(client &client,
 	opts.lower_bound = true;
 	opts.room_id = since;
 	opts.search_term = search_term;
+	opts.request_node_id = request.node_id;
 
 	size_t count{0};
 	m::room::id::buf prev_batch_buf;

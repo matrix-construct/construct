@@ -133,7 +133,7 @@ get__publicrooms(client &client,
 	opts.search_term = search_term;
 	opts.lower_bound = true;
 	opts.room_id = since;
-
+	opts.request_user_id = request.user_id;
 	if(m::valid(m::id::USER, search_term))
 		opts.user_id = search_term;
 

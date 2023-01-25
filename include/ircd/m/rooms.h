@@ -83,6 +83,14 @@ struct ircd::m::rooms::opts
 	/// Specify prefetching to increase iteration performance.
 	size_t prefetch {0};
 
+	/// Pass the c2s user_id making the request to determine access to features
+	/// and visibility of results. Note the endpoint does not require auth.
+	string_view request_user_id;
+
+	/// Pass the s2s server making the request to determine access to features
+	/// and visibility of results.
+	string_view request_node_id;
+
 	opts() = default;
 	opts(const string_view &search_term) noexcept; // special
 };
