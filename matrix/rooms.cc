@@ -138,6 +138,10 @@ ircd::m::rooms::for_each(const opts &opts,
 			if(!join_rule(room, opts.join_rule))
 				return;
 
+		if(opts.server && opts.request_node_id && my_host(opts.server))
+			if(!room::aliases(room_id).has_server(opts.server))
+				return;
+
 		if(opts.room_alias)
 		{
 			const auto match_alias_prefix{[&opts](const auto &alias)
