@@ -51,3 +51,17 @@ AC_DEFUN([AM_COND_IF_NAND],
 		AM_COND_IF([$2], [], [$3])
 	])
 ])
+
+AC_DEFUN([RB_CHK_SYSHEADER],
+[
+	if test -z "$rb_cv_header_have_$2"; then
+		AC_CHECK_HEADER([$1],
+		[
+			rb_cv_header_have_$2=1;
+			AC_DEFINE([HAVE_$2], [1], [ Indication $1 is available. ])
+			RB_DEFINE_UNQUOTED([INC_$2], [$1>], [ The computed-include location of $1. ])
+		], [
+			RB_DEFINE_UNQUOTED([INC_$2], [stddef.h>], [ The dead-header in place of $1. ])
+		])
+	fi
+])
