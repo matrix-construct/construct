@@ -14,6 +14,8 @@
 namespace ircd::fs
 {
 	struct error; // does not participate in ircd::exception hierarchy
+
+	extern const std::error_code eof;
 }
 
 namespace ircd

@@ -948,7 +948,7 @@ ircd::fs::_read_asio(const vector_view<read_op> &op)
 		d[i]->async_read_some_at(op[i].opts->offset, op[i].bufs, [i, &op, &ret, &latch]
 		(const auto &ec, const size_t &bytes)
 		{
-			if(ec && ec != net::eof)
+			if(ec && ec != eof)
 				op[i].eptr = make_system_eptr(ec);
 
 			op[i].ret = bytes;
@@ -1089,8 +1089,8 @@ ircd::fs::_read_asio(const fd &fd,
 		}
 	};
 
-	assert(ret || ec == net::eof);
-	if(unlikely(ec && ec != net::eof))
+	assert(ret || ec == eof);
+	if(unlikely(ec && ec != eof))
 		throw_system_error(ec);
 
 	return ret;
@@ -2872,6 +2872,12 @@ ircd::fs::bytes(const const_iovec_view &iov)
 //
 // fs/error.h
 //
+
+decltype(ircd::fs::eof)
+ircd::fs::eof
+{
+	make_error_code(boost::asio::error::eof)
+};
 
 std::string
 ircd::string(const std::filesystem::filesystem_error &e)
