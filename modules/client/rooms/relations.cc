@@ -138,8 +138,6 @@ try
 	{
 		relations_chunk_append(client, request, event_idx, event, chunk);
 	});
-
-	relations_chunk_append(client, request, event_idx, event, chunk);
 }
 catch(const std::exception &e)
 {
