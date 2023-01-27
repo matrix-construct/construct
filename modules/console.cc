@@ -369,6 +369,33 @@ console_cmd__time(opt &out, const string_view &line)
 	return ret;
 }
 
+// Rep
+
+bool
+console_cmd__rep(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"count",
+	}};
+
+	const auto count
+	{
+		param.at<uint>("count")
+	};
+
+	const auto cmd
+	{
+		tokens_after(line, ' ', 0)
+	};
+
+	for(uint i(0); i < count; ++i)
+		if(!_console_command(out, cmd))
+			return false;
+
+	return true;
+}
+
 // Help
 
 bool
