@@ -372,7 +372,7 @@ noexcept try
 		log::logf
 		{
 			ios::log, log::level::DEBUG,
-			"QUEUE %5u %-30s [%11lu] ------[%9lu] q:%-4lu id:%-5u %-30s",
+			"QUEUE %5u %-30s [%11lu] ------[%15lu] q:%-4lu id:%-5u %-30s",
 			ios_desc.id,
 			trunc(ios_desc.name, 30),
 			uint64_t(ios_desc.stats->calls),

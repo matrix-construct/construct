@@ -600,7 +600,7 @@ noexcept
 		log::logf
 		{
 			log, log::level::DEBUG,
-			"LEAVE %5u %-30s [%11lu] cycles[%9lu] q:%-4lu",
+			"LEAVE %5u %-30s [%11lu] cycles[%15lu] q:%-4lu",
 			descriptor.id,
 			trunc(descriptor.name, 30),
 			uint64_t(stats.calls),
@@ -645,7 +645,7 @@ noexcept
 		log::logf
 		{
 			log, log::level::DEBUG,
-			"ENTER %5u %-30s [%11lu] latent[%9lu] q:%-4lu",
+			"ENTER %5u %-30s [%11lu] latent[%15lu] q:%-4lu",
 			descriptor.id,
 			trunc(descriptor.name, 30),
 			uint64_t(stats.calls),
