@@ -1089,6 +1089,7 @@ ircd::fs::_read_asio(const fd &fd,
 		}
 	};
 
+	assert(ret <= bytes(iov));
 	assert(ret || ec == eof);
 	if(unlikely(ec && ec != eof))
 		throw_system_error(ec);

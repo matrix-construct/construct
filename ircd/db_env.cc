@@ -3421,6 +3421,7 @@ const noexcept try
 		fs::read(fd, buf, opts)
 	};
 
+	assert(!opts.all || size(read) == length);
 	*result = slice(read);
 	return Status::OK();
 }
@@ -3862,6 +3863,7 @@ const noexcept try
 		fs::read(fd, buf, opts)
 	};
 
+	assert(!opts.all || size(read) == length);
 	*result = slice(read);
 	return Status::OK();
 }
