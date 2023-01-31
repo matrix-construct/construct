@@ -3558,20 +3558,25 @@ ircd::u64x2
 ircd::json::string_unescape_utf16(u8x16 &block,
                                   const u8x16 block_mask)
 {
-	const u8x16 surr_mark
-	{
-		utf16::find_surrogate(block) & block_mask
-	};
-
-	const u8x16 surr_mask
-	{
-		utf16::mask_surrogate(surr_mark)
-	};
-
 	const u32x4 unicode
 	{
-		utf16::decode_surrogate_aligned_next(block)
+		utf16::decode_surrogate_aligned_next(block & block_mask)
 	};
+
+	const u32x4 length
+	{
+		utf8::length(unicode)
+	};
+
+	const u8x16 pair_mask
+	(
+		length != 0 || shl<32>(length) == 4
+	);
+
+	const u8x16 is_surrogate
+	(
+		utf16::find_surrogate(block & block_mask) & pair_mask
+	);
 
 	const u32x4 encoded_sparse
 	{
@@ -3583,32 +3588,22 @@ ircd::json::string_unescape_utf16(u8x16 &block,
 		encoded_sparse
 	);
 
-	u32x4 is_surrogate
-	{
-		-1U, -1U, 0, 0
-	};
-
-	for(size_t i(0); i < 6; ++i)
-	{
-		is_surrogate[0] &= surr_mask[i];
-		is_surrogate[1] &= surr_mask[i + 6];
-	}
-
-	const u32x4 length
-	{
-		utf8::length(unicode) & is_surrogate
-	};
-
 	size_t di(0), i(0);
 	for(; i < 2 && length[i] > 0; ++i)
 		for(size_t j(0); j < length[i]; ++j)
 			block[di++] = encoded[i * 4 + j];
 
+	const auto surrogates
+	{
+		simd::popcnt(u64x2(popmask(is_surrogate)))
+	};
+
+	assert(surrogates > 0 && surrogates <= 2);
 	assert(di == length[0] + length[1]);
 	assert(i >= 1 && i <= 2);
 	return u64x2
 	{
-		di, 6U * i
+		di, 6U * surrogates
 	};
 }
 
@@ -3807,25 +3802,25 @@ ircd::json::string_stringify_utf16(u8x16 &block,
 		utf16::decode_surrogate_aligned_next(block & block_mask)
 	};
 
-	const u32x4 is_surrogate
+	const u32x4 length_encoded
+	{
+		utf8::length(unicode)
+	};
+
+	const u8x16 pair_mask
 	(
-		utf16::find_surrogate(block & block_mask)
+		length_encoded != 0 || shl<32>(length_encoded) == 4
 	);
 
-	const u32x4 surrogate_mask
+	const u8x16 is_surrogate
 	(
-		is_surrogate != 0U
+		utf16::find_surrogate(block & block_mask) & pair_mask
 	);
 
 	const u32x4 is_ctrl
 	(
 		unicode < 0x20
 	);
-
-	const u32x4 length_encoded
-	{
-		utf8::length(unicode)
-	};
 
 	const u32x4 ctrl_idx
 	{
@@ -3838,23 +3833,10 @@ ircd::json::string_stringify_utf16(u8x16 &block,
 		u32(ctrl_tab_len[ctrl_idx[1]]),
 	};
 
-	const u32x4 is_non_bmp
-	(
-		unicode >= 0x10000U
-	);
-
-	const u32x4 is_surrogate_pair
-	{
-		(is_non_bmp | shl<32>(is_non_bmp)) &
-		(surrogate_mask | shr<32>(surrogate_mask))
-	};
-
-	// Determine the utf-8 encoding length for each codepoint...
 	// Supplement the escaped surrogate length for excluded codepoints.
 	const u32x4 length
 	{
-		(length_encoded & ~is_ctrl) |
-		(length_surrogate & is_ctrl & ~is_surrogate_pair & surrogate_mask)
+		(length_encoded & ~is_ctrl) | (length_surrogate & is_ctrl)
 	};
 
 	const u32x4 encoded_sparse
@@ -3876,7 +3858,7 @@ ircd::json::string_stringify_utf16(u8x16 &block,
 
 	const auto surrogates
 	{
-		simd::popcnt(u64x2(popmask(u8x16(is_surrogate))))
+		simd::popcnt(u64x2(popmask(is_surrogate)))
 	};
 
 	assert(di == length[0] + length[1]);
@@ -4014,30 +3996,30 @@ ircd::u64x2
 ircd::json::string_serialized_utf16(const u8x16 block,
                                     const u8x16 block_mask)
 {
-	const u32x4 is_surrogate
-	(
-		utf16::find_surrogate(block & block_mask)
-	);
-
-	const u32x4 surrogate_mask
-	(
-		is_surrogate != 0U
-	);
-
 	const u32x4 unicode
 	{
 		utf16::decode_surrogate_aligned_next(block & block_mask)
 	};
 
-	const u32x4 is_ctrl
-	(
-		unicode < 0x20
-	);
-
 	const u32x4 length_encoded
 	{
 		utf8::length(unicode)
 	};
+
+	const u8x16 pair_mask
+	(
+		length_encoded != 0 || shl<32>(length_encoded) == 4
+	);
+
+	const u8x16 is_surrogate
+	(
+		utf16::find_surrogate(block & block_mask) & pair_mask
+	);
+
+	const u32x4 is_ctrl
+	(
+		unicode < 0x20
+	);
 
 	const u32x4 ctrl_idx
 	{
@@ -4050,23 +4032,10 @@ ircd::json::string_serialized_utf16(const u8x16 block,
 		ctrl_tab_len[ctrl_idx[1]],
 	};
 
-	const u32x4 is_non_bmp
-	(
-		unicode >= 0x10000U
-	);
-
-	const u32x4 is_surrogate_pair
-	{
-		(is_non_bmp | shl<32>(is_non_bmp)) &
-		(surrogate_mask | shr<32>(surrogate_mask))
-	};
-
-	// Determine the utf-8 encoding length for each codepoint...
 	// Supplement the escaped surrogate length for excluded codepoints.
 	const u32x4 length
 	{
-		(length_encoded & ~is_ctrl) |
-		(length_surrogate & is_ctrl & ~is_surrogate_pair & surrogate_mask)
+		(length_encoded & ~is_ctrl) | (length_surrogate & is_ctrl)
 	};
 
 	const auto total_length
@@ -4076,7 +4045,7 @@ ircd::json::string_serialized_utf16(const u8x16 block,
 
 	const auto surrogates
 	{
-		popcnt(u64x2(popmask(u8x16(is_surrogate))))
+		popcnt(u64x2(popmask(is_surrogate)))
 	};
 
 	return u64x2

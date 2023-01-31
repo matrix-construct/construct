@@ -12,6 +12,13 @@
 // utf16
 //
 
+namespace ircd::utf16
+{
+	static const u32x4
+	mask_one { -1U,  0U,  0U,  0U, },
+	mask_two { -1U, -1U,  0U,  0U, };
+}
+
 /// Decodes one or two escaped surrogates (surrogate pair) aligned to the
 /// front of the input block. If the surrogates are a pair which decode into
 /// a single codepoint, only the first element of the return vector is used;
@@ -137,33 +144,55 @@ noexcept
 		(codepoint_paired <= 0xffffU) & ~(shl<32>(codepoint_high))
 	};
 
-	// When one surrogate is input, only lane[0]
-	const u32x4 ret_codepoint_single
+	const u32x4 single_mask
 	{
-		codepoint_unpaired & ~surrogate_pair_range & ~surrogate_deuce
+		~surrogate_pair_range & ~surrogate_deuce & mask_one
+	};
+
+	const u32x4 paired_mask
+	{
+		surrogate_paired & surrogate_deuce & mask_one
+	};
+
+	const u32x4 unpaired_mask
+	{
+		~surrogate_pair_range & surrogate_deuce & mask_two
+	};
+
+	// When one surrogate is input, only lane[0]
+	const u32x4 single_codepoint
+	{
+		codepoint_unpaired & single_mask
 	};
 
 	// When two surrogates in a pair are input, lane[0] only
-	const u32x4 ret_codepoint_paired
+	const u32x4 paired_codepoint
 	{
-		codepoint_paired & (surrogate_paired & surrogate_deuce)
+		codepoint_paired & paired_mask
 	};
 
 	// When two unrelated surrogates are input, lane[0] and lane[1]
-	const u32x4 ret_codepoint_unpaired
+	const u32x4 unpaired_codepoint
 	{
-		codepoint_unpaired & ~surrogate_pair_range & surrogate_deuce
+		codepoint_unpaired & unpaired_mask
 	};
 
-	static const u32x4
-	mask_one { -1U,  0U,  0U,  0U, },
-	mask_two { -1U, -1U,  0U,  0U, };
+	const u32x4 codepoint
+	{
+		single_codepoint | paired_codepoint | unpaired_codepoint
+	};
 
-	return 0
-	| (ret_codepoint_single & mask_one)
-	| (ret_codepoint_paired & mask_one)
-	| (ret_codepoint_unpaired & mask_two)
-	;
+	const u32x4 ret_mask
+	{
+		single_mask | paired_mask | unpaired_mask
+	};
+
+	const u32x4 ret
+	{
+		codepoint | ~ret_mask
+	};
+
+	return ret;
 }
 
 namespace ircd::utf16
