@@ -3022,10 +3022,11 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		out << " :"
 		    << name(ctx);
 
-		out << std::endl;
+		out << '\n';
 		return true;
 	});
 
+	out << std::flush;
 	return true;
 }
 
@@ -5829,7 +5830,7 @@ try
 		<< std::setw(4) << std::right << peer.link_count() << ' '
 		<< std::setw(15) << std::left << flags << ' '
 		<< std::setw(32) << std::left << error << ' '
-		<< std::endl;
+		<< '\n';
 	}};
 
 	if(!count)
@@ -5871,6 +5872,8 @@ try
 
 	if(count)
 		out << i << std::endl;
+	else
+		out << std::flush;
 
 	return true;
 }
@@ -5912,9 +5915,10 @@ console_cmd__peer__error(opt &out, const string_view &line)
 		else
 			out << "  <unknown error>"_sv;
 
-		out << std::endl;
+		out << '\n';
 	}
 
+	out << std::flush;
 	return true;
 }
 
@@ -6876,9 +6880,10 @@ console_cmd__client(opt &out, const string_view &line)
 		if(client->request.head.path)
 			out << " " << client->request.head.path;
 
-		out << std::endl;
+		out << '\n';
 	}
 
+	out << std::flush;
 	return true;
 }
 
@@ -16907,28 +16912,26 @@ console_cmd__vm(opt &out, const string_view &line)
 		<< std::left << std::setw(20) << trunc(eval.event_? json::get<"sender"_>(*eval.event_) : json::string{}, 20) << " "
 		<< std::left << std::setw(20) << trunc(eval.event_? json::get<"type"_>(*eval.event_) : json::string{}, 20) << " "
 		<< std::left << std::setw(20) << trunc(eval.event_? json::get<"state_key"_>(*eval.event_) : json::string{}, 20) << " "
-		<< std::endl
-		;
+		<< '\n';
 	});
 
-	out << std::endl;
-
+	out << '\n';
 	out << "    retired " << std::left << std::setw(10) << m::vm::sequence::retired;
 	out << "  committed " << std::left << std::setw(10) << m::vm::sequence::committed;
 	out << "   uncommit " << std::left << std::setw(10) << m::vm::sequence::uncommitted;
-	out << std::endl;
 
+	out << '\n';
 	out << "    pending " << std::left << std::setw(10) << m::vm::sequence::pending;
 	out << "      evals " << std::left << std::setw(10) << m::vm::eval::id_ctr;
 	out << "     spread " << std::left << std::setw(10) << m::vm::sequence::min()
 	               << ' ' << std::left << std::setw(10) << m::vm::sequence::max();
-	out << std::endl;
 
+	out << '\n';
 	out << "       inst " << std::left << std::setw(10) << size(m::vm::eval::list);
 	out << "       exec " << std::left << std::setw(10) << m::vm::eval::executing;
 	out << "     inject " << std::left << std::setw(10) << m::vm::eval::injecting;
-	out << std::endl;
 
+	out << std::endl;
 	return true;
 }
 
@@ -17167,12 +17170,12 @@ console_cmd__fetch(opt &out, const string_view &line)
 		<< std::left << std::right << std::setw(14) << ago(abuf[0], request.last, 1) << " "
 		<< std::left << "attempt:" << std::setw(3) << request.attempted.size() << " "
 		<< std::left << "err:" << bool(request.eptr) << " "
-		<< std::endl
-		;
+		<< '\n';
 
 		return true;
 	});
 
+	out << std::flush;
 	return true;
 }
 
@@ -17306,9 +17309,10 @@ console_cmd__synchron(opt &out, const string_view &line)
 			out << client->loghead() << " | ";
 
 		out << m::sync::loghead(*data_p) << " | ";
-		out << std::endl;
+		out << '\n';
 	}
 
+	out << std::flush;
 	return true;
 }
 
