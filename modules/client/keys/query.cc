@@ -201,11 +201,6 @@ try
 		ircd::now<system_point>() + timeout
 	};
 
-	json::stack::object response_keys
-	{
-		out, "device_keys"
-	};
-
 	while(!queries.empty())
 	{
 		static const auto dereferencer{[]
@@ -233,7 +228,7 @@ try
 		if(failures.count(remote))
 			continue;
 
-		recv_response(client_request, remote, request, failures, response_keys);
+		recv_response(client_request, remote, request, failures, out);
 	}
 }
 catch(const std::exception &)
@@ -247,7 +242,7 @@ recv_response(const m::resource::request &client_request,
               const string_view &remote,
               m::fed::user::keys::query &request,
               failure_map &failures,
-              json::stack::object &object)
+              json::stack::object &out)
 try
 {
 	const auto code
@@ -260,94 +255,126 @@ try
 		request
 	};
 
-	const json::object &device_keys
+	// device_keys
 	{
-		response["device_keys"]
-	};
-
-	for(const auto &[_user_id, device_keys] : device_keys)
-	{
-		const m::user::id &user_id
+		json::stack::object object
 		{
-			_user_id
+			out, "device_keys"
 		};
 
-		json::stack::object user_object
+		const json::object &device_keys
 		{
-			object, user_id
+			response["device_keys"]
 		};
 
-		for(const auto &[device_id, keys] : json::object(device_keys))
+		for(const auto &[_user_id, device_keys] : device_keys)
+		{
+			const m::user::id &user_id
+			{
+				_user_id
+			};
+
+			json::stack::object user_object
+			{
+				object, user_id
+			};
+
+			for(const auto &[device_id, keys] : json::object(device_keys))
+				json::stack::member
+				{
+					user_object, device_id, keys
+				};
+		}
+	}
+
+	// master_keys
+	{
+		json::stack::object object
+		{
+			out, "master_keys"
+		};
+
+		const json::object &master_keys
+		{
+			response["master_keys"]
+		};
+
+		for(const auto &[_user_id, master_key] : master_keys)
+		{
+			const m::user::id &user_id
+			{
+				_user_id
+			};
+
 			json::stack::member
 			{
-				user_object, device_id, keys
+				object, user_id, json::object
+				{
+					master_key
+				}
 			};
+		}
 	}
 
-	const json::object &master_keys
+	// self_signing_keys
 	{
-		response["master_keys"]
-	};
-
-	for(const auto &[_user_id, master_key] : master_keys)
-	{
-		const m::user::id &user_id
+		json::stack::object object
 		{
-			_user_id
+			out, "self_signing_keys"
 		};
 
-		json::stack::member
+		const json::object &self_signing_keys
 		{
-			object, user_id, json::object
+			response["self_signing_keys"]
+		};
+
+		for(const auto &[_user_id, self_signing_key] : self_signing_keys)
+		{
+			const m::user::id &user_id
 			{
-				master_key
-			}
-		};
+				_user_id
+			};
+
+			json::stack::member
+			{
+				object, user_id, json::object
+				{
+					self_signing_key
+				}
+			};
+		}
 	}
 
-	const json::object &self_signing_keys
+	// user_signing_keys
 	{
-		response["self_signing_keys"]
-	};
-
-	for(const auto &[_user_id, self_signing_key] : self_signing_keys)
-	{
-		const m::user::id &user_id
+		json::stack::object object
 		{
-			_user_id
+			out, "user_signing_keys"
 		};
 
-		json::stack::member
+		const json::object &user_signing_keys
 		{
-			object, user_id, json::object
+			response["user_signing_keys"]
+		};
+
+		for(const auto &[_user_id, user_signing_key] : user_signing_keys)
+		{
+			const m::user::id &user_id
 			{
-				self_signing_key
-			}
-		};
-	}
+				_user_id
+			};
 
-	const json::object &user_signing_keys
-	{
-		response["user_signing_keys"]
-	};
+			if(client_request.user_id != _user_id)
+				continue;
 
-	for(const auto &[_user_id, user_signing_key] : user_signing_keys)
-	{
-		const m::user::id &user_id
-		{
-			_user_id
-		};
-
-		if(client_request.user_id != _user_id)
-			continue;
-
-		json::stack::member
-		{
-			object, user_id, json::object
+			json::stack::member
 			{
-				user_signing_key
-			}
-		};
+				object, user_id, json::object
+				{
+					user_signing_key
+				}
+			};
+		}
 	}
 }
 catch(const std::exception &e)
