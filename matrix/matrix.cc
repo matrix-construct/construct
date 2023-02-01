@@ -123,6 +123,7 @@ ircd::m::module_names
 	"client_devices",
 	"client_delete_devices",
 	"client_send_to_device",
+	"client_dehydrated_device",
 	"client_keys_changes",
 	"client_keys_upload",
 	"client_keys_claim",

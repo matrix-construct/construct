@@ -284,6 +284,7 @@ client_client_delete_devices_la_SOURCES = client/delete_devices.cc
 client_client_notifications_la_SOURCES = client/notifications.cc
 client_client_register_email_la_SOURCES = client/register_email.cc
 client_client_create_group_la_SOURCES = client/create_group.cc
+client_client_dehydrated_device_la_SOURCES = client/dehydrated_device.cc
 
 client_module_LTLIBRARIES = \
 	client/client_versions.la \
@@ -311,6 +312,7 @@ client_module_LTLIBRARIES = \
 	client/client_notifications.la \
 	client/client_register_email.la \
 	client/client_create_group.la \
+	client/client_dehydrated_device.la \
 	###
 
 #
