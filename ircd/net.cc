@@ -543,6 +543,11 @@ noexcept
 // net/wait.h
 //
 
+namespace ircd::net
+{
+	static asio::ip::tcp::socket::wait_type translate(const ready &) noexcept;
+}
+
 decltype(ircd::net::wait_opts_default)
 ircd::net::wait_opts_default;
 
@@ -605,6 +610,31 @@ ircd::net::wait(socket &socket,
                 wait_callback_ec callback)
 {
 	socket.wait(wait_opts, std::move(callback));
+}
+
+boost::asio::ip::tcp::socket::wait_type
+ircd::net::translate(const ready &ready)
+noexcept
+{
+	using wait_type = asio::ip::tcp::socket::wait_type;
+
+	switch(ready)
+	{
+		case ready::ANY:
+			return wait_type::wait_read | wait_type::wait_write | wait_type::wait_error;
+
+		case ready::READ:
+			return wait_type::wait_read;
+
+		case ready::WRITE:
+			return wait_type::wait_write;
+
+		case ready::ERROR:
+			return wait_type::wait_error;
+	}
+
+	assert(0);
+	__builtin_unreachable();
 }
 
 ircd::string_view
@@ -1639,42 +1669,19 @@ try
 		*this, opts.timeout
 	};
 
-	switch(opts.type)
+	const auto wait_cond
 	{
-		case ready::READ: continuation
-		{
-			continuation::asio_predicate, interruption, [this]
-			(auto &yield)
-			{
-				sd.async_wait(wait_type::wait_read, yield);
-			}
-		};
-		break;
+		translate(opts.type)
+	};
 
-		case ready::WRITE: continuation
+	continuation
+	{
+		continuation::asio_predicate, interruption, [this, &wait_cond]
+		(auto &yield)
 		{
-			continuation::asio_predicate, interruption, [this]
-			(auto &yield)
-			{
-				sd.async_wait(wait_type::wait_write, yield);
-			}
-		};
-		break;
-
-		case ready::ERROR: continuation
-		{
-			continuation::asio_predicate, interruption, [this]
-			(auto &yield)
-			{
-				sd.async_wait(wait_type::wait_error, yield);
-			}
-		};
-		break;
-
-		[[unlikely]]
-		default:
-			throw ircd::not_implemented{};
-	}
+			sd.async_wait(wait_cond, yield);
+		}
+	};
 }
 catch(const boost::system::system_error &e)
 {
