@@ -2528,6 +2528,7 @@ noexcept try
 		[[unlikely]]
 		case X509_V_OK:
 			assert(0);
+			[[fallthrough]];
 
 		default:
 			reject();

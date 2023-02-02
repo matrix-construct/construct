@@ -526,8 +526,9 @@ ircd::db::loglevel(const database &d)
 		[[unlikely]]
 		case rocksdb::NUM_INFO_LOG_LEVELS:
 			assert(0);
+			[[fallthrough]];
 
-		case rocksdb::HEADER_LEVEL:
+		case rocksdb::HEADER_LEVEL:    [[fallthrough]];
 		case rocksdb::FATAL_LEVEL:     return log::level::CRITICAL;
 		case rocksdb::ERROR_LEVEL:     return log::level::ERROR;
 		case rocksdb::WARN_LEVEL:      return log::level::WARNING;

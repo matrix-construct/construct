@@ -858,6 +858,7 @@ RB_MAYBE_CWARN([-Wnull-dereference], charybdis_cv_c_gcc_w_null_dereference)
 RB_MAYBE_CWARN([-Wplacement-new=2], charybdis_cv_c_gcc_w_placement_new)
 RB_MAYBE_CWARN([-Wundef], charybdis_cv_c_gcc_w_undef)
 RB_MAYBE_CWARN([-Wodr], charybdis_cv_c_gcc_w_odr)
+RB_MAYBE_CWARN([-Wimplicit-fallthrough], charybdis_cv_c_gcc_w_implicit_fallthrough)
 
 RB_MAYBE_CWARN([-Werror=return-type], charybdis_cv_c_gcc_w_error_return_type)
 
