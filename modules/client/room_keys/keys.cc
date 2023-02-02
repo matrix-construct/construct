@@ -61,10 +61,56 @@ ircd::m::resource::response
 ircd::m::delete_room_keys_keys(client &client,
                                const resource::request &request)
 {
+	char room_id_buf[room::id::buf::SIZE];
+	const string_view &room_id
+	{
+		request.parv.size() > 0?
+			url::decode(room_id_buf, request.parv[0]):
+			string_view{}
+	};
+
+	char session_id_buf[256];
+	const string_view &session_id
+	{
+		request.parv.size() > 1?
+			url::decode(session_id_buf, request.parv[1]):
+			string_view{}
+	};
+
+	const event::idx version
+	{
+		request.query.at<event::idx>("version")
+	};
+
+	const m::user::room user_room
+	{
+		request.user_id
+	};
+
+	const m::room::state state
+	{
+		user_room
+	};
+
+	char state_key_buf[event::STATE_KEY_MAX_SIZE];
+	const string_view state_key
+	{
+		make_state_key(state_key_buf, room_id, session_id, version)
+	};
+
+	const auto event_id
+	{
+		m::event_id(state.get("ircd.room_keys.key", state_key))
+	};
+
+	const auto redact_id
+	{
+		m::redact(user_room, request.user_id, event_id, "deleted by client")
+	};
 
 	return resource::response
 	{
-		client, http::NOT_IMPLEMENTED
+		client, http::OK
 	};
 }
 
