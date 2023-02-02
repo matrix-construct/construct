@@ -10,6 +10,10 @@
 
 namespace ircd::m
 {
+	static string_view make_state_key(const mutable_buffer &, const string_view &, const string_view &, const event::idx &);
+
+	static resource::response _get_room_keys_keys(client &, const resource::request &, const room::state &, const event::idx &, const string_view &, const string_view &);
+	static void _get_room_keys_keys(client &, const resource::request &, const room::state &, const event::idx &, const string_view &, json::stack::object &);
 	static resource::response get_room_keys_keys(client &, const resource::request &);
 	extern resource::method room_keys_keys_get;
 
@@ -175,13 +179,10 @@ ircd::m::put_room_keys_keys_key(client &client,
 	});
 
 	char state_key_buf[event::STATE_KEY_MAX_SIZE];
-	const string_view state_key{fmt::sprintf
+	const string_view state_key
 	{
-		state_key_buf, "%s:%s:%u",
-		string_view{room_id},
-		session_id,
-		version,
-	}};
+		make_state_key(state_key_buf, room_id, session_id, version)
+	};
 
 	const auto event_id
 	{
@@ -241,32 +242,7 @@ ircd::m::get_room_keys_keys(client &client,
 	};
 
 	if(room_id && session_id)
-	{
-		char state_key_buf[event::STATE_KEY_MAX_SIZE];
-		const string_view state_key{fmt::sprintf
-		{
-			state_key_buf, "%s:%s:%u",
-			string_view{room_id},
-			session_id,
-			version,
-		}};
-
-		const auto event_idx
-		{
-			state.get("ircd.room_keys.key", state_key)
-		};
-
-		m::get(event_idx, "content", [&client]
-		(const json::object &content)
-		{
-			resource::response
-			{
-				client, content
-			};
-		});
-
-		return {}; // responded from closure
-	}
+		return _get_room_keys_keys(client, request, state, version, room_id, session_id);
 
 	resource::response::chunked response
 	{
@@ -283,50 +259,132 @@ ircd::m::get_room_keys_keys(client &client,
 		out
 	};
 
+	json::stack::object rooms
+	{
+		top, "rooms"
+	};
+
 	if(room_id)
 	{
-		json::stack::object sessions
-		{
-			top, "sessions"
-		};
-
-		state.for_each("ircd.room_keys.key", [&room_id, &version, &sessions]
-		(const string_view &type, const string_view &state_key, const event::idx &event_idx)
-		{
-			string_view part[4]; const auto parts
-			{
-				tokens(state_key, ':', part)
-			};
-
-			const auto &_version{part[3]};
-			const auto &_session_id{part[2]};
-			const string_view &_room_id
-			{
-				begin(part[0]), end(part[1])
-			};
-
-			assert(m::valid(id::ROOM, _room_id));
-			if(_room_id != room_id)
-				return true;
-
-			if(_version != lex_cast<event::idx>(version))
-				return true;
-
-			m::get(std::nothrow, event_idx, "content", [&sessions, &_session_id]
-			(const json::object &session)
-			{
-				json::stack::member
-				{
-					sessions, _session_id, session
-				};
-			});
-
-			return true;
-		});
-
-		return {};
+		_get_room_keys_keys(client, request, state, version, room_id, rooms);
+		return response;
 	}
 
-	assert(0);
-	return {};
+	m::room::id::buf last_room;
+	state.for_each("ircd.room_keys.key", [&client, &request, &state, &version, &rooms, &last_room]
+	(const string_view &, const string_view &state_key, const event::idx &)
+	{
+		const auto &room_id
+		{
+			token(state_key, ":::", 0)
+		};
+
+		if(!m::valid(id::ROOM, room_id))
+			return true;
+
+		if(room_id == last_room)
+			return true;
+
+		_get_room_keys_keys(client, request, state, version, room_id, rooms);
+		return true;
+	});
+
+	return response;
+}
+
+void
+ircd::m::_get_room_keys_keys(client &client,
+                             const resource::request &request,
+                             const m::room::state &state,
+                             const event::idx &version,
+                             const string_view &room_id,
+                             json::stack::object &rooms)
+{
+	json::stack::object room
+	{
+		rooms, room_id
+	};
+
+	json::stack::object sessions
+	{
+		room, "sessions"
+	};
+
+	state.for_each("ircd.room_keys.key", [&room_id, &version, &sessions]
+	(const string_view &type, const string_view &state_key, const event::idx &event_idx)
+	{
+		string_view part[3]; const auto parts
+		{
+			tokens(state_key, ":::", part)
+		};
+
+		const auto &_room_id{part[0]};
+		const auto &_session_id{part[1]};
+		const auto &_version{part[2]};
+		if(!m::valid(id::ROOM, _room_id))
+			return true;
+
+		if(_room_id != room_id)
+			return true;
+
+		if(_version != lex_cast<event::idx>(version))
+			return true;
+
+		m::get(std::nothrow, event_idx, "content", [&sessions, &_session_id]
+		(const json::object &session)
+		{
+			json::stack::member
+			{
+				sessions, _session_id, session
+			};
+		});
+
+		return true;
+	});
+}
+
+ircd::m::resource::response
+ircd::m::_get_room_keys_keys(client &client,
+                             const resource::request &request,
+                             const m::room::state &state,
+                             const event::idx &version,
+                             const string_view &room_id,
+                             const string_view &session_id)
+{
+	char state_key_buf[event::STATE_KEY_MAX_SIZE];
+	const string_view state_key
+	{
+		make_state_key(state_key_buf, room_id, session_id, version)
+	};
+
+	const auto event_idx
+	{
+		state.get("ircd.room_keys.key", state_key)
+	};
+
+	m::get(event_idx, "content", [&client]
+	(const json::object &content)
+	{
+		resource::response
+		{
+			client, content
+		};
+	});
+
+	return {}; // responded from closure or thrown
+}
+
+ircd::string_view
+ircd::m::make_state_key(const mutable_buffer &buf,
+                        const string_view &room_id,
+                        const string_view &session_id,
+                        const event::idx &version)
+{
+	return fmt::sprintf
+	{
+		buf, "%s:::%s:::%u",
+		room_id,
+		session_id,
+		version,
+	};
 }
