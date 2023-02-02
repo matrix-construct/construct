@@ -4398,6 +4398,7 @@ ircd::db::throw_on_error::throw_on_error(const rocksdb::Status &status)
 
 	switch(status.code())
 	{
+		[[likely]]
 		case Status::kOk:
 			return;
 
@@ -4412,6 +4413,7 @@ ircd::db::throw_on_error::throw_on_error(const rocksdb::Status &status)
 			[[fallthrough]];
 		#endif
 
+		[[unlikely]]
 		default:
 			throw error
 			{
@@ -4444,6 +4446,7 @@ ircd::db::error_to_status::error_to_status(const std::error_code &e)
 
 	switch(e.value())
 	{
+		[[likely]]
 		case 0:
 			return Status::OK();
 
@@ -4529,6 +4532,7 @@ ircd::db::append(rocksdb::WriteBatch &batch,
 	const auto v(slice(std::get<2>(delta)));
 	switch(std::get<0>(delta))
 	{
+		[[unlikely]]
 		case op::GET:            assert(0);                    break;
 		case op::SET:            batch.Put(c, k, v);           break;
 		case op::MERGE:          batch.Merge(c, k, v);         break;
@@ -5120,11 +5124,13 @@ ircd::db::valid(const rocksdb::Iterator &it)
 	{
 		using rocksdb::Status;
 
+		[[likely]]
 		case Status::kOk:
 		case Status::kNotFound:
 		case Status::kIncomplete:
 			return it.Valid();
 
+		[[unlikely]]
 		default:
 			throw_on_error
 			{
@@ -5142,13 +5148,16 @@ ircd::db::valid(const rocksdb::Status &s)
 	{
 		using rocksdb::Status;
 
+		[[likely]]
 		case Status::kOk:
 			return true;
 
+		[[likely]]
 		case Status::kNotFound:
 		case Status::kIncomplete:
 			return false;
 
+		[[unlikely]]
 		default:
 			throw_on_error{s};
 			__builtin_unreachable();

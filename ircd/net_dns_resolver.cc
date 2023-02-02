@@ -172,6 +172,7 @@ ircd::net::dns::resolver::make_query(const mutable_buffer &buf,
 	string_view hoststr;
 	switch(tag.opts.qtype)
 	{
+		[[unlikely]]
 		case 0: throw error
 		{
 			"Query type is required to form a question."
@@ -803,6 +804,7 @@ ircd::net::dns::resolver::handle_error(const header &header,
 {
 	switch(header.rcode)
 	{
+		[[likely]]
 		case 0: // NoError; continue
 			return true;
 

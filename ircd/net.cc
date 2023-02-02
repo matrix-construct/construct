@@ -1671,6 +1671,7 @@ try
 		};
 		break;
 
+		[[unlikely]]
 		default:
 			throw ircd::not_implemented{};
 	}
@@ -1760,7 +1761,9 @@ try
 			return;
 		}
 
-		default: throw ircd::not_implemented{};
+		[[unlikely]]
+		default:
+			throw ircd::not_implemented{};
 	}
 }
 catch(const boost::system::system_error &e)
@@ -2188,6 +2191,7 @@ noexcept try
 		}
 
 		// A cancelation means there was no timeout.
+		[[likely]]
 		case int(std::errc::operation_canceled):
 		{
 			assert(ec.category() == std::system_category());
@@ -2196,6 +2200,7 @@ noexcept try
 		}
 
 		// All other errors are unexpected, logged and ignored here.
+		[[unlikely]]
 		default: throw panic
 		{
 			"socket(%p): unexpected :%s",
@@ -2520,6 +2525,7 @@ noexcept try
 
 	if(!valid) switch(err)
 	{
+		[[unlikely]]
 		case X509_V_OK:
 			assert(0);
 

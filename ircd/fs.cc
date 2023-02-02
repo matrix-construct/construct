@@ -2332,8 +2332,13 @@ ircd::fs::advise(const fd &fd,
 		cnt = std::min(opts.offset + count - off, max_count);
 		switch(const auto r(::posix_fadvise(fd, off, cnt, advice)); r)
 		{
-			case 0:   break;
-			default:  throw_system_error(r);
+			[[likely]]
+			case 0:
+				break;
+
+			[[unlikely]]
+			default:
+				throw_system_error(r);
 		}
 	}
 	while(off + cnt < opts.offset + count);

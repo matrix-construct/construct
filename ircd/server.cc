@@ -1236,6 +1236,7 @@ ircd::server::peer::handle_error(link &link,
 
 	if(system_category(ec)) switch(ec.value())
 	{
+		[[unlikely]]
 		case 0:
 			assert(0);
 			break;
@@ -2414,6 +2415,7 @@ noexcept try
 
 	if(system_category(ec)) switch(ec.value())
 	{
+		[[likely]]
 		case 0:
 			handle_writable_success();
 			return;
@@ -2601,6 +2603,7 @@ noexcept try
 
 	if(system_category(ec)) switch(ec.value())
 	{
+		[[likely]]
 		case 0:
 			handle_readable_success();
 			return;

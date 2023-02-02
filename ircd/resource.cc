@@ -1117,6 +1117,7 @@ try
 			return;
 		}
 
+		[[unlikely]]
 		default: throw http::error
 		{
 			"Cannot send json::%s as response content",

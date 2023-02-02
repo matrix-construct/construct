@@ -523,7 +523,7 @@ ircd::db::loglevel(const database &d)
 
 	switch(level)
 	{
-		default:
+		[[unlikely]]
 		case rocksdb::NUM_INFO_LOG_LEVELS:
 			assert(0);
 
@@ -534,6 +534,9 @@ ircd::db::loglevel(const database &d)
 		case rocksdb::INFO_LEVEL:      return log::level::INFO;
 		case rocksdb::DEBUG_LEVEL:     return log::level::DEBUG;
 	}
+
+	assert(0);
+	__builtin_unreachable();
 }
 
 ircd::db::options

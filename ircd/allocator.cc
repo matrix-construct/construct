@@ -56,12 +56,15 @@ ircd::allocator::allocate(const size_t alignment,
 	void *ret;
 	switch(int errc(::posix_memalign(&ret, alignment, size)); errc)
 	{
+		[[likely]]
 		case 0:
 			break;
 
+		[[unlikely]]
 		case int(std::errc::not_enough_memory):
 			throw std::bad_alloc{};
 
+		[[unlikely]]
 		default:
 			throw_system_error();
 			__builtin_unreachable();
@@ -249,9 +252,11 @@ ircd::allocator::advise(const const_buffer &buf,
 	assert(aligned(data(buf), info::page_size));
 	switch(const auto r(::madvise(mutable_cast(data(buf)), size(buf), advice)); r)
 	{
+		[[likely]]
 		case 0:
 			return size(buf);          // success
 
+		[[unlikely]]
 		default:
 			throw_system_error(r);     // error
 	}
