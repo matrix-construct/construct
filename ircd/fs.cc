@@ -1624,8 +1624,7 @@ ircd::fs::flags(const write_opts &opts)
 
 namespace ircd::fs
 {
-	static constexpr asio::posix::stream_descriptor::wait_type translate(const ready &) noexcept
-	__attribute__((const));
+	static asio::posix::stream_descriptor::wait_type translate(const ready &) noexcept;
 }
 
 decltype(ircd::fs::wait_opts_default)
@@ -1671,7 +1670,6 @@ ircd::fs::wait(const fd &fd,
 		throw_system_error(ec);
 }
 
-constexpr
 boost::asio::posix::stream_descriptor::wait_type
 ircd::fs::translate(const ready &ready)
 noexcept
@@ -1690,9 +1688,11 @@ noexcept
 			return wait_type::wait_write;
 
 		case ready::ERROR:
-		default:
 			return wait_type::wait_error;
 	}
+
+	assert(0);
+	__builtin_unreachable();
 }
 
 ircd::string_view
