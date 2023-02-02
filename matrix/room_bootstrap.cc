@@ -548,8 +548,6 @@ try
 	// pre-sort here and indicate that to eval.
 	std::sort(begin(auth_chain), end(auth_chain));
 	vmopts.ordered = true;
-
-	vmopts.nothrows = vm::fault::EXISTS;
 	vmopts.fetch = false;
 	m::vm::eval
 	{
