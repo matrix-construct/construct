@@ -23,6 +23,7 @@ namespace ircd::m::bridge
 	extern ctx::dock worker_dock;
 	extern std::vector<context> worker_context;
 	extern hookfn<vm::eval &> notify_hook;
+	extern ircd::run::changed quit_handler;
 }
 
 ircd::mapi::header
@@ -59,6 +60,16 @@ ircd::m::bridge::notify_hook
 	handle_event,
 	{
 		{ "_site", "vm.notify" },
+	}
+};
+
+decltype(ircd::m::bridge::quit_handler)
+ircd::m::bridge::quit_handler
+{
+	run::level::QUIT, []
+	{
+		for(auto &worker : worker_context)
+			worker.terminate();
 	}
 };
 
