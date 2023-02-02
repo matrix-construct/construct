@@ -774,7 +774,7 @@ ircd::server::peer::sock_nodelay
 {
 	{
 		{ "name",     "ircd.server.peer.sock.nodelay" },
-		{ "default",  true                            },
+		{ "default",  long(true)                      },
 	},
 	[]() noexcept
 	{
