@@ -22,6 +22,7 @@ struct construct::console
 	static std::deque<std::string> queue;
 	static bool quit_when_done;
 	static bool interactive_when_done;
+	static bool silent;
 
 	std::string line;
 	std::string record_path;

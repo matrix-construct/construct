@@ -49,6 +49,7 @@ bool defaults;
 const char *bootstrap;
 const char *diagnostic;
 bool nobanner;
+bool silentmode;
 
 lgetopt opts[]
 {
@@ -85,6 +86,7 @@ lgetopt opts[]
 	{ "bootstrap",  &bootstrap,     lgetopt::STRING,  "Bootstrap fresh database from event vector" },
 	{ "diagnostic", &diagnostic,    lgetopt::STRING,  "Specify a diagnostic type in conjunction with other commands" },
 	{ "nobanner",   &nobanner,      lgetopt::BOOL,    "Terminal log enabled only in runlevel RUN" },
+	{ "silent",     &silentmode,    lgetopt::BOOL,    "Like quiet mode without console output either" },
 	{ nullptr,      nullptr,        lgetopt::STRING,  nullptr },
 };
 
@@ -629,8 +631,11 @@ applyargs()
 	if(soft_assert)
 		ircd::soft_assert.set("true");
 
-	if(quietmode || nobanner)
+	if(quietmode || nobanner || silentmode)
 		ircd::log::console_disable();
+
+	if(silentmode)
+		construct::console::silent = true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

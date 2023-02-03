@@ -84,6 +84,9 @@ construct::console::quit_when_done;
 decltype(construct::console::interactive_when_done)
 construct::console::interactive_when_done;
 
+decltype(construct::console::silent)
+construct::console::silent;
+
 bool
 construct::console::spawn()
 {
@@ -359,7 +362,12 @@ construct::console::handle_line_bymodule()
 				pbase(), pptr()
 			};
 
+			setp(pbase(), epptr());
 			record_append(str);
+
+			if(silent)
+				return 0;
+
 			std::cout << str;
 			wrote += size(str);
 			if(wrote >= size_t(ratelimit_bytes))
@@ -369,7 +377,6 @@ construct::console::handle_line_bymodule()
 				wrote = 0;
 			}
 
-			setp(pbase(), epptr());
 			return 0;
 		}
 
@@ -412,7 +419,7 @@ construct::console::handle_line_bymodule()
 				view(out, outbuf)
 			};
 
-			if(!endswith(str, '\n'))
+			if(!endswith(str, '\n') && !silent)
 				std::cout << std::endl;
 
 			return ret;
