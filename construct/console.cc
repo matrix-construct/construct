@@ -321,7 +321,7 @@ construct::console::handle_line_bymodule()
 	};
 
 	struct buf
-	:std::stringbuf
+	:std::streambuf
 	{
 		size_t syncs {0};
 		size_t wrote {0};
@@ -373,6 +373,18 @@ construct::console::handle_line_bymodule()
 			return 0;
 		}
 
+		int overflow(int ch) override
+		{
+			this->sync();
+			return 0;
+		}
+
+		buf *setbuf(char *const s, std::streamsize n) override
+		{
+			setp(s, s + n);
+			return this;
+		}
+
 		~buf()
 		{
 			// Console logs are permitted again after the command completes.
@@ -383,7 +395,7 @@ construct::console::handle_line_bymodule()
 	buf;
 	buf.cmdline = line;
 	buf.record_fd = &record_fd;
-	pubsetbuf((std::stringbuf &)buf, outbuf);
+	buf.pubsetbuf(data(outbuf), size(outbuf));
 
 	std::ostream out(&buf);
 	out.exceptions(out.badbit | out.failbit | out.eofbit);
