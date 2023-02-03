@@ -279,26 +279,31 @@ noexcept
 
 	// vpermb
 	u8x64 _perm;
+	#pragma clang loop vectorize(enable) unroll(full)
 	for(k = 0; k < 64; ++k)
 		_perm[k] = in[encode_permute_tab[k]];
 
 	// TODO: currently does not achieve vpmultshiftqb on avx512vbmi
 	u64x8 sh[8], perm(_perm);
+	#pragma clang loop vectorize(enable)
 	for(i = 0; i < 8; ++i)
 		for(j = 0; j < 8; ++j)
 			sh[i][j] = perm[i] >> encode_shift_ctrl[i * 8 + j];
 
 	// TODO: not needed if vpmultishiftqb is emitted.
+	#pragma clang loop vectorize(enable) vectorize_predicate(enable)
 	for(i = 0; i < 8; ++i)
 		for(j = 0; j < 8; ++j)
 			sh[i][j] &= 0x3f;
 
 	u32x8 res[8];
+	#pragma clang loop vectorize(enable) unroll(full)
 	for(i = 0; i < 8; ++i)
 		for(j = 0; j < 8; ++j)
 			res[i][j] = dict[sh[i][j]];
 
 	u8x64 ret;
+	#pragma clang loop vectorize(enable) unroll(full)
 	for(i = 0, k = 0; i < 8; ++i)
 		for(j = 0; j < 8; ++j)
 			ret[k++] = res[i][j];
@@ -400,32 +405,40 @@ noexcept
 	size_t i, j;
 
 	i32x16 vals[4];
+	#pragma clang loop vectorize(enable) unroll(full)
 	for(i = 0; i < 4; ++i)
+		#pragma clang loop vectorize(enable) unroll(full)
 		for(j = 0; j < 16; ++j)
 			vals[i][j] = block[i * 16 + j],
 			vals[i][j] = decode_tab[vals[i][j]];
 
 	u8x64 _err;
 	i32x16 errs;
+	#pragma clang loop vectorize(enable) unroll(full)
 	for(i = 0; i < 4; ++i)
+		#pragma clang loop vectorize(enable) unroll(full)
 		for(j = 0, errs = vals[i] >= 64; j < 16; ++j)
 			_err[i * 16 + j] = errs[j];
 
 	u16x32 al, ah;
+	#pragma clang loop vectorize(enable) unroll(full)
 	for(i = 0; i < 4; ++i)
 		for(j = 0; j < 8; ++j)
 			ah[i * 8 + j] = vals[i][j * 2 + 0],
 			al[i * 8 + j] = vals[i][j * 2 + 1];
 
 	u16x32 a;
+	#pragma clang loop vectorize(enable) unroll(full)
 	for(i = 0; i < 32; ++i)
 		a[i] = ah[i] * 64U + al[i];
 
 	i32x16 b;
+	#pragma clang loop vectorize(enable) unroll(full)
 	for(i = 0, j = 0; i < 16; ++i, j += 2)
 		b[i] = a[j] * 4096U + a[j + 1];
 
 	u8x64 c(b), ret;
+	#pragma clang loop vectorize(enable) unroll(full)
 	for(i = 0; i < 64; ++i)
 		ret[i] = c[decode_permute_tab_le[i]];
 
