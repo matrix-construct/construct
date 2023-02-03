@@ -274,6 +274,9 @@ ASIO_UNIT_CPPFLAGS += -include ircd/asio.h
 SPIRIT_UNIT_CPPFLAGS += -include ircd/spirit.h
 endif
 
+if CLANG
+b64.lo:               AM_CXXFLAGS := ${AM_CXXFLAGS} -Wno-conditional-uninitialized
+endif
 if OPENCL
 cl.lo:                AM_CPPFLAGS := @OPENCL_CPPFLAGS@ ${AM_CPPFLAGS}
 endif
