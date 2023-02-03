@@ -5701,6 +5701,9 @@ ircd::db::reflect(const rocksdb::CompactionReason &r)
 		#ifdef IRCD_DB_HAS_FORCED_BLOBGC
 		case Reason::kForcedBlobGC:                 return "kForcedBlobGC";
 		#endif
+		#ifdef IRCD_DB_HAS_ROUND_ROBIN_TTL
+		case Reason::kRoundRobinTtl:                return "kRoundRobinTtl";
+		#endif
 
 		case Reason::kNumOfReasons:
 			break;
