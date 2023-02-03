@@ -46,3 +46,7 @@ struct ircd::m::app
 
 	static void init(), fini();
 };
+
+template<>
+decltype(ircd::m::app::list)
+ircd::instance_list<ircd::m::app>::list;

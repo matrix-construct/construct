@@ -54,6 +54,10 @@ struct ircd::m::push::request
 	char buf[15_KiB];
 };
 
+template<>
+decltype(ircd::m::push::request::list)
+ircd::instance_list<ircd::m::push::request>::list;
+
 struct ircd::m::push::match
 :boolean
 {

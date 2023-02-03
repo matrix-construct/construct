@@ -109,6 +109,10 @@ struct ircd::log::log
 	static log *find(const char &snote);
 };
 
+template<>
+decltype(ircd::log::log::list)
+ircd::instance_list<ircd::log::log>::list;
+
 /// log::hook is used by the receivers of messages; this is a extern singleton.
 /// Examples of hooks are stdout/stderr, and file logging. This hook does not
 /// propagate exceptions and silently drops them. Listeners should not yield

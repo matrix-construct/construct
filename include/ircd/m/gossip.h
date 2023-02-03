@@ -51,6 +51,10 @@ struct ircd::m::gossip
 	~gossip() noexcept;
 };
 
+template<>
+decltype(ircd::m::gossip::list)
+ircd::instance_list<ircd::m::gossip>::list;
+
 struct ircd::m::gossip::opts
 {
 	/// Room apropos; when room.event_id is true, only that event will be

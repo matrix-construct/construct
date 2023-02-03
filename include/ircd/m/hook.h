@@ -78,6 +78,10 @@ struct ircd::m::hook::base
 	virtual ~base() noexcept;
 };
 
+template<>
+decltype(ircd::m::hook::base::list)
+ircd::instance_list<ircd::m::hook::base>::list;
+
 /// Non-template base class for all hook sites (dispatcher/caller component)
 ///
 struct ircd::m::hook::base::site
@@ -110,6 +114,10 @@ struct ircd::m::hook::base::site
 	site(const site &) = delete;
 	virtual ~site() noexcept;
 };
+
+template<>
+decltype(ircd::m::hook::base::site::list)
+ircd::instance_list<ircd::m::hook::base::site>::list;
 
 /// Hook function with no payload; only an m::event argument
 template<>

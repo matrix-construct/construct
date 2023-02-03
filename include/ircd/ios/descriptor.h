@@ -51,6 +51,10 @@ struct ircd::ios::descriptor
 	~descriptor() noexcept;
 };
 
+template<>
+decltype(ircd::ios::descriptor::list)
+ircd::instance_list<ircd::ios::descriptor>::list;
+
 /// Statistics for the descriptor.
 struct ircd::ios::descriptor::stats
 {

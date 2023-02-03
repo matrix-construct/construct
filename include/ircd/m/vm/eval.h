@@ -106,3 +106,7 @@ struct ircd::m::vm::eval
 	static eval *seqmin();
 	static void seqsort();
 };
+
+template<>
+decltype(ircd::m::vm::eval::list)
+ircd::instance_list<ircd::m::vm::eval>::list;

@@ -89,6 +89,10 @@ struct ircd::client
 	friend const ipport &local(const client &);
 };
 
+template<>
+decltype(ircd::client::map)
+ircd::instance_multimap<ircd::net::ipport, ircd::client, ircd::net::ipport::cmp_ip>::map;
+
 /// Confs can be attached to individual clients to change their behavior
 struct ircd::client::conf
 {

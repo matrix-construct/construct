@@ -70,6 +70,10 @@ struct ircd::exec
 	~exec() noexcept;
 };
 
+template<>
+decltype(ircd::exec::list)
+ircd::instance_list<ircd::exec>::list;
+
 /// Exec options
 ///
 struct ircd::exec::opts

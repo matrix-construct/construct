@@ -118,6 +118,10 @@ struct ircd::m::sync::data
 	~data() noexcept;
 };
 
+template<>
+decltype(ircd::m::sync::data::list)
+ircd::instance_list<ircd::m::sync::data>::list;
+
 inline bool
 ircd::m::sync::apropos(const data &d,
                        const event &event)

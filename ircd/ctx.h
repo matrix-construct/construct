@@ -75,3 +75,7 @@ struct ircd::ctx::ctx
 	ctx &operator=(const ctx &) = delete;
 	~ctx() noexcept;
 };
+
+template<>
+decltype(ircd::ctx::ctx::list)
+ircd::util::instance_list<ircd::ctx::ctx>::list;

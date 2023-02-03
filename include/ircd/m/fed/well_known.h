@@ -81,3 +81,7 @@ struct ircd::m::fed::well_known::request
 	char tgtbuf[2][rfc3986::REMOTE_BUFSIZE];
 	char buf[15_KiB];
 };
+
+template<>
+decltype(ircd::m::fed::well_known::request::list)
+ircd::instance_list<ircd::m::fed::well_known::request>::list;

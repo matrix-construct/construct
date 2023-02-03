@@ -60,6 +60,10 @@ struct ircd::resource
 	static resource &find(const string_view &path);
 };
 
+template<>
+decltype(ircd::resource::map)
+ircd::instance_map<ircd::string_view, ircd::resource, ircd::iless>::map;
+
 #include "method.h"
 #include "request.h"
 #include "response.h"

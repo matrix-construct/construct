@@ -68,6 +68,10 @@ struct ircd::m::acquire
 	~acquire() noexcept;
 };
 
+template<>
+decltype(ircd::m::acquire::list)
+ircd::instance_list<ircd::m::acquire>::list;
+
 struct ircd::m::acquire::opts
 {
 	/// Room apropos; note that the event_id in this structure may have some

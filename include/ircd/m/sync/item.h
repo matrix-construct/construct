@@ -61,3 +61,7 @@ struct ircd::m::sync::item
 	item(const item &) = delete;
 	~item() noexcept;
 };
+
+template<>
+decltype(ircd::m::sync::item::map)
+ircd::instance_multimap<std::string, ircd::m::sync::item, std::less<>>::map;

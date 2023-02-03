@@ -179,3 +179,7 @@ struct ircd::db::database
 	static const database &get(const column &);
 	static database &get(column &);
 };
+
+template<>
+decltype(ircd::db::database::list)
+ircd::instance_list<ircd::db::database>::list;
