@@ -15776,7 +15776,6 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 
 	m::vm::opts vmopts;
 	vmopts.nothrows = -1;
-	vmopts.wopts.appendix[m::dbs::appendix::ROOM_HEAD_RESOLVE] = false;
 	vmopts.wopts.appendix[m::dbs::appendix::ROOM_HEAD] = false;
 	vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
 	vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
@@ -16211,7 +16210,6 @@ console_cmd__fed__auth(opt &out, const string_view &line)
 		m::vm::opts vmopts;
 		vmopts.node_id = opts.remote;
 		vmopts.nothrows = -1;
-		vmopts.wopts.appendix[m::dbs::appendix::ROOM_HEAD_RESOLVE] = false;
 		vmopts.wopts.appendix[m::dbs::appendix::ROOM_HEAD] = false;
 		vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
 		vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
