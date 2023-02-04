@@ -723,26 +723,12 @@ ircd::m::vm::fetch::prev_fetch(const event &event,
 	return ret;
 }
 
-//TODO: Adjust when PDU lookahead/lookaround is fixed in the vm::eval iface.
-//TODO: Wait on another eval completion instead of just coarse sleep()'s.
 bool
 ircd::m::vm::fetch::prev_wait(const event &event,
                               vm::eval &eval)
 {
 	const auto &opts(*eval.opts);
 	const event::prev prev(event);
-	const size_t prev_count
-	{
-		prev.prev_events_count()
-	};
-
-	const size_t &wait_count
-	{
-		ssize_t(opts.fetch_prev_wait_count) >= 0?
-			opts.fetch_prev_wait_count:
-			size_t(prev_wait_count)
-	};
-
 	const milliseconds &wait_time
 	{
 		opts.fetch_prev_wait_time >= 0ms?
@@ -750,14 +736,29 @@ ircd::m::vm::fetch::prev_wait(const event &event,
 			milliseconds(prev_wait_time)
 	};
 
-	size_t i(0); while(i < wait_count)
+	const auto ids
 	{
-		sleep(milliseconds(++i * wait_time));
-		if(prev_count == prev.prev_events_exist())
-			return true;
-	}
+		prev.prev_events_count()
+	};
 
-	return false;
+	assume(ids <= event::prev::MAX);
+	event::id buf[event::prev::MAX];
+	const vector_view<const event::id> prev_id
+	(
+		prev.ids(buf)
+	);
+
+	const auto exists
+	{
+		notify::wait(prev_id, wait_time)
+	};
+
+	const bool obtained
+	{
+		exists == ids
+	};
+
+	return obtained;
 }
 
 void
