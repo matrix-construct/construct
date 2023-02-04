@@ -131,7 +131,6 @@ void
 ircd::m::typing::timeout_check()
 try
 {
-	const ctx::uninterruptible ui;
 	const auto now
 	{
 		ircd::now<system_point>()
@@ -141,9 +140,9 @@ try
 	{
 		if(it->timesout < now)
 		{
+			const ctx::uninterruptible ui;
 			timeout_timeout(*it);
 			it = typists.erase(it);
-			ctx::interruption_point();
 		}
 		else ++it;
 	}
