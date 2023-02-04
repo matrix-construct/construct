@@ -30,7 +30,7 @@ namespace ircd::m::sync
 /// and a linear handler.
 /// 
 struct ircd::m::sync::item
-:instance_multimap<std::string, item, std::less<>>
+:instance_multimap<string_view, item, std::less<>>
 {
 	using handle = std::function<bool (data &)>;
 
@@ -52,10 +52,10 @@ struct ircd::m::sync::item
 	bool linear(data &);
 	bool polylog(data &);
 
-	item(std::string name,
-	     handle polylog         = {},
-	     handle linear          = {},
-	     const json::members &  = {});
+	item(const string_view &name,
+	     handle polylog           = {},
+	     handle linear            = {},
+	     const json::members &    = {});
 
 	item(item &&) = delete;
 	item(const item &) = delete;
@@ -64,4 +64,4 @@ struct ircd::m::sync::item
 
 template<>
 decltype(ircd::m::sync::item::map)
-ircd::instance_multimap<std::string, ircd::m::sync::item, std::less<>>::map;
+ircd::instance_multimap<ircd::string_view, ircd::m::sync::item, std::less<>>::map;

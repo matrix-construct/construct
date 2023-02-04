@@ -32,8 +32,8 @@ ircd::m::sync::pool
 };
 
 template<>
-decltype(ircd::util::instance_multimap<std::string, ircd::m::sync::item, std::less<>>::map)
-ircd::util::instance_multimap<std::string, ircd::m::sync::item, std::less<>>::map
+decltype(ircd::m::sync::item::map)
+ircd::util::instance_multimap<ircd::string_view, ircd::m::sync::item, std::less<>>::map
 {};
 
 template<>
@@ -195,13 +195,13 @@ ircd::m::sync::stats::info
 // item::item
 //
 
-ircd::m::sync::item::item(std::string name,
+ircd::m::sync::item::item(const string_view &name,
                           handle polylog,
                           handle linear,
                           const json::members &feature)
 :instance_multimap
 {
-	std::move(name)
+	name
 }
 ,conf_name
 {
