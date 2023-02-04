@@ -32,9 +32,16 @@ ircd::m::sync::pool
 };
 
 template<>
+decltype(ircd::m::sync::item::allocator)
+ircd::util::instance_multimap<ircd::string_view, ircd::m::sync::item, std::less<>>::allocator
+{};
+
+template<>
 decltype(ircd::m::sync::item::map)
 ircd::util::instance_multimap<ircd::string_view, ircd::m::sync::item, std::less<>>::map
-{};
+{
+	allocator
+};
 
 template<>
 decltype(ircd::util::instance_list<ircd::m::sync::data>::allocator)

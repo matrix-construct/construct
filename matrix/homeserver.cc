@@ -16,11 +16,18 @@ namespace ircd::m
 	extern conf::item<std::string> offline_status_msg;
 }
 
+template<>
+decltype(ircd::m::homeserver::allocator)
+ircd::util::instance_multimap<ircd::string_view, ircd::m::homeserver, std::less<>>::allocator
+{};
+
 // Linkage for the container of all active clients for iteration purposes.
 template<>
-decltype(ircd::util::instance_multimap<ircd::string_view, ircd::m::homeserver, std::less<>>::map)
+decltype(ircd::m::homeserver::map)
 ircd::util::instance_multimap<ircd::string_view, ircd::m::homeserver, std::less<>>::map
-{};
+{
+	allocator
+};
 
 [[gnu::hot]]
 ircd::m::user::id

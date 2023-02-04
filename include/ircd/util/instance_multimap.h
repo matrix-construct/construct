@@ -14,7 +14,10 @@
 namespace ircd {
 inline namespace util
 {
-	template<class K, class T, class C = std::less<K>> struct instance_multimap;
+	template<class K,
+	         class T,
+	         class C = std::less<K>>
+	struct instance_multimap;
 }}
 
 /// See instance_list for purpose and overview.
@@ -23,17 +26,29 @@ template<class K,
          class C>
 struct ircd::util::instance_multimap
 {
-	static std::multimap<K, T *, C> map;
+	using value_type = std::pair<const K, T *>;
+	using allocator_state_type = ircd::allocator::node<value_type>;
+	using allocator_scope = typename allocator_state_type::scope;
+	using allocator_type = typename allocator_state_type::allocator;
+	using map_type = std::multimap<K, T *, C, allocator_type>;
+	using node_type = std::pair<typename map_type::node_type, value_type>;
+	using iterator_type = typename map_type::iterator;
+	using const_iterator_type = typename map_type::const_iterator;
+
+	static allocator_state_type allocator;
+	static map_type map;
 
   protected:
-	typename decltype(map)::iterator it;
+	node_type node;
+	iterator_type it;
 
 	template<class Key>
-	instance_multimap(const typename decltype(map)::const_iterator &hint, Key&& key);
+	instance_multimap(const const_iterator_type &hint, Key&& key);
 
 	template<class Key>
 	instance_multimap(Key&& key);
 
+	instance_multimap() = delete;
 	instance_multimap(instance_multimap &&) noexcept;
 	instance_multimap(const instance_multimap &);
 	instance_multimap &operator=(instance_multimap &&) noexcept;
@@ -47,24 +62,30 @@ template<class K,
 template<class Key>
 inline
 ircd::util::instance_multimap<K, T, C>::instance_multimap(Key&& key)
-:it
 {
-	map.emplace(std::forward<Key>(key), static_cast<T *>(this))
+	const allocator_scope alloca
+	{
+		map, this->node
+	};
+
+	it = map.emplace(std::forward<Key>(key), static_cast<T *>(this));
 }
-{}
 
 template<class K,
          class T,
          class C>
 template<class Key>
 inline
-ircd::util::instance_multimap<K, T, C>::instance_multimap(const typename decltype(map)::const_iterator &hint,
+ircd::util::instance_multimap<K, T, C>::instance_multimap(const const_iterator_type &hint,
                                                           Key&& key)
-:it
 {
-	map.emplace_hint(hint, std::forward<Key>(key), static_cast<T *>(this))
+	const allocator_scope alloca
+	{
+		map, this->node
+	};
+
+	it = map.emplace_hint(hint, std::forward<Key>(key), static_cast<T *>(this));
 }
-{}
 
 template<class K,
          class T,
@@ -72,16 +93,15 @@ template<class K,
 inline
 ircd::util::instance_multimap<K, T, C>::instance_multimap(instance_multimap &&other)
 noexcept
-:it
 {
-	std::move(other.it)
-}
-{
-	if(it != end(map))
+	const allocator_scope alloca
 	{
-		it->second = static_cast<T *>(this);
-		other.it = end(map);
-	}
+		map, this->node
+	};
+
+	it = likely(other.it != end(map))?
+		map.emplace_hint(other.it, other.it->first, static_cast<T *>(this)):
+		end(map);
 }
 
 template<class K,
@@ -89,13 +109,16 @@ template<class K,
          class C>
 inline
 ircd::util::instance_multimap<K, T, C>::instance_multimap(const instance_multimap &other)
-:it
 {
-	other.it != end(map)?
+	const allocator_scope alloca
+	{
+		map, this->node
+	};
+
+	it = likely(other.it != end(map))?
 		map.emplace_hint(other.it, other.it->first, static_cast<T *>(this)):
-		end(map)
+		end(map);
 }
-{}
 
 template<class K,
          class T,
@@ -105,11 +128,16 @@ ircd::util::instance_multimap<K, T, C>::operator=(instance_multimap &&other)
 noexcept
 {
 	this->~instance_multimap();
-	it = std::move(other.it);
-	if(it != end(map))
-		it->second = static_cast<T *>(this);
 
-	other.it = end(map);
+	const allocator_scope alloca
+	{
+		map, this->node
+	};
+
+	it = likely(other.it != end(map))?
+		map.emplace_hint(other.it, other.it->first, static_cast<T *>(this)):
+		end(map);
+
 	return *this;
 }
 
@@ -120,7 +148,13 @@ inline ircd::util::instance_multimap<K, T, C> &
 ircd::util::instance_multimap<K, T, C>::operator=(const instance_multimap &other)
 {
 	this->~instance_multimap();
-	it = other.it != end(map)?
+
+	const allocator_scope alloca
+	{
+		map, this->node
+	};
+
+	it = likely(other.it != end(map))?
 		map.emplace_hint(other.it, other.it->first, static_cast<T *>(this)):
 		end(map);
 

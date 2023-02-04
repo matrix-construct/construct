@@ -110,11 +110,19 @@ ircd::client::dock;
 decltype(ircd::client::ctr)
 ircd::client::ctr;
 
+// Allocator for the container of all active clients for iteration purposes.
+template<>
+decltype(ircd::client::allocator)
+ircd::util::instance_multimap<ircd::net::ipport, ircd::client, ircd::net::ipport::cmp_ip>::allocator
+{};
+
 // Linkage for the container of all active clients for iteration purposes.
 template<>
-decltype(ircd::util::instance_multimap<ircd::net::ipport, ircd::client, ircd::net::ipport::cmp_ip>::map)
+decltype(ircd::client::map)
 ircd::util::instance_multimap<ircd::net::ipport, ircd::client, ircd::net::ipport::cmp_ip>::map
-{};
+{
+	allocator
+};
 
 //
 // init
