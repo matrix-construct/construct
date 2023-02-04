@@ -82,6 +82,13 @@ ircd::m::pretty_detailed(std::ostream &out,
 		<< refs.count()
 		<< std::endl;
 
+	const m::event::horizon horizon{event.event_id};
+	if(horizon.count())
+		out
+		<< std::setw(16) << std::right << "HORIZONS" << "  "
+		<< horizon.count()
+		<< std::endl;
+
 	out << std::endl;
 	for(size_t i(0); i < auth.auth_events_count(); ++i)
 	{
@@ -120,6 +127,28 @@ ircd::m::pretty_detailed(std::ostream &out,
 		<< " " << pretty_oneline(event, false)
 		<< std::endl;
 	}
+
+	horizon.for_each([&out]
+	(const auto &, const auto &event_idx)
+	{
+		const m::event::fetch event
+		{
+			std::nothrow, event_idx
+		};
+
+		out
+		<< "<-- HORIZON     "
+		<< " " << std::setw(9) << std::right << event.event_idx
+		<< " ";
+
+		if(event.valid)
+			out << pretty_oneline(event, false);
+		else
+			out << "Not Found.";
+
+		out << std::endl;
+		return true;
+	});
 
 	if(event_idx)
 		out
