@@ -53,7 +53,7 @@ ircd::ctx::this_ctx::wait_until(const system_point &tp)
 }
 
 /// Wait for a notification until a point in time. If there is a notification
-/// then returns true. If there's never a notification then returns false.
+/// then returns false. If there's never a notification then returns true.
 /// interruption point. this is not noexcept.
 template<class E>
 inline ircd::nothrow_overload<E, bool>
