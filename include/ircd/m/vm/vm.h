@@ -28,6 +28,7 @@ namespace ircd::m::vm
 #include "opts.h"
 #include "eval.h"
 #include "seq.h"
+#include "notify.h"
 
 namespace ircd::m::vm
 {
