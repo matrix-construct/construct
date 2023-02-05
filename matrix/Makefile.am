@@ -179,6 +179,7 @@ libircd_matrix_la_SOURCES += push.cc
 libircd_matrix_la_SOURCES += filter.cc
 libircd_matrix_la_SOURCES += txn.cc
 libircd_matrix_la_SOURCES += vm.cc
+libircd_matrix_la_SOURCES += vm_seq.cc
 libircd_matrix_la_SOURCES += vm_eval.cc
 libircd_matrix_la_SOURCES += vm_inject.cc
 libircd_matrix_la_SOURCES += vm_execute.cc
