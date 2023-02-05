@@ -87,17 +87,12 @@ const
 		return auth_event(i++);
 	});
 
-	const auto mask
-	{
-		m::exists({ids, i})
-	};
-
 	const auto ret
 	{
-		__builtin_popcountl(mask)
+		m::exists_count({ids, i})
 	};
 
-	assert(size_t(ret) <= max && size_t(ret) <= auth_events_count());
+	assert(ret <= max && ret <= auth_events_count());
 	return ret;
 }
 

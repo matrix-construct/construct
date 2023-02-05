@@ -1044,6 +1044,23 @@ ircd::m::operator==(const event &a, const event &b)
 	return a.event_id == b.event_id;
 }
 
+size_t
+ircd::m::exists_count(const vector_view<const id::event> &event_ids)
+{
+	const auto mask
+	{
+		exists(event_ids)
+	};
+
+	const auto ret
+	{
+		__builtin_popcountl(mask)
+	};
+
+	assert(size_t(ret) <= event_ids.size());
+	return ret;
+}
+
 uint64_t
 ircd::m::exists(const vector_view<const id::event> &event_ids)
 {
