@@ -13,6 +13,7 @@ namespace ircd::m::vm::fetch
 	static void prev_check(const event &, vm::eval &);
 	static bool prev_wait(const event &, vm::eval &);
 	static std::forward_list<ctx::future<m::fetch::result>> prev_fetch(const event &, vm::eval &, const room &);
+	static void prev_eval(const event &, vm::eval &, ctx::future<m::fetch::result> &);
 	static void prev(const event &, vm::eval &, const room &);
 	static std::forward_list<ctx::future<m::fetch::result>> state_fetch(const event &, vm::eval &, const room &);
 	static void state(const event &, vm::eval &, const room &);
@@ -555,56 +556,63 @@ ircd::m::vm::fetch::prev(const event &event,
 	}
 
 	// evaluate results
-	for(auto &future : futures) try
-	{
-		m::fetch::result result
-		{
-			future.get()
-		};
-
-		const json::object content
-		{
-			result
-		};
-
-		const json::array &pdus
-		{
-			content["pdus"]
-		};
-
-		auto opts(*eval.opts);
-		opts.phase.set(m::vm::phase::FETCH_PREV, false);
-		opts.phase.set(m::vm::phase::FETCH_STATE, false);
-		opts.notify_servers = false;
-		opts.node_id = result.origin;
-		log::debug
-		{
-			log, "%s fetched %zu pdus; evaluating...",
-			loghead(eval),
-			pdus.size(),
-		};
-
-		vm::eval
-		{
-			pdus, opts
-		};
-	}
-	catch(const ctx::interrupted &)
-	{
-		throw;
-	}
-	catch(const std::exception &e)
-	{
-		log::derror
-		{
-			log, "%s prev fetch/eval :%s",
-			loghead(eval),
-			e.what(),
-		};
-	}
+	for(auto &future : futures)
+		prev_eval(event, eval, future);
 
 	// check if result evals have satisfied this eval now; or throw
 	prev_check(event, eval);
+}
+
+void
+ircd::m::vm::fetch::prev_eval(const event &event,
+                              vm::eval &eval,
+                              ctx::future<m::fetch::result> &future)
+try
+{
+	m::fetch::result result
+	{
+		future.get()
+	};
+
+	const json::object content
+	{
+		result
+	};
+
+	const json::array &pdus
+	{
+		content["pdus"]
+	};
+
+	auto opts(*eval.opts);
+	opts.phase.set(m::vm::phase::FETCH_PREV, false);
+	opts.phase.set(m::vm::phase::FETCH_STATE, false);
+	opts.notify_servers = false;
+	opts.node_id = result.origin;
+	log::debug
+	{
+		log, "%s fetched %zu pdus; evaluating...",
+		loghead(eval),
+		pdus.size(),
+	};
+
+	vm::eval
+	{
+		pdus, opts
+	};
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		log, "%s prev fetch/eval :%s",
+		loghead(eval),
+		e.what(),
+	};
 }
 
 std::forward_list
