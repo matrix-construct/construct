@@ -45,7 +45,7 @@
 #include "vg.h"
 #include "simd/simd.h"
 #include "simt/simt.h"
-#include "allocator.h"
+#include "allocator/allocator.h"
 #include "util/util.h"
 #include "exception.h"
 #include "panic.h"
