@@ -84,7 +84,7 @@ struct ircd::resource::response
 struct ircd::resource::response::chunked
 :resource::response
 {
-	struct json;
+	template<class top_type> struct json;
 
 	static conf::item<size_t> default_buffer_size;
 
@@ -119,24 +119,31 @@ struct ircd::resource::response::chunked
 /// constructed in a response handler using chunked encoding to stream
 /// json::object content.
 ///
+template<class top_type = ircd::json::stack::object>
 struct ircd::resource::response::chunked::json
 :resource::response::chunked
 {
 	ircd::json::stack out;
-	ircd::json::stack::object top;
+	top_type top;
 
 	operator ircd::json::stack &()
 	{
 		return out;
 	}
 
+	explicit operator top_type &()
+	{
+		return top;
+	}
+
 	template<class... args>
 	json(args&&... a);
 };
 
+template<class top_type>
 template<class... args>
 inline
-ircd::resource::response::chunked::json::json(args&&... a)
+ircd::resource::response::chunked::json<top_type>::json(args&&... a)
 :resource::response::chunked
 {
 	std::forward<args>(a)...
