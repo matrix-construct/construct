@@ -39,9 +39,8 @@ namespace ircd::m
 	user::id me(); // primary
 }
 
-///NOTE: instance_multimap is used because there is no instance_map yet.
 struct ircd::m::homeserver
-:instance_multimap<string_view, homeserver, std::less<>>
+:instance_map<string_view, homeserver, std::less<>>
 {
 	struct key;
 	struct cert;

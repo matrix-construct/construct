@@ -18,13 +18,13 @@ namespace ircd::m
 
 template<>
 decltype(ircd::m::homeserver::allocator)
-ircd::util::instance_multimap<ircd::string_view, ircd::m::homeserver, std::less<>>::allocator
+ircd::util::instance_map<ircd::string_view, ircd::m::homeserver, std::less<>>::allocator
 {};
 
 // Linkage for the container of all active clients for iteration purposes.
 template<>
 decltype(ircd::m::homeserver::map)
-ircd::util::instance_multimap<ircd::string_view, ircd::m::homeserver, std::less<>>::map
+ircd::util::instance_map<ircd::string_view, ircd::m::homeserver, std::less<>>::map
 {
 	allocator
 };
@@ -220,7 +220,7 @@ noexcept
 IRCD_MODULE_EXPORT
 ircd::m::homeserver::homeserver(const struct opts *const &opts)
 try
-:instance_multimap
+:instance_map
 {
 	string_view{opts->origin}
 }
