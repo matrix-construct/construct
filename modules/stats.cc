@@ -10,6 +10,8 @@
 
 namespace ircd::stats
 {
+	static const_buffer print_item(stats::item<void> &item, const mutable_buffer &, const time_t &);
+	static void each_item(resource::response::chunked &, stats::item<void> &, window_buffer &, const time_t &);
 	static resource::response get_stats(client &, const resource::request &);
 
 	extern resource::method method_get;
@@ -46,32 +48,76 @@ ircd::stats::get_stats(client &client,
 		client, http::OK, "text/plain"
 	};
 
+	window_buffer buf
+	{
+		response.buf
+	};
+
 	const time_t ts
 	{
 		ircd::time<milliseconds>()
 	};
 
 	for(const auto &item : items)
+		each_item(response, *item, buf, ts);
+
+	const auto flushed
 	{
-		char buf[256], name[2][128], val[64];
-		const string_view _name
-		{
-			replace(name[0], item->name, '.', '_')
-		};
+		response.flush(buf.completed())
+	};
 
-		const string_view line
-		{
-			buf, size_t(::snprintf
-			(
-				buf, sizeof(buf), "%s %s %lu\n",
-				data(strlcpy(name[1], _name)),
-				data(string(val, *item)),
-				ts
-			))
-		};
-
-		response.write(line);
-	}
-
+	buf.shift(size(flushed));
+	assert(!buf.consumed());
 	return response;
+}
+
+void
+ircd::stats::each_item(resource::response::chunked &response,
+                       stats::item<void> &item,
+                       window_buffer &buf,
+                       const time_t &ts)
+{
+	buf([&item, &ts]
+	(const mutable_buffer &buf)
+	{
+		return print_item(item, buf, ts);
+	});
+
+	if(buf.remaining() >= 1_KiB)
+		return;
+
+	const auto completed
+	{
+		buf.completed()
+	};
+
+	const auto flushed
+	{
+		response.flush(completed)
+	};
+
+	buf.shift(size(flushed));
+}
+
+ircd::const_buffer
+ircd::stats::print_item(stats::item<void> &item,
+                        const mutable_buffer &buf,
+                        const time_t &ts)
+{
+	char name[2][128], val[64];
+	const string_view _name
+	{
+		replace(name[0], item.name, '.', '_')
+	};
+
+	return string_view
+	{
+		data(buf), size_t(::snprintf
+		(
+			data(buf), size(buf), "%s %s %lu\n",
+			data(strlcpy(name[1], _name)),
+			data(string(val, item)),
+			ts
+		))
+	};
 }
