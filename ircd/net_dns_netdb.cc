@@ -172,9 +172,7 @@ ircd::net::dns::service_port(std::nothrow_t,
                              const string_view &name,
                              const string_view &prot)
 {
-	//TODO: XXX
-	always_assert(false);
-	return 0;
+	return _service_port(name, prot);
 }
 #endif
 
@@ -256,9 +254,7 @@ ircd::net::dns::service_name(std::nothrow_t,
                              const uint16_t &port,
                              const string_view &prot)
 {
-	//TODO: XXX
-	always_assert(false);
-	return {};
+	return strlcpy(out, _service_name(port, prot));
 }
 #endif
 
