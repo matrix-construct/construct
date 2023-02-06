@@ -1307,6 +1307,9 @@ noexcept try
 	{
 		assert(link.peer);
 		++tag_done;
+	}
+
+	if(tag.request && (ircd::debugmode || RB_DEBUG_LEVEL))
 		log::logf
 		{
 			request::log[1], uint(tag.state.status) >= 300? log::DERROR: log::DEBUG,
@@ -1321,7 +1324,6 @@ noexcept try
 			tag.state.content_length,
 			tag.request->in.chunks.size(),
 		};
-	}
 
 	// Peer-level actions for any specific HTTP codes
 	switch(tag.state.status)
