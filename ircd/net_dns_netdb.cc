@@ -17,6 +17,7 @@ namespace ircd::net::dns
 
 	static bool netdb_ready;
 	extern conf::item<bool> netdb_enable;
+	extern conf::item<bool> netdb_internal;
 	extern const std::map<pair<string_view>, uint16_t> service_ports;
 	extern const std::map<pair<uint16_t, string_view>, string_view> service_names;
 }
@@ -53,6 +54,14 @@ ircd::net::dns::netdb_enable
 {
 	{ "name",     "ircd.net.dns.netdb.enable" },
 	{ "default",  true                        },
+};
+
+[[gnu::visibility("internal")]]
+decltype(ircd::net::dns::netdb_internal)
+ircd::net::dns::netdb_internal
+{
+	{ "name",     "ircd.net.dns.netdb.internal" },
+	{ "default",  true                          },
 };
 
 void
@@ -114,6 +123,10 @@ try
 {
 	thread_local struct ::servent res, *ent {nullptr};
 	thread_local char _name[32], _prot[32], buf[2048];
+
+	if(likely(netdb_internal))
+		if((res.s_port = _service_port(name, prot)))
+			return res.s_port;
 
 	const mods::ldso::exceptions enable {false};
 	const prof::syscall_usage_warning timer
@@ -209,6 +222,13 @@ try
 
 	thread_local struct ::servent res, *ent {nullptr};
 	thread_local char _prot[32], buf[2048];
+
+	if(likely(netdb_internal))
+	{
+		string_view ret;
+		if((ret = strlcpy(out, _service_name(port, prot))))
+			return ret;
+	}
 
 	const mods::ldso::exceptions enable {false};
 	const prof::syscall_usage_warning timer
