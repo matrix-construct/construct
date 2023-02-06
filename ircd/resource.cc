@@ -15,9 +15,16 @@ ircd::resource::log
 };
 
 template<>
-decltype(ircd::util::instance_map<ircd::string_view, ircd::resource, ircd::iless>::map)
-ircd::util::instance_map<ircd::string_view, ircd::resource, ircd::iless>::map
+decltype(ircd::resource::allocator)
+ircd::util::instance_map<ircd::string_view, ircd::resource, ircd::iless>::allocator
 {};
+
+template<>
+decltype(ircd::resource::map)
+ircd::util::instance_map<ircd::string_view, ircd::resource, ircd::iless>::map
+{
+	allocator
+};
 
 ircd::resource &
 ircd::resource::find(const string_view &path_)
