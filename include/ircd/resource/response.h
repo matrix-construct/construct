@@ -72,7 +72,7 @@ struct ircd::resource::response
 /// something like json::stack, which streams chunks of JSON. To facilitate
 /// this type of pairing and real world use, instances of this object contain
 /// a simple buffered flush-callback system.
-//
+///
 /// By default this object allocates a buffer to facilitate the chunked
 /// response and to satisfy the majority pattern of allocating this same
 /// buffer immediately preceding construction. A function pointer can also
@@ -102,8 +102,9 @@ struct ircd::resource::response::chunked
 
 	std::function<const_buffer (const const_buffer &)> flusher();
 
-	chunked(client &, const http::code &, const string_view &content_type, const string_view &headers = {}, const size_t &buffer_size = default_buffer_size, const mutable_buffer & = {});
+	chunked(client &, const http::code &, const string_view &content_type, const string_view &headers, const size_t &buffer_size = default_buffer_size, const mutable_buffer & = {});
 	chunked(client &, const http::code &, const string_view &content_type, const vector_view<const http::header> &, const size_t &buffer_size = default_buffer_size, const mutable_buffer & = {});
+	chunked(client &, const http::code &, const string_view &content_type, const size_t &buffer_size = default_buffer_size, const mutable_buffer & = {});
 	chunked(client &, const http::code &, const vector_view<const http::header> &, const size_t &buffer_size = default_buffer_size, const mutable_buffer & = {});
 	chunked(client &, const http::code &, const size_t &buffer_size = default_buffer_size, const mutable_buffer & = {});
 	chunked() = default;

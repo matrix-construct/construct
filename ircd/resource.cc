@@ -855,6 +855,23 @@ ircd::resource::response::chunked::chunked(client &client,
 ircd::resource::response::chunked::chunked(client &client,
                                            const http::code &code,
                                            const string_view &content_type,
+                                           const size_t &buffer_size,
+                                           const mutable_buffer &buf)
+:chunked
+{
+	client,
+	code,
+	content_type,
+	string_view{}, // headers
+	buffer_size,
+	buf,
+}
+{
+}
+
+ircd::resource::response::chunked::chunked(client &client,
+                                           const http::code &code,
+                                           const string_view &content_type,
                                            const vector_view<const http::header> &headers,
                                            const size_t &buffer_size,
                                            const mutable_buffer &buf)
