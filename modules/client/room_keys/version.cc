@@ -186,6 +186,47 @@ ircd::m::resource::response
 ircd::m::put_room_keys_version(client &client,
                                   const resource::request &request)
 {
+	if(request.parv.size() < 1)
+		throw m::NEED_MORE_PARAMS
+		{
+			"version path parameter required",
+		};
+
+	const m::user::room user_room
+	{
+		request.user_id
+	};
+
+	const event::idx event_idx
+	{
+		lex_cast<event::idx>(request.parv[0])
+	};
+
+	if(m::room_id(event_idx) != user_room.room_id)
+		throw m::ACCESS_DENIED
+		{
+			"Event idx:%lu is not in your room",
+			event_idx,
+		};
+
+	const auto event_id
+	{
+		m::event_id(event_idx)
+	};
+
+	const json::string &algorithm
+	{
+		request["algorithm"]
+	};
+
+	const json::object &auth_data
+	{
+		request["auth_data"]
+	};
+
+	//
+	// TODO: XXX
+	//
 
 	return resource::response
 	{
