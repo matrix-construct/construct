@@ -38,11 +38,25 @@ template<class T>
 struct ircd::allocator::node
 {
 	struct allocator;
-	struct monotonic;
+	struct scope;
 
 	T *next {nullptr};
 
 	node() = default;
+};
+
+/// The container will use provided node when it calls for an allocation during
+/// the lifetime of this object. Construct this object ahead of the insertion.
+template<class T>
+struct ircd::allocator::node<T>::scope
+{
+	node<T> *state;
+
+	template<class C,
+	         class N>
+	scope(C &container, N &node);
+	scope(const scope &) = delete;
+	~scope() noexcept;
 };
 
 /// The actual template passed to containers for using the allocator.
@@ -129,3 +143,31 @@ struct ircd::allocator::node<T>::allocator
 		return &a == &b;
 	}
 };
+
+template<class T>
+template<class C,
+         class N>
+inline
+ircd::allocator::node<T>::scope::scope(C &container,
+                                       N &node)
+:state
+{
+	container.get_allocator().s
+}
+{
+	using value_type = typename C::value_type;
+
+	assert(state);
+	assert(!state->next);
+	state->next = reinterpret_cast<value_type *>(&node);
+}
+
+template<class T>
+inline
+ircd::allocator::node<T>::scope::~scope()
+noexcept
+{
+	assert(state);
+	assert(state->next);
+	state->next = nullptr;
+}
