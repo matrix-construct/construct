@@ -14,8 +14,10 @@ namespace ircd::server
 	extern log::log log;
 	extern ctx::dock dock;
 	extern conf::item<seconds> close_all_timeout;
+	extern peers_allocator_state peers_alloc;
 
 	// Internal util
+	template<class F> static bool for_each_peer_safe(F&&);
 	template<class F> static size_t accumulate_peers(F&&);
 	template<class F> static size_t accumulate_links(F&&);
 	template<class F> static size_t accumulate_tags(F&&);
@@ -24,6 +26,8 @@ namespace ircd::server
 	// Internal control
 	static decltype(ircd::server::peers)::iterator
 	create(const net::hostport &, decltype(peers)::iterator &);
+
+	static void clear();
 }
 #pragma GCC visibility pop
 
@@ -51,6 +55,15 @@ ircd::server::close_all_timeout
 	{ "default",  2L                              },
 };
 
+decltype(ircd::server::peers_alloc)
+ircd::server::peers_alloc;
+
+decltype(ircd::server::peers)
+ircd::server::peers
+{
+	peers_alloc
+};
+
 //
 // init
 //
@@ -64,8 +77,22 @@ noexcept
 ircd::server::init::~init()
 noexcept
 {
-	interrupt(), close(), wait();
-	peers.clear();
+	interrupt();
+	close();
+	wait();
+	clear();
+}
+
+void
+ircd::server::clear()
+{
+	for_each_peer_safe([](const auto &peer)
+	{
+		peer->del();
+		return true;
+	});
+
+	assert(peers.empty());
 	log::debug
 	{
 		log, "All server peers, connections, and requests are clear."
@@ -116,8 +143,12 @@ ircd::server::close()
 
 	net::close_opts opts;
 	opts.timeout = seconds(close_all_timeout);
-	for(auto &peer : peers)
-		peer.second->close(opts);
+	for_each_peer_safe([&opts]
+	(const auto &peer)
+	{
+		peer->close(opts);
+		return true;
+	});
 }
 
 void
@@ -217,7 +248,12 @@ ircd::server::create(const net::hostport &hostport,
 	assert(bool(peer));
 	assert(!empty(peer->hostcanon));
 	const string_view key{peer->hostcanon};
-	it = peers.emplace_hint(it, key, std::move(peer));
+	const typename peers_allocator_state::scope alloca
+	{
+		server::peers, peer->node
+	};
+
+	it = peers.emplace_hint(it, key, peer.release());
 	assert(it->second->hostcanon.data() == it->first.data());
 	return it;
 }
@@ -451,6 +487,24 @@ ircd::server::accumulate_peers(F&& closure)
 		const auto &peer{*pair.second};
 		return ret += closure(peer);
 	});
+}
+
+template<class F>
+bool
+ircd::server::for_each_peer_safe(F&& closure)
+{
+	std::vector<peer *> peers(server::peers.size());
+	std::transform(begin(server::peers), end(server::peers), begin(peers), []
+	(const auto &pair)
+	{
+		return pair.second;
+	});
+
+	for(const auto &peer : peers)
+		if(!closure(peer))
+			return false;
+
+	return true;
 }
 
 ircd::string_view
@@ -694,14 +748,6 @@ catch(const std::exception &e)
 ///////////////////////////////////////////////////////////////////////////////
 //
 // server/peer.h
-//
-
-decltype(ircd::server::peers)
-ircd::server::peers
-{};
-
-//
-// server::peer
 //
 
 decltype(ircd::server::peer::MAX_LINK)
@@ -1880,6 +1926,40 @@ void
 ircd::server::peer::handle_finished()
 {
 	assert(finished());
+
+	log::debug
+	{
+		log, "peer(%p) id:%lu finished; tags:%zu wrote:%zu read:%zu err:%d :%s",
+		this,
+		id,
+		tag_done,
+		write_bytes,
+		read_bytes,
+		err_has(),
+		hostcanon,
+	};
+
+	//TODO: XXX
+	if(ircd::run::level == ircd::run::level::RUN)
+		if(err_has())
+			return;
+
+	del();
+}
+
+void
+ircd::server::peer::del()
+{
+	// unlink from map
+	assert(finished());
+	const auto erased
+	{
+		peers.erase(this->hostcanon)
+	};
+
+	// self-destruct
+	assert(erased);
+	delete this;
 
 	// Right now this is what the server:: ~init sequence needs
 	// to wait for all links to close on IRCd shutdown.

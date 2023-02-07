@@ -11,11 +11,6 @@
 #pragma once
 #define HAVE_IRCD_SERVER_PEER_H
 
-namespace ircd::server
-{
-	extern std::map<string_view, std::unique_ptr<peer>> peers;
-}
-
 /// Remote entity.
 ///
 struct ircd::server::peer
@@ -40,6 +35,7 @@ struct ircd::server::peer
 	static uint64_t ids;
 
 	uint64_t id {++ids};
+	peers_node_type node;
 	std::string hostcanon;        // hostname:service[:port]
 	net::ipport remote;
 	system_point remote_expires;
@@ -56,6 +52,7 @@ struct ircd::server::peer
 	template<class F> size_t accumulate_links(F&&) const;
 	template<class F> size_t accumulate_tags(F&&) const;
 
+	void del();
 	void handle_finished();
 	void open_links();
 	void handle_resolve_A(const hostport &, const json::array &);

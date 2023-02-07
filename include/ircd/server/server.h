@@ -26,7 +26,14 @@ namespace ircd::server
 	IRCD_EXCEPTION(error, unavailable);
 	IRCD_EXCEPTION(error, canceled);
 
+	using peers_value_type = std::pair<const string_view, peer *>;
+	using peers_allocator_state = allocator::node<peers_value_type>;
+	using peers_allocator = typename peers_allocator_state::allocator;
+	using peers_map_type = std::map<string_view, peer *, std::less<>, peers_allocator>;
+	using peers_node_type = std::pair<typename peers_map_type::node_type, peers_value_type>;
+
 	extern conf::item<bool> enable;
+	extern peers_map_type peers;
 }
 
 #include "tag.h"
