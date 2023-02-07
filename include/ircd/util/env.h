@@ -14,5 +14,14 @@
 namespace ircd {
 inline namespace util
 {
+	using env_closure = closure_bool<std::function, string_view, string_view>;
+
+	// Iterate environment variables starting with prefix
+	bool for_each_env(const string_view &, const env_closure &);
+
+	// Iterate all environment variables
+	bool for_each_env(const env_closure &);
+
+	// Get one environment variable
 	string_view getenv(const string_view &);
 }}

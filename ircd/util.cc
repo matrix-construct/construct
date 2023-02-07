@@ -52,6 +52,38 @@ ircd::util::getenv(const string_view &key)
 	return var;
 }
 
+bool
+ircd::util::for_each_env(const string_view &prefix,
+                         const env_closure &closure)
+{
+	return for_each_env([&prefix, &closure]
+	(const auto &key, const auto &val)
+	{
+		if(!startswith(key, prefix))
+			return true;
+
+		return closure(key, val);
+	});
+}
+
+bool
+ircd::util::for_each_env(const env_closure &closure)
+{
+	assert(environ);
+	for(char **env(environ); *env; ++env)
+	{
+		const auto &[key, val]
+		{
+			split(*env, '=')
+		};
+
+		if(!closure(key, val))
+			return false;
+	}
+
+	return true;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // util/pretty.h
