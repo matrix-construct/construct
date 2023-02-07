@@ -27,6 +27,14 @@
 	#define __is_identifier(x) 0
 #endif
 
+#ifndef __has_feature
+	#define __has_feature(x) 0
+#endif
+
+#ifndef __has_cpp_attribute
+	#define __has_cpp_attribute(x) 0
+#endif
+
 //
 // Common branch prediction macros
 //
