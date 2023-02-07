@@ -17,7 +17,8 @@ static bool load_listener(const string_view &, const json::object &);
 static bool load_listener(const m::event &);
 extern "C" bool unload_listener(const string_view &name);
 extern "C" bool load_listener(const string_view &name);
-static void init_listeners();
+static void init_conf_listeners();
+static void init_room_listeners();
 static void on_quit() noexcept;
 static void on_run();
 static void on_unload();
@@ -60,7 +61,8 @@ on_load()
 		return;
 	}
 
-	init_listeners();
+	init_conf_listeners();
+	init_room_listeners();
 }
 
 void
@@ -105,7 +107,51 @@ noexcept
 }
 
 void
-init_listeners()
+init_conf_listeners()
+{
+	static const string_view prefix
+	{
+		"ircd_listen"
+	};
+
+	std::map<string_view, json::strung> map;
+	for_each_env(prefix, [&map]
+	(const string_view &full_key, const string_view &val)
+	{
+		const auto key
+		{
+			lstrip(full_key, prefix)
+		};
+
+		const auto name
+		{
+			token(key, '_', 0)
+		};
+
+		const auto opt
+		{
+			tokens_after(key, '_', 0)
+		};
+
+		map[name] = json::replace(map[name],
+		{
+			opt, val
+		});
+	});
+
+	for(const std::pair<string_view, json::object> p : map)
+		if(load_listener(p.first, p.second))
+			log::notice
+			{
+				"Listener '%s' configured for %s:%s by environment",
+				p.first,
+				p.second["host"],
+				p.second["port"],
+			};
+}
+
+void
+init_room_listeners()
 {
 	const m::room::id::buf my_room
 	{
