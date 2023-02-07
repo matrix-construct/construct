@@ -240,7 +240,7 @@ ircd::m::get(const vector_view<const event::idx> &event_idx,
 
 	const auto found
 	{
-		__builtin_popcountl(mask)
+		popcount(mask)
 	};
 
 	if(unlikely(size_t(found) < event_idx.size()))

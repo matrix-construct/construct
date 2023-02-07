@@ -1054,7 +1054,7 @@ ircd::m::exists_count(const vector_view<const id::event> &event_ids)
 
 	const auto ret
 	{
-		__builtin_popcountl(mask)
+		popcount(mask)
 	};
 
 	assert(size_t(ret) <= event_ids.size());

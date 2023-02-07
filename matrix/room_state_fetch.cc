@@ -90,7 +90,7 @@ ircd::m::room_state_fetch_result(room::state::fetch &f,
 		};
 
 		f.responses += i;
-		f.exists += __builtin_popcountl(exists);
+		f.exists += popcount(exists);
 		for(size_t j(0); j < i; ++j)
 		{
 			if(exists & (1UL << j))

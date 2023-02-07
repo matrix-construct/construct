@@ -25,12 +25,7 @@ noexcept
 {
 	uint ret(0), i(0);
 	for(; i < lanes<T>(); ++i)
-		if constexpr(sizeof_lane<T>() <= sizeof(int))
-			ret += __builtin_popcount(a[i]);
-		else if constexpr(sizeof_lane<T>() <= sizeof(long))
-			ret += __builtin_popcountl(a[i]);
-		else
-			ret += __builtin_popcountll(a[i]);
+		ret += popcount(a[i]);
 
 	return ret;
 }

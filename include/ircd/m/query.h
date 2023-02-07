@@ -157,7 +157,7 @@ ircd::m::query(std::nothrow_t,
 
 	const auto got
 	{
-		__builtin_popcountl(mask)
+		popcount(mask)
 	};
 
 	return ret;

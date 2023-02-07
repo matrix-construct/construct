@@ -132,7 +132,7 @@ const
 {
 	size_t ret(0);
 	for(size_t i(0); i < words; ++i)
-		ret += std::popcount(buf[i]);
+		ret += popcount(buf[i]);
 
 	return ret;
 }

@@ -200,7 +200,7 @@ ircd::m::index(const vector_view<event::idx> &out_,
 			db::read(column, keys, bufs)
 		};
 
-		ret += __builtin_popcountl(found_mask);
+		ret += popcount(found_mask);
 	}
 
 	return ret;

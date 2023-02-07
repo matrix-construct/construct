@@ -43,6 +43,7 @@
 #include "byte_view.h"
 #include "buffer/buffer.h"
 #include "vg.h"
+#include "util/popcount.h"
 #include "simd/simd.h"
 #include "simt/simt.h"
 #include "allocator/allocator.h"
