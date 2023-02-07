@@ -92,10 +92,15 @@ inline string_view
 view(stringstream &ss,
      const const_buffer &buf)
 {
-	const auto tell
-	{
-		std::min(size_t(ss.tellp()), size(buf))
-	};
+	const size_t tell
+	(
+		std::clamp
+		(
+			ssize_t(ss.tellp()),
+			ssize_t(0),
+			ssize_t(size(buf))
+		)
+	);
 
 	ss.flush();
 	ss.rdbuf()->pubsync();
