@@ -94,18 +94,18 @@ ircd::util::instance_map<K, T, C>::instance_map(const const_iterator_type &hint,
 		map, this->node
 	};
 
-	auto [it, ok]
+	T *const ptr
 	{
-		map.emplace_hint(hint, std::forward<Key>(key), static_cast<T *>(this))
+		static_cast<T *>(this)
 	};
 
-	if(unlikely(!ok))
+	this->it = map.emplace_hint(hint, std::forward<Key>(key), ptr);
+
+	if(unlikely(this->it->second != ptr))
 		throw std::invalid_argument
 		{
 			"Instance mapping to this key already exists."
 		};
-
-	this->it = std::move(it);
 }
 
 template<class K,
