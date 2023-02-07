@@ -5591,6 +5591,9 @@ try
 	property("rocksdb.is-file-deletions-enabled");
 	property("rocksdb.is-write-stopped");
 	property("rocksdb.actual-delayed-write-rate");
+	property("rocksdb.num-immutable-mem-table");
+	property("rocksdb.num-entries-imm-mem-table");
+	property("rocksdb.num-deletes-imm-mem-table");
 	property("rocksdb.num-entries-active-mem-table");
 	property("rocksdb.num-deletes-active-mem-table");
 	property("rocksdb.mem-table-flush-pending");
