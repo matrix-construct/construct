@@ -1439,12 +1439,15 @@ noexcept try
 		net::dock.notify_all();
 
 	if(unlikely(opened(*this)))
+	{
+		char buf[128];
 		throw panic
 		{
 			"Failed to ensure socket(%p) is disconnected from %s before dtor.",
 			this,
-			string(remote())
+			string(buf, remote_ipport(*this)),
 		};
+	}
 }
 catch(const std::exception &e)
 {

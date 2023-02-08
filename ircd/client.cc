@@ -632,13 +632,10 @@ ircd::handle_ec_default(client &client,
 //
 
 ircd::client::client(std::shared_ptr<socket> sock)
-:instance_multimap{[&sock]
-() -> net::ipport
+:instance_multimap
 {
-	assert(bool(sock));
-	const auto &ep(sock->remote());
-	return { ep.address(), ep.port() };
-}()}
+	net::remote_ipport(*sock)
+}
 ,head_buffer
 {
 	conf->header_max_size
