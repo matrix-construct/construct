@@ -16,6 +16,7 @@ namespace ircd::m::sync
 	static bool _handle_message_receipt(data &, const m::event &);
 	static bool _handle_message(data &, const m::event::idx &);
 	static size_t _prefetch_message(data &, const m::event::idx &);
+	static bool room_ephemeral_m_receipt_m_read_polylog_prefetch(data &);
 	static bool room_ephemeral_m_receipt_m_read_polylog(data &);
 	static bool room_ephemeral_m_receipt_m_read_linear(data &);
 	extern item room_ephemeral_m_receipt_m_read;
@@ -34,7 +35,8 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read
 	room_ephemeral_m_receipt_m_read_polylog,
 	room_ephemeral_m_receipt_m_read_linear,
 	{
-		{ "phased", true }
+		{ "phased",   true },
+		{ "prefetch", true },
 	}
 };
 
@@ -106,12 +108,15 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 	if(data.phased && int64_t(data.range.first) == 0L)
 		return false;
 
+	if(data.prefetch)
+		return room_ephemeral_m_receipt_m_read_polylog_prefetch(data);
+
 	m::room::events it
 	{
 		*data.room
 	};
 
-	// Prefetch loop for event::refs; initial recent messages walk.
+	// initial recent messages walk.
 	ssize_t i(0);
 	event::idx idx(0);
 	for(; it && i < receipt_scan_depth; --it)
@@ -119,9 +124,44 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 		if(!apropos(data, it.event_idx()) && i > 0)
 			break;
 
+		idx = it.event_idx();
+		++i;
+	}
+
+	if(!it && i > 0)
+		it.seek_idx(idx);
+
+	// Fetch loop; stream to client.
+	bool ret{false};
+	for(ssize_t j(0); it && j < i; ++it)
+	{
+		if(!apropos(data, it.event_idx()))
+			continue;
+
+		ret |= _handle_message(data, it.event_idx());
+		++j;
+	}
+
+	return ret;
+}
+
+bool
+ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog_prefetch(data &data)
+{
+	m::room::events it
+	{
+		*data.room
+	};
+
+	// Prefetch loop for event::refs; initial recent messages walk.
+	ssize_t i(0);
+	for(; it && i < receipt_scan_depth; --it)
+	{
+		if(!apropos(data, it.event_idx()) && i > 0)
+			break;
+
 		const event::refs refs{it.event_idx()};
 		refs.prefetch(dbs::ref::M_RECEIPT__M_READ);
-		idx = it.event_idx();
 		++i;
 	}
 
@@ -138,21 +178,7 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 		++j;
 	}
 
-	if(i > 0)
-		it.seek_idx(idx);
-
-	// Fetch loop; stream to client.
-	bool ret{false};
-	for(ssize_t j(0); it && j < i; ++it)
-	{
-		if(!apropos(data, it.event_idx()))
-			continue;
-
-		ret |= _handle_message(data, it.event_idx());
-		++j;
-	}
-
-	return ret;
+	return i;
 }
 
 size_t
