@@ -56,7 +56,7 @@ get__aliases(client &client,
 		top, "aliases"
 	};
 
-	aliases.for_each([&array]
+	aliases.for_each(my_host(), [&array]
 	(const m::room::alias &room_alias)
 	{
 		array.append(room_alias);
