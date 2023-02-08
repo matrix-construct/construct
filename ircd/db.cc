@@ -574,7 +574,7 @@ noexcept
 			queue.size(),
 		};
 
-		dock.wait_for(seconds(5), [this]() noexcept
+		fini.wait_for(seconds(5), [this]() noexcept
 		{
 			return queue.empty();
 		});
@@ -612,7 +612,7 @@ ircd::db::prefetcher::operator()(column &c,
 	// of any request pool queue, and allow for more direct submission.
 	if(db::request.wouldblock())
 	{
-		dock.notify_one();
+		work.notify_one();
 
 		// If the user sets NO_BLOCKING we honor their request to not
 		// context switch for a prefetch. However by default we want to
@@ -675,7 +675,7 @@ ircd::db::prefetcher::cancel(const closure &closure)
 	}
 
 	if(canceled)
-		dock.notify_all();
+		work.notify_all();
 
 	assert(ticker);
 	ticker->cancels += canceled;
@@ -690,7 +690,7 @@ ircd::db::prefetcher::wait_pending()
 		ticker->fetched
 	};
 
-	dock.wait([this, &fetched]() noexcept
+	fini.wait([this, &fetched]() noexcept
 	{
 		return this->ticker->fetched >= fetched + this->request_workers;
 	});
@@ -705,7 +705,7 @@ try
 {
 	while(1)
 	{
-		dock.wait([this]() noexcept
+		work.wait([this]() noexcept
 		{
 			if(queue.empty())
 				return false;
@@ -747,7 +747,7 @@ ircd::db::prefetcher::request_worker()
 {
 	const ctx::scope_notify notify
 	{
-		this->dock
+		this->fini, ctx::scope_notify::all
 	};
 
 	const scope_count request_workers
