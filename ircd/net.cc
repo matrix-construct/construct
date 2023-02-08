@@ -204,7 +204,7 @@ noexcept try
 	if(!opened(socket))
 		return {};
 
-	const auto &ep(socket.remote());
+	const auto &ep(socket.remote);
 	return make_ipport(ep);
 }
 catch(...)
@@ -219,7 +219,7 @@ noexcept try
 	if(!opened(socket))
 		return {};
 
-	const auto &ep(socket.local());
+	const auto &ep(socket.local);
 	return make_ipport(ep);
 }
 catch(...)
@@ -1490,6 +1490,7 @@ ircd::net::socket::connect(const endpoint &ep,
 		std::bind(&socket::handle_connect, this, weak_from(*this), opts, std::move(callback), ph::_1)
 	};
 
+	this->remote = ep;
 	set_timeout(opts.connect_timeout);
 	sd.async_connect(ep, ios::handle(desc_connect, std::move(connect_handler)));
 }
@@ -2284,6 +2285,10 @@ noexcept try
 	using std::errc;
 
 	const life_guard<socket> s{wp};
+
+	if(likely(sd.is_open()))
+		this->local = sd.local_endpoint();
+
 	char ecbuf[64], epbuf[128];
 	log::debug
 	{
@@ -2730,20 +2735,6 @@ ircd::net::socket::set_timeout(const milliseconds &t,
 
 	timer.expires_from_now(pt);
 	timer.async_wait(ios::handle(desc_timeout, std::move(handler)));
-}
-
-boost::asio::ip::tcp::endpoint
-ircd::net::socket::local()
-const
-{
-	return sd.local_endpoint();
-}
-
-boost::asio::ip::tcp::endpoint
-ircd::net::socket::remote()
-const
-{
-	return sd.remote_endpoint();
 }
 
 ircd::net::socket::operator

@@ -519,6 +519,7 @@ try
 		std::bind(&acceptor::accept, this, ph::_1, sock)
 	};
 
+	sock->local = ep;
 	ip::tcp::socket &sd(*sock);
 	a.async_accept(sd, ios::handle(accept_desc, std::move(handler)));
 	++accepting;
@@ -545,6 +546,15 @@ noexcept try
 	assert(bool(sock));
 	assert(accepting > 0);
 	assert(accepting == 1); // for now
+
+	if(likely(sock->sd.is_open()))
+		sock->remote = sock->sd.remote_endpoint();
+
+	const auto remote
+	{
+		remote_ipport(*sock)
+	};
+
 	char ecbuf[64];
 	log::debug
 	{
@@ -562,11 +572,6 @@ noexcept try
 		net::close(*sock, dc::RST, close_ignore);
 		return;
 	}
-
-	const auto &remote
-	{
-		remote_ipport(*sock)
-	};
 
 	if(unlikely(!check_handshake_limit(*sock, remote)))
 	{

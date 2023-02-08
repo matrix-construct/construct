@@ -62,6 +62,7 @@ ircd::net::socket
 	uint64_t id {++count};
 	ip::tcp::socket sd;
 	asio::ssl::stream<ip::tcp::socket &> ssl;
+	endpoint local, remote;
 	stat in, out;
 	deadline_timer timer;
 	uint64_t timer_sem[2] {0};                   // handler, sender
@@ -84,9 +85,6 @@ ircd::net::socket
 	operator ip::tcp::socket &()                 { return sd;                                      }
 	operator const SSL &() const;
 	operator SSL &();
-
-	endpoint remote() const;                     // getpeername(); throws if not conn
-	endpoint local() const;                      // getsockname(); throws if not conn/bound
 
 	// Timer for this socket
 	void set_timeout(const milliseconds &, ec_handler);
