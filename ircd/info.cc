@@ -933,7 +933,6 @@ ircd::info::dump_sys_info()
 	fs::support::dump_info();
 
 	// Additional detected system parameters
-	//#ifdef RB_DEBUG
 	char buf[2][48];
 	log::logf
 	{
@@ -948,7 +947,6 @@ ircd::info::dump_sys_info()
 		between(thp_enable, '[', ']'),
 		thp_size,
 	};
-	//#endif
 }
 
 #ifdef HAVE_SYS_UTSNAME_H

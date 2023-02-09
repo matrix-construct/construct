@@ -1361,32 +1361,33 @@ ircd::resource::response::response(client &client,
 		eptr = std::current_exception();
 	}
 
-	#ifdef RB_DEBUG
-	const log::level level
+	if constexpr(RB_DEBUG_LEVEL)
 	{
-		http::severity(http::category(code))
-	};
+		const log::level level
+		{
+			http::severity(http::category(code))
+		};
 
-	log::logf
-	{
-		log, level,
-		"%s HTTP %u `%s' %s in %s; %s content-length:%s head-length:%zu %s%s",
-		loghead(client),
-		uint(code),
-		client.request.head.path,
-		http::status(code),
-		rtime,
-		content_type,
-		ssize_t(content_length) >= 0?
-			lex_cast(content_length):
-			"chunked"_sv,
-		wrote_head,
-		eptr?
-			"error:"_sv:
-			string_view{},
-		what(eptr)
-	};
-	#endif
+		log::logf
+		{
+			log, level,
+			"%s HTTP %u `%s' %s in %s; %s content-length:%s head-length:%zu %s%s",
+			loghead(client),
+			uint(code),
+			client.request.head.path,
+			http::status(code),
+			rtime,
+			content_type,
+			ssize_t(content_length) >= 0?
+				lex_cast(content_length):
+				"chunked"_sv,
+			wrote_head,
+			eptr?
+				"error:"_sv:
+				string_view{},
+			what(eptr)
+		};
+	}
 
 	if(unlikely(eptr))
 		std::rethrow_exception(eptr);

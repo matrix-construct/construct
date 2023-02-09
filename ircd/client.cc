@@ -484,14 +484,17 @@ try
 			dock.notify_all();
 	}};
 
-	#ifdef RB_DEBUG
-	util::timer timer;
-	log::debug
+	util::timer timer
 	{
-		log, "%s enter",
-		loghead(*client),
+		RB_DEBUG_LEVEL
 	};
-	#endif
+
+	if constexpr(RB_DEBUG_LEVEL)
+		log::debug
+		{
+			log, "%s enter",
+			loghead(*client),
+		};
 
 	if(!client->main())
 	{
@@ -499,15 +502,16 @@ try
 		return;
 	}
 
-	#ifdef RB_DEBUG
-	char buf[64];
-	log::debug
+	if constexpr(RB_DEBUG_LEVEL)
 	{
-		log, "%s leave %s",
-		loghead(*client),
-		pretty(buf, timer.at<microseconds>(), true)
-	};
-	#endif
+		char buf[64];
+		log::debug
+		{
+			log, "%s leave %s",
+			loghead(*client),
+			pretty(buf, timer.at<microseconds>(), true)
+		};
+	}
 
 	client->async();
 }

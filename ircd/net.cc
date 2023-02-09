@@ -2420,25 +2420,26 @@ noexcept try
 	if(timedout && ec == errc::operation_canceled)
 		ec = make_error_code(errc::timed_out);
 
-	#ifdef RB_DEBUG
-	const auto *const current_cipher
+	if constexpr(RB_DEBUG_LEVEL)
 	{
-		!ec?
-			openssl::current_cipher(*this):
-			nullptr
-	};
+		const auto *const current_cipher
+		{
+			!ec?
+				openssl::current_cipher(*this):
+				nullptr
+		};
 
-	char ecbuf[64];
-	log::debug
-	{
-		log, "%s handshake cipher:%s %s",
-		loghead(*this),
-		current_cipher?
-			openssl::name(*current_cipher):
-			"<NO CIPHER>"_sv,
-		string(ecbuf, ec)
-	};
-	#endif
+		char ecbuf[64];
+		log::debug
+		{
+			log, "%s handshake cipher:%s %s",
+			loghead(*this),
+			current_cipher?
+				openssl::name(*current_cipher):
+				"<NO CIPHER>"_sv,
+			string(ecbuf, ec)
+		};
+	}
 
 	// Toggles the behavior of non-async functions; see func comment
 	if(!ec)
@@ -2608,16 +2609,17 @@ noexcept try
 		}
 	}
 
-	#ifdef RB_DEBUG
-	thread_local char buf[16_KiB];
-	const critical_assertion ca;
-	log::debug
+	if constexpr(RB_DEBUG_LEVEL)
 	{
-		log, "verify[%s] %s",
-		common_name(opts),
-		openssl::print_subject(buf, cert)
-	};
-	#endif
+		thread_local char buf[16_KiB];
+		const critical_assertion ca;
+		log::debug
+		{
+			log, "verify[%s] %s",
+			common_name(opts),
+			openssl::print_subject(buf, cert)
+		};
+	}
 
 	return true;
 }

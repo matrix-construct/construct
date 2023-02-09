@@ -4405,13 +4405,12 @@ ircd::db::throw_on_error::throw_on_error(const rocksdb::Status &status)
 		case Status::kNotFound:
 			throw not_found{};
 
-		#ifdef RB_DEBUG
 		//case Status::kCorruption:
 		case Status::kNotSupported:
 		case Status::kInvalidArgument:
-			debugtrap();
+			if constexpr(RB_DEBUG_LEVEL)
+				debugtrap();
 			[[fallthrough]];
-		#endif
 
 		[[unlikely]]
 		default:
@@ -4556,9 +4555,10 @@ ircd::db::commit(database &d,
                  rocksdb::WriteBatch &batch,
                  const rocksdb::WriteOptions &opts)
 {
-	#ifdef RB_DEBUG
-	ircd::timer timer;
-	#endif
+	ircd::timer timer
+	{
+		RB_DEBUG_LEVEL
+	};
 
 	const std::lock_guard lock{d.write_mutex};
 	const ctx::uninterruptible ui;
@@ -4568,17 +4568,18 @@ ircd::db::commit(database &d,
 		d.d->Write(opts, &batch)
 	};
 
-	#ifdef RB_DEBUG
-	char dbuf[192];
-	log::debug
+	if constexpr(RB_DEBUG_LEVEL)
 	{
-		log, "[%s] %lu COMMIT %s in %ld$us",
-		d.name,
-		sequence(d),
-		debug(dbuf, batch),
-		timer.at<microseconds>().count()
-	};
-	#endif
+		char dbuf[192];
+		log::debug
+		{
+			log, "[%s] %lu COMMIT %s in %ld$us",
+			d.name,
+			sequence(d),
+			debug(dbuf, batch),
+			timer.at<microseconds>().count()
+		};
+	}
 }
 
 ircd::string_view

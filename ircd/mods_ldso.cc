@@ -416,6 +416,7 @@ ircd_dl_signal_exception(int errcode,
 //
 #ifdef HAVE_DLFCN_H
 #ifdef IRCD_MODS_HOOK_DLSYM
+#define RB_DEBUG_MODS_HOOK_DLSYM 0
 
 extern "C" void *
 __libc_dlsym(void *, const char *);
@@ -424,14 +425,13 @@ extern "C" void *
 dlsym(void *const handle,
       const char *const symbol)
 {
-	#ifdef RB_DEBUG_MODS_HOOK_DLSYM
-	ircd::log::debug
-	{
-		ircd::mods::log, "handle:%p symbol lookup '%s'",
-		handle,
-		symbol
-	};
-	#endif
+	if constexpr(RB_DEBUG_MODS_HOOK_DLSYM)
+		ircd::log::debug
+		{
+			ircd::mods::log, "handle:%p symbol lookup '%s'",
+			handle,
+			symbol
+		};
 
 	return __libc_dlsym(handle, symbol);
 }

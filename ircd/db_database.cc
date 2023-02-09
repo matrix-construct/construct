@@ -1042,9 +1042,8 @@ try
 	opts->stats_dump_period_sec = 0; // Disable noise
 	opts->statistics = this->stats;
 
-	#ifdef RB_DEBUG
-	opts->dump_malloc_stats = true;
-	#endif
+	if constexpr(RB_DEBUG_LEVEL)
+		opts->dump_malloc_stats = true;
 
 	// Disables the timer to delete unused files; this operation occurs
 	// instead with our compaction operations so we don't need to complicate.

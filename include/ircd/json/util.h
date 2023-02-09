@@ -92,9 +92,8 @@ __attribute__((always_inline, gnu_inline, artificial))
 ircd::json::debug_valid_output(const string_view &in,
                                const size_t &expected)
 {
-	#ifdef RB_DEBUG
-	valid_output(in, expected);
-	#endif
+	if constexpr(RB_DEBUG_LEVEL)
+		valid_output(in, expected);
 }
 
 constexpr ircd::json::name_hash_t

@@ -273,17 +273,19 @@ ircd::fs::support::dump_info()
 		support
 	};
 
-	#ifdef RB_DEBUG
-	const unique_mutable_buffer buf
+	if constexpr(RB_DEBUG_LEVEL)
 	{
-		PATH_MAX_LEN + 1
-	};
+		const unique_mutable_buffer buf
+		{
+			PATH_MAX_LEN + 1
+		};
 
-	log::debug
-	{
-		log, "Current working directory: `%s'", cwd(buf)
-	};
-	#endif
+		log::debug
+		{
+			log, "Current working directory: `%s'",
+			cwd(buf)
+		};
+	}
 }
 
 bool

@@ -726,28 +726,29 @@ noexcept try
 	assert(it != end(handshaking));
 	assert(openssl::get_app_data(*sock) == sock.get());
 
-	#ifdef RB_DEBUG
-	const auto *const current_cipher
+	if constexpr(RB_DEBUG_LEVEL)
 	{
-		!ec?
-			openssl::current_cipher(*sock):
-			nullptr
-	};
+		const auto *const current_cipher
+		{
+			!ec?
+				openssl::current_cipher(*sock):
+				nullptr
+		};
 
-	char ecbuf[64];
-	log::debug
-	{
-		log, "%s %s handshook(%zd:%zu) cipher:%s %s",
-		loghead(*sock),
-		loghead(*this),
-		std::distance(cbegin(handshaking), it),
-		handshaking.size(),
-		current_cipher?
-			openssl::name(*current_cipher):
-			"<NO CIPHER>"_sv,
-		string(ecbuf, ec)
-	};
-	#endif
+		char ecbuf[64];
+		log::debug
+		{
+			log, "%s %s handshook(%zd:%zu) cipher:%s %s",
+			loghead(*sock),
+			loghead(*this),
+			std::distance(cbegin(handshaking), it),
+			handshaking.size(),
+			current_cipher?
+				openssl::name(*current_cipher):
+				"<NO CIPHER>"_sv,
+			string(ecbuf, ec)
+		};
+	}
 
 	handshaking.erase(it);
 	openssl::set_app_data(*sock, nullptr);
