@@ -121,9 +121,6 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 	event::idx idx(0);
 	for(; it && i < receipt_scan_depth; --it)
 	{
-		if(!apropos(data, it.event_idx()) && i > 0)
-			break;
-
 		idx = it.event_idx();
 		++i;
 	}
@@ -135,9 +132,6 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 	bool ret{false};
 	for(ssize_t j(0); it && j < i; ++it)
 	{
-		if(!apropos(data, it.event_idx()))
-			continue;
-
 		ret |= _handle_message(data, it.event_idx());
 		++j;
 	}
@@ -157,9 +151,6 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog_prefetch(data &data)
 	ssize_t i(0);
 	for(; it && i < receipt_scan_depth; --it)
 	{
-		if(!apropos(data, it.event_idx()) && i > 0)
-			break;
-
 		const event::refs refs{it.event_idx()};
 		refs.prefetch(dbs::ref::M_RECEIPT__M_READ);
 		++i;
@@ -171,9 +162,6 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog_prefetch(data &data)
 	// Prefetch loop for the receipt events
 	for(ssize_t j(0); it && j < i; --it)
 	{
-		if(!apropos(data, it.event_idx()))
-			continue;
-
 		_prefetch_message(data, it.event_idx());
 		++j;
 	}
@@ -187,10 +175,13 @@ ircd::m::sync::_prefetch_message(data &data,
 {
 	size_t ret(0);
 	const event::refs refs{idx};
-	refs.for_each(dbs::ref::M_RECEIPT__M_READ, [&ret]
+	refs.for_each(dbs::ref::M_RECEIPT__M_READ, [&data, &ret]
 	(const event::idx &idx, const auto &type)
 	{
 		assert(type == dbs::ref::M_RECEIPT__M_READ);
+		if(!apropos(data, idx))
+			return true;
+
 		ret += m::prefetch(idx, receipt_fopts);
 		return true;
 	});
@@ -208,12 +199,15 @@ ircd::m::sync::_handle_message(data &data,
 	(const event::idx &idx, const auto &type)
 	{
 		assert(type == dbs::ref::M_RECEIPT__M_READ);
+		if(!apropos(data, idx))
+			return true;
+
 		const m::event::fetch event
 		{
 			std::nothrow, idx, receipt_fopts
 		};
 
-		if(event.valid)
+		if(likely(event.valid))
 			ret |= _handle_message_receipt(data, event);
 
 		return true;
