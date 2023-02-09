@@ -310,7 +310,7 @@ get__context(client &client,
 	log::debug
 	{
 		context_log, "%s %s in %s before:%zu start:%s after:%zu end:%s state:%zu",
-		client.loghead(),
+		loghead(client),
 		string_view{event_id},
 		string_view{room_id},
 		counts.before,

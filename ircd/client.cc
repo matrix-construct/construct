@@ -155,6 +155,38 @@ noexcept
 // util
 //
 
+ircd::string_view
+ircd::loghead(const client &client)
+{
+	thread_local char buf[512];
+	return loghead(buf, client);
+}
+
+ircd::string_view
+ircd::loghead(const mutable_buffer &buf,
+              const client &client)
+{
+	const string_view alpn
+	{
+		client.sock?
+			client.sock->alpn:
+			"h1"_sv
+	};
+
+	char rembuf[64], locbuf[64];
+	return fmt::sprintf
+	{
+		buf, "socket:%lu local:%s remote:%s client:%lu %s %lu:%lu",
+		client.sock? net::id(*client.sock) : -1UL,
+		string(locbuf, local(client)),
+		string(rembuf, remote(client)),
+		client.id,
+		alpn,
+		client.ready_count,
+		client.request_count,
+	};
+}
+
 const ircd::ipport &
 ircd::local(const client &client)
 {
@@ -199,10 +231,11 @@ ircd::client::wait_all()
 	{
 		for(const auto &[remote, client] : client::map)
 		{
+			assert(client);
 			log::dwarning
 			{
 				log, "Waiting for client %s",
-				client->loghead(),
+				loghead(*client),
 			};
 
 			assert(!client->sock || client->sock->fini);
@@ -233,7 +266,8 @@ ircd::client::close_all()
 	if(!client::map.empty())
 		log::debug
 		{
-			log, "Closing %zu clients", client::map.size()
+			log, "Closing %zu clients",
+			client::map.size()
 		};
 
 	auto it(begin(client::map));
@@ -247,7 +281,9 @@ ircd::client::close_all()
 		{
 			log::derror
 			{
-				log, "Error disconnecting client @%p: %s", c.get(), e.what()
+				log, "Error disconnecting client @%p: %s",
+				c.get(),
+				e.what(),
 			};
 		}
 	}
@@ -451,7 +487,7 @@ try
 	log::debug
 	{
 		log, "%s enter",
-		client->loghead()
+		loghead(*client),
 	};
 	#endif
 
@@ -466,7 +502,7 @@ try
 	log::debug
 	{
 		log, "%s leave %s",
-		client->loghead(),
+		loghead(*client),
 		pretty(buf, timer.at<microseconds>(), true)
 	};
 	#endif
@@ -478,7 +514,7 @@ catch(const std::exception &e)
 	log::error
 	{
 		log, "%s fault :%s",
-		client->loghead(),
+		loghead(*client),
 		e.what()
 	};
 }
@@ -496,7 +532,7 @@ ircd::handle_ec(client &client,
 		log::dwarning
 		{
 			client::log, "%s refusing client request in runlevel %s",
-			client.loghead(),
+			loghead(client),
 			reflect(run::level)
 		};
 
@@ -533,7 +569,7 @@ try
 	log::debug
 	{
 		client::log, "%s end of file",
-		client.loghead()
+		loghead(client),
 	};
 
 	client.close(net::dc::SSL_NOTIFY, net::close_ignore);
@@ -544,7 +580,7 @@ catch(const std::exception &e)
 	log::error
 	{
 		client::log, "%s end of file :%s",
-		client.loghead(),
+		loghead(client),
 		e.what()
 	};
 
@@ -561,7 +597,7 @@ try
 	log::dwarning
 	{
 		client::log, "%s short_read",
-		client.loghead()
+		loghead(client),
 	};
 
 	client.close(net::dc::RST, net::close_ignore);
@@ -572,7 +608,7 @@ catch(const std::exception &e)
 	log::error
 	{
 		client::log, "%s short_read :%s",
-		client.loghead(),
+		loghead(client),
 		e.what()
 	};
 
@@ -591,7 +627,7 @@ try
 	log::debug
 	{
 		client::log, "%s disconnecting after inactivity timeout",
-		client.loghead()
+		loghead(client),
 	};
 
 	client.close(net::dc::SSL_NOTIFY, net::close_ignore);
@@ -602,7 +638,7 @@ catch(const std::exception &e)
 	log::derror
 	{
 		client::log, "%s timeout :%s",
-		client.loghead(),
+		loghead(client),
 		e.what()
 	};
 
@@ -619,7 +655,7 @@ ircd::handle_ec_default(client &client,
 	log::derror
 	{
 		client::log, "%s :%s",
-		client.loghead(),
+		loghead(client),
 		string(buf, ec)
 	};
 
@@ -722,7 +758,7 @@ catch(const ctx::interrupted &e)
 	log::warning
 	{
 		log, "%s request interrupted :%s",
-		loghead(),
+		loghead(*this),
 		e.what()
 	};
 
@@ -734,7 +770,7 @@ catch(const std::exception &e)
 	log::critical
 	{
 		log, "%s :%s",
-		loghead(),
+		loghead(*this),
 		e.what()
 	};
 
@@ -786,7 +822,7 @@ try
 	log::debug
 	{
 		resource::log, "%s HTTP %s `%s' content-length:%zu have:%zu",
-		loghead(),
+		loghead(*this),
 		head.method,
 		head.path,
 		head.content_length,
@@ -849,7 +885,7 @@ catch(const http::error &e)
 	{
 		log, log::level::DERROR,
 		"%s HTTP %u %s :%s",
-		loghead(),
+		loghead(*this),
 		uint(e.code),
 		http::status(e.code),
 		e.content
@@ -913,7 +949,7 @@ catch(const http::error &e)
 		{
 			resource::log, log::level::DERROR,
 			"%s HTTP %u `%s' %s :%s",
-			loghead(),
+			loghead(*this),
 			uint(e.code),
 			head.uri,
 			http::status(e.code),
@@ -956,7 +992,7 @@ catch(const std::exception &e)
 	log::error
 	{
 		resource::log, "%s HTTP 500 Internal Error `%s' :%s",
-		loghead(),
+		loghead(*this),
 		head.uri,
 		e.what()
 	};
@@ -992,7 +1028,7 @@ ircd::client::discard_unconsumed(const http::request::head &head)
 	log::debug
 	{
 		log, "%s discarding %zu unconsumed of %zu bytes content...",
-		loghead(),
+		loghead(*this),
 		unconsumed,
 		head.content_length
 	};
@@ -1038,36 +1074,4 @@ ircd::client::write_all(const net::const_buffers &bufs)
 		};
 
 	return net::write_all(*sock, bufs);
-}
-
-/// Returns a string_view to a static (tls) buffer containing common
-/// information used to prefix log calls for this client: i.e id, remote
-/// address, etc. This is meant to be used as the first argument to all log
-/// calls apropos this client and should not be held over a context switch
-/// as there is only one static buffer.
-ircd::string_view
-ircd::client::loghead()
-const
-{
-	thread_local char buf[512];
-
-	const string_view alpn
-	{
-		sock?
-			sock->alpn:
-			nullptr
-	};
-
-	char rembuf[64], locbuf[64];
-	return fmt::sprintf
-	{
-		buf, "socket:%lu local:%s remote:%s client:%lu %s %lu:%lu",
-		sock? net::id(*sock) : -1UL,
-		string(locbuf, ircd::local(*this)),
-		string(rembuf, ircd::remote(*this)),
-		id,
-		alpn?: "h1"_sv,
-		ready_count,
-		request_count,
-	};
 }

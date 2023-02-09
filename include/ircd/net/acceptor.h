@@ -16,6 +16,14 @@
 // is part of the <ircd/asio.h> stack which can be included in your
 // definition file if you need low level access to this acceptor API.
 
+namespace ircd::net
+{
+	#pragma GCC visibility push(hidden)
+	string_view loghead(const mutable_buffer &, const acceptor &);
+	string_view loghead(const acceptor &);
+	#pragma GCC visibility pop
+}
+
 /// Implementation to net::listener. See listener.h for additional interface.
 struct [[gnu::visibility("protected")]]
 ircd::net::acceptor

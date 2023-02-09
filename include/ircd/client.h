@@ -17,6 +17,9 @@ namespace ircd
 
 	const ipport &remote(const client &);
 	const ipport &local(const client &);
+
+	string_view loghead(const mutable_buffer &buf, const client &);
+	string_view loghead(const client &);
 }
 
 /// Remote party connecting to our daemon to make requests.
@@ -51,7 +54,6 @@ struct ircd::client
 	size_t content_consumed {0};
 	resource::request request;
 
-	string_view loghead() const;
 	size_t write_all(const net::const_buffers &);
 	size_t write_all(const const_buffer &);
 	void close(const net::close_opts &, net::close_callback);

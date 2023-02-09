@@ -688,7 +688,7 @@ const
 	log::derror
 	{
 		log, "%s Timed out in %s `%s'",
-		client.loghead(),
+		loghead(client),
 		name,
 		resource->path
 	};
@@ -951,7 +951,7 @@ noexcept try
 		log::derror
 		{
 			log, "%s HTTP response chunks:%u wrote:%zu flushed:%zu :stream interrupted...",
-			c->loghead(),
+			loghead(*c),
 			count,
 			wrote,
 			flushed,
@@ -991,7 +991,7 @@ ircd::resource::response::chunked::finish(const bool psh)
 	log::debug
 	{
 		log, "%s HTTP --- `%s' in %s wrote:%zu flushed:%zu chunks:%u psh:%b",
-		c->loghead(),
+		loghead(*c),
 		c->request.head.path,
 		pretty(tmbuf, c->timer.at<microseconds>(), true),
 		wrote,
@@ -1371,7 +1371,7 @@ ircd::resource::response::response(client &client,
 	{
 		log, level,
 		"%s HTTP %u `%s' %s in %s; %s content-length:%s head-length:%zu %s%s",
-		client.loghead(),
+		loghead(client),
 		uint(code),
 		client.request.head.path,
 		http::status(code),

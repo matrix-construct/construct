@@ -201,7 +201,7 @@ get__messages(client &client,
 	log::debug
 	{
 		messages_log, "%s in %s from:%s to:%s dir:%c limit:%zu start:%s end:%s hit:%zu miss:%zu post:%zu",
-		client.loghead(),
+		loghead(client),
 		string_view{room_id},
 		string_view{page.from},
 		string_view{page.to},

@@ -28,11 +28,6 @@ namespace ircd::net
 	size_t handshaking_count(const acceptor &);
 	size_t accepting_count(const acceptor &);
 
-	string_view loghead(const mutable_buffer &, const acceptor &);
-	string_view loghead(const acceptor &);
-	std::ostream &operator<<(std::ostream &s, const acceptor &);
-	std::ostream &operator<<(std::ostream &s, const listener &);
-
 	bool allow(acceptor &);
 	bool start(acceptor &);
 	bool stop(acceptor &);
@@ -78,6 +73,4 @@ struct ircd::net::listener
 	         proffer = {});
 
 	~listener() noexcept;
-
-	friend std::ostream &operator<<(std::ostream &s, const listener &);
 };

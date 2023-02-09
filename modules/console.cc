@@ -17307,7 +17307,7 @@ console_cmd__synchron(opt &out, const string_view &line)
 	{
 		const auto *const &client(data_p->client);
 		if(client)
-			out << client->loghead() << " | ";
+			out << loghead(*client) << " | ";
 
 		out << m::sync::loghead(*data_p) << " | ";
 		out << '\n';

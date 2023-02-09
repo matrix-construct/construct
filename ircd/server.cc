@@ -23,6 +23,14 @@ namespace ircd::server
 	template<class F> static size_t accumulate_tags(F&&);
 	static string_view canonize(const hostport &); // TLS buffer
 
+	// convenience suite used to prefix log messages.
+	static string_view loghead(const mutable_buffer &out, const request &);
+	static string_view loghead(const request &);
+	static string_view loghead(const mutable_buffer &out, const link &, const request &);
+	static string_view loghead(const link &, const request &);
+	static string_view loghead(const mutable_buffer &out, const link &);
+	static string_view loghead(const link &);
+
 	// Internal control
 	static decltype(ircd::server::peers)::iterator
 	create(const net::hostport &, decltype(peers)::iterator &);

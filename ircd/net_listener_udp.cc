@@ -8,20 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-std::ostream &
-ircd::net::operator<<(std::ostream &s, const listener_udp &a)
-{
-	s << *a.acceptor;
-	return s;
-}
-
-std::ostream &
-ircd::net::operator<<(std::ostream &s, const acceptor_udp &a)
-{
-	s << loghead(a);
-	return s;
-}
-
 ircd::string_view
 ircd::net::loghead(const acceptor_udp &a)
 {

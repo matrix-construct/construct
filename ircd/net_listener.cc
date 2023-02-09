@@ -49,20 +49,6 @@ ircd::net::allow(acceptor &a)
 	return true;
 }
 
-std::ostream &
-ircd::net::operator<<(std::ostream &s, const acceptor &a)
-{
-	s << loghead(a);
-	return s;
-}
-
-std::ostream &
-ircd::net::operator<<(std::ostream &s, const listener &a)
-{
-	s << *a.acceptor;
-	return s;
-}
-
 ircd::string_view
 ircd::net::loghead(const acceptor &a)
 {

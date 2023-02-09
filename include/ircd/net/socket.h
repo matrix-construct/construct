@@ -22,6 +22,9 @@ namespace ircd::net
 	extern conf::item<std::string> ssl_cipher_list;
 	extern conf::item<std::string> ssl_cipher_blacklist;
 	extern asio::ssl::context sslv23_client;
+
+	string_view loghead(const mutable_buffer &out, const socket &);
+	string_view loghead(const socket &);
 }
 
 /// Internal socket interface

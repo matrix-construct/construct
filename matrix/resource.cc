@@ -211,7 +211,7 @@ try
 		log::debug
 		{
 			log, "%s %s %s %s `%s'",
-			client.loghead(),
+			loghead(client),
 			ident,
 			request.head.method,
 			request.version?: "??"_sv,

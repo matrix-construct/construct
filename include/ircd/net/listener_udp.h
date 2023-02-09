@@ -15,11 +15,6 @@ namespace ircd::net
 {
 	struct listener_udp;
 	struct acceptor_udp;
-
-	string_view loghead(const mutable_buffer &, const acceptor_udp &);
-	string_view loghead(const acceptor_udp &);
-	std::ostream &operator<<(std::ostream &s, const listener_udp &);
-	std::ostream &operator<<(std::ostream &s, const acceptor_udp &);
 }
 
 struct ircd::net::listener_udp
@@ -46,8 +41,6 @@ struct ircd::net::listener_udp
 	             const std::string &options);
 
 	~listener_udp() noexcept;
-
-	friend std::ostream &operator<<(std::ostream &s, const listener_udp &);
 };
 
 struct ircd::net::listener_udp::datagram
