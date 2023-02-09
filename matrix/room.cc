@@ -8,35 +8,22 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-size_t
-ircd::m::room::purge(const room &room)
+ircd::m::room::purge::purge(const room &room)
+:returns<size_t>{0}
 {
-	size_t ret(0);
 	db::txn txn
 	{
 		*m::dbs::events
 	};
 
-	room.for_each([&txn, &ret]
+	room.for_each([this, &txn]
 	(const m::event::idx &event_idx)
 	{
-		const m::event::fetch event
-		{
-			std::nothrow, event_idx
-		};
-
-		if(!event.valid)
-			return;
-
-		m::dbs::write_opts opts;
-		opts.op = db::op::DELETE;
-		opts.event_idx = event_idx;
-		m::dbs::write(txn, event, opts);
-		++ret;
+		ret += m::event::purge(txn, event_idx);
 	});
 
+	assert(ret || !txn.size());
 	txn();
-	return ret;
 }
 
 ircd::m::room

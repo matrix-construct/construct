@@ -132,7 +132,7 @@ try
 	create(room, user_id, "file");
 	const unwind_exceptional purge{[&room]
 	{
-		m::room::purge(room);
+		m::room::purge{room};
 	}};
 
 	const size_t written

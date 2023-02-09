@@ -104,6 +104,7 @@ struct ircd::m::event
 	struct fetch;
 	struct conforms;
 	struct append;
+	struct purge;
 
 	using keys = json::keys<event>;
 	using id = m::id::event;
@@ -168,6 +169,7 @@ struct ircd::m::event
 #include "prefetch.h"
 #include "conforms.h"
 #include "append.h"
+#include "purge.h"
 
 inline ircd::m::event::operator
 const id &()

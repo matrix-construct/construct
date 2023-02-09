@@ -8533,32 +8533,34 @@ console_cmd__event__cached(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__event__erase(opt &out, const string_view &line)
+console_cmd__event__purge(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"event_id"
+	}};
+
 	const m::event::id event_id
 	{
-		token(line, ' ', 0)
+		param.at("event_id")
 	};
 
-	m::event::fetch event
+	const auto event_idx
 	{
-		event_id
+		m::index(event_id)
 	};
 
-	db::txn txn
+	const bool purged
 	{
-		*m::dbs::events
+		m::event::purge(event_idx)
 	};
 
-	m::dbs::write_opts opts;
-	opts.op = db::op::DELETE;
-	opts.event_idx = index(event);
-	m::dbs::write(txn, event, opts);
-	txn();
+	if(purged)
+		out << "purged ";
+	else
+		out << "failed to purge ";
 
-	out << "erased " << txn.size() << " cells"
-	    << " for " << event_id << std::endl;
-
+	out << event_id << " [" << event_idx << ']' << std::endl;
 	return true;
 }
 

@@ -126,6 +126,7 @@ struct ircd::m::room
 	struct messages;
 	struct bootstrap;
 	struct content;
+	struct purge;
 
 	using id = m::id::room;
 	using alias = m::id::room_alias;
@@ -185,8 +186,6 @@ struct ircd::m::room
 	// Index of create event
 	static event::idx index(const id &, std::nothrow_t);
 	static event::idx index(const id &);
-
-	static size_t purge(const room &); // cuidado!
 };
 
 #include "events.h"
@@ -209,6 +208,7 @@ struct ircd::m::room
 #include "message.h"
 #include "messages.h"
 #include "bootstrap.h"
+#include "purge.h"
 
 inline
 ircd::m::room::room(const id &room_id,
