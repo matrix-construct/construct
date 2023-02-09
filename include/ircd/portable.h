@@ -68,10 +68,16 @@
 //
 
 #if !defined(assume)
-	#if __has_builtin(__builtin_assume)
-		#define assume(x) assert(x); __builtin_assume(x);
+	#if __has_builtin(__builtin_assume) && defined(__cplusplus)
+		// If the expression is 'evaluated' (llvm) (which includes any
+		// function call not explicitly annotated pure, even when fully
+		// inlined) then the assume is diagnosed by -Wassume and ignored.
+		// Declaring the bool mitigates this.
+		#define assume(x) assert(x); ({ const bool y(x); __builtin_assume(y); })
+	#elif __has_builtin(__builtin_assume)
+		#define assume(x) assert(x); __builtin_assume(x)
 	#else
-		#define assume(x) assert(x);
+		#define assume(x) assert(x)
 	#endif
 #endif
 
