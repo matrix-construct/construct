@@ -187,10 +187,12 @@ ircd::loghead(const mutable_buffer &buf,
 	};
 }
 
-const ircd::ipport &
+ircd::ipport
 ircd::local(const client &client)
 {
-	return client.local;
+	return likely(client.sock)?
+		net::local_ipport(*client.sock):
+		net::ipport{};
 }
 
 const ircd::ipport &
@@ -679,10 +681,6 @@ ircd::client::client(std::shared_ptr<socket> sock)
 ,sock
 {
 	std::move(sock)
-}
-,local
-{
-	net::local_ipport(*this->sock)
 }
 {
 	assert(size(head_buffer) >= 8_KiB);

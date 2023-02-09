@@ -16,7 +16,7 @@ namespace ircd
 	struct client;
 
 	const ipport &remote(const client &);
-	const ipport &local(const client &);
+	ipport local(const client &);
 
 	string_view loghead(const mutable_buffer &buf, const client &);
 	string_view loghead(const client &);
@@ -44,7 +44,6 @@ struct ircd::client
 	unique_buffer<mutable_buffer> head_buffer;
 	unique_buffer<mutable_buffer> content_buffer;
 	std::shared_ptr<socket> sock;
-	net::ipport local;
 	uint64_t id {++ctr};
 	uint64_t ready_count {0};
 	uint64_t request_count {0};
@@ -88,7 +87,7 @@ struct ircd::client
 	static void spawn();
 
 	friend const ipport &remote(const client &);
-	friend const ipport &local(const client &);
+	friend ipport local(const client &);
 };
 
 template<>
