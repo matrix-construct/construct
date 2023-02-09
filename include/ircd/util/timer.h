@@ -60,12 +60,23 @@ struct ircd::util::timer
 	void cont();
 	void stop();
 
+	constexpr timer(nostart_t);
+	constexpr timer(const bool cond);
 	timer(const std::function<void ()> &);
-	timer(nostart_t);
 	timer() = default;
 };
 
-inline
+constexpr
+ircd::util::timer::timer(const bool cond)
+:start
+{
+	cond?
+		clock::now():
+		clock::time_point::min()
+}
+{}
+
+constexpr
 ircd::util::timer::timer(nostart_t)
 :start
 {
