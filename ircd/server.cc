@@ -2273,15 +2273,16 @@ ircd::server::link::submit(request &request)
 		request.tag? queue.emplace(end(queue), std::move(*request.tag)):
 		             queue.emplace(end(queue), request)
 	};
-/*
-	log::debug
-	{
-		log, "tag(%p) submitted to link(%p) queue: %zu",
-		&(*it),
-		this,
-		tag_count()
-	};
-*/
+
+	if constexpr((false))
+		log::debug
+		{
+			log, "tag(%p) submitted to link(%p) queue: %zu",
+			&(*it),
+			this,
+			tag_count()
+		};
+
 	if(ready())
 		wait_writable();
 }
@@ -2347,14 +2348,13 @@ ircd::server::link::cleanup_canceled()
 			continue;
 		}
 
-		#if 0
-		log::dwarning
-		{
-			log, "%s removing abandoned tag:%lu",
-			loghead(*this),
-			tag.state.id,
-		};
-		#endif
+		if constexpr((false))
+			log::dwarning
+			{
+				log, "%s removing abandoned tag:%lu",
+				loghead(*this),
+				tag.state.id,
+			};
 
 		it = queue.erase(it);
 	}

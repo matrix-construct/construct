@@ -1397,14 +1397,13 @@ ircd::m::vm::call_hook(hook::site<T> &hook,
                        T&& data)
 try
 {
-	#if 0
-	log::debug
-	{
-		log, "%s hook:%s enter",
-		loghead(eval),
-		hook.name(),
-	};
-	#endif
+	if constexpr((false))
+		log::debug
+		{
+			log, "%s hook:%s enter",
+			loghead(eval),
+			hook.name(),
+		};
 
 	// Providing a pointer to the eval.hook pointer allows the hook site to
 	// provide updates for observers in other contexts for which hook is
@@ -1416,14 +1415,13 @@ try
 
 	hook(cur, event, std::forward<T>(data));
 
-	#if 0
-	log::debug
-	{
-		log, "%s hook:%s leave",
-		loghead(eval),
-		hook.name(),
-	};
-	#endif
+	if constexpr((false))
+		log::debug
+		{
+			log, "%s hook:%s leave",
+			loghead(eval),
+			hook.name(),
+		};
 }
 catch(const m::error &e)
 {

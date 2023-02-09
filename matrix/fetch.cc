@@ -754,21 +754,20 @@ ircd::m::fetch::finish(request &request)
 {
 	request.finished = ircd::now<system_point>();
 
-	#if 0
-	log::logf
-	{
-		log, request.eptr? log::DERROR: log::DEBUG,
-		"Finished %s in %s started:%ld finished:%d attempted:%zu abandon:%b %s%s",
-		string_view{request.opts.event_id},
-		string_view{request.opts.room_id},
-		duration_cast<seconds>(tse(request.started)).count(),
-		duration_cast<seconds>(tse(request.finished)).count(),
-		request.attempted.size(),
-		!request.promise,
-		request.eptr? " :" : "",
-		what(request.eptr),
-	};
-	#endif
+	if constexpr((false))
+		log::logf
+		{
+			log, request.eptr? log::DERROR: log::DEBUG,
+			"Finished %s in %s started:%ld finished:%d attempted:%zu abandon:%b %s%s",
+			string_view{request.opts.event_id},
+			string_view{request.opts.room_id},
+			duration_cast<seconds>(tse(request.started)).count(),
+			duration_cast<seconds>(tse(request.finished)).count(),
+			request.attempted.size(),
+			!request.promise,
+			request.eptr? " :" : "",
+			what(request.eptr),
+		};
 
 	if(!request.promise)
 		return;

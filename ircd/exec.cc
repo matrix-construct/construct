@@ -332,18 +332,19 @@ void
 ircd::exec::handler::on_exec_setup(executor &ex)
 const noexcept
 {
-	#if 0 // outputs from child; don't want
-	assert(e);
-
-	log::logf
+	if constexpr((false)) // outputs from child; don't want
 	{
-		log, log::level::DEBUG,
-		"id:%lu pid:%ld `%s' executing...",
-		e->id,
-		e->pid,
-		e->path,
-	};
-	#endif
+		assert(e);
+
+		log::logf
+		{
+			log, log::level::DEBUG,
+			"id:%lu pid:%ld `%s' executing...",
+			e->id,
+			e->pid,
+			e->path,
+		};
+	}
 
 	// Set the parent death signal in case of a crash so we won't go zombie.
 	#if defined(HAVE_SYS_PRCTL_H)
@@ -462,20 +463,21 @@ ircd::exec::handler::on_exec_error(executor &ex,
                                    const std::error_code &ec)
 const noexcept
 {
-	#if 0 // outputs from child; don't want
-	assert(e);
-
-	char ecbuf[64];
-	log::error
+	if constexpr((false)) // outputs from child; don't want
 	{
-		log, "id:%lu pid:%ld `%s' exec() #%ld :%s",
-		e->id,
-		e->pid,
-		e->path,
-		ec.value(),
-		string(ecbuf, ec),
-	};
-	#endif
+		assert(e);
+
+		char ecbuf[64];
+		log::error
+		{
+			log, "id:%lu pid:%ld `%s' exec() #%ld :%s",
+			e->id,
+			e->pid,
+			e->path,
+			ec.value(),
+			string(ecbuf, ec),
+		};
+	}
 }
 
 template<class executor>

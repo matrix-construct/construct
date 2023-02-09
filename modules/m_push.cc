@@ -148,18 +148,17 @@ try
 		event, rule, opts
 	};
 
-	#if 0
-	log::debug
-	{
-		log, "event %s rule { %s, %s, %s } for %s %s",
-		string_view{event.event_id},
-		scope,
-		kind,
-		ruleid,
-		string_view{user_id},
-		bool(match)? "MATCH"_sv : string_view{}
-	};
-	#endif
+	if constexpr((false))
+		log::debug
+		{
+			log, "event %s rule { %s, %s, %s } for %s %s",
+			string_view{event.event_id},
+			scope,
+			kind,
+			ruleid,
+			string_view{user_id},
+			bool(match)? "MATCH"_sv : string_view{}
+		};
 
 	return bool(match);
 }

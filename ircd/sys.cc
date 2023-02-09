@@ -47,14 +47,13 @@ catch(const ctx::interrupted &)
 }
 catch(const std::exception &e)
 {
-	#if 0
-	log::derror
-	{
-		log, "sysfs query `%s' :%s",
-		relpath,
-		e.what(),
-	};
-	#endif
+	if constexpr((false))
+		log::derror
+		{
+			log, "sysfs query `%s' :%s",
+			relpath,
+			e.what(),
+		};
 
 	return {};
 }
