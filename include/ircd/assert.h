@@ -117,7 +117,7 @@ extern "C" // for clang
 	/// Override the standard assert behavior, if enabled, to trap into the
 	/// debugger as close as possible to the offending site.
 	extern inline void
-	__attribute__((cold, flatten, always_inline, gnu_inline, artificial))
+	__attribute__((cold, flatten, always_inline, gnu_inline, artificial, nodebug))
 	__assert_fail(const char *const __assertion,
 	              const char *const __file,
 	              unsigned int __line,
@@ -137,7 +137,7 @@ extern "C" // for clang
 /// aborting the program.
 ///
 extern inline void
-__attribute__((always_inline, gnu_inline, artificial))
+__attribute__((always_inline, gnu_inline, artificial, nodebug))
 ircd::debugtrap()
 noexcept
 {
@@ -154,7 +154,7 @@ noexcept
 /// Trap on false expression whether or not NDEBUG.
 template<class expr>
 extern inline void
-__attribute__((always_inline, gnu_inline, artificial))
+__attribute__((always_inline, gnu_inline, artificial, nodebug))
 ircd::always_assert(expr&& x)
 noexcept
 {
