@@ -97,7 +97,6 @@ struct ircd::m::room::state
 	static event::idx next(const event::idx &);
 
 	static bool present(const event::idx &);
-	static size_t purge_replaced(const room::id &);
 	static bool is(std::nothrow_t, const event::idx &);
 	static bool is(const event::idx &);
 };

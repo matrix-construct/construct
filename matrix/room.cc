@@ -8,24 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-ircd::m::room::purge::purge(const room &room)
-:returns<size_t>{0}
-{
-	db::txn txn
-	{
-		*m::dbs::events
-	};
-
-	room.for_each([this, &txn]
-	(const m::event::idx &event_idx)
-	{
-		ret += m::event::purge(txn, event_idx);
-	});
-
-	assert(ret || !txn.size());
-	txn();
-}
-
 ircd::m::room
 ircd::m::create(const id::room &room_id,
                 const id::user &creator,

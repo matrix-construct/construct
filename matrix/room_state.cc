@@ -777,39 +777,6 @@ ircd::m::room::state::is(std::nothrow_t,
 	return ret;
 }
 
-size_t
-ircd::m::room::state::purge_replaced(const room::id &room_id)
-{
-	db::txn txn
-	{
-		*m::dbs::events
-	};
-
-	size_t ret(0);
-	m::room::events it
-	{
-		room_id, uint64_t(0)
-	};
-
-	if(!it)
-		return ret;
-
-	for(; it; ++it)
-	{
-		const m::event::idx &event_idx(it.event_idx());
-		static const auto no_action{[](const auto &) noexcept {}};
-		if(!m::get(std::nothrow, event_idx, "state_key", no_action))
-			continue;
-
-		if(!m::event::refs(event_idx).count(m::dbs::ref::NEXT_STATE))
-			continue;
-
-		// TODO: erase event
-	}
-
-	return ret;
-}
-
 bool
 ircd::m::room::state::present(const event::idx &event_idx)
 {

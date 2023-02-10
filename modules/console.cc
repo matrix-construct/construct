@@ -10939,28 +10939,6 @@ console_cmd__room__state__space__rebuild(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__room__state__purge__replaced(opt &out, const string_view &line)
-{
-	const params param{line, " ",
-	{
-		"room_id",
-	}};
-
-	const auto &room_id
-	{
-		m::room_id(param.at(0))
-	};
-
-	const size_t ret
-	{
-		m::room::state::purge_replaced(room_id)
-	};
-
-	out << "erased " << ret << std::endl;
-	return true;
-}
-
-bool
 console_cmd__room__state__rebuild(opt &out, const string_view &line)
 {
 	const params param{line, " ",
@@ -12257,22 +12235,39 @@ console_cmd__room__purge(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id",
+		"room_id", "op", "start_depth", "end_depth"
 	}};
 
-	const auto &room_id
+	const auto room_id
 	{
 		m::room_id(param.at(0))
 	};
 
-	const m::room room
-	{
-		room_id
-	};
-
 	const size_t ret
 	{
-		m::room::purge(room)
+		m::room::purge
+		{
+			room_id,
+			{
+				.depth =
+				{
+					param.at<uint64_t>("start_depth", 0),
+					param.at<uint64_t>("end_depth", -1UL)
+				},
+
+				// When "timeline" is given here we don't purge state
+				.state = !has(param["op"], "timeline"),
+
+				// When "history" is given here we don't purge present state
+				.present = !has(param["op"], "history"),
+
+				// When "state" is given here we don't purge non-state
+				.timeline = !has(param["op"], "state") && !has(param["op"], "history"),
+
+				// Log an INFO message
+				.infolog_txn = true,
+			}
+		}
 	};
 
 	out << "erased " << ret << std::endl;
