@@ -20,6 +20,8 @@ inline namespace util
 	template<> constexpr int popcount(const unsigned long long) noexcept;
 	template<> constexpr int popcount(const unsigned long) noexcept;
 	template<> constexpr int popcount(const unsigned int) noexcept;
+	template<> constexpr int popcount(const unsigned short) noexcept;
+	template<> constexpr int popcount(const unsigned char) noexcept;
 }}
 
 template<>
@@ -49,6 +51,30 @@ noexcept
 template<>
 constexpr int
 ircd::util::popcount(const unsigned int a)
+noexcept
+{
+	#if __has_feature(__cpp_lib_bitops)
+		return std::popcount(a);
+	#else
+		return __builtin_popcount(a);
+	#endif
+}
+
+template<>
+constexpr int
+ircd::util::popcount(const unsigned short a)
+noexcept
+{
+	#if __has_feature(__cpp_lib_bitops)
+		return std::popcount(a);
+	#else
+		return __builtin_popcount(a);
+	#endif
+}
+
+template<>
+constexpr int
+ircd::util::popcount(const unsigned char a)
 noexcept
 {
 	#if __has_feature(__cpp_lib_bitops)
