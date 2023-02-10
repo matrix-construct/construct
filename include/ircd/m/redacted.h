@@ -17,7 +17,7 @@ namespace ircd::m
 }
 
 struct ircd::m::redacted
-:boolean
+:returns<bool>
 {
 	redacted(const event::idx &);
 	redacted(const event::id &);
@@ -44,7 +44,7 @@ ircd::m::redacted::redacted(const event::id &event_id)
 
 inline
 ircd::m::redacted::redacted(const event::idx &event_idx)
-:boolean
+:returns<bool>
 {
 	event_idx?
 		event::refs(event_idx).has(dbs::ref::M_ROOM_REDACTION):

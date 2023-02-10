@@ -25,7 +25,7 @@ namespace ircd::m
 /// find and add the prev_state/prev_content for state events, etc.
 ///
 struct ircd::m::event::append
-:boolean
+:returns<bool>
 {
 	struct opts;
 

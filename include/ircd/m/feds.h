@@ -45,7 +45,7 @@ namespace ircd::m::feds
 /// the user can distinguish different requests in their options vector.
 ///
 struct ircd::m::feds::execute
-:boolean
+:returns<bool>
 {
 	execute(const vector_view<const opts> &, const closure &);
 	execute(const opts &, const closure &);

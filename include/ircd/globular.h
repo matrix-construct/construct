@@ -22,7 +22,7 @@ namespace ircd
 /// and '?' characters and equality of the string expressions will be
 /// determined. Case insensitive.
 struct ircd::globular_iequals
-:boolean
+:returns<bool>
 {
 	using is_transparent = std::true_type;
 
@@ -31,7 +31,7 @@ struct ircd::globular_iequals
 	template<class A,
 	         class B>
 	globular_iequals(A&& a, B&& b)
-	:boolean{operator()(std::forward<A>(a), std::forward<B>(b))}
+	:returns<bool>(operator()(std::forward<A>(a), std::forward<B>(b)))
 	{}
 };
 

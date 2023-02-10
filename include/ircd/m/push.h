@@ -59,7 +59,7 @@ decltype(ircd::m::push::request::list)
 ircd::instance_list<ircd::m::push::request>::list;
 
 struct ircd::m::push::match
-:boolean
+:returns<bool>
 {
 	struct opts;
 	using cond_kind_func = bool (*)(const event &, const cond &, const opts &);

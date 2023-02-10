@@ -110,14 +110,14 @@ struct ircd::m::room::power
 };
 
 struct ircd::m::room::power::grant
-:boolean
+:returns<bool>
 {
 	grant(json::stack::object &, const room::power &, const pair<string_view> &, const int64_t &);
 	grant(json::stack::object &, const room::power &, const m::id::user &, const int64_t &);
 };
 
 struct ircd::m::room::power::revoke
-:boolean
+:returns<bool>
 {
 	revoke(json::stack::object &, const room::power &, const pair<string_view> &);
 	revoke(json::stack::object &, const room::power &, const m::id::user &);

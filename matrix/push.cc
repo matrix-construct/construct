@@ -110,7 +110,7 @@ ircd::m::push::match::cond_kind_name
 ircd::m::push::match::match(const event &event,
                             const rule &rule,
                             const match::opts &opts)
-:boolean{[&event, &rule, &opts]
+:returns<bool>{[&event, &rule, &opts]
 {
 	if(json::get<"pattern"_>(rule))
 	{
@@ -137,7 +137,7 @@ ircd::m::push::match::match(const event &event,
 ircd::m::push::match::match(const event &event,
                             const cond &cond,
                             const match::opts &opts)
-:boolean{[&event, &cond, &opts]
+:returns<bool>{[&event, &cond, &opts]
 {
 	const string_view &kind
 	{

@@ -11,7 +11,7 @@
 ircd::m::room::power::revoke::revoke(json::stack::object &out,
                                      const room::power &power,
                                      const pair<string_view> &prop_key)
-:boolean{false}
+:returns<bool>{false}
 {
 	bool &ret(*this);
 	const auto replace{[&ret]
@@ -71,7 +71,7 @@ ircd::m::room::power::grant::grant(json::stack::object &out,
                                    const room::power &power,
                                    const pair<string_view> &prop_key,
                                    const int64_t &level)
-:boolean{false}
+:returns<bool>{false}
 {
 	bool &ret(*this);
 	const auto replace{[&ret, &level]

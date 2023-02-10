@@ -54,7 +54,7 @@ ircd::m::event_append_default_keys
 ircd::m::event::append::append(json::stack::array &array,
                                const event &event_,
                                const opts &opts)
-:boolean{[&]
+:returns<bool>{[&]
 {
 	assert(array.s);
 	json::stack::checkpoint cp
@@ -84,7 +84,7 @@ ircd::m::event::append::append(json::stack::array &array,
 ircd::m::event::append::append(json::stack::object &object,
                                const event &event,
                                const opts &opts)
-:boolean{[&]
+:returns<bool>{[&]
 {
 	// Assertions that the event being appended has some required fields. This
 	// is a central butt-end test of data coming through the system to here.

@@ -93,7 +93,7 @@ noexcept
 
 ircd::m::feds::execute::execute(const vector_view<const opts> &optsv,
                                 const closure &closure)
-:boolean{true}
+:returns<bool>{true}
 {
 	request_list list;
 	for(const auto &opts : optsv) switch(opts.op)
@@ -138,7 +138,7 @@ ircd::m::feds::execute::execute(const vector_view<const opts> &optsv,
 	for(const auto &opts : optsv)
 		timeout = std::max(opts.timeout, timeout);
 
-	this->boolean::val = handler(list, timeout, closure);
+	ret = handler(list, timeout, closure);
 }
 
 ircd::m::feds::request_list
