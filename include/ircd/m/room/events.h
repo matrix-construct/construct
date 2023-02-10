@@ -80,10 +80,10 @@ struct ircd::m::room::events
 	auto &operator--()                 { return ++it;                          }
 
 	// Fetch the actual event data at the iterator's position
-	const m::event &operator*();
-	const m::event *operator->()       { return &operator*();                  }
-	const m::event &fetch(std::nothrow_t);
+	const m::event &fetch(std::nothrow_t, bool *valid = nullptr);
 	const m::event &fetch();
+	const m::event &operator*()        { return fetch(std::nothrow);           }
+	const m::event *operator->()       { return &operator*();                  }
 
 	// Prefetch the actual event data at the iterator's position (async)
 	bool prefetch(const string_view &event_prop);

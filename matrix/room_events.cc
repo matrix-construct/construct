@@ -321,17 +321,19 @@ ircd::m::room::events::fetch()
 }
 
 const ircd::m::event &
-ircd::m::room::events::fetch(std::nothrow_t)
+ircd::m::room::events::fetch(std::nothrow_t,
+                             bool *const valid_)
 {
-	m::seek(std::nothrow, _event, event_idx());
+	const bool valid
+	{
+		m::seek(std::nothrow, _event, event_idx())
+	};
+
+	if(valid_)
+		*valid_ = valid;
+
 	return _event;
 }
-
-const ircd::m::event &
-ircd::m::room::events::operator*()
-{
-	return fetch(std::nothrow);
-};
 
 bool
 ircd::m::room::events::preseek(const uint64_t &depth)
