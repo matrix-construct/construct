@@ -161,6 +161,10 @@ ircd::m::dbs::_index_room_state_space(db::txn &txn,
 {
 	assert(opts.appendix.test(appendix::ROOM_STATE_SPACE));
 
+	// Ignore non-state
+	if(!defined(json::get<"state_key"_>(event)))
+		return;
+
 	const ctx::critical_assertion ca;
 	thread_local char buf[ROOM_STATE_SPACE_KEY_MAX_SIZE];
 	const string_view &key

@@ -113,6 +113,7 @@ ircd::m::dbs::_index_event_state(db::txn &txn,
 	assert(json::get<"type"_>(event));
 	assert(opts.event_idx);
 
+	// Ignore non-state
 	if(!defined(json::get<"state_key"_>(event)))
 		return;
 

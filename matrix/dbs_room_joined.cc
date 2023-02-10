@@ -154,6 +154,15 @@ ircd::m::dbs::_index_room_joined(db::txn &txn,
 	assert(opts.appendix.test(appendix::ROOM_JOINED));
 	assert(at<"type"_>(event) == "m.room.member");
 
+	// Ignore non-state
+	if(!defined(json::get<"state_key"_>(event)))
+		return;
+
+	// Ignore non-present state (similar to room_state)
+	if(opts.op == db::op::DELETE)
+		if(!room::state::present(opts.event_idx))
+			return;
+
 	thread_local char buf[ROOM_JOINED_KEY_MAX_SIZE];
 	const ctx::critical_assertion ca;
 	const string_view &key

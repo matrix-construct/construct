@@ -315,17 +315,14 @@ ircd::m::dbs::_index_room(db::txn &txn,
 	if(opts.appendix.test(appendix::ROOM_HEAD_RESOLVE))
 		_index_room_head_resolve(txn, event, opts);
 
-	if(defined(json::get<"state_key"_>(event)))
-	{
-		if(opts.appendix.test(appendix::ROOM_STATE))
-			_index_room_state(txn, event, opts);
+	if(opts.appendix.test(appendix::ROOM_STATE))
+		_index_room_state(txn, event, opts);
 
-		if(opts.appendix.test(appendix::ROOM_STATE_SPACE))
-			_index_room_state_space(txn, event, opts);
+	if(opts.appendix.test(appendix::ROOM_STATE_SPACE))
+		_index_room_state_space(txn, event, opts);
 
-		if(opts.appendix.test(appendix::ROOM_JOINED) && at<"type"_>(event) == "m.room.member")
-			_index_room_joined(txn, event, opts);
-	}
+	if(opts.appendix.test(appendix::ROOM_JOINED) && at<"type"_>(event) == "m.room.member")
+		_index_room_joined(txn, event, opts);
 
 	if(opts.appendix.test(appendix::ROOM_REDACT) && json::get<"type"_>(event) == "m.room.redaction")
 		_index_room_redact(txn, event, opts);
@@ -350,17 +347,14 @@ ircd::m::dbs::_prefetch_room(const event &event,
 	if(opts.appendix.test(appendix::ROOM_HEAD_RESOLVE))
 		;//ret += _prefetch_room_head_resolve(event, opts);
 
-	if(defined(json::get<"state_key"_>(event)))
-	{
-		if(opts.appendix.test(appendix::ROOM_STATE))
-			;//ret += _prefetch_room_state(event, opts);
+	if(opts.appendix.test(appendix::ROOM_STATE))
+		;//ret += _prefetch_room_state(event, opts);
 
-		if(opts.appendix.test(appendix::ROOM_STATE_SPACE))
-			;//ret += _prefetch_room_state_space(event, opts);
+	if(opts.appendix.test(appendix::ROOM_STATE_SPACE))
+		;//ret += _prefetch_room_state_space(event, opts);
 
-		if(opts.appendix.test(appendix::ROOM_JOINED) && at<"type"_>(event) == "m.room.member")
-			;//ret += _prefetch_room_joined(event, opts);
-	}
+	if(opts.appendix.test(appendix::ROOM_JOINED) && at<"type"_>(event) == "m.room.member")
+		;//ret += _prefetch_room_joined(event, opts);
 
 	if(opts.appendix.test(appendix::ROOM_REDACT) && json::get<"type"_>(event) == "m.room.redaction")
 		ret += _prefetch_room_redact(event, opts);

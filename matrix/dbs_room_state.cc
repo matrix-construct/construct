@@ -161,6 +161,15 @@ ircd::m::dbs::_index_room_state(db::txn &txn,
 {
 	assert(opts.appendix.test(appendix::ROOM_STATE));
 
+	// Ignore non-state
+	if(!defined(json::get<"state_key"_>(event)))
+		return;
+
+	// Ignore non-present state (likely coming from an event purge)
+	if(opts.op == db::op::DELETE)
+		if(!room::state::present(opts.event_idx))
+			return;
+
 	const ctx::critical_assertion ca;
 	thread_local char buf[ROOM_STATE_KEY_MAX_SIZE];
 	const string_view &key
