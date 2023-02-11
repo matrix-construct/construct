@@ -98,7 +98,7 @@ ircd::m::room::purge::state()
 
 		const auto purged
 		{
-			event::purge(txn, event_idx, event)
+			event::purge(txn, event_idx, event, opts.wopts)
 		};
 
 		ret += purged;
@@ -133,7 +133,7 @@ ircd::m::room::purge::timeline()
 
 		const bool purged
 		{
-			event::purge(txn, it.event_idx(), event)
+			event::purge(txn, it.event_idx(), event, opts.wopts)
 		};
 
 		ret += purged;

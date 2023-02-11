@@ -42,6 +42,9 @@ struct ircd::m::room::purge
 /// Options for purge
 struct ircd::m::room::purge::opts
 {
+	/// Lower-level options passed to event::purge and dbs::
+	dbs::opts wopts;
+
 	/// Limit purge to the index window
 	pair<event::idx> idx
 	{

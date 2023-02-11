@@ -9,6 +9,17 @@
 // full license for this software is available in the LICENSE file.
 
 ircd::m::event::purge::purge(const event::idx &event_idx)
+:purge
+{
+	event_idx, dbs::opts
+	{
+	}
+}
+{
+}
+
+ircd::m::event::purge::purge(const event::idx &event_idx,
+                             dbs::opts opts)
 :returns{false}
 {
 	assert(m::dbs::events);
@@ -17,7 +28,7 @@ ircd::m::event::purge::purge(const event::idx &event_idx)
 		*m::dbs::events
 	};
 
-	if(!purge(txn, event_idx))
+	if(!purge(txn, event_idx, opts))
 		return;
 
 	txn();
@@ -26,6 +37,18 @@ ircd::m::event::purge::purge(const event::idx &event_idx)
 
 ircd::m::event::purge::purge(db::txn &txn,
                              const event::idx &event_idx)
+:purge
+{
+	txn, event_idx, dbs::opts
+	{
+	}
+}
+{
+}
+
+ircd::m::event::purge::purge(db::txn &txn,
+                             const event::idx &event_idx,
+                             dbs::opts opts)
 :returns{false}
 {
 	const m::event::fetch event
@@ -36,15 +59,27 @@ ircd::m::event::purge::purge(db::txn &txn,
 	if(!event.valid)
 		return;
 
-	ret = purge(txn, event_idx, event);
+	ret = purge(txn, event_idx, event, opts);
 }
 
 ircd::m::event::purge::purge(db::txn &txn,
                              const event::idx &event_idx,
                              const event &event)
+:purge
+{
+	txn, event_idx, event, dbs::opts
+	{
+	}
+}
+{
+}
+
+ircd::m::event::purge::purge(db::txn &txn,
+                             const event::idx &event_idx,
+                             const event &event,
+                             dbs::opts opts)
 :returns{false}
 {
-	m::dbs::opts opts;
 	opts.op = db::op::DELETE;
 	opts.event_idx = event_idx;
 	m::dbs::write(txn, event, opts);

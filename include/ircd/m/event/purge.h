@@ -11,6 +11,12 @@
 #pragma once
 #define HAVE_IRCD_M_EVENT_PURGE_H
 
+//XXX fwd decl
+namespace ircd::m::dbs
+{
+	struct opts;
+}
+
 /// Erase an event from the database.
 ///
 /// Purging an event will erase its data and metadata, including applying
@@ -30,7 +36,10 @@
 struct ircd::m::event::purge
 :returns<bool>
 {
+	purge(db::txn &, const event::idx &, const event &, dbs::opts);
 	purge(db::txn &, const event::idx &, const event &);
+	purge(db::txn &, const event::idx &, dbs::opts);
 	purge(db::txn &, const event::idx &);
+	purge(const event::idx &, dbs::opts);
 	purge(const event::idx &);
 };
