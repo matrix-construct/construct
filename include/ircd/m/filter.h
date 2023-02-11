@@ -54,13 +54,18 @@ struct ircd::m::room_event_filter
 	json::property<name::rooms, json::array>,
 	json::property<name::senders, json::array>,
 	json::property<name::labels, json::array>,
+	json::property<name::relation_types, json::array>,
+	json::property<name::relation_senders, json::array>,
 	json::property<name::not_types, json::array>,
 	json::property<name::not_rooms, json::array>,
 	json::property<name::not_senders, json::array>,
 	json::property<name::not_labels, json::array>,
+	json::property<name::not_relation_types, json::array>,
+	json::property<name::not_relation_senders, json::array>,
 	json::property<name::contains_url, bool>,
 	json::property<name::lazy_load_members, bool>,
-	json::property<name::include_redundant_members, bool>
+	json::property<name::include_redundant_members, bool>,
+	json::property<name::unread_thread_notifications, bool>
 >
 {
 	using super_type::tuple;
@@ -84,7 +89,8 @@ struct ircd::m::state_filter
 	json::property<name::not_labels, json::array>,
 	json::property<name::contains_url, bool>,
 	json::property<name::lazy_load_members, bool>,
-	json::property<name::include_redundant_members, bool>
+	json::property<name::include_redundant_members, bool>,
+	json::property<name::unread_thread_notifications, bool>
 >
 {
 	using super_type::tuple;

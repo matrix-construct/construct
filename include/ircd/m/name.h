@@ -97,6 +97,11 @@ struct ircd::m::name
 	static constexpr const char *const contains_url {"contains_url"};
 	static constexpr const char *const lazy_load_members {"lazy_load_members"};
 	static constexpr const char *const include_redundant_members {"include_redundant_members"};
+	static constexpr const char *const relation_types {"relation_types"};
+	static constexpr const char *const not_relation_types {"not_relation_types"};
+	static constexpr const char *const relation_senders {"relation_senders"};
+	static constexpr const char *const not_relation_senders {"not_relation_senders"};
+	static constexpr const char *const unread_thread_notifications {"unread_thread_notifications"};
 
 	static constexpr const char *const edu_type {"edu_type"};
 
