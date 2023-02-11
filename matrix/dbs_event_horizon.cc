@@ -120,14 +120,14 @@ ircd::m::dbs::desc::event_horizon
 
 namespace ircd::m::dbs
 {
-	static void _index_event_horizon_resolve_one(db::txn &, const event &, const write_opts &, const event::idx &);
+	static void _index_event_horizon_resolve_one(db::txn &, const event &, const opts &, const event::idx &);
 }
 
 // NOTE: QUERY
 void
 ircd::m::dbs::_index_event_horizon_resolve(db::txn &txn,
                                            const event &event,
-                                           const write_opts &opts)
+                                           const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_HORIZON_RESOLVE));
 	assert(opts.event_idx != 0);
@@ -159,7 +159,7 @@ ircd::m::dbs::_index_event_horizon_resolve(db::txn &txn,
 
 size_t
 ircd::m::dbs::_prefetch_event_horizon_resolve(const event &event,
-                                              const write_opts &opts)
+                                              const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_HORIZON_RESOLVE));
 
@@ -191,7 +191,7 @@ ircd::m::dbs::_prefetch_event_horizon_resolve(const event &event,
 void
 ircd::m::dbs::_index_event_horizon_resolve_one(db::txn &txn,
                                                const event &event,
-                                               const write_opts &opts,
+                                               const opts &opts,
                                                const event::idx &event_idx)
 {
 	assert(event_idx != 0);
@@ -225,7 +225,7 @@ ircd::m::dbs::_index_event_horizon_resolve_one(db::txn &txn,
 	};
 
 	// Make the references on behalf of the future event
-	write_opts _opts;
+	dbs::opts _opts;
 	_opts.op = opts.op;
 	_opts.event_idx = event_idx;
 	_opts.appendix.reset();
@@ -258,7 +258,7 @@ ircd::m::dbs::_index_event_horizon_resolve_one(db::txn &txn,
 void
 ircd::m::dbs::_index_event_horizon(db::txn &txn,
                                    const event &event,
-                                   const write_opts &opts,
+                                   const opts &opts,
                                    const m::event::id &unresolved_id)
 {
 	thread_local char buf[EVENT_HORIZON_KEY_MAX_SIZE];

@@ -35,8 +35,8 @@ struct ircd::m::vm::opts
 	/// Enabled phases of evaluation.
 	std::bitset<num_of<vm::phase>()> phase {-1UL};
 
-	/// Custom write_opts to use during write.
-	dbs::write_opts wopts;
+	/// Custom dbs::opts to use during write.
+	dbs::opts wopts;
 
 	/// Broadcast to local clients (/sync stream).
 	bool notify_clients {true};

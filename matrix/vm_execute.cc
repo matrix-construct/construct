@@ -943,7 +943,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 			eval.phase, phase::PREINDEX
 		};
 
-		dbs::write_opts wopts(opts.wopts);
+		dbs::opts wopts(opts.wopts);
 		wopts.event_idx = eval.sequence;
 		const size_t prefetched
 		{
@@ -1251,7 +1251,7 @@ ircd::m::vm::write_append(eval &eval,
 		*eval.txn
 	};
 
-	m::dbs::write_opts wopts(opts.wopts);
+	m::dbs::opts wopts(opts.wopts);
 	wopts.interpose = eval.txn.get();
 	wopts.event_idx = eval.sequence;
 	wopts.json_source = true;

@@ -34,7 +34,7 @@ ircd::m::dbs::cache_comp_enable
 
 /// Coarse toggle for the prefetch phase before the transaction building
 /// handlers (indexers) are called. If this is false, prefetching will be
-/// disabled; otherwise the write_opts passed to write() control whether
+/// disabled; otherwise the opts passed to write() control whether
 /// prefetching is enabled.
 decltype(ircd::m::dbs::prefetch_enable)
 ircd::m::dbs::prefetch_enable
@@ -74,11 +74,11 @@ ircd::m::dbs::sst_write_buffer_size
 };
 
 //
-// write_opts
+// opts
 //
 
-decltype(ircd::m::dbs::write_opts::event_refs_all)
-ircd::m::dbs::write_opts::event_refs_all{[]
+decltype(ircd::m::dbs::opts::event_refs_all)
+ircd::m::dbs::opts::event_refs_all{[]
 {
 	char full[event_refs_all.size()];
 	memset(full, '1', sizeof(full));
@@ -88,8 +88,8 @@ ircd::m::dbs::write_opts::event_refs_all{[]
 	};
 }()};
 
-decltype(ircd::m::dbs::write_opts::appendix_all)
-ircd::m::dbs::write_opts::appendix_all{[]
+decltype(ircd::m::dbs::opts::appendix_all)
+ircd::m::dbs::opts::appendix_all{[]
 {
 	char full[appendix_all.size()];
 	memset(full, '1', sizeof(full));
@@ -105,15 +105,15 @@ ircd::m::dbs::write_opts::appendix_all{[]
 
 namespace ircd::m::dbs
 {
-	static size_t _prefetch(const event &, const write_opts &);
-	static size_t _index(db::txn &, const event &, const write_opts &);
-	static size_t blacklist(db::txn &txn, const event::id &, const write_opts &);
+	static size_t _prefetch(const event &, const opts &);
+	static size_t _index(db::txn &, const event &, const opts &);
+	static size_t blacklist(db::txn &txn, const event::id &, const opts &);
 }
 
 size_t
 ircd::m::dbs::write(db::txn &txn,
                     const event &event,
-                    const write_opts &opts)
+                    const opts &opts)
 try
 {
 	if(opts.event_idx == 0 && opts.blacklist)
@@ -141,7 +141,7 @@ catch(const std::exception &e)
 
 size_t
 ircd::m::dbs::prefetch(const event &event,
-                       const write_opts &opts)
+                       const opts &opts)
 try
 {
 	if(!prefetch_enable)
@@ -164,7 +164,7 @@ catch(const std::exception &e)
 size_t
 ircd::m::dbs::blacklist(db::txn &txn,
                         const event::id &event_id,
-                        const write_opts &opts)
+                        const opts &opts)
 {
 	// An entry in the event_idx column with a value 0 is blacklisting
 	// because 0 is not a valid event_idx. Thus a value here can only
@@ -197,20 +197,20 @@ ircd::m::dbs::blacklist(db::txn &txn,
 
 namespace ircd::m::dbs
 {
-	static size_t _prefetch_room_redact(const event &, const write_opts &);
-	static void _index_room_redact(db::txn &, const event &, const write_opts &);
+	static size_t _prefetch_room_redact(const event &, const opts &);
+	static void _index_room_redact(db::txn &, const event &, const opts &);
 
-	static size_t _prefetch_room(const event &, const write_opts &);
-	static void _index_room(db::txn &, const event &, const write_opts &);
+	static size_t _prefetch_room(const event &, const opts &);
+	static void _index_room(db::txn &, const event &, const opts &);
 
-	static size_t _prefetch_event(const event &, const write_opts &);
-	static void _index_event(db::txn &, const event &, const write_opts &);
+	static size_t _prefetch_event(const event &, const opts &);
+	static void _index_event(db::txn &, const event &, const opts &);
 }
 
 size_t
 ircd::m::dbs::_index(db::txn &txn,
                      const event &event,
-                     const write_opts &opts)
+                     const opts &opts)
 {
 	size_t ret(0);
 	_index_event(txn, event, opts);
@@ -223,7 +223,7 @@ ircd::m::dbs::_index(db::txn &txn,
 
 size_t
 ircd::m::dbs::_prefetch(const event &event,
-                        const write_opts &opts)
+                        const opts &opts)
 {
 	size_t ret(0);
 	ret += _prefetch_event(event, opts);
@@ -237,7 +237,7 @@ ircd::m::dbs::_prefetch(const event &event,
 void
 ircd::m::dbs::_index_event(db::txn &txn,
                            const event &event,
-                           const write_opts &opts)
+                           const opts &opts)
 {
 	if(opts.appendix.test(appendix::EVENT_ID))
 		_index_event_id(txn, event, opts);
@@ -266,7 +266,7 @@ ircd::m::dbs::_index_event(db::txn &txn,
 
 size_t
 ircd::m::dbs::_prefetch_event(const event &event,
-                              const write_opts &opts)
+                              const opts &opts)
 {
 	size_t ret(0);
 	if(opts.appendix.test(appendix::EVENT_ID))
@@ -299,7 +299,7 @@ ircd::m::dbs::_prefetch_event(const event &event,
 void
 ircd::m::dbs::_index_room(db::txn &txn,
                           const event &event,
-                          const write_opts &opts)
+                          const opts &opts)
 {
 	assert(!empty(json::get<"room_id"_>(event)));
 
@@ -330,7 +330,7 @@ ircd::m::dbs::_index_room(db::txn &txn,
 
 size_t
 ircd::m::dbs::_prefetch_room(const event &event,
-                             const write_opts &opts)
+                             const opts &opts)
 {
 	assert(!empty(json::get<"room_id"_>(event)));
 
@@ -366,7 +366,7 @@ ircd::m::dbs::_prefetch_room(const event &event,
 void
 ircd::m::dbs::_index_room_redact(db::txn &txn,
                                  const event &event,
-                                 const write_opts &opts)
+                                 const opts &opts)
 {
 	assert(opts.appendix.test(appendix::ROOM_REDACT));
 	assert(json::get<"type"_>(event) == "m.room.redaction");
@@ -431,7 +431,7 @@ ircd::m::dbs::_index_room_redact(db::txn &txn,
 
 size_t
 ircd::m::dbs::_prefetch_room_redact(const event &event,
-                                    const write_opts &opts)
+                                    const opts &opts)
 {
 	assert(opts.appendix.test(appendix::ROOM_REDACT));
 	assert(json::get<"type"_>(event) == "m.room.redaction");
@@ -464,7 +464,7 @@ ircd::m::dbs::_prefetch_room_redact(const event &event,
 size_t
 ircd::m::dbs::find_event_idx(const vector_view<event::idx> &idx,
                              const vector_view<const event::id> &event_id,
-                             const write_opts &wopts)
+                             const opts &wopts)
 {
 	const size_t num
 	{
@@ -501,7 +501,7 @@ ircd::m::dbs::find_event_idx(const vector_view<event::idx> &idx,
 
 size_t
 ircd::m::dbs::prefetch_event_idx(const vector_view<const event::id> &event_id,
-                                 const write_opts &wopts)
+                                 const opts &wopts)
 {
 	size_t ret(0);
 	for(size_t i(0); i < event_id.size(); ++i)

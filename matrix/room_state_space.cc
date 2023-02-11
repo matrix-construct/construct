@@ -259,7 +259,7 @@ ircd::m::room::state::space::rebuild::rebuild(const room::id &room_id)
 				what(reason_relative),
 			};
 
-		dbs::write_opts opts;
+		dbs::opts opts;
 		opts.event_idx = event_idx;
 
 		opts.appendix.reset();

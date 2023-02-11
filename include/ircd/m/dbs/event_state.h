@@ -30,7 +30,7 @@ namespace ircd::m::dbs
 	string_view event_state_key(const mutable_buffer &out, const event_state_tuple &);
 	event_state_tuple event_state_key(const string_view &);
 
-	void _index_event_state(db::txn &, const event &, const write_opts &);
+	void _index_event_state(db::txn &, const event &, const opts &);
 
 	// state_key, type, room_id, depth, event_idx
 	extern db::domain event_state;

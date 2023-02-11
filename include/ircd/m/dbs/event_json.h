@@ -13,7 +13,7 @@
 
 namespace ircd::m::dbs
 {
-	void _index_event_json(db::txn &, const event &, const write_opts &);
+	void _index_event_json(db::txn &, const event &, const opts &);
 
 	// event_idx => full json
 	extern db::column event_json;

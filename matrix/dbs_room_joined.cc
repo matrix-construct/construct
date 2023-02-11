@@ -149,7 +149,7 @@ ircd::m::dbs::desc::room_joined
 void
 ircd::m::dbs::_index_room_joined(db::txn &txn,
                                   const event &event,
-                                  const write_opts &opts)
+                                  const opts &opts)
 {
 	assert(opts.appendix.test(appendix::ROOM_JOINED));
 	assert(at<"type"_>(event) == "m.room.member");

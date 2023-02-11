@@ -11,13 +11,13 @@
 //TODO: XXX remove fwd decl
 namespace ircd::m::dbs
 {
-	void _index_event_horizon(db::txn &, const event &, const write_opts &, const m::event::id &);
+	void _index_event_horizon(db::txn &, const event &, const opts &, const m::event::id &);
 }
 
 size_t
 ircd::m::event::horizon::rebuild()
 {
-	m::dbs::write_opts opts;
+	m::dbs::opts opts;
 	opts.appendix.reset();
 	opts.appendix.set(dbs::appendix::EVENT_HORIZON);
 	db::txn txn

@@ -175,7 +175,7 @@ ircd::m::dbs::desc::room_events
 void
 ircd::m::dbs::_index_room_events(db::txn &txn,
                                  const event &event,
-                                 const write_opts &opts)
+                                 const opts &opts)
 {
 	assert(opts.appendix.test(appendix::ROOM_EVENTS));
 

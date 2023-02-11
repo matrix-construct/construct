@@ -8582,7 +8582,7 @@ console_cmd__event__rewrite(opt &out, const string_view &line)
 		event_id
 	};
 
-	m::dbs::write_opts opts;
+	m::dbs::opts opts;
 	opts.op = db::op::SET;
 	opts.event_idx = event.event_idx;
 

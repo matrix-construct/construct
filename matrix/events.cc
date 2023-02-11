@@ -38,7 +38,7 @@ ircd::m::events::rebuild()
 		*m::dbs::events
 	};
 
-	dbs::write_opts wopts;
+	dbs::opts wopts;
 	wopts.appendix.reset();
 	wopts.appendix.set(dbs::appendix::EVENT_TYPE);
 	wopts.appendix.set(dbs::appendix::EVENT_SENDER);

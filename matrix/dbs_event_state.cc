@@ -107,7 +107,7 @@ ircd::m::dbs::desc::event_state
 void
 ircd::m::dbs::_index_event_state(db::txn &txn,
                                  const event &event,
-                                 const write_opts &opts)
+                                 const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_STATE));
 	assert(json::get<"type"_>(event));

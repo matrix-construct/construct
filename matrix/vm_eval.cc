@@ -41,7 +41,7 @@ size_t
 ircd::m::vm::prefetch_refs(const eval &eval)
 {
 	assert(eval.opts);
-	const dbs::write_opts &wopts
+	const dbs::opts &wopts
 	{
 		eval.opts->wopts
 	};

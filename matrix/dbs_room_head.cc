@@ -150,7 +150,7 @@ ircd::m::dbs::desc::room_head
 void
 ircd::m::dbs::_index_room_head(db::txn &txn,
                                const event &event,
-                               const write_opts &opts)
+                               const opts &opts)
 {
 	assert(opts.appendix.test(appendix::ROOM_HEAD));
 	assert(opts.event_idx);
@@ -177,7 +177,7 @@ ircd::m::dbs::_index_room_head(db::txn &txn,
 void
 ircd::m::dbs::_index_room_head_resolve(db::txn &txn,
                                        const event &event,
-                                       const write_opts &opts)
+                                       const opts &opts)
 {
 	assert(opts.appendix.test(appendix::ROOM_HEAD_RESOLVE));
 

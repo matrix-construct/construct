@@ -22,9 +22,9 @@ namespace ircd::m::dbs
 	string_view event_horizon_key(const mutable_buffer &out, const id::event &);
 	std::tuple<event::idx> event_horizon_key(const string_view &amalgam);
 
-	size_t _prefetch_event_horizon_resolve(const event &, const write_opts &);
-	void _index_event_horizon_resolve(db::txn &, const event &, const write_opts &); //query
-	void _index_event_horizon(db::txn &, const event &, const write_opts &, const id::event &);
+	size_t _prefetch_event_horizon_resolve(const event &, const opts &);
+	void _index_event_horizon_resolve(db::txn &, const event &, const opts &); //query
+	void _index_event_horizon(db::txn &, const event &, const opts &, const id::event &);
 
 	// event_id | event_idx
 	extern db::domain event_horizon;

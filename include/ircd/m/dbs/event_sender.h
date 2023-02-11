@@ -29,7 +29,7 @@ namespace ircd::m::dbs
 	string_view event_sender_origin_key(const mutable_buffer &out, const id::user &, const event::idx &);
 	std::tuple<string_view, event::idx> event_sender_origin_key(const string_view &amalgam);
 
-	void _index_event_sender(db::txn &, const event &, const write_opts &);
+	void _index_event_sender(db::txn &, const event &, const opts &);
 
 	// mxid | event_idx
 	// host | local, event_idx  (see event_sender_origin.h)

@@ -713,7 +713,7 @@ ircd::m::dbs::desc::depth
 void
 ircd::m::dbs::_index_event_cols(db::txn &txn,
                                 const event &event,
-                                const write_opts &opts)
+                                const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_COLS));
 	assert(opts.event_idx);

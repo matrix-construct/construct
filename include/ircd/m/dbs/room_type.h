@@ -35,7 +35,7 @@ namespace ircd::m::dbs
 	              const uint64_t &depth       = -1,
 	              const event::idx &          = -1);
 
-	void _index_room_type(db::txn &,  const event &, const write_opts &);
+	void _index_room_type(db::txn &,  const event &, const opts &);
 
 	// room_id | type, depth, event_idx
 	extern db::domain room_type;

@@ -25,7 +25,7 @@ namespace ircd::m::dbs
 		event::size()
 	};
 
-	void _index_event_cols(db::txn &, const event &, const write_opts &);
+	void _index_event_cols(db::txn &, const event &, const opts &);
 
 	// There is one position in this array corresponding to each property
 	// in the m::event tuple, however, the db::column in this position may

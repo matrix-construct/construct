@@ -22,7 +22,7 @@ namespace ircd::m::dbs
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth);
 	std::tuple<uint64_t, event::idx> room_events_key(const string_view &amalgam);
 
-	void _index_room_events(db::txn &, const event &, const write_opts &);
+	void _index_room_events(db::txn &, const event &, const opts &);
 
 	// room_id | depth, event_idx => node_id
 	extern db::domain room_events;

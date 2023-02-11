@@ -53,7 +53,7 @@ ircd::m::event::refs::rebuild()
 		std::string event{it->second};
 		pool([&txn, &dock, &i, &j, event(std::move(event)), event_idx]
 		{
-			m::dbs::write_opts wopts;
+			m::dbs::opts wopts;
 			wopts.event_idx = event_idx;
 			wopts.appendix.reset();
 			wopts.appendix.set(dbs::appendix::EVENT_REFS);

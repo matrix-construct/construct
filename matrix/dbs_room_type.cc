@@ -166,7 +166,7 @@ ircd::m::dbs::desc::room_type
 void
 ircd::m::dbs::_index_room_type(db::txn &txn,
                                const event &event,
-                               const write_opts &opts)
+                               const opts &opts)
 {
 	assert(opts.appendix.test(appendix::ROOM_TYPE));
 

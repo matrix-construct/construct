@@ -901,7 +901,7 @@ ircd::m::room::state::rebuild::rebuild(const room::id &room_id)
 		!m::internal(room_id)
 	};
 
-	m::dbs::write_opts opts;
+	m::dbs::opts opts;
 	opts.appendix.reset();
 	opts.appendix.set(dbs::appendix::ROOM_STATE);
 	opts.appendix.set(dbs::appendix::ROOM_JOINED);

@@ -302,7 +302,7 @@ ircd::m::room::head::reset(const head &head)
 	};
 
 	// Iterate all of the existing heads with a delete operation
-	m::dbs::write_opts opts;
+	m::dbs::opts opts;
 	opts.op = db::op::DELETE;
 	opts.appendix.reset();
 	opts.appendix.set(dbs::appendix::ROOM_HEAD);
@@ -368,7 +368,7 @@ ircd::m::room::head::rebuild(const head &head)
 		*m::dbs::events
 	};
 
-	m::dbs::write_opts opts;
+	m::dbs::opts opts;
 	opts.op = db::op::SET;
 	for(; it; ++it)
 	{
@@ -400,7 +400,7 @@ ircd::m::room::head::modify(const m::event::id &event_id,
 	};
 
 	// Iterate all of the existing heads with a delete operation
-	m::dbs::write_opts opts;
+	m::dbs::opts opts;
 	opts.op = op;
 	opts.event_idx = event.event_idx;
 	opts.appendix.reset();

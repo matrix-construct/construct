@@ -13,7 +13,7 @@
 
 namespace ircd::m::dbs
 {
-	void _index_event_id(db::txn &, const event &, const write_opts &);
+	void _index_event_id(db::txn &, const event &, const opts &);
 
 	extern db::column event_idx;       // event_id => event_idx
 }

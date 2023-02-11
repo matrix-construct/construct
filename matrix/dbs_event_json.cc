@@ -113,7 +113,7 @@ ircd::m::dbs::desc::event_json
 void
 ircd::m::dbs::_index_event_json(db::txn &txn,
                                 const event &event,
-                                const write_opts &opts)
+                                const opts &opts)
 {
 	const ctx::critical_assertion ca;
 	assert(opts.appendix.test(appendix::EVENT_JSON));

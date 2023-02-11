@@ -134,7 +134,7 @@ ircd::m::dbs::desc::event_sender
 void
 ircd::m::dbs::_index_event_sender(db::txn &txn,
                                   const event &event,
-                                  const write_opts &opts)
+                                  const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_SENDER));
 	assert(json::get<"sender"_>(event));

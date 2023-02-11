@@ -44,7 +44,7 @@ ircd::m::event::purge::purge(db::txn &txn,
                              const event &event)
 :returns{false}
 {
-	m::dbs::write_opts opts;
+	m::dbs::opts opts;
 	opts.op = db::op::DELETE;
 	opts.event_idx = event_idx;
 	m::dbs::write(txn, event, opts);

@@ -10,20 +10,20 @@
 
 namespace ircd::m::dbs
 {
-	static size_t _prefetch_event_refs_m_room_redaction(const event &, const write_opts &);
-	static void _index_event_refs_m_room_redaction(db::txn &, const event &, const write_opts &); //query
-	static size_t _prefetch_event_refs_m_receipt_m_read(const event &, const write_opts &);
-	static void _index_event_refs_m_receipt_m_read(db::txn &, const event &, const write_opts &); //query
-	static size_t _prefetch_event_refs_m_relates_m_reply(const event &, const write_opts &);
-	static void _index_event_refs_m_relates_m_reply(db::txn &, const event &, const write_opts &); //query
-	static size_t _prefetch_event_refs_m_relates(const event &, const write_opts &);
-	static void _index_event_refs_m_relates(db::txn &, const event &, const write_opts &); //query
-	static size_t _prefetch_event_refs_state(const event &, const write_opts &);
-	static void _index_event_refs_state(db::txn &, const event &, const write_opts &); // query
-	static size_t _prefetch_event_refs_auth(const event &, const write_opts &);
-	static void _index_event_refs_auth(db::txn &, const event &, const write_opts &); //query
-	static size_t _prefetch_event_refs_prev(const event &, const write_opts &);
-	static void _index_event_refs_prev(db::txn &, const event &, const write_opts &); //query
+	static size_t _prefetch_event_refs_m_room_redaction(const event &, const opts &);
+	static void _index_event_refs_m_room_redaction(db::txn &, const event &, const opts &); //query
+	static size_t _prefetch_event_refs_m_receipt_m_read(const event &, const opts &);
+	static void _index_event_refs_m_receipt_m_read(db::txn &, const event &, const opts &); //query
+	static size_t _prefetch_event_refs_m_relates_m_reply(const event &, const opts &);
+	static void _index_event_refs_m_relates_m_reply(db::txn &, const event &, const opts &); //query
+	static size_t _prefetch_event_refs_m_relates(const event &, const opts &);
+	static void _index_event_refs_m_relates(db::txn &, const event &, const opts &); //query
+	static size_t _prefetch_event_refs_state(const event &, const opts &);
+	static void _index_event_refs_state(db::txn &, const event &, const opts &); // query
+	static size_t _prefetch_event_refs_auth(const event &, const opts &);
+	static void _index_event_refs_auth(db::txn &, const event &, const opts &); //query
+	static size_t _prefetch_event_refs_prev(const event &, const opts &);
+	static void _index_event_refs_prev(db::txn &, const event &, const opts &); //query
 	static bool event_refs__cmp_less(const string_view &a, const string_view &b);
 }
 
@@ -153,7 +153,7 @@ ircd::m::dbs::desc::event_refs
 void
 ircd::m::dbs::_index_event_refs(db::txn &txn,
                                 const event &event,
-                                const write_opts &opts)
+                                const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 
@@ -182,7 +182,7 @@ ircd::m::dbs::_index_event_refs(db::txn &txn,
 
 size_t
 ircd::m::dbs::_prefetch_event_refs(const event &event,
-                                   const write_opts &opts)
+                                   const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 
@@ -216,7 +216,7 @@ ircd::m::dbs::_prefetch_event_refs(const event &event,
 void
 ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
                                      const event &event,
-                                     const write_opts &opts)
+                                     const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::NEXT)));
@@ -277,7 +277,7 @@ ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
 
 size_t
 ircd::m::dbs::_prefetch_event_refs_prev(const event &event,
-                                        const write_opts &opts)
+                                        const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::NEXT)));
@@ -300,7 +300,7 @@ ircd::m::dbs::_prefetch_event_refs_prev(const event &event,
 void
 ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
                                      const event &event,
-                                     const write_opts &opts)
+                                     const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::NEXT_AUTH)));
@@ -362,7 +362,7 @@ ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
 
 size_t
 ircd::m::dbs::_prefetch_event_refs_auth(const event &event,
-                                        const write_opts &opts)
+                                        const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::NEXT_AUTH)));
@@ -388,7 +388,7 @@ ircd::m::dbs::_prefetch_event_refs_auth(const event &event,
 void
 ircd::m::dbs::_index_event_refs_state(db::txn &txn,
                                       const event &event,
-                                      const write_opts &opts)
+                                      const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::NEXT_STATE)) ||
@@ -466,7 +466,7 @@ ircd::m::dbs::_index_event_refs_state(db::txn &txn,
 
 size_t
 ircd::m::dbs::_prefetch_event_refs_state(const event &event,
-                                         const write_opts &opts)
+                                         const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::NEXT_STATE)) ||
@@ -494,7 +494,7 @@ ircd::m::dbs::_prefetch_event_refs_state(const event &event,
 void
 ircd::m::dbs::_index_event_refs_m_receipt_m_read(db::txn &txn,
                                                  const event &event,
-                                                 const write_opts &opts)
+                                                 const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::M_RECEIPT__M_READ)));
@@ -556,7 +556,7 @@ ircd::m::dbs::_index_event_refs_m_receipt_m_read(db::txn &txn,
 
 size_t
 ircd::m::dbs::_prefetch_event_refs_m_receipt_m_read(const event &event,
-                                                    const write_opts &opts)
+                                                    const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::M_RECEIPT__M_READ)));
@@ -582,7 +582,7 @@ ircd::m::dbs::_prefetch_event_refs_m_receipt_m_read(const event &event,
 void
 ircd::m::dbs::_index_event_refs_m_relates(db::txn &txn,
                                           const event &event,
-                                          const write_opts &opts)
+                                          const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::M_RELATES)));
@@ -663,7 +663,7 @@ ircd::m::dbs::_index_event_refs_m_relates(db::txn &txn,
 
 size_t
 ircd::m::dbs::_prefetch_event_refs_m_relates(const event &event,
-                                             const write_opts &opts)
+                                             const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::M_RELATES)));
@@ -696,7 +696,7 @@ ircd::m::dbs::_prefetch_event_refs_m_relates(const event &event,
 void
 ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
                                                   const event &event,
-                                                  const write_opts &opts)
+                                                  const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::M_RELATES)));
@@ -758,7 +758,7 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 
 size_t
 ircd::m::dbs::_prefetch_event_refs_m_relates_m_reply(const event &event,
-                                                     const write_opts &opts)
+                                                     const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::M_RELATES)));
@@ -786,7 +786,7 @@ ircd::m::dbs::_prefetch_event_refs_m_relates_m_reply(const event &event,
 void
 ircd::m::dbs::_index_event_refs_m_room_redaction(db::txn &txn,
                                                  const event &event,
-                                                 const write_opts &opts)
+                                                 const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::M_ROOM_REDACTION)));
@@ -843,7 +843,7 @@ ircd::m::dbs::_index_event_refs_m_room_redaction(db::txn &txn,
 
 size_t
 ircd::m::dbs::_prefetch_event_refs_m_room_redaction(const event &event,
-                                                    const write_opts &opts)
+                                                    const opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::M_ROOM_REDACTION)));

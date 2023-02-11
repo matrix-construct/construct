@@ -21,7 +21,7 @@ namespace ircd::m::dbs
 	string_view event_type_key(const mutable_buffer &out, const string_view &, const event::idx & = 0);
 	std::tuple<event::idx> event_type_key(const string_view &amalgam);
 
-	void _index_event_type(db::txn &, const event &, const write_opts &);
+	void _index_event_type(db::txn &, const event &, const opts &);
 
 	// type | event_idx => -
 	extern db::domain event_type;
