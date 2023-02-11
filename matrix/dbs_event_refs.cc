@@ -240,12 +240,23 @@ ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
 
 	for(size_t i(0); i < prev_id.size(); ++i)
 	{
-		if(opts.appendix.test(appendix::EVENT_HORIZON) && !prev_idx[i])
-		{
-			_index_event_horizon(txn, event, opts, prev_id[i]);
-			continue;
-		}
-		else if(!prev_idx[i])
+		if(opts.appendix.test(appendix::EVENT_HORIZON))
+			if(opts.op == db::op::DELETE && prev_idx[i])
+			{
+				auto _opts(opts);
+				_opts.op = db::op::SET;
+				_opts.event_idx = prev_idx[i];
+				_index_event_horizon(txn, {}, _opts, event.event_id);
+			}
+
+		if(opts.appendix.test(appendix::EVENT_HORIZON))
+			if(opts.op == db::op::SET && !prev_idx[i])
+			{
+				_index_event_horizon(txn, event, opts, prev_id[i]);
+				continue;
+			}
+
+		if(!prev_idx[i])
 		{
 			log::dwarning
 			{
@@ -327,11 +338,21 @@ ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
 
 	for(size_t i(0); i < auth_id.size(); ++i)
 	{
-		if(unlikely(!auth_idx[i]))
-		{
-			if(opts.appendix.test(appendix::EVENT_HORIZON))
+		if(opts.appendix.test(appendix::EVENT_HORIZON))
+			if(opts.op == db::op::DELETE && auth_idx[i])
+			{
+				auto _opts(opts);
+				_opts.op = db::op::SET;
+				_opts.event_idx = auth_idx[i];
+				_index_event_horizon(txn, {}, _opts, event.event_id);
+			}
+
+		if(opts.appendix.test(appendix::EVENT_HORIZON))
+			if(opts.op == db::op::SET && unlikely(!auth_idx[i]))
 				_index_event_horizon(txn, event, opts, auth_id[i]);
 
+		if(unlikely(!auth_idx[i]))
+		{
 			log::error
 			{
 				log, "No index found to ref %s AUTH of %s",
@@ -520,12 +541,23 @@ ircd::m::dbs::_index_event_refs_m_receipt_m_read(db::txn &txn,
 		find_event_idx(event_id, opts)
 	};
 
-	if(opts.appendix.test(appendix::EVENT_HORIZON) && !event_idx)
-	{
-		_index_event_horizon(txn, event, opts, event_id);
-		return;
-	}
-	else if(!event_idx)
+	if(opts.appendix.test(appendix::EVENT_HORIZON))
+		if(opts.op == db::op::DELETE && event_idx)
+		{
+			auto _opts(opts);
+			_opts.op = db::op::SET;
+			_opts.event_idx = event_idx;
+			_index_event_horizon(txn, {}, _opts, event.event_id);
+		}
+
+	if(opts.appendix.test(appendix::EVENT_HORIZON))
+		if(opts.op == db::op::SET && !event_idx)
+		{
+			_index_event_horizon(txn, event, opts, event_id);
+			return;
+		}
+
+	if(!event_idx)
 	{
 		log::dwarning
 		{
@@ -625,14 +657,23 @@ ircd::m::dbs::_index_event_refs_m_relates(db::txn &txn,
 		find_event_idx(event_id, opts)
 	};
 
-	if(opts.appendix.test(appendix::EVENT_HORIZON) && !event_idx)
-	{
-		// If we don't have the event being related to yet, place a marker in
-		// the event_horizon indicating need for re-evaluation later.
-		_index_event_horizon(txn, event, opts, event_id);
-		return;
-	}
-	else if(!event_idx)
+	if(opts.appendix.test(appendix::EVENT_HORIZON))
+		if(opts.op == db::op::DELETE && event_idx)
+		{
+			auto _opts(opts);
+			_opts.op = db::op::SET;
+			_opts.event_idx = event_idx;
+			_index_event_horizon(txn, {}, _opts, event.event_id);
+		}
+
+	if(opts.appendix.test(appendix::EVENT_HORIZON))
+		if(opts.op == db::op::SET && !event_idx)
+		{
+			_index_event_horizon(txn, event, opts, event_id);
+			return;
+		}
+
+	if(!event_idx)
 	{
 		log::derror
 		{
@@ -722,12 +763,23 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 		find_event_idx(event_id, opts)
 	};
 
-	if(opts.appendix.test(appendix::EVENT_HORIZON) && !event_idx)
-	{
-		_index_event_horizon(txn, event, opts, event_id);
-		return;
-	}
-	else if(!event_idx)
+	if(opts.appendix.test(appendix::EVENT_HORIZON))
+		if(opts.op == db::op::DELETE && event_idx)
+		{
+			auto _opts(opts);
+			_opts.op = db::op::SET;
+			_opts.event_idx = event_idx;
+			_index_event_horizon(txn, {}, _opts, event.event_id);
+		}
+
+	if(opts.appendix.test(appendix::EVENT_HORIZON))
+		if(opts.op == db::op::SET && !event_idx)
+		{
+			_index_event_horizon(txn, event, opts, event_id);
+			return;
+		}
+
+	if(!event_idx)
 	{
 		log::dwarning
 		{
@@ -807,12 +859,23 @@ ircd::m::dbs::_index_event_refs_m_room_redaction(db::txn &txn,
 		find_event_idx(event_id, opts)
 	};
 
-	if(opts.appendix.test(appendix::EVENT_HORIZON) && !event_idx)
-	{
-		_index_event_horizon(txn, event, opts, event_id);
-		return;
-	}
-	else if(!event_idx)
+	if(opts.appendix.test(appendix::EVENT_HORIZON))
+		if(opts.op == db::op::DELETE && event_idx)
+		{
+			auto _opts(opts);
+			_opts.op = db::op::SET;
+			_opts.event_idx = event_idx;
+			_index_event_horizon(txn, {}, _opts, event.event_id);
+		}
+
+	if(opts.appendix.test(appendix::EVENT_HORIZON))
+		if(opts.op == db::op::SET && !event_idx)
+		{
+			_index_event_horizon(txn, event, opts, event_id);
+			return;
+		}
+
+	if(!event_idx)
 	{
 		log::dwarning
 		{
