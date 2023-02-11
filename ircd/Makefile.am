@@ -356,6 +356,10 @@ endif
 if CLANG
 if OPENCL
 
+GPU_OPT = opt-${CXX_EPOCH}
+GPU_LINK = llvm-link-${CXX_EPOCH}
+GPU_SPIRV = llvm-spirv-${CXX_EPOCH}
+
 GPU_CPPFLAGS =#
 GPU_CPPFLAGS += -Dcl_clang_storage_class_specifiers
 GPU_CPPFLAGS += -DNOFP64
@@ -420,7 +424,7 @@ gpt_gpu.spv.bc: gpt_gpu.cl
 
 BUILT_SOURCES += gpt_gpu.spv
 gpt_gpu.spv: gpt_gpu.spv.bc
-	llvm-spirv -o $@ $^
+	$(GPU_SPIRV) -o $@ $^
 
 CLEANFILES += gpt_gpu.spv.cc
 libircd_la_SOURCES += gpt_gpu.spv.cc
@@ -449,8 +453,8 @@ gpt_gpu.gcn_hsa.bc: gpt_gpu.cl
 
 BUILT_SOURCES += gpt_gpu.gcn_hsa.link.bc
 gpt_gpu.gcn_hsa.link.bc: gpt_gpu.gcn_hsa.bc
-	llvm-link-14 $(GPU_LINKFLAGS) -o $@ $^ /usr/lib/clc/amdgcn--amdhsa.bc
-	opt-14 $(GPU_OPTFLAGS) -o $@ $@
+	$(GPU_LINK) $(GPU_LINKFLAGS) -o $@ $^ /usr/lib/clc/amdgcn--amdhsa.bc
+	$(GPU_OPT) $(GPU_OPTFLAGS) -o $@ $@
 
 #BUILT_SOURCES += gpt_gpu.gcn_hsa.s
 gpt_gpu.gcn_hsa.s: gpt_gpu.gcn_hsa.link.bc
@@ -490,8 +494,8 @@ gpt_gpu.r600_barts.bc: gpt_gpu.cl
 
 #BUILT_SOURCES += gpt_gpu.r600_barts.link.bc
 gpt_gpu.r600_barts.link.bc: gpt_gpu.r600_barts.bc
-	llvm-link-14 $(GPU_LINKFLAGS) -o $@ $^ /usr/lib/clc/barts-r600--.bc
-	opt-14 $(GPU_OPTFLAGS) -o $@ $@
+	$(GPU_LINK) $(GPU_LINKFLAGS) -o $@ $^ /usr/lib/clc/barts-r600--.bc
+	$(GPU_OPT) $(GPU_OPTFLAGS) -o $@ $@
 
 #BUILT_SOURCES += gpt_gpu.r600_barts.s
 gpt_gpu.r600_barts.s: gpt_gpu.r600_barts.link.bc
