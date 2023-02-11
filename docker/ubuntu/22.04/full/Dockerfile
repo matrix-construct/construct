@@ -14,7 +14,6 @@ ENV packages_dev="\
 ${packages_dev} \
 libgraphicsmagick1-dev \
 libpng-dev \
-llvm-spirv \
 xxd \
 "
 

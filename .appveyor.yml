@@ -15,7 +15,7 @@ environment:
       DOCKER_IMAGE: jevolk/construct:ubuntu-22.04-base-build-gcc-12-amd64
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
-      DOCKER_IMAGE: jevolk/construct:ubuntu-22.04-full-build-clang-14-amd64
+      DOCKER_IMAGE: jevolk/construct:ubuntu-22.04-full-build-clang-15-amd64
 
 for:
 -

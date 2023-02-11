@@ -137,12 +137,13 @@ docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-test-gcc-12-amd64 $BASEDIR/u
 ARGS="$ARGS_"
 ARGS="$ARGS --platform linux/amd64"
 ARGS="$ARGS --build-arg feature=full"
-ARGS="$ARGS --build-arg extra_packages_dev=clang-14"
-ARGS="$ARGS --build-arg extra_packages_dev1=llvm-14-dev"
-ARGS="$ARGS --build-arg cc=clang-14 --build-arg cxx=clang++-14"
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-build-clang-14-amd64 $BASEDIR/ubuntu/22.04/build
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-built-clang-14-amd64 $BASEDIR/ubuntu/22.04/built
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-test-clang-14-amd64 $BASEDIR/ubuntu/22.04/test
+ARGS="$ARGS --build-arg extra_packages_dev=clang-15"
+ARGS="$ARGS --build-arg extra_packages_dev1=llvm-15-dev"
+ARGS="$ARGS --build-arg extra_packages_dev2=llvm-spirv-15"
+ARGS="$ARGS --build-arg cc=clang-15 --build-arg cxx=clang++-15"
+docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-build-clang-15-amd64 $BASEDIR/ubuntu/22.04/build
+docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-built-clang-15-amd64 $BASEDIR/ubuntu/22.04/built
+docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-test-clang-15-amd64 $BASEDIR/ubuntu/22.04/test
 
 #
 # Pushed images
@@ -154,8 +155,8 @@ docker push $ACCT/$REPO:ubuntu-22.04-base-built-gcc-9-amd64
 docker push $ACCT/$REPO:ubuntu-22.04-base-build-gcc-12-amd64
 docker push $ACCT/$REPO:ubuntu-22.04-base-built-gcc-12-amd64
 
-docker push $ACCT/$REPO:ubuntu-22.04-full-build-clang-14-amd64
-docker push $ACCT/$REPO:ubuntu-22.04-full-built-clang-14-amd64
+docker push $ACCT/$REPO:ubuntu-22.04-full-build-clang-15-amd64
+docker push $ACCT/$REPO:ubuntu-22.04-full-built-clang-15-amd64
 
 ###############################################################################
 #
