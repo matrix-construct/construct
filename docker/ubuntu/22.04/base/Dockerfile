@@ -22,7 +22,6 @@ libsodium23 \
 libssl3 \
 liblz4-1 \
 libmagic1 \
-liburing2 \
 libzstd1 \
 "
 
@@ -48,7 +47,6 @@ libicu-dev \
 libmagic-dev \
 libsodium-dev \
 libssl-dev \
-liburing-dev \
 "
 
 ENV rocksdb_cmake="\
