@@ -5351,8 +5351,8 @@ ircd::db::make_opts(const gopts &opts)
 	if(opts.pin)
 		ret.pin_data = true;
 
-	if(opts.cache)
-		ret.fill_cache = true;
+	if(!opts.cache)
+		ret.fill_cache = false;
 
 	if(opts.prefix)
 		ret.prefix_same_as_start = true;
