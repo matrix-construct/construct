@@ -79,26 +79,6 @@ get__members(client &client,
 			string_view{room_id}
 		};
 
-	m::resource::response::chunked response
-	{
-		client, http::OK
-	};
-
-	json::stack out
-	{
-		response.buf, response.flusher()
-	};
-
-	json::stack::object top
-	{
-		out
-	};
-
-	json::stack::array chunk
-	{
-		top, "chunk"
-	};
-
 	const m::room::members members
 	{
 		room
@@ -148,6 +128,26 @@ get__members(client &client,
 	});
 
 	// stream to client
+	m::resource::response::chunked response
+	{
+		client, http::OK
+	};
+
+	json::stack out
+	{
+		response.buf, response.flusher()
+	};
+
+	json::stack::object top
+	{
+		out
+	};
+
+	json::stack::array chunk
+	{
+		top, "chunk"
+	};
+
 	m::event::fetch event;
 	members.for_each(membership, [&membership, &membership_match, &at_idx, &chunk, &event]
 	(const m::user::id &member, const m::event::idx &event_idx)
@@ -192,6 +192,20 @@ get__joined_members(client &client,
 			string_view{room_id}
 		};
 
+	const m::room::members members
+	{
+		room
+	};
+
+	// prefetch loop
+	members.for_each("join", []
+	(const m::user::id &user_id, const m::event::idx &event_idx)
+	{
+		m::prefetch(event_idx, "content");
+		return true;
+	});
+
+	// stream to client
 	m::resource::response::chunked response
 	{
 		client, http::OK
@@ -211,18 +225,6 @@ get__joined_members(client &client,
 	{
 		top, "joined"
 	};
-
-	const m::room::members members
-	{
-		room
-	};
-
-	members.for_each("join", []
-	(const m::user::id &user_id, const m::event::idx &event_idx)
-	{
-		m::prefetch(event_idx);
-		return true;
-	});
 
 	members.for_each("join", [&joined, &room]
 	(const m::user::id &user_id, const m::event::idx &event_idx)
