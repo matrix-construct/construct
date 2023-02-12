@@ -19,12 +19,12 @@ namespace ircd::json
 	bool operator!(const array &);
 	size_t size(const array &);
 
-	size_t serialized(const string_view *const &begin, const string_view *const &end);
-	size_t serialized(const std::string *const &begin, const std::string *const &end);
+	size_t serialized(const string_view *begin, const string_view *end);
+	size_t serialized(const std::string *begin, const std::string *end);
 	size_t serialized(const array &);
 
-	string_view stringify(mutable_buffer &buf, const string_view *const &begin, const string_view *const &end);
-	string_view stringify(mutable_buffer &buf, const std::string *const &begin, const std::string *const &end);
+	string_view stringify(mutable_buffer &buf, const string_view *begin, const string_view *end);
+	string_view stringify(mutable_buffer &buf, const std::string *begin, const std::string *end);
 	string_view stringify(mutable_buffer &, const array &);
 	std::ostream &operator<<(std::ostream &, const array &);
 }
@@ -62,8 +62,8 @@ struct ircd::json::array
 	size_t size() const;
 
 	template<class T> T at(const size_t &i) const;
-	string_view at(const size_t &i) const;
-	string_view operator[](const size_t &i) const;
+	string_view at(const size_t i) const;
+	string_view operator[](const size_t i) const;
 
 	explicit operator std::string() const;
 
@@ -108,4 +108,22 @@ const
 	// matter here for us.
 	assert(sv.size() > 2 || sv.empty() || sv == empty_array || sv == empty_object);
 	return sv.size() <= 2 || sv == literal_null;
+}
+
+inline size_t
+ircd::json::size(const array &array)
+{
+	return array.size();
+}
+
+inline bool
+ircd::json::operator!(const array &array)
+{
+	return empty(array);
+}
+
+inline bool
+ircd::json::empty(const array &array)
+{
+	return array.empty();
 }

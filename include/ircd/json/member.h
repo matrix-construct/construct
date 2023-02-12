@@ -22,13 +22,13 @@ namespace ircd::json
 	bool operator<(const member &a, const member &b);
 	bool operator<(const member &a, const string_view &b);
 
-	bool sorted(const member *const &begin, const member *const &end);
+	bool sorted(const member *begin, const member *end);
 
-	size_t serialized(const member *const &begin, const member *const &end);
+	size_t serialized(const member *begin, const member *end);
 	size_t serialized(const members &);
 	size_t serialized(const member &);
 
-	string_view stringify(mutable_buffer &, const member *const &begin, const member *const &end);
+	string_view stringify(mutable_buffer &, const member *begin, const member *end);
 	string_view stringify(mutable_buffer &, const members &);
 	string_view stringify(mutable_buffer &, const member &);
 
@@ -86,3 +86,65 @@ ircd::json::member::member(const string_view &k)
 	k, value{}
 }
 {}
+
+inline ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const members &list)
+{
+	return stringify(buf, std::begin(list), std::end(list));
+}
+
+inline ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const member &m)
+{
+	return stringify(buf, &m, &m + 1);
+}
+
+inline size_t
+ircd::json::serialized(const members &m)
+{
+	return serialized(std::begin(m), std::end(m));
+}
+
+inline size_t
+ircd::json::serialized(const member &member)
+{
+	return serialized(member.first) + 1 + serialized(member.second);
+}
+
+inline bool
+ircd::json::operator<(const member &a, const member &b)
+{
+	return a.first < b.first;
+}
+
+inline bool
+ircd::json::operator!=(const member &a, const member &b)
+{
+	return a.first != b.first;
+}
+
+inline bool
+ircd::json::operator==(const member &a, const member &b)
+{
+	return a.first == b.first;
+}
+
+inline bool
+ircd::json::operator<(const member &a, const string_view &b)
+{
+	return string_view{a.first.string, a.first.len} < b;
+}
+
+inline bool
+ircd::json::operator!=(const member &a, const string_view &b)
+{
+	return string_view{a.first.string, a.first.len} != b;
+}
+
+inline bool
+ircd::json::operator==(const member &a, const string_view &b)
+{
+	return string_view{a.first.string, a.first.len} == b;
+}

@@ -22,11 +22,11 @@ namespace ircd::json
 
 	size_t serialized(const bool &);
 	size_t serialized(const value &);
-	size_t serialized(const value *const &begin, const value *const &end);
+	size_t serialized(const value *begin, const value *end);
 	size_t serialized(const values &);
 
 	string_view stringify(mutable_buffer &, const value &);
-	string_view stringify(mutable_buffer &, const value *const &begin, const value *const &end);
+	string_view stringify(mutable_buffer &, const value *begin, const value *end);
 	std::ostream &operator<<(std::ostream &, const value &);
 
 	bool operator==(const value &a, const value &b);
@@ -364,6 +364,18 @@ inline bool
 ircd::json::operator!=(const value &a, const value &b)
 {
 	return !operator==(a, b);
+}
+
+inline size_t
+ircd::json::serialized(const bool &b)
+{
+	constexpr const size_t tf[2]
+	{
+		_constexpr_strlen("false"),
+		_constexpr_strlen("true"),
+	};
+
+	return tf[b];
 }
 
 inline bool

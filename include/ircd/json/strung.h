@@ -65,3 +65,17 @@ ircd::json::strung::strung(T&&... t)
 	})
 }
 {}
+
+inline ircd::json::strung::operator
+json::array()
+const
+{
+	return string_view{*this};
+}
+
+inline ircd::json::strung::operator
+json::object()
+const
+{
+	return string_view{*this};
+}

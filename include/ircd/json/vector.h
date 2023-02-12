@@ -47,8 +47,8 @@ struct ircd::json::vector
 	const_iterator begin() const;
 
 	const_iterator find(size_t i) const;
-	value_type at(const size_t &i) const;
-	value_type operator[](const size_t &i) const;
+	value_type at(const size_t i) const;
+	value_type operator[](const size_t i) const;
 
 	bool empty() const;
 	operator bool() const;
@@ -60,9 +60,49 @@ struct ircd::json::vector
 
 #include "vector_iterator.h"
 
+inline size_t
+ircd::json::vector::size()
+const
+{
+	return count();
+}
+
+inline ircd::json::vector::operator
+bool()
+const
+{
+	return !empty();
+}
+
+inline bool
+ircd::json::vector::empty()
+const
+{
+	const string_view &sv{*this};
+	return sv.empty();
+}
+
 inline ircd::json::vector::const_iterator
 ircd::json::vector::end()
 const
 {
 	return { string_view::end(), string_view::end() };
+}
+
+inline bool
+ircd::json::operator!(const vector &v)
+{
+	return v.empty();
+}
+
+inline size_t
+ircd::json::size(const vector &v)
+{
+	return v.size();
+}
+
+inline bool
+ircd::json::empty(const vector &v)
+{
+	return v.empty();
 }

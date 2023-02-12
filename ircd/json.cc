@@ -1675,12 +1675,6 @@ ircd::json::stack::array::_pre_append()
 	s->rethrow_exception();
 }
 
-void
-ircd::json::stack::array::_post_append()
-{
-	++vc;
-}
-
 //
 // member
 //
@@ -1846,18 +1840,6 @@ ircd::json::stack::member::append(const json::value &value)
 	{
 		return size(stringify(buf, value));
 	});
-}
-
-void
-ircd::json::stack::member::_pre_append()
-{
-	assert(!vc);
-}
-
-void
-ircd::json::stack::member::_post_append()
-{
-	vc |= true;
 }
 
 //
@@ -2397,56 +2379,8 @@ ircd::json::iov::defaults::defaults(iov &iov,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// json/strung.h
-//
-
-ircd::json::strung::operator
-json::array()
-const
-{
-	return string_view{*this};
-}
-
-ircd::json::strung::operator
-json::object()
-const
-{
-	return string_view{*this};
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
 // json/vector.h
 //
-
-bool
-ircd::json::operator!(const vector &v)
-{
-	return v.empty();
-}
-
-size_t
-ircd::json::size(const vector &v)
-{
-	return v.size();
-}
-
-bool
-ircd::json::empty(const vector &v)
-{
-	return v.empty();
-}
-
-//
-// vector::vector
-//
-
-size_t
-ircd::json::vector::size()
-const
-{
-	return count();
-}
 
 size_t
 ircd::json::vector::count()
@@ -2455,39 +2389,22 @@ const
 	return std::distance(begin(), end());
 }
 
-ircd::json::vector::operator
-bool()
-const
-{
-	return !empty();
-}
-
-bool
-ircd::json::vector::empty()
-const
-{
-	const string_view &sv
-	{
-		*static_cast<const string_view *>(this)
-	};
-
-	return sv.empty();
-}
-
 ircd::json::vector::value_type
-ircd::json::vector::operator[](const size_t &i)
+ircd::json::vector::operator[](const size_t i)
 const
 {
 	const auto it(find(i));
-	return it != end()? *it : object{};
+	return it != end()?
+		*it:
+		object{};
 }
 
 ircd::json::vector::value_type
-ircd::json::vector::at(const size_t &i)
+ircd::json::vector::at(const size_t i)
 const
 {
 	const auto it(find(i));
-	if(it == end())
+	if(unlikely(it == end()))
 		throw not_found
 		{
 			"indice %zu", i
@@ -2640,24 +2557,6 @@ ircd::json::sorted(const object &object)
 	return true;
 }
 
-size_t
-ircd::json::size(const object &object)
-{
-	return object.size();
-}
-
-bool
-ircd::json::operator!(const object &object)
-{
-	return empty(object);
-}
-
-bool
-ircd::json::empty(const object &object)
-{
-	return object.empty();
-}
-
 //
 // object
 //
@@ -2681,7 +2580,14 @@ ircd::json::object::get(const string_view &key,
                         const string_view &def)
 const
 {
-	return get<string_view>(key, def);
+	const auto it
+	{
+		find(key)
+	};
+
+	return it != end()?
+		it->second:
+		def;
 }
 
 ircd::json::object::operator std::string()
@@ -2710,13 +2616,6 @@ ircd::json::object::has(const string_view &key)
 const
 {
 	return find(key) != end();
-}
-
-size_t
-ircd::json::object::size()
-const
-{
-	return count();
 }
 
 size_t
@@ -2887,8 +2786,8 @@ ircd::json::serialized(const object::member &member)
 
 ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
-                      const object::member *const &b,
-                      const object::member *const &e)
+                      const object::member *const b,
+                      const object::member *const e)
 {
 	const size_t mc(object_member_arrays_ctr);
 	assert(mc < object_member_arrays.size());
@@ -2935,8 +2834,8 @@ ircd::json::_stringify(mutable_buffer &buf,
 }
 
 size_t
-ircd::json::serialized(const object::member *const &begin,
-                       const object::member *const &end)
+ircd::json::serialized(const object::member *const begin,
+                       const object::member *const end)
 {
 	const size_t ret(1 + (begin == end));
 	return std::accumulate(begin, end, ret, []
@@ -2947,8 +2846,8 @@ ircd::json::serialized(const object::member *const &begin,
 }
 
 bool
-ircd::json::sorted(const object::member *const &begin,
-                   const object::member *const &end)
+ircd::json::sorted(const object::member *const begin,
+                   const object::member *const end)
 {
 	return std::is_sorted(begin, end, []
 	(const object::member &a, const object::member &b)
@@ -2992,50 +2891,32 @@ ircd::json::serialized(const array &v)
 
 ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
-                      const std::string *const &b,
-                      const std::string *const &e)
+                      const std::string *const b,
+                      const std::string *const e)
 {
 	return array::stringify(buf, b, e);
 }
 
 size_t
-ircd::json::serialized(const std::string *const &b,
-                       const std::string *const &e)
+ircd::json::serialized(const std::string *const b,
+                       const std::string *const e)
 {
 	return array::serialized(b, e);
 }
 
 ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
-                      const string_view *const &b,
-                      const string_view *const &e)
+                      const string_view *const b,
+                      const string_view *const e)
 {
 	return array::stringify(buf, b, e);
 }
 
 size_t
-ircd::json::serialized(const string_view *const &b,
-                       const string_view *const &e)
+ircd::json::serialized(const string_view *const b,
+                       const string_view *const e)
 {
 	return array::serialized(b, e);
-}
-
-size_t
-ircd::json::size(const array &array)
-{
-	return array.size();
-}
-
-bool
-ircd::json::operator!(const array &array)
-{
-	return empty(array);
-}
-
-bool
-ircd::json::empty(const array &array)
-{
-	return array.empty();
 }
 
 //
@@ -3132,7 +3013,7 @@ const
 }
 
 ircd::string_view
-ircd::json::array::operator[](const size_t &i)
+ircd::json::array::operator[](const size_t i)
 const
 {
 	const auto it(find(i));
@@ -3140,7 +3021,7 @@ const
 }
 
 ircd::string_view
-ircd::json::array::at(const size_t &i)
+ircd::json::array::at(const size_t i)
 const
 {
 	const auto it(find(i));
@@ -3216,20 +3097,6 @@ ircd::json::array::const_iterator::operator++()
 // json/member.h
 //
 
-ircd::string_view
-ircd::json::stringify(mutable_buffer &buf,
-                      const members &list)
-{
-	return stringify(buf, std::begin(list), std::end(list));
-}
-
-ircd::string_view
-ircd::json::stringify(mutable_buffer &buf,
-                      const member &m)
-{
-	return stringify(buf, &m, &m + 1);
-}
-
 namespace ircd::json
 {
 	using member_array = std::array<const member *, object::max_sorted_members>;
@@ -3242,8 +3109,8 @@ namespace ircd::json
 
 ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
-                      const member *const &b,
-                      const member *const &e)
+                      const member *const b,
+                      const member *const e)
 {
 	static const auto less_member
 	{
@@ -3300,14 +3167,8 @@ ircd::json::stringify(mutable_buffer &buf,
 }
 
 size_t
-ircd::json::serialized(const members &m)
-{
-	return serialized(std::begin(m), std::end(m));
-}
-
-size_t
-ircd::json::serialized(const member *const &begin,
-                       const member *const &end)
+ircd::json::serialized(const member *const begin,
+                       const member *const end)
 {
 	const size_t ret(1 + (begin == end));
 	return std::accumulate(begin, end, ret, []
@@ -3317,57 +3178,15 @@ ircd::json::serialized(const member *const &begin,
 	});
 }
 
-size_t
-ircd::json::serialized(const member &member)
-{
-	return serialized(member.first) + 1 + serialized(member.second);
-}
-
 bool
-ircd::json::sorted(const member *const &begin,
-                   const member *const &end)
+ircd::json::sorted(const member *const begin,
+                   const member *const end)
 {
 	return std::is_sorted(begin, end, []
 	(const member &a, const member &b)
 	{
 		return a < b;
 	});
-}
-
-bool
-ircd::json::operator<(const member &a, const member &b)
-{
-	return a.first < b.first;
-}
-
-bool
-ircd::json::operator!=(const member &a, const member &b)
-{
-	return a.first != b.first;
-}
-
-bool
-ircd::json::operator==(const member &a, const member &b)
-{
-	return a.first == b.first;
-}
-
-bool
-ircd::json::operator<(const member &a, const string_view &b)
-{
-	return string_view{a.first.string, a.first.len} < b;
-}
-
-bool
-ircd::json::operator!=(const member &a, const string_view &b)
-{
-	return string_view{a.first.string, a.first.len} != b;
-}
-
-bool
-ircd::json::operator==(const member &a, const string_view &b)
-{
-	return string_view{a.first.string, a.first.len} == b;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -4124,8 +3943,8 @@ ircd::json::operator<<(std::ostream &s, const value &v)
 
 ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
-                      const value *const &b,
-                      const value *const &e)
+                      const value *const b,
+                      const value *const e)
 {
 	static const auto print_value
 	{
@@ -4249,8 +4068,8 @@ ircd::json::serialized(const values &v)
 }
 
 size_t
-ircd::json::serialized(const value *const &begin,
-                       const value *const &end)
+ircd::json::serialized(const value *const begin,
+                       const value *const end)
 {
 	// One opening '[' and either one ']' or comma count.
 	const size_t ret(1 + (begin == end));
@@ -4318,22 +4137,6 @@ ircd::json::serialized(const value &v)
 	{
 		"deciding the size of a type[%u] is undefined", int(v.type)
 	};
-}
-
-size_t
-ircd::json::serialized(const bool &b)
-{
-	static constexpr const size_t t
-	{
-		_constexpr_strlen("true")
-	};
-
-	static constexpr const size_t f
-	{
-		_constexpr_strlen("false")
-	};
-
-	return b? t : f;
 }
 
 //

@@ -20,10 +20,10 @@ namespace ircd::json
 	bool operator<(const object::member &, const object::member &);
 	bool operator>(const object::member &, const object::member &);
 
-	bool sorted(const object::member *const &, const object::member *const &);
-	size_t serialized(const object::member *const &, const object::member *const &);
+	bool sorted(const object::member *, const object::member *);
+	size_t serialized(const object::member *, const object::member *);
 	size_t serialized(const object::member &);
-	string_view stringify(mutable_buffer &, const object::member *const &, const object::member *const &);
+	string_view stringify(mutable_buffer &, const object::member *, const object::member *);
 	string_view stringify(mutable_buffer &, const object::member &);
 	std::ostream &operator<<(std::ostream &, const object::member &);
 }

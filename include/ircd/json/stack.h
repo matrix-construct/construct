@@ -316,6 +316,18 @@ ircd::json::stack::member::append(const json::tuple<T...> &t)
 	});
 }
 
+inline void
+ircd::json::stack::member::_pre_append()
+{
+	assert(!vc);
+}
+
+inline void
+ircd::json::stack::member::_post_append()
+{
+	vc |= true;
+}
+
 template<class... T>
 void
 ircd::json::stack::array::append(const json::tuple<T...> &t)
@@ -330,6 +342,12 @@ ircd::json::stack::array::append(const json::tuple<T...> &t)
 	{
 		return ircd::size(stringify(buf, t));
 	});
+}
+
+inline void
+ircd::json::stack::array::_post_append()
+{
+	++vc;
 }
 
 template<class... T>

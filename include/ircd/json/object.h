@@ -257,6 +257,13 @@ catch(const bad_lex_cast &e)
 	return def;
 }
 
+inline size_t
+ircd::json::object::size()
+const
+{
+	return count();
+}
+
 inline ircd::json::object::const_iterator
 ircd::json::object::end()
 const
@@ -271,4 +278,22 @@ const
 	const string_view &sv{*this};
 	assert(sv.size() > 2 || (sv.empty() || sv == empty_object));
 	return sv.size() <= 2 || sv == literal_null;
+}
+
+inline size_t
+ircd::json::size(const object &object)
+{
+	return object.size();
+}
+
+inline bool
+ircd::json::operator!(const object &object)
+{
+	return empty(object);
+}
+
+inline bool
+ircd::json::empty(const object &object)
+{
+	return object.empty();
 }
