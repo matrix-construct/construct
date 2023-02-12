@@ -57,7 +57,7 @@
 
 #if !defined(unpredictable)
 	#if __has_builtin(__builtin_unpredictable)
-		#define unpredictable(x) __builtin_unpredictable(!!(x), 0)
+		#define unpredictable(x) __builtin_unpredictable(!!(x))
 	#else
 		#define unpredictable(x) (x)
 	#endif
