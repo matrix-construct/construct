@@ -433,9 +433,14 @@ ircd::m::_create_event(const createroom &c)
 		{ content,   { "creator",     creator          }},
 	};
 
+	const bool add_creation_type
+	{
+		!type.empty() && type != "room" && !user_content.has("type")
+	};
+
 	const json::iov::add _type
 	{
-		content, !type.empty() && type != "room",
+		content, add_creation_type,
 		{
 			"type", [&type]() -> json::value
 			{
