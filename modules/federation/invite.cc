@@ -423,7 +423,7 @@ try
 	vmopts.node_id = request.node_id;
 
 	// Synapse may 403 a fetch of the prev_event of the invite event.
-	vmopts.fetch = false;
+	vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
 
 	// Synapse now 403's a fetch of auth_events of the invite event
 	vmopts.auth = false;

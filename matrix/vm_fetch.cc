@@ -327,13 +327,18 @@ catch(const vm::error &e)
 }
 catch(const std::exception &e)
 {
-	log::error
+	log::logf
 	{
-		log, "Fetching auth chain for %s in %s :%s",
+		log, eval.opts->auth? log::ERROR: log::DERROR,
+		"Fetching auth chain for %s in %s :%s",
 		string_view{room.event_id},
 		string_view{room.room_id},
 		e.what(),
 	};
+
+	// Stop propagation if auth not required but fetch attempted anyway
+	if(!eval.opts->auth)
+		return;
 
 	throw;
 }
