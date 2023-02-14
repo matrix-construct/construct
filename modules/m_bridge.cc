@@ -19,7 +19,9 @@ namespace ircd::m::bridge
 	static void init();
 
 	extern conf::item<bool> enable;
-	extern conf::item<seconds> timeout;
+	extern conf::item<seconds> backoff;
+	extern conf::item<seconds> txn_timeout;
+	extern conf::item<size_t> txn_bufsize;
 	extern ctx::dock worker_dock;
 	extern std::vector<context> worker_context;
 	extern hookfn<vm::eval &> notify_hook;
@@ -41,11 +43,25 @@ ircd::m::bridge::enable
 	{ "default",   true                    },
 };
 
-decltype(ircd::m::bridge::timeout)
-ircd::m::bridge::timeout
+decltype(ircd::m::bridge::backoff)
+ircd::m::bridge::backoff
+{
+	{ "name",      "ircd.m.bridge.backoff"  },
+	{ "default",   15L                      },
+};
+
+decltype(ircd::m::bridge::txn_timeout)
+ircd::m::bridge::txn_timeout
 {
 	{ "name",      "ircd.m.bridge.txn.timeout"  },
 	{ "default",   10L                          },
+};
+
+decltype(ircd::m::bridge::txn_bufsize)
+ircd::m::bridge::txn_bufsize
+{
+	{ "name",      "ircd.m.bridge.txn.buf.size"  },
+	{ "default",   long(event::MAX_SIZE * 8)     },
 };
 
 decltype(ircd::m::bridge::worker_dock)
@@ -168,7 +184,7 @@ try
 
 	const unique_mutable_buffer buf
 	{
-		event::MAX_SIZE * 8
+		size_t(txn_bufsize)
 	};
 
 	log::notice
@@ -238,7 +254,7 @@ try
 				server::errmsg(target),
 			};
 
-			sleep(15s);
+			sleep(seconds(backoff));
 			continue;
 		}
 
@@ -254,7 +270,7 @@ try
 		// Prevent spin for retrying the same range on handled exception.
 		if(unlikely(since == range.first))
 		{
-			sleep(15s);
+			sleep(seconds(backoff));
 			continue;
 		}
 	}
@@ -359,7 +375,7 @@ try
 	// Recv response
 	const auto code
 	{
-		req.get(seconds(timeout))
+		req.get(seconds(txn_timeout))
 	};
 
 	log::logf
