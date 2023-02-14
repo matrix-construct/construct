@@ -13676,7 +13676,7 @@ console_cmd__user__tokens(opt &out, const string_view &line)
 
 		const auto device_id
 		{
-			m::user::tokens::device(token)
+			m::user::tokens::device(std::nothrow, token)
 		};
 
 		out

@@ -261,10 +261,11 @@ ircd::m::user::tokens::device(std::nothrow_t,
 	{
 		const json::string &device_id
 		{
-			content.at("device_id")
+			content["device_id"]
 		};
 
-		ret = device_id;
+		if(device_id)
+			ret = device_id;
 	});
 
 	return ret;
