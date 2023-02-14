@@ -1055,7 +1055,6 @@ ircd::fs::_read_asio(const fd &fd,
                      const const_iovec_view &iov,
                      const read_opts &opts)
 {
-	assert(bytes(iov) > 0);
 	assert(opts.offset >= 0);
 
 	asio::mutable_buffer buf[iov.size()];
@@ -1092,7 +1091,7 @@ ircd::fs::_read_asio(const fd &fd,
 	};
 
 	assert(ret <= bytes(iov));
-	assert(ret || ec == eof);
+	assert(ret || ec == eof || !bytes(iov));
 	if(unlikely(ec && ec != eof))
 		throw_system_error(ec);
 
