@@ -17634,6 +17634,30 @@ console_cmd__bridge__protocol(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__bridge__set(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"file"
+	}};
+
+	static mods::import<m::event::id::buf (const string_view &)> set
+	{
+		"m_bridge_register", "ircd::m::bridge::set"
+	};
+
+	const auto event_id
+	{
+		set(param.at("file"))
+	};
+
+	out
+	<< "Bridge set. Configuration event: " << event_id
+	<< std::endl;
+	return true;
+}
+
 //
 // icu
 //

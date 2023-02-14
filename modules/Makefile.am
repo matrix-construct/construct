@@ -81,6 +81,7 @@ m_moduledir = @moduledir@
 
 m_breadcrumbs_la_SOURCES = m_breadcrumbs.cc
 m_bridge_la_SOURCES = m_bridge.cc
+m_bridge_register_la_SOURCES = m_bridge_register.cc
 m_command_la_SOURCES = m_command.cc
 m_control_la_SOURCES = m_control.cc
 m_device_la_SOURCES = m_device.cc
@@ -114,6 +115,7 @@ m_room_tombstone_la_SOURCES = m_room_tombstone.cc
 m_module_LTLIBRARIES = \
 	m_breadcrumbs.la \
 	m_bridge.la \
+	m_bridge_register.la \
 	m_command.la \
 	m_control.la \
 	m_device.la \

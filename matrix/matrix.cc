@@ -59,6 +59,7 @@ ircd::m::module_names
 	"m_noop",
 	"m_breadcrumbs",
 	"m_bridge",
+	"m_bridge_register",
 	"m_command",
 	"m_control",
 	"m_device",
