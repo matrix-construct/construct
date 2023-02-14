@@ -2566,7 +2566,7 @@ try
 			"fs::fs::fd(): openat(2): %s", path
 		};
 
-		assert((flags & ~O_CREAT) || mode != 0);
+		assert(!(flags & O_CREAT) || mode != 0);
 		fdno = syscall(::openat, dirfd, path_cstr(path), flags, mode);
 	}
 
@@ -2686,7 +2686,7 @@ ircd::fs::flags(const fd::opts &opts)
 	ret |= fs::flags(opts.mode);
 	ret |= opts.direct? O_DIRECT : 0UL;
 	ret |= opts.cloexec? O_CLOEXEC : 0UL;
-	ret |= opts.create? O_CREAT : 0UL;
+	ret &= !opts.create? ~O_CREAT : ret;
 	ret |= !opts.blocking? O_NONBLOCK : 0UL;
 	ret |= opts.exclusive? O_EXCL : 0UL;
 	return ret;
