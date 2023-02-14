@@ -8,6 +8,42 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+ircd::string_view
+ircd::m::user::tokens::create(const mutable_buffer &buf,
+                              const json::object &content)
+const
+{
+	const auto token
+	{
+		generate(buf)
+	};
+
+	const auto event_id
+	{
+		add(token, content)
+	};
+
+	return token;
+}
+
+ircd::m::event::id::buf
+ircd::m::user::tokens::add(const string_view &token,
+                           const json::object &content)
+const
+{
+	const m::room::id::buf tokens_room
+	{
+		"tokens", user.user_id.host()
+	};
+
+	const m::event::id::buf event_id
+	{
+		m::send(tokens_room, user, "ircd.access_token", token, content)
+	};
+
+	return event_id;
+}
+
 size_t
 ircd::m::user::tokens::del(const string_view &reason)
 const

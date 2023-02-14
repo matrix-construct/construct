@@ -28,6 +28,8 @@ struct ircd::m::user::tokens
 	bool check(const string_view &token) const;
 	bool del(const string_view &token, const string_view &reason) const;
 	size_t del(const string_view &reason) const;
+	m::event::id::buf add(const string_view &, const json::object & = {}) const;
+	string_view create(const mutable_buffer &, const json::object & = {}) const;
 
 	tokens(const m::user &user)
 	:user{user}
