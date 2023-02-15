@@ -227,9 +227,22 @@ ircd::m::bridge::set(const string_view &file)
 	else if(!tokens.check(json::get<"as_token"_>(config)))
 		tokens.add(json::get<"as_token"_>(config));
 
+	// Check if the config is the same as the existing one so we don't create
+	// identical state; update() ensures canonical serialization first.
+	update();
+	event::idx exist_idx{0};
+	m::bridge::config::get(std::nothrow, at<"id"_>(config), [&exist_idx, &config]
+	(const auto &event_idx, const auto &event, const auto &exist)
+	{
+		if(exist.source == config.source)
+			exist_idx = event_idx;
+	});
+
 	const auto event_id
 	{
-		m::send(room_id, user_id, "ircd.bridge", at<"id"_>(config), content)
+		!exist_idx?
+			m::send(room_id, user_id, "ircd.bridge", at<"id"_>(config), content):
+			m::event_id(exist_idx)
 	};
 
 	return event_id;
