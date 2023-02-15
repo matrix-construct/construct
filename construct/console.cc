@@ -348,6 +348,9 @@ construct::console::handle_line_bymodule()
 				append(*record_fd, string_view(cmdline));
 			}
 
+			if(empty(str))
+				return;
+
 			append(*record_fd, str);
 		}
 
