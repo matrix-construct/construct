@@ -70,6 +70,9 @@ struct ircd::m::user
 	event::id::buf deactivate();
 	event::id::buf activate();
 
+	event::id::buf deoper();
+	event::id::buf oper();
+
 	user(const id &user_id)
 	:user_id{user_id}
 	{}

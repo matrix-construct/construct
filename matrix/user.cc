@@ -231,6 +231,38 @@ const
 }
 
 ircd::m::event::id::buf
+ircd::m::user::oper()
+{
+	const m::room::id::buf control_room_id
+	{
+		"!control", origin(my())
+	};
+
+	const m::room control_room
+	{
+		control_room_id
+	};
+
+	return m::join(control_room, user_id);
+}
+
+ircd::m::event::id::buf
+ircd::m::user::deoper()
+{
+	const m::room::id::buf control_room_id
+	{
+		"!control", origin(my())
+	};
+
+	const m::room control_room
+	{
+		control_room_id
+	};
+
+	return m::leave(control_room, user_id);
+}
+
+ircd::m::event::id::buf
 ircd::m::user::activate()
 {
 	const m::user::room user_room
