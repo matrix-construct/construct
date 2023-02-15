@@ -494,36 +494,28 @@ try
 			"Required X-Matrix Authorization was not supplied"
 		};
 
-	if(x_matrix_verify_destination && !m::self::host(request.head.host))
-		throw m::error
-		{
-			http::UNAUTHORIZED, "M_NOT_MY_HOST",
-			"The HTTP Host '%s' is not an authenticable destination here.",
-			request.head.host,
-		};
-
-	const auto head_host
+	const auto supplied_dest
 	{
-		rstrip(request.head.host, ":8448")
+		request.x_matrix.destination
 	};
 
-	const auto auth_dest
-	{
-		rstrip(request.x_matrix.destination, ":8448")
-	};
-
-	if(x_matrix_verify_destination && auth_dest && head_host != auth_dest)
+	if(x_matrix_verify_destination && supplied_dest && !m::self::host(supplied_dest))
 		throw m::error
 		{
 			http::UNAUTHORIZED, "M_NOT_MY_DESTINATION",
 			"The X-Matrix Authorization destination '%s' is not recognized here.",
-			auth_dest,
+			supplied_dest,
 		};
+
+	const auto destination
+	{
+		supplied_dest?: origin(my())
+	};
 
 	const m::request object
 	{
 		request.x_matrix.origin,
-		head_host,
+		destination,
 		method.name,
 		request.head.uri,
 		request.content
