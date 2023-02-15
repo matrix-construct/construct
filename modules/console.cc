@@ -17658,6 +17658,54 @@ console_cmd__bridge__set(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__bridge__add(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"file"
+	}};
+
+	static mods::import<m::event::id::buf (const string_view &)> add
+	{
+		"m_bridge_register", "ircd::m::bridge::add"
+	};
+
+	const auto event_id
+	{
+		add(param.at("file"))
+	};
+
+	out
+	<< "Bridge added. Configuration event: " << event_id
+	<< std::endl;
+	return true;
+}
+
+bool
+console_cmd__bridge__del(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"id"
+	}};
+
+	static mods::import<m::event::id::buf (const string_view &)> del
+	{
+		"m_bridge_register", "ircd::m::bridge::del"
+	};
+
+	const auto event_id
+	{
+		del(param.at("id"))
+	};
+
+	out
+	<< "Bridge removed. Redaction event: " << event_id
+	<< std::endl;
+	return true;
+}
+
 //
 // icu
 //
