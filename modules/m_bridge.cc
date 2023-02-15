@@ -10,6 +10,13 @@
 
 namespace ircd::m::bridge
 {
+	static bool pick_alias(const config &, const event::idx &, const event &, const json::array &, const m::room::alias &);
+	static bool pick_alias(const config &, const event::idx &, const event &, const room &, const json::array &);
+	static bool pick_room(const config &, const event::idx &, const event &, const room &, const json::array &);
+	static bool pick_user(const config &, const event::idx &, const event &, const json::array &, const m::user::id &);
+	static bool pick_user(const config &, const event::idx &, const event &, const room &, const json::array &);
+	static bool pick(const config &, const event::idx &, const event &);
+	static bool append(const config &, json::stack::array &, events::range &, size_t &, const event::idx &, const event &);
 	static size_t make_txn(const config &, json::stack &, events::range &);
 	static event::idx worker_handle(const config &, const net::hostport &, const events::range &, window_buffer);
 	static void worker_loop(const config &, const rfc3986::uri &, const mutable_buffer &);
@@ -409,17 +416,6 @@ catch(const std::exception &e)
 	};
 
 	return range_.first;
-}
-
-namespace ircd::m::bridge
-{
-	static bool pick_alias(const config &, const event::idx &, const event &, const json::array &, const m::room::alias &);
-	static bool pick_alias(const config &, const event::idx &, const event &, const room &, const json::array &);
-	static bool pick_room(const config &, const event::idx &, const event &, const room &, const json::array &);
-	static bool pick_user(const config &, const event::idx &, const event &, const json::array &, const m::user::id &);
-	static bool pick_user(const config &, const event::idx &, const event &, const room &, const json::array &);
-	static bool pick(const config &, const event::idx &, const event &);
-	static bool append(const config &, json::stack::array &, events::range &, size_t &, const event::idx &, const event &);
 }
 
 size_t
