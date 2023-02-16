@@ -19,8 +19,8 @@ namespace rocksdb
 
 namespace ircd::db
 {
-	uint64_t sequence(const database::snapshot &);  // Sequence of a snapshot
-	uint64_t sequence(const rocksdb::Snapshot *const &);
+	uint64_t sequence(const database::snapshot &) noexcept;  // Sequence of a snapshot
+	uint64_t sequence(const rocksdb::Snapshot *) noexcept;
 }
 
 /// Database snapshot object. Maintaining this object will maintain a
@@ -31,12 +31,41 @@ struct ircd::db::database::snapshot
 	std::shared_ptr<const rocksdb::Snapshot> s;
 
   public:
-	operator const rocksdb::Snapshot *() const   { return s.get();                                 }
+	operator const rocksdb::Snapshot *() const;
 
-	explicit operator bool() const               { return bool(s);                                 }
-	bool operator !() const                      { return !s;                                      }
+	explicit operator bool() const;
+	bool operator !() const;
 
 	explicit snapshot(database &);
 	snapshot() = default;
 	~snapshot() noexcept;
 };
+
+inline bool
+ircd::db::database::snapshot::operator!()
+const
+{
+	return !s;
+}
+
+inline ircd::db::database::snapshot::operator
+bool()
+const
+{
+	return bool(s);
+}
+
+inline ircd::db::database::snapshot::operator
+const rocksdb::Snapshot *()
+const
+{
+	return s.get();
+}
+
+inline uint64_t
+ircd::db::sequence(const database::snapshot &s)
+noexcept
+{
+	const rocksdb::Snapshot *const rs(s);
+	return sequence(rs);
+}

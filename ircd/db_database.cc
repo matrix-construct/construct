@@ -2109,14 +2109,8 @@ const noexcept
 //
 
 uint64_t
-ircd::db::sequence(const database::snapshot &s)
-{
-	const rocksdb::Snapshot *const rs(s);
-	return sequence(rs);
-}
-
-uint64_t
-ircd::db::sequence(const rocksdb::Snapshot *const &rs)
+ircd::db::sequence(const rocksdb::Snapshot *const rs)
+noexcept
 {
 	return likely(rs)? rs->GetSequenceNumber() : 0ULL;
 }
