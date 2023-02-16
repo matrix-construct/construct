@@ -146,7 +146,8 @@ try
 		                                  "invite"
 	};
 
-	if(join_rule != "invite") try
+	// Riot won't allow changing the join_rules unless the event exists.
+	if(join_rule != "invite" || createroom::spec_preset(preset)) try
 	{
 		send(room, creator, "m.room.join_rules", "",
 		{
