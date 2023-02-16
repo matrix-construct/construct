@@ -916,6 +916,8 @@ RB_MAYBE_CWARN([-Wno-unused-label], charybdis_cv_c_gcc_w_unused_label)
 RB_MAYBE_CWARN([-Wno-unused-value], charybdis_cv_c_gcc_w_unused_value)
 RB_MAYBE_CWARN([-Wno-unused-variable], charybdis_cv_c_gcc_w_unused_variable)
 RB_MAYBE_CWARN([-Wno-unused-parameter], charybdis_cv_c_gcc_w_unused_parameter)
+dnl Re-enable -Wunused-result so explicit annotations will still warn.
+RB_MAYBE_CWARN([-Wunused-result], charybdis_cv_c_gcc_w_unused_result)
 
 dnl This warning is disabled to allow preprocessor statements like #endif to
 dnl contain text on the same line. This is used for example to write the
