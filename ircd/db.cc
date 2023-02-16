@@ -3784,7 +3784,8 @@ ircd::db::seek(column::const_iterator_base &it,
                const pos &p)
 {
 	database::column &c(it);
-	return seek(c, p, make_opts(it.opts), it.it);
+	const auto opts(make_opts(it.opts));
+	return seek(c, p, opts, it.it);
 }
 template bool ircd::db::seek<ircd::db::pos>(column::const_iterator_base &, const pos &);
 template bool ircd::db::seek<ircd::string_view>(column::const_iterator_base &, const string_view &);
@@ -4877,7 +4878,8 @@ ircd::db::seek(column &column,
 	database::column &c(column);
 
 	std::unique_ptr<rocksdb::Iterator> ret;
-	seek(c, key, make_opts(opts), ret);
+	const auto ropts(make_opts(opts));
+	seek(c, key, ropts, ret);
 	return ret;
 }
 
@@ -5317,19 +5319,22 @@ namespace ircd::db
 [[gnu::hot]]
 rocksdb::ReadOptions
 ircd::db::make_opts(const gopts &opts)
+noexcept
 {
-	rocksdb::ReadOptions ret;
-	assume(ret.iterate_lower_bound == nullptr);
-	assume(ret.iterate_upper_bound == nullptr);
-	assume(ret.pin_data == false);
-	assume(ret.fill_cache == true);
-	assume(ret.total_order_seek == false);
-	assume(ret.verify_checksums == true);
-	assume(ret.tailing == false);
-	assume(ret.read_tier == rocksdb::ReadTier::kReadAllTier);
-	assume(ret.readahead_size == 0);
-	assume(ret.prefix_same_as_start == false);
+	const auto &def{default_read_options};
+	assume(def.iterate_lower_bound == nullptr);
+	assume(def.iterate_upper_bound == nullptr);
+	assume(def.pin_data == false);
+	assume(def.fill_cache == true);
+	assume(def.total_order_seek == false);
+	assume(def.verify_checksums == true);
+	assume(def.tailing == false);
+	assume(def.read_tier == rocksdb::ReadTier::kReadAllTier);
+	assume(def.readahead_size == 0);
+	assume(def.prefix_same_as_start == false);
+	assume(def.table_filter == nullptr);
 
+	rocksdb::ReadOptions ret{def};
 	ret.snapshot = opts.snapshot;
 	ret.readahead_size = opts.readahead;
 
@@ -5374,6 +5379,7 @@ ircd::db::enable_wal
 [[gnu::hot]]
 rocksdb::WriteOptions
 ircd::db::make_opts(const sopts &opts)
+noexcept
 {
 	rocksdb::WriteOptions ret;
 	ret.sync = opts.fsync;
