@@ -138,6 +138,13 @@ put__invite(client &client,
 		at<"state_key"_>(event)
 	};
 
+	if(m::membership(room_id, target, m::membership_positive))
+		throw m::error
+		{
+			http::NOT_MODIFIED, "M_MEMBER_EXISTS",
+			"User is already joined or invited to this room.",
+		};
+
 	thread_local char sigs[4_KiB];
 	const m::event signed_event
 	{
@@ -337,6 +344,13 @@ put__invite2(client &client,
 		{
 			http::FORBIDDEN, "M_INVALID_STATE_KEY",
 			"event.state_key must be my user."
+		};
+
+	if(m::membership(room_id, target, m::membership_positive))
+		throw m::error
+		{
+			http::NOT_MODIFIED, "M_MEMBER_EXISTS",
+			"User is already joined or invited to this room.",
 		};
 
 	m::event::conforms non_conforms;
