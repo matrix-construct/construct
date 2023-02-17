@@ -189,6 +189,9 @@ struct ircd::m::room
 };
 
 #include "events.h"
+#include "events_sounding.h"
+#include "events_missing.h"
+#include "events_horizon.h"
 #include "state.h"
 #include "state_space.h"
 #include "state_history.h"
