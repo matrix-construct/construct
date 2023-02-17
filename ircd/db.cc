@@ -4912,7 +4912,7 @@ try
 	const ctx::uninterruptible ui;
 
 	util::timer timer{util::timer::nostart};
-	if constexpr(RB_DEBUG_DB_SEEK_ROW)
+	if constexpr(RB_DEBUG_DB_SEEK)
 		timer = util::timer{};
 
 	_seek_(it, p);
@@ -4960,7 +4960,7 @@ try
 
 	bool valid_it;
 	util::timer timer{util::timer::nostart};
-	if constexpr(RB_DEBUG_DB_SEEK_ROW)
+	if constexpr(RB_DEBUG_DB_SEEK)
 	{
 		valid_it = valid(it);
 		timer = util::timer{};
