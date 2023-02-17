@@ -24,6 +24,8 @@ namespace ircd::m::dbs
 	static void _index_event_refs_auth(db::txn &, const event &, const opts &); //query
 	static size_t _prefetch_event_refs_prev(const event &, const opts &);
 	static void _index_event_refs_prev(db::txn &, const event &, const opts &); //query
+	static size_t _prefetch_delete_horizon(const event &, const opts &);
+	static void _index_delete_horizon(db::txn &, const event &, const opts &); // query
 	static bool event_refs__cmp_less(const string_view &a, const string_view &b);
 }
 
@@ -157,6 +159,10 @@ ircd::m::dbs::_index_event_refs(db::txn &txn,
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 
+	if(opts.op == db::op::DELETE)
+		if(opts.appendix.test(appendix::EVENT_HORIZON))
+			_index_delete_horizon(txn, event, opts);
+
 	if(opts.event_refs.test(uint(ref::NEXT)))
 		_index_event_refs_prev(txn, event, opts);
 
@@ -187,6 +193,10 @@ ircd::m::dbs::_prefetch_event_refs(const event &event,
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 
 	size_t ret(0);
+	if(opts.op == db::op::DELETE)
+		if(opts.appendix.test(appendix::EVENT_HORIZON))
+			ret += _prefetch_delete_horizon(event, opts);
+
 	if(opts.event_refs.test(uint(ref::NEXT)))
 		ret += _prefetch_event_refs_prev(event, opts);
 
@@ -210,6 +220,50 @@ ircd::m::dbs::_prefetch_event_refs(const event &event,
 		ret += _prefetch_event_refs_m_room_redaction(event, opts);
 
 	return ret;
+}
+
+// NOTE: QUERY
+void
+ircd::m::dbs::_index_delete_horizon(db::txn &txn,
+                                    const event &event,
+                                    const opts &opts)
+{
+	assert(opts.event_idx);
+	assert(opts.op == db::op::DELETE);
+	assert(opts.appendix.test(appendix::EVENT_HORIZON));
+
+	const event::refs refs
+	{
+		opts.event_idx
+	};
+
+	refs.for_each([&txn, &event, &opts]
+	(const auto &event_idx, const auto &type)
+	{
+		if(!opts.event_refs.test(uint(type)))
+			return;
+
+		auto _opts(opts);
+		_opts.op = db::op::SET;
+		_opts.event_idx = event_idx;
+		_index_event_horizon(txn, {}, _opts, event.event_id);
+	});
+}
+
+size_t
+ircd::m::dbs::_prefetch_delete_horizon(const event &event,
+                                       const opts &opts)
+{
+	assert(opts.event_idx);
+	assert(opts.op == db::op::DELETE);
+	assert(opts.appendix.test(appendix::EVENT_HORIZON));
+
+	const event::refs refs
+	{
+		opts.event_idx
+	};
+
+	return refs.prefetch();
 }
 
 // NOTE: QUERY
@@ -241,16 +295,7 @@ ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
 	for(size_t i(0); i < prev_id.size(); ++i)
 	{
 		if(opts.appendix.test(appendix::EVENT_HORIZON))
-			if(opts.op == db::op::DELETE && prev_idx[i])
-			{
-				auto _opts(opts);
-				_opts.op = db::op::SET;
-				_opts.event_idx = prev_idx[i];
-				_index_event_horizon(txn, {}, _opts, event.event_id);
-			}
-
-		if(opts.appendix.test(appendix::EVENT_HORIZON))
-			if(opts.op == db::op::SET && !prev_idx[i])
+			if(!prev_idx[i])
 			{
 				_index_event_horizon(txn, event, opts, prev_id[i]);
 				continue;
@@ -339,16 +384,7 @@ ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
 	for(size_t i(0); i < auth_id.size(); ++i)
 	{
 		if(opts.appendix.test(appendix::EVENT_HORIZON))
-			if(opts.op == db::op::DELETE && auth_idx[i])
-			{
-				auto _opts(opts);
-				_opts.op = db::op::SET;
-				_opts.event_idx = auth_idx[i];
-				_index_event_horizon(txn, {}, _opts, event.event_id);
-			}
-
-		if(opts.appendix.test(appendix::EVENT_HORIZON))
-			if(opts.op == db::op::SET && unlikely(!auth_idx[i]))
+			if(unlikely(!auth_idx[i]))
 				_index_event_horizon(txn, event, opts, auth_id[i]);
 
 		if(unlikely(!auth_idx[i]))
@@ -542,16 +578,7 @@ ircd::m::dbs::_index_event_refs_m_receipt_m_read(db::txn &txn,
 	};
 
 	if(opts.appendix.test(appendix::EVENT_HORIZON))
-		if(opts.op == db::op::DELETE && event_idx)
-		{
-			auto _opts(opts);
-			_opts.op = db::op::SET;
-			_opts.event_idx = event_idx;
-			_index_event_horizon(txn, {}, _opts, event.event_id);
-		}
-
-	if(opts.appendix.test(appendix::EVENT_HORIZON))
-		if(opts.op == db::op::SET && !event_idx)
+		if(!event_idx)
 		{
 			_index_event_horizon(txn, event, opts, event_id);
 			return;
@@ -658,16 +685,7 @@ ircd::m::dbs::_index_event_refs_m_relates(db::txn &txn,
 	};
 
 	if(opts.appendix.test(appendix::EVENT_HORIZON))
-		if(opts.op == db::op::DELETE && event_idx)
-		{
-			auto _opts(opts);
-			_opts.op = db::op::SET;
-			_opts.event_idx = event_idx;
-			_index_event_horizon(txn, {}, _opts, event.event_id);
-		}
-
-	if(opts.appendix.test(appendix::EVENT_HORIZON))
-		if(opts.op == db::op::SET && !event_idx)
+		if(!event_idx)
 		{
 			_index_event_horizon(txn, event, opts, event_id);
 			return;
@@ -764,16 +782,7 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 	};
 
 	if(opts.appendix.test(appendix::EVENT_HORIZON))
-		if(opts.op == db::op::DELETE && event_idx)
-		{
-			auto _opts(opts);
-			_opts.op = db::op::SET;
-			_opts.event_idx = event_idx;
-			_index_event_horizon(txn, {}, _opts, event.event_id);
-		}
-
-	if(opts.appendix.test(appendix::EVENT_HORIZON))
-		if(opts.op == db::op::SET && !event_idx)
+		if(!event_idx)
 		{
 			_index_event_horizon(txn, event, opts, event_id);
 			return;
@@ -860,16 +869,7 @@ ircd::m::dbs::_index_event_refs_m_room_redaction(db::txn &txn,
 	};
 
 	if(opts.appendix.test(appendix::EVENT_HORIZON))
-		if(opts.op == db::op::DELETE && event_idx)
-		{
-			auto _opts(opts);
-			_opts.op = db::op::SET;
-			_opts.event_idx = event_idx;
-			_index_event_horizon(txn, {}, _opts, event.event_id);
-		}
-
-	if(opts.appendix.test(appendix::EVENT_HORIZON))
-		if(opts.op == db::op::SET && !event_idx)
+		if(!event_idx)
 		{
 			_index_event_horizon(txn, event, opts, event_id);
 			return;
