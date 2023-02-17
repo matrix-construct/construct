@@ -20,7 +20,10 @@
 ///
 struct ircd::m::room::events::missing
 {
-	using closure = std::function<bool (const event::id &, const uint64_t &, const event::idx &)>;
+	using closure = util::function_bool
+	<
+		const event::id &, const uint64_t &, const event::idx &
+	>;
 
 	m::room room;
 

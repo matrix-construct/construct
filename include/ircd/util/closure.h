@@ -35,6 +35,9 @@ inline namespace util
 	         class F,
 	         class... A>
 	using closure_bool = closure<F, bool, A...>;
+
+	template<class... A>
+	using function_bool = closure_bool<std::function, A...>;
 }}
 
 template<template<class, class...>

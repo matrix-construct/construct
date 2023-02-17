@@ -16,9 +16,8 @@ struct ircd::m::user::rooms
 {
 	struct origins;
 
-	using closure_bool = util::closure_bool
+	using closure_bool = util::function_bool
 	<
-		std::function,
 		const m::room &, const string_view &
 	>;
 

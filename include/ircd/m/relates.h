@@ -39,9 +39,8 @@ struct ircd::m::relates_to
 ///
 struct ircd::m::relates
 {
-	using closure = util::closure_bool
+	using closure = util::function_bool
 	<
-		std::function,
 		const event::idx &, const json::object &, const m::relates_to &
 	>;
 

@@ -21,9 +21,9 @@ namespace ircd::m
 ///
 struct ircd::m::room::messages
 {
-	using closure = util::closure_bool
+	using closure = util::function_bool
 	<
-		std::function, const message &, const uint64_t &, const event::idx &
+		const message &, const uint64_t &, const event::idx &
 	>;
 
 	static const event::fetch::opts fopts;

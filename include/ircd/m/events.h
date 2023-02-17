@@ -97,9 +97,8 @@ namespace ircd::m::events::refs
 namespace ircd::m::events::relates
 {
 	// (source, rel_type, target)
-	using closure = util::closure_bool
+	using closure = util::function_bool
 	<
-		std::function,
 		const event::idx &, const m::relates_to &, const event::idx &
 	>;
 
@@ -112,9 +111,9 @@ namespace ircd::m::events::relates
 namespace ircd::m::events::annotates
 {
 	// (source, key, target)
-	using closure = util::closure_bool
+	using closure = util::function_bool
 	<
-		std::function, const event::idx &, const string_view &, const event::idx &
+		const event::idx &, const string_view &, const event::idx &
 	>;
 
 	// Iterate events in range

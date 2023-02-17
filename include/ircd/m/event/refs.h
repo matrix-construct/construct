@@ -26,9 +26,8 @@ namespace ircd::m::dbs
 /// scan when using this interface, etc).
 struct ircd::m::event::refs
 {
-	using closure = util::closure_bool
+	using closure = util::function_bool
 	<
-		std::function,
 		const event::idx &, const dbs::ref &
 	>;
 

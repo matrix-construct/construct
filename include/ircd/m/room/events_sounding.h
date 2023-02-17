@@ -47,7 +47,10 @@ namespace ircd::m
 struct ircd::m::room::events::sounding
 {
 	using range = std::pair<int64_t, int64_t>;
-	using closure = std::function<bool (const range &, const event::idx &)>;
+	using closure = util::function_bool
+	<
+		const range &, const event::idx &
+	>;
 
 	m::room room;
 

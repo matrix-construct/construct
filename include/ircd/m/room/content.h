@@ -16,9 +16,9 @@
 struct ircd::m::room::content
 {
 	using entry = pair<uint64_t, m::event::idx>;
-	using closure = util::closure_bool
+	using closure = util::function_bool
 	<
-		std::function, const json::object &, const uint64_t &, const event::idx &
+		const json::object &, const uint64_t &, const event::idx &
 	>;
 
 	static const size_t prefetch_max;

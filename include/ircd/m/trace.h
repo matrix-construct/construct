@@ -13,9 +13,8 @@
 
 namespace ircd::m::trace
 {
-	using closure = util::closure_bool
+	using closure = util::function_bool
 	<
-		std::function,
 		const event::idx &, const uint64_t &, const m::room::message &
 	>;
 
