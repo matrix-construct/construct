@@ -10,6 +10,7 @@
 
 namespace ircd::m
 {
+	extern conf::item<bool> room_member_leave_delist_enable;
 	extern conf::item<bool> room_member_leave_purge_enable;
 	static void room_member_leave_purge(const event &, vm::eval &);
 	extern m::hookfn<vm::eval &> room_member_leave_purge_hookfn;
@@ -658,6 +659,17 @@ ircd::m::room_member_leave_purge_enable
 	{ "help",     "Erase the room after the last local users leaves."  },
 };
 
+decltype(ircd::m::room_member_leave_delist_enable)
+ircd::m::room_member_leave_delist_enable
+{
+	{ "name",     "ircd.m.room.member.leave.delist.enable" },
+	{ "default",  true                                     },
+	{ "help",
+		"Remove the room from the directory after the last "
+		"local users leaves."
+	},
+};
+
 void
 ircd::m::room_member_leave_purge(const event &event,
                                  vm::eval &eval)
@@ -666,6 +678,7 @@ ircd::m::room_member_leave_purge(const event &event,
 	{
 		false
 		|| room_member_leave_purge_enable
+		|| room_member_leave_delist_enable
 	};
 
 	if(!enabled)
@@ -686,6 +699,19 @@ ircd::m::room_member_leave_purge(const event &event,
 
 	if(local_joined(room) > 0)
 		return;
+
+	if(room_member_leave_delist_enable && rooms::summary::has(room, origin(my())))
+	{
+		log::logf
+		{
+			log, log::level::DEBUG,
+			"Delisting %s after %s has left the room.",
+			string_view{room.room_id},
+			string_view{target},
+		};
+
+		m::rooms::summary::del(room, origin(my()));
+	}
 
 	if(room_member_leave_purge_enable)
 	{
