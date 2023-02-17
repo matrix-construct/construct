@@ -9,16 +9,14 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_ROOM_EVENTS_MISSING_H
+#define HAVE_IRCD_M_ROOM_HORIZON_H
 
-/// Find missing room events. This is a breadth-first iteration of missing
-/// references from the tophead (or at the event provided in the room arg)
+/// Find missing room events. This is an interface to the event-horizon for
+/// this room. The event horizon is keyed by event_id and the value is the
+/// event::idx of the event referencing it. There can be multiple entries for
+/// an event_id. The closure is also invoked with the depth of the referencer.
 ///
-/// The closure is invoked with the first argument being the event_id unknown
-/// to the server, followed by the depth and event::idx of the event making the
-/// reference.
-///
-struct ircd::m::room::events::missing
+struct ircd::m::room::horizon
 {
 	using closure = util::function_bool
 	<
@@ -27,17 +25,14 @@ struct ircd::m::room::events::missing
 
 	m::room room;
 
-  private:
-	bool _each(m::room::events &, const closure &) const;
-
   public:
-	bool rfor_each(const pair<int64_t> &depth, const closure &) const;
-	bool for_each(const pair<int64_t> &depth, const closure &) const;
 	bool for_each(const closure &) const;
 	size_t count() const;
 
-	missing() = default;
-	missing(const m::room &room)
+	size_t rebuild();
+
+	horizon() = default;
+	horizon(const m::room &room)
 	:room{room}
 	{}
 };

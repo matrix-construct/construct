@@ -164,7 +164,7 @@ ircd::m::acquire::fetch_history(event::idx &ref_min)
 	if(size_t(depth_range.second - depth_range.first) < opts.viewport_size)
 		depth_range.first -= std::min(long(opts.viewport_size), depth_range.first);
 
-	m::room::events::missing missing
+	m::room::missing missing
 	{
 		opts.room
 	};

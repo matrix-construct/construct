@@ -112,6 +112,9 @@ namespace ircd::m
 struct ircd::m::room
 {
 	struct events;
+	struct missing;
+	struct horizon;
+	struct sounding;
 	struct state;
 	struct members;
 	struct origins;
@@ -189,9 +192,9 @@ struct ircd::m::room
 };
 
 #include "events.h"
-#include "events_sounding.h"
-#include "events_missing.h"
-#include "events_horizon.h"
+#include "sounding.h"
+#include "missing.h"
+#include "horizon.h"
 #include "state.h"
 #include "state_space.h"
 #include "state_history.h"

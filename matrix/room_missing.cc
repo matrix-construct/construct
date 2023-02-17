@@ -9,7 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 size_t
-ircd::m::room::events::missing::count()
+ircd::m::room::missing::count()
 const
 {
 	size_t ret{0};
@@ -24,15 +24,15 @@ const
 }
 
 bool
-ircd::m::room::events::missing::for_each(const closure &closure)
+ircd::m::room::missing::for_each(const closure &closure)
 const
 {
 	return for_each({0L, 0L}, closure);
 }
 
 bool
-ircd::m::room::events::missing::for_each(const pair<int64_t> &depth,
-                                         const closure &closure)
+ircd::m::room::missing::for_each(const pair<int64_t> &depth,
+                                 const closure &closure)
 const
 {
 	room::events it
@@ -53,8 +53,8 @@ const
 }
 
 bool
-ircd::m::room::events::missing::rfor_each(const pair<int64_t> &depth,
-                                          const closure &closure)
+ircd::m::room::missing::rfor_each(const pair<int64_t> &depth,
+                                  const closure &closure)
 const
 {
 	room::events it
@@ -78,8 +78,8 @@ const
 }
 
 bool
-ircd::m::room::events::missing::_each(m::room::events &it,
-                                      const closure &closure)
+ircd::m::room::missing::_each(m::room::events &it,
+                              const closure &closure)
 const
 {
 	const m::event event

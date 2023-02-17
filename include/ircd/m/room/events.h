@@ -21,10 +21,6 @@
 ///
 struct ircd::m::room::events
 {
-	struct sounding;
-	struct missing;
-	struct horizon;
-
 	static conf::item<ssize_t> viewport_size;
 
 	m::room room;

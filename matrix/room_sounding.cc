@@ -43,7 +43,7 @@ ircd::m::twain(const room &room)
 		-1, 0
 	};
 
-	const room::events::sounding s
+	const room::sounding s
 	{
 		room
 	};
@@ -66,7 +66,7 @@ ircd::m::sounding(const room &room)
 		-1, 0
 	};
 
-	const room::events::sounding s
+	const room::sounding s
 	{
 		room
 	};
@@ -90,7 +90,7 @@ ircd::m::hazard(const room &room)
 		0, 0
 	};
 
-	const room::events::sounding s
+	const room::sounding s
 	{
 		room
 	};
@@ -106,11 +106,11 @@ ircd::m::hazard(const room &room)
 }
 
 //
-// room::events::sounding
+// room::sounding
 //
 
 bool
-ircd::m::room::events::sounding::rfor_each(const closure &closure)
+ircd::m::room::sounding::rfor_each(const closure &closure)
 const
 {
 	const int64_t depth
@@ -155,7 +155,7 @@ const
 }
 
 bool
-ircd::m::room::events::sounding::for_each(const closure &closure)
+ircd::m::room::sounding::for_each(const closure &closure)
 const
 {
 	const int64_t depth

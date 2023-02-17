@@ -9415,7 +9415,7 @@ console_cmd__room(opt &out, const string_view &line)
 	out << std::endl;
 	out << "recent missing: " << std::endl;
 
-	const m::room::events::missing missing
+	const m::room::missing missing
 	{
 		room
 	};
@@ -9463,7 +9463,7 @@ console_cmd__room(opt &out, const string_view &line)
 	out << "recent gaps: " << std::endl;
 
 	size_t gap_count(4);
-	const m::room::events::sounding gaps
+	const m::room::sounding gaps
 	{
 		room
 	};
@@ -9832,7 +9832,7 @@ console_cmd__room__depth__gaps(opt &out, const string_view &line)
 		return true;
 	}};
 
-	const m::room::events::sounding gaps
+	const m::room::sounding gaps
 	{
 		room
 	};
@@ -11310,7 +11310,7 @@ console_cmd__room__events__missing(opt &out, const string_view &line)
 		m::top(room)
 	};
 
-	const m::room::events::missing missing
+	const m::room::missing missing
 	{
 		room
 	};
@@ -11386,7 +11386,7 @@ console_cmd__room__events__missing__count(opt &out, const string_view &line)
 		room_id, event_id
 	};
 
-	const m::room::events::missing missing
+	const m::room::missing missing
 	{
 		room
 	};
@@ -11418,7 +11418,7 @@ console_cmd__room__events__horizon(opt &out, const string_view &line)
 		room_id
 	};
 
-	const m::room::events::horizon horizon
+	const m::room::horizon horizon
 	{
 		room
 	};
@@ -11462,7 +11462,7 @@ console_cmd__room__events__horizon__count(opt &out, const string_view &line)
 		room_id, event_id
 	};
 
-	const m::room::events::horizon horizon
+	const m::room::horizon horizon
 	{
 		room
 	};
@@ -11489,7 +11489,7 @@ console_cmd__room__events__horizon__rebuild(opt &out, const string_view &line)
 		room_id
 	};
 
-	m::room::events::horizon horizon
+	m::room::horizon horizon
 	{
 		room
 	};

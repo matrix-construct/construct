@@ -9,7 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_ROOM_EVENTS_SOUNDING_H
+#define HAVE_IRCD_M_ROOM_SOUNDING_H
 
 // The "viewport" is comprised of events starting from the tophead (most recent
 // in room timeline) and covering about ~20 events leading up to that. Note
@@ -44,7 +44,7 @@ namespace ircd::m
 /// to calculate backfill requests, etc. This interface is depth-first oriented,
 /// rather than the breadth-first room::missing interface.
 ///
-struct ircd::m::room::events::sounding
+struct ircd::m::room::sounding
 {
 	using range = std::pair<int64_t, int64_t>;
 	using closure = util::function_bool

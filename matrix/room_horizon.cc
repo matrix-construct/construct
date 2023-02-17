@@ -15,7 +15,7 @@ namespace ircd::m::dbs
 }
 
 size_t
-ircd::m::room::events::horizon::rebuild()
+ircd::m::room::horizon::rebuild()
 {
 	m::dbs::opts opts;
 	opts.appendix.reset();
@@ -54,7 +54,7 @@ ircd::m::room::events::horizon::rebuild()
 }
 
 size_t
-ircd::m::room::events::horizon::count()
+ircd::m::room::horizon::count()
 const
 {
 	size_t ret{0};
@@ -69,7 +69,7 @@ const
 }
 
 bool
-ircd::m::room::events::horizon::for_each(const closure &closure)
+ircd::m::room::horizon::for_each(const closure &closure)
 const
 {
 	const std::function<bool (const string_view &)> in_room
