@@ -136,6 +136,28 @@ try
 		};
 	}
 
+	// initial m.room.canonical_alias (room_alias_name)
+
+	if(json::get<"room_alias_name"_>(c)) try
+	{
+		const id::room_alias::buf canonical_alias
+		{
+			json::get<"room_alias_name"_>(c), origin(my())
+		};
+
+		send(room, creator, "m.room.canonical_alias", "",
+		{
+			{ "alias", canonical_alias }
+		});
+	}
+	catch(const std::exception &e)
+	{
+		report_error
+		{
+			errors, room_id, creator, "Failed to set room_alias_name: %s", e.what()
+		};
+	}
+
 	// initial join_rules
 
 	const string_view &join_rule
