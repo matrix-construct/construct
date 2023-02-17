@@ -10,6 +10,10 @@
 
 namespace ircd::m
 {
+	extern conf::item<bool> room_member_leave_purge_enable;
+	static void room_member_leave_purge(const event &, vm::eval &);
+	extern m::hookfn<vm::eval &> room_member_leave_purge_hookfn;
+
 	extern conf::item<bool> room_member_invite_autodirect_enable;
 	extern conf::item<bool> room_member_invite_autojoin_dmonly;
 	extern conf::item<bool> room_member_invite_autojoin_enable;
@@ -630,4 +634,75 @@ ircd::m::room_member_invite_autodirect(const event &event,
 
 		account_data.set("m.direct", direct_rooms);
 	});
+}
+
+decltype(ircd::m::room_member_leave_purge_hookfn)
+ircd::m::room_member_leave_purge_hookfn
+{
+	room_member_leave_purge,
+	{
+		{ "_site",       "vm.effect"     },
+		{ "type",        "m.room.member" },
+		{ "content",
+		{
+			{ "membership",  "leave" },
+		}},
+	}
+};
+
+decltype(ircd::m::room_member_leave_purge_enable)
+ircd::m::room_member_leave_purge_enable
+{
+	{ "name",     "ircd.m.room.member.leave.purge.enable"              },
+	{ "default",  false                                                },
+	{ "help",     "Erase the room after the last local users leaves."  },
+};
+
+void
+ircd::m::room_member_leave_purge(const event &event,
+                                 vm::eval &eval)
+{
+	const bool enabled
+	{
+		false
+		|| room_member_leave_purge_enable
+	};
+
+	if(!enabled)
+		return;
+
+	const m::user::id &target
+	{
+		at<"state_key"_>(event)
+	};
+
+	if(!my(target))
+		return;
+
+	const m::room room
+	{
+		at<"room_id"_>(event)
+	};
+
+	if(local_joined(room) > 0)
+		return;
+
+	if(room_member_leave_purge_enable)
+	{
+		log::logf
+		{
+			log, log::level::DEBUG,
+			"Purging %s after %s has left the room.",
+			string_view{room.room_id},
+			string_view{target},
+		};
+
+		m::room::purge
+		{
+			room,
+			{
+				.infolog_txn = true,
+			}
+		};
+	}
 }
