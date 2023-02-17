@@ -18,29 +18,39 @@ IRCD_MODULE
 
 static void
 _changed_rules(const m::event &event,
-               m::vm::eval &)
+               m::vm::eval &eval)
 {
-	const m::user::id &sender
+	const json::string new_rule
 	{
-		at<"sender"_>(event)
+		json::get<"content"_>(event).get("join_rule")
 	};
 
-	if(!my(sender))
-		return;
-
-	const m::room::id::buf public_room
+	// Whether the room transitioned from public to private
+	const bool privatized
 	{
-		"public", my_host()
+		new_rule == "invite" &&
+		m::query(std::nothrow, m::room::state::prev(eval.sequence), "content", false, []
+		(const json::object &content)
+		{
+			const json::string old_rule
+			{
+				content["join_rule"]
+			};
+
+			return old_rule == "public";
+		})
 	};
 
-	const m::room::id &room_id
+	// Delete the entry in the room directory for the no-longer-public room
+	if(privatized)
 	{
-		at<"room_id"_>(event)
-	};
+		const m::room::id &room_id
+		{
+			at<"room_id"_>(event)
+		};
 
-	// This call sends a message to the !public room to list this room in the
-	// public rooms list.
-	m::rooms::summary::set(room_id);
+		m::rooms::summary::del(room_id);
+	}
 }
 
 m::hookfn<m::vm::eval &>
