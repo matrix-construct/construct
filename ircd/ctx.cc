@@ -1087,6 +1087,9 @@ noexcept
 	// initializer list.
 	assert(!std::uncaught_exceptions());
 
+	// Saved uncaught exception count was non-zero.
+	assert(!uncaught_exceptions);
+
 	// Note: Construct an instance of ctx::exception_handler to enable yielding
 	// in your catch block.
 	//
