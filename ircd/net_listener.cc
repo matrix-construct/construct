@@ -852,19 +852,18 @@ ircd::net::acceptor::handle_alpn(socket &socket,
 		size(in),
 	};
 
-	#ifdef IRCD_NET_ACCEPTOR_DEBUG_ALPN
-	for(size_t i(0); i < size(in); ++i)
-	{
-		log::debug
+	if constexpr(debug_alpn)
+		for(size_t i(0); i < size(in); ++i)
 		{
-			log, "%s ALPN protocol %zu of %zu: '%s'",
-			loghead(socket),
-			i,
-			size(in),
-			in[i],
-		};
-	}
-	#endif IRCD_NET_ACCEPTOR_DEBUG_ALPN
+			log::debug
+			{
+				log, "%s ALPN protocol %zu of %zu: '%s'",
+				loghead(socket),
+				i,
+				size(in),
+				in[i],
+			};
+		}
 
 	//NOTE: proto == "h2" condition goes here
 	for(const auto &proto : in)

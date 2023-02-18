@@ -16,6 +16,8 @@ namespace ircd::magick
 	struct display;
 	struct transform;
 
+	constexpr bool debug_progress {false};
+
 	[[noreturn]] static void handle_exception(const ExceptionType, const char *, const char *);
 	static void handle_fatal(const ExceptionType, const char *, const char *) __attribute__((noreturn));
 	static void handle_error(const ExceptionType, const char *, const char *) noexcept;
@@ -664,18 +666,17 @@ noexcept try
 
 	// This debug message is very noisy, even for debug mode. Developer can
 	// enable it at their discretion.
-	#ifdef IRCD_MAGICK_DEBUG_PROGRESS
-	log::debug
-	{
-		log, "job:%lu progress %2.2lf%% (%ld/%ld) cycles:%lu :%s",
-		job::cur.id,
-		(job::cur.tick / double(job::cur.ticks) * 100.0),
-		job::cur.tick,
-		job::cur.ticks,
-		job::cur.cycles,
-		job::cur.text,
-	};
-	#endif
+	if constexpr(debug_progress)
+		log::debug
+		{
+			log, "job:%lu progress %2.2lf%% (%ld/%ld) cycles:%lu :%s",
+			job::cur.id,
+			(job::cur.tick / double(job::cur.ticks) * 100.0),
+			job::cur.tick,
+			job::cur.ticks,
+			job::cur.cycles,
+			job::cur.text,
+		};
 
 	check_cycles(job::cur);
 	check_yield(job::cur);

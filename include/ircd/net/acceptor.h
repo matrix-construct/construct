@@ -37,6 +37,8 @@ ircd::net::acceptor
 	IRCD_EXCEPTION(listener::error, error)
 	IRCD_EXCEPTION(error, sni_warning)
 
+	static constexpr bool debug_alpn {false};
+
 	static log::log log;
 	static ios::descriptor accept_desc;
 	static ios::descriptor handshake_desc;

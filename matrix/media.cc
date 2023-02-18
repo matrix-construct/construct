@@ -396,20 +396,20 @@ ircd::m::media::file::read(const m::room &room,
 			b64::decode(blk_decode_buf, blk_encoded)
 		};
 
-		#ifdef IRCD_M_MEDIA_FILE_DEBUG
-		log::debug
-		{
-			log, "File %s read event_idx:%lu events[fetched:%zu prefetched:%zu] encoded:%zu decoded:%zu total_encoded:%zu total_decoded:%zu",
-			string_view{room.room_id},
-			it.event_idx(),
-			events_fetched,
-			events_prefetched,
-			size(blk_encoded),
-			size(blk),
-			encoding_bytes,
-			decoded_bytes,
-		};
-		#endif
+		if constexpr(debug_read)
+			log::debug
+			{
+				log, "File %s read event_idx:%lu events[fetched:%zu prefetched:%zu] encoded:%zu decoded:%zu total_encoded:%zu total_decoded:%zu",
+				string_view{room.room_id},
+				it.event_idx(),
+				events_fetched,
+				events_prefetched,
+				size(blk_encoded),
+				size(blk),
+				encoding_bytes,
+				decoded_bytes,
+			};
+
 		assert(size(blk) == b64::decode_size(blk_encoded));
 
 		closure(blk);

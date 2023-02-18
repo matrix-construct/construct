@@ -27,6 +27,8 @@ namespace ircd::m::media::file
 {
 	using closure = std::function<void (const const_buffer &)>;
 
+	constexpr bool debug_read {false};
+
 	room::id room_id(room::id::buf &out, const mxc &);
 	room::id::buf room_id(const mxc &);
 
