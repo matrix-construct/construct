@@ -45,5 +45,4 @@ struct ircd::prof::system
 
 	system(sample_t) noexcept;
 	system() :array_type{{{0}}} {}
-	~system() noexcept;
 };

@@ -336,11 +336,6 @@ noexcept
 	start(group);
 }
 
-ircd::prof::system::~system()
-noexcept
-{
-}
-
 /*
 	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_CLOCK,          true,  false);
 	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_CLOCK,          false,  true);

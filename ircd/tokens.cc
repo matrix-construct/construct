@@ -27,7 +27,6 @@ ircd::string_separator
 	void reset() noexcept;
 
 	string_separator(const string_view &delim) noexcept;
-	~string_separator() noexcept;
 };
 
 struct [[gnu::visibility("internal")]]
@@ -41,7 +40,6 @@ ircd::char_separator
 	void reset() noexcept;
 
 	char_separator(const char &delim) noexcept;
-	~char_separator() noexcept;
 };
 
 //
@@ -517,11 +515,6 @@ noexcept
 {
 }
 
-ircd::string_separator::~string_separator()
-noexcept
-{
-}
-
 void
 ircd::string_separator::reset()
 noexcept
@@ -567,11 +560,6 @@ noexcept
 {
 	delim
 }
-{
-}
-
-ircd::char_separator::~char_separator()
-noexcept
 {
 }
 

@@ -36,8 +36,10 @@ struct ircd::db::database::snapshot
 	explicit operator bool() const;
 	bool operator !() const;
 
-	explicit snapshot(database &);
 	snapshot() = default;
+	explicit snapshot(database &);
+	snapshot(const snapshot &) = default;
+	snapshot &operator=(const snapshot &) = default;
 	~snapshot() noexcept;
 };
 
