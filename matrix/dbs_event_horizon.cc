@@ -282,7 +282,7 @@ ircd::m::dbs::_index_event_horizon(db::txn &txn,
 // key
 //
 
-std::tuple<ircd::m::event::idx>
+ircd::m::dbs::event_horizon_tuple
 ircd::m::dbs::event_horizon_key(const string_view &amalgam)
 {
 	assert(size(amalgam) == 1 + sizeof(event::idx));

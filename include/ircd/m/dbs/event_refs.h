@@ -13,6 +13,8 @@
 
 namespace ircd::m::dbs
 {
+	using event_refs_tuple = std::tuple<ref, event::idx>;
+
 	constexpr size_t EVENT_REFS_KEY_MAX_SIZE
 	{
 		sizeof(event::idx) + sizeof(event::idx)
@@ -34,7 +36,7 @@ namespace ircd::m::dbs
 	               const ref &type,
 	               const event::idx &referer);
 
-	std::tuple<ref, event::idx>
+	event_refs_tuple
 	event_refs_key(const string_view &amalgam);
 
 	string_view

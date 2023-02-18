@@ -13,7 +13,7 @@
 
 namespace ircd::m::dbs
 {
-	using room_state_space_key_parts = std::tuple<string_view, string_view, int64_t, event::idx>;
+	using room_state_space_tuple = std::tuple<string_view, string_view, int64_t, event::idx>;
 
 	constexpr size_t ROOM_STATE_SPACE_KEY_MAX_SIZE
 	{
@@ -28,7 +28,7 @@ namespace ircd::m::dbs
 	string_view room_state_space_key(const mutable_buffer &out, const id::room &, const string_view &type, const string_view &state_key);
 	string_view room_state_space_key(const mutable_buffer &out, const id::room &, const string_view &type);
 	string_view room_state_space_key(const mutable_buffer &out, const id::room &);
-	room_state_space_key_parts room_state_space_key(const string_view &amalgam);
+	room_state_space_tuple room_state_space_key(const string_view &amalgam);
 
 	void _index_room_state_space(db::txn &,  const event &, const opts &);
 

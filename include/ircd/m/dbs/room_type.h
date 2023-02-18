@@ -13,6 +13,8 @@
 
 namespace ircd::m::dbs
 {
+	using room_type_tuple = std::tuple<string_view, uint64_t, event::idx>;
+
 	constexpr size_t ROOM_TYPE_KEY_MAX_SIZE
 	{
 		id::MAX_SIZE                   // room_id
@@ -22,8 +24,6 @@ namespace ircd::m::dbs
 		+ 8                            // u64
 		+ 8                            // u64
 	};
-
-	using room_type_tuple = std::tuple<string_view, uint64_t, event::idx>;
 
 	room_type_tuple
 	room_type_key(const string_view &amalgam);

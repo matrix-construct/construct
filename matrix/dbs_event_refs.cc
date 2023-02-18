@@ -958,7 +958,7 @@ ircd::m::dbs::event_refs__cmp_less(const string_view &a,
 // key
 //
 
-std::tuple<ircd::m::dbs::ref, ircd::m::event::idx>
+ircd::m::dbs::event_refs_tuple
 ircd::m::dbs::event_refs_key(const string_view &amalgam)
 {
 	const event::idx key

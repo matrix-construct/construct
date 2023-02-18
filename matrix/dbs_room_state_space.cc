@@ -264,7 +264,7 @@ ircd::m::dbs::room_state_space__cmp_lt(const string_view &a,
 // key
 //
 
-ircd::m::dbs::room_state_space_key_parts
+ircd::m::dbs::room_state_space_tuple
 ircd::m::dbs::room_state_space_key(const string_view &amalgam)
 {
 	const auto &key

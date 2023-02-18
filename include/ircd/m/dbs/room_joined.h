@@ -13,6 +13,8 @@
 
 namespace ircd::m::dbs
 {
+	using room_joined_tuple = std::tuple<string_view, string_view>;
+
 	constexpr size_t ROOM_JOINED_KEY_MAX_SIZE
 	{
 		id::MAX_SIZE + event::ORIGIN_MAX_SIZE + id::MAX_SIZE
@@ -20,7 +22,7 @@ namespace ircd::m::dbs
 
 	string_view room_joined_key(const mutable_buffer &out, const id::room &, const string_view &origin, const id::user &member);
 	string_view room_joined_key(const mutable_buffer &out, const id::room &, const string_view &origin);
-	std::tuple<string_view, string_view> room_joined_key(const string_view &amalgam);
+	room_joined_tuple room_joined_key(const string_view &amalgam);
 
 	void _index_room_joined(db::txn &, const event &, const opts &);
 

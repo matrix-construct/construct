@@ -135,7 +135,7 @@ ircd::m::dbs::_index_event_type(db::txn &txn,
 // key
 //
 
-std::tuple<ircd::m::event::idx>
+ircd::m::dbs::event_type_tuple
 ircd::m::dbs::event_type_key(const string_view &amalgam)
 {
 	assert(size(amalgam) == sizeof(event::idx) + 1);

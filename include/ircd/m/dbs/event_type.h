@@ -13,13 +13,15 @@
 
 namespace ircd::m::dbs
 {
+	using event_type_tuple = std::tuple<event::idx>;
+
 	constexpr size_t EVENT_TYPE_KEY_MAX_SIZE
 	{
 		event::TYPE_MAX_SIZE + 1 + 8
 	};
 
 	string_view event_type_key(const mutable_buffer &out, const string_view &, const event::idx & = 0);
-	std::tuple<event::idx> event_type_key(const string_view &amalgam);
+	event_type_tuple event_type_key(const string_view &amalgam);
 
 	void _index_event_type(db::txn &, const event &, const opts &);
 

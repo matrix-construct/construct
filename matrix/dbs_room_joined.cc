@@ -218,7 +218,7 @@ ircd::m::dbs::_index_room_joined(db::txn &txn,
 // key
 //
 
-std::tuple<ircd::string_view, ircd::string_view>
+ircd::m::dbs::room_joined_tuple
 ircd::m::dbs::room_joined_key(const string_view &amalgam)
 {
 	const auto &key

@@ -267,7 +267,7 @@ ircd::m::dbs::room_events__cmp_lt(const string_view &a,
 // key
 //
 
-std::tuple<uint64_t, ircd::m::event::idx>
+ircd::m::dbs::room_events_tuple
 ircd::m::dbs::room_events_key(const string_view &amalgam)
 {
 	assert(size(amalgam) >= 1 + 8 + 8 || size(amalgam) == 1 + 8);

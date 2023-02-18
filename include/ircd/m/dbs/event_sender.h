@@ -13,6 +13,9 @@
 
 namespace ircd::m::dbs
 {
+	using event_sender_tuple = std::tuple<event::idx>;
+	using event_sender_origin_tuple = std::tuple<string_view, event::idx>;
+
 	constexpr size_t EVENT_SENDER_KEY_MAX_SIZE
 	{
 		id::MAX_SIZE + 1 + 8
@@ -21,13 +24,13 @@ namespace ircd::m::dbs
 	// sender keyspace
 	bool is_event_sender_key(const string_view &amalgam);
 	string_view event_sender_key(const mutable_buffer &out, const id::user &, const event::idx & = 0UL);
-	std::tuple<event::idx> event_sender_key(const string_view &amalgam);
+	event_sender_tuple event_sender_key(const string_view &amalgam);
 
 	// sender_origin keyspace
 	bool is_event_sender_origin_key(const string_view &amalgam);
 	string_view event_sender_origin_key(const mutable_buffer &out, const string_view &origin, const string_view &localpart = {}, const event::idx & = 0UL);
 	string_view event_sender_origin_key(const mutable_buffer &out, const id::user &, const event::idx &);
-	std::tuple<string_view, event::idx> event_sender_origin_key(const string_view &amalgam);
+	event_sender_origin_tuple event_sender_origin_key(const string_view &amalgam);
 
 	void _index_event_sender(db::txn &, const event &, const opts &);
 

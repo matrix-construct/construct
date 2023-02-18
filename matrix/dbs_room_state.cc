@@ -230,7 +230,7 @@ ircd::m::dbs::room_state_key(const mutable_buffer &out_,
 	return { data(out_), data(out) };
 }
 
-std::tuple<ircd::string_view, ircd::string_view>
+ircd::m::dbs::room_state_tuple
 ircd::m::dbs::room_state_key(const string_view &amalgam)
 {
 	const auto &key

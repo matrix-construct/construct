@@ -13,6 +13,8 @@
 
 namespace ircd::m::dbs
 {
+	using event_horizon_tuple = std::tuple<event::idx>;
+
 	constexpr size_t EVENT_HORIZON_KEY_MAX_SIZE
 	{
 		id::MAX_SIZE + 1 + 8
@@ -20,7 +22,7 @@ namespace ircd::m::dbs
 
 	string_view event_horizon_key(const mutable_buffer &out, const id::event &, const event::idx &);
 	string_view event_horizon_key(const mutable_buffer &out, const id::event &);
-	std::tuple<event::idx> event_horizon_key(const string_view &amalgam);
+	event_horizon_tuple event_horizon_key(const string_view &amalgam);
 
 	size_t _prefetch_event_horizon_resolve(const event &, const opts &);
 	void _index_event_horizon_resolve(db::txn &, const event &, const opts &); //query

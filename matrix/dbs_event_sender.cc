@@ -174,7 +174,7 @@ ircd::m::dbs::_index_event_sender(db::txn &txn,
 
 // sender_key
 
-std::tuple<ircd::m::event::idx>
+ircd::m::dbs::event_sender_tuple
 ircd::m::dbs::event_sender_key(const string_view &amalgam)
 {
 	const auto &parts
@@ -217,7 +217,7 @@ ircd::m::dbs::is_event_sender_key(const string_view &key)
 
 // sender_origin_key
 
-std::tuple<ircd::string_view, ircd::m::event::idx>
+ircd::m::dbs::event_sender_origin_tuple
 ircd::m::dbs::event_sender_origin_key(const string_view &amalgam)
 {
 	const auto &parts

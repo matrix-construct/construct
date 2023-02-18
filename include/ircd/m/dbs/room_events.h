@@ -13,6 +13,8 @@
 
 namespace ircd::m::dbs
 {
+	using room_events_tuple = std::tuple<uint64_t, event::idx>;
+
 	constexpr size_t ROOM_EVENTS_KEY_MAX_SIZE
 	{
 		id::MAX_SIZE + 1 + 8 + 8
@@ -20,7 +22,7 @@ namespace ircd::m::dbs
 
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth, const event::idx &);
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth);
-	std::tuple<uint64_t, event::idx> room_events_key(const string_view &amalgam);
+	room_events_tuple room_events_key(const string_view &amalgam);
 
 	void _index_room_events(db::txn &, const event &, const opts &);
 
