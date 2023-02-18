@@ -371,7 +371,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "request_cleanup(): %s",
+		log, "request_cleanup() :%s",
 		e.what(),
 	};
 

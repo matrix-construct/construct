@@ -234,7 +234,7 @@ check_event(const m::resource::request &request,
 		throw m::error
 		{
 			http::NOT_MODIFIED, "M_INVALID_EVENT",
-			"Proffered event has the following problems: %s",
+			"Proffered event has the following problems :%s",
 			string(report)
 		};
 
@@ -363,7 +363,7 @@ put__invite2(client &client,
 		throw m::error
 		{
 			http::NOT_MODIFIED, "M_INVALID_EVENT",
-			"Proffered event has the following problems: %s",
+			"Proffered event has the following problems :%s",
 			string(report)
 		};
 

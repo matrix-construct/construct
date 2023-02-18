@@ -86,7 +86,7 @@ post__upload(client &client,
 
 	log::debug
 	{
-		m::media::log, "%s uploaded %zu bytes uri: `%s' file_room: %s :%s",
+		m::media::log, "%s uploaded %zu bytes uri: `%s' file_room %s :%s",
 		request.user_id,
 		request.head.content_length,
 		content_uri,

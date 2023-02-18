@@ -242,7 +242,7 @@ catch(const json::print_error &e)
 	throw m::error
 	{
 		http::INTERNAL_SERVER_ERROR, "M_NOT_JSON",
-		"Generator Protection: %s",
+		"Generator Protection :%s",
 		e.what()
 	};
 }
@@ -251,7 +251,7 @@ catch(const json::not_found &e)
 	throw m::error
 	{
 		http::BAD_REQUEST, "M_BAD_JSON",
-		"Required JSON field: %s",
+		"Required JSON field :%s",
 		e.what()
 	};
 }
@@ -491,7 +491,7 @@ try
 		throw m::error
 		{
 			http::UNAUTHORIZED, "M_MISSING_AUTHORIZATION",
-			"Required X-Matrix Authorization was not supplied"
+			"Required X-Matrix Authorization was not supplied."
 		};
 
 	const auto supplied_dest
@@ -539,7 +539,7 @@ catch(const std::exception &e)
 	thread_local char rembuf[128];
 	log::derror
 	{
-		resource::log, "X-Matrix Authorization from %s: %s",
+		resource::log, "X-Matrix Authorization from %s :%s",
 		string(rembuf, remote(client)),
 		e.what()
 	};
@@ -547,7 +547,7 @@ catch(const std::exception &e)
 	throw m::error
 	{
 		http::UNAUTHORIZED, "M_UNKNOWN_ERROR",
-		"An error has prevented authorization: %s",
+		"An error has prevented authorization :%s",
 		e.what()
 	};
 }

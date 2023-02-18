@@ -353,7 +353,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		"is_password__user(): %s %s",
+		"is_password__user() :%s %s",
 		string_view{user_id},
 		e.what()
 	};

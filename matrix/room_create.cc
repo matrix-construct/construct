@@ -132,7 +132,8 @@ try
 	{
 		report_error
 		{
-			errors, room_id, creator, "Failed to set power_levels: %s", e.what()
+			errors, room_id, creator, "Failed to set power_levels :%s",
+			e.what()
 		};
 	}
 
@@ -154,7 +155,8 @@ try
 	{
 		report_error
 		{
-			errors, room_id, creator, "Failed to set room_alias_name: %s", e.what()
+			errors, room_id, creator, "Failed to set room_alias_name :%s",
+			e.what()
 		};
 	}
 
@@ -180,7 +182,8 @@ try
 	{
 		report_error
 		{
-			errors, room_id, creator, "Failed to set join_rules: %s", e.what()
+			errors, room_id, creator, "Failed to set join_rules :%s",
+			e.what()
 		};
 	}
 
@@ -205,7 +208,8 @@ try
 	{
 		report_error
 		{
-			errors, room_id, creator, "Failed to set history_visibility: %s", e.what()
+			errors, room_id, creator, "Failed to set history_visibility :%s",
+			e.what()
 		};
 	}
 
@@ -230,7 +234,8 @@ try
 	{
 		report_error
 		{
-			errors, room_id, creator, "Failed to set guest_access: %s", e.what()
+			errors, room_id, creator, "Failed to set guest_access :%s",
+			e.what()
 		};
 	}
 
@@ -252,7 +257,7 @@ try
 	{
 		report_error
 		{
-			errors, room_id, creator, "Failed to set initial_state event @%zu: %s",
+			errors, room_id, creator, "Failed to set initial_state event @%zu :%s",
 			i++,
 			e.what()
 		};
@@ -282,7 +287,8 @@ try
 	{
 		report_error
 		{
-			errors, room_id, creator, "Failed to set room name: %s", e.what()
+			errors, room_id, creator, "Failed to set room name :%s",
+			e.what()
 		};
 	}
 
@@ -299,7 +305,8 @@ try
 	{
 		report_error
 		{
-			errors, room_id, creator, "Failed to set room topic: %s", e.what()
+			errors, room_id, creator, "Failed to set room topic :%s",
+			e.what()
 		};
 	}
 
@@ -358,7 +365,8 @@ try
 	{
 		report_error
 		{
-			errors, room_id, creator, "Failed to set guest_access: %s", e.what()
+			errors, room_id, creator, "Failed to set guest_access :%s",
+			e.what()
 		};
 	}
 
@@ -375,7 +383,8 @@ try
 	{
 		report_error
 		{
-			errors, room_id, creator, "Failed to set public visibility: %s", e.what()
+			errors, room_id, creator, "Failed to set public visibility :%s",
+			e.what()
 		};
 	}
 

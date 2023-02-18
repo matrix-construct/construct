@@ -207,7 +207,8 @@ send_worker()
 	{
 		log::error
 		{
-			"sender worker: %s", e.what()
+			m::log, "sender worker :%s",
+			e.what()
 		};
 	}
 }
@@ -491,7 +492,9 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		"flush error to %s :%s", remote, e.what()
+		"flush error to %s :%s",
+		remote,
+		e.what()
 	};
 
 	return false;

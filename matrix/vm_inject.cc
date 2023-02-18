@@ -430,7 +430,7 @@ ircd::m::vm::inject1(eval &eval,
 	if(opts.debuglog_precommit)
 		log::debug
 		{
-			log, "Issuing: %s", pretty_oneline(event_tuple)
+			log, "Issuing :%s", pretty_oneline(event_tuple)
 		};
 
 	const vector_view events
@@ -525,7 +525,7 @@ ircd::m::vm::inject3(eval &eval,
 	if(opts.debuglog_precommit)
 		log::debug
 		{
-			log, "Issuing: %s", pretty_oneline(event_tuple)
+			log, "Issuing :%s", pretty_oneline(event_tuple)
 		};
 
 	const vector_view events

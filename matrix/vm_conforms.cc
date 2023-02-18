@@ -76,7 +76,8 @@ ircd::m::vm::conform_check_origin
 		if(unlikely(eval.copts && !my_host(at<"origin"_>(event))))
 			throw error
 			{
-				fault::INVALID, "Issuing event for origin: %s", at<"origin"_>(event)
+				fault::INVALID, "Issuing event for origin :%s",
+				at<"origin"_>(event)
 			};
 	}
 };
@@ -186,7 +187,7 @@ ircd::m::vm::conform_report
 		if(!report.clean())
 			throw error
 			{
-				fault::INVALID, "Non-conforming event: %s",
+				fault::INVALID, "Non-conforming event :%s",
 				string(report)
 			};
 	}
