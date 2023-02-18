@@ -147,7 +147,31 @@ put__send_join(client &client,
 	m::vm::opts vmopts
 	{
 		.node_id = request.node_id,
+
+		// Don't conduct fetches for any references they added.
 		.fetch = false,
+
+		// Whether to conduct join amplification.
+		.amplify =
+		{
+			// This is required by the spec, but...
+			true
+
+			// Only if their server has no other users joined to the room.
+			&& m::room::members(room_id).empty("join", request.node_id)
+
+			// If one of the following holds:
+			&& (false
+
+				// If we've set an alias for this room, otherwise we're not
+				// an official join server and they shouldn't be using us.
+				|| m::room::aliases(room_id).has_server(origin(m::my()))
+
+				// Unless we invited them directly.
+				// TODO: check if *we* invited them.
+				|| m::membership(room_id, at<"state_key"_>(event), "invite")
+			)
+		}
 	};
 
 	m::vm::eval eval
