@@ -669,13 +669,14 @@ noexcept try
 	if constexpr(debug_progress)
 		log::debug
 		{
-			log, "job:%lu progress %2.2lf%% (%ld/%ld) cycles:%lu :%s",
+			log, "job:%lu progress %2.2lf%% (%ld/%ld) cycles:%lu intrs:%lu errors:%lu",
 			job::cur.id,
 			(job::cur.tick / double(job::cur.ticks) * 100.0),
 			job::cur.tick,
 			job::cur.ticks,
 			job::cur.cycles,
-			job::cur.text,
+			job::cur.intrs,
+			job::cur.errors,
 		};
 
 	check_cycles(job::cur);
