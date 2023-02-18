@@ -97,6 +97,7 @@ static void send_to_room(const m::event &, const m::room::id &room_id);
 static void send(const m::event &);
 static void send_worker();
 
+static bool should_notify(const m::event &, const m::vm::eval &);
 static void handle_notify(const m::event &, m::vm::eval &);
 
 context
@@ -144,11 +145,7 @@ handle_notify(const m::event &event,
               m::vm::eval &eval)
 try
 {
-	if(!my(event))
-		return;
-
-	assert(eval.opts);
-	if(!eval.opts->notify_servers)
+	if(!should_notify(event, eval))
 		return;
 
 	const m::event::id::buf &event_id
@@ -172,6 +169,20 @@ catch(const std::exception &e)
 		m::log, "Federation sender notify handler :%s",
 		e.what()
 	};
+}
+
+bool
+should_notify(const m::event &event,
+              const m::vm::eval &eval)
+{
+	assert(eval.opts);
+	if(!eval.opts->notify_servers)
+		return false;
+
+	if(my(event))
+		return true;
+
+	return false;
 }
 
 void
@@ -311,22 +322,21 @@ send_to_room(const m::event &event,
 
 	// Special case for negative membership changes (i.e kicks and bans)
 	// which may remove a server from the above iteration
-	if(json::get<"type"_>(event) == "m.room.member")
-		if(m::membership(event, m::membership_negative))
+	if(m::member(event, m::membership_negative))
+	{
+		const m::user::id &target
 		{
-			const m::user::id &target
-			{
-				at<"state_key"_>(event)
-			};
+			at<"state_key"_>(event)
+		};
 
-			const string_view &origin
-			{
-				target.host()
-			};
+		const string_view &origin
+		{
+			target.host()
+		};
 
-			if(!origins.has(origin))
-				each_origin(origin);
-		}
+		if(!origins.has(origin))
+			each_origin(origin);
+	}
 }
 
 /// EDU path where the target is a user/device
