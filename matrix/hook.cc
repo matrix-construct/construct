@@ -707,9 +707,10 @@ ircd::m::_hook_match(const m::event &matching,
 		if(at<"state_key"_>(matching) != json::get<"state_key"_>(event))
 			return false;
 
-	if(membership(matching))
-		if(membership(matching) != membership(event))
-			return false;
+	if(json::get<"type"_>(matching) == "m.room.member")
+		if(membership(matching))
+			if(membership(matching) != membership(event))
+				return false;
 
 	if(json::get<"content"_>(matching))
 		if(json::get<"type"_>(event) == "m.room.message")
