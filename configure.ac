@@ -861,6 +861,7 @@ RB_MAYBE_CWARN([-Wodr], charybdis_cv_c_gcc_w_odr)
 RB_MAYBE_CWARN([-Wimplicit-fallthrough], charybdis_cv_c_gcc_w_implicit_fallthrough)
 
 RB_MAYBE_CWARN([-Werror=return-type], charybdis_cv_c_gcc_w_error_return_type)
+RB_MAYBE_CWARN([-Werror=reorder], charybdis_cv_c_gcc_w_error_reorder)
 
 dnl Compiler specific
 AM_COND_IF([GCC],
