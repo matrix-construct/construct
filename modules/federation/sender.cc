@@ -179,6 +179,9 @@ should_notify(const m::event &event,
 	if(!eval.opts->notify_servers)
 		return false;
 
+	if(eval.opts->amplify)
+		return true;
+
 	if(my(event))
 		return true;
 

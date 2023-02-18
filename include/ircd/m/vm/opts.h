@@ -51,6 +51,11 @@ struct ircd::m::vm::opts
 	/// prevents all broadcasts.
 	bool notify_servers {true};
 
+	/// Override normal conditions for broadcasts to federation servers. This
+	/// may result in broadcasting events originating from other servers, etc.
+	/// The notify_servers option must still be true.
+	bool amplify {false};
+
 	/// False to allow a dirty conforms report (not recommended).
 	bool conforming {true};
 
