@@ -86,7 +86,7 @@ struct ircd::db::cell
 	cell(column, const string_view &index = {}, const gopts & = {});
 	cell(database &, const string_view &column, const string_view &index, const gopts & = {});
 	cell(database &, const string_view &column, const gopts & = {});
-	cell();
+	cell() noexcept;
 	cell(cell &&) noexcept;
 	cell(const cell &) = delete;
 	cell &operator=(cell &&) noexcept;
@@ -145,4 +145,11 @@ string_view()
 const
 {
     return val();
+}
+
+inline bool
+ircd::db::cell::valid()
+const
+{
+	return it && db::valid(*it);
 }

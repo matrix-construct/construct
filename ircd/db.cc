@@ -2146,7 +2146,9 @@ template bool ircd::db::seek<ircd::db::pos>(cell &, const pos &, gopts);
 template bool ircd::db::seek<ircd::string_view>(cell &, const string_view &, gopts);
 
 // Linkage for incomplete rocksdb::Iterator
+[[gnu::hot]]
 ircd::db::cell::cell()
+noexcept
 {
 }
 
@@ -2235,6 +2237,7 @@ noexcept
 }
 
 // Linkage for incomplete rocksdb::Iterator
+[[gnu::hot]]
 ircd::db::cell::~cell()
 noexcept
 {
@@ -2332,13 +2335,6 @@ ircd::db::cell::valid_lte(const string_view &s)
 const
 {
 	return valid() && db::valid_lte(*it, s);
-}
-
-bool
-ircd::db::cell::valid()
-const
-{
-	return bool(it) && db::valid(*it);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -3679,18 +3675,6 @@ const
 	val.first = db::key(*it);
 	val.second = db::val(*it);
 	return val;
-}
-
-ircd::db::column::const_iterator_base::operator bool()
-const noexcept
-{
-	if(!it)
-		return false;
-
-	if(!valid(*it))
-		return false;
-
-	return true;
 }
 
 bool
@@ -5316,7 +5300,6 @@ namespace ircd::db
 }
 
 /// Convert our options structure into RocksDB's options structure.
-[[gnu::hot]]
 rocksdb::ReadOptions
 ircd::db::make_opts(const gopts &opts)
 noexcept

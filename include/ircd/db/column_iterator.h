@@ -51,8 +51,8 @@ struct ircd::db::column::const_iterator_base
 	explicit operator database::snapshot &();
 	explicit operator gopts &();
 
-	operator bool() const noexcept;
-	bool operator!() const noexcept;
+	operator bool() const;
+	bool operator!() const;
 
 	const value_type *operator->() const;
 	const value_type &operator*() const;
@@ -101,9 +101,16 @@ const
 
 inline bool
 ircd::db::column::const_iterator_base::operator!()
-const noexcept
+const
 {
 	return !static_cast<bool>(*this);
+}
+
+inline ircd::db::column::const_iterator_base::operator
+bool()
+const
+{
+	return it && valid(*it);
 }
 
 inline ircd::db::column::const_iterator_base::operator
