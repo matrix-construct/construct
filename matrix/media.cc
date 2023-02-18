@@ -124,17 +124,13 @@ try
 	if(size(content) >= size_t(journal_threshold))
 		vmopts.wopts.sopts.journal = false;
 
-	const m::room room
+	const ctx::uninterruptible::nothrow ui;
+	auto room
 	{
-		room_id, &vmopts
+		create(room_id, user_id, "file")
 	};
 
-	create(room, user_id, "file");
-	const unwind_exceptional purge{[&room]
-	{
-		m::room::purge{room};
-	}};
-
+	room.copts = &vmopts;
 	const size_t written
 	{
 		file::write(room, user_id, content, content_type)
@@ -308,6 +304,7 @@ try
 }
 catch(const std::exception &e)
 {
+	const ctx::exception_handler eh;
 	log::error
 	{
 		log, "File writing %s by %s type:%s len:%zu :%s",
@@ -318,7 +315,12 @@ catch(const std::exception &e)
 		e.what(),
 	};
 
-	throw;
+	m::room::purge
+	{
+		room.room_id
+	};
+
+	std::rethrow_exception(eh);
 }
 
 size_t
