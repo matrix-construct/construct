@@ -82,9 +82,14 @@ bool
 ircd::m::membership(const m::event &event,
                     const vector_view<const string_view> &membership)
 {
+	const auto matching
+	{
+		m::membership(event)
+	};
+
 	const auto it
 	{
-		std::find(begin(membership), end(membership), m::membership(event))
+		std::find(begin(membership), end(membership), matching)
 	};
 
 	return it != end(membership);
@@ -125,23 +130,28 @@ ircd::m::membership(const mutable_buffer &out,
 ircd::string_view
 ircd::m::membership(const event &event)
 {
-	const json::object &content
-	{
-		json::get<"content"_>(event)
-	};
+	// The caller should check event type; empty is allowed if they only have content.
+	assert(!json::get<"type"_>(event) || json::get<"type"_>(event) == "m.room.member");
 
-	const string_view &membership
+	const auto &membership
 	{
 		json::get<"membership"_>(event)
 	};
 
-	if(membership)
-		return membership;
-
-	const json::string &content_membership
+	if(likely(!membership))
 	{
-		content.get("membership")
-	};
+		const auto &content
+		{
+			json::get<"content"_>(event)
+		};
 
-	return content_membership;
+		const json::string &membership
+		{
+			content.get("membership")
+		};
+
+		return membership;
+	}
+
+	return membership;
 }

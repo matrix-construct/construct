@@ -14,7 +14,7 @@
 namespace ircd::m
 {
 	// Extract membership string from event data.
-	string_view membership(const event &);
+	[[gnu::pure]] string_view membership(const event &);
 
 	// Query and copy membership string to buffer. Note that the event type
 	// is not checked here, only content.membership is sought.
