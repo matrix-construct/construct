@@ -82,9 +82,14 @@ ircd::m::room::missing::_each(m::room::events &it,
                               const closure &closure)
 const
 {
-	const m::event event
+	const auto &[depth, event_idx]
 	{
 		*it
+	};
+
+	const m::event::fetch event
+	{
+		std::nothrow, event_idx
 	};
 
 	const event::prev prev
@@ -93,17 +98,17 @@ const
 	};
 
 	event::idx idx_buf[event::prev::MAX];
-	const auto idx
+	const auto prev_idx
 	{
 		prev.idxs(idx_buf)
 	};
 
-	for(size_t i(0); i < idx.size(); ++i)
+	for(size_t i(0); i < prev_idx.size(); ++i)
 	{
-		if(idx[i])
+		if(prev_idx[i])
 			continue;
 
-		if(!closure(prev.prev_event(i), it.depth(), it.event_idx()))
+		if(!closure(prev.prev_event(i), depth, event_idx))
 			return false;
 	}
 

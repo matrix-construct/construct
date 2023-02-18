@@ -164,14 +164,17 @@ get__context(client &client,
 		if(before)
 			--before;
 
+		m::event::fetch event;
 		for(size_t i(0); i < limit && before; --before, ++i)
 		{
-			const m::event &event{*before};
+			const auto event_idx(before.event_idx());
+			if(!seek(std::nothrow, event, event_idx))
+				continue;
+
 			start = event.event_id;
 			if(!visible(event, request.user_id))
 				continue;
 
-			const auto event_idx(before.event_idx());
 			counts.before += m::event::append
 			{
 				array, event,
@@ -215,14 +218,17 @@ get__context(client &client,
 		if(after)
 			++after;
 
+		m::event::fetch event;
 		for(size_t i(0); i < limit && after; ++after, ++i)
 		{
-			const m::event &event{*after};
+			const auto event_idx(after.event_idx());
+			if(!seek(std::nothrow, event, event_idx))
+				continue;
+
 			end = event.event_id;
 			if(!visible(event, request.user_id))
 				continue;
 
-			const auto event_idx(after.event_idx());
 			counts.after += m::event::append
 			{
 				array, event,

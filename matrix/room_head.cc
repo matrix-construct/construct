@@ -291,9 +291,9 @@ ircd::m::room::head::reset(const head &head)
 		return ret;
 
 	// Replacement will be the single new head
-	const m::event replacement
+	const m::event::fetch replacement
 	{
-		*it
+		it.event_idx()
 	};
 
 	db::txn txn
@@ -368,11 +368,17 @@ ircd::m::room::head::rebuild(const head &head)
 		*m::dbs::events
 	};
 
-	m::dbs::opts opts;
-	opts.op = db::op::SET;
+	m::dbs::opts opts
+	{
+		.op = db::op::SET,
+	};
+
+	m::event::fetch event;
 	for(; it; ++it)
 	{
-		const m::event &event{*it};
+		if(!seek(std::nothrow, event, it.event_idx()))
+			continue;
+
 		opts.event_idx = it.event_idx();
 		opts.appendix.reset();
 		opts.appendix.set(dbs::appendix::ROOM_HEAD);

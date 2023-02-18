@@ -131,18 +131,17 @@ get__messages(client &client,
 		room
 	};
 
+	m::event::fetch event;
 	for(; it; page.dir == 'b'? --it : ++it)
 	{
-		const m::event &event
-		{
-			*it
-		};
+		const auto &event_idx(it.event_idx());
+		if(!seek(std::nothrow, event, event_idx))
+			continue;
 
 		end = event.event_id;
 		if(hit >= page.limit || miss >= size_t(max_filter_miss))
 			break;
 
-		const m::event::idx event_idx{it};
 		const bool ok
 		{
 			(empty(filter_json) || match(filter, event))

@@ -382,9 +382,10 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 	if(i > 1 && it)
 		--i, ++it;
 
+	m::event::fetch event;
 	for(; i >= 0 && it; --i, ++it)
 	{
-		const auto event_idx
+		const auto &event_idx
 		{
 			it.event_idx()
 		};
@@ -392,9 +393,12 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 		if(event_idx == batch_idx)
 			continue;
 
+		if(!seek(std::nothrow, event, event_idx))
+			continue;
+
 		ret |= m::event::append
 		{
-			array, *it,
+			array, event,
 			{
 				.event_idx = &event_idx,
 				.client_txnid = &data.client_txnid,

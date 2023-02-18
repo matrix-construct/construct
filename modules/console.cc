@@ -11196,12 +11196,11 @@ console_cmd__room__count(opt &out, const string_view &line)
 	if(param[1])
 	{
 		size_t count{0};
+		m::event::fetch event;
 		m::room::events it{room};
 		for(; it && limit; --it, --limit)
-		{
-			const m::event &event{*it};
-			count += match(filter, event);
-		}
+			if(seek(std::nothrow, event, it.event_idx()))
+				count += match(filter, event);
 
 		out << count << std::endl;
 		return true;
@@ -11256,10 +11255,17 @@ console_cmd__room__events(opt &out, const string_view &line)
 		room, uint64_t(depth >= 0? depth : -1)
 	};
 
+	m::event::fetch event;
 	for(; it && limit > 0; order == 'b'? --it : ++it, --limit)
-		out << std::left << std::setw(10) << it.event_idx() << " "
-		    << pretty_oneline(*it)
-		    << std::endl;
+	{
+		if(!seek(std::nothrow, event, it.event_idx()))
+			continue;
+
+		out
+		<< std::left << std::setw(10) << it.event_idx() << " "
+		<< pretty_oneline(event)
+		<< std::endl;
+	}
 
 	return true;
 }

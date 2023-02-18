@@ -333,13 +333,16 @@ get_events_from(client &client,
 	};
 
 	size_t i(0), j(0);
+	m::event::fetch event;
 	for(; it && i < size_t(events_limit); --it, ++i)
 	{
-		const m::event &event{*it};
+		const auto &event_idx(it.event_idx());
+		if(!seek(std::nothrow, event, event_idx))
+			continue;
+
 		if(!visible(event, request.user_id))
 			continue;
 
-		const auto &event_idx(it.event_idx());
 		j += append_event(chunk, event, event_idx, room_depth, user_room);
 	}
 

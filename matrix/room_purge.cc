@@ -114,18 +114,13 @@ ircd::m::room::purge::timeline()
 		room, opts.depth.second
 	};
 
+	m::event::fetch event;
 	for(; it && it.depth() >= opts.depth.first; --it)
 	{
 		if(!match(it.depth(), it.event_idx()))
 			continue;
 
-		bool valid;
-		const event &event
-		{
-			it.fetch(std::nothrow, &valid)
-		};
-
-		if(unlikely(!valid))
+		if(unlikely(!seek(std::nothrow, event, it.event_idx())))
 			continue;
 
 		if(!match(it.event_idx(), event))

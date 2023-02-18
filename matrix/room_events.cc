@@ -15,10 +15,6 @@ ircd::m::room::events::viewport_size
 	{ "default",  96L                                },
 };
 
-//
-// room::events
-//
-
 size_t
 ircd::m::room::events::count(const m::event::idx_range &range)
 {
@@ -137,18 +133,14 @@ ircd::m::room::events::preseek(const m::room &room,
 //
 
 ircd::m::room::events::events(const m::room &room,
-                              const event::fetch::opts *const &fopts)
+                              const event::fetch::opts *const fopts)
 :room{room}
-,_event
-{
-	fopts?
-		*fopts:
-	room.fopts?
-		*room.fopts:
-		event::fetch::default_opts
-}
 {
 	assert(room.room_id);
+
+	if(fopts)
+		this->room.fopts = fopts;
+
 	const bool found
 	{
 		room.event_id?
@@ -161,18 +153,14 @@ ircd::m::room::events::events(const m::room &room,
 
 ircd::m::room::events::events(const m::room &room,
                               const event::id &event_id,
-                              const event::fetch::opts *const &fopts)
+                              const event::fetch::opts *const fopts)
 :room{room}
-,_event
-{
-	fopts?
-		*fopts:
-	room.fopts?
-		*room.fopts:
-		event::fetch::default_opts
-}
 {
 	assert(room.room_id);
+
+	if(fopts)
+		this->room.fopts = fopts;
+
 	const bool found
 	{
 		seek(event_id)
@@ -183,18 +171,13 @@ ircd::m::room::events::events(const m::room &room,
 
 ircd::m::room::events::events(const m::room &room,
                               const uint64_t &depth,
-                              const event::fetch::opts *const &fopts)
+                              const event::fetch::opts *const fopts)
 :room{room}
-,_event
-{
-	fopts?
-		*fopts:
-	room.fopts?
-		*room.fopts:
-		event::fetch::default_opts
-}
 {
 	assert(room.room_id);
+
+	if(fopts)
+		this->room.fopts = fopts;
 
 	// As a special convenience for the ctor only, if the depth=0 and
 	// nothing is found another attempt is made for depth=1 for synapse
@@ -206,36 +189,20 @@ ircd::m::room::events::events(const m::room &room,
 bool
 ircd::m::room::events::prefetch()
 {
-	assert(_event.fopts);
-	return m::prefetch(event_idx(), *_event.fopts);
+	const auto &fopts
+	{
+		room.fopts?
+			*room.fopts:
+			event::fetch::default_opts
+	};
+
+	return m::prefetch(event_idx(), fopts);
 }
 
 bool
 ircd::m::room::events::prefetch(const string_view &event_prop)
 {
 	return m::prefetch(event_idx(), event_prop);
-}
-
-const ircd::m::event &
-ircd::m::room::events::fetch()
-{
-	m::seek(_event, event_idx());
-	return _event;
-}
-
-const ircd::m::event &
-ircd::m::room::events::fetch(std::nothrow_t,
-                             bool *const valid_)
-{
-	const bool valid
-	{
-		m::seek(std::nothrow, _event, event_idx())
-	};
-
-	if(valid_)
-		*valid_ = valid;
-
-	return _event;
 }
 
 bool
@@ -307,35 +274,11 @@ ircd::m::room::events::seek_idx(const event::idx &event_idx,
 	return true;
 }
 
-ircd::m::room::events::operator
-ircd::m::event::idx()
-const
-{
-	return event_idx();
-}
-
-ircd::m::event::idx
-ircd::m::room::events::event_idx()
+const ircd::m::room::events::entry *
+ircd::m::room::events::operator->()
 const
 {
 	assert(bool(*this));
-	const auto part
-	{
-		dbs::room_events_key(it->first)
-	};
-
-	return std::get<1>(part);
-}
-
-uint64_t
-ircd::m::room::events::depth()
-const
-{
-	assert(bool(*this));
-	const auto part
-	{
-		dbs::room_events_key(it->first)
-	};
-
-	return std::get<0>(part);
+	_entry = dbs::room_events_key(it->first);
+	return &_entry;
 }

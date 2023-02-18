@@ -31,11 +31,13 @@ ircd::m::room::horizon::rebuild()
 		room
 	};
 
+	m::event::fetch event;
 	for(; it; --it)
 	{
-		const m::event &event{*it};
-		const event::prev prev_events{event};
+		if(!seek(std::nothrow, event, it.event_idx()))
+			continue;
 
+		const event::prev prev_events{event};
 		opts.event_idx = it.event_idx();
 		m::for_each(prev_events, [&]
 		(const m::event::id &event_id)

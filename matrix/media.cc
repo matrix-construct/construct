@@ -367,16 +367,14 @@ ircd::m::media::file::read(const m::room &room,
 	encoding_bytes(0),
 	events_fetched(0),
 	events_prefetched(0);
+	m::event::fetch event;
 	for(; it; ++it) try
 	{
 		for(; epf && events_prefetched < events_fetched + events_prefetch; ++epf)
 			events_prefetched += epf.prefetch();
 
+		seek(event, it.event_idx());
 		++events_fetched;
-		const m::event &event
-		{
-			*it
-		};
 
 		if(json::get<"type"_>(event) != "ircd.file.block.b64")
 			continue;

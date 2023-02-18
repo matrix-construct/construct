@@ -212,6 +212,7 @@ ircd::m::room::state::space::rebuild::rebuild(const room::id &room_id)
 		!m::internal(room_id)
 	};
 
+	m::event::fetch event;
 	size_t state_count(0), messages_count(0), state_deleted(0);
 	for(; it; ++it, ++messages_count) try
 	{
@@ -223,8 +224,10 @@ ircd::m::room::state::space::rebuild::rebuild(const room::id &room_id)
 		if(!state::is(std::nothrow, event_idx))
 			continue;
 
+		if(!seek(std::nothrow, event, event_idx))
+			continue;
+
 		++state_count;
-		const m::event &event{*it};
 		const auto &[pass_static, reason_static]
 		{
 			check_auth?

@@ -554,6 +554,7 @@ initialsync_room_timeline_events(client &client,
 	m::event::idx event_idx{0};
 	m::event::id::buf event_id;
 	m::room::events it{room};
+	m::event::fetch event;
 	for(; it && i < 10; --it, ++i)
 	{
 		event_idx = it.event_idx();
@@ -565,7 +566,8 @@ initialsync_room_timeline_events(client &client,
 
 	if(i > 0)
 		for(; it && i > -1; ++it, --i)
-			out.append(*it);
+			if(seek(std::nothrow, event, it.event_idx()))
+				out.append(event);
 
 	return event_id;
 }

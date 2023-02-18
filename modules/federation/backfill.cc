@@ -123,12 +123,11 @@ get__backfill(client &client,
 	};
 
 	size_t count{0};
+	m::event::fetch event;
 	for(; it && count < limit; ++count, --it)
 	{
-		const m::event &event
-		{
-			*it
-		};
+		if(!seek(std::nothrow, event, it.event_idx()))
+			continue;
 
 		assert(event.event_id);
 		if(!visible(event, request.node_id))

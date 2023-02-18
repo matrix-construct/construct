@@ -21,20 +21,30 @@
 ///
 struct ircd::m::room::events
 {
+	using depth_range = std::pair<uint64_t, uint64_t>;
+	using entry = std::tuple<uint64_t, event::idx>;
+
 	static conf::item<ssize_t> viewport_size;
 
 	m::room room;
 	db::domain::const_iterator it;
-	event::fetch _event;
+	mutable entry _entry;
 
   public:
-	explicit operator bool() const     { return bool(it);                      }
-	bool operator!() const             { return !it;                           }
+	explicit operator bool() const;
+	bool operator!() const;
+
+	// Fetch the actual event data at the iterator's position
+	const entry *operator->() const;
+	const entry &operator*() const;
 
 	// Observers from the current valid iterator
-	uint64_t depth() const;
 	event::idx event_idx() const;
-	explicit operator event::idx() const;
+	uint64_t depth() const;
+
+	// Move the iterator
+	auto &operator++();
+	auto &operator--();
 
 	// Perform a new lookup / iterator
 	bool seek_idx(const event::idx &, const bool &lower_bound = false);
@@ -44,16 +54,6 @@ struct ircd::m::room::events
 	// Prefetch a new iterator lookup (async)
 	bool preseek(const uint64_t &depth = -1);
 
-	// Move the iterator
-	auto &operator++()                 { return --it;                          }
-	auto &operator--()                 { return ++it;                          }
-
-	// Fetch the actual event data at the iterator's position
-	const m::event &fetch(std::nothrow_t, bool *valid = nullptr);
-	const m::event &fetch();
-	const m::event &operator*()        { return fetch(std::nothrow);           }
-	const m::event *operator->()       { return &operator*();                  }
-
 	// Prefetch the actual event data at the iterator's position (async)
 	bool prefetch(const string_view &event_prop);
 	bool prefetch(); // uses supplied fetch::opts.
@@ -61,17 +61,17 @@ struct ircd::m::room::events
 	// Seeks to closest event in the room by depth; room.event_id ignored.
 	events(const m::room &,
 	       const uint64_t &depth,
-	       const event::fetch::opts *const & = nullptr);
+	       const event::fetch::opts * = nullptr);
 
 	// Seeks to event_id; null iteration when not found; seekless when empty.
 	events(const m::room &,
 	       const event::id &,
-	       const event::fetch::opts *const & = nullptr);
+	       const event::fetch::opts * = nullptr);
 
 	// Seeks to latest event in the room unless room.event_id given. Null
 	// iteration when given and not found.
 	events(const m::room &,
-	       const event::fetch::opts *const & = nullptr);
+	       const event::fetch::opts * = nullptr);
 
 	events() = default;
 	events(const events &) = delete;
@@ -81,7 +81,6 @@ struct ircd::m::room::events
 	static bool preseek(const m::room &, const uint64_t &depth = -1);
 
 	// Prefetch the actual room event data for a range; or most recent.
-	using depth_range = std::pair<uint64_t, uint64_t>;
 	static size_t prefetch(const m::room &, const depth_range &);
 	static size_t prefetch_viewport(const m::room &);
 
@@ -90,3 +89,51 @@ struct ircd::m::room::events
 	static size_t count(const m::room &, const event::idx_range &);
 	static size_t count(const event::idx_range &);
 };
+
+inline auto &
+ircd::m::room::events::operator++()
+{
+	return --it;
+}
+
+inline auto &
+ircd::m::room::events::operator--()
+{
+	return ++it;
+}
+
+inline uint64_t
+ircd::m::room::events::depth()
+const
+{
+	return std::get<0>(operator*());
+}
+
+inline ircd::m::event::idx
+ircd::m::room::events::event_idx()
+const
+{
+	return std::get<1>(operator*());
+}
+
+inline
+const ircd::m::room::events::entry &
+ircd::m::room::events::operator*()
+const
+{
+	return *(operator->());
+}
+
+inline bool
+ircd::m::room::events::operator!()
+const
+{
+	return !it;
+}
+
+inline ircd::m::room::events::operator
+bool()
+const
+{
+	return bool(it);
+}

@@ -245,10 +245,13 @@ get__initialsync_local(client &client,
 		messages, "chunk"
 	};
 
+	m::event::fetch event;
 	for(; it; ++it)
 	{
 		const auto &event_idx(it.event_idx());
-		const m::event &event(*it);
+		if(!seek(std::nothrow, event, event_idx))
+			continue;
+
 		if(!visible(event, user.user_id))
 			continue;
 
