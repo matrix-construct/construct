@@ -35,23 +35,24 @@ struct ircd::m::vm::opts
 	/// Enabled phases of evaluation.
 	std::bitset<num_of<vm::phase>()> phase {-1UL};
 
-	/// Custom dbs::opts to use during write.
-	dbs::opts wopts;
-
-	/// Broadcast to local clients (/sync stream).
-	bool notify_clients {true};
-
-	/// Broadcast to federation servers (/federation/send/).
-	bool notify_servers {true};
-
-	/// False to allow a dirty conforms report (not recommended).
-	bool conforming {true};
-
 	/// False to bypass all auth phases.
 	bool auth {true};
 
 	/// False to bypass all fetch phases.
 	bool fetch {true};
+
+	/// Broadcast to local clients (/sync stream). False only effectively
+	/// prevents longpoll sync from triggering. The client may still receive
+	/// the event by numerous other means, or may not due to other conditions.
+	bool notify_clients {true};
+
+	/// Broadcast to federation servers (/federation/send/). Only certain
+	/// events are broadcast based on other conditions; setting this to false
+	/// prevents all broadcasts.
+	bool notify_servers {true};
+
+	/// False to allow a dirty conforms report (not recommended).
+	bool conforming {true};
 
 	/// Mask of conformity failures to allow without considering dirty.
 	event::conforms non_conform;
@@ -161,6 +162,9 @@ struct ircd::m::vm::opts
 	/// in the database transaction allocation. Most evaluators have little
 	/// reason to ever adjust this.
 	size_t reserve_index {1024};
+
+	/// Custom dbs::opts to use during write.
+	dbs::opts wopts;
 
 	/// Coarse limit for array evals. The counter is incremented for every
 	/// event; both accepted and faulted.
