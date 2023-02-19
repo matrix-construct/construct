@@ -31,13 +31,13 @@ namespace ircd::m::vm
 enum ircd::m::vm::fault
 :uint
 {
-	ACCEPT        = 0x00,  ///< No fault.
-	EXISTS        = 0x01,  ///< Replaying existing event. (#ex)
-	GENERAL       = 0x02,  ///< General protection fault. (#gp)
-	INVALID       = 0x04,  ///< Non-conforming event format. (#ud)
-	AUTH          = 0x08,  ///< Auth rules violation. (#av)
-	STATE         = 0x10,  ///< Required state is missing (#st)
-	EVENT         = 0x20,  ///< Eval requires addl events in the ef register (#ef)
-	BOUNCE        = 0x40,  ///< The event is not needed at this time (#bo)
-	DONOTWANT     = 0x80,  ///< The event will never be needed (cache this) (#dw)
+	ACCEPT       = 0x0000,  ///< No fault.
+	EXISTS       = 0x0001,  ///< Replaying existing event. (#ex)
+	GENERAL      = 0x0002,  ///< General protection fault. (#gp)
+	INVALID      = 0x0004,  ///< Non-conforming event format. (#ud)
+	AUTH         = 0x0008,  ///< Auth rules violation. (#av)
+	STATE        = 0x0010,  ///< Required state is missing. (#st)
+	EVENT        = 0x0020,  ///< Eval requires addl events in the ef register. (#ef)
+	BOUNCE       = 0x0040,  ///< The event is not needed at this time. (#bo)
+	DONOTWANT    = 0x0080,  ///< The event will never be needed (cache this). (#dw)
 };
