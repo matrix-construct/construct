@@ -981,28 +981,28 @@ try
 	// When corrupted after crash, the DB is rolled back before the first
 	// corruption and erases everything after it, giving a consistent
 	// state up at that point, though losing some recent data.
-	if(string_view(open_recover) == "point")
+	if(iequals(string_view(open_recover), "point"))
 		opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kPointInTimeRecovery;
-
-	// When corrupted after crash and PointInTimeRecovery does not work,
-	// this will drop more data, but consistently. RocksDB sez the WAL is not
-	// used at all in this mode.
-	#if ROCKSDB_MAJOR > 6 \
-	|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR >= 10)
-	if(string_view(open_recover) == "recover")
-		opts->best_efforts_recovery = true;
-	#endif
 
 	// Skipping corrupted records will create gaps in the DB timeline where the
 	// application (like a matrix timeline) cannot tolerate the unexpected gap.
-	if(string_view(open_recover) == "skip" || string_view(open_recover) == "recover")
+	if(iequals(string_view(open_recover), "skip"))
 		opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kSkipAnyCorruptedRecords;
 
 	// Tolerating corrupted records is very last-ditch for getting the database to
 	// open in a catastrophe. We have no use for this option but should use it for
 	//TODO: emergency salvage-mode.
-	if(string_view(open_recover) == "tolerate")
+	if(iequals(string_view(open_recover), "tolerate"))
 		opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kTolerateCorruptedTailRecords;
+
+	// When the mode is all caps best efforts recovery is enabled. This is
+	// highly experimental and not well understood. Possibly in combination
+	// with an ill-selected above mode, the entire database may be destroyed.
+	#if ROCKSDB_MAJOR > 6 \
+	|| (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR >= 10)
+	if(all_of<std::isupper>(string_view(open_recover)))
+		opts->best_efforts_recovery = true;
+	#endif
 
 	// Setup env
 	opts->env = env.get();
