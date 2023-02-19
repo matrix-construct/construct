@@ -38,7 +38,7 @@ namespace ircd::json
 #include "iov.h"
 #include "strung.h"
 #include "tuple/tuple.h"
-#include "stack.h"
+#include "stack/stack.h"
 
 // Convenience toolset for higher level operations.
 namespace ircd::json

@@ -975,7 +975,7 @@ noexcept
 }
 
 void
-ircd::json::stack::append(const size_t &expect,
+ircd::json::stack::append(const size_t expect,
                           const window_buffer::closure &closure)
 noexcept try
 {
@@ -1070,7 +1070,7 @@ ircd::json::stack::rethrow_exception()
 }
 
 bool
-ircd::json::stack::flush(const bool &force)
+ircd::json::stack::flush(const bool force)
 noexcept try
 {
 	if(!flusher)
@@ -1125,6 +1125,7 @@ catch(...)
 
 size_t
 ircd::json::stack::invalidate_checkpoints()
+noexcept
 {
 	size_t ret(0);
 	for(auto cp(this->cp); cp; cp = cp->pc)
@@ -1139,6 +1140,7 @@ ircd::json::stack::invalidate_checkpoints()
 
 void
 ircd::json::stack::clear()
+noexcept
 {
 	const size_t rewound
 	{
@@ -1149,7 +1151,8 @@ ircd::json::stack::clear()
 }
 
 size_t
-ircd::json::stack::rewind(const size_t &bytes)
+ircd::json::stack::rewind(const size_t bytes)
+noexcept
 {
 	const size_t before
 	{
@@ -1173,56 +1176,6 @@ ircd::json::stack::rewind(const size_t &bytes)
 	appended -= amount;
 	assert(appended >= after);
 	return amount;
-}
-
-ircd::string_view
-ircd::json::stack::completed()
-const
-{
-	return buf.completed();
-}
-
-size_t
-ircd::json::stack::remaining()
-const
-{
-	return buf.remaining();
-}
-
-bool
-ircd::json::stack::failed()
-const
-{
-	return bool(eptr);
-}
-
-bool
-ircd::json::stack::done()
-const
-{
-	assert((opened() && level) || !level);
-	return closed() && buf.consumed();
-}
-
-bool
-ircd::json::stack::clean()
-const
-{
-	return closed() && !buf.consumed();
-}
-
-bool
-ircd::json::stack::closed()
-const
-{
-	return !opened();
-}
-
-bool
-ircd::json::stack::opened()
-const
-{
-	return co || ca;
 }
 
 //
@@ -1847,8 +1800,8 @@ ircd::json::stack::member::append(const json::value &value)
 //
 
 ircd::json::stack::checkpoint::checkpoint(stack &s,
-                                          const bool &committed,
-                                          const bool &exception_rollback)
+                                          const bool committed,
+                                          const bool exception_rollback)
 :s{&s}
 ,pc{s.cp}
 ,point
@@ -1946,12 +1899,13 @@ ircd::json::stack::checkpoint::rollback()
 
 namespace ircd::json
 {
-	template<class chase> static bool _next(chase &);
-	template<class chase> static bool _prev(chase &);
+	template<class chase> static bool _next(chase &) noexcept;
+	template<class chase> static bool _prev(chase &) noexcept;
 }
 
 ircd::json::stack::chase::chase(stack &s,
-                                const bool &prechase)
+                                const bool prechase)
+noexcept
 :a{s.ca}
 ,o{s.co}
 ,m{nullptr}
@@ -1962,12 +1916,14 @@ ircd::json::stack::chase::chase(stack &s,
 
 bool
 ircd::json::stack::chase::next()
+noexcept
 {
 	return _next(*this);
 }
 
 bool
 ircd::json::stack::chase::prev()
+noexcept
 {
 	return _prev(*this);
 }
@@ -1977,7 +1933,8 @@ ircd::json::stack::chase::prev()
 //
 
 ircd::json::stack::const_chase::const_chase(const stack &s,
-                                            const bool &prechase)
+                                            const bool prechase)
+noexcept
 :a{s.ca}
 ,o{s.co}
 ,m{nullptr}
@@ -1988,12 +1945,14 @@ ircd::json::stack::const_chase::const_chase(const stack &s,
 
 bool
 ircd::json::stack::const_chase::next()
+noexcept
 {
 	return _next(*this);
 }
 
 bool
 ircd::json::stack::const_chase::prev()
+noexcept
 {
 	return _prev(*this);
 }
@@ -2005,6 +1964,7 @@ ircd::json::stack::const_chase::prev()
 template<class chase>
 bool
 ircd::json::_next(chase &c)
+noexcept
 {
 	if(c.o)
 	{
@@ -2042,6 +2002,7 @@ ircd::json::_next(chase &c)
 template<class chase>
 bool
 ircd::json::_prev(chase &c)
+noexcept
 {
 	if(c.o)
 	{
