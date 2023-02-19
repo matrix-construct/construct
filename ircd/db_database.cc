@@ -2167,8 +2167,7 @@ noexcept
 	return rocksdb::Status::NotSupported();
 }
 
-static
-ircd::log::level
+static ircd::log::level
 translate(const rocksdb::InfoLogLevel &level)
 {
 	switch(level)
@@ -2214,15 +2213,21 @@ ircd::db::database::logger::Logv(const rocksdb::InfoLogLevel level_,
                                  va_list ap)
 noexcept
 {
-	if(level_ < GetInfoLogLevel())
-		return;
-
-	const log::level level
+	const bool level_pass
 	{
-		translate(level_)
+		true
+		&& translate(level_) <= RB_LOG_LEVEL
+		&& level_ >= GetInfoLogLevel()
 	};
 
-	if(level > RB_LOG_LEVEL)
+	const bool pass
+	{
+		false
+		|| level_pass
+		|| ircd::debugmode
+	};
+
+	if(likely(!pass))
 		return;
 
 	thread_local char buf[1024]; const auto len
@@ -2240,7 +2245,7 @@ noexcept
 	if(startswith(str, "Options"))
 		return;
 
-	rog(level, "[%s] %s", d->name, str);
+	rog(translate(level_), "[%s] %s", d->name, str);
 }
 #ifdef __clang__
 #pragma clang diagnostic pop
