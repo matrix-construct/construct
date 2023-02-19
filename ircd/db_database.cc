@@ -2774,6 +2774,8 @@ noexcept
 	{
 		info.status == rocksdb::Status::OK()?
 			log::level::DEBUG:
+		info.status == rocksdb::Status::ShutdownInProgress()?
+			log::level::INFO:
 		info.status == rocksdb::Status::Aborted()?
 			log::level::WARNING:
 			log::level::ERROR
