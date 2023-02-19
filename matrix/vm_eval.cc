@@ -144,6 +144,22 @@ ircd::m::vm::loghead(const mutable_buffer &buf,
 	};
 }
 
+ircd::string_view
+ircd::m::vm::evaluator(const eval &eval)
+noexcept
+{
+	if(!eval.opts)
+		return {};
+
+	if(eval.opts->user_id)
+		return eval.opts->user_id;
+
+	if(eval.opts->node_id)
+		return eval.opts->node_id;
+
+	return {};
+}
+
 //
 // eval::eval
 //

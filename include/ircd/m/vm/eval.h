@@ -15,6 +15,8 @@ namespace ircd::m::vm
 {
 	struct eval;
 
+	string_view evaluator(const eval &) noexcept;
+
 	string_view loghead(const mutable_buffer &, const eval &);
 	string_view loghead(const eval &);    // single tls buffer
 

@@ -41,4 +41,5 @@ enum ircd::m::vm::fault
 	BOUNCE       = 0x0040,  ///< The event is not needed at this time. (#bo)
 	DONOTWANT    = 0x0080,  ///< The event will never be needed (cache this). (#dw)
 	DENIED       = 0x0100,  ///< Access of evaluator insufficient. (#ad)
+	IDENT        = 0x0200,  ///< Identity of evaluator missing. (#id)
 };
