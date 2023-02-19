@@ -44,8 +44,9 @@ ircd::m::on_check_room_server_acl(const event &event,
 		return;
 
 	if(!m::room::server_acl::check(at<"room_id"_>(event), at<"origin"_>(event)))
-		throw m::ACCESS_DENIED
+		throw vm::error
 		{
+			vm::fault::DENIED,
 			"Server '%s' denied by room %s access control list.",
 			at<"origin"_>(event),
 			at<"room_id"_>(event),

@@ -40,4 +40,5 @@ enum ircd::m::vm::fault
 	EVENT        = 0x0020,  ///< Eval requires addl events in the ef register. (#ef)
 	BOUNCE       = 0x0040,  ///< The event is not needed at this time. (#bo)
 	DONOTWANT    = 0x0080,  ///< The event will never be needed (cache this). (#dw)
+	DENIED       = 0x0100,  ///< Access of evaluator insufficient. (#ad)
 };

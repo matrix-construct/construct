@@ -159,6 +159,7 @@ ircd::m::vm::http_code(const fault &code)
 		case fault::EVENT:        return http::NOT_FOUND;
 		case fault::BOUNCE:       break;
 		case fault::DONOTWANT:    break;
+		case fault::DENIED:       return http::FORBIDDEN;
 	}
 
 	return http::INTERNAL_SERVER_ERROR;
@@ -178,6 +179,7 @@ ircd::m::vm::reflect(const enum fault &code)
 		case fault::STATE:        return "#STATE";
 		case fault::BOUNCE:       return "#BOUNCE";
 		case fault::DONOTWANT:    return "#DONOTWANT";
+		case fault::DENIED:       return "#DENIED";
 	}
 
 	return "??????";
