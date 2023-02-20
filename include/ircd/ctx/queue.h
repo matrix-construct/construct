@@ -15,13 +15,16 @@ namespace ircd::ctx
 {
 	template<class T,
 	         class A = std::allocator<T>>
-	class queue;
+	struct queue;
 }
 
 template<class T,
          class A>
-class ircd::ctx::queue
+struct ircd::ctx::queue
 {
+	using opts = dock::opts;
+
+  private:
 	dock d;
 	std::deque<T, A> q;
 	size_t w {0};
@@ -32,13 +35,18 @@ class ircd::ctx::queue
 	size_t waiting() const;
 
 	// Consumer interface; waits for item and std::move() it off the queue
-	template<class time_point> T pop_until(time_point&&);
-	template<class duration> T pop_for(const duration &);
-	T pop();
+	template<class time_point> T pop_until(time_point&&, const opts & = (opts)0);
+	template<class duration> T pop_for(const duration &, const opts & = (opts)0);
+	T pop(const opts & = (opts)0);
 
 	// Producer interface; emplace item on the queue and notify consumer
+	template<class... args> void emplace(const opts &, args&&...);
 	template<class... args> void emplace(args&&...);
+
+	void push(const opts &, const T &);
 	void push(const T &);
+
+	void push(const opts &, T &&) noexcept;
 	void push(T &&) noexcept;
 
 	queue();
@@ -77,7 +85,22 @@ inline void
 ircd::ctx::queue<T, A>::push(T&& t)
 noexcept
 {
-	q.push_back(std::forward<T>(t));
+	static const opts opts {0};
+	push(opts, std::forward<T>(t));
+}
+
+template<class T,
+         class A>
+inline void
+ircd::ctx::queue<T, A>::push(const opts &opts,
+                             T&& t)
+noexcept
+{
+	if(opts & opts::LIFO)
+		q.push_front(std::forward<T>(t));
+	else
+		q.push_back(std::forward<T>(t));
+
 	d.notify();
 }
 
@@ -86,7 +109,21 @@ template<class T,
 inline void
 ircd::ctx::queue<T, A>::push(const T &t)
 {
-	q.push_back(t);
+	static const opts opts {0};
+	push(opts, t);
+}
+
+template<class T,
+         class A>
+inline void
+ircd::ctx::queue<T, A>::push(const opts &opts,
+                             const T &t)
+{
+	if(opts & opts::LIFO)
+		q.push_front(t);
+	else
+		q.push_back(t);
+
 	d.notify();
 }
 
@@ -96,24 +133,41 @@ template<class... args>
 inline void
 ircd::ctx::queue<T, A>::emplace(args&&... a)
 {
-	q.emplace(std::forward<args>(a)...);
+	static const opts opts {0};
+	emplace(opts, std::forward<args>(a)...);
+}
+
+template<class T,
+         class A>
+template<class... args>
+inline void
+ircd::ctx::queue<T, A>::emplace(const opts &opts,
+                                args&&... a)
+{
+	if(opts & opts::LIFO)
+		q.emplace_front(std::forward<args>(a)...);
+	else
+		q.emplace_back(std::forward<args>(a)...);
+
 	d.notify();
 }
 
 template<class T,
          class A>
 inline T
-ircd::ctx::queue<T, A>::pop()
+ircd::ctx::queue<T, A>::pop(const opts &opts)
 {
 	const scope_count w
 	{
 		this->w
 	};
 
-	d.wait([this]() noexcept
+	const auto predicate{[this]() noexcept
 	{
 		return !q.empty();
-	});
+	}};
+
+	d.wait(predicate, opts);
 
 	assert(!q.empty());
 	auto ret(std::move(q.front()));
@@ -125,22 +179,25 @@ template<class T,
          class A>
 template<class duration>
 inline T
-ircd::ctx::queue<T, A>::pop_for(const duration &dur)
+ircd::ctx::queue<T, A>::pop_for(const duration &dur,
+                                const opts &opts)
 {
 	const scope_count w
 	{
 		this->w
 	};
 
+	const auto predicate{[this]() noexcept
+	{
+		return !q.empty();
+	}};
+
 	const bool ready
 	{
-		d.wait_for(dur, [this]() noexcept
-		{
-			return !q.empty();
-		})
+		d.wait_for(dur, predicate, opts)
 	};
 
-	if(!ready)
+	if(unlikely(!ready))
 		throw timeout{};
 
 	assert(!q.empty());
@@ -153,22 +210,25 @@ template<class T,
          class A>
 template<class time_point>
 inline T
-ircd::ctx::queue<T, A>::pop_until(time_point&& tp)
+ircd::ctx::queue<T, A>::pop_until(time_point&& tp,
+                                  const opts &opts)
 {
 	const scope_count w
 	{
 		this->w
 	};
 
+	const auto predicate{[this]() noexcept
+	{
+		return !q.empty();
+	}};
+
 	const bool ready
 	{
-		d.wait_until(tp, [this]() noexcept
-		{
-			return !q.empty();
-		})
+		d.wait_until(tp, predicate, opts)
 	};
 
-	if(!ready)
+	if(unlikely(!ready))
 		throw timeout{};
 
 	assert(!q.empty());
