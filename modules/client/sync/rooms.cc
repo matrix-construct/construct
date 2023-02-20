@@ -58,10 +58,11 @@ ircd::m::sync::rooms_linear(data &data)
 	char membuf[room::MEMBERSHIP_MAX_SIZE];
 	const string_view &membership
 	{
-		json::get<"room_id"_>(*data.event)?
+		data.room && m::creation(*data.event, data.user)?
+			"join"_sv:
+		data.room?
 			m::membership(membuf, room, data.user):
-
-		string_view{}
+			string_view{}
 	};
 
 	const scope_restore their_membership

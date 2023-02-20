@@ -109,7 +109,7 @@ ircd::m::sync::room_state_linear_events(data &data)
 
 	const bool is_own_room_join
 	{
-		is_own_join
+		(is_own_join || m::creation(*data.event, data.user))
 		&& m::creator(*data.room, data.user)
 	};
 
@@ -141,7 +141,7 @@ ircd::m::sync::room_state_linear_events(data &data)
 	{
 		viewport_size <= 0
 		|| data.membership == "invite"
-		|| sounding < viewport_size
+		|| sounding <= viewport_size
 	};
 
 	// Query whether this state cell has been overwritten. Unlike the timeline,

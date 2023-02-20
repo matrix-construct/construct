@@ -105,7 +105,7 @@ ircd::m::sync::room_timeline_linear(data &data)
 	const bool viewport_visible
 	{
 		viewport_size <= 0
-		|| sounding < viewport_size
+		|| sounding <= viewport_size
 	};
 
 	const bool is_own_membership
