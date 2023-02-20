@@ -16925,10 +16925,10 @@ console_cmd__vm(opt &out, const string_view &line)
 	out << "   uncommit " << std::left << std::setw(10) << m::vm::sequence::uncommitted;
 
 	out << '\n';
-	out << "    pending " << std::left << std::setw(10) << m::vm::sequence::pending;
 	out << "      evals " << std::left << std::setw(10) << m::vm::eval::id_ctr;
-	out << "     spread " << std::left << std::setw(10) << m::vm::sequence::min()
-	               << ' ' << std::left << std::setw(10) << m::vm::sequence::max();
+	out << "    pending " << std::left << std::setw(10) << m::vm::sequence::pending;
+	out << "     spread " << std::left << std::setw(10) << m::vm::sequence::max()
+	                                                     - m::vm::sequence::min();
 
 	out << '\n';
 	out << "       inst " << std::left << std::setw(10) << size(m::vm::eval::list);
