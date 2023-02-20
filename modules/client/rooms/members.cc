@@ -149,7 +149,7 @@ get__members(client &client,
 	};
 
 	m::event::fetch event;
-	members.for_each(membership, [&membership, &membership_match, &at_idx, &chunk, &event]
+	members.for_each(membership, [&request, &membership, &membership_match, &at_idx, &chunk, &event]
 	(const m::user::id &member, const m::event::idx &event_idx)
 	{
 		if(event_idx > at_idx)
@@ -161,7 +161,18 @@ get__members(client &client,
 		if(!membership && !membership_match(event))
 			return true;
 
-		chunk.append(event);
+		m::event::append
+		{
+			chunk, event,
+			{
+				.event_idx = &event_idx,
+				.user_id = &request.user_id,
+				.query_txnid = false,
+				.query_prev_state = false,
+				.query_redacted = false,
+			}
+		};
+
 		return true;
 	});
 
