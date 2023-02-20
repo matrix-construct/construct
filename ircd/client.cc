@@ -90,6 +90,7 @@ ircd::client::pool_opts
 {
 	.stack_size = size_t(settings.stack_size),
 	.initial_ctxs = size_t(settings.pool_size),
+	.dispatch = ctx::dock::opts::SORT,
 };
 
 /// The pool of request contexts. When a client makes a request it does so by acquiring

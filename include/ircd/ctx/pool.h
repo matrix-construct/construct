@@ -115,6 +115,12 @@ struct ircd::ctx::pool::opts
 
 	/// Scheduler priority nice value for contexts in this pool.
 	int8_t nice {0};
+
+	/// Worker dispatch strategy.
+	/// - FIFO: Dispatch fairly (round-robin).
+	/// - LIFO: Dispatch the last to finish.
+	/// - SORT: Like LIFO but lower ID's are given partial precedence.
+	dock::opts dispatch {dock::opts::LIFO};
 };
 
 template<class F,

@@ -1589,9 +1589,14 @@ void
 ircd::ctx::pool::work()
 try
 {
+	const auto pop_opts
+	{
+		opt->dispatch
+	};
+
 	const auto func
 	{
-		q.pop()
+		q.pop(pop_opts)
 	};
 
 	const scope_notify notify
