@@ -171,3 +171,9 @@ const
 	assert(opt);
 	return *opt;
 }
+
+inline const ircd::string_view &
+ircd::ctx::name(const pool &pool)
+{
+	return pool.name;
+}

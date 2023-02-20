@@ -1404,12 +1404,6 @@ ircd::ctx::context::detach()
 // ctx_pool.h
 //
 
-const ircd::string_view &
-ircd::ctx::name(const pool &pool)
-{
-	return pool.name;
-}
-
 decltype(ircd::ctx::pool::default_name)
 ircd::ctx::pool::default_name
 {

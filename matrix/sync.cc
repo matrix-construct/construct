@@ -20,10 +20,7 @@ ircd::m::sync::log
 };
 
 decltype(ircd::m::sync::pool_opts)
-ircd::m::sync::pool_opts
-{
-	ctx::DEFAULT_STACK_SIZE, 0, -1, 0
-};
+ircd::m::sync::pool_opts;
 
 decltype(ircd::m::sync::pool)
 ircd::m::sync::pool

@@ -4091,14 +4091,14 @@ ircd::db::database::env::state::pool::pool(database &d,
 }
 ,popts
 {
-	size_t(stack_size),    // stack size of worker
-	0,                     // initial workers
-	-1,                    // queue hard limit
-	-1,                    // queue soft limit
-	true,                  // queue_max_blocking
-	true,                  // queue_max_dwarning
-	make_nice(iopri),      // ionice
-	make_nice(this->pri),  // nice
+	.stack_size = size_t(stack_size),
+	.initial_ctxs = 0,
+	.queue_max_hard = -1,
+	.queue_max_soft = -1,
+	.queue_max_blocking = true,
+	.queue_max_dwarning = true,
+	.ionice = make_nice(iopri),
+	.nice = make_nice(this->pri),
 }
 ,p
 {

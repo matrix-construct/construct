@@ -254,14 +254,10 @@ try
 	// The context pool lives directly in this frame.
 	static const ctx::pool::opts pool_opts
 	{
-		512_KiB,               // stack sz
-		size_t(pool_size),     // pool sz
-		-1,                    // queue max hard
-		0,                     // queue max soft
-		true,                  // queue max blocking
-		true,                  // queue max warning
-		3,                     // ionice
-		3,                     // nice
+		.stack_size = 512_KiB,
+		.initial_ctxs = size_t(pool_size),
+		.ionice = 3,
+		.nice = 3,
 	};
 
 	ctx::pool pool

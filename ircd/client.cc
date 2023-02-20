@@ -88,8 +88,8 @@ ircd::client::log
 decltype(ircd::client::pool_opts)
 ircd::client::pool_opts
 {
-	size_t(settings.stack_size),
-	size_t(settings.pool_size),
+	.stack_size = size_t(settings.stack_size),
+	.initial_ctxs = size_t(settings.pool_size),
 };
 
 /// The pool of request contexts. When a client makes a request it does so by acquiring
