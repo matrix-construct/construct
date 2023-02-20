@@ -43,6 +43,14 @@ namespace boost
 #include <RB_INC_SYS_EPOLL_H
 #include <RB_INC_SYS_TIMERFD_H
 #include <RB_INC_SYS_EVENTFD_H
+
+// Workaround io_uring_service::get_sqe() bug; see below
+#if defined(HAVE_LIBURING_H) \
+&& IRCD_USE_URING == 1 \
+&& BOOST_VERSION <= 108100
+	#define LIBURING_INTERNAL
+#endif
+
 #include <RB_INC_LIBURING_H
 
 #pragma GCC visibility push(internal)
@@ -151,6 +159,22 @@ noexcept
 {
 	auto &context(mutable_cast(main.context()));
 	return static_cast<asio::io_context &>(context);
+}
+#endif
+
+// Workaround for bug in io_uring_service::get_sqe(). We have to aim upstream
+// because we can't get to it directly; this won't affect other users in the
+// address space; if LIBURING_INTERNAL ever has another meaning sometime in
+// the future hopefully the boost version will be ancient history by then...
+#if defined(LIBURING_INTERNAL)
+inline struct io_uring_sqe *
+io_uring_get_sqe(struct io_uring *const ring)
+{
+	struct io_uring_sqe *sqe;
+	if(likely(sqe = _io_uring_get_sqe(ring)))
+		::io_uring_sqe_set_data(sqe, nullptr);
+
+	return sqe;
 }
 #endif
 
