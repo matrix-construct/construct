@@ -25,6 +25,7 @@ namespace ircd::ctx
 ///
 class ircd::ctx::dock
 {
+	struct continuation;
 	using predicate = std::function<bool ()>;
 
 	list q;
@@ -55,6 +56,15 @@ namespace ircd::ctx
 	template<> bool dock::wait_for(const microseconds, const predicate &);
 	template<> bool dock::wait_for(const microseconds);
 }
+
+struct [[gnu::visibility("internal")]]
+ircd::ctx::dock::continuation
+{
+	dock *const d;
+
+	continuation(dock *);
+	~continuation() noexcept;
+};
 
 /// Wake up the next context waiting on the dock
 inline void

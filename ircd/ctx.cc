@@ -2863,18 +2863,7 @@ noexcept
 void
 ircd::ctx::dock::wait()
 {
-	assert(current);
-	const unwind_exceptional renotify{[this]
-	{
-		notify_one();
-	}};
-
-	const unwind remove{[this]
-	{
-		q.remove(current);
-	}};
-
-	q.push_back(current);
+	const continuation c{this};
 	this_ctx::wait();
 }
 
@@ -2884,18 +2873,7 @@ ircd::ctx::dock::wait(const predicate &pred)
 	if(pred())
 		return;
 
-	assert(current);
-	const unwind_exceptional renotify{[this]
-	{
-		notify_one();
-	}};
-
-	const unwind remove{[this]
-	{
-		q.remove(current);
-	}};
-
-	q.push_back(current); do
+	const continuation c{this}; do
 	{
 		this_ctx::wait();
 	}
@@ -2908,18 +2886,7 @@ ircd::ctx::dock::wait_for(const microseconds dur)
 {
 	static const microseconds zero {0};
 
-	assert(current);
-	const unwind_exceptional renotify{[this]
-	{
-		notify_one();
-	}};
-
-	const unwind remove{[this]
-	{
-		q.remove(current);
-	}};
-
-	q.push_back(current);
+	const continuation c{this};
 	return ircd::ctx::wait<std::nothrow_t>(dur) > zero;
 }
 
@@ -2933,18 +2900,7 @@ ircd::ctx::dock::wait_for(const microseconds dur,
 	if(pred())
 		return true;
 
-	assert(current);
-	const unwind_exceptional renotify{[this]
-	{
-		notify_one();
-	}};
-
-	const unwind remove{[this]
-	{
-		q.remove(current);
-	}};
-
-	q.push_back(current); do
+	const continuation c{this}; do
 	{
 		const bool expired
 		{
@@ -2963,18 +2919,7 @@ ircd::ctx::dock::wait_for(const microseconds dur,
 bool
 ircd::ctx::dock::wait_until(const system_point tp)
 {
-	assert(current);
-	const unwind_exceptional renotify{[this]
-	{
-		notify_one();
-	}};
-
-	const unwind remove{[this]
-	{
-		q.remove(current);
-	}};
-
-	q.push_back(current);
+	const continuation c{this};
 	return !ircd::ctx::wait_until<std::nothrow_t>(tp);
 }
 
@@ -2986,18 +2931,7 @@ ircd::ctx::dock::wait_until(const system_point tp,
 	if(pred())
 		return true;
 
-	assert(current);
-	const unwind_exceptional renotify{[this]
-	{
-		notify_one();
-	}};
-
-	const unwind remove{[this]
-	{
-		q.remove(current);
-	}};
-
-	q.push_back(current); do
+	const continuation c{this}; do
 	{
 		const bool expired
 		{
@@ -3025,6 +2959,31 @@ const noexcept
 		// return false to break on equal
 		return std::addressof(a) != std::addressof(b);
 	}});
+}
+
+//
+// dock::continuation
+//
+
+ircd::ctx::dock::continuation::continuation(dock *const d)
+:d{d}
+{
+	assert(d);
+	assert(current);
+
+	d->q.push_back(current);
+}
+
+ircd::ctx::dock::continuation::~continuation()
+noexcept
+{
+	assert(d);
+	assert(current);
+
+	d->q.remove(current);
+
+	if(unlikely(std::uncaught_exceptions()))
+		d->notify_one();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
