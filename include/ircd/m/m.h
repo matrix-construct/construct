@@ -63,6 +63,7 @@ namespace ircd::m
 #include "device.h"
 #include "push.h"
 #include "createroom.h"
+#include "creator.h"
 #include "txn.h"
 #include "relates.h"
 #include "room/room.h"

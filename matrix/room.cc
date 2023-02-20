@@ -775,6 +775,7 @@ ircd::m::creator(const id::room &room_id)
 {
 	// Query the sender field of the event to get the creator. This is for
 	// future compatibility if the content.creator field gets eliminated.
+	// If the sender gets eliminated instead, include "content" in the keys.
 	static const event::fetch::opts fopts
 	{
 		event::keys::include {"sender"}
@@ -789,10 +790,7 @@ ircd::m::creator(const id::room &room_id)
 	state.get("m.room.create", "", [&ret]
 	(const m::event &event)
 	{
-		ret = user::id
-		{
-			json::get<"sender"_>(event)
-		};
+		ret = m::creator(event);
 	});
 
 	return ret;
