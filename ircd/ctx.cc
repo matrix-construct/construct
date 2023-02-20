@@ -2853,19 +2853,20 @@ noexcept
 }
 
 void
-ircd::ctx::dock::wait()
+ircd::ctx::dock::wait(const opts opts)
 {
-	const continuation c{this};
+	const continuation c{this, opts};
 	this_ctx::wait();
 }
 
 void
-ircd::ctx::dock::wait(const predicate &pred)
+ircd::ctx::dock::wait(const predicate &pred,
+                      const opts opts)
 {
 	if(pred())
 		return;
 
-	const continuation c{this}; do
+	const continuation c{this, opts}; do
 	{
 		this_ctx::wait();
 	}
@@ -2874,25 +2875,27 @@ ircd::ctx::dock::wait(const predicate &pred)
 
 template<>
 bool
-ircd::ctx::dock::wait_for(const microseconds dur)
+ircd::ctx::dock::wait_for(const microseconds dur,
+                          const opts opts)
 {
 	static const microseconds zero {0};
 
-	const continuation c{this};
+	const continuation c{this, opts};
 	return ircd::ctx::wait<std::nothrow_t>(dur) > zero;
 }
 
 template<>
 bool
 ircd::ctx::dock::wait_for(const microseconds dur,
-                          const predicate &pred)
+                          const predicate &pred,
+                          const opts opts)
 {
 	static const microseconds zero {0};
 
 	if(pred())
 		return true;
 
-	const continuation c{this}; do
+	const continuation c{this, opts}; do
 	{
 		const bool expired
 		{
@@ -2909,21 +2912,23 @@ ircd::ctx::dock::wait_for(const microseconds dur,
 }
 
 bool
-ircd::ctx::dock::wait_until(const system_point tp)
+ircd::ctx::dock::wait_until(const system_point tp,
+                            const opts opts)
 {
-	const continuation c{this};
+	const continuation c{this, opts};
 	return !ircd::ctx::wait_until<std::nothrow_t>(tp);
 }
 
 /// Returns true if predicate passed; false if timed out
 bool
 ircd::ctx::dock::wait_until(const system_point tp,
-                            const predicate &pred)
+                            const predicate &pred,
+                            const opts opts)
 {
 	if(pred())
 		return true;
 
-	const continuation c{this}; do
+	const continuation c{this, opts}; do
 	{
 		const bool expired
 		{
@@ -2957,13 +2962,20 @@ const noexcept
 // dock::continuation
 //
 
-ircd::ctx::dock::continuation::continuation(dock *const d)
+ircd::ctx::dock::continuation::continuation(dock *const d,
+                                            const opts &opts)
 :d{d}
+,o{&opts}
 {
 	assert(d);
 	assert(current);
 
-	d->q.push_back(current);
+	if(opts & opts::LIFO)
+		d->q.push_front(current);
+	else if(opts & opts::SORT)
+		d->q.push_sort(current);
+	else
+		d->q.push_back(current);
 }
 
 ircd::ctx::dock::continuation::~continuation()

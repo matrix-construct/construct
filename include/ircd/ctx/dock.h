@@ -23,11 +23,13 @@ namespace ircd::ctx
 /// dock is a condition variable which has no requirement for locking because
 /// the context system does not require mutual exclusion for coherence.
 ///
-class ircd::ctx::dock
+struct ircd::ctx::dock
 {
+	enum opts :uint;
 	struct continuation;
 	using predicate = std::function<bool ()>;
 
+  private:
 	list q;
 
   public:
@@ -35,14 +37,14 @@ class ircd::ctx::dock
 	size_t size() const noexcept;
 	bool waiting(const ctx &) const noexcept;
 
-	bool wait_until(const system_point, const predicate &);
-	bool wait_until(const system_point);
+	bool wait_until(const system_point, const predicate &, const opts = (opts)0);
+	bool wait_until(const system_point, const opts = (opts)0);
 
-	template<class duration> bool wait_for(const duration, const predicate &);
-	template<class duration> bool wait_for(const duration);
+	template<class duration> bool wait_for(const duration, const predicate &, const opts = (opts)0);
+	template<class duration> bool wait_for(const duration, const opts = (opts)0);
 
-	void wait(const predicate &);
-	void wait();
+	void wait(const predicate &, const opts = (opts)0);
+	void wait(const opts = (opts)0);
 
 	void terminate_all() noexcept;
 	void interrupt_all() noexcept;
@@ -53,17 +55,38 @@ class ircd::ctx::dock
 
 namespace ircd::ctx
 {
-	template<> bool dock::wait_for(const microseconds, const predicate &);
-	template<> bool dock::wait_for(const microseconds);
+	template<> bool dock::wait_for(const microseconds, const predicate &, const opts);
+	template<> bool dock::wait_for(const microseconds, const opts);
 }
 
 struct [[gnu::visibility("internal")]]
 ircd::ctx::dock::continuation
 {
 	dock *const d;
+	const opts *const o;
 
-	continuation(dock *);
+	continuation(dock *, const opts &opts);
 	~continuation() noexcept;
+};
+
+/// Options. These are bitflags for forward compatibility with unrelated opts
+/// even though some flags are exclusive to others.
+enum ircd::ctx::dock::opts
+:uint
+{
+	/// No options.
+	NONE = 0x00,
+
+	/// Waiting context will add itself to back of queue. This is the default.
+	FIFO = 0x01,
+
+	/// Waiting context will add itself to front of queue. The default is FIFO
+	/// for fair queuing preventing starvation.
+	LIFO = 0x02,
+
+	/// Waiting context will add itself to front if its ID is lower than the
+	/// front, otherwise back.
+	SORT = 0x04,
 };
 
 /// Wake up the next context waiting on the dock
@@ -80,18 +103,20 @@ noexcept
 template<class duration>
 inline bool
 ircd::ctx::dock::wait_for(const duration dur,
-                          const predicate &pred)
+                          const predicate &pred,
+                          const opts opts)
 {
 	static_assert(!std::is_same<duration, microseconds>());
-	return wait_for(duration_cast<microseconds>(dur), pred);
+	return wait_for(duration_cast<microseconds>(dur), pred, opts);
 }
 
 template<class duration>
 inline bool
-ircd::ctx::dock::wait_for(const duration dur)
+ircd::ctx::dock::wait_for(const duration dur,
+                          const opts opts)
 {
 	static_assert(!std::is_same<duration, microseconds>());
-	return wait_for(duration_cast<microseconds>(dur));
+	return wait_for(duration_cast<microseconds>(dur), opts);
 }
 
 
