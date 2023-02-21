@@ -3701,7 +3701,18 @@ console_cmd__db__io(opt &out, const string_view &line)
 		db::iostats_current()
 	};
 
-	out << db::string(ic) << std::endl;
+	const auto s
+	{
+		db::string(ic)
+	};
+
+	tokens(s, ',', [&out]
+	(string_view token)
+	{
+		token = lstrip(token, ' ');
+		out << token << std::endl;
+	});
+
 	return true;
 }
 
@@ -3713,7 +3724,18 @@ console_cmd__db__perf(opt &out, const string_view &line)
 		db::perf_current()
 	};
 
-	out << db::string(pc) << std::endl;
+	const auto s
+	{
+		db::string(pc)
+	};
+
+	tokens(s, ',', [&out]
+	(string_view token)
+	{
+		token = lstrip(token, ' ');
+		out << token << std::endl;
+	});
+
 	return true;
 }
 
