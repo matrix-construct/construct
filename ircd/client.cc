@@ -41,8 +41,8 @@ ircd::client::settings::pool_size
 		{ "default",  96L                      },
 	}, []
 	{
-		using client = ircd::client;
-		client::pool.set(client::settings::pool_size);
+		if(run::level == run::level::RUN)
+			client::pool.set(client::settings::pool_size);
 	}
 };
 
