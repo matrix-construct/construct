@@ -46,6 +46,13 @@ ircd::client::settings::pool_size
 	}
 };
 
+ircd::conf::item<size_t>
+ircd::client::settings::pool_disp
+{
+	{ "name",     "ircd.client.pool_disp"      },
+	{ "default",  long(ctx::dock::opts::LIFO)  },
+};
+
 /// Linkage for the default settings
 decltype(ircd::client::settings)
 ircd::client::settings;
@@ -90,7 +97,7 @@ ircd::client::pool_opts
 {
 	.stack_size = size_t(settings.stack_size),
 	.initial_ctxs = size_t(settings.pool_size),
-	.dispatch = ctx::dock::opts::SORT,
+	.dispatch = ctx::dock::opts(size_t(settings.pool_disp)),
 };
 
 /// The pool of request contexts. When a client makes a request it does so by acquiring

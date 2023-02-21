@@ -124,6 +124,7 @@ struct ircd::client::settings
 
 	static item<size_t> stack_size;
 	static item<size_t> pool_size;
+	static item<size_t> pool_disp;
 	static item<size_t> max_client;
 	static item<size_t> max_client_per_peer;
 };
