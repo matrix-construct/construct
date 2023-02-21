@@ -31,10 +31,8 @@ namespace ircd::ctx
 struct ircd::ctx::list
 {
 	struct node;
-	using closure_bool_const = std::function<bool (const ctx &)>;
-	using closure_const = std::function<void (const ctx &)>;
-	using closure_bool = std::function<bool (ctx &)>;
-	using closure = std::function<void (ctx &)>;
+	using closure_const = util::closure_bool<std::function, const ctx &>;
+	using closure = util::closure_bool<std::function, ctx &>;
 
   private:
 	ctx *head {nullptr};
@@ -56,29 +54,25 @@ struct ircd::ctx::list
 	ctx *back() noexcept;
 
 	// iteration
-	bool for_each(const closure_bool_const &) const;
-	void for_each(const closure_const &) const;
-	bool for_each(const closure_bool &);
-	void for_each(const closure &);
+	bool for_each(const closure_const &) const;
+	bool for_each(const closure &);
 
 	// reverse iteration
-	bool rfor_each(const closure_bool_const &) const;
-	void rfor_each(const closure_const &) const;
-	bool rfor_each(const closure_bool &);
-	void rfor_each(const closure &);
+	bool rfor_each(const closure_const &) const;
+	bool rfor_each(const closure &);
 
 	bool empty() const noexcept;
 	size_t size() const noexcept;
 
-	void push_front(ctx *const & = current) noexcept;
-	void push_back(ctx *const & = current) noexcept;
-	void push(ctx *const & = current) noexcept;            // push_back
+	void push_front(ctx * = current) noexcept;
+	void push_back(ctx * = current) noexcept;
+	void push(ctx * = current) noexcept;                   // push_back
 
 	ctx *pop_front() noexcept;
 	ctx *pop_back() noexcept;
 	ctx *pop() noexcept;                                   // pop_front
 
-	void remove(ctx *const & = current) noexcept;
+	void remove(ctx * = current) noexcept;
 
 	list() = default;
 	list(list &&) noexcept;
@@ -132,7 +126,7 @@ noexcept
 }
 
 inline void
-ircd::ctx::list::push(ctx *const &c)
+ircd::ctx::list::push(ctx *const c)
 noexcept
 {
 	push_back(c);

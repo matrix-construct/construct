@@ -291,7 +291,7 @@ ircd::ctx::ctx::jump()
 /// considered handled an another attempt to `wait()` can be made. Returns true
 /// if the context suspended and was notified. When a context wakes up the
 /// note counter is reset.
-[[gnu::visibility("hidden"), gnu::hot]]
+[[gnu::visibility("hidden")]]
 bool
 IRCD_CTX_STACK_PROTECT
 ircd::ctx::ctx::wait()
@@ -361,7 +361,7 @@ noexcept
 }
 
 /// Wakes a context without a note (internal)
-[[gnu::visibility("hidden"), gnu::hot]]
+[[gnu::visibility("hidden")]]
 bool
 ircd::ctx::ctx::wake()
 noexcept try
@@ -1070,7 +1070,6 @@ noexcept -> void
 	return;
 }};
 
-[[gnu::hot]]
 void
 ircd::ctx::continuation::leave()
 noexcept
@@ -1121,7 +1120,6 @@ noexcept
 	ircd::ctx::current = nullptr;
 }
 
-[[gnu::hot]]
 void
 ircd::ctx::continuation::enter()
 {
@@ -2785,12 +2783,12 @@ ircd::ctx::condition_variable::waiting(const ctx &a)
 const noexcept
 {
 	// for_each returns false if a was found
-	return !q.for_each(list::closure_bool_const{[&a](const ctx &b)
+	return !q.for_each([&a](const ctx &b)
 	noexcept
 	{
 		// return false to break on equal
 		return std::addressof(a) != std::addressof(b);
-	}});
+	});
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2947,12 +2945,12 @@ ircd::ctx::dock::waiting(const ctx &a)
 const noexcept
 {
 	// for_each returns false if a was found
-	return !q.for_each(list::closure_bool_const{[&a](const ctx &b)
+	return !q.for_each([&a](const ctx &b)
 	noexcept
 	{
 		// return false to break on equal
 		return std::addressof(a) != std::addressof(b);
-	}});
+	});
 }
 
 //
@@ -2986,7 +2984,7 @@ noexcept
 //
 
 void
-ircd::ctx::list::remove(ctx *const &c)
+ircd::ctx::list::remove(ctx *const c)
 noexcept
 {
 	assert(c);
@@ -3010,6 +3008,7 @@ noexcept
 	prev(c) = nullptr;
 }
 
+[[gnu::hot]]
 ircd::ctx::ctx *
 ircd::ctx::list::pop_back()
 noexcept
@@ -3042,6 +3041,7 @@ noexcept
 	return tail;
 }
 
+[[gnu::hot]]
 ircd::ctx::ctx *
 ircd::ctx::list::pop_front()
 noexcept
@@ -3074,8 +3074,9 @@ noexcept
 	return head;
 }
 
+[[gnu::hot]]
 void
-ircd::ctx::list::push_front(ctx *const &c)
+ircd::ctx::list::push_front(ctx *const c)
 noexcept
 {
 	assert(next(c) == nullptr);
@@ -3095,8 +3096,9 @@ noexcept
 	head = c;
 }
 
+[[gnu::hot]]
 void
-ircd::ctx::list::push_back(ctx *const &c)
+ircd::ctx::list::push_back(ctx *const c)
 noexcept
 {
 	assert(next(c) == nullptr);
@@ -3130,25 +3132,21 @@ const noexcept
 	return i;
 }
 
-void
+bool
 ircd::ctx::list::rfor_each(const closure &closure)
 {
 	for(ctx *tail{this->tail}; tail; tail = prev(tail))
-		closure(*tail);
+		if(!closure(*tail))
+			return false;
+
+	return true;
 }
 
-void
+bool
 ircd::ctx::list::rfor_each(const closure_const &closure)
 const
 {
 	for(const ctx *tail{this->tail}; tail; tail = prev(tail))
-		closure(*tail);
-}
-
-bool
-ircd::ctx::list::rfor_each(const closure_bool &closure)
-{
-	for(ctx *tail{this->tail}; tail; tail = prev(tail))
 		if(!closure(*tail))
 			return false;
 
@@ -3156,33 +3154,7 @@ ircd::ctx::list::rfor_each(const closure_bool &closure)
 }
 
 bool
-ircd::ctx::list::rfor_each(const closure_bool_const &closure)
-const
-{
-	for(const ctx *tail{this->tail}; tail; tail = prev(tail))
-		if(!closure(*tail))
-			return false;
-
-	return true;
-}
-
-void
 ircd::ctx::list::for_each(const closure &closure)
-{
-	for(ctx *head{this->head}; head; head = next(head))
-		closure(*head);
-}
-
-void
-ircd::ctx::list::for_each(const closure_const &closure)
-const
-{
-	for(const ctx *head{this->head}; head; head = next(head))
-		closure(*head);
-}
-
-bool
-ircd::ctx::list::for_each(const closure_bool &closure)
 {
 	for(ctx *head{this->head}; head; head = next(head))
 		if(!closure(*head))
@@ -3192,7 +3164,7 @@ ircd::ctx::list::for_each(const closure_bool &closure)
 }
 
 bool
-ircd::ctx::list::for_each(const closure_bool_const &closure)
+ircd::ctx::list::for_each(const closure_const &closure)
 const
 {
 	for(const ctx *head{this->head}; head; head = next(head))
