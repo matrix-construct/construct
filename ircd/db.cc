@@ -109,6 +109,8 @@ ircd::db::init::direct_io_test_file_path
 ircd::db::init::init()
 try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef IRCD_DB_HAS_ALLOCATOR
 	database::allocator::init();
 	#endif
@@ -1049,7 +1051,7 @@ ircd::db::for_each(database &d,
 {
 	std::unique_ptr<rocksdb::TransactionLogIterator> tit;
 	{
-		const ctx::uninterruptible ui;
+		const ctx::uninterruptible::nothrow ui;
 		throw_on_error
 		{
 			d.d->GetUpdatesSince(seq, &tit)
@@ -1543,11 +1545,17 @@ ircd::db::txn::checkpoint::checkpoint(txn &t)
 ircd::db::txn::checkpoint::~checkpoint()
 noexcept
 {
-	const ctx::uninterruptible ui;
+	const ctx::uninterruptible::nothrow ui;
 	if(likely(!std::uncaught_exceptions()))
-		throw_on_error { t.wb->PopSavePoint() };
+		throw_on_error
+		{
+			t.wb->PopSavePoint()
+		};
 	else
-		throw_on_error { t.wb->RollbackToSavePoint() };
+		throw_on_error
+		{
+			t.wb->RollbackToSavePoint()
+		};
 }
 
 //
@@ -1931,6 +1939,7 @@ ircd::db::_make_iterators(database &d,
 
 	std::vector<Iterator *> ret;
 	const ctx::stack_usage_assertion sua;
+	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
 		d.d->NewIterators(opts, handles, &ret)
@@ -2729,6 +2738,7 @@ ircd::db::setopt(column &column,
 		{ std::string{key}, std::string{val} }
 	};
 
+	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
 		d.d->SetOptions(c, options)
@@ -2746,10 +2756,15 @@ ircd::db::ingest(column &column,
 	opts.allow_global_seqno = true;
 	opts.allow_blocking_flush = true;
 
+	const ctx::uninterruptible::nothrow ui;
+	const auto &copts
+	{
+		d.d->GetOptions(c)
+	};
+
 	// Automatically determine if we can avoid issuing new sequence
 	// numbers by considering this ingestion as "backfill" of missing
 	// data which did actually exist but was physically removed.
-	const auto &copts{d.d->GetOptions(c)};
 	opts.ingest_behind = copts.allow_ingest_behind;
 	const std::vector<std::string> files
 	{
@@ -2757,7 +2772,6 @@ ircd::db::ingest(column &column,
 	};
 
 	const std::lock_guard lock{d.write_mutex};
-	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
 		d.d->IngestExternalFile(c, files, opts)
@@ -3002,6 +3016,8 @@ ircd::db::bytes(column &column,
                 const std::pair<string_view, string_view> &key,
                 const gopts &gopts)
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	database &d(column);
 	database::column &c(column);
 	const rocksdb::Range range[1]
@@ -3032,6 +3048,8 @@ ircd::db::has(column &column,
 	auto opts(make_opts(gopts));
 	if(c.table_opts.filter_policy && (false))
 	{
+		const ctx::uninterruptible::nothrow ui;
+
 		auto opts(make_opts(gopts));
 		const scope_restore read_tier
 		{
@@ -3208,9 +3226,11 @@ ircd::db::prop_str
 ircd::db::property(const column &column,
                    const string_view &name)
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	std::string ret;
-	database::column &c(mutable_cast(column));
 	database &d(mutable_cast(column));
+	database::column &c(mutable_cast(column));
 	if(!d.d->GetProperty(c, slice(name), &ret))
 		throw not_found
 		{
@@ -3228,9 +3248,11 @@ ircd::db::prop_int
 ircd::db::property(const column &column,
                    const string_view &name)
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	uint64_t ret(0);
-	database::column &c(mutable_cast(column));
 	database &d(mutable_cast(column));
+	database::column &c(mutable_cast(column));
 	if(!d.d->GetIntProperty(c, slice(name), &ret))
 		throw not_found
 		{
@@ -3248,9 +3270,11 @@ ircd::db::prop_map
 ircd::db::property(const column &column,
                    const string_view &name)
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	std::map<std::string, std::string> ret;
-	database::column &c(mutable_cast(column));
 	database &d(mutable_cast(column));
+	database::column &c(mutable_cast(column));
 	if(!d.d->GetMapProperty(c, slice(name), &ret))
 		ret.emplace(std::string{name}, property<std::string>(column, name));
 
@@ -3260,6 +3284,8 @@ ircd::db::property(const column &column,
 ircd::db::options
 ircd::db::getopt(const column &column)
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	database &d(mutable_cast(column));
 	database::column &c(mutable_cast(column));
 	return options
@@ -3271,9 +3297,12 @@ ircd::db::getopt(const column &column)
 size_t
 ircd::db::bytes(const column &column)
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	rocksdb::ColumnFamilyMetaData cfm;
 	database &d(mutable_cast(column));
 	database::column &c(mutable_cast(column));
+
 	assert(bool(c.handle));
 	d.d->GetColumnFamilyMetaData(c.handle.get(), &cfm);
 	return cfm.size;
@@ -3282,9 +3311,12 @@ ircd::db::bytes(const column &column)
 size_t
 ircd::db::file_count(const column &column)
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	rocksdb::ColumnFamilyMetaData cfm;
 	database &d(mutable_cast(column));
 	database::column &c(mutable_cast(column));
+
 	assert(bool(c.handle));
 	d.d->GetColumnFamilyMetaData(c.handle.get(), &cfm);
 	return cfm.file_count;
@@ -3293,6 +3325,8 @@ ircd::db::file_count(const column &column)
 std::vector<std::string>
 ircd::db::files(const column &column)
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	database::column &c(mutable_cast(column));
 	database &d(*c.d);
 
@@ -4666,7 +4700,7 @@ ircd::db::_seek(database::column &c,
                 const string_view &key,
                 const rocksdb::ReadOptions &ropts)
 {
-	const ctx::uninterruptible::nothrow ui;
+	const ctx::uninterruptible ui;
 	const ctx::stack_usage_assertion sua;
 
 	rocksdb::ColumnFamilyHandle *const &cf(c);
@@ -4791,7 +4825,7 @@ ircd::db::_seek(const vector_view<_read_op> &op,
 	assert(ret.size() == val.size());
 
 	const ctx::stack_usage_assertion sua;
-	const ctx::uninterruptible::nothrow ui;
+	const ctx::uninterruptible ui;
 
 	assert(op.size() >= 1);
 	database &d(std::get<0>(op[0]));
@@ -4874,10 +4908,11 @@ ircd::db::seek(database::column &c,
                const rocksdb::ReadOptions &opts,
                std::unique_ptr<rocksdb::Iterator> &it)
 {
+	const ctx::uninterruptible ui;
+	const ctx::stack_usage_assertion sua;
+
 	if(!it)
 	{
-		const ctx::uninterruptible::nothrow ui;
-
 		database &d(*c.d);
 		rocksdb::ColumnFamilyHandle *const &cf(c);
 		it.reset(d.d->NewIterator(opts, cf));
@@ -4893,8 +4928,6 @@ ircd::db::_seek(database::column &c,
                 rocksdb::Iterator &it)
 try
 {
-	const ctx::uninterruptible ui;
-
 	util::timer timer{util::timer::nostart};
 	if constexpr(RB_DEBUG_DB_SEEK)
 		timer = util::timer{};
@@ -4940,8 +4973,6 @@ ircd::db::_seek(database::column &c,
                 rocksdb::Iterator &it)
 try
 {
-	const ctx::stack_usage_assertion sua;
-
 	bool valid_it;
 	util::timer timer{util::timer::nostart};
 	if constexpr(RB_DEBUG_DB_SEEK)
@@ -4992,6 +5023,8 @@ rocksdb::Iterator &
 ircd::db::_seek_lower_(rocksdb::Iterator &it,
                        const string_view &sv)
 {
+	assert(!ctx::interruptible());
+
 	it.SeekForPrev(slice(sv));
 	return it;
 }
@@ -5001,6 +5034,8 @@ rocksdb::Iterator &
 ircd::db::_seek_upper_(rocksdb::Iterator &it,
                        const string_view &sv)
 {
+	assert(!ctx::interruptible());
+
 	it.Seek(slice(sv));
 	return it;
 }
@@ -5017,6 +5052,8 @@ rocksdb::Iterator &
 ircd::db::_seek_(rocksdb::Iterator &it,
                  const pos &p)
 {
+	assert(!ctx::interruptible());
+
 	switch(p)
 	{
 		case pos::NEXT:     it.Next();           break;

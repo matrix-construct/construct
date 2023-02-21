@@ -102,6 +102,7 @@ ircd::db::sync(database &d)
 		sequence(d)
 	};
 
+	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
 		d.d->SyncWAL()
@@ -121,6 +122,7 @@ ircd::db::flush(database &d,
 		sequence(d)
 	};
 
+	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
 		d.d->FlushWAL(sync)
@@ -205,6 +207,8 @@ void
 ircd::db::check(database &d)
 {
 	assert(d.d);
+
+	const ctx::uninterruptible ui;
 	throw_on_error
 	{
 		d.d->VerifyChecksum()
@@ -218,6 +222,7 @@ ircd::db::check(database &d,
 	assert(file);
 	assert(d.d);
 
+	const ctx::uninterruptible ui;
 	const auto &opts
 	{
 		d.d->GetOptions()
@@ -255,6 +260,7 @@ void
 ircd::db::resume(database &d)
 {
 	assert(d.d);
+
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard lock
 	{
@@ -295,6 +301,7 @@ ircd::db::refresh(database &d)
 {
 	assert(d.d);
 
+	const ctx::uninterruptible ui;
 	throw_on_error
 	{
 		#ifdef IRCD_DB_HAS_SECONDARY
@@ -316,6 +323,7 @@ ircd::db::bgpause(database &d)
 {
 	assert(d.d);
 
+	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
 		d.d->PauseBackgroundWork()
@@ -339,6 +347,7 @@ ircd::db::bgcontinue(database &d)
 		name(d)
 	};
 
+	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
 		d.d->ContinueBackgroundWork()
@@ -350,19 +359,20 @@ ircd::db::bgcancel(database &d,
                    const bool &blocking)
 {
 	assert(d.d);
+
 	log::debug
 	{
 		log, "[%s] Canceling all background work...",
 		name(d)
 	};
 
+	const ctx::uninterruptible::nothrow ui;
 	rocksdb::CancelAllBackgroundWork(d.d.get(), blocking);
 	if(!blocking)
 		return;
 
 	assert(d.env);
 	assert(d.env->st);
-	const ctx::uninterruptible::nothrow ui;
 	for(auto &pool : d.env->st->pool) if(pool)
 	{
 		log::debug
@@ -452,6 +462,8 @@ ircd::db::fdeletions(database &d,
                      const bool &enable,
                      const bool &force)
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	if(enable)
 		throw_on_error
 		{
@@ -474,6 +486,7 @@ ircd::db::setopt(database &d,
 		{ std::string{key}, std::string{val} }
 	};
 
+	const ctx::uninterruptible ui;
 	throw_on_error
 	{
 		d.d->SetDBOptions(options)
@@ -543,6 +556,7 @@ ircd::db::loglevel(const database &d)
 ircd::db::options
 ircd::db::getopt(const database &d)
 {
+	const ctx::uninterruptible::nothrow ui;
 	return options
 	{
 		d.d->GetDBOptions()
@@ -573,17 +587,14 @@ ircd::db::file_count(const database &d)
 
 /// Get the list of WAL (Write Ahead Log) files.
 std::vector<std::string>
-ircd::db::wals(const database &cd)
+ircd::db::wals(const database &d)
 {
-	auto &d
-	{
-		mutable_cast(cd)
-	};
+	const ctx::uninterruptible::nothrow ui;
 
 	std::vector<std::unique_ptr<rocksdb::LogFile>> vec;
 	throw_on_error
 	{
-		d.d->GetSortedWalFiles(vec)
+		mutable_cast(d).d->GetSortedWalFiles(vec)
 	};
 
 	std::vector<std::string> ret(vec.size());
@@ -612,14 +623,15 @@ ircd::db::files(const database &d)
 /// most current list is to flush all columns first and ensure no database
 /// activity took place between the flushing and this query.
 std::vector<std::string>
-ircd::db::files(const database &cd,
+ircd::db::files(const database &d,
                 uint64_t &msz)
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	std::vector<std::string> ret;
-	auto &d(mutable_cast(cd));
 	throw_on_error
 	{
-		d.d->GetLiveFiles(ret, &msz, false)
+		mutable_cast(d).d->GetLiveFiles(ret, &msz, false)
 	};
 
 	return ret;
@@ -631,11 +643,12 @@ ircd::db::errors(const database &d)
 	return d.errors;
 }
 
+[[gnu::hot]]
 uint64_t
-ircd::db::sequence(const database &cd)
+ircd::db::sequence(const database &d)
 {
-	database &d(mutable_cast(cd));
-	return d.d->GetLatestSequenceNumber();
+	const ctx::critical_assertion ca;
+	return mutable_cast(d).d->GetLatestSequenceNumber();
 }
 
 rocksdb::Cache *
@@ -657,6 +670,7 @@ ircd::db::property(const database &cd,
 {
 	uint64_t ret(0);
 	database &d(mutable_cast(cd));
+	const ctx::uninterruptible::nothrow ui;
 	if(!d.d->GetAggregatedIntProperty(slice(name), &ret))
 		throw not_found
 		{
@@ -722,6 +736,7 @@ ircd::db::default_description
 	{ "default" }
 };
 
+[[gnu::hot]]
 ircd::db::database &
 ircd::db::database::get(column &column)
 {
@@ -729,6 +744,7 @@ ircd::db::database::get(column &column)
 	return *column.d;
 }
 
+[[gnu::hot]]
 const ircd::db::database &
 ircd::db::database::get(const column &column)
 {
@@ -1101,6 +1117,8 @@ try
 }()}
 ,d{[this]
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	std::vector<rocksdb::ColumnFamilyHandle *> handles; // filled by DB::Open()
 	std::vector<rocksdb::ColumnFamilyDescriptor> columns(this->column_names.size());
 	std::transform(begin(this->column_names), end(this->column_names), begin(columns), []
@@ -1115,7 +1133,9 @@ try
 	{
 		log::notice
 		{
-			log, "Checking database @ `%s' columns[%zu]", path, columns.size()
+			log, "Checking database @ `%s' columns[%zu]",
+			path,
+			columns.size()
 		};
 
 		throw_on_error
@@ -1125,7 +1145,8 @@ try
 
 		log::info
 		{
-			log, "Database @ `%s' check complete", path
+			log, "Database @ `%s' check complete",
+			path
 		};
 	}
 
@@ -1230,6 +1251,7 @@ try
 ,uuid{[this]
 {
 	std::string ret;
+	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
 		d->GetDbIdentity(ret)
@@ -1240,6 +1262,7 @@ try
 ,checkpointer{[this]
 {
 	rocksdb::Checkpoint *checkpointer{nullptr};
+	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
 		rocksdb::Checkpoint::Create(this->d.get(), &checkpointer)
@@ -1593,6 +1616,7 @@ ircd::db::drop(database::column &c)
 		sequence(d)
 	};
 
+	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
 		c.d->d->DropColumnFamily(c.handle.get())
@@ -3672,6 +3696,7 @@ ircd::db::database::sst::tool(const vector_view<const string_view> &args)
 ircd::db::database::sst::scan::scan(database &d,
                                     const string_view &fpath)
 {
+	const ctx::uninterruptible::nothrow ui;
 	const auto &opts
 	{
 		d.d->GetOptions()
@@ -3708,6 +3733,7 @@ ircd::db::database::sst::scan::scan(database &d,
                                     const string_view &fpath,
                                     const closure &call)
 {
+	const ctx::uninterruptible::nothrow ui;
 	const auto &opts
 	{
 		d.d->GetOptions()
@@ -3764,6 +3790,7 @@ ircd::db::database::sst::dump::dump(db::column column,
                                     const key_range &range,
                                     const string_view &path_)
 {
+	const ctx::uninterruptible::nothrow ui;
 	database::column &c(column);
 	const database &d(column);
 	std::string path
@@ -3850,6 +3877,7 @@ ircd::db::database::sst::info::vector::vector(const database &d)
 
 ircd::db::database::sst::info::vector::vector(const db::column &column)
 {
+	const ctx::uninterruptible::nothrow ui;
 	database::column &c(mutable_cast(column));
 	database &d(*c.d);
 
@@ -3895,8 +3923,8 @@ ircd::db::database::sst::info::vector::vector(const db::column &column)
 ircd::db::database::sst::info::info(const database &d_,
                                     const string_view &filename)
 {
-	auto &d(mutable_cast(d_));
 	const ctx::uninterruptible::nothrow ui;
+	auto &d(mutable_cast(d_));
 
 	std::vector<rocksdb::LiveFileMetaData> v;
 	d.d->GetLiveFilesMetaData(&v);
@@ -4023,13 +4051,14 @@ ircd::db::database::sst::info::operator=(rocksdb::TableProperties &&tp)
 // wal::info::vector
 //
 
-ircd::db::database::wal::info::vector::vector(const database &d_)
+ircd::db::database::wal::info::vector::vector(const database &d)
 {
-	auto &d{mutable_cast(d_)};
+	const ctx::uninterruptible::nothrow ui;
+
 	std::vector<std::unique_ptr<rocksdb::LogFile>> vec;
 	throw_on_error
 	{
-		d.d->GetSortedWalFiles(vec)
+		mutable_cast(d).d->GetSortedWalFiles(vec)
 	};
 
 	this->resize(vec.size());
@@ -4041,14 +4070,15 @@ ircd::db::database::wal::info::vector::vector(const database &d_)
 // wal::info::info
 //
 
-ircd::db::database::wal::info::info(const database &d_,
+ircd::db::database::wal::info::info(const database &d,
                                     const string_view &filename)
 {
-	auto &d{mutable_cast(d_)};
+	const ctx::uninterruptible::nothrow ui;
+
 	std::vector<std::unique_ptr<rocksdb::LogFile>> vec;
 	throw_on_error
 	{
-		d.d->GetSortedWalFiles(vec)
+		mutable_cast(d).d->GetSortedWalFiles(vec)
 	};
 
 	for(const auto &ptr : vec)
