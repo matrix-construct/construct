@@ -35,6 +35,9 @@
 ///
 #define RB_DEBUG_DB_PORT 0
 
+// RocksDB doesn't use exceptions, but our units don't know to optimize for
+// that from their headers. This adds noexcept to every function in their API.
+#pragma clang attribute push([[gnu::nothrow]], apply_to=any(hasType(functionType)))
 #include <rocksdb/version.h>
 #include <rocksdb/status.h>
 #include <rocksdb/db.h>
@@ -58,6 +61,7 @@
 #include <rocksdb/compaction_filter.h>
 #include <rocksdb/wal_filter.h>
 #include <rocksdb/rate_limiter.h>
+#pragma clang attribute pop
 
 #include "db_has.h"
 #include "db_port.h"
