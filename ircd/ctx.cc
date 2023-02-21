@@ -3074,6 +3074,21 @@ noexcept
 	return head;
 }
 
+void
+ircd::ctx::list::push_sort(ctx *const c)
+noexcept
+{
+	assert(c);
+	for(ctx *o{head}; o; o = next(o))
+		if(ircd::ctx::id(*c) < ircd::ctx::id(*o))
+		{
+			push_before(o, c);
+			return;
+		}
+
+	push_back(c);
+}
+
 [[gnu::hot]]
 void
 ircd::ctx::list::push_front(ctx *const c)
@@ -3116,6 +3131,52 @@ noexcept
 	next(tail) = c;
 	prev(c) = tail;
 	tail = c;
+}
+
+[[gnu::hot]]
+void
+ircd::ctx::list::push_after(ctx *const o,
+                            ctx *const c)
+noexcept
+{
+	assert(o != c);
+	assert(next(c) == nullptr);
+	assert(prev(c) == nullptr);
+	assert(prev(o) || o == head);
+	assert(next(o) || o == tail);
+
+	prev(c) = o;
+	next(c) = next(o);
+	next(o) = c;
+
+	if(next(c))
+		prev(next(c)) = c;
+
+	if(tail == o)
+		tail = c;
+}
+
+[[gnu::hot]]
+void
+ircd::ctx::list::push_before(ctx *const o,
+                             ctx *const c)
+noexcept
+{
+	assert(o != c);
+	assert(next(c) == nullptr);
+	assert(prev(c) == nullptr);
+	assert(prev(o) || o == head);
+	assert(next(o) || o == tail);
+
+	next(c) = o;
+	prev(c) = prev(o);
+	prev(o) = c;
+
+	if(prev(c))
+		next(prev(c)) = c;
+
+	if(head == o)
+		head = c;
 }
 
 size_t

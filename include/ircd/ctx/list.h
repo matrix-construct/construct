@@ -64,8 +64,11 @@ struct ircd::ctx::list
 	bool empty() const noexcept;
 	size_t size() const noexcept;
 
+	void push_before(ctx *, ctx * = current) noexcept;
+	void push_after(ctx *, ctx * = current) noexcept;
 	void push_front(ctx * = current) noexcept;
 	void push_back(ctx * = current) noexcept;
+	void push_sort(ctx * = current) noexcept;              // weak/partial
 	void push(ctx * = current) noexcept;                   // push_back
 
 	ctx *pop_front() noexcept;
