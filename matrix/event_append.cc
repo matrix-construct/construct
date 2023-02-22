@@ -218,6 +218,18 @@ ircd::m::event::append::append(json::stack::object &object,
 			0UL
 	};
 
+	const bool query_prev_state
+	{
+		opts.query_prev_state && has_event_idx && is_state
+	};
+
+	const auto prev_state_idx
+	{
+		query_prev_state?
+			room::state::prev(*opts.event_idx):
+			0UL
+	};
+
 	#if defined(RB_DEBUG) && 0
 	if(!has_client_txnid && !txnid_idx && sender_is_user && opts.query_txnid)
 		log::dwarning
@@ -234,28 +246,6 @@ ircd::m::event::append::append(json::stack::object &object,
 		{
 			object, "event_id", event.event_id
 		};
-
-	const bool query_prev_state
-	{
-		has_event_idx && opts.query_prev_state && is_state
-	};
-
-	if(query_prev_state)
-	{
-		const auto prev_idx
-		{
-			room::state::prev(*opts.event_idx)
-		};
-
-		m::get(std::nothrow, prev_idx, "content", [&object]
-		(const json::object &content)
-		{
-			json::stack::member
-			{
-				object, "prev_content", content
-			};
-		});
-	}
 
 	// Get the list of properties to send to the client so we can strip
 	// the remaining and save b/w
@@ -337,6 +327,16 @@ ircd::m::event::append::append(json::stack::object &object,
 			json::stack::member
 			{
 				unsigned_, "transaction_id", unquote(content.get("transaction_id"))
+			};
+		});
+
+	if(prev_state_idx)
+		m::get(std::nothrow, prev_state_idx, "content", [&unsigned_]
+		(const json::object &content)
+		{
+			json::stack::member
+			{
+				unsigned_, "prev_content", content
 			};
 		});
 
