@@ -175,11 +175,12 @@ ircd::m::media::file::download(const mutable_buffer &buf_,
 	fed::request::opts fedopts;
 	fedopts.remote = remote?: mxc.server;
 	json::get<"method"_>(fedopts.request) = "GET";
+	thread_local char mxc_buf[2][2048];
 	json::get<"uri"_>(fedopts.request) = fmt::sprintf
 	{
 		buf, "/_matrix/media/r0/download/%s/%s",
-		mxc.server,
-		mxc.mediaid,
+		url::encode(mxc_buf[0], mxc.server),
+		url::encode(mxc_buf[1], mxc.mediaid),
 	};
 	consume(buf, size(json::get<"uri"_>(fedopts.request)));
 

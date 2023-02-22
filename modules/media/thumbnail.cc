@@ -108,9 +108,11 @@ get__thumbnail(client &client,
 			"Media ID parameter required"
 		};
 
+	char url_buf[2][256];
 	const m::media::mxc mxc
 	{
-		request.parv[0], request.parv[1]
+		url::decode(url_buf[0], request.parv[0]),
+		url::decode(url_buf[1], request.parv[1]),
 	};
 
 	// Thumbnail doesn't require auth so if there is no user_id detected

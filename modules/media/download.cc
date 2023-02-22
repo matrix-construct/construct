@@ -25,8 +25,7 @@ download_resource
 static m::resource::response
 get__download_local(client &client,
                     const m::resource::request &request,
-                    const string_view &server,
-                    const string_view &file,
+                    const m::media::mxc &mxc,
                     const m::room &room);
 
 static m::resource::response
@@ -39,14 +38,11 @@ get__download(client &client,
 			http::MULTIPLE_CHOICES, "/ download / domain / file"
 		};
 
-	const auto &server
+	char url_buf[2][256];
+	const m::media::mxc mxc
 	{
-		request.parv[0]
-	};
-
-	const auto &file
-	{
-		request.parv[1]
+		url::decode(url_buf[0], request.parv[0]),
+		url::decode(url_buf[1], request.parv[1]),
 	};
 
 	// Download doesn't require auth so if there is no user_id detected
@@ -65,17 +61,16 @@ get__download(client &client,
 
 	const m::room::id::buf room_id
 	{
-		m::media::file::download({server, file}, user_id)
+		m::media::file::download(mxc, user_id)
 	};
 
-	return get__download_local(client, request, server, file, room_id);
+	return get__download_local(client, request, mxc, room_id);
 }
 
 static m::resource::response
 get__download_local(client &client,
                     const m::resource::request &request,
-                    const string_view &server,
-                    const string_view &file,
+                    const m::media::mxc &mxc,
                     const m::room &room)
 {
 	static const m::event::fetch::opts fopts
@@ -145,8 +140,8 @@ get__download_local(client &client,
 		log::error
 		{
 			m::media::log, "File %s/%s [%s] size mismatch: expected %zu got %zu",
-			server,
-			file,
+			mxc.server,
+			mxc.mediaid,
 			string_view{room.room_id},
 			file_size,
 			read
