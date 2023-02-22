@@ -84,8 +84,8 @@ ircd::m::get(const event::id &event_id,
 	if(!ret)
 		throw m::NOT_FOUND
 		{
-			"%s for %s not found in database",
-			key,
+			"%s for %s not found in database.",
+			key?: "<_event_json>",
 			string_view{event_id}
 		};
 
@@ -105,8 +105,8 @@ ircd::m::get(const event::idx &event_idx,
 	if(!ret)
 		throw m::NOT_FOUND
 		{
-			"%s for event_idx[%lu] not found in database",
-			key,
+			"%s for event_idx[%lu] not found in database.",
+			key?: "<_event_json>",
 			event_idx
 		};
 
@@ -146,8 +146,8 @@ ircd::m::get(const event::id &event_id,
 	if(!get(std::nothrow, index(event_id), key, closure))
 		throw m::NOT_FOUND
 		{
-			"%s for %s not found in database",
-			key,
+			"%s for %s not found in database.",
+			key?: "<_event_json>",
 			string_view{event_id}
 		};
 }
@@ -161,7 +161,7 @@ ircd::m::get(const event::idx &event_idx,
 		throw m::NOT_FOUND
 		{
 			"%s for event_idx[%lu] not found in database",
-			key,
+			key?: "<_event_json>",
 			event_idx
 		};
 }
@@ -184,23 +184,26 @@ ircd::m::get(std::nothrow_t,
 	if(!event_idx)
 		return false;
 
-	const auto &column_idx
-	{
-		json::indexof<event>(key)
-	};
-
-	auto &column
-	{
-		dbs::event_column.at(column_idx)
-	};
-
 	const string_view &column_key
 	{
 		byte_view<string_view>{event_idx}
 	};
 
-	if(column)
-		return column(column_key, std::nothrow, closure);
+	const auto &column_idx
+	{
+		json::indexof<event>(key)
+	};
+
+	if(column_idx < dbs::event_column.size())
+	{
+		auto &column
+		{
+			dbs::event_column.at(column_idx)
+		};
+
+		if(column)
+			return column(column_key, std::nothrow, closure);
+	}
 
 	// If the event property being sought doesn't have its own column we
 	// fall back to fetching the full JSON and closing over the property.
@@ -210,7 +213,9 @@ ircd::m::get(std::nothrow_t,
 	{
 		string_view value
 		{
-			event[key]
+			key?
+				event[key]:
+				string_view{event}
 		};
 
 		if(!value)
@@ -218,7 +223,7 @@ ircd::m::get(std::nothrow_t,
 
 		// The user expects an unquoted string to their closure, the same as
 		// if this value was found in its own column.
-		if(json::type(value, json::STRING))
+		if(key && json::type(value, json::STRING))
 			value = json::string(value);
 
 		ret = true;
@@ -249,7 +254,7 @@ ircd::m::get(const vector_view<const event::idx> &event_idx,
 			"Only %zu/%zu for %s found in database",
 			found,
 			event_idx.size(),
-			key,
+			key?: "<_event_json>",
 		};
 }
 
