@@ -486,6 +486,17 @@ ircd::m::rooms::summary::chunk_local(const m::room &room,
 		};
 	}
 
+	// room_type
+	{
+		char buf[128];
+		string_view room_type;
+		if((room_type = m::type(buf, room)))
+			json::stack::member
+			{
+				obj, "room_type", room_type
+			};
+	}
+
 	query("m.room.topic", "topic", [&obj]
 	(const string_view &value)
 	{
