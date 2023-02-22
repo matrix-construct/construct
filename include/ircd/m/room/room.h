@@ -112,6 +112,7 @@ namespace ircd::m
 struct ircd::m::room
 {
 	struct events;
+	struct iterate;
 	struct missing;
 	struct horizon;
 	struct sounding;
@@ -128,7 +129,6 @@ struct ircd::m::room
 	struct message;
 	struct messages;
 	struct bootstrap;
-	struct content;
 	struct purge;
 
 	using id = m::id::room;
@@ -195,6 +195,7 @@ struct ircd::m::room
 };
 
 #include "events.h"
+#include "iterate.h"
 #include "sounding.h"
 #include "missing.h"
 #include "horizon.h"
@@ -205,7 +206,6 @@ struct ircd::m::room
 #include "members.h"
 #include "origins.h"
 #include "type.h"
-#include "content.h"
 #include "head.h"
 #include "head_generate.h"
 #include "head_fetch.h"

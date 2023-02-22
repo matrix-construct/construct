@@ -396,9 +396,9 @@ ircd::m::search::query_room(result &result,
 			string_view{room_id},
 		};
 
-	const m::room::content content
+	const m::room::iterate content
 	{
-		room
+		room, "content"
 	};
 
 	return content.for_each([&result, &query]
