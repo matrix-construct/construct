@@ -37,7 +37,9 @@ struct ircd::util::returns
 		return ret;
 	}
 
-	returns(const std::function<T ()> &func)
+	template<class F>
+	returns(F&& func,
+	        typename std::enable_if<std::is_invocable_r<T, F>::value, int>::type = 0)
 	:ret{func()}
 	{}
 
