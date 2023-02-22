@@ -40,12 +40,13 @@ const
 		room, uint64_t(depth.first)
 	};
 
+	m::event::fetch event;
 	for(; it; ++it)
 	{
 		if(depth.second && int64_t(it.depth()) > depth.second)
 			break;
 
-		if(!_each(it, closure))
+		if(!_each(it, event, closure))
 			return false;
 	}
 
@@ -62,6 +63,7 @@ const
 		room, depth.second?: -1UL
 	};
 
+	m::event::fetch event;
 	for(; it; --it)
 	{
 		if(depth.second && int64_t(it.depth()) > depth.second)
@@ -70,7 +72,7 @@ const
 		if(int64_t(it.depth()) < depth.first)
 			break;
 
-		if(!_each(it, closure))
+		if(!_each(it, event, closure))
 			return false;
 	}
 
@@ -79,6 +81,7 @@ const
 
 bool
 ircd::m::room::missing::_each(m::room::events &it,
+                              m::event::fetch &event,
                               const closure &closure)
 const
 {
@@ -87,10 +90,8 @@ const
 		*it
 	};
 
-	const m::event::fetch event
-	{
-		std::nothrow, event_idx
-	};
+	if(!seek(std::nothrow, event, event_idx))
+		return true;
 
 	const event::prev prev
 	{
