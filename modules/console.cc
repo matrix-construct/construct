@@ -410,7 +410,7 @@ console_cmd__help(opt &out, const string_view &line)
 		find_cmd(line)
 	};
 
-	if(cmd)
+	if(cmd && (false))
 	{
 		out << "No help available for '" << cmd->name << "'."
 		    << std::endl;
@@ -418,15 +418,13 @@ console_cmd__help(opt &out, const string_view &line)
 		//TODO: help string symbol map
 	}
 
-	out << "\nSubcommands available:\n"
-	    << std::endl;
-
 	const size_t elems
 	{
 		std::min(token_count(line, ' '), cmd::MAX_DEPTH)
 	};
 
-	size_t num(0);
+	std::vector<string_view> subs;
+	subs.reserve(128);
 	for(size_t e(elems+1); e > 0; --e)
 	{
 		const auto name
@@ -461,15 +459,27 @@ console_cmd__help(opt &out, const string_view &line)
 				e > 1? tokens_after(prefix, ' ', e - 2) : prefix
 			};
 
-			if(empty(suffix))
-				continue;
-
-			out << std::left << std::setw(20) << suffix;
-			if(++num % 4 == 0)
-				out << std::endl;
+			if(!empty(suffix))
+				subs.emplace_back(suffix);
 		}
 
 		break;
+	}
+
+	if(!subs.empty())
+	{
+		out << "\nSubcommands available:\n" << std::endl;
+
+		size_t num(0);
+		for(size_t i(0); i < subs.size(); ++i)
+		{
+			out << std::left << std::setw(20) << subs.at(i);
+			if(++num % 4 == 0)
+				out << '\n';
+		}
+
+		if(num % 4 != 0)
+			out << std::endl;
 	}
 
 	return true;

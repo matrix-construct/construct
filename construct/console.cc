@@ -278,7 +278,15 @@ catch(const std::out_of_range &e)
 }
 catch(const bad_command &e)
 {
-	std::cerr << "Bad command or file name: " << e.what() << std::endl;
+	const ircd::string_view what(e.what());
+
+	std::cerr << "\nBad command";
+	if(what)
+		std::cerr << " :" << what;
+	else
+		std::cerr << '.';
+
+	std::cerr << std::endl;
 	return true;
 }
 catch(const http::error &e)
