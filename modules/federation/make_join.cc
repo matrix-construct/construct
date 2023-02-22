@@ -35,6 +35,13 @@ make_join_resource
 	}
 };
 
+static conf::item<bool>
+version_check
+{
+	{ "name",    "ircd.federation.make_join.version.check" },
+	{ "default", true                                      },
+};
+
 m::resource::response
 get__make_join(client &client,
                 const m::resource::request &request)
@@ -108,6 +115,15 @@ get__make_join(client &client,
 	};
 
 	if(version_mismatch)
+		log::dwarning
+		{
+			"Room %s version %s not compatible with server '%s'",
+			string_view{room.room_id},
+			room_version?: "??????"_sv,
+			request.node_id,
+		};
+
+	if(version_mismatch && version_check)
 		throw m::error
 		{
 			http::NOT_IMPLEMENTED, "M_INCOMPATIBLE_ROOM_VERSION",
