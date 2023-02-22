@@ -12,6 +12,7 @@ namespace ircd::m
 {
 	extern const event::keys::exclude event_append_exclude_keys;
 	extern const event::keys event_append_default_keys;
+	extern conf::item<std::string> event_append_exclude_types;
 	extern conf::item<bool> event_append_info;
 	extern log::log event_append_log;
 }
@@ -28,6 +29,13 @@ ircd::m::event_append_info
 	{ "name",     "ircd.m.event.append.info" },
 	{ "default",  false                      },
 	{ "persist",  false                      },
+};
+
+decltype(ircd::m::event_append_exclude_types)
+ircd::m::event_append_exclude_types
+{
+	{ "name",     "ircd.m.event.append.exclude.types" },
+	{ "default",  "org.matrix.dummy_event"            },
 };
 
 /// Default event property mask of keys which we strip from the event sent
@@ -103,6 +111,23 @@ ircd::m::event::append::append(json::stack::object &object,
 
 	if(opts.event_filter && !m::match(*opts.event_filter, event))
 		return false;
+
+	const auto &not_types
+	{
+		event_append_exclude_types
+	};
+
+	if(!opts.event_filter && token_exists(not_types, ' ', json::get<"type"_>(event)))
+	{
+		log::debug
+		{
+			log, "Not sending event %s because type '%s' excluded by configuration.",
+			string_view{event.event_id},
+			json::get<"type"_>(event),
+		};
+
+		return false;
+	}
 
 	if(opts.query_visible && opts.user_id && !visible(event, *opts.user_id))
 	{
