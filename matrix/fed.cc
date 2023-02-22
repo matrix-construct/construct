@@ -1429,13 +1429,13 @@ ircd::m::fed::key::keys::keys(const server_key &server_key,
 		{
 			json::get<"uri"_>(opts.request) = fmt::sprintf
 			{
-				buf, "/_matrix/key/v2/server/%s/",
+				buf, "/_matrix/key/v2/server/%s",
 				key_id
 			};
 
 			consume(buf, size(json::get<"uri"_>(opts.request)));
 		}
-		else json::get<"uri"_>(opts.request) = "/_matrix/key/v2/server/";
+		else json::get<"uri"_>(opts.request) = "/_matrix/key/v2/server";
 	}
 
 	return request
