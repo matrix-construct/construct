@@ -254,3 +254,13 @@ ircd::m::resource::response
 get__hierarchy(ircd::client &,
                const ircd::m::resource::request &,
                const ircd::m::room::id &);
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// threads.cc
+//
+
+ircd::m::resource::response
+get__threads(ircd::client &,
+             const ircd::m::resource::request &,
+             const ircd::m::room::id &);

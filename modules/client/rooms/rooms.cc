@@ -78,6 +78,9 @@ get_rooms(client &client,
 	if(cmd == "hierarchy")
 		return get__hierarchy(client, request, room_id);
 
+	if(cmd == "threads")
+		return get__threads(client, request, room_id);
+
 	throw m::NOT_FOUND
 	{
 		"/rooms command not found"
