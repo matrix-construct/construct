@@ -372,7 +372,7 @@ ircd::m::rooms::summary::chunk_local(const m::room &room,
 			state.get(std::nothrow, type, "")
 		};
 
-		m::get(std::nothrow, event_idx, "content", [&content_key, &closure]
+		return m::get(std::nothrow, event_idx, "content", [&content_key, &closure]
 		(const json::object &content)
 		{
 			const json::string &value
@@ -382,6 +382,13 @@ ircd::m::rooms::summary::chunk_local(const m::room &room,
 
 			closure(value);
 		});
+	}};
+
+	const auto required{[&query]
+	(const auto &type, const auto &content_key, const auto &closure)
+	{
+		if(!query(type, content_key, closure))
+			closure(string_view{});
 	}};
 
 	// Aliases array
@@ -438,7 +445,7 @@ ircd::m::rooms::summary::chunk_local(const m::room &room,
 		});
 	}
 
-	query("m.room.guest_access", "guest_access", [&obj]
+	required("m.room.guest_access", "guest_access", [&obj]
 	(const string_view &value)
 	{
 		json::stack::member
@@ -488,7 +495,7 @@ ircd::m::rooms::summary::chunk_local(const m::room &room,
 		};
 	});
 
-	query("m.room.history_visibility", "history_visibility", [&obj]
+	required("m.room.history_visibility", "history_visibility", [&obj]
 	(const string_view &value)
 	{
 		json::stack::member
