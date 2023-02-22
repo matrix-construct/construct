@@ -32,25 +32,16 @@ size_t
 ircd::m::room::stats::bytes_json(const m::room &room)
 {
 	size_t ret(0);
-	for(m::room::events it(room); it; --it)
+	const room::iterate iterate
 	{
-		const m::event::idx &event_idx
-		{
-			it.event_idx()
-		};
+		room
+	};
 
-		const byte_view<string_view> key
-		{
-			event_idx
-		};
-
-		static const db::gopts gopts
-		{
-			.cache = false,
-		};
-
-		ret += db::bytes_value(m::dbs::event_json, key, gopts);
-	}
+	iterate.for_each([&ret]
+	(const string_view &event, const auto &depth, const auto &event_idx)
+	{
+		ret += size(event);
+	});
 
 	return ret;
 }
