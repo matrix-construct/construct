@@ -75,6 +75,8 @@ struct ircd::util::closure<F, bool, A...>
 	closure(lambda &&o,
 	        typename std::enable_if<std::is_constructible<func_bool_type, lambda>::value, int>::type = 0)
 	noexcept(std::is_nothrow_invocable<lambda, bool, A...>());
+
+	closure() = default;
 };
 
 template<template<class, class...>
