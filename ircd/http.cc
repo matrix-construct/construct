@@ -519,12 +519,9 @@ try
 :line::response{pc}
 ,headers
 {
-	http::headers
+	pc, [this](const auto &header)
 	{
-		pc, [this](const auto &header)
-		{
-			assign(*this, header);
-		}
+		assign(*this, header);
 	}
 }
 {
@@ -540,13 +537,10 @@ try
 :line::response{pc}
 ,headers
 {
-	http::headers
+	pc, [this, &closure](const auto &header)
 	{
-		pc, [this, &closure](const auto &header)
-		{
-			assign(*this, header);
-			closure(header);
-		}
+		assign(*this, header);
+		closure(header);
 	}
 }
 {

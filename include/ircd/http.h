@@ -325,8 +325,8 @@ struct ircd::http::request::head
 	string_view forwarded_for;
 	size_t content_length {0};
 
-	string_view uri;       // full view of (path, query, fragmet)
-	string_view headers;   // full view of all headers
+	string_view uri;        // full view of (path, query, fragmet)
+	http::headers headers;  // full view of all headers
 
 	// full view of all head (request line and headers)
 	operator string_view() const;
@@ -367,7 +367,7 @@ struct ircd::http::response::head
 	string_view server;
 	string_view location;
 
-	string_view headers;
+	http::headers headers;
 
 	head(parse::capstan &pc, const headers::closure &c);
 	head(parse::capstan &pc);
