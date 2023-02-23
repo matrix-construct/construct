@@ -652,22 +652,7 @@ ircd::http::headers::terminator
 };
 
 ircd::http::headers::headers(parse::capstan &pc,
-                             const closure &c)
-:headers
-{
-	pc, closure_bool{[&c](const auto &header)
-	{
-		if(c)
-			c(header);
-
-		return true;
-	}}
-}
-{
-}
-
-ircd::http::headers::headers(parse::capstan &pc,
-                             closure_bool c)
+                             closure c)
 :string_view{[&pc, &c]
 () -> string_view
 {
@@ -729,7 +714,7 @@ const
 }
 
 bool
-ircd::http::headers::for_each(const closure_bool &closure)
+ircd::http::headers::for_each(const closure &closure)
 const
 {
 	if(empty())

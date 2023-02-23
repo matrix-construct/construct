@@ -223,7 +223,7 @@ struct ircd::http::query
 struct ircd::http::query::string
 :string_view
 {
-	using closure = std::function<bool (const query &)>;
+	using closure = util::function_bool<const query &>;
 
 	bool for_each(const closure &) const;
 	bool for_each(const string_view &key, const closure &) const;
@@ -271,19 +271,17 @@ struct ircd::http::header
 struct ircd::http::headers
 :string_view
 {
-	using closure = std::function<void (const header &)>;
-	using closure_bool = std::function<bool (const header &)>;
+	using closure = util::function_bool<const header &>;
 
 	static const string_view terminator; // "\r\n\r\n"
 
-	bool for_each(const closure_bool &) const;
+	bool for_each(const closure &) const;
 	string_view operator[](const string_view &key) const;
 	string_view at(const string_view &key) const;
 	bool has(const string_view &key) const;
 
 	using string_view::string_view;
-	headers(parse::capstan &, closure_bool);
-	headers(parse::capstan &, const closure & = {});
+	headers(parse::capstan &, closure = {});
 	headers() = default;
 
 	friend bool has(const headers &, const string_view &key);
