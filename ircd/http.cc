@@ -394,8 +394,14 @@ ircd::http::assign(request::head &head,
 	else if(key == "if-range"_sv)
 		head.if_range = val;
 
+	else if(key == "forwarded"_sv)
+		head.forwarded[0] = val;
+
 	else if(key == "x-forwarded-for"_sv)
-		head.forwarded_for = val;
+		head.forwarded_for[0] = val;
+
+	else if(key == "x-forwarded-host"_sv)
+		head.forwarded_host[0] = val;
 }
 
 ircd::http::response::response(window_buffer &out,

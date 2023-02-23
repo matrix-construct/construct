@@ -320,7 +320,9 @@ struct ircd::http::request::head
 	string_view upgrade;
 	string_view range;
 	string_view if_range;
-	string_view forwarded_for;
+	string_view forwarded[1];       // last forwarded
+	string_view forwarded_for[1];   // last x-forwarded-for
+	string_view forwarded_host[1];  // last x-forwarded-host
 	size_t content_length {0};
 
 	string_view uri;        // full view of (path, query, fragmet)
