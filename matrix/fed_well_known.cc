@@ -233,6 +233,14 @@ try
 		};
 	}
 
+	// Ride any duplicate request already pending
+	for(const auto &req : request::list)
+		if(req->target == target)
+			return ctx::future<string_view>
+			{
+				req->promise
+			};
+
 	// Synchronize modification of the request::list
 	const std::lock_guard request_lock
 	{
