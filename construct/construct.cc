@@ -50,6 +50,7 @@ const char *bootstrap;
 const char *diagnostic;
 bool nobanner;
 bool silentmode;
+bool noiouct;
 
 lgetopt opts[]
 {
@@ -87,6 +88,7 @@ lgetopt opts[]
 	{ "diagnostic", &diagnostic,    lgetopt::STRING,  "Specify a diagnostic type in conjunction with other commands" },
 	{ "nobanner",   &nobanner,      lgetopt::BOOL,    "Terminal log enabled only in runlevel RUN" },
 	{ "silent",     &silentmode,    lgetopt::BOOL,    "Like quiet mode without console output either" },
+	{ "noiouct",    &noiouct,       lgetopt::BOOL,    "Disable experimental IORING_SETUP_COOP_TASKRUN" },
 	{ nullptr,      nullptr,        lgetopt::STRING,  nullptr },
 };
 
@@ -668,6 +670,62 @@ __wrap_epoll_wait(int __epfd,
 		__maxevents,
 		__timeout
 	);
+}
+
+#endif
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// This is where we interpose additional features for io_uring not yet
+// leveraged by ASIO.
+//
+#if IRCD_USE_ASIO_IO_URING
+
+extern "C" int
+__real_io_uring_queue_init(unsigned,
+                           struct io_uring *,
+                           unsigned flags);
+
+extern "C" int
+__wrap_io_uring_queue_init(unsigned entries,
+                           struct io_uring *ring,
+                           unsigned flags)
+{
+	namespace info = ircd::info;
+
+	const bool have_coop_taskrun
+	{
+		info::kernel_version[0] > 5 ||
+		(info::kernel_version[0] >= 5 && info::kernel_version[1] >= 19)
+	};
+
+	#if defined(IORING_SETUP_COOP_TASKRUN)
+	if(have_coop_taskrun && !noiouct)
+		flags |= IORING_SETUP_COOP_TASKRUN;
+	#endif
+
+	struct io_uring_params params
+	{
+		.flags = flags,
+	};
+
+	int ret;
+	if constexpr((true))
+		ret = ::io_uring_queue_init_params
+		(
+			entries,
+			ring,
+			&params
+		);
+	else
+		ret = __real_io_uring_queue_init
+		(
+			entries,
+			ring,
+			flags
+		);
+
+	return ret;
 }
 
 #endif

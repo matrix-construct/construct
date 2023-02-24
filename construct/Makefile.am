@@ -32,6 +32,7 @@ AM_LDFLAGS = \
 	-Wl,--rosegment \
 	-Wl,-z,noexecstack \
 	-Wl,--wrap=epoll_wait \
+	-Wl,--wrap=io_uring_queue_init \
 	-L$(top_srcdir)/ircd \
 	-L$(top_srcdir)/modules \
 	$(PLATFORM_LDFLAGS) \
