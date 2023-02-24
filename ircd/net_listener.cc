@@ -967,14 +967,9 @@ try
 	if(!name)
 		return true;
 
-	const string_view accept[]
-	{
-		this->cname,
-	};
-
 	const bool accepts
 	{
-		std::find(begin(accept), end(accept), name) != end(accept)
+		name == this->cname
 	};
 
 	if(!accepts)
