@@ -116,7 +116,27 @@ get__backfill(client &client,
 		response.buf, response.flusher(), size_t(backfill_flush_hiwat)
 	};
 
-	json::stack::object top{out};
+	json::stack::object top
+	{
+		out
+	};
+
+	json::stack::member
+	{
+		top, "origin", json::value
+		{
+			origin(m::my())
+		}
+	};
+
+	json::stack::member
+	{
+		top, "origin_server_ts", json::value
+		{
+			time<milliseconds>()
+		}
+	};
+
 	json::stack::array pdus
 	{
 		top, ids_only? "pdu_ids": "pdus"

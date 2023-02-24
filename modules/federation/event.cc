@@ -65,20 +65,30 @@ handle_get(client &client,
 			"You are not permitted to view this event"
 		};
 
-	m::resource::response::chunked response
+	m::resource::response::chunked::json response
 	{
 		client, http::OK
 	};
 
-	json::stack out
+	json::stack::member
 	{
-		response.buf, response.flusher()
+		response, "origin", json::value
+		{
+			origin(m::my())
+		}
 	};
 
-	json::stack::object top{out};
+	json::stack::member
+	{
+		response, "origin_server_ts", json::value
+		{
+			time<milliseconds>()
+		}
+	};
+
 	json::stack::array pdus
 	{
-		top, "pdus"
+		response, "pdus"
 	};
 
 	pdus.append(event);
