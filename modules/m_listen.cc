@@ -360,7 +360,14 @@ _listener_proffer(net::listener &listener,
 		return false;
 	}
 
-	if(client::count(ipport) >= size_t(client::settings::max_client_per_peer))
+	// Trapdoor for reverse-proxies
+	const bool local
+	{
+		//TODO: lan cidr
+		net::is_loop(ipport)
+	};
+
+	if(!local && client::count(ipport) >= size_t(client::settings::max_client_per_peer))
 	{
 		log::dwarning
 		{
