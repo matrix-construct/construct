@@ -182,8 +182,8 @@ ircd::m::homeserver::init(const struct opts *const opts)
 try
 {
 	assert(opts);
-	rfc3986::valid_host(opts->origin);
-	rfc3986::valid_host(opts->server_name);
+	rfc3986::valid_remote(opts->origin);
+	rfc3986::valid_remote(opts->server_name);
 
 	return new homeserver
 	{
