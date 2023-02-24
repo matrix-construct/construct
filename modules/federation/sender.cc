@@ -503,8 +503,16 @@ try
 }
 catch(const std::exception &e)
 {
-	log::error
+	const auto level
 	{
+		run::level == run::level::RUN?
+			log::level::ERROR:
+			log::level::DERROR
+	};
+
+	log::logf
+	{
+		m::log, level,
 		"flush error to %s :%s",
 		remote,
 		e.what()
