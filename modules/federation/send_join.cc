@@ -230,14 +230,19 @@ send_join__response(client &client,
 		request.query.get("omit_members", false)
 	};
 
+	const auto state_idx
+	{
+		m::index(std::nothrow, event.event_id)
+	};
+
 	const auto prev_state_idx
 	{
-		m::room::state::prev(m::index(event.event_id))
+		m::room::state::prev(state_idx)
 	};
 
 	const auto prev_state_id
 	{
-		m::event_id(prev_state_idx)
+		m::event_id(std::nothrow, prev_state_idx)
 	};
 
 	// The room prior to this join.
