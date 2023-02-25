@@ -141,10 +141,20 @@ try
 
 	if(json::get<"room_alias_name"_>(c)) try
 	{
-		const id::room_alias::buf canonical_alias
+		const id::room_alias::buf canonical_alias_buf
 		{
 			json::get<"room_alias_name"_>(c), origin(my())
 		};
+
+		const json::value canonical_alias
+		{
+			canonical_alias_buf
+		};
+
+		send(room, creator, "m.room.aliases", origin(my()),
+		{
+			{ "aliases", json::value { &canonical_alias, 1 } }
+		});
 
 		send(room, creator, "m.room.canonical_alias", "",
 		{
