@@ -1775,7 +1775,8 @@ ircd::db::database::column::column(database &d,
 
 	// Conf item can be set to disable automatic compactions. For developers
 	// and debugging; good for valgrind.
-	this->options.disable_auto_compactions = !bool(db::auto_compact);
+	this->options.disable_auto_compactions =
+		!this->descriptor->compaction || !bool(db::auto_compact);
 
 	// Set the compaction style; we don't override this in the descriptor yet.
 	//this->options.compaction_style = rocksdb::kCompactionStyleNone;

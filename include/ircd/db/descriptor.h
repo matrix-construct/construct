@@ -139,4 +139,8 @@ struct ircd::db::descriptor
 	{
 		2
 	};
+
+	/// Circuit-breaker to disable automatic compaction specifically for this
+	/// column from this descriptor.
+	bool compaction {true};
 };
