@@ -454,7 +454,7 @@ ircd::m::dbs::_index_event_refs_state(db::txn &txn,
 	if(!json::get<"room_id"_>(event))
 		return;
 
-	if(!json::get<"state_key"_>(event))
+	if(!defined(json::get<"state_key"_>(event)))
 		return;
 
 	const m::room room
@@ -531,7 +531,7 @@ ircd::m::dbs::_prefetch_event_refs_state(const event &event,
 
 	assert(json::get<"type"_>(event));
 	assert(json::get<"room_id"_>(event));
-	if(!json::get<"state_key"_>(event))
+	if(!defined(json::get<"state_key"_>(event)))
 		return false;
 
 	const m::room room

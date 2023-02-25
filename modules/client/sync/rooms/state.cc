@@ -92,7 +92,7 @@ ircd::m::sync::room_state_linear_events(data &data)
 		return false;
 
 	assert(data.event);
-	if(!json::get<"state_key"_>(*data.event))
+	if(!defined(json::get<"state_key"_>(*data.event)))
 		return false;
 
 	const bool is_own_membership

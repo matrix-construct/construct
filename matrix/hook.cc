@@ -95,11 +95,11 @@ ircd::m::hook::maps::add(base &hook,
 	if(json::get<"sender"_>(matching))
 		map(sender, at<"sender"_>(matching));
 
-	if(json::get<"state_key"_>(matching))
-		map(state_key, at<"state_key"_>(matching));
-
 	if(json::get<"type"_>(matching))
 		map(type, at<"type"_>(matching));
+
+	if(defined(json::get<"state_key"_>(matching)))
+		map(state_key, at<"state_key"_>(matching));
 
 	// Hook had no mappings which means it will match everything.
 	// We don't increment the matcher count for this case.
@@ -139,11 +139,11 @@ ircd::m::hook::maps::del(base &hook,
 	if(json::get<"sender"_>(matching))
 		unmap(sender, at<"sender"_>(matching));
 
-	if(json::get<"state_key"_>(matching))
-		unmap(state_key, at<"state_key"_>(matching));
-
 	if(json::get<"type"_>(matching))
 		unmap(type, at<"type"_>(matching));
+
+	if(defined(json::get<"state_key"_>(matching)))
+		unmap(state_key, at<"state_key"_>(matching));
 
 	return ret;
 }
@@ -178,7 +178,7 @@ const
 	if(json::get<"type"_>(event))
 		site_match(type, at<"type"_>(event));
 
-	if(json::get<"state_key"_>(event))
+	if(defined(json::get<"state_key"_>(event)))
 		site_match(state_key, at<"state_key"_>(event));
 
 	auto it(begin(matching));
@@ -703,7 +703,7 @@ ircd::m::_hook_match(const m::event &matching,
 		if(at<"type"_>(matching) != json::get<"type"_>(event))
 			return false;
 
-	if(json::get<"state_key"_>(matching))
+	if(defined(json::get<"state_key"_>(matching)))
 		if(at<"state_key"_>(matching) != json::get<"state_key"_>(event))
 			return false;
 
