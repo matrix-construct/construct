@@ -93,7 +93,7 @@ get__make_join(client &client,
 			"You are not permitted by the room's server access control list."
 		};
 
-	if(!visible(room, user_id))
+	if(!join_rule(room, "public") && !visible(room, user_id))
 		throw m::ACCESS_DENIED
 		{
 			"You are not permitted to view the room at this event."
