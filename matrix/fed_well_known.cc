@@ -233,13 +233,20 @@ try
 		};
 	}
 
-	// Ride any duplicate request already pending
+	// Check for duplicate requests
 	for(const auto &req : request::list)
 		if(req->target == target)
+		{
+			//XXX: Support multiple result buffers.
+			if(data(req->out) != data(buf))
+				break;
+
+			// Ride any duplicate request already pending
 			return ctx::future<string_view>
 			{
 				req->promise
 			};
+		}
 
 	// Synchronize modification of the request::list
 	const std::lock_guard request_lock
