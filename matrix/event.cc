@@ -19,8 +19,8 @@ namespace ircd::m
 decltype(ircd::m::event::max_size)
 ircd::m::event::max_size
 {
-	{ "name",     "m.event.max_size" },
-	{ "default",   65507L            },
+	{ "name",     "ircd.m.event.max_size" },
+	{ "default",   65507L                 },
 };
 
 [[gnu::tls_model("global-dynamic")]]
