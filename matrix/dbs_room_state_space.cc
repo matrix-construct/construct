@@ -43,7 +43,8 @@ ircd::m::dbs::desc::room_state_space__cache__size
 	{
 		{ "name",     "ircd.m.dbs._room_state_space.cache.size"  },
 		{ "default",  long(32_MiB)                               },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		const size_t &value{room_state_space__cache__size};
 		db::capacity(db::cache(dbs::room_state_space), value);
@@ -56,7 +57,8 @@ ircd::m::dbs::desc::room_state_space__cache_comp__size
 	{
 		{ "name",     "ircd.m.dbs._room_state_space.cache_comp.size"  },
 		{ "default",  long(8_MiB)                                     },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		const size_t &value{room_state_space__cache_comp__size};
 		db::capacity(db::cache_compressed(dbs::room_state_space), value);

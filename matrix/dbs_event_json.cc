@@ -38,7 +38,8 @@ ircd::m::dbs::desc::event_json__cache__size
 	{
 		{ "name",     "ircd.m.dbs._event_json.cache.size" },
 		{ "default",  long(128_MiB)                       },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		const size_t &value{event_json__cache__size};
 		db::capacity(db::cache(dbs::event_json), value);
@@ -51,7 +52,8 @@ ircd::m::dbs::desc::event_json__cache_comp__size
 	{
 		{ "name",     "ircd.m.dbs._event_json.cache_comp.size" },
 		{ "default",  long(0_MiB)                              },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		const size_t &value{event_json__cache_comp__size};
 		db::capacity(db::cache_compressed(dbs::event_json), value);

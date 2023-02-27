@@ -97,7 +97,8 @@ ircd::maintenance
 		{ "name",     "ircd.maintenance"   },
 		{ "default",  false                },
 		{ "persist",  false                },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		if(!maintenance)
 			return;
@@ -117,7 +118,8 @@ ircd::write_avoid
 		{ "name",     "ircd.write_avoid"   },
 		{ "default",  false                },
 		{ "persist",  false                },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		if(!write_avoid)
 			return;
@@ -137,7 +139,8 @@ ircd::read_only
 		{ "name",     "ircd.read_only"     },
 		{ "default",  false                },
 		{ "persist",  false                },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		if(!read_only)
 			return;

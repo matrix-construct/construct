@@ -43,7 +43,8 @@ ircd::m::dbs::desc::room_type__cache__size
 	{
 		{ "name",     "ircd.m.dbs._room_type.cache.size" },
 		{ "default",  long(16_MiB)                       },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		const size_t &value{room_type__cache__size};
 		db::capacity(db::cache(dbs::room_type), value);
@@ -56,7 +57,8 @@ ircd::m::dbs::desc::room_type__cache_comp__size
 	{
 		{ "name",     "ircd.m.dbs._room_type.cache_comp.size" },
 		{ "default",  long(8_MiB)                             },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		const size_t &value{room_type__cache_comp__size};
 		db::capacity(db::cache_compressed(dbs::room_type), value);

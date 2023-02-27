@@ -35,7 +35,7 @@ namespace ircd::gpt::model
 	static bool init_from_cache(const string_view &);
 	static void init_from_json_handle(decoder &, const init_handler &, const size_t &);
 	static void init_from_json(const string_view &, const string_view &);
-	static void init(), fini() noexcept;
+	static void init(conf::item<void> &), fini() noexcept;
 
 	extern const init_handler
 	manifest[],
@@ -157,7 +157,7 @@ decltype(ircd::gpt::model::default_data)
 ircd::gpt::model::default_data;
 
 void
-ircd::gpt::model::init()
+ircd::gpt::model::init(conf::item<void> &)
 {
 	if(!model::path)
 		return;

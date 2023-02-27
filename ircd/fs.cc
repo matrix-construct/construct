@@ -22,7 +22,7 @@ namespace ircd::fs
 {
 	extern conf::item<ulong> rlimit_nofile;
 
-	static void update_rlimit_nofile();
+	static void update_rlimit_nofile(conf::item<void> &);
 	static void init_dump_info();
 }
 
@@ -74,7 +74,7 @@ ircd::fs::init_dump_info()
 
 #if defined(HAVE_SYS_RESOURCE_H) && defined(RLIMIT_NOFILE)
 void
-ircd::fs::update_rlimit_nofile()
+ircd::fs::update_rlimit_nofile(conf::item<void> &)
 try
 {
 	rlimit rlim[2];

@@ -38,7 +38,8 @@ ircd::m::dbs::desc::event_type__cache__size
 	{
 		{ "name",     "ircd.m.dbs._event_type.cache.size" },
 		{ "default",  long(16_MiB)                        },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		const size_t &value{event_type__cache__size};
 		db::capacity(db::cache(dbs::event_type), value);
@@ -51,7 +52,8 @@ ircd::m::dbs::desc::event_type__cache_comp__size
 	{
 		{ "name",     "ircd.m.dbs._event_type.cache_comp.size" },
 		{ "default",  long(0_MiB)                              },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		const size_t &value{event_type__cache_comp__size};
 		db::capacity(db::cache_compressed(dbs::event_type), value);

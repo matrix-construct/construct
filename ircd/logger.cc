@@ -854,7 +854,8 @@ ircd::log::unmask_file
 	{
 		{ "name",     "ircd.log.unmask.file" },
 		{ "default",  string_view{}          },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		if(!empty(string_view(unmask_file)))
 			file_unmask(tokens<std::vector>(unmask_file, ' '));
@@ -868,7 +869,8 @@ ircd::log::unmask_console
 	{
 		{ "name",     "ircd.log.unmask.console" },
 		{ "default",  string_view{}             },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		if(!empty(string_view(unmask_console)))
 			console_unmask(tokens<std::vector>(unmask_console, ' '));
@@ -882,7 +884,8 @@ ircd::log::mask_file
 	{
 		{ "name",     "ircd.log.mask.file" },
 		{ "default",  string_view{}        },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		if(!empty(string_view(mask_file)))
 			file_mask(tokens<std::vector>(mask_file, ' '));
@@ -896,7 +899,8 @@ ircd::log::mask_console
 	{
 		{ "name",     "ircd.log.mask.console" },
 		{ "default",  string_view{}           },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		if(!empty(string_view(mask_console)))
 			console_mask(tokens<std::vector>(mask_console, ' '));

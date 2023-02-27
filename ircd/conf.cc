@@ -63,7 +63,7 @@ try
 	if(!item.set_cb)
 		return false;
 
-	item.set_cb();
+	item.set_cb(item);
 	return true;
 }
 catch(const std::out_of_range &e)
@@ -359,7 +359,7 @@ noexcept try
 
 	if(on_set(default_))
 		if(set_cb)
-			set_cb();
+			set_cb(*this);
 }
 catch(const std::exception &e)
 {
@@ -381,7 +381,7 @@ ircd::conf::item<void>::set(const string_view &val)
 	{
 		if(on_set(val))
 			if(set_cb)
-				set_cb();
+				set_cb(*this);
 	}
 	catch(...)
 	{
@@ -389,7 +389,7 @@ ircd::conf::item<void>::set(const string_view &val)
 		{
 			if(on_set(existing))
 				if(set_cb)
-					set_cb();
+					set_cb(*this);
 		}
 		catch(...)
 		{

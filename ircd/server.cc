@@ -817,7 +817,7 @@ ircd::server::peer::only_ipv6
 		{ "name",     "ircd.server.peer.ipv6.only" },
 		{ "default",  net::sock_opts::IGN          },
 	},
-	[]() noexcept
+	[](conf::item<void> &) noexcept
 	{
 		sock_opts.v6only = ssize_t(only_ipv6);
 	}
@@ -830,7 +830,7 @@ ircd::server::peer::sock_nodelay
 		{ "name",     "ircd.server.peer.sock.nodelay" },
 		{ "default",  long(true)                      },
 	},
-	[]() noexcept
+	[](conf::item<void> &) noexcept
 	{
 		sock_opts.nodelay = ssize_t(sock_nodelay);
 	}
@@ -843,7 +843,7 @@ ircd::server::peer::sock_read_bufsz
 		{ "name",     "ircd.server.peer.sock.read.bufsz" },
 		{ "default",  net::sock_opts::IGN                },
 	},
-	[]() noexcept
+	[](conf::item<void> &) noexcept
 	{
 		sock_opts.read_bufsz = ssize_t(sock_read_bufsz);
 	}
@@ -856,7 +856,7 @@ ircd::server::peer::sock_read_lowat
 		{ "name",     "ircd.server.peer.sock.read.lowat" },
 		{ "default",  net::sock_opts::IGN                },
 	},
-	[]() noexcept
+	[](conf::item<void> &) noexcept
 	{
 		sock_opts.read_lowat = ssize_t(sock_read_lowat);
 	}
@@ -869,7 +869,7 @@ ircd::server::peer::sock_write_bufsz
 		{ "name",     "ircd.server.peer.sock.write.bufsz" },
 		{ "default",  net::sock_opts::IGN                 },
 	},
-	[]() noexcept
+	[](conf::item<void> &) noexcept
 	{
 		sock_opts.write_bufsz = ssize_t(sock_write_bufsz);
 	}
@@ -882,7 +882,7 @@ ircd::server::peer::sock_write_lowat
 		{ "name",     "ircd.server.peer.sock.write.lowat" },
 		{ "default",  net::sock_opts::IGN                 },
 	},
-	[]() noexcept
+	[](conf::item<void> &) noexcept
 	{
 		sock_opts.write_lowat = ssize_t(sock_write_lowat);
 	}

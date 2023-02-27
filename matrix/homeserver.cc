@@ -549,7 +549,7 @@ ircd::m::homeserver::conf::conf(const struct opts &opts)
 	{
 		assert(item);
 		if(item->set_cb)
-			item->set_cb();
+			item->set_cb(*item);
 	}
 	catch(const std::exception &e)
 	{

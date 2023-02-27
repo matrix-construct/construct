@@ -22,7 +22,7 @@ namespace ircd::gpt::vocab
 	static u64x2 pre_tokenize(u8x16 (&)[16], const u8x16, const u8x16);
 	static u64x2 unk_tokenize(u16x16 &, const u8x16, u64);
 	static u64x2 tokenize_block(u16x16 &, const u8x16, const i8x16) noexcept;
-	static void init_tokens(), init_merges();
+	static void init_tokens(conf::item<void> &), init_merges(conf::item<void> &);
 
 	extern const char32_t charset[256];
 }
@@ -102,7 +102,7 @@ ircd::gpt::vocab::merges_path
 };
 
 void
-ircd::gpt::vocab::init_tokens()
+ircd::gpt::vocab::init_tokens(conf::item<void> &)
 {
 	if(!tokens_path)
 		return;
@@ -147,7 +147,7 @@ ircd::gpt::vocab::init_tokens()
 }
 
 void
-ircd::gpt::vocab::init_merges()
+ircd::gpt::vocab::init_merges(conf::item<void> &)
 {
 	if(!merges_path)
 		return;

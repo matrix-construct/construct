@@ -60,7 +60,8 @@ ircd::m::dbs::desc::event_id__cache__size
 	{
 		{ "name",     "ircd.m.dbs.event_id.cache.size"  },
 		{ "default",  long(48_MiB)                      },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		auto &column(event_column.at(json::indexof<event, "event_id"_>()));
 		const size_t &value{event_id__cache__size};
@@ -74,7 +75,8 @@ ircd::m::dbs::desc::event_id__cache_comp__size
 	{
 		{ "name",     "ircd.m.dbs.event_id.cache_comp.size"  },
 		{ "default",  long(16_MiB)                           },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		auto &column(event_column.at(json::indexof<event, "event_id"_>()));
 		const size_t &value{event_id__cache_comp__size};
@@ -144,7 +146,8 @@ ircd::m::dbs::desc::type__cache__size
 	{
 		{ "name",     "ircd.m.dbs.type.cache.size"  },
 		{ "default",  long(64_MiB)                  },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		auto &column(event_column.at(json::indexof<event, "type"_>()));
 		const size_t &value{type__cache__size};
@@ -158,7 +161,8 @@ ircd::m::dbs::desc::type__cache_comp__size
 	{
 		{ "name",     "ircd.m.dbs.type.cache_comp.size"  },
 		{ "default",  long(16_MiB)                       },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		auto &column(event_column.at(json::indexof<event, "type"_>()));
 		const size_t &value{type__cache_comp__size};
@@ -228,7 +232,8 @@ ircd::m::dbs::desc::content__cache__size
 	{
 		{ "name",     "ircd.m.dbs.content.cache.size"  },
 		{ "default",  long(64_MiB)                     },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		auto &column(event_column.at(json::indexof<event, "content"_>()));
 		const size_t &value{content__cache__size};
@@ -242,7 +247,8 @@ ircd::m::dbs::desc::content__cache_comp__size
 	{
 		{ "name",     "ircd.m.dbs.content.cache_comp.size"  },
 		{ "default",  long(16_MiB)                          },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		auto &column(event_column.at(json::indexof<event, "content"_>()));
 		const size_t &value{content__cache_comp__size};
@@ -329,7 +335,8 @@ ircd::m::dbs::desc::room_id__cache__size
 	{
 		{ "name",     "ircd.m.dbs.room_id.cache.size"  },
 		{ "default",  long(32_MiB)                     },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		auto &column(event_column.at(json::indexof<event, "room_id"_>()));
 		const size_t &value{room_id__cache__size};
@@ -343,7 +350,8 @@ ircd::m::dbs::desc::room_id__cache_comp__size
 	{
 		{ "name",     "ircd.m.dbs.room_id.cache_comp.size"  },
 		{ "default",  long(16_MiB)                          },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		auto &column(event_column.at(json::indexof<event, "room_id"_>()));
 		const size_t &value{room_id__cache_comp__size};
@@ -412,7 +420,8 @@ ircd::m::dbs::desc::sender__cache__size
 	{
 		{ "name",     "ircd.m.dbs.sender.cache.size"  },
 		{ "default",  long(32_MiB)                    },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		auto &column(event_column.at(json::indexof<event, "sender"_>()));
 		const size_t &value{sender__cache__size};
@@ -426,7 +435,8 @@ ircd::m::dbs::desc::sender__cache_comp__size
 	{
 		{ "name",     "ircd.m.dbs.sender.cache_comp.size"  },
 		{ "default",  long(16_MiB)                         },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		auto &column(event_column.at(json::indexof<event, "sender"_>()));
 		const size_t &value{sender__cache_comp__size};
@@ -495,7 +505,8 @@ ircd::m::dbs::desc::state_key__cache__size
 	{
 		{ "name",     "ircd.m.dbs.state_key.cache.size"  },
 		{ "default",  long(32_MiB)                       },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		auto &column(event_column.at(json::indexof<event, "state_key"_>()));
 		const size_t &value{state_key__cache__size};
@@ -509,7 +520,8 @@ ircd::m::dbs::desc::state_key__cache_comp__size
 	{
 		{ "name",     "ircd.m.dbs.state_key.cache_comp.size"  },
 		{ "default",  long(16_MiB)                            },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		auto &column(event_column.at(json::indexof<event, "state_key"_>()));
 		const size_t &value{state_key__cache_comp__size};
@@ -580,7 +592,8 @@ ircd::m::dbs::desc::origin_server_ts__cache__size
 	{
 		{ "name",     "ircd.m.dbs.origin_server_ts.cache.size"  },
 		{ "default",  long(32_MiB)                              },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		auto &column(event_column.at(json::indexof<event, "origin_server_ts"_>()));
 		const size_t &value{origin_server_ts__cache__size};
@@ -594,7 +607,8 @@ ircd::m::dbs::desc::origin_server_ts__cache_comp__size
 	{
 		{ "name",     "ircd.m.dbs.origin_server_ts.cache_comp.size"  },
 		{ "default",  long(16_MiB)                                   },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		auto &column(event_column.at(json::indexof<event, "origin_server_ts"_>()));
 		const size_t &value{origin_server_ts__cache_comp__size};
@@ -664,7 +678,8 @@ ircd::m::dbs::desc::depth__cache__size
 	{
 		{ "name",     "ircd.m.dbs.depth.cache.size"  },
 		{ "default",  long(16_MiB)                   },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		auto &column(event_column.at(json::indexof<event, "depth"_>()));
 		const size_t &value{depth__cache__size};
@@ -678,7 +693,8 @@ ircd::m::dbs::desc::depth__cache_comp__size
 	{
 		{ "name",     "ircd.m.dbs.depth.cache_comp.size"  },
 		{ "default",  long(16_MiB)                        },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		auto &column(event_column.at(json::indexof<event, "depth"_>()));
 		const size_t &value{depth__cache_comp__size};

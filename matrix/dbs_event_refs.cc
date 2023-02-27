@@ -59,7 +59,8 @@ ircd::m::dbs::desc::event_refs__cache__size
 	{
 		{ "name",     "ircd.m.dbs._event_refs.cache.size" },
 		{ "default",  long(32_MiB)                        },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		const size_t &value{event_refs__cache__size};
 		db::capacity(db::cache(dbs::event_refs), value);
@@ -72,7 +73,8 @@ ircd::m::dbs::desc::event_refs__cache_comp__size
 	{
 		{ "name",     "ircd.m.dbs._event_refs.cache_comp.size" },
 		{ "default",  long(0_MiB)                              },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		const size_t &value{event_refs__cache_comp__size};
 		db::capacity(db::cache_compressed(dbs::event_refs), value);

@@ -44,7 +44,8 @@ ircd::m::dbs::desc::room_events__cache__size
 	{
 		{ "name",     "ircd.m.dbs._room_events.cache.size" },
 		{ "default",  long(32_MiB)                         },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		const size_t &value{room_events__cache__size};
 		db::capacity(db::cache(dbs::room_events), value);
@@ -57,7 +58,8 @@ ircd::m::dbs::desc::room_events__cache_comp__size
 	{
 		{ "name",     "ircd.m.dbs._room_events.cache_comp.size" },
 		{ "default",  long(16_MiB)                              },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		const size_t &value{room_events__cache_comp__size};
 		db::capacity(db::cache_compressed(dbs::room_events), value);

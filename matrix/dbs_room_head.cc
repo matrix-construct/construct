@@ -38,7 +38,8 @@ ircd::m::dbs::desc::room_head__cache__size
 	{
 		{ "name",     "ircd.m.dbs._room_head.cache.size" },
 		{ "default",  long(8_MiB)                        },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		const size_t &value{room_head__cache__size};
 		db::capacity(db::cache(dbs::room_head), value);

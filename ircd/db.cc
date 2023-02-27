@@ -62,7 +62,8 @@ ircd::db::request_pool_size
 	{
 		{ "name",     "ircd.db.request_pool.size" },
 		{ "default",  0L                          },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		request.set(size_t(request_pool_size));
 	}

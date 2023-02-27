@@ -39,7 +39,8 @@ ircd::client::settings::pool_size
 	{
 		{ "name",     "ircd.client.pool_size"  },
 		{ "default",  96L                      },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		if(run::level == run::level::RUN)
 			client::pool.set(client::settings::pool_size);

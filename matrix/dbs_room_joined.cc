@@ -38,7 +38,8 @@ ircd::m::dbs::desc::room_joined__cache__size
 	{
 		{ "name",     "ircd.m.dbs._room_joined.cache.size" },
 		{ "default",  long(8_MiB)                          },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		const size_t &value{room_joined__cache__size};
 		db::capacity(db::cache(dbs::room_joined), value);
@@ -51,7 +52,8 @@ ircd::m::dbs::desc::room_joined__cache_comp__size
 	{
 		{ "name",     "ircd.m.dbs._room_joined.cache_comp.size" },
 		{ "default",  long(8_MiB)                               },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		const size_t &value{room_joined__cache_comp__size};
 		db::capacity(db::cache_compressed(dbs::room_joined), value);

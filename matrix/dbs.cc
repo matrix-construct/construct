@@ -64,7 +64,8 @@ ircd::m::dbs::sst_write_buffer_size
 	{
 		{ "name",     "ircd.m.dbs.sst.write_buffer_size" },
 		{ "default",  long(1_MiB)                        },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		static const string_view key{"writable_file_max_buffer_size"};
 		const size_t &value{sst_write_buffer_size};

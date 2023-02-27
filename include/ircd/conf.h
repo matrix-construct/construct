@@ -53,7 +53,7 @@ namespace ircd::conf
 	IRCD_EXCEPTION(error, not_found)
 	IRCD_EXCEPTION(error, bad_value)
 
-	using set_cb = std::function<void ()>;
+	using set_cb = std::function<void (item<void> &)>;
 
 	const size_t NAME_MAX_LEN {127};
 	const size_t VALUE_MAX_LEN {48_KiB};

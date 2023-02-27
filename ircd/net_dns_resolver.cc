@@ -45,7 +45,8 @@ ircd::net::dns::resolver::servers
 	{
 		{ "name",     "ircd.net.dns.resolver.servers"                    },
 		{ "default",  "4.2.2.1 4.2.2.2 4.2.2.3 4.2.2.4 4.2.2.5 4.2.2.6"  },
-	}, []
+	},
+	[](conf::item<void> &)
 	{
 		if(bool(ircd::net::dns::resolver_instance))
 			ircd::net::dns::resolver_instance->set_servers();
