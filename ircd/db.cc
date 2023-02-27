@@ -5357,6 +5357,67 @@ ircd::db::optstr_find_and_remove(std::string &optstr,
 	return true;
 }
 
+std::vector<std::unique_ptr<ircd::conf::item<std::string>>>
+ircd::db::make_confs(const db::options &opts,
+                     const pair<string_view> &name,
+                     const conf::set_cb &setter)
+{
+	const db::options::map map(opts);
+
+	std::vector<std::unique_ptr<conf::item<std::string>>> ret;
+	ret.reserve(map.size());
+
+	char buf[512];
+	for(const auto &[key, val] : map)
+		ret.emplace_back(std::make_unique<conf::item<std::string>>
+		(
+			json::members
+			{
+				{ "name",     make_conf_name(buf, name, key) },
+				{ "default",  string_view{val}               },
+			},
+			setter
+		));
+
+	return ret;
+}
+
+ircd::string_view
+ircd::db::unmake_conf_name_key(const conf::item<void> &item)
+{
+	const auto &name
+	{
+		lstrip(lstrip(item.name, confs_prefix), '.')
+	};
+
+	const auto &[dbname, remain]
+	{
+		split(name, '.')
+	};
+
+	const auto &[colname, key]
+	{
+		split(remain, '.')
+	};
+
+	return key;
+}
+
+ircd::string_view
+ircd::db::make_conf_name(const mutable_buffer &buf,
+                         const pair<string_view> &name,
+                         const string_view &key)
+{
+	return fmt::sprintf
+	{
+		buf, "%s.%s.%s.%s",
+		confs_prefix,
+		name.first,
+		name.second,
+		key,
+	};
+}
+
 decltype(ircd::db::read_checksum)
 ircd::db::read_checksum
 {

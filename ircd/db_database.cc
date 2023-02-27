@@ -713,6 +713,7 @@ ircd::db::name(const database &d)
 namespace ircd::db
 {
 	extern const description default_description;
+	static options::map conf_open_opts;
 }
 
 // Instance list linkage
@@ -863,6 +864,10 @@ try
 ,read_only
 {
 	slave || ircd::read_only
+}
+,opened
+{
+	false
 }
 ,env
 {
@@ -1072,6 +1077,51 @@ try
 	//rocksdb::SetPerfLevel(rocksdb::PerfLevel::kDisable);
 
 	return opts;
+}()}
+,confs{[this]() -> db::confs
+{
+	const pair<string_view> name
+	{
+		this->name, "db"
+	};
+
+	auto ret
+	{
+		make_confs(db::options(*this->opts), name, [this]
+		(const conf::item<void> &item)
+		{
+			const string_view key
+			{
+				unmake_conf_name_key(item)
+			};
+
+			const string_view val
+			{
+				dynamic_cast<const conf::item<std::string> &>(item)
+			};
+
+			// The conf setter can be called prior to open (by an env var) in
+			// which case we integrate the conf with the options passed at open.
+			if(!this->opened)
+			{
+				conf_open_opts.emplace(key, val);
+				return;
+			}
+
+			//const db::database &d(*this);
+			//db::setopt(mutable_cast(d), key, val);
+		})
+	};
+
+	// Merge any conf item results (likely set by env var at this point) into
+	// the master options.
+	if(!conf_open_opts.empty())
+	{
+		this->opts = std::make_unique<rocksdb::DBOptions>(conf_open_opts.merge(*this->opts));
+		conf_open_opts.clear();
+	}
+
+	return ret;
 }()}
 ,column_names{[this]
 {
@@ -1297,6 +1347,7 @@ try
 		check(*this);
 	}
 
+	opened = true;
 	log::info
 	{
 		log, "[%s] Opened database @ `%s' with %zu columns at sequence number %lu.",
@@ -1426,6 +1477,7 @@ noexcept try
 		d->Close()
 	};
 
+	opened = false;
 	env->st.reset(nullptr);
 
 	log::info
@@ -1691,15 +1743,7 @@ ircd::db::database::column::column(database &d,
 	std::make_shared<struct database::allocator>(this->d, this, database::allocator::cache_arena, descriptor.block_size)
 	#endif
 }
-,handle
-{
-	nullptr, [&d](rocksdb::ColumnFamilyHandle *const handle)
-	{
-		assert(d.d);
-		if(handle && d.d)
-			d.d->DestroyColumnFamilyHandle(handle);
-	}
-}
+,options_preconfiguration{[this]
 {
 	// If possible, deduce comparator based on type given in descriptor
 	if(!this->descriptor->cmp.less)
@@ -1953,7 +1997,59 @@ ircd::db::database::column::column(database &d,
 
 	// Finally set the table options in the column options.
 	this->options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_opts));
+	return true;
+}()}
+,confs{[this]() -> db::confs
+{
+	const pair<string_view> name
+	{
+		this->d->name, this->descriptor->name
+	};
 
+	auto ret
+	{
+		make_confs(db::options(this->options), name, [this]
+		(const conf::item<void> &item)
+		{
+			const string_view key
+			{
+				unmake_conf_name_key(item)
+			};
+
+			const string_view val
+			{
+				dynamic_cast<const conf::item<std::string> &>(item)
+			};
+
+			if(!this->d->opened)
+			{
+				conf_open_opts.emplace(key, val);
+				return;
+			}
+
+			//const db::column &c(*this);
+			//db::setopt(mutable_cast(c), key, val);
+		})
+	};
+
+	if(!conf_open_opts.empty())
+	{
+		this->options = conf_open_opts.merge(this->options);
+		conf_open_opts.clear();
+	}
+
+	return ret;
+}()}
+,handle
+{
+	nullptr, [&d](rocksdb::ColumnFamilyHandle *const handle)
+	{
+		assert(d.d);
+		if(handle && d.d)
+			d.d->DestroyColumnFamilyHandle(handle);
+	}
+}
+{
 	log::debug
 	{
 		log, "schema '%s' column [%s => %s] cmp[%s] pfx[%s] lru:%s:%s bloom:%zu compression:%d %s",
@@ -1962,9 +2058,9 @@ ircd::db::database::column::column(database &d,
 		demangle(mapped_type.name()),
 		this->cmp.Name(),
 		this->options.prefix_extractor? this->prefix.Name() : "none",
-		cache_size? "YES": "NO",
-		cache_size_comp? "YES": "NO",
-		bloom_bits,
+		table_opts.block_cache? "YES": "NO",
+		table_opts.block_cache_compressed? "YES": "NO",
+		this->descriptor->bloom_bits,
 		int(this->options.compression),
 		this->descriptor->name
 	};

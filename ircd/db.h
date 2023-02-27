@@ -104,6 +104,13 @@ namespace ircd::db
 	rocksdb::WriteOptions make_opts(const sopts &) noexcept;
 	rocksdb::ReadOptions make_opts(const gopts &) noexcept;
 
+	// Database options as ircd::conf items.
+	static const string_view confs_prefix {"ircd.db"};
+	using confs = std::vector<std::unique_ptr<conf::item<std::string>>>;
+	string_view make_conf_name(const mutable_buffer &, const pair<string_view> &, const string_view &);
+	string_view unmake_conf_name_key(const conf::item<void> &);
+	confs make_confs(const db::options &, const pair<string_view> &, const conf::set_cb &);
+
 	// Database options creator
 	static bool optstr_find_and_remove(std::string &optstr, const std::string &what);
 	rocksdb::DBOptions make_dbopts(std::string optstr, std::string *const &out = nullptr, bool *read_only = nullptr, bool *fsck = nullptr);
@@ -397,6 +404,8 @@ ircd::db::database::column final
 	std::shared_ptr<struct database::stats> stats;
 	std::shared_ptr<struct database::allocator> allocator;
 	rocksdb::BlockBasedTableOptions table_opts;
+	const bool options_preconfiguration;
+	std::vector<std::unique_ptr<conf::item<std::string>>> confs;
 	custom_ptr<rocksdb::ColumnFamilyHandle> handle;
 
   public:

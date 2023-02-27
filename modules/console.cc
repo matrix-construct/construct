@@ -2256,7 +2256,7 @@ console_cmd__conf__list(opt &out, const string_view &line)
 		};
 
 		out
-		<< std::setw(64) << std::left << std::setfill('_') << _key
+		<< std::setw(80) << std::left << std::setfill('_') << _key
 		<< " " << item_p->get(val + size(_key))
 		<< std::endl;
 	}

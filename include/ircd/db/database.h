@@ -108,7 +108,7 @@ struct ircd::db::database
 	uint64_t checkpoint;
 	std::string path;
 	std::string optstr;
-	bool fsck, slave, read_only;
+	bool fsck, slave, read_only, opened;
 	std::shared_ptr<struct env> env;
 	std::shared_ptr<struct stats> stats;
 	std::shared_ptr<struct logger> logger;
@@ -121,6 +121,7 @@ struct ircd::db::database
 	std::shared_ptr<rocksdb::Cache> row_cache;
 	std::vector<descriptor> descriptors;
 	std::unique_ptr<rocksdb::DBOptions> opts;
+	std::vector<std::unique_ptr<conf::item<std::string>>> confs;
 	std::unordered_map<string_view, std::shared_ptr<column>> column_names;
 	std::unique_ptr<rocksdb::DB> d;
 	ctx::mutex write_mutex;
