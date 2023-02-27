@@ -2514,7 +2514,7 @@ const
 		database_stats_name_buf, "ircd.db.%s.%s.%s",
 		db::name(*d),
 		c? db::name(*c): "db"s,
-		ticker_name,
+		lstrip(ticker_name, "rocksdb."),
 	};
 }
 
