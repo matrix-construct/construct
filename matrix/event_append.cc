@@ -331,6 +331,7 @@ ircd::m::event::append::append(json::stack::object &object,
 		});
 
 	if(prev_state_idx)
+	{
 		m::get(std::nothrow, prev_state_idx, "content", [&unsigned_]
 		(const json::object &content)
 		{
@@ -339,6 +340,22 @@ ircd::m::event::append::append(json::stack::object &object,
 				unsigned_, "prev_content", content
 			};
 		});
+
+		const auto replaces_state_id
+		{
+			m::event_id(std::nothrow, prev_state_idx)
+		};
+
+		json::stack::member
+		{
+			unsigned_, "replaces_state", json::value
+			{
+				replaces_state_id?
+					string_view{replaces_state_id}:
+					string_view{}
+			}
+		};
+	}
 
 	if(unlikely(event_append_info))
 		log::info
