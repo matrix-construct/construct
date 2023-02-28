@@ -25,6 +25,40 @@ ircd::util::size(std::ostream &s)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// util/blackwhite.h
+//
+
+bool
+ircd::util::blackwhite::list::match(const string_view &a)
+const
+{
+	const auto matcher
+	{
+		[&a](const string_view &b) noexcept
+		{
+			return a != b;
+		}
+	};
+
+	const bool black
+	{
+		this->black && !this->white?
+			!tokens(this->black, delim, matcher):
+			false
+	};
+
+	const bool white
+	{
+		!black && this->white?
+			!tokens(this->white, delim, matcher):
+			false
+	};
+
+	return !black && (white || !this->white);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // util/env.h
 //
 

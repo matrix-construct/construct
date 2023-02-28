@@ -67,6 +67,7 @@ namespace ircd
 #include "all.h"
 #include "compare_exchange.h"
 #include "bitset.h"
+#include "blackwhite.h"
 
 // Unsorted section
 namespace ircd {
