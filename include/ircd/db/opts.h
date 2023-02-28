@@ -110,6 +110,12 @@ struct ircd::db::options
 struct ircd::db::options::map
 :std::unordered_map<std::string, std::string>
 {
+	// Merge output of options structures from map (map takes precedence).
+	rocksdb::DBOptions merge(const rocksdb::DBOptions &) const;
+	rocksdb::ColumnFamilyOptions merge(const rocksdb::ColumnFamilyOptions &) const;
+	rocksdb::PlainTableOptions merge(const rocksdb::PlainTableOptions &) const;
+	rocksdb::BlockBasedTableOptions merge(const rocksdb::BlockBasedTableOptions &) const;
+
 	// Output of options structures from map
 	operator rocksdb::DBOptions() const;
 	operator rocksdb::ColumnFamilyOptions() const;
@@ -120,7 +126,7 @@ struct ircd::db::options::map
 	map(const options &);
 
 	// Input of options map from user
-	map(std::unordered_map<std::string, std::string> m)
+	map(std::unordered_map<std::string, std::string> m = {})
 	:std::unordered_map<std::string, std::string>{std::move(m)}
 	{}
 };

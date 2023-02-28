@@ -3920,49 +3920,81 @@ ircd::db::options::map::map(const options &o)
 	};
 }
 
-ircd::db::options::map::operator rocksdb::PlainTableOptions()
-const
-{
-	rocksdb::PlainTableOptions ret;
-	throw_on_error
-	{
-		rocksdb::GetPlainTableOptionsFromMap(ret, *this, &ret)
-	};
-
-	return ret;
-}
-
 ircd::db::options::map::operator rocksdb::BlockBasedTableOptions()
 const
 {
 	rocksdb::BlockBasedTableOptions ret;
-	throw_on_error
-	{
-		rocksdb::GetBlockBasedTableOptionsFromMap(ret, *this, &ret)
-	};
+	return merge(ret);
+}
 
-	return ret;
+ircd::db::options::map::operator rocksdb::PlainTableOptions()
+const
+{
+	rocksdb::PlainTableOptions ret;
+	return merge(ret);
 }
 
 ircd::db::options::map::operator rocksdb::ColumnFamilyOptions()
 const
 {
 	rocksdb::ColumnFamilyOptions ret;
-	throw_on_error
-	{
-		rocksdb::GetColumnFamilyOptionsFromMap(ret, *this, &ret)
-	};
-
-	return ret;
+	return merge(ret);
 }
 
 ircd::db::options::map::operator rocksdb::DBOptions()
 const
 {
 	rocksdb::DBOptions ret;
+	return merge(ret);
+}
+
+rocksdb::BlockBasedTableOptions
+ircd::db::options::map::merge(const rocksdb::BlockBasedTableOptions &opts)
+const
+{
+	rocksdb::BlockBasedTableOptions ret;
 	throw_on_error
 	{
-		rocksdb::GetDBOptionsFromMap(ret, *this, &ret)
+		rocksdb::GetBlockBasedTableOptionsFromMap(opts, *this, &ret, true, true)
+	};
+
+	return ret;
+}
+
+rocksdb::PlainTableOptions
+ircd::db::options::map::merge(const rocksdb::PlainTableOptions &opts)
+const
+{
+	rocksdb::PlainTableOptions ret;
+	throw_on_error
+	{
+		rocksdb::GetPlainTableOptionsFromMap(opts, *this, &ret, true, true)
+	};
+
+	return ret;
+}
+
+rocksdb::ColumnFamilyOptions
+ircd::db::options::map::merge(const rocksdb::ColumnFamilyOptions &opts)
+const
+{
+	rocksdb::ColumnFamilyOptions ret;
+	throw_on_error
+	{
+		rocksdb::GetColumnFamilyOptionsFromMap(opts, *this, &ret, true, true)
+	};
+
+	return ret;
+}
+
+rocksdb::DBOptions
+ircd::db::options::map::merge(const rocksdb::DBOptions &opts)
+const
+{
+	rocksdb::DBOptions ret;
+	throw_on_error
+	{
+		rocksdb::GetDBOptionsFromMap(opts, *this, &ret, true, true)
 	};
 
 	return ret;
