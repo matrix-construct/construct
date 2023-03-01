@@ -483,11 +483,10 @@ ircd::m::pretty(std::ostream &s,
 		s << std::endl;
 	}
 
-	const m::event::prev prev
-	{
-		event
-	};
+	const m::event::auth auth{event};
+	pretty(s, auth);
 
+	const m::event::prev prev{event};
 	pretty(s, prev);
 
 	if(!contents.empty())
