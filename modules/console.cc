@@ -7352,9 +7352,17 @@ console_cmd__stage__final(opt &out, const string_view &line)
 		stage.at(id)
 	};
 
+	char ver_buf[128];
+	string_view version;
+	if(json::get<"room_id"_>(event))
+		version = m::version(ver_buf, m::room(at<"room_id"_>(event)), std::nothrow);
+
+	if(!version)
+		version = "1";
+
 	m::event::id::buf event_id_buf;
-	if(!has(opts, "no_event_id"))
-		json::get<"event_id"_>(event) = make_id(event, "1", event_id_buf);
+	if(!has(opts, "no_event_id") || version == "1")
+		json::get<"event_id"_>(event) = make_id(event, version, event_id_buf);
 
 	thread_local char hashes_buf[512];
 	if(!has(opts, "no_hashes"))
