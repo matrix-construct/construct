@@ -874,9 +874,9 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log::critical
+	ircd::terminate
 	{
-		log, "[%s] start thread :%s",
+		"[%s] start thread :%s",
 		d.name,
 		e.what()
 	};
