@@ -575,7 +575,9 @@ catch(const json::error &e)
 		e.what(),
 	};
 
-	return default_power_level;
+	return prop == "invite"?
+		default_event_level:
+		default_power_level;
 }
 
 size_t
