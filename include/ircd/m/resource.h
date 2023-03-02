@@ -43,6 +43,7 @@ struct ircd::m::resource
 struct ircd::m::resource::method
 :ircd::resource::method
 {
+	enum flag :std::underlying_type_t<ircd::resource::flag>;
 	using handler = std::function<response (client &, request &)>;
 
 	handler function;
@@ -51,6 +52,20 @@ struct ircd::m::resource::method
 
 	method(m::resource &, const string_view &name, handler, struct opts = {});
 	~method() noexcept;
+};
+
+/// Matrix resource method option flags. These flags are valued in the upper
+/// bits to not conflict with the base ircd::resource flag values.
+enum ircd::m::resource::method::flag
+:std::underlying_type_t<ircd::resource::flag>
+{
+	/// Method will verify access_token or authentication bearer. This is used
+	/// on the client-server API.
+	REQUIRES_AUTH = 0x0001'0000,
+
+	/// Method will verify X-Matrix-authorization. This is used on the
+	/// federation API.
+	VERIFY_ORIGIN = 0x0002'0000,
 };
 
 struct ircd::m::resource::request

@@ -6987,15 +6987,17 @@ console_cmd__resource(opt &out, const string_view &line)
 			r[method]
 		};
 
-		out << method << " "
-		    << path
-		    << std::endl;
+		out
+		<< method << " "
+		<< path
+		<< std::endl;
 
-		out << (m.opts->flags & resource::method::REQUIRES_AUTH? " REQUIRES_AUTH" : "")
-		    << (m.opts->flags & resource::method::RATE_LIMITED? " RATE_LIMITED" : "")
-		    << (m.opts->flags & resource::method::VERIFY_ORIGIN? " VERIFY_ORIGIN" : "")
-		    << (m.opts->flags & resource::method::CONTENT_DISCRETION? " CONTENT_DISCRETION" : "")
-		    << std::endl;
+		out
+		<< (m.opts->flags & m::resource::method::REQUIRES_AUTH? " REQUIRES_AUTH" : "")
+		<< (m.opts->flags & m::resource::method::VERIFY_ORIGIN? " VERIFY_ORIGIN" : "")
+		<< (m.opts->flags & resource::method::RATE_LIMITED? " RATE_LIMITED" : "")
+		<< (m.opts->flags & resource::method::CONTENT_DISCRETION? " CONTENT_DISCRETION" : "")
+		<< std::endl;
 
 		return true;
 	}

@@ -43,20 +43,34 @@ struct ircd::resource::method
 	~method() noexcept;
 };
 
+/// Resource method option flags. Flag values enumerated here are restricted
+/// to the lower half of the integer. The upper half is reserved for derived
+/// resource methods and their own flags.
 enum ircd::resource::method::flag
 :uint
 {
-	REQUIRES_AUTH         = 0x01,   //TODO: matrix abstraction bleed.
-	RATE_LIMITED          = 0x02,
-	VERIFY_ORIGIN         = 0x04,   //TODO: matrix abstraction bleed.
-	CONTENT_DISCRETION    = 0x08,
-	DELAYED_ACK           = 0x10,
-	DELAYED_RESPONSE      = 0x20,
+	/// Options governing the frequency of requests are applied to method. If
+	/// not given, any set rate limiting options or their defaults are ignored.
+	RATE_LIMITED = 0x0001,
+
+	/// Method assumes responsibility for consuming HTTP content off socket.
+	/// If this flag is not set, all content will be consumed off the socket
+	/// into a buffer prior to the method call.
+	CONTENT_DISCRETION = 0x0002,
+
+	/// The TCP quick-ack feature will not be used prior to calling the method.
+	/// If this flag is not set the feature may be used if conditions permit.
+	DELAYED_ACK = 0x0004,
+
+	/// TCP delays will be in use while this method responds to the client on
+	/// the socket.
+	DELAYED_RESPONSE = 0x0008,
 };
 
 struct ircd::resource::method::opts
 {
-	flag flags {(flag)0};
+	/// Option flags
+	std::underlying_type_t<method::flag> flags {0};
 
 	/// Timeout specific to this resource; 0 is automatic
 	seconds timeout {0};
