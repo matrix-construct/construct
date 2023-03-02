@@ -4910,7 +4910,7 @@ try
 {
 	const params param{line, " ",
 	{
-		"dbname", "column"
+		"dbname", "column", "level"
 	}};
 
 	const auto dbname
@@ -4921,6 +4921,11 @@ try
 	const auto colname
 	{
 		param.at("column", "*"_sv)
+	};
+
+	const auto level
+	{
+		param.at("level", -1)
 	};
 
 	auto &database
@@ -4969,7 +4974,12 @@ try
 
 		_print_sst_info_header(out);
 		for(const auto &fileinfo : vector)
+		{
+			if(level != -1 && fileinfo.level != level)
+				continue;
+
 			_print_sst_info(out, fileinfo);
+		}
 
 		out << std::endl;
 		_print_totals(vector);
@@ -5001,7 +5011,12 @@ try
 
 	_print_sst_info_header(out);
 	for(const auto &info : vector)
+	{
+		if(level != -1 && info.level != level)
+			continue;
+
 		_print_sst_info(out, info);
+	}
 
 	out << std::endl;
 	_print_totals(vector);
