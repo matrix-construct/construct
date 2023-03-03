@@ -342,10 +342,16 @@ ircd::m::authenticate_user(const resource::method &method,
                            const client &client,
                            resource::request &request)
 {
+	static const auto auth_requires
+	{0
+		| resource::method::REQUIRES_AUTH
+		| resource::method::REQUIRES_OPER
+	};
+
 	assert(method.opts);
 	const auto requires_auth
 	{
-		method.opts->flags & resource::method::REQUIRES_AUTH
+		method.opts->flags & auth_requires
 	};
 
 	if(!requires_auth && !request.access_token)
@@ -396,6 +402,14 @@ ircd::m::authenticate_user(const resource::method &method,
 			http::UNAUTHORIZED, "M_UNKNOWN_TOKEN",
 			"Credentials for this method are required but invalid."
 		};
+
+	// Operator access required for method.
+	if(method.opts->flags & resource::method::REQUIRES_OPER)
+		if(!is_oper(m::user::id(sender)))
+			throw m::ACCESS_DENIED
+			{
+				"You are not an operator."
+			};
 
 	return sender;
 }

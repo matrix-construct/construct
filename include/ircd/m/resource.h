@@ -66,6 +66,9 @@ enum ircd::m::resource::method::flag
 	/// Method will verify X-Matrix-authorization. This is used on the
 	/// federation API.
 	VERIFY_ORIGIN = 0x0002'0000,
+
+	/// Method requires operator access. This is used on the client-server API.
+	REQUIRES_OPER = 0x0004'0000,
 };
 
 struct ircd::m::resource::request
