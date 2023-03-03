@@ -55,6 +55,7 @@ ircd::m::admin::handle_get(client &client,
 		buf
 	};
 
+	make_deps(deps);
 	return m::resource::response
 	{
 		client, json::members
