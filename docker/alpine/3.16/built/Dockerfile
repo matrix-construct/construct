@@ -50,7 +50,7 @@ RUN true \
 && ln -sv /usr/src/rocksdb construct/deps/rocksdb \
 && cd /usr/src/construct \
 && ./autogen.sh \
-&& (./configure --with-profile=no || (cat config.log; exit 1)) \
+&& (./configure --disable-iou || (cat config.log; exit 1)) \
 && make -j `nproc` EXTRA_LDFLAGS="-Wl,--strip-all" install \
 && rm -rf /usr/src/rocksdb \
 && rm -rf /usr/src/construct \
