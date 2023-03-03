@@ -10,6 +10,7 @@
 
 namespace ircd::m::admin
 {
+	static resource::response handle_get_state(client &, const resource::request &, const room::id &);
 	static resource::response handle_get_members(client &, const resource::request &, const room::id &);
 	static resource::response handle_delete_forward_extremis(client &, const resource::request &, const room::id &);
 	static resource::response handle_get_forward_extremis(client &, const resource::request &, const room::id &);
@@ -86,6 +87,9 @@ ircd::m::admin::handle(client &client,
 
 	if(request.head.method == "GET" && cmd == "members")
 		return handle_get_members(client, request, room_id);
+
+	if(request.head.method == "GET" && cmd == "state")
+		return handle_get_state(client, request, room_id);
 
 	throw m::NOT_FOUND
 	{
@@ -199,6 +203,39 @@ ircd::m::admin::handle_get_members(client &client,
 	(const m::id::user &user_id)
 	{
 		array.append(user_id);
+		return true;
+	});
+
+	return response;
+}
+
+ircd::m::resource::response
+ircd::m::admin::handle_get_state(client &client,
+                                 const resource::request &request,
+                                 const room::id &room_id)
+{
+	const m::room::state state
+	{
+		room_id
+	};
+
+	m::resource::response::chunked::json response
+	{
+		client, http::OK
+	};
+
+	json::stack::array array
+	{
+		response, "state"
+	};
+
+	m::event::fetch event;
+	state.for_each([&array, &event]
+	(const auto &type, const auto &state_key, const auto &event_idx)
+	{
+		if(likely(seek(std::nothrow, event, event_idx)))
+			array.append(event);
+
 		return true;
 	});
 
