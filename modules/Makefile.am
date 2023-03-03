@@ -560,10 +560,12 @@ admin_moduledir = @moduledir@
 
 admin_admin_users_la_SOURCES = admin/users.cc
 admin_admin_deactivate_la_SOURCES = admin/deactivate.cc
+admin_admin_server_version_la_SOURCES = admin/server_version.cc
 
 admin_module_LTLIBRARIES = \
 	admin/admin_users.la \
 	admin/admin_deactivate.la \
+	admin/admin_server_version.la \
 	###
 
 ###############################################################################
