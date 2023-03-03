@@ -74,12 +74,26 @@ post__delete_devices(client &client,
 		request.user_id
 	};
 
+	const m::user::tokens access_tokens
+	{
+		request.user_id
+	};
+
+	size_t revoked(0);
 	for(const json::string device_id : devices)
-		user_devices.del(device_id);
+		revoked += access_tokens.del_by_device(device_id, "device deleted");
+
+	size_t deleted(0);
+	for(const json::string device_id : devices)
+		deleted += user_devices.del(device_id);
 
 	return m::resource::response
 	{
-		client, http::OK
+		client, json::members
+		{
+			{ "deleted", long(deleted) },
+			{ "revoked", long(revoked) },
+		}
 	};
 }
 

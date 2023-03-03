@@ -193,6 +193,16 @@ delete__devices(client &client,
 			"Incorrect password."
 		};
 
+	const m::user::tokens tokens
+	{
+		request.user_id
+	};
+
+	const size_t revoked
+	{
+		tokens.del_by_device(device_id)
+	};
+
 	const m::user::devices devices
 	{
 		request.user_id
