@@ -603,6 +603,13 @@ try
 		tokens(client.request.params, '/', client.request.param)
 	};
 
+	// Start the TCP cork if the method has this option set.
+	if(opts->flags & RESPONSE_NOPUSH)
+	{
+		assert(client.sock);
+		net::nopush(*client.sock, true);
+	}
+
 	// Finally handle the request.
 	const auto &ret
 	{
@@ -611,6 +618,13 @@ try
 
 	// Increment the successful completion counter for the handler.
 	++stats->completions;
+
+	// Stop the TCP cork if the method has this option set.
+	if(opts->flags & RESPONSE_NOPUSH)
+	{
+		assert(client.sock);
+		net::nopush(*client.sock, false);
+	}
 
 	// This branch flips TCP_NODELAY to force transmission here. This is a
 	// good place because the request has finished writing everything; the

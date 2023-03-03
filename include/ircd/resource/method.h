@@ -65,6 +65,9 @@ enum ircd::resource::method::flag
 	/// This option prevents TCP nodelay from being toggled at the end of the
 	/// request to flush the sendq; TCP delays are used by default.
 	RESPONSE_NOFLUSH = 0x0008,
+
+	/// This option TCP corks the response during the request.
+	RESPONSE_NOPUSH = 0x0010,
 };
 
 struct ircd::resource::method::opts
