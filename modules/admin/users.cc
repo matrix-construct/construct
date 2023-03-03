@@ -10,6 +10,7 @@
 
 namespace ircd::m::admin
 {
+	static resource::response handle_get_joined_rooms(client &, const resource::request &, const user::id &);
 	static resource::response handle_get_admin(client &, const resource::request &, const user::id &);
 	static resource::response handle_get(client &, const resource::request &);
 
@@ -71,6 +72,9 @@ ircd::m::admin::handle_get(client &client,
 	if(cmd == "admin")
 		return handle_get_admin(client, request, user_id);
 
+	if(cmd == "joined_rooms")
+		return handle_get_joined_rooms(client, request, user_id);
+
 	throw m::NOT_FOUND
 	{
 		"/admin/users command not found"
@@ -95,4 +99,41 @@ ircd::m::admin::handle_get_admin(client &client,
 			{ "admin", admin }
 		}
 	};
+}
+
+ircd::m::resource::response
+ircd::m::admin::handle_get_joined_rooms(client &client,
+                                        const resource::request &request,
+                                        const user::id &user_id)
+{
+	const m::user::rooms rooms
+	{
+		user_id
+	};
+
+	m::resource::response::chunked::json response
+	{
+		client, http::OK
+	};
+
+	json::stack::member
+	{
+		response, "total", json::value
+		{
+			long(rooms.count("join"))
+		}
+	};
+
+	json::stack::array joined_rooms
+	{
+		response, "joined_rooms"
+	};
+
+	rooms.for_each("join", [&joined_rooms]
+	(const m::room &room, const string_view &)
+	{
+		joined_rooms.append(room.room_id);
+	});
+
+	return response;
 }
