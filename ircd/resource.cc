@@ -616,7 +616,7 @@ try
 	// good place because the request has finished writing everything; the
 	// socket doesn't know that, but we do, and this is the place. The action
 	// can be disabled by using the flag in the method's options.
-	if(likely(~opts->flags & DELAYED_RESPONSE))
+	if(likely(~opts->flags & RESPONSE_NOFLUSH))
 	{
 		assert(client.sock);
 		net::flush(*client.sock);

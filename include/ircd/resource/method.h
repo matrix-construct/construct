@@ -62,9 +62,9 @@ enum ircd::resource::method::flag
 	/// If this flag is not set the feature may be used if conditions permit.
 	DELAYED_ACK = 0x0004,
 
-	/// TCP delays will be in use while this method responds to the client on
-	/// the socket.
-	DELAYED_RESPONSE = 0x0008,
+	/// This option prevents TCP nodelay from being toggled at the end of the
+	/// request to flush the sendq; TCP delays are used by default.
+	RESPONSE_NOFLUSH = 0x0008,
 };
 
 struct ircd::resource::method::opts
