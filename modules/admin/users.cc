@@ -10,6 +10,7 @@
 
 namespace ircd::m::admin
 {
+	static resource::response handle_get_pushers(client &, const resource::request &, const user::id &);
 	static resource::response handle_get_devices(client &, const resource::request &, const user::id &);
 	static resource::response handle_get_account_data(client &, const resource::request &, const user::id &);
 	static resource::response handle_get_joined_rooms(client &, const resource::request &, const user::id &);
@@ -82,6 +83,9 @@ ircd::m::admin::handle_get(client &client,
 
 	if(cmd == "devices")
 		return handle_get_devices(client, request, user_id);
+
+	if(cmd == "pushers")
+		return handle_get_pushers(client, request, user_id);
 
 	throw m::NOT_FOUND
 	{
@@ -276,6 +280,44 @@ ircd::m::admin::handle_get_devices(client &client,
 			return true;
 		});
 
+		return true;
+	});
+
+	return response;
+}
+
+ircd::m::resource::response
+ircd::m::admin::handle_get_pushers(client &client,
+                                   const resource::request &request,
+                                   const user::id &user_id)
+{
+	const m::user::pushers pushers
+	{
+		user_id
+	};
+
+	m::resource::response::chunked::json response
+	{
+		client, http::OK
+	};
+
+	json::stack::member
+	{
+		response, "total", json::value
+		{
+			long(pushers.count())
+		}
+	};
+
+	json::stack::array array
+	{
+		response, "pushers"
+	};
+
+	pushers.for_each([&array]
+	(const auto &, const auto &key, const json::object &pusher)
+	{
+		array.append(pusher);
 		return true;
 	});
 
