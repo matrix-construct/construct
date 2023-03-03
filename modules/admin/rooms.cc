@@ -10,6 +10,7 @@
 
 namespace ircd::m::admin
 {
+	static resource::response handle_get_members(client &, const resource::request &, const room::id &);
 	static resource::response handle_delete_forward_extremis(client &, const resource::request &, const room::id &);
 	static resource::response handle_get_forward_extremis(client &, const resource::request &, const room::id &);
 	static resource::response handle(client &, const resource::request &);
@@ -82,6 +83,9 @@ ircd::m::admin::handle(client &client,
 
 	if(request.head.method == "GET" && cmd == "forward_extremities")
 		return handle_get_forward_extremis(client, request, room_id);
+
+	if(request.head.method == "GET" && cmd == "members")
+		return handle_get_members(client, request, room_id);
 
 	throw m::NOT_FOUND
 	{
@@ -157,6 +161,44 @@ ircd::m::admin::handle_get_forward_extremis(client &client,
 			}
 		};
 
+		return true;
+	});
+
+	return response;
+}
+
+ircd::m::resource::response
+ircd::m::admin::handle_get_members(client &client,
+                                   const resource::request &request,
+                                   const room::id &room_id)
+{
+	const m::room::members members
+	{
+		room_id
+	};
+
+	m::resource::response::chunked::json response
+	{
+		client, http::OK
+	};
+
+	json::stack::member
+	{
+		response, "total", json::value
+		{
+			long(members.count("join"))
+		}
+	};
+
+	json::stack::array array
+	{
+		response, "members"
+	};
+
+	members.for_each("join", [&array]
+	(const m::id::user &user_id)
+	{
+		array.append(user_id);
 		return true;
 	});
 
