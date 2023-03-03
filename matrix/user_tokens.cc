@@ -59,6 +59,32 @@ const
 	return ret;
 }
 
+size_t
+ircd::m::user::tokens::del_by_device(const string_view &device_id,
+                                     const string_view &reason)
+const
+{
+	size_t ret(0);
+	for_each([this, &ret, &device_id, &reason]
+	(const event::idx &event_idx, const string_view &token)
+	{
+		const auto match
+		{
+			[&device_id](const json::object &content)
+			{
+				return json::string{content["device_id"]} == device_id;
+			}
+		};
+
+		if(m::query(std::nothrow, event_idx, "content", false, match))
+			ret += del(token, reason);
+
+		return true;
+	});
+
+	return ret;
+}
+
 bool
 ircd::m::user::tokens::del(const string_view &token,
                            const string_view &reason)
