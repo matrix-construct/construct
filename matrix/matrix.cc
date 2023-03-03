@@ -183,6 +183,7 @@ ircd::m::module_names
 	"admin_deactivate",
 	"admin_server_version",
 	"admin_federation",
+	"admin_rooms",
 };
 
 /// This is a list of modules that are considered "optional" and any loading
