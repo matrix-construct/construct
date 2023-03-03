@@ -274,6 +274,7 @@ catch(const ctx::timeout &e)
 
 namespace ircd::m
 {
+	static bool add_query(std::vector<fed::key::server_key> &, const fed::key::server_key &);
 	extern conf::item<milliseconds> keys_get_timeout;
 }
 
@@ -293,27 +294,10 @@ ircd::m::keys::fetch(const pdus &pdus)
 	for(const auto &event : pdus)
 		for(const auto &[server_name, signatures] : json::get<"signatures"_>(event))
 			for(const auto &[key_id, signature] : json::object(signatures))
-			{
-				const server_key query
+				add_query(q, server_key
 				{
 					json::get<"origin"_>(event), key_id
-				};
-
-				// Check if we're already making a query.
-				if(std::binary_search(begin(q), end(q), query))
-					continue;
-
-				// Check if we already have the key.
-				if(cache::has(json::get<"origin"_>(event), key_id))
-					continue;
-
-				// If there's a cached error on the host we can skip here.
-				if(fed::errant(json::get<"origin"_>(event)))
-					continue;
-
-				q.emplace_back(query);
-				std::sort(begin(q), end(q));
-			}
+				});
 
 	const size_t fetched
 	{
@@ -321,6 +305,49 @@ ircd::m::keys::fetch(const pdus &pdus)
 	};
 
 	return fetched;
+}
+
+bool
+ircd::m::add_query(std::vector<fed::key::server_key> &q,
+                   const fed::key::server_key &query)
+try
+{
+	const auto &[server, key_id]
+	{
+		query
+	};
+
+	// Check if we're already making a query.
+	if(std::binary_search(begin(q), end(q), query))
+		return false;
+
+	// Check if we already have the key.
+	if(keys::cache::has(server, key_id))
+		return false;
+
+	// If there's a cached error on the host we can skip here.
+	if(fed::errant(server))
+		return false;
+
+	q.emplace_back(query);
+	std::sort(begin(q), end(q));
+	return true;
+}
+catch(const ctx::interrupted &e)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		log, "Key '%s' from server '%s' :%s",
+		query.second,
+		query.first,
+		e.what(),
+	};
+
+	return false;
 }
 
 size_t
