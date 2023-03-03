@@ -346,7 +346,7 @@ try
 
 	// Conformity checks only require the event data itself; note that some
 	// local queries may still be made by the hook, such as m::redacted().
-	if(likely(opts.phase[phase::CONFORM]) && !opts.edu)
+	if(likely(opts.phase[phase::CONFORM]) && !opts.edu) try
 	{
 		const scope_restore eval_phase
 		{
@@ -354,6 +354,22 @@ try
 		};
 
 		call_hook(conform_hook, eval, event, eval);
+	}
+	catch(const vm::error &e)
+	{
+		return handle_fault
+		(
+			*eval.opts, e.code, event.event_id,
+			"eval %s %s :%s :%s",
+			event.event_id?
+				string_view{event.event_id}:
+				"<unknown>"_sv,
+			json::get<"room_id"_>(event)?
+				string_view{json::get<"room_id"_>(event)}:
+				"<unknown>"_sv,
+			e.what(),
+			e.content
+		);
 	}
 
 	// If the event is simply missing content while not being authoritatively
