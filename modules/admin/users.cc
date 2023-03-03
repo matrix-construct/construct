@@ -38,7 +38,7 @@ ircd::m::admin::get_method
 {
 	users_resource, "GET", handle_get,
 	{
-		get_method.REQUIRES_AUTH
+		get_method.REQUIRES_OPER
 	}
 };
 

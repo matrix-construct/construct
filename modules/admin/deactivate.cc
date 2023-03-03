@@ -37,7 +37,7 @@ ircd::m::admin::post_method
 {
 	deactivate_resource, "POST", handle_post,
 	{
-		post_method.REQUIRES_AUTH
+		post_method.REQUIRES_OPER
 	}
 };
 
@@ -55,12 +55,6 @@ ircd::m::admin::handle_post(client &client,
 	{
 		url::decode(user_id, request.parv[0])
 	};
-
-	if(!is_oper(request.user_id))
-		throw m::ACCESS_DENIED
-		{
-			"You are not an operator."
-		};
 
 	m::user user
 	{
