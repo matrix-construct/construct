@@ -15557,6 +15557,102 @@ console_cmd__fed__send(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__fed__join(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "event_id", "remote", "op", "oparg"
+	}};
+
+	const auto room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const m::event::id &event_id
+	{
+		param.at(1)
+	};
+
+	const string_view remote
+	{
+		param.at(2, room_id.host())
+	};
+
+	const string_view &op
+	{
+		param["op"]
+	};
+
+	const m::event::fetch event
+	{
+		event_id
+	};
+
+	m::fed::send_join::opts opts;
+	opts.remote = remote;
+	opts.knock = has(op, "knock");
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB
+	};
+
+	m::fed::send_join request
+	{
+		room_id, event_id, event.source, buf, std::move(opts)
+	};
+
+	request.get(out.timeout);
+	const json::object response
+	{
+		json::array(request.in.content)[1]
+	};
+
+	const json::array auth_chain
+	{
+		response["auth_chain"]
+	};
+
+	const json::array state
+	{
+		response["state"]
+	};
+
+	if(has(op, "eval"))
+	{
+		m::vm::opts vmopts;
+		vmopts.node_id = opts.remote;
+		vmopts.nothrows = -1;
+		vmopts.wopts.appendix[m::dbs::appendix::ROOM_HEAD] = false;
+		vmopts.phase.set(m::vm::phase::FETCH_PREV, false);
+		vmopts.phase.set(m::vm::phase::FETCH_STATE, false);
+		vmopts.phase.set(m::vm::phase::FETCH_AUTH, false);
+		vmopts.notify_servers = false;
+		vmopts.auth = !has(param["oparg"], "noauth");
+		vmopts.replays = has(param["oparg"], "replay");
+		m::vm::eval
+		{
+			auth_chain, vmopts
+		};
+
+		m::vm::eval
+		{
+			state, vmopts
+		};
+
+		return true;
+	}
+
+	for(const json::object event : auth_chain)
+		out << event << std::endl;
+
+	for(const json::object event : state)
+		out << event << std::endl;
+
+	return true;
+}
+
+bool
 console_cmd__fed__state(opt &out, const string_view &line)
 {
 	const params param{line, " ",
