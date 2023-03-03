@@ -10,10 +10,12 @@
 
 namespace ircd::m::admin
 {
+	static resource::response handle_delete_forward_extremis(client &, const resource::request &, const room::id &);
 	static resource::response handle_get_forward_extremis(client &, const resource::request &, const room::id &);
-	static resource::response handle_get(client &, const resource::request &);
+	static resource::response handle(client &, const resource::request &);
 
 	extern resource::method get_method;
+	extern resource::method delete_method;
 	extern resource rooms_resource;
 };
 
@@ -36,15 +38,24 @@ ircd::m::admin::rooms_resource
 decltype(ircd::m::admin::get_method)
 ircd::m::admin::get_method
 {
-	rooms_resource, "GET", handle_get,
+	rooms_resource, "GET", handle,
 	{
 		get_method.REQUIRES_OPER
 	}
 };
 
+decltype(ircd::m::admin::delete_method)
+ircd::m::admin::delete_method
+{
+	rooms_resource, "DELETE", handle,
+	{
+		delete_method.REQUIRES_OPER
+	}
+};
+
 ircd::m::resource::response
-ircd::m::admin::handle_get(client &client,
-                           const resource::request &request)
+ircd::m::admin::handle(client &client,
+                       const resource::request &request)
 {
 	char buf[768];
 	const string_view &room_id_or_alias
@@ -66,12 +77,34 @@ ircd::m::admin::handle_get(client &client,
 		request.parv[1]
 	};
 
-	if(cmd == "forward_extremities")
+	if(request.head.method == "DELETE" && cmd == "forward_extremities")
+		return handle_delete_forward_extremis(client, request, room_id);
+
+	if(request.head.method == "GET" && cmd == "forward_extremities")
 		return handle_get_forward_extremis(client, request, room_id);
 
 	throw m::NOT_FOUND
 	{
 		"/admin/rooms command not found"
+	};
+}
+
+ircd::m::resource::response
+ircd::m::admin::handle_delete_forward_extremis(client &client,
+                                               const resource::request &request,
+                                               const room::id &room_id)
+{
+	const room::head room_head
+	{
+		room_id
+	};
+
+	return resource::response
+	{
+		client, http::OK, json::members
+		{
+			{ "deleted", long(room::head::reset(room_head)) }
+		}
 	};
 }
 
