@@ -825,6 +825,7 @@ ircd::net::open(socket &socket,
 ircd::net::sock_opts::sock_opts(const socket &socket)
 :v6only{net::v6only(socket)}
 ,blocking{net::blocking(socket)}
+,nopush{net::nopush(socket)}
 ,nodelay{net::nodelay(socket)}
 ,quickack{net::quickack(socket)}
 ,keepalive{net::keepalive(socket)}
@@ -847,6 +848,9 @@ ircd::net::set(socket &socket,
 
 	if(opts.blocking != opts.IGN)
 		net::blocking(socket, opts.blocking);
+
+	if(opts.nopush != opts.IGN)
+		net::nopush(socket, opts.nopush);
 
 	if(opts.nodelay != opts.IGN)
 		net::nodelay(socket, opts.nodelay);
@@ -1056,6 +1060,29 @@ ircd::net::nodelay(socket &socket,
 	return true;
 }
 
+bool
+ircd::net::nopush(socket &socket,
+                  const bool &b)
+#if defined(TCP_CORK) && defined(SOL_SOCKET)
+{
+	ip::tcp::socket &sd(socket);
+	const auto &fd
+	{
+		sd.lowest_layer().native_handle()
+	};
+
+	const int val(b);
+	const socklen_t len(sizeof(val));
+	syscall(::setsockopt, fd, SOL_SOCKET, TCP_CORK, &val, len);
+	return true;
+}
+#else
+{
+	#warning "TCP_CORK is not defined on this platform."
+	return false;
+}
+#endif
+
 /// Toggles the behavior of non-async asio calls.
 ///
 /// This option affects very little in practice and only sets a flag in
@@ -1206,6 +1233,29 @@ ircd::net::nodelay(const socket &socket)
 	sd.get_option(option);
 	return option.value();
 }
+
+bool
+ircd::net::nopush(const socket &socket)
+#if defined(TCP_CORK) && defined(SOL_SOCKET)
+{
+	const ip::tcp::socket &sd(socket);
+	const auto &fd
+	{
+		mutable_cast(sd).lowest_layer().native_handle()
+	};
+
+	uint32_t ret;
+	socklen_t len(sizeof(ret));
+	syscall(::getsockopt, fd, SOL_SOCKET, TCP_CORK, &ret, &len);
+	assert(len <= sizeof(ret));
+	return ret;
+}
+#else
+{
+	#warning "TCP_CORK is not defined on this platform."
+	return false;
+}
+#endif
 
 bool
 ircd::net::blocking(const socket &socket)

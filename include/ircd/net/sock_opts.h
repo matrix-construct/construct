@@ -17,6 +17,7 @@ namespace ircd::net
 
 	bool v6only(const socket &);
 	bool blocking(const socket &);
+	bool nopush(const socket &);
 	bool nodelay(const socket &);
 	bool quickack(const socket &);
 	bool keepalive(const socket &);
@@ -30,6 +31,7 @@ namespace ircd::net
 	// returns true if supported, false if unsupported; failures will throw.
 	bool v6only(socket &, const bool &);
 	bool blocking(socket &, const bool &);
+	bool nopush(socket &, const bool &);
 	bool nodelay(socket &, const bool &);
 	bool quickack(socket &, const bool &);
 	bool keepalive(socket &, const bool &);
@@ -57,6 +59,7 @@ struct ircd::net::sock_opts
 
 	int8_t v6only { IGN };
 	int8_t blocking { IGN };             // Simulates blocking behavior
+	int8_t nopush { IGN };
 	int8_t nodelay { IGN };
 	int8_t quickack { IGN };
 	int8_t keepalive { IGN };
