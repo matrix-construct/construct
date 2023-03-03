@@ -10,6 +10,7 @@
 
 namespace ircd::m::admin
 {
+	static resource::response handle_get_account_data(client &, const resource::request &, const user::id &);
 	static resource::response handle_get_joined_rooms(client &, const resource::request &, const user::id &);
 	static resource::response handle_get_admin(client &, const resource::request &, const user::id &);
 	static resource::response handle_get(client &, const resource::request &);
@@ -75,6 +76,9 @@ ircd::m::admin::handle_get(client &client,
 	if(cmd == "joined_rooms")
 		return handle_get_joined_rooms(client, request, user_id);
 
+	if(cmd == "account_data")
+		return handle_get_account_data(client, request, user_id);
+
 	throw m::NOT_FOUND
 	{
 		"/admin/users command not found"
@@ -134,6 +138,88 @@ ircd::m::admin::handle_get_joined_rooms(client &client,
 	{
 		joined_rooms.append(room.room_id);
 	});
+
+	return response;
+}
+
+ircd::m::resource::response
+ircd::m::admin::handle_get_account_data(client &client,
+                                        const resource::request &request,
+                                        const user::id &user_id)
+{
+	m::resource::response::chunked::json response
+	{
+		client, http::OK
+	};
+
+	json::stack::object object
+	{
+		response, "account_data"
+	};
+
+	// global
+	{
+		json::stack::object global
+		{
+			object, "global"
+		};
+
+		const m::user::account_data account_data
+		{
+			user_id
+		};
+
+		account_data.for_each([&global]
+		(const string_view &key, const json::object &val)
+		{
+			json::stack::member
+			{
+				global, key, val
+			};
+
+			return true;
+		});
+	}
+
+	// rooms
+	{
+		json::stack::object rooms_object
+		{
+			object, "rooms"
+		};
+
+		const m::user::rooms user_rooms
+		{
+			user_id
+		};
+
+		user_rooms.for_each([&rooms_object, &user_id]
+		(const m::room &room, const string_view &membership)
+		{
+			const m::user::room_account_data room_account_data
+			{
+				user_id, room
+			};
+
+			json::stack::object room_object
+			{
+				rooms_object, room.room_id
+			};
+
+			room_account_data.for_each([&room_object]
+			(const string_view &key, const json::object &val)
+			{
+				json::stack::member
+				{
+					room_object, key, val
+				};
+
+				return true;
+			});
+
+			return true;
+		});
+	}
 
 	return response;
 }
