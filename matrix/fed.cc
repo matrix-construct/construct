@@ -835,10 +835,11 @@ ircd::m::fed::send_join::send_join(const room::id &room_id,
 		thread_local char ridbuf[768], uidbuf[768];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			buf, "/_matrix/federation/v1/send_%s/%s/%s",
+			buf, "/_matrix/federation/v2/send_%s/%s/%s?omit_members=%s",
 			opts.knock? "knock"_sv: "join"_sv,
 			url::encode(ridbuf, room_id),
-			url::encode(uidbuf, event_id)
+			url::encode(uidbuf, event_id),
+			opts.omit_members? "true": "false",
 		};
 
 		consume(buf, size(json::get<"uri"_>(opts.request)));

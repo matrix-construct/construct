@@ -589,25 +589,15 @@ try
 		send_join.get(seconds(send_join_timeout))
 	};
 
-	const json::array send_join_response
+	const json::object send_join_response
 	{
 		send_join
-	};
-
-	const uint more_send_join_code
-	{
-		send_join_response.at<uint>(0)
-	};
-
-	const json::object &send_join_response_data
-	{
-		send_join_response[1]
 	};
 
 	assert(!!send_join.in.dynamic);
 	return
 	{
-		send_join_response_data,
+		send_join_response,
 		std::move(send_join.in.dynamic)
 	};
 }

@@ -15592,6 +15592,7 @@ console_cmd__fed__join(opt &out, const string_view &line)
 	m::fed::send_join::opts opts;
 	opts.remote = remote;
 	opts.knock = has(op, "knock");
+	opts.omit_members = has(op, "lazy");
 	const unique_buffer<mutable_buffer> buf
 	{
 		16_KiB
@@ -15605,7 +15606,7 @@ console_cmd__fed__join(opt &out, const string_view &line)
 	request.get(out.timeout);
 	const json::object response
 	{
-		json::array(request.in.content)[1]
+		request
 	};
 
 	const json::array auth_chain
@@ -15613,9 +15614,29 @@ console_cmd__fed__join(opt &out, const string_view &line)
 		response["auth_chain"]
 	};
 
+	const json::object signed_event
+	{
+		response["event"]
+	};
+
+	const bool members_omitted
+	{
+		response.get("members_omitted", false)
+	};
+
+	const json::string origin
+	{
+		response["origin"]
+	};
+
 	const json::array state
 	{
 		response["state"]
+	};
+
+	const json::array servers_in_room
+	{
+		response["servers_in_room"]
 	};
 
 	if(has(op, "eval"))
@@ -15643,11 +15664,28 @@ console_cmd__fed__join(opt &out, const string_view &line)
 		return true;
 	}
 
+	if(has(op, "raw"))
+	{
+		for(const json::object event : auth_chain)
+			out << event << std::endl;
+
+		for(const json::object event : state)
+			out << event << std::endl;
+
+		for(const json::string server : servers_in_room)
+			out << server << std::endl;
+
+		return true;
+	}
+
 	for(const json::object event : auth_chain)
-		out << event << std::endl;
+		out << pretty_oneline(m::event{event}) << std::endl;
 
 	for(const json::object event : state)
-		out << event << std::endl;
+		out << pretty_oneline(m::event{event}) << std::endl;
+
+	for(const json::string server : servers_in_room)
+		out << server << std::endl;
 
 	return true;
 }

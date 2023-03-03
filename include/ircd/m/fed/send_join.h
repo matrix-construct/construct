@@ -21,9 +21,9 @@ struct ircd::m::fed::send_join
 {
 	struct opts;
 
-	explicit operator json::array() const
+	explicit operator json::object() const
 	{
-		return json::array
+		return json::object
 		{
 			in.content
 		};
@@ -42,4 +42,5 @@ struct ircd::m::fed::send_join::opts
 :request::opts
 {
 	bool knock {false};
+	bool omit_members {false};
 };
