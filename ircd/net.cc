@@ -876,7 +876,7 @@ ircd::net::set(socket &socket,
 		net::attach(socket, opts.ebpf);
 }
 
-void
+bool
 ircd::net::detach(socket &socket,
                   const int &prog_fd)
 {
@@ -886,24 +886,27 @@ ircd::net::detach(socket &socket,
 		sd.lowest_layer().native_handle()
 	};
 
-	return detach(fd, prog_fd);
+	detach(fd, prog_fd);
+	return true;
 }
 
-void
+bool
 ircd::net::detach(const int &sd,
                   const int &prog_fd)
 #if defined(SO_DETACH_BPF) && defined(SOL_SOCKET)
 {
 	const socklen_t len(sizeof(prog_fd));
 	sys::call(::setsockopt, sd, SOL_SOCKET, SO_DETACH_BPF, &prog_fd, len);
+	return true;
 }
 #else
 {
 	#warning "SO_DETACH_BPF is not defined on this platform."
+	return false;
 }
 #endif
 
-void
+bool
 ircd::net::attach(socket &socket,
                   const int &prog_fd)
 {
@@ -913,24 +916,27 @@ ircd::net::attach(socket &socket,
 		sd.lowest_layer().native_handle()
 	};
 
-	return attach(fd, prog_fd);
+	attach(fd, prog_fd);
+	return true;
 }
 
-void
+bool
 ircd::net::attach(const int &sd,
                   const int &prog_fd)
 #if defined(SO_ATTACH_BPF) && defined(SOL_SOCKET)
 {
 	const socklen_t len(sizeof(prog_fd));
 	sys::call(::setsockopt, sd, SOL_SOCKET, SO_ATTACH_BPF, &prog_fd, len);
+	return true;
 }
 #else
 {
 	#warning "SO_ATTACH_BPF is not defined on this platform."
+	return false;
 }
 #endif
 
-void
+bool
 ircd::net::write_lowat(socket &socket,
                        const size_t &bytes)
 {
@@ -942,9 +948,10 @@ ircd::net::write_lowat(socket &socket,
 
 	ip::tcp::socket &sd(socket);
 	sd.set_option(option);
+	return true;
 }
 
-void
+bool
 ircd::net::read_lowat(socket &socket,
                       const size_t &bytes)
 {
@@ -956,9 +963,10 @@ ircd::net::read_lowat(socket &socket,
 
 	ip::tcp::socket &sd(socket);
 	sd.set_option(option);
+	return true;
 }
 
-void
+bool
 ircd::net::write_bufsz(socket &socket,
                        const size_t &bytes)
 {
@@ -970,9 +978,10 @@ ircd::net::write_bufsz(socket &socket,
 
 	ip::tcp::socket &sd(socket);
 	sd.set_option(option);
+	return true;
 }
 
-void
+bool
 ircd::net::read_bufsz(socket &socket,
                       const size_t &bytes)
 {
@@ -984,9 +993,10 @@ ircd::net::read_bufsz(socket &socket,
 
 	ip::tcp::socket &sd(socket);
 	sd.set_option(option);
+	return true;
 }
 
-void
+bool
 ircd::net::linger(socket &socket,
                   const time_t &t)
 {
@@ -1000,18 +1010,20 @@ ircd::net::linger(socket &socket,
 
 	ip::tcp::socket &sd(socket);
 	sd.set_option(option);
+	return true;
 }
 
-void
+bool
 ircd::net::keepalive(socket &socket,
                      const bool &b)
 {
 	const ip::tcp::socket::keep_alive option{b};
 	ip::tcp::socket &sd(socket);
 	sd.set_option(option);
+	return true;
 }
 
-void
+bool
 ircd::net::quickack(socket &socket,
                     const bool &b)
 #if defined(TCP_QUICKACK) && defined(SOL_SOCKET)
@@ -1025,20 +1037,23 @@ ircd::net::quickack(socket &socket,
 	const int val(b);
 	const socklen_t len(sizeof(val));
 	syscall(::setsockopt, fd, SOL_SOCKET, TCP_QUICKACK, &val, len);
+	return true;
 }
 #else
 {
 	#warning "TCP_QUICKACK is not defined on this platform."
+	return false;
 }
 #endif
 
-void
+bool
 ircd::net::nodelay(socket &socket,
                    const bool &b)
 {
 	const ip::tcp::no_delay option{b};
 	ip::tcp::socket &sd(socket);
 	sd.set_option(option);
+	return true;
 }
 
 /// Toggles the behavior of non-async asio calls.
@@ -1065,21 +1080,23 @@ ircd::net::nodelay(socket &socket,
 /// however, sockets do get constructed by asio in blocking mode by default
 /// so we mostly use this function to set it to non-blocking.
 ///
-void
+bool
 ircd::net::blocking(socket &socket,
                     const bool &b)
 {
 	ip::tcp::socket &sd(socket);
 	sd.non_blocking(!b);
+	return true;
 }
 
-void
+bool
 ircd::net::v6only(socket &socket,
                   const bool &b)
 {
 	const ip::v6_only option{b};
 	ip::tcp::socket &sd(socket);
 	sd.set_option(option);
+	return true;
 }
 
 int

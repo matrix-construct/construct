@@ -27,20 +27,21 @@ namespace ircd::net
 	size_t write_lowat(const socket &);
 	int attach(const socket &);
 
-	void v6only(socket &, const bool &);
-	void blocking(socket &, const bool &);
-	void nodelay(socket &, const bool &);
-	void quickack(socket &, const bool &);
-	void keepalive(socket &, const bool &);
-	void linger(socket &, const time_t &); // -1 is OFF; >= 0 is ON
-	void read_bufsz(socket &, const size_t &bytes);
-	void write_bufsz(socket &, const size_t &bytes);
-	void read_lowat(socket &, const size_t &bytes);
-	void write_lowat(socket &, const size_t &bytes);
-	void attach(const int &sd, const int &fd);
-	void attach(socket &, const int &fd);
-	void detach(const int &sd, const int &fd);
-	void detach(socket &, const int &fd);
+	// returns true if supported, false if unsupported; failures will throw.
+	bool v6only(socket &, const bool &);
+	bool blocking(socket &, const bool &);
+	bool nodelay(socket &, const bool &);
+	bool quickack(socket &, const bool &);
+	bool keepalive(socket &, const bool &);
+	bool linger(socket &, const time_t &); // -1 is OFF; >= 0 is ON
+	bool read_bufsz(socket &, const size_t &bytes);
+	bool write_bufsz(socket &, const size_t &bytes);
+	bool read_lowat(socket &, const size_t &bytes);
+	bool write_lowat(socket &, const size_t &bytes);
+	bool attach(const int &sd, const int &fd);
+	bool attach(socket &, const int &fd);
+	bool detach(const int &sd, const int &fd);
+	bool detach(socket &, const int &fd);
 
 	void set(socket &, const sock_opts &);
 }
