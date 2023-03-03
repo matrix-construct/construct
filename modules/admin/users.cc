@@ -10,6 +10,7 @@
 
 namespace ircd::m::admin
 {
+	static resource::response handle_get_devices(client &, const resource::request &, const user::id &);
 	static resource::response handle_get_account_data(client &, const resource::request &, const user::id &);
 	static resource::response handle_get_joined_rooms(client &, const resource::request &, const user::id &);
 	static resource::response handle_get_admin(client &, const resource::request &, const user::id &);
@@ -78,6 +79,9 @@ ircd::m::admin::handle_get(client &client,
 
 	if(cmd == "account_data")
 		return handle_get_account_data(client, request, user_id);
+
+	if(cmd == "devices")
+		return handle_get_devices(client, request, user_id);
 
 	throw m::NOT_FOUND
 	{
@@ -220,6 +224,60 @@ ircd::m::admin::handle_get_account_data(client &client,
 			return true;
 		});
 	}
+
+	return response;
+}
+
+ircd::m::resource::response
+ircd::m::admin::handle_get_devices(client &client,
+                                   const resource::request &request,
+                                   const user::id &user_id)
+{
+	m::resource::response::chunked::json response
+	{
+		client, http::OK
+	};
+
+	json::stack::array array
+	{
+		response, "devices"
+	};
+
+	const m::user::devices devices
+	{
+		user_id
+	};
+
+	devices.for_each([&devices, &array]
+	(const auto &, const string_view &device_id)
+	{
+		json::stack::object object
+		{
+			array
+		};
+
+		json::stack::member
+		{
+			object, "device_id", device_id
+		};
+
+		devices.for_each(device_id, [&devices, &object, &device_id]
+		(const auto &, const string_view &prop)
+		{
+			devices.get(std::nothrow, device_id, prop, [&object, &prop]
+			(const auto &, const string_view &value)
+			{
+				json::stack::member
+				{
+					object, prop, value
+				};
+			});
+
+			return true;
+		});
+
+		return true;
+	});
 
 	return response;
 }
