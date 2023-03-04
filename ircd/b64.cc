@@ -25,7 +25,10 @@ namespace ircd::b64
 	extern const i32
 	decode_tab[256];
 
+	[[IRCD_CLONES(IRCD_B64_TARGETS)]]
 	static u8x64 decode_block(const u8x64 block, i64x8 &__restrict__ err) noexcept;
+
+	[[IRCD_CLONES(IRCD_B64_TARGETS)]]
 	static u8x64 encode_block(const u8x64 block, const dictionary &) noexcept;
 }
 #pragma GCC visibility pop
@@ -264,6 +267,7 @@ noexcept
 /// Based on https://arxiv.org/pdf/1910.05109 (and earlier work). No specific
 /// intrinsics are used here; instead we recite a kotodama divination known
 /// as "vector extensions" which by chance is visible to humans as C syntax.
+[[IRCD_CLONES(IRCD_B64_TARGETS)]]
 ircd::u8x64
 ircd::b64::encode_block(const u8x64 in,
                         const dictionary &dict)
@@ -391,6 +395,7 @@ ircd::b64::decode(const mutable_buffer out,
 
 /// Decode 64 base64 characters into a 48 byte result. The last 16 bytes of
 /// the returned vector are undefined for the caller.
+[[IRCD_CLONES(IRCD_B64_TARGETS)]]
 ircd::u8x64
 ircd::b64::decode_block(const u8x64 block,
                         i64x8 &__restrict__ err)

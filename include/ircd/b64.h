@@ -11,6 +11,12 @@
 #pragma once
 #define HAVE_IRCD_B64_H
 
+#define IRCD_B64_TARGETS    \
+    "avx",                  \
+    "avx2",                 \
+    "arch=skylake-avx512",  \
+    "default"
+
 namespace ircd::b64
 {
 	IRCD_EXCEPTION(ircd::error, error)
