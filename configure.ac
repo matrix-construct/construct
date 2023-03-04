@@ -267,6 +267,24 @@ AC_ARG_ENABLE(optimize, RB_HELP_STRING([--enable-optimize], [Enable optimization
 AM_CONDITIONAL([OPTIMIZE], [[[[ "$OPTIMIZE" = "1" ]]]])
 
 dnl
+dnl Enable target clones code generation
+dnl
+
+AC_MSG_CHECKING(whether to generate code for target clones)
+AC_ARG_ENABLE(clones, RB_HELP_STRING([--enable-clones], [Enable target clones generation]),
+[
+	AC_MSG_RESULT([yes])
+	AC_SUBST(CLONES, 1)
+	RB_DEFINE([CLONES], [1], [Function multi-versioning for different architectures])
+	clones="yes"
+], [
+	AC_MSG_RESULT([no])
+	clones="no"
+])
+
+AM_CONDITIONAL([CLONES], [[[[ "$CLONES" = "1" ]]]])
+
+dnl
 dnl Explicit link-time-optimization switch
 dnl
 
@@ -3154,6 +3172,7 @@ echo "Linker flags (LDFLAGS) ............ $LDFLAGS"
 echo
 echo "Developer platform (build) ........ $build_cpu $build_vendor $build_os"
 echo "Target platform (host) ............ $host_cpu $host_vendor $host_os"
+echo "Target clones ..................... $clones"
 echo "Target features ................... $machine_tuning $machine_features"
 echo
 echo "Precompile headers ................ $build_pch"

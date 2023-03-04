@@ -82,6 +82,16 @@
 #endif
 
 //
+// Target clones
+//
+
+#ifdef RB_CLONES
+	#define IRCD_CLONES(features) gnu::target_clones(features)
+#else
+	#define IRCD_CLONES(features)
+#endif
+
+//
 // 128 bit integer support
 //
 
