@@ -846,7 +846,6 @@ RB_MAYBE_CWARN([-Wuninitialized], charybdis_cv_c_gcc_w_uninitialized)
 RB_MAYBE_CWARN([-Wunreachable-code], charybdis_cv_c_gcc_w_unreachable_code)
 RB_MAYBE_CWARN([-Wno-overloaded-virtual], charybdis_cv_c_gcc_w_overloaded_virtual)
 RB_MAYBE_CWARN([-Wnon-virtual-dtor], charybdis_cv_c_gcc_w_non_virtual_dtor)
-RB_MAYBE_CWARN([-Wnoexcept], charybdis_cv_c_gcc_w_noexcept)
 RB_MAYBE_CWARN([-Wsized-deallocation], charybdis_cv_c_gcc_w_sized_deallocation)
 RB_MAYBE_CWARN([-Wctor-dtor-privacy], charybdis_cv_c_gcc_w_ctor_dtor_privacy)
 RB_MAYBE_CWARN([-Wsign-promo], charybdis_cv_c_gcc_w_sign_promo)
@@ -878,6 +877,7 @@ AM_COND_IF([GCC],
 
 	AM_COND_IF([DEBUG],
 	[
+		RB_MAYBE_CWARN([-Wnoexcept], charybdis_cv_c_gcc_w_noexcept)
 		RB_MAYBE_CWARN([-Wsuggest-attribute=format], charybdis_cv_c_gcc_w_suggest_attribute_format)
 		RB_MAYBE_CWARN([-Wsuggest-attribute=noreturn], charybdis_cv_c_gcc_w_suggest_attribute_noreturn)
 		RB_MAYBE_CWARN([-Wsuggest-attribute=malloc], charybdis_cv_c_gcc_w_suggest_attribute_malloc)
