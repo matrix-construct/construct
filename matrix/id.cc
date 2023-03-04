@@ -927,7 +927,7 @@ ircd::m::id::event::v4::v4(const mutable_buffer &out,
 	out[0] = '$';
 	const string_view hashb64
 	{
-		b64::encode_unpadded<b64::urlsafe>(out + 1, hash)
+		b64::encode_unpadded(out + 1, hash, b64::urlsafe)
 	};
 
 	return string_view

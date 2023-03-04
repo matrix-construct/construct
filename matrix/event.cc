@@ -118,7 +118,7 @@ ircd::m::make_id(const event &event,
 	{
 		const id::event ret
 		{
-			buf, b64::encode_unpadded<b64::urlsafe>(readable, hash), at<"origin"_>(event)
+			buf, b64::encode_unpadded(readable, hash, b64::urlsafe), at<"origin"_>(event)
 		};
 
 		buf.assigned(ret);
@@ -137,7 +137,7 @@ ircd::m::make_id(const event &event,
 
 	const id::event ret
 	{
-		buf, b64::encode_unpadded<b64::urlsafe>(readable, hash), string_view{}
+		buf, b64::encode_unpadded(readable, hash, b64::urlsafe), string_view{}
 	};
 
 	buf.assigned(ret);
