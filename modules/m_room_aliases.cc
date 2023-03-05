@@ -110,9 +110,6 @@ try
 			e.what(),
 		};
 	}
-
-	if(m::join_rule(room_id, "public"))
-		rooms::summary::set(room_id);
 }
 catch(const std::exception &e)
 {
