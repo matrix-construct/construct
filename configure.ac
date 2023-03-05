@@ -860,7 +860,6 @@ RB_MAYBE_CWARN([-Wstrict-aliasing=2 -Wstrict-overflow=5], charybdis_cv_c_gcc_w_s
 RB_MAYBE_CWARN([-Wdisabled-optimization], charybdis_cv_c_gcc_w_disabled_optimization)
 RB_MAYBE_CWARN([-Winvalid-pch], charybdis_cv_c_gcc_w_invalid_pch)
 RB_MAYBE_CWARN([-Winit-self], charybdis_cv_c_gcc_w_init_self)
-RB_MAYBE_CWARN([-Wuninitialized], charybdis_cv_c_gcc_w_uninitialized)
 RB_MAYBE_CWARN([-Wunreachable-code], charybdis_cv_c_gcc_w_unreachable_code)
 RB_MAYBE_CWARN([-Wno-overloaded-virtual], charybdis_cv_c_gcc_w_overloaded_virtual)
 RB_MAYBE_CWARN([-Wnon-virtual-dtor], charybdis_cv_c_gcc_w_non_virtual_dtor)
@@ -892,17 +891,6 @@ AM_COND_IF([GCC],
 	RB_MAYBE_CWARN([-Walloca], charybdis_cv_c_gcc_w_alloca)
 	RB_MAYBE_CWARN([-Wvector-operation-performance], charybdis_cv_c_gcc_w_vector_operation_performance)
 	RB_MAYBE_CWARN([-Wstringop-overflow=4], charybdis_cv_c_gcc_w_stringop_overflow)
-
-	AM_COND_IF([DEBUG],
-	[
-		RB_MAYBE_CWARN([-Wnoexcept], charybdis_cv_c_gcc_w_noexcept)
-		RB_MAYBE_CWARN([-Wsuggest-attribute=format], charybdis_cv_c_gcc_w_suggest_attribute_format)
-		RB_MAYBE_CWARN([-Wsuggest-attribute=noreturn], charybdis_cv_c_gcc_w_suggest_attribute_noreturn)
-		RB_MAYBE_CWARN([-Wsuggest-attribute=malloc], charybdis_cv_c_gcc_w_suggest_attribute_malloc)
-		RB_MAYBE_CWARN([-Wsuggest-attribute=cold], charybdis_cv_c_gcc_w_suggest_attribute_cold)
-		dnl RB_MAYBE_CWARN([-Wsuggest-attribute=pure], charybdis_cv_c_gcc_w_suggest_attribute_pure)
-		dnl RB_MAYBE_CWARN([-Wsuggest-attribute=const], charybdis_cv_c_gcc_w_suggest_attribute_const)
-	])
 ])
 
 dnl Compiler specific
@@ -954,6 +942,18 @@ AM_COND_IF([DEBUG],
 	RB_MAYBE_CWARN([-Wsuggest-final-methods], charybdis_cv_c_gcc_w_suggest_final_methods)
 	RB_MAYBE_CWARN([-Wsuggest-override], charybdis_cv_c_gcc_w_suggest_override)
 	RB_MAYBE_CWARN([-Wmissing-noreturn], charybdis_cv_c_gcc_w_missing_noreturn)
+	RB_MAYBE_CWARN([-Wuninitialized], charybdis_cv_c_gcc_w_uninitialized)
+
+	AM_COND_IF([GCC],
+	[
+		RB_MAYBE_CWARN([-Wnoexcept], charybdis_cv_c_gcc_w_noexcept)
+		RB_MAYBE_CWARN([-Wsuggest-attribute=format], charybdis_cv_c_gcc_w_suggest_attribute_format)
+		RB_MAYBE_CWARN([-Wsuggest-attribute=noreturn], charybdis_cv_c_gcc_w_suggest_attribute_noreturn)
+		RB_MAYBE_CWARN([-Wsuggest-attribute=malloc], charybdis_cv_c_gcc_w_suggest_attribute_malloc)
+		RB_MAYBE_CWARN([-Wsuggest-attribute=cold], charybdis_cv_c_gcc_w_suggest_attribute_cold)
+		dnl RB_MAYBE_CWARN([-Wsuggest-attribute=pure], charybdis_cv_c_gcc_w_suggest_attribute_pure)
+		dnl RB_MAYBE_CWARN([-Wsuggest-attribute=const], charybdis_cv_c_gcc_w_suggest_attribute_const)
+	])
 ], [
 	RB_MAYBE_CWARN([-Wno-unknown-pragmas], charybdis_cv_c_gcc_w_no_unknown_pragmas)
 
