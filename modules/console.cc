@@ -14625,12 +14625,15 @@ console_cmd__feds__version(opt &out, const string_view &line)
 		m::room_id(param.at(0))
 	};
 
+	size_t count[2] {0};
 	m::feds::opts opts;
 	opts.op = m::feds::op::version;
 	opts.room_id = room_id;
-	m::feds::execute(opts, [&out]
+	m::feds::execute(opts, [&out, &count]
 	(const auto &result)
 	{
+		count[bool(result.eptr)]++;
+
 		out << (result.eptr? '-' : '+')
 		    << " "
 		    << std::setw(40) << std::left << result.origin
@@ -14645,6 +14648,10 @@ console_cmd__feds__version(opt &out, const string_view &line)
 		return true;
 	});
 
+	out
+	<< '\n'
+	<< count[0] << ':' << count[1]
+	<< std::endl;
 	return true;
 }
 
@@ -14752,12 +14759,16 @@ console_cmd__feds__event(opt &out, const string_view &line)
 		return true;
 	}
 
+	size_t count[2] {0};
 	m::feds::opts opts;
 	opts.op = m::feds::op::event;
 	opts.room_id = room_id;
 	opts.event_id = event_id;
-	m::feds::execute(opts, [&out](const auto &result)
+	m::feds::execute(opts, [&out, &count]
+	(const auto &result)
 	{
+		count[bool(result.eptr)]++;
+
 		out << (result.eptr? '-': empty(result.object)? '?': '+')
 		    << " "
 		    << std::setw(40) << std::left << result.origin
@@ -14771,6 +14782,10 @@ console_cmd__feds__event(opt &out, const string_view &line)
 		return true;
 	});
 
+	out
+	<< '\n'
+	<< count[0] << ':' << count[1]
+	<< std::endl;
 	return true;
 }
 
@@ -15159,14 +15174,17 @@ console_cmd__feds__send(opt &out, const string_view &line)
 		m::txn::create_id(txnidbuf, content)
 	};
 
+	size_t count[2] {0};
 	m::feds::opts opts;
 	opts.op = m::feds::op::send;
 	opts.room_id = at<"room_id"_>(event);
 	opts.arg[0] = txnid;
 	opts.arg[1] = content;
-	m::feds::execute(opts, [&out]
+	m::feds::execute(opts, [&out, &count]
 	(const auto &result)
 	{
+		count[bool(result.eptr)]++;
+
 		out << (result.eptr? '-' : '+')
 		    << " "
 		    << std::setw(40) << std::left << result.origin
@@ -15181,6 +15199,10 @@ console_cmd__feds__send(opt &out, const string_view &line)
 		return true;
 	});
 
+	out
+	<< '\n'
+	<< count[0] << ':' << count[1]
+	<< std::endl;
 	return true;
 }
 
