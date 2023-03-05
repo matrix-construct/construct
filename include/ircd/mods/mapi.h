@@ -89,6 +89,15 @@ IRCD_MAPI_SERIAL
 	4
 };
 
+struct ircd::mapi::metablock
+{
+	init_func init;                    // Executed after dlopen()
+	fini_func fini;                    // Executed before dlclose()
+	meta_data meta;                    // Various key-value metadata
+
+	metablock(const string_view, init_func &&, fini_func &&) noexcept;
+};
+
 /// Module Header
 ///
 /// A static instance of this class must be included in an IRCd module with
@@ -113,22 +122,16 @@ struct ircd::mapi::header
 	operator const mods::mod &() const;
 	operator mods::mod &();
 
-	header(const string_view &,
+	header(const string_view,
 	       init_func            = {},
 	       fini_func            = {});
 
 	header(header &&) = delete;
 	header(const header &) = delete;
 	~header() noexcept;
-};
 
-struct ircd::mapi::metablock
-{
-	init_func init;                    // Executed after dlopen()
-	fini_func fini;                    // Executed before dlclose()
-	meta_data meta;                    // Various key-value metadata
-
-	metablock(const string_view &, init_func &&, fini_func &&);
+	// Non-throwing allocations
+	static uint8_t body[sizeof(metablock)];
 };
 
 static_assert
@@ -144,14 +147,17 @@ static_assert
 	"The MAPI header size has changed on this platform."
 );
 
+inline decltype(ircd::mapi::header::body)
+ircd::mapi::header::body;
+
 inline
 __attribute__((always_inline))
-ircd::mapi::header::header(const string_view &description,
+ircd::mapi::header::header(const string_view description,
                            init_func init,
                            fini_func fini)
 :meta
 {
-	new metablock
+	new (body) metablock
 	{
 		description, std::move(init), std::move(fini)
 	}

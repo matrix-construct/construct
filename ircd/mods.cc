@@ -403,9 +403,10 @@ const
 // metablock
 //
 
-ircd::mapi::metablock::metablock(const string_view &description,
+ircd::mapi::metablock::metablock(const string_view description,
                                  init_func &&init_func,
                                  fini_func &&fini_func)
+noexcept
 :init{std::move(init_func)}
 ,fini{std::move(fini_func)}
 ,meta
@@ -422,8 +423,9 @@ ircd::mapi::metablock::metablock(const string_view &description,
 ircd::mapi::header::~header()
 noexcept
 {
-	delete meta;
-	meta = nullptr;
+	assert(meta);
+	if(likely(meta))
+		meta->meta.clear();
 
 	static_destruction = true;
 }
