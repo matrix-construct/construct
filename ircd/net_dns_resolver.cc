@@ -349,7 +349,13 @@ ircd::net::dns::resolver::check_timeout(const uint16_t &id,
 		host(tag.hp)
 	};
 
-	if(tag.tries < size_t(retry_max))
+	const bool retry
+	{
+		tag.tries < size_t(retry_max)
+		&& run::level != run::level::QUIT
+	};
+
+	if(retry)
 	{
 		submit(tag);
 		return false;
