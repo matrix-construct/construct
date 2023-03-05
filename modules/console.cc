@@ -14998,46 +14998,55 @@ console_cmd__feds__perspective(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "server_name", "key_id",
+		"room_id", "server_name", "key_id", "op"
 	}};
 
 	const auto &room_id
 	{
-		m::room_id(param.at(0))
+		m::room_id(param["room_id"])
 	};
 
 	const string_view &server_name
 	{
-		param.at(1)
+		param["server_name"]
 	};
 
 	const string_view &key_id
 	{
-		param.at(2)
+		param["key_id"]
+	};
+
+	const string_view &op
+	{
+		param["op"]
 	};
 
 	const m::fed::key::server_key server_key
 	{
-		server_name, key_id
+		server_name,
+		key_id == "*"? string_view{}: key_id,
 	};
 
+	size_t count[3] {0};
 	m::feds::opts opts;
 	opts.op = m::feds::op::keys;
 	opts.timeout = out.timeout;
 	opts.room_id = room_id;
 	opts.arg[0] = server_key.first;
 	opts.arg[1] = server_key.second;
-	m::feds::execute(opts, [&out](const auto &result)
+	m::feds::execute(opts, [&out, &op, &key_id, &count]
+	(const auto &result)
 	{
-		out << std::setw(32) << trunc(result.origin, 32) << " :";
-
 		if(result.eptr)
 		{
-			out << what(result.eptr)
-			    << std::endl;
-
+			out
+			<< std::setw(32) << trunc(result.origin, 32) << " :"
+			<< what(result.eptr)
+			<< std::endl;
+			count[2]++;
 			return true;
 		}
+		else count[1]++;
 
 		const json::array &server_keys
 		{
@@ -15046,13 +15055,33 @@ console_cmd__feds__perspective(opt &out, const string_view &line)
 
 		for(const json::object server_key : server_keys)
 		{
-			const m::keys &key{server_key};
-			out << key << std::endl;
+			const m::keys key
+			{
+				server_key
+			};
+
+			out << std::setw(32) << trunc(result.origin, 32) << " :";
+			if(has(op, "raw"))
+			{
+				out << key << std::endl;
+				continue;
+			}
+
+			for(const auto &[_key_id, key_obj] : json::get<"verify_keys"_>(key))
+				if(key_id == _key_id)
+					count[0]++;
+
+			pretty_oneline(out, key);
+			out << std::endl;
 		}
 
 		return true;
 	});
 
+	out
+	<< '\n'
+	<< count[0] << ':' << count[1] << ':' << count[2]
+	<< std::endl;
 	return true;
 }
 
