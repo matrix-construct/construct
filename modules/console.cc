@@ -1397,7 +1397,7 @@ console_cmd__mem__get(opt &out, const string_view &line)
 			break;
 
 		case "string"_:
-			out << *reinterpret_cast<const char *const *const>(data(val)) << std::endl;
+			out << *reinterpret_cast<const char *const *>(data(val)) << std::endl;
 			break;
 	}
 
