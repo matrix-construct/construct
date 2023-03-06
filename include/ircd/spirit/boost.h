@@ -28,6 +28,12 @@
 #define BOOST_PHOENIX_DEBUG_HPP
 #endif
 
+// Multiple definitions from phoenix tuple impl with gcc+ld.gold; doesn't seem
+// to be a necessary header for our uses, so we guard it out.
+#if !defined(__clang__)
+#define BOOST_PHOENIX_STL_TUPLE_H_
+#endif
+
 // These must be included prior to the internal visibility/linkage sections.
 #include <boost/config.hpp>
 #include <boost/type_index.hpp>
