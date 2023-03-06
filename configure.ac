@@ -967,6 +967,7 @@ AM_COND_IF([DEBUG],
 		RB_MAYBE_CWARN([-Wno-ignored-attributes], charybdis_cv_c_gcc_w_no_ignored_attributes)
 		RB_MAYBE_CWARN([-Wno-attributes], charybdis_cv_c_gcc_w_no_attributes)
 		RB_MAYBE_CWARN([-Wno-pragmas], charybdis_cv_c_gcc_w_no_pragmas)
+		RB_MAYBE_CWARN([-Wno-empty-body], charybdis_cv_c_gcc_w_no_empty_body)
 	])
 ])
 
