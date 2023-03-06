@@ -24,7 +24,13 @@ static_assert
 rocksdb::port::Mutex::Mutex()
 noexcept
 {
-	memset(this, 0x0, sizeof(pthread_mutex_t));
+	static_assert
+	(
+		sizeof(mu_) >= sizeof(mu),
+		"Mutex is not fully initialized."
+	);
+
+	memset(&mu_, 0x0, sizeof(mu_));
 
 	if constexpr(RB_DEBUG_DB_PORT > 1)
 	{
@@ -125,7 +131,13 @@ static_assert
 rocksdb::port::RWMutex::RWMutex()
 noexcept
 {
-	memset(this, 0x0, sizeof(pthread_rwlock_t));
+	static_assert
+	(
+		sizeof(mu_) >= sizeof(mu),
+		"RWMutex is not fully initialized."
+	);
+
+	memset(&mu_, 0x0, sizeof(mu_));
 
 	if constexpr(RB_DEBUG_DB_PORT > 1)
 	{
@@ -252,7 +264,13 @@ static_assert
 rocksdb::port::CondVar::CondVar(Mutex *mu)
 noexcept
 {
-	memset(this, 0x0, sizeof(pthread_cond_t) + sizeof(Mutex *));
+	static_assert
+	(
+		sizeof(cv_) >= sizeof(cv),
+		"CondVar is not fully initialized."
+	);
+
+	memset(&cv_, 0x0, sizeof(cv_));
 	this->mu = mu;
 
 	if constexpr(RB_DEBUG_DB_PORT > 1)

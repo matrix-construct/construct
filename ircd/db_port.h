@@ -41,7 +41,11 @@ class rocksdb::port::Mutex
 {
 	friend class CondVar;
 
-	ctx::mutex mu;
+	union
+	{
+		ctx::mutex mu;
+		pthread_mutex_t mu_;
+	};
 
   public:
 	void Lock() noexcept;
@@ -57,8 +61,13 @@ class rocksdb::port::Mutex
 
 class rocksdb::port::CondVar
 {
+	union
+	{
+		ctx::condition_variable cv;
+		pthread_cond_t cv_;
+	};
+
 	Mutex *mu;
-	ctx::condition_variable cv;
 
   public:
 	void Wait() noexcept;
@@ -72,7 +81,11 @@ class rocksdb::port::CondVar
 
 class rocksdb::port::RWMutex
 {
-	ctx::shared_mutex mu;
+	union
+	{
+		ctx::shared_mutex mu;
+		pthread_rwlock_t mu_;
+	};
 
   public:
 	void ReadLock() noexcept;
