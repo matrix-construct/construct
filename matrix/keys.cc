@@ -20,15 +20,13 @@ ircd::m::pretty_oneline(std::ostream &s,
 	  << ' ';
 
 	for(const auto &[key_id, verify_key_] : json::get<"verify_keys"_>(keys))
-		s << "[ " << key_id << "] ";
+		s << " " << key_id << " ";
 
-	s << "sig ";
 	for(const auto &[domain, signature_] : json::get<"signatures"_>(keys))
 	{
-		s << "[ " << domain << ' ';
+		s << "| " << domain << ' ';
 		for(const auto &[key_id, signature] : json::object(signature_))
 			s << key_id << ' ';
-		s << "]";
 	}
 
 	return s;
