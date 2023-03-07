@@ -167,6 +167,11 @@ ircd::m::push::match::match(const event &event,
 // push::match condition functors (internal)
 //
 
+namespace ircd::m::push
+{
+	static string_view value_extract(const event &, const cond &);
+}
+
 bool
 ircd::m::push::event_match(const event &event,
                            const cond &cond,
@@ -175,29 +180,10 @@ try
 {
 	assert(json::get<"kind"_>(cond) == "event_match");
 
-	const auto &[top, path]
+	const auto value
 	{
-		split(json::get<"key"_>(cond), '.')
+		value_extract(event, cond)
 	};
-
-	string_view value
-	{
-		json::get(event, top, json::object{})
-	};
-
-	tokens(path, '.', [&value]
-	(const string_view &key)
-	{
-		if(!json::type(value, json::OBJECT))
-			return false;
-
-		value = json::object(value)[key];
-		if(likely(!json::type(value, json::STRING)))
-			return true;
-
-		value = json::string(value);
-		return false;
-	});
 
 	 //TODO: XXX spec leading/trailing; not imatch
 	const globular_imatch pattern
@@ -231,29 +217,10 @@ try
 {
 	assert(json::get<"kind"_>(cond) == "event_property_is");
 
-	const auto &[top, path]
+	const auto value
 	{
-		split(json::get<"key"_>(cond), '.')
+		value_extract(event, cond)
 	};
-
-	string_view value
-	{
-		json::get(event, top, json::object{})
-	};
-
-	tokens(path, '.', [&value]
-	(const string_view &key)
-	{
-		if(!json::type(value, json::OBJECT))
-			return false;
-
-		value = json::object(value)[key];
-		if(likely(!json::type(value, json::STRING)))
-			return true;
-
-		value = json::string(value);
-		return false;
-	});
 
 	const json::value a{value}, b
 	{
@@ -605,6 +572,41 @@ ircd::m::push::unknown_condition_kind(const event &event,
 }
 
 //
+// match tools (internal)
+//
+
+ircd::string_view
+ircd::m::push::value_extract(const event &event,
+                             const cond &cond)
+{
+	const auto &[top, path]
+	{
+		split(json::get<"key"_>(cond), '.')
+	};
+
+	string_view value
+	{
+		json::get(event, top, json::object{})
+	};
+
+	tokens(path, '.', [&value]
+	(const string_view &key)
+	{
+		if(!json::type(value, json::OBJECT))
+			return false;
+
+		value = json::object(value)[key];
+		if(likely(!json::type(value, json::STRING)))
+			return true;
+
+		value = json::string(value);
+		return false;
+	});
+
+	return value;
+}
+
+//
 // rule
 //
 
@@ -805,6 +807,10 @@ ircd::m::push::make_type(const mutable_buffer &buf,
 		kind,
 	};
 }
+
+//
+// default ruleset
+//
 
 decltype(ircd::m::push::rules::defaults)
 ircd::m::push::rules::defaults{R"(
