@@ -7049,13 +7049,29 @@ console_cmd__key(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"server_name"
+		"server_name", "key_id"
 	}};
 
 	const auto &server_name
 	{
 		param.at("server_name")
 	};
+
+	const auto &key_id
+	{
+		param["key_id"]
+	};
+
+	if(key_id)
+	{
+		m::keys::get(server_name, key_id, [&out]
+		(const m::keys &keys)
+		{
+			pretty(out, keys) << std::endl;
+		});
+
+		return true;
+	}
 
 	// keys cached for server by param.
 	m::keys::cache::for_each(server_name, [&out]
