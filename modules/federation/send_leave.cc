@@ -113,14 +113,22 @@ put__send_leave(client &client,
 		event, vmopts
 	};
 
-	static const json::array &response
+	static const json::value responses[]
 	{
-		"[200,{}]"
+		{ "[200,{}]",  json::ARRAY  },
+		{ "{}",        json::OBJECT },
+	};
+
+	const json::value &response
+	{
+		request.version == "v1"?
+			responses[0]:
+			responses[1]
 	};
 
 	return m::resource::response
 	{
-		client, http::OK, response
+		client, response
 	};
 }
 
