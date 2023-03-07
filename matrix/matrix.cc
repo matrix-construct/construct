@@ -109,6 +109,7 @@ ircd::m::module_names
 	"federation_send_leave",
 	"federation_send",
 	"federation_state",
+	"federation_timestamp_to_event",
 	"federation_user_devices",
 	"federation_user_keys_claim",
 	"federation_user_keys_query",

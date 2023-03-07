@@ -264,3 +264,13 @@ ircd::m::resource::response
 get__threads(ircd::client &,
              const ircd::m::resource::request &,
              const ircd::m::room::id &);
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// timestamp_to_event.cc
+//
+
+ircd::m::resource::response
+get__timestamp_to_event(ircd::client &,
+                        const ircd::m::resource::request &,
+                        const ircd::m::room::id &);

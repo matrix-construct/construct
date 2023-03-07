@@ -81,6 +81,9 @@ get_rooms(client &client,
 	if(cmd == "threads")
 		return get__threads(client, request, room_id);
 
+	if(cmd == "timestamp_to_event")
+		return get__timestamp_to_event(client, request, room_id);
+
 	throw m::NOT_FOUND
 	{
 		"/rooms command not found"
