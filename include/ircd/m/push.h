@@ -64,8 +64,8 @@ struct ircd::m::push::match
 	struct opts;
 	using cond_kind_func = bool (*)(const event &, const cond &, const opts &);
 
-	static const string_view cond_kind_name[6];
-	static const cond_kind_func cond_kind[7];
+	static const string_view cond_kind_name[];
+	static const cond_kind_func cond_kind[];
 
 	explicit match(const event &, const cond &, const opts &);
 	explicit match(const event &, const rule &, const opts &);
@@ -217,7 +217,11 @@ struct ircd::m::push::cond
 	/// prefixed by one of, ==, <, >, >= or <=. A prefix of < matches rooms
 	/// where the member count is strictly less than the given number and so
 	/// forth. If no prefix is present, this parameter defaults to ==.
-	json::property<name::is, json::string>
+	json::property<name::is, json::string>,
+
+	/// Required for event_property conditions. The exact case-sensitive string
+	/// to match.
+	json::property<name::value, json::string>
 >
 {
 	using super_type::tuple;

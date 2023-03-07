@@ -191,6 +191,7 @@ struct ircd::m::name
 	static constexpr const char *const pattern {"pattern"};
 	static constexpr const char *const is {"is"};
 	static constexpr const char *const cond {"cond"};
+	static constexpr const char *const value {"value"};
 
 	static constexpr const char *const actions {"actions"};
 	static constexpr const char *const default_ {"default"};

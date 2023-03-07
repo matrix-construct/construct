@@ -170,6 +170,7 @@ constexpr const char *const ircd::m::name::key;
 constexpr const char *const ircd::m::name::pattern;
 constexpr const char *const ircd::m::name::is;
 constexpr const char *const ircd::m::name::cond;
+constexpr const char *const ircd::m::name::value;
 
 constexpr const char *const ircd::m::name::actions;
 constexpr const char *const ircd::m::name::default_;
