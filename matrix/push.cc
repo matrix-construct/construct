@@ -77,6 +77,7 @@ namespace ircd::m::push
 	static bool state_key_user_mxid(const event &, const cond &, const match::opts &);
 	static bool contains_user_mxid(const event &, const cond &, const match::opts &);
 	static bool room_member_count(const event &, const cond &, const match::opts &);
+	static bool event_property_contains(const event &, const cond &, const match::opts &);
 	static bool event_property_is(const event &, const cond &, const match::opts &);
 	static bool event_match(const event &, const cond &, const match::opts &);
 }
@@ -86,6 +87,7 @@ ircd::m::push::match::cond_kind
 {
 	event_match,
 	event_property_is,
+	event_property_contains,
 	room_member_count,
 	contains_user_mxid,
 	state_key_user_mxid,
@@ -99,6 +101,7 @@ ircd::m::push::match::cond_kind_name
 {
 	"event_match",
 	"event_property_is",
+	"event_property_contains",
 	"room_member_count",
 	"contains_user_mxid",
 	"state_key_user_mxid",
@@ -238,6 +241,49 @@ catch(const std::exception &e)
 	log::error
 	{
 		log, "Push condition 'event_property_is' %s :%s",
+		string_view{event.event_id},
+		e.what(),
+	};
+
+	return false;
+}
+
+bool
+ircd::m::push::event_property_contains(const event &event,
+                                       const cond &cond,
+                                       const match::opts &opts)
+try
+{
+	assert(json::get<"kind"_>(cond) == "event_property_contains");
+
+	const json::array array
+	{
+		value_extract(event, cond)
+	};
+
+	if(!json::type(array, json::ARRAY))
+		return false;
+
+	const json::value a
+	{
+		at<"value"_>(cond)
+	};
+
+	for(const json::value b : array)
+		if(type(a) == type(b) && a == b)
+			return true;
+
+	return false;
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Push condition 'event_property_contains' %s :%s",
 		string_view{event.event_id},
 		e.what(),
 	};
