@@ -83,9 +83,10 @@ get__query_profile(client &client,
 		url::decode(user_id, request.query.at("user_id"))
 	};
 
+	char field_buf[512];
 	const string_view field
 	{
-		request.query["field"]
+		url::decode(field_buf, request.query["field"])
 	};
 
 	const m::user user
