@@ -15741,6 +15741,62 @@ console_cmd__fed__join(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__fed__invite(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id", "remote", "op", "oparg"
+	}};
+
+	const m::event::id &event_id
+	{
+		param.at("event_id")
+	};
+
+	const string_view remote
+	{
+		param.at("remote")
+	};
+
+	const string_view &op
+	{
+		param["op"]
+	};
+
+	const m::event::fetch event
+	{
+		event_id
+	};
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB
+	};
+
+	m::fed::invite2::opts opts;
+	opts.remote = remote;
+	m::fed::invite2 request
+	{
+		at<"room_id"_>(event),
+		event_id,
+		event.source,
+		buf,
+		std::move(opts),
+	};
+
+	request.get(out.timeout);
+	const json::object response
+	{
+		request
+	};
+
+	out
+	<< string_view{response}
+	<< std::endl;
+	return true;
+}
+
+bool
 console_cmd__fed__state(opt &out, const string_view &line)
 {
 	const params param{line, " ",
