@@ -60,7 +60,7 @@ put__send_join(client &client,
 {
 	const bool v1
 	{
-		startswith(request.head.path, "/_matrix/federation/v1/")
+		request.version == "v1"
 	};
 
 	if(request.parv.size() < 1)
@@ -152,7 +152,7 @@ put__send_join(client &client,
 		.fetch = false,
 
 		// Whether to conduct join amplification.
-		.amplify =
+		.amplify = bool
 		{
 			// This is required by the spec, but...
 			true
