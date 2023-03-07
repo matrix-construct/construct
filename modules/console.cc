@@ -15612,22 +15612,17 @@ console_cmd__fed__join(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "event_id", "remote", "op", "oparg"
+		"event_id", "remote", "op", "oparg"
 	}};
-
-	const auto room_id
-	{
-		m::room_id(param.at(0))
-	};
 
 	const m::event::id &event_id
 	{
-		param.at(1)
+		param.at("event_id")
 	};
 
 	const string_view remote
 	{
-		param.at(2, room_id.host())
+		param.at("remote")
 	};
 
 	const string_view &op
@@ -15640,18 +15635,22 @@ console_cmd__fed__join(opt &out, const string_view &line)
 		event_id
 	};
 
-	m::fed::send_join::opts opts;
-	opts.remote = remote;
-	opts.knock = has(op, "knock");
-	opts.omit_members = has(op, "lazy");
 	const unique_buffer<mutable_buffer> buf
 	{
 		16_KiB
 	};
 
+	m::fed::send_join::opts opts;
+	opts.remote = remote;
+	opts.knock = has(op, "knock");
+	opts.omit_members = has(op, "lazy");
 	m::fed::send_join request
 	{
-		room_id, event_id, event.source, buf, std::move(opts)
+		at<"room_id"_>(event),
+		event_id,
+		event.source,
+		buf,
+		std::move(opts)
 	};
 
 	request.get(out.timeout);
