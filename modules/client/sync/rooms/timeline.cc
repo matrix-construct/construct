@@ -39,22 +39,22 @@ ircd::m::sync::room_timeline
 decltype(ircd::m::sync::reflow_depth)
 ircd::m::sync::reflow_depth
 {
-	{ "name",     "ircd.client.sync.rooms.timeline.reflow.depth" },
-	{ "default",  0L                                             },
+	{ "name",     "ircd.m.sync.rooms.timeline.reflow.depth" },
+	{ "default",  0L                                        },
 };
 
 decltype(ircd::m::sync::limit_default)
 ircd::m::sync::limit_default
 {
-	{ "name",     "ircd.client.sync.rooms.timeline.limit.default" },
-	{ "default",  10L                                             },
+	{ "name",     "ircd.m.sync.rooms.timeline.limit.default" },
+	{ "default",  10L                                        },
 };
 
 decltype(ircd::m::sync::limit_initial_default)
 ircd::m::sync::limit_initial_default
 {
-	{ "name",     "ircd.client.sync.rooms.timeline.limit_initial.default" },
-	{ "default",  1L                                                      },
+	{ "name",     "ircd.m.sync.rooms.timeline.limit_initial.default" },
+	{ "default",  1L                                                 },
 };
 
 bool

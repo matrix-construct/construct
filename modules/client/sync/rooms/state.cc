@@ -61,6 +61,27 @@ ircd::m::sync::room_invite_state
 	}
 };
 
+decltype(ircd::m::sync::member_scan_max)
+ircd::m::sync::member_scan_max
+{
+	{ "name",         "ircd.m.sync.rooms.state.members.scan.max" },
+	{ "default",      12L                                        },
+};
+
+decltype(ircd::m::sync::lazyload_members_enable)
+ircd::m::sync::lazyload_members_enable
+{
+	{ "name",         "ircd.m.sync.rooms.state.members.lazyload" },
+	{ "default",      true                                       },
+};
+
+decltype(ircd::m::sync::crazyload_historical_members)
+ircd::m::sync::crazyload_historical_members
+{
+	{ "name",         "ircd.m.sync.rooms.state.members.historical" },
+	{ "default",      false                                        },
+};
+
 bool
 ircd::m::sync::room_state_linear(data &data)
 {
@@ -303,28 +324,6 @@ ircd::m::sync::_room_state_polylog(data &data)
 	else
 		return room_state_polylog_events(data);
 }
-
-decltype(ircd::m::sync::member_scan_max)
-ircd::m::sync::member_scan_max
-{
-	{ "name",         "ircd.client.sync.rooms.state.members.scan.max" },
-	{ "default",      12L                                             },
-};
-
-decltype(ircd::m::sync::lazyload_members_enable)
-ircd::m::sync::lazyload_members_enable
-{
-	{ "name",         "ircd.client.sync.rooms.state.members.lazyload" },
-	{ "default",      true                                            },
-	{ "persist",      false                                           },
-};
-
-decltype(ircd::m::sync::crazyload_historical_members)
-ircd::m::sync::crazyload_historical_members
-{
-	{ "name",         "ircd.client.sync.rooms.state.members.historical" },
-	{ "default",      false                                             },
-};
 
 bool
 ircd::m::sync::room_state_polylog_prefetch(data &data)

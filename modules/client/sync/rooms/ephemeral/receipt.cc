@@ -43,8 +43,8 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read
 decltype(ircd::m::sync::receipt_scan_depth)
 ircd::m::sync::receipt_scan_depth
 {
-	{ "name",     "ircd.client.sync.rooms.ephemeral.receipt_scan_depth" },
-	{ "default",  10L                                                   },
+	{ "name",     "ircd.m.sync.rooms.ephemeral.receipt_scan_depth" },
+	{ "default",  10L                                              },
 };
 
 decltype(ircd::m::sync::receipt_fopts)
