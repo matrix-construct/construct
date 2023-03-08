@@ -20,6 +20,10 @@ namespace ircd::m::sync
 	static bool _rooms_linear(data &, const string_view &membership);
 	static bool rooms_linear(data &);
 
+	extern conf::item<bool> rooms_polylog_invite;
+	extern conf::item<bool> rooms_polylog_leave;
+	extern conf::item<bool> rooms_polylog_join;
+	extern conf::item<bool> rooms_polylog_ban;
 	extern item rooms;
 }
 
@@ -37,6 +41,34 @@ ircd::m::sync::rooms
 		{ "phased",   true },
 		{ "prefetch", true },
 	}
+};
+
+decltype(ircd::m::sync::rooms_polylog_ban)
+ircd::m::sync::rooms_polylog_ban
+{
+	{ "name",     "ircd.m.sync.rooms.polylog.ban.enable" },
+	{ "default",  true                                   },
+};
+
+decltype(ircd::m::sync::rooms_polylog_join)
+ircd::m::sync::rooms_polylog_join
+{
+	{ "name",     "ircd.m.sync.rooms.polylog.join.enable" },
+	{ "default",  true                                    },
+};
+
+decltype(ircd::m::sync::rooms_polylog_leave)
+ircd::m::sync::rooms_polylog_leave
+{
+	{ "name",     "ircd.m.sync.rooms.polylog.leave.enable" },
+	{ "default",  false                                    },
+};
+
+decltype(ircd::m::sync::rooms_polylog_invite)
+ircd::m::sync::rooms_polylog_invite
+{
+	{ "name",     "ircd.m.sync.rooms.polylog.invite.enable" },
+	{ "default",  true                                      },
 };
 
 bool
@@ -151,19 +183,27 @@ ircd::m::sync::rooms_polylog(data &data)
 	if(data.prefetch)
 		data.user_rooms.prefetch();
 
-	ret |= _rooms_polylog(data, "join", phase);
+	if(rooms_polylog_ban)
+		ret |= _rooms_polylog(data, "ban", phase);
+
 	if(data.phased && ret)
 		return ret;
 
-	ret |= _rooms_polylog(data, "invite", phase);
+	if(rooms_polylog_join)
+		ret |= _rooms_polylog(data, "join", phase);
+
 	if(data.phased && ret)
 		return ret;
 
-	ret |= _rooms_polylog(data, "leave", phase);
+	if(rooms_polylog_invite)
+		ret |= _rooms_polylog(data, "invite", phase);
+
 	if(data.phased && ret)
 		return ret;
 
-	ret |= _rooms_polylog(data, "ban", phase);
+	if(rooms_polylog_leave)
+		ret |= _rooms_polylog(data, "leave", phase);
+
 	if(data.phased && ret)
 		return ret;
 
