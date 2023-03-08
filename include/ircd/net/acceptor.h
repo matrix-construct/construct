@@ -49,7 +49,6 @@ ircd::net::acceptor
 	static conf::item<std::string> ssl_cipher_list;
 	static conf::item<std::string> ssl_cipher_blacklist;
 
-	net::listener *listener_;
 	std::string name;
 	std::string opts;
 	std::string cname;
@@ -81,7 +80,7 @@ ircd::net::acceptor
 	void handshake(const error_code &, const std::shared_ptr<socket>, const decltype(handshaking)::const_iterator) noexcept;
 
 	// Acceptance stack
-	static bool proffer_default(listener &, const ipport &);
+	static bool proffer_default(acceptor &, const ipport &);
 	bool check_handshake_limit(socket &, const ipport &) const;
 	bool check_accept_error(const error_code &ec, socket &) const;
 	void accept(const error_code &, const std::shared_ptr<socket>) noexcept;

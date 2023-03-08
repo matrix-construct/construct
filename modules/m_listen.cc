@@ -317,7 +317,7 @@ listener_whitelist
 };
 
 static bool
-_listener_proffer(net::listener &listener,
+_listener_proffer(net::acceptor &listener,
                   const net::ipport &ipport)
 {
 	thread_local char strbuf[256];

@@ -46,8 +46,8 @@ namespace ircd::net
 /// reject connections by returning false.
 struct ircd::net::listener
 {
-	using callback = std::function<void (listener &, const std::shared_ptr<socket> &)>;
-	using proffer = std::function<bool (listener &, const ipport &)>;
+	using callback = std::function<void (acceptor &, const std::shared_ptr<socket> &)>;
+	using proffer = std::function<bool (acceptor &, const ipport &)>;
 
 	IRCD_EXCEPTION(net::error, error)
 

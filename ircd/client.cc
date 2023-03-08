@@ -333,7 +333,7 @@ ircd::client::terminate_all()
 }
 
 void
-ircd::client::create(net::listener &,
+ircd::client::create(net::acceptor &,
                      const std::shared_ptr<socket> &sock)
 {
 	const auto client

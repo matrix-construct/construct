@@ -282,11 +282,7 @@ ircd::net::acceptor::acceptor(net::listener &listener,
                               listener::callback cb,
                               listener::proffer pcb)
 try
-:listener_
-{
-	&listener
-}
-,name
+:name
 {
 	name
 }
@@ -569,7 +565,7 @@ noexcept try
 	// Call the proffer-callback. This allows the application to check whether
 	// to allow or deny this remote before the handshake, as well as setting
 	// the next accept to shape the kernel's queue.
-	if(!pcb(*listener_, remote))
+	if(!pcb(*this, remote))
 	{
 		net::close(*sock, dc::RST, close_ignore);
 		return;
@@ -708,10 +704,10 @@ const
 /// next accept to take place as well. This is generally overriden by a
 /// user callback to control this behavior.
 bool
-ircd::net::acceptor::proffer_default(listener &listener,
+ircd::net::acceptor::proffer_default(acceptor &acceptor,
                                      const ipport &ipport)
 {
-	allow(listener);
+	allow(acceptor);
 	return true;
 }
 
@@ -758,7 +754,7 @@ noexcept try
 
 	// Toggles the behavior of non-async functions; see func comment
 	blocking(*sock, false);
-	cb(*listener_, sock);
+	cb(*this, sock);
 }
 catch(const ctx::interrupted &e)
 {
