@@ -152,7 +152,9 @@ const
 {
 	constexpr auto max(words - 1);
 	const auto off(pos / 8);
-	assert(off <= max);
+	if(!__builtin_is_constant_evaluated())
+		assert(off <= max);
+
 	return std::min(off, max);
 }
 
