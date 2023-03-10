@@ -16,13 +16,13 @@ namespace ircd
 	struct string_view;
 
 	constexpr size_t _constexpr_strlen(const char *) noexcept;
-	template<size_t N> constexpr size_t _constexpr_strlen(const char (&)[N]) noexcept;
+	template<size_t N> consteval size_t _constexpr_strlen(const char (&)[N]) noexcept;
 
 	constexpr bool _constexpr_equal(const char *a, const char *b) noexcept;
 	constexpr bool _constexpr_equal(const char *a, const char *b, size_t) noexcept;
 	constexpr bool _constexpr_equal(const char *a, const size_t, const char *b, const size_t) noexcept;
 	constexpr bool _constexpr_equal(const string_view &, const string_view &) noexcept;
-	template<size_t N0, size_t N1> constexpr bool _constexpr_equal(const char (&)[N0], const char (&)[N1]) noexcept;
+	template<size_t N0, size_t N1> consteval bool _constexpr_equal(const char (&)[N0], const char (&)[N1]) noexcept;
 
 	constexpr const char *data(const string_view &) noexcept;
 	constexpr size_t size(const string_view &) noexcept;
@@ -327,7 +327,7 @@ noexcept
 
 template<size_t N0,
          size_t N1>
-constexpr bool
+consteval bool
 ircd::_constexpr_equal(const char (&a)[N0],
                        const char (&b)[N1])
 noexcept
@@ -347,7 +347,10 @@ ircd::_constexpr_equal(const string_view &a,
                        const string_view &b)
 noexcept
 {
-	return _constexpr_equal(data(a), size(a), data(b), size(b));
+	if constexpr(__cplusplus >= 202002L)
+		return a == b;
+	else
+		return _constexpr_equal(data(a), size(a), data(b), size(b));
 }
 
 constexpr bool
@@ -378,7 +381,7 @@ noexcept
 }
 
 template<size_t N>
-constexpr size_t
+consteval size_t
 ircd::_constexpr_strlen(const char (&a)[N])
 noexcept
 {
