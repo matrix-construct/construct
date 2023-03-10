@@ -60,17 +60,18 @@ template<class T>
 struct ircd::json::keys<T>::include
 :selection
 {
-	constexpr include(const vector_view<const string_view> list)
+	include(const vector_view<const string_view> &keys)
 	:selection{0}
 	{
-		for(const auto key : list)
+		for(const auto &key : keys)
 			selection::set(key, true);
 	}
 
-	constexpr include(const std::initializer_list<const string_view> list)
+	template<class... list>
+	consteval include(list&&... keys)
 	:selection{0}
 	{
-		for(const auto key : list)
+		for(auto&& key : {keys...})
 			selection::set(key, true);
 	}
 
@@ -86,17 +87,19 @@ template<class T>
 struct ircd::json::keys<T>::exclude
 :selection
 {
-	constexpr exclude(const vector_view<const string_view> list)
+	exclude(const vector_view<const string_view> &keys)
 	:selection{}
 	{
-		for(const auto key : list)
+		for(const auto &key : keys)
 			selection::set(key, false);
 	}
 
-	constexpr exclude(const std::initializer_list<const string_view> list)
+
+	template<class... list>
+	consteval exclude(list&&... keys)
 	:selection{}
 	{
-		for(const auto key : list)
+		for(auto&& key : {keys...})
 			selection::set(key, false);
 	}
 
