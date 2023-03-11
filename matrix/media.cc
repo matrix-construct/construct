@@ -221,7 +221,8 @@ size_t
 ircd::m::media::file::write(const m::room &room,
                             const m::user::id &user_id,
                             const const_buffer &content,
-                            const string_view &content_type)
+                            const string_view &content_type,
+                            const string_view &name)
 try
 {
 	static const size_t BLK_SZ
@@ -255,6 +256,12 @@ try
 	{
 		{ "mime_type", content_type }
 	});
+
+	if(name)
+		send(room, user_id, "ircd.file.stat.name", "", json::members
+		{
+			{ "name", name }
+		});
 
 	size_t off{0}, wrote{0};
 	while(off < size(content))

@@ -75,7 +75,7 @@ post__upload(client &client,
 
 	const size_t written
 	{
-		m::media::file::write(room, request.user_id, buf, content_type)
+		m::media::file::write(room, request.user_id, buf, content_type, filename)
 	};
 
 	char uribuf[256];

@@ -33,7 +33,7 @@ namespace ircd::m::media::file
 	room::id::buf room_id(const mxc &);
 
 	size_t read(const room &, const closure &);
-	size_t write(const room &, const user::id &, const const_buffer &content, const string_view &content_type);
+	size_t write(const room &, const user::id &, const const_buffer &content, const string_view &content_type, const string_view &name = {});
 
 	room::id::buf
 	download(const mxc &,
