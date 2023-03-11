@@ -12358,7 +12358,7 @@ console_cmd__room__auth(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"event_id|room_id", "event_id"
+		"event_id|room_id", "event_id", "type"
 	}};
 
 	const string_view &p0
@@ -12395,17 +12395,26 @@ console_cmd__room__auth(opt &out, const string_view &line)
 			p0
 	};
 
+	const auto type
+	{
+		param["type"]
+	};
+
 	const m::room::auth::chain ac
 	{
 		m::index(event_id)
 	};
 
-	ac.for_each([&out](const auto &idx)
+	ac.for_each([&out, &type]
+	(const auto &idx)
 	{
 		const m::event::fetch event
 		{
 			std::nothrow, idx
 		};
+
+		if(type && json::get<"type"_>(event) != type)
+			return true;
 
 		out << idx;
 		if(event.valid)
@@ -16553,7 +16562,13 @@ console_cmd__fed__auth(opt &out, const string_view &line)
 
 	std::sort(begin(events), end(events));
 	for(const auto &event : events)
+	{
+		if(startswith(param["op"], "m.room."))
+			if(json::get<"type"_>(event) != param["op"])
+				continue;
+
 		out << pretty_oneline(event) << std::endl;
+	}
 
 	return true;
 }
