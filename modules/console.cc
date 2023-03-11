@@ -14895,7 +14895,7 @@ console_cmd__feds__auth(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "event_id"
+		"room_id", "event_id", "type"
 	}};
 
 	const auto &room_id
@@ -14908,29 +14908,72 @@ console_cmd__feds__auth(opt &out, const string_view &line)
 		param.at("event_id")
 	};
 
+	const auto type
+	{
+		param["type"]
+	};
+
+	size_t count[2] {0};
+	std::set<string_view> origins;
+	std::map<std::string, std::set<std::string>, std::less<>> grid;
+
 	m::feds::opts opts;
 	opts.op = m::feds::op::auth;
 	opts.room_id = room_id;
 	opts.event_id = event_id;
-	m::feds::execute(opts, [&out](const auto &result)
+	m::feds::execute(opts, [&]
+	(const auto &result)
 	{
+		count[bool(result.eptr)]++;
 		if(result.eptr)
 			return true;
 
 		const json::array auth_chain
 		{
-			result.object.at("auth_chain")
+			result.object["auth_chain"]
 		};
 
-		out << "+ " << std::setw(40) << std::left << result.origin;
 		for(const json::object auth_event : auth_chain)
 		{
-			out << " " << unquote(auth_event.at("event_id"));
-		};
+			if(type && json::string(auth_event["type"]) != type)
+				continue;
 
-		out << std::endl;
+			const json::string event_id
+			{
+				auth_event.at("event_id")
+			};
+
+			auto it(grid.lower_bound(event_id));
+			if(it == end(grid) || it->first != event_id)
+				it = grid.emplace_hint(it, event_id, std::set<std::string>{});
+
+			auto &set(it->second);
+			const auto iit(set.emplace(result.origin));
+			origins.emplace(*iit.first);
+		}
+
 		return true;
 	});
+
+	size_t i(0);
+	for(const auto &p : grid)
+		out << i++ << " " << p.first << std::endl;
+
+	for(size_t j(0); j < i; ++j)
+		out << "| " << std::left << std::setw(2) << j;
+	out << "|" << std::endl;
+
+	for(const auto &origin : origins)
+	{
+		for(const auto &p : grid)
+			out << "| " << (p.second.count(origin)? '+' : ' ') << " ";
+		out << "| " << origin << std::endl;
+	}
+
+	out
+	<< '\n'
+	<< count[0] << ':' << count[1]
+	<< std::endl;
 
 	return true;
 }
