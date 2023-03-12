@@ -1156,7 +1156,7 @@ ircd::m::push::rules::defaults{R"(
 			],
 			"actions":
 			[
-				"notify",
+				"dont_notify",
 				{
 					"set_tweak": "highlight",
 					"value": false
@@ -1177,7 +1177,7 @@ ircd::m::push::rules::defaults{R"(
 			],
 			"actions":
 			[
-				"notify",
+				"dont_notify",
 				{
 					"set_tweak": "highlight",
 					"value": false
