@@ -183,12 +183,6 @@ ircd::m::sync::rooms_polylog(data &data)
 	if(data.prefetch)
 		data.user_rooms.prefetch();
 
-	if(rooms_polylog_ban)
-		ret |= _rooms_polylog(data, "ban", phase);
-
-	if(data.phased && ret)
-		return ret;
-
 	if(rooms_polylog_join)
 		ret |= _rooms_polylog(data, "join", phase);
 
@@ -203,6 +197,12 @@ ircd::m::sync::rooms_polylog(data &data)
 
 	if(rooms_polylog_leave)
 		ret |= _rooms_polylog(data, "leave", phase);
+
+	if(data.phased && ret)
+		return ret;
+
+	if(rooms_polylog_ban)
+		ret |= _rooms_polylog(data, "ban", phase);
 
 	if(data.phased && ret)
 		return ret;
