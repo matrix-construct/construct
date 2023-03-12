@@ -49,6 +49,7 @@ ARGS="$ARGS --build-arg extra_packages_dev1=g++"
 ARGS="$ARGS --build-arg cc=gcc --build-arg cxx=g++"
 docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base-built-gcc-amd64 $BASEDIR/alpine/3.16/built
 docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base-test-gcc-amd64 $BASEDIR/alpine/3.16/test
+docker push $ACCT/$REPO:alpine-3.16-base-built-gcc-amd64
 
 ARGS="$ARGS_"
 ARGS="$ARGS --platform linux/amd64"
@@ -59,6 +60,7 @@ ARGS="$ARGS --build-arg extra_packages_dev2=llvm-dev"
 ARGS="$ARGS --build-arg cc=clang --build-arg cxx=clang++"
 docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base-built-clang-amd64 $BASEDIR/alpine/3.16/built
 docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base-test-clang-amd64 $BASEDIR/alpine/3.16/test
+docker push $ACCT/$REPO:alpine-3.16-base-built-clang-amd64
 
 ARGS="$ARGS_"
 ARGS="$ARGS --platform linux/amd64"
@@ -68,6 +70,7 @@ ARGS="$ARGS --build-arg extra_packages_dev1=g++"
 ARGS="$ARGS --build-arg cc=gcc --build-arg cxx=g++"
 docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full-built-gcc-amd64 $BASEDIR/alpine/3.16/built
 docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full-test-gcc-amd64 $BASEDIR/alpine/3.16/test
+docker push $ACCT/$REPO:alpine-3.16-full-built-gcc-amd64
 
 ARGS="$ARGS_"
 ARGS="$ARGS --platform linux/amd64"
@@ -78,15 +81,6 @@ ARGS="$ARGS --build-arg extra_packages_dev2=llvm-dev"
 ARGS="$ARGS --build-arg cc=clang --build-arg cxx=clang++"
 docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full-built-clang-amd64 $BASEDIR/alpine/3.16/built
 docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full-test-clang-amd64 $BASEDIR/alpine/3.16/test
-
-#
-# Pushed images
-#
-
-docker push $ACCT/$REPO:alpine-3.16-base-built-gcc-amd64
-docker push $ACCT/$REPO:alpine-3.16-base-built-clang-amd64
-
-docker push $ACCT/$REPO:alpine-3.16-full-built-gcc-amd64
 docker push $ACCT/$REPO:alpine-3.16-full-built-clang-amd64
 
 ###############################################################################
@@ -117,12 +111,14 @@ docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-amd64 $BASEDIR/ubuntu/22.04/
 ARGS="$ARGS_"
 ARGS="$ARGS --platform linux/amd64"
 ARGS="$ARGS --build-arg feature=base"
-ARGS="$ARGS --build-arg extra_packages_dev=gcc-9"
-ARGS="$ARGS --build-arg extra_packages_dev1=g++-9"
-ARGS="$ARGS --build-arg cc=gcc-9 --build-arg cxx=g++-9"
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-build-gcc-9-amd64 $BASEDIR/ubuntu/22.04/build
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-built-gcc-9-amd64 $BASEDIR/ubuntu/22.04/built
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-test-gcc-9-amd64 $BASEDIR/ubuntu/22.04/test
+ARGS="$ARGS --build-arg extra_packages_dev=gcc-10"
+ARGS="$ARGS --build-arg extra_packages_dev1=g++-10"
+ARGS="$ARGS --build-arg cc=gcc-10 --build-arg cxx=g++-10"
+docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-build-gcc-10-amd64 $BASEDIR/ubuntu/22.04/build
+docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-built-gcc-10-amd64 $BASEDIR/ubuntu/22.04/built
+docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-test-gcc-10-amd64 $BASEDIR/ubuntu/22.04/test
+docker push $ACCT/$REPO:ubuntu-22.04-base-build-gcc-10-amd64
+docker push $ACCT/$REPO:ubuntu-22.04-base-built-gcc-10-amd64
 
 ARGS="$ARGS_"
 ARGS="$ARGS --platform linux/amd64"
@@ -133,6 +129,8 @@ ARGS="$ARGS --build-arg cc=gcc-12 --build-arg cxx=g++-12"
 docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-build-gcc-12-amd64 $BASEDIR/ubuntu/22.04/build
 docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-built-gcc-12-amd64 $BASEDIR/ubuntu/22.04/built
 docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-test-gcc-12-amd64 $BASEDIR/ubuntu/22.04/test
+docker push $ACCT/$REPO:ubuntu-22.04-base-build-gcc-12-amd64
+docker push $ACCT/$REPO:ubuntu-22.04-base-built-gcc-12-amd64
 
 ARGS="$ARGS_"
 ARGS="$ARGS --platform linux/amd64"
@@ -144,38 +142,5 @@ ARGS="$ARGS --build-arg cc=clang-15 --build-arg cxx=clang++-15"
 docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-build-clang-15-amd64 $BASEDIR/ubuntu/22.04/build
 docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-built-clang-15-amd64 $BASEDIR/ubuntu/22.04/built
 docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-test-clang-15-amd64 $BASEDIR/ubuntu/22.04/test
-
-#
-# Pushed images
-#
-
-docker push $ACCT/$REPO:ubuntu-22.04-base-build-gcc-9-amd64
-docker push $ACCT/$REPO:ubuntu-22.04-base-built-gcc-9-amd64
-
-docker push $ACCT/$REPO:ubuntu-22.04-base-build-gcc-12-amd64
-docker push $ACCT/$REPO:ubuntu-22.04-base-built-gcc-12-amd64
-
 docker push $ACCT/$REPO:ubuntu-22.04-full-build-clang-15-amd64
 docker push $ACCT/$REPO:ubuntu-22.04-full-built-clang-15-amd64
-
-###############################################################################
-#
-# Ubuntu 20.04
-#
-
-#docker build -t $ACCT/$REPO:ubuntu-20.04 $BASEDIR/ubuntu/20.04/base
-#docker build -t $ACCT/$REPO:ubuntu-20.04-gcc-8 $BASEDIR/ubuntu/20.04/gcc-8
-#docker build -t $ACCT/$REPO:ubuntu-20.04-gcc-9 $BASEDIR/ubuntu/20.04/gcc-9
-#docker build -t $ACCT/$REPO:ubuntu-20.04-gcc-10 $BASEDIR/ubuntu/20.04/gcc-10
-#docker build -t $ACCT/$REPO:ubuntu-20.04-clang-9 $BASEDIR/ubuntu/20.04/clang-9
-#docker build -t $ACCT/$REPO:ubuntu-20.04-clang-10 $BASEDIR/ubuntu/20.04/clang-10
-#docker build -t $ACCT/$REPO:ubuntu-20.04-clang-11 $BASEDIR/ubuntu/20.04/clang-11
-#docker build -t $ACCT/$REPO:ubuntu-20.04-clang-12 $BASEDIR/ubuntu/20.04/clang-12
-
-#docker push $ACCT/$REPO:ubuntu-20.04-gcc-8
-#docker push $ACCT/$REPO:ubuntu-20.04-gcc-9
-#docker push $ACCT/$REPO:ubuntu-20.04-gcc-10
-#docker push $ACCT/$REPO:ubuntu-20.04-clang-9
-#docker push $ACCT/$REPO:ubuntu-20.04-clang-10
-#docker push $ACCT/$REPO:ubuntu-20.04-clang-11
-#docker push $ACCT/$REPO:ubuntu-20.04-clang-12
