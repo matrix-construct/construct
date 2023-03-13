@@ -267,6 +267,17 @@ ircd::m::vm::inject(eval &eval,
 		}
 	};
 
+	const json::iov::defaults membership_
+	{
+		event, event.at("type") == "m.room.member",
+		{
+			"membership", [&contents]()
+			{
+				return contents.at("membership");
+			}
+		}
+	};
+
 	const bool add_auth_events
 	{
 		!is_room_create
