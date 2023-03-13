@@ -211,17 +211,37 @@ try
 	if(at<"type"_>(event) == "m.room.create")
 		return {true, {}};
 
-	if(!m::exists(event.event_id))
-		return {true, {}};
-
 	const auto &room_id
 	{
 		at<"room_id"_>(event)
 	};
 
+	const auto event_idx
+	{
+		m::index(std::nothrow, event.event_id)
+	};
+
+	if(!event_idx)
+		return {true, {}};
+
+	const auto prev_idx
+	{
+		m::room::state::prev(event_idx)
+	};
+
+	const auto prev_id
+	{
+		m::event_id(std::nothrow, prev_idx)
+	};
+
+	const auto state_id
+	{
+		prev_id?: event.event_id
+	};
+
 	const m::room room
 	{
-		room_id, event.event_id
+		room_id, state_id
 	};
 
 	const auto idxs
