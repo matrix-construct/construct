@@ -16617,6 +16617,108 @@ console_cmd__fed__auth(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__fed__auth__space(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "type", "state_key", "remote", "depth", "limit"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const string_view &type
+	{
+		param["type"] != "*"?
+			param["type"] : string_view{},
+	};
+
+	const string_view &state_key
+	{
+		param["state_key"] != "\"\""?
+			param["state_key"] : string_view{},
+	};
+
+	const string_view remote
+	{
+		param.at("remote")
+	};
+
+	const int64_t depth
+	{
+		param.at("depth", -1L)
+	};
+
+	const uint64_t limit
+	{
+		param.at("limit", -1UL)
+	};
+
+	const m::room::state state
+	{
+		room_id
+	};
+
+	const m::room::state::space space
+	{
+		room_id
+	};
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB
+	};
+
+	const server::request::opts sopts
+	{
+		.http_exceptions = false,
+	};
+
+	size_t i(0);
+	space.for_each(type, state_key, depth, [&]
+	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
+	{
+		const m::event::fetch event
+		{
+			std::nothrow, event_idx
+		};
+
+		if(!event.valid)
+			return true;
+
+		m::fed::event_auth::opts opts;
+		opts.remote = remote;
+		opts.sopts = &sopts;
+		m::fed::event_auth request
+		{
+			room_id, event.event_id, buf, std::move(opts)
+		};
+
+		request.wait(out.timeout);
+		const auto code
+		{
+			request.get()
+		};
+
+		const char report
+		{
+			code == 200? '+':
+			code == 404? '-':
+			code == 403? 'X':
+			'?'
+		};
+
+		out << report << ' ';
+		m::pretty_stateline(out, event, event_idx);
+		return ++i < limit;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__fed__query_auth(opt &out, const string_view &line)
 {
 	const params param{line, " ",
