@@ -196,6 +196,7 @@ ircd::m::push::execute(const event &event,
                        const event::idx &rule_idx)
 try
 {
+	assert(json::get<"enabled"_>(rule));
 	const auto &[scope, kind, ruleid]
 	{
 		path

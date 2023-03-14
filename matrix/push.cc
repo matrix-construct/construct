@@ -1145,7 +1145,7 @@ ircd::m::push::rules::defaults{R"(
 		{
 			"rule_id": ".m.rule.message",
 			"default": true,
-			"enabled": false,
+			"enabled": true,
 			"conditions":
 			[
 				{
