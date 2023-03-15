@@ -26,6 +26,20 @@ server_resource
 	}
 };
 
+conf::item<std::string>
+occlusion_blacklist
+{
+	{ "name",     "ircd.key.occlude.blacklist" },
+	{ "default",  ""                           },
+};
+
+conf::item<std::string>
+occlusion_whitelist
+{
+	{ "name",     "ircd.key.occlude.whitelist" },
+	{ "default",  ""                           },
+};
+
 m::resource::response
 handle_get(client &client,
            const m::resource::request &request)
@@ -35,6 +49,38 @@ handle_get(client &client,
 	{
 		url::decode(key_id_buf, request.params)
 	};
+
+	const blackwhite::list acl
+	{
+		' ', occlusion_blacklist, occlusion_whitelist
+	};
+
+	char remote_buf[256];
+	const auto ip_str
+	{
+		occlusion_blacklist || occlusion_whitelist?
+			host(string(remote_buf, remote(client))):
+			string_view{}
+	};
+
+	const bool allow
+	{
+		acl(ip_str)
+	};
+
+	log::debug
+	{
+		m::log, "%s requested key %s (%s)",
+		loghead(client),
+		key_id?: "*"_sv,
+		allow? "ALLOWED": "DENIED",
+	};
+
+	if(!allow)
+		return m::resource::response
+		{
+			client, http::FORBIDDEN
+		};
 
 	m::keys::get(my_host(), key_id, [&client]
 	(const json::object &keys)
