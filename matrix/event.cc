@@ -323,9 +323,29 @@ ircd::m::signatures(const mutable_buffer &out,
 }
 
 ircd::m::event
+ircd::m::signatures(const mutable_buffer &out,
+                    const m::event &event,
+                    const string_view &origin)
+{
+	const auto &secret_key
+	{
+		m::secret_key(my(origin))
+	};
+
+	const string_view public_key_id
+	{
+		m::public_key_id(my(origin))
+	};
+
+	return signatures(out, event, origin, secret_key, public_key_id);
+}
+
+ircd::m::event
 ircd::m::signatures(const mutable_buffer &out_,
                     const m::event &event_,
-                    const string_view &origin)
+                    const string_view &origin,
+                    const ed25519::sk &secret_key,
+                    const string_view &public_key_id)
 {
 	m::event event
 	{
@@ -335,16 +355,6 @@ ircd::m::signatures(const mutable_buffer &out_,
 	const string_view &preimage
 	{
 		stringify(event::buf[2], event)
-	};
-
-	const auto &secret_key
-	{
-		m::secret_key(my(origin))
-	};
-
-	const string_view public_key_id
-	{
-		m::public_key_id(my(origin))
 	};
 
 	const ed25519::sig my_sig

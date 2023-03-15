@@ -41,11 +41,12 @@ namespace ircd::m
 	size_t degree(const event &);
 	bool before(const event &a, const event &b);
 
-	json::object hashes(const mutable_buffer &, const event &);
-	event signatures(const mutable_buffer &, const m::event &, const string_view &origin);
-	event signatures(const mutable_buffer &, const m::event &);
 	event essential(event, const mutable_buffer &content, const bool &sigs = false);
+	event signatures(const mutable_buffer &, const event &, const string_view &origin, const ed25519::sk &, const string_view &pkid);
+	event signatures(const mutable_buffer &, const event &, const string_view &origin);
+	event signatures(const mutable_buffer &, const event &);
 
+	json::object hashes(const mutable_buffer &, const event &);
 	bool verify_hash(const event &, const sha256::buf &);
 	bool verify_hash(const event &);
 
