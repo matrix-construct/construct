@@ -37,6 +37,7 @@ ircd::net::dns::resolver
 	static conf::item<milliseconds> send_rate;
 	static conf::item<size_t> send_burst;
 	static conf::item<size_t> retry_max;
+	static conf::item<bool> retry_serv_fail;
 
 	answers_callback callback;
 	std::vector<ip::udp::endpoint> server;       // The list of active servers

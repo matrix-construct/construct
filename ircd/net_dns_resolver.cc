@@ -39,6 +39,13 @@ ircd::net::dns::resolver::retry_max
 	{ "default",   20L                              },
 };
 
+decltype(ircd::net::dns::resolver::retry_serv_fail)
+ircd::net::dns::resolver::retry_serv_fail
+{
+	{ "name",     "ircd.net.dns.resolver.retry_serv_fail" },
+	{ "default",  true                                    },
+};
+
 decltype(ircd::net::dns::resolver::servers)
 ircd::net::dns::resolver::servers
 {
@@ -726,7 +733,14 @@ ircd::net::dns::resolver::handle_reply(const ipport &from,
 
 	// Handle ServFail as a special case here. We can try again without
 	// handling this tag or propagating this error any further yet.
-	if(header.rcode == 2 && tag.tries < size_t(server.size()))
+	const bool serv_fail_retry
+	{
+		retry_serv_fail
+		&& header.rcode == 2
+		&& tag.tries < size_t(server.size())
+	};
+
+	if(serv_fail_retry)
 	{
 		log::error
 		{
