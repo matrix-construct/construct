@@ -37,29 +37,21 @@ method_get
 	}
 };
 
-mods::import<void (const m::id::user &)>
-validate_user_id
-{
-	"client_register", "validate_user_id"
-};
-
-mods::import<ircd::conf::item<bool>>
-register_enable
-{
-	"client_register", "register_enable"
-};
-
-mods::import<ircd::conf::item<bool>>
-register_user_enable
-{
-	"client_register", "register_user_enable"
-};
-
 m::resource::response
 get__register_available(client &client,
                         const m::resource::request &request)
 {
-	if(!bool(register_enable) || !bool(register_user_enable))
+	const bool register_enable
+	{
+		conf::as("ircd.client.register.enable", false)
+	};
+
+	const bool register_user_enable
+	{
+		conf::as("ircd.client.register.user.enable", false)
+	};
+
+	if(!register_enable || !register_user_enable)
 		throw m::error
 		{
 			http::FORBIDDEN, "M_REGISTRATION_DISABLED",
@@ -74,7 +66,7 @@ get__register_available(client &client,
 	};
 
 	// Performs additional custom checks on the user_id else throws.
-	validate_user_id(user_id);
+	m::user::registar::validate_user_id(user_id);
 
 	// We indicate availability of a valid mxid in the cacheable 200 OK
 	return resource::response
