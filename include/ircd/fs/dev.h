@@ -16,7 +16,6 @@ namespace ircd::fs::dev
 	struct blk;
 
 	using major_minor = std::pair<ulong, ulong>;
-	using blk_closure = std::function<bool (const ulong &id, const blk &)>;
 
 	// Convert device ID's with the major(3) / minor(3) / makedev(3)
 	ulong id(const major_minor &);
@@ -36,13 +35,12 @@ namespace ircd::fs::dev
 	sysfs(const ulong &id,
 	      const string_view &path,
 	      const R &def = 0);
-
-	bool for_each(const string_view &devtype, const blk_closure &);
-	bool for_each(const blk_closure &);
 }
 
 struct ircd::fs::dev::blk
 {
+	using closure = util::function_bool<const ulong &, const blk &>;
+
 	static const size_t SECTOR_SIZE;
 	static const string_view BASE_PATH;
 
@@ -66,6 +64,9 @@ struct ircd::fs::dev::blk
 
 	blk(const ulong &id);
 	blk() = default;
+
+	static bool for_each(const string_view &devtype, const closure &);
+	static bool for_each(const closure &);
 };
 
 /// Return a lex_cast'able (an integer) from a sysfs target.

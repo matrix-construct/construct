@@ -1057,7 +1057,7 @@ console_cmd__fs__dev(opt &out, const string_view &line)
 	<< std::setw(24) << std::left << "SCHED" << ' '
 	<< std::endl;
 
-	fs::dev::for_each(type, [&out]
+	fs::dev::blk::for_each(type, [&out]
 	(const ulong &id, const fs::dev::blk &dev)
 	{
 		const auto mm(fs::dev::id(id));
@@ -1082,7 +1082,6 @@ console_cmd__fs__dev(opt &out, const string_view &line)
 		<< std::setw(16) << std::left << dev.vendor << ' '
 		<< std::setw(24) << std::left << dev.scheduler << ' '
 		<< std::endl;
-		return true;
 	});
 
 	return true;

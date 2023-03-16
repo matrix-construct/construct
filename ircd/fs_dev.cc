@@ -10,55 +10,6 @@
 
 #include <RB_INC_SYS_SYSMACROS_H
 
-bool
-ircd::fs::dev::for_each(const blk_closure &closure)
-{
-	return for_each(string_view{}, closure);
-}
-
-bool
-ircd::fs::dev::for_each(const string_view &type,
-                        const blk_closure &closure)
-{
-	for(const auto &dir : fs::ls(blk::BASE_PATH)) try
-	{
-		const auto &[major, minor]
-		{
-			split(filename(path_scratch, dir), ':')
-		};
-
-		if(!major || !minor)
-			continue;
-
-		const ulong id
-		{
-			dev::id({lex_cast<ulong>(major), lex_cast<ulong>(minor)})
-		};
-
-		char dtbuf[32];
-		if(type && blk::devtype(dtbuf, id) != type)
-			continue;
-
-		if(!closure(id, blk(id)))
-			return false;
-	}
-	catch(const ctx::interrupted &)
-	{
-		throw;
-	}
-	catch(const std::exception &e)
-	{
-		log::error
-		{
-			log, "%s :%s",
-			dir,
-			e.what(),
-		};
-	}
-
-	return true;
-}
-
 ircd::string_view
 ircd::fs::dev::sysfs(const mutable_buffer &out,
                      const ulong &id,
@@ -122,6 +73,59 @@ ircd::fs::dev::blk::BASE_PATH
 {
 	"/sys/dev/block"
 };
+
+bool
+ircd::fs::dev::blk::for_each(const closure &closure)
+{
+	return for_each(string_view{}, closure);
+}
+
+bool
+ircd::fs::dev::blk::for_each(const string_view &type,
+                             const closure &closure)
+{
+	for(const auto &dir : fs::ls(blk::BASE_PATH)) try
+	{
+		const auto &[major, minor]
+		{
+			split(filename(path_scratch, dir), ':')
+		};
+
+		if(!major || !minor)
+			continue;
+
+		const ulong id
+		{
+			dev::id({lex_cast<ulong>(major), lex_cast<ulong>(minor)})
+		};
+
+		char dtbuf[32];
+		if(type && blk::devtype(dtbuf, id) != type)
+			continue;
+
+		if(!closure(id, blk(id)))
+			return false;
+	}
+	catch(const ctx::interrupted &)
+	{
+		throw;
+	}
+	catch(const std::exception &e)
+	{
+		log::error
+		{
+			log, "%s :%s",
+			dir,
+			e.what(),
+		};
+	}
+
+	return true;
+}
+
+//
+// dev::blk::blk
+//
 
 ircd::fs::dev::blk::blk(const ulong &id)
 :type

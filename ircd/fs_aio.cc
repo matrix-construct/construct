@@ -114,15 +114,13 @@ size_t
 ircd::fs::aio::init::query_max_events()
 {
 	size_t ret(0);
-	fs::dev::for_each("disk", [&ret]
+	fs::dev::blk::for_each("disk", [&ret]
 	(const ulong &id, const fs::dev::blk &device)
 	{
 		ret = std::clamp
 		(
 			device.queue_depth, ret, MAX_EVENTS
 		);
-
-		return true;
 	});
 
 	if(!ret)
