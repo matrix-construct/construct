@@ -1088,6 +1088,78 @@ console_cmd__fs__dev(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__fs__dev__stats(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"name"
+	}};
+
+	const string_view name
+	{
+		param["name"]
+	};
+
+	out
+	<< std::setw(3) << std::right << "maj" << ':'
+	<< std::setw(3) << std::left << "min" << ' '
+	<< std::setw(18) << std::left << "name" << ' '
+	<< std::setw(6) << std::right << "io cur" << ' '
+	<< std::setw(12) << std::right << "io time" << ' '
+	<< std::setw(12) << std::right << "io weighted" << ' '
+	<< std::setw(12) << std::right << "reads" << ' '
+	<< std::setw(12) << std::right << "read sect" << ' '
+	<< std::setw(12) << std::right << "read merge" << ' '
+	<< std::setw(12) << std::right << "read time" << ' '
+	<< std::setw(12) << std::right << "writes" << ' '
+	<< std::setw(12) << std::right << "write sect" << ' '
+	<< std::setw(12) << std::right << "write merge" << ' '
+	<< std::setw(12) << std::right << "write time" << ' '
+	<< std::setw(12) << std::right << "discards" << ' '
+	<< std::setw(12) << std::right << "discard sect" << ' '
+	<< std::setw(12) << std::right << "discard merg" << ' '
+	<< std::setw(12) << std::right << "discard time" << ' '
+	<< std::setw(12) << std::right << "flushes" << ' '
+	<< std::setw(12) << std::right << "flush time" << ' '
+	<< std::endl;
+
+	fs::dev::stats::for_each([&out, &name]
+	(const auto &stats)
+	{
+		if(name && !startswith(stats.name, name))
+			return true;
+
+		char tmbuf[8][32];
+		out
+		<< std::setw(3) << std::right << stats.id.first << ':'
+		<< std::setw(3) << std::left << stats.id.second << ' '
+		<< std::setw(18) << std::left << stats.name << ' '
+		<< std::setw(6) << std::right << stats.io_current << ' '
+		<< std::setw(12) << std::right << pretty(tmbuf[0], stats.io_time, 1) << ' '
+		<< std::setw(12) << std::right << pretty(tmbuf[1], stats.io_weighted_time, 1) << ' '
+		<< std::setw(12) << std::right << stats.read << ' '
+		<< std::setw(12) << std::right << stats.read_merged << ' '
+		<< std::setw(12) << std::right << stats.read_sectors << ' '
+		<< std::setw(12) << std::right << pretty(tmbuf[2], stats.read_time, 1) << ' '
+		<< std::setw(12) << std::right << stats.write << ' '
+		<< std::setw(12) << std::right << stats.write_merged << ' '
+		<< std::setw(12) << std::right << stats.write_sectors << ' '
+		<< std::setw(12) << std::right << pretty(tmbuf[3], stats.write_time, 1) << ' '
+		<< std::setw(12) << std::right << stats.discard << ' '
+		<< std::setw(12) << std::right << stats.discard_merged << ' '
+		<< std::setw(12) << std::right << stats.discard_sectors << ' '
+		<< std::setw(12) << std::right << pretty(tmbuf[4], stats.discard_time, 1) << ' '
+		<< std::setw(12) << std::right << stats.flush << ' '
+		<< std::setw(12) << std::right << pretty(tmbuf[5], stats.flush_time, 1) << ' '
+		<< '\n';
+		return !name;
+	});
+
+	out << std::endl;
+	return true;
+}
+
+bool
 console_cmd__ls(opt &out, const string_view &line)
 {
 	return console_cmd__fs__ls(out, line);

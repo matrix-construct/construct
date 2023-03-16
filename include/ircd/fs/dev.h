@@ -14,6 +14,7 @@
 namespace ircd::fs::dev
 {
 	struct blk;
+	struct stats;
 
 	using major_minor = std::pair<ulong, ulong>;
 
@@ -67,6 +68,44 @@ struct ircd::fs::dev::blk
 
 	static bool for_each(const string_view &devtype, const closure &);
 	static bool for_each(const closure &);
+};
+
+struct ircd::fs::dev::stats
+{
+	using closure = util::function_bool<const stats &>;
+
+	char name[32] {0};
+	major_minor id {0, 0};
+
+	uint64_t read {0};
+	uint64_t read_merged {0};
+	uint64_t read_sectors {0};
+	milliseconds read_time {0ms};
+
+	uint64_t write {0};
+	uint64_t write_merged {0};
+	uint64_t write_sectors {0};
+	milliseconds write_time {0ms};
+
+	uint64_t io_current {0};
+	milliseconds io_time {0ms};
+	milliseconds io_weighted_time {0ms};
+
+	// 4.18+
+	uint64_t discard {0};
+	uint64_t discard_merged {0};
+	uint64_t discard_sectors {0};
+	milliseconds discard_time {0ms};
+
+	// 5.5+
+	uint64_t flush {0};
+	milliseconds flush_time {0ms};
+
+	stats(const string_view &line);
+	stats() = default;
+
+	static bool for_each(const closure &);
+	static stats get(const major_minor &id);
 };
 
 /// Return a lex_cast'able (an integer) from a sysfs target.

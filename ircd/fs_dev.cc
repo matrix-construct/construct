@@ -231,3 +231,100 @@ ircd::fs::dev::blk::devtype(const mutable_buffer &buf,
 
 	return ret;
 }
+
+//
+// dev::stats
+//
+
+ircd::fs::dev::stats
+ircd::fs::dev::stats::get(const major_minor &id)
+{
+	stats ret;
+	for_each([&id, &ret]
+	(const auto &stats)
+	{
+		if(stats.id == id)
+		{
+			ret = stats;
+			return false;
+		}
+		else return true;
+	});
+
+	return ret;
+}
+
+bool
+ircd::fs::dev::stats::for_each(const closure &closure)
+{
+	thread_local char buf[16_KiB];
+
+	const fs::fd fd
+	{
+		"/proc/diskstats", fs::fd::opts
+		{
+			.mode = std::ios::in,
+		},
+	};
+
+	fs::read_opts opts;
+	opts.aio = false;
+	const string_view read
+	{
+		fs::read(fd, buf, opts)
+	};
+
+	return tokens(read, '\n', [&closure]
+	(const auto &line)
+	{
+		return closure(stats(line));
+	});
+}
+
+//
+// dev::stats::stats
+//
+
+ircd::fs::dev::stats::stats(const string_view &line)
+{
+	string_view item[20];
+	const auto items
+	{
+		tokens(line, ' ', item)
+	};
+
+	id.first = lex_cast<uint64_t>(item[0]);
+	id.second = lex_cast<uint64_t>(item[1]);
+	strlcpy(name, item[2]);
+
+	read = lex_cast<uint64_t>(item[3]);
+	read_merged = lex_cast<uint64_t>(item[4]);
+	read_sectors = lex_cast<uint64_t>(item[5]);
+	read_time = lex_cast<milliseconds>(item[6]);
+
+	write = lex_cast<uint64_t>(item[7]);
+	write_merged = lex_cast<uint64_t>(item[8]);
+	write_sectors = lex_cast<uint64_t>(item[9]);
+	write_time = lex_cast<milliseconds>(item[10]);
+
+	io_current = lex_cast<uint64_t>(item[11]);
+	io_time = lex_cast<milliseconds>(item[12]);
+	io_weighted_time = lex_cast<milliseconds>(item[13]);
+
+	if(items <= 14)
+		return;
+
+	discard = lex_cast<uint64_t>(item[14]);
+	discard_merged = lex_cast<uint64_t>(item[15]);
+	discard_sectors = lex_cast<uint64_t>(item[16]);
+	discard_time = lex_cast<milliseconds>(item[17]);
+
+	if(items <= 18)
+		return;
+
+	flush = lex_cast<uint64_t>(item[18]);
+	flush_time = lex_cast<milliseconds>(item[19]);
+
+	if(items <= 20)
+		return;
+}
