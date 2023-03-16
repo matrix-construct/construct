@@ -5343,7 +5343,7 @@ try
 {
 	const params param{line, " ",
 	{
-		"dbname", "column"
+		"dbname", "column|file"
 	}};
 
 	const auto &dbname
@@ -5353,13 +5353,29 @@ try
 
 	const auto &colname
 	{
-		param["column"]
+		param["column|file"]
+	};
+
+	const auto &fname
+	{
+		!startswith(colname, '/')?
+			string_view{}:
+			lstrip(colname, '/')
 	};
 
 	auto &database
 	{
 		db::database::get(dbname)
 	};
+
+	if(fname)
+	{
+		check(database, fname);
+		out << "Check of file " << fname << " in " << dbname << " completed without error."
+		    << std::endl;
+
+		return true;
+	}
 
 	if(colname)
 	{
