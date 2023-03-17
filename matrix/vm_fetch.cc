@@ -35,6 +35,23 @@ namespace ircd::m::vm::fetch
 	extern log::log log;
 }
 
+namespace ircd::m::vm::fetch::stats
+{
+	using ircd::stats::item;
+
+	extern item<uint64_t> prev_noempts;
+	extern item<uint64_t> prev_preempts;
+	extern item<uint64_t> prev_evals;
+	extern item<uint64_t> prev_fetched;
+	extern item<uint64_t> prev_fetches;
+	extern item<uint64_t> auth_evals;
+	extern item<uint64_t> auth_fetched;
+	extern item<uint64_t> auth_fetches;
+	extern item<uint64_t> state_evals;
+	extern item<uint64_t> state_fetched;
+	extern item<uint64_t> state_fetches;
+}
+
 decltype(ircd::m::vm::fetch::log)
 ircd::m::vm::fetch::log
 {
@@ -115,6 +132,72 @@ ircd::m::vm::fetch::prev_preempt_time
 {
 	{ "name",     "ircd.m.vm.fetch.prev.preempt.time" },
 	{ "default",  5000L                               },
+};
+
+decltype(ircd::m::vm::fetch::stats::state_fetches)
+ircd::m::vm::fetch::stats::state_fetches
+{
+	{ "name", "ircd.m.vm.fetch.state.fetches" },
+};
+
+decltype(ircd::m::vm::fetch::stats::state_fetched)
+ircd::m::vm::fetch::stats::state_fetched
+{
+	{ "name", "ircd.m.vm.fetch.state.fetched" },
+};
+
+decltype(ircd::m::vm::fetch::stats::state_evals)
+ircd::m::vm::fetch::stats::state_evals
+{
+	{ "name", "ircd.m.vm.fetch.state.evals" },
+};
+
+decltype(ircd::m::vm::fetch::stats::auth_fetches)
+ircd::m::vm::fetch::stats::auth_fetches
+{
+	{ "name", "ircd.m.vm.fetch.auth.fetches" },
+};
+
+decltype(ircd::m::vm::fetch::stats::auth_fetched)
+ircd::m::vm::fetch::stats::auth_fetched
+{
+	{ "name", "ircd.m.vm.fetch.auth.fetched" },
+};
+
+decltype(ircd::m::vm::fetch::stats::auth_evals)
+ircd::m::vm::fetch::stats::auth_evals
+{
+	{ "name", "ircd.m.vm.fetch.auth.evals" },
+};
+
+decltype(ircd::m::vm::fetch::stats::prev_fetches)
+ircd::m::vm::fetch::stats::prev_fetches
+{
+	{ "name", "ircd.m.vm.fetch.prev.fetches" },
+};
+
+decltype(ircd::m::vm::fetch::stats::prev_fetched)
+ircd::m::vm::fetch::stats::prev_fetched
+{
+	{ "name", "ircd.m.vm.fetch.prev.fetched" },
+};
+
+decltype(ircd::m::vm::fetch::stats::prev_evals)
+ircd::m::vm::fetch::stats::prev_evals
+{
+	{ "name", "ircd.m.vm.fetch.prev.evals" },
+};
+
+decltype(ircd::m::vm::fetch::stats::prev_preempts)
+ircd::m::vm::fetch::stats::prev_preempts
+{
+	{ "name", "ircd.m.vm.fetch.prev.preempts" },
+};
+
+decltype(ircd::m::vm::fetch::stats::prev_noempts)
+ircd::m::vm::fetch::stats::prev_noempts
+{
+	{ "name", "ircd.m.vm.fetch.prev.noempts" },
 };
 
 //
@@ -295,11 +378,13 @@ try
 	};
 
 	// recv
+	stats::auth_fetches++;
 	const auto result
 	{
 		future.get(seconds(auth_timeout))
 	};
 
+	stats::auth_fetched++;
 	const json::object response
 	{
 		result
@@ -312,6 +397,7 @@ try
 	};
 
 	auth_chain_eval(event, eval, room, auth_chain, result.origin);
+	stats::auth_evals++;
 }
 catch(const vm::error &e)
 {
@@ -427,6 +513,7 @@ try
 			return;
 	}
 
+	stats::state_fetches++;
 	log::dwarning
 	{
 		log, "%s fetching possible missing state in %s",
@@ -446,6 +533,7 @@ try
 	};
 
 	//TODO: XXX
+	stats::state_fetched++;
 	log::info
 	{
 		log, "%s evaluated missing state in %s fetched:-- good:-- fail:--",
@@ -496,7 +584,10 @@ ircd::m::vm::fetch::prev(const event &event,
 
 	// Attempt to wait for missing prev_events without issuing fetches here.
 	if(prev_wait(event, eval))
+	{
+		stats::prev_noempts += prev_count;
 		return;
+	}
 
 	if(!m::vm::fetch::enable)
 	{
@@ -511,8 +602,14 @@ ircd::m::vm::fetch::prev(const event &event,
 		prev_fetch(event, eval, room)
 	};
 
+	const auto fetching_count
+	{
+		std::distance(begin(fetching), end(fetching))
+	};
+
 	// At this point one or more prev_events are missing; the fetches were
 	// launched asynchronously if the options allowed for it.
+	stats::prev_fetches += fetching_count;
 	log::dwarning
 	{
 		log, "%s depth:%ld prev_events:%zu miss:%zu fetching:%zu fetching ...",
@@ -520,7 +617,7 @@ ircd::m::vm::fetch::prev(const event &event,
 		at<"depth"_>(event),
 		prev_count,
 		prev_count - prev_exists,
-		std::distance(begin(fetching), end(fetching)),
+		fetching_count,
 	};
 
 	// Rather than waiting for all of the events to arrive or for the entire
@@ -564,6 +661,7 @@ ircd::m::vm::fetch::prev(const event &event,
 	// Check for satisfaction.
 	if(prev.prev_events_exist() == prev_count)
 	{
+		stats::prev_preempts += prev_count;
 		assert(finished);
 		return;
 	}
@@ -593,6 +691,7 @@ try
 		future.get_until(until)
 	};
 
+	stats::prev_fetched++;
 	const json::object content
 	{
 		result
@@ -619,6 +718,8 @@ try
 	{
 		pdus, opts
 	};
+
+	stats::prev_evals++;
 }
 catch(const ctx::interrupted &)
 {
