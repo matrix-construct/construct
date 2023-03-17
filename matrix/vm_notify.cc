@@ -112,6 +112,44 @@ ircd::m::vm::notify::wait(const vector_view<const event::id> &event_id,
 	return exists;
 }
 
+//
+// future::future
+//
+
+ircd::m::vm::notify::future::future(const event::id &event_id)
+:ctx::future<>{ctx::already}
+{
+	if(m::exists(event_id))
+		return;
+
+	const auto &s
+	{
+		map.get_allocator().s
+	};
+
+	assert(s);
+	assert(!s->next);
+	const scope_restore next
+	{
+		s->next, reinterpret_cast<notify::value_type *>(&node)
+	};
+
+	it =
+	{
+		map, map.emplace(event_id, &promise)
+	};
+
+	assert(it->second);
+	static_cast<ctx::future<> &>(*this) = ctx::future<>
+	{
+		*it->second
+	};
+}
+
+//
+// internal
+//
+
 void
 ircd::m::vm::notify::hook_handle(const m::event &event,
                                  vm::eval &)

@@ -13,6 +13,8 @@
 
 namespace ircd::m::vm::notify
 {
+	struct future;
+
 	using value_type = std::pair<const event::id, ctx::promise<> *>;
 	using alloc_type = allocator::node<value_type>;
 	using map_type = std::multimap<const event::id, ctx::promise<> *, std::less<>, alloc_type::allocator>;
@@ -23,6 +25,19 @@ namespace ircd::m::vm::notify
 	size_t wait(const vector_view<const event::id> &, const milliseconds);
 	bool wait(const event::id &, const milliseconds);
 }
+
+class ircd::m::vm::notify::future
+:public ctx::future<>
+{
+	node_type node;
+	ctx::promise<> promise;
+	unique_iterator<map_type> it;
+
+  public:
+	future(const event::id &);
+	future(future &&) = delete;
+	future(const future &) = delete;
+};
 
 /// Yields ctx until event was successfully evaluated. Returns false if
 /// timeout occurred.
