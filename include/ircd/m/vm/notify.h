@@ -13,9 +13,10 @@
 
 namespace ircd::m::vm::notify
 {
-	using value_type = std::pair<const event::id, ctx::ctx *>;
+	using value_type = std::pair<const event::id, ctx::promise<> *>;
 	using alloc_type = allocator::node<value_type>;
-	using map_type = std::multimap<event::id, ctx::ctx *, std::less<>, alloc_type::allocator>;
+	using map_type = std::multimap<const event::id, ctx::promise<> *, std::less<>, alloc_type::allocator>;
+	using node_type = std::pair<map_type::node_type, value_type>;
 
 	extern map_type map;
 

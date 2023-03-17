@@ -42,12 +42,7 @@ ircd::m::vm::notify::wait(const vector_view<const event::id> &event_id,
                           const milliseconds to)
 {
 	using iterator_type = unique_iterator<map_type>;
-	using node_type = std::pair<map_type::node_type, value_type>;
-
-	static const size_t max_ids
-	{
-		64
-	};
+	static const size_t max_ids {64};
 
 	assume(event_id.size() <= max_ids);
 	const auto event_ids
@@ -60,14 +55,15 @@ ircd::m::vm::notify::wait(const vector_view<const event::id> &event_id,
 		m::exists(event_id)
 	};
 
-	size_t exists(0);
 	node_type node[max_ids];
 	iterator_type it[event_ids];
+	ctx::future<> future[event_ids];
+	ctx::promise<> promise[event_ids];
 	for(size_t i(0); i < event_ids; ++i)
 	{
 		if(exists_mask & (1UL << i))
 		{
-			exists++;
+			future[i] = ctx::future<>{ctx::already};
 			continue;
 		}
 
@@ -85,17 +81,32 @@ ircd::m::vm::notify::wait(const vector_view<const event::id> &event_id,
 
 		it[i] =
 		{
-			map, map.emplace(event_id[i], ctx::current)
+			map, map.emplace(event_id[i], promise + i)
+		};
+
+		assert(it[i]->second);
+		future[i] = ctx::future<>
+		{
+			*it[i]->second
 		};
 	}
 
-	bool timeout(false);
-	const auto tp(now<system_point>() + to);
-	while(exists < event_ids && !timeout)
+	auto all
 	{
-		timeout = ctx::wait_until(tp, std::nothrow);
-		exists = m::exists_count(event_id);
-	}
+		ctx::when_all(future, future + event_ids)
+	};
+
+	const bool ok
+	{
+		all.wait_until(now<system_point>() + to, std::nothrow)
+	};
+
+	const size_t exists
+	{
+		!ok?
+			m::exists_count(event_id):
+			event_ids
+	};
 
 	assert(exists <= event_ids);
 	return exists;
@@ -112,11 +123,13 @@ ircd::m::vm::notify::hook_handle(const m::event &event,
 
 	for(; pit.first != pit.second; ++pit.first)
 	{
-		const auto &[event_id, ctx] {*pit.first};
+		const auto &[event_id, promise] {*pit.first};
 
+		assert(promise);
+		assert(promise->valid());
 		assert(event_id == event.event_id);
-		assert(ctx != nullptr);
 
-		ctx::notify(*ctx);
+		if(likely(*promise))
+			promise->set_value();
 	}
 }
