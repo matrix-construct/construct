@@ -32,41 +32,24 @@ template<class container,
          class iterator>
 struct ircd::util::unique_iterator
 {
-	container *c;
+	container *c {nullptr};
 	iterator it;
 
-	unique_iterator(container &c, iterator it)
-	:c{&c}
-	,it{std::move(it)}
-	{}
+	operator const iterator &() const;
+	decltype(auto) operator->() const;
+	decltype(auto) operator*() const;
 
-	unique_iterator()
-	:c{nullptr}
-	{}
+	operator iterator &();
+	decltype(auto) operator->();
+	decltype(auto) operator*();
 
+	unique_iterator(container &c, iterator it);
+	unique_iterator() = default;
+	unique_iterator(unique_iterator &&o) noexcept;
 	unique_iterator(const unique_iterator &) = delete;
-	unique_iterator(unique_iterator &&o) noexcept
-	:c{std::move(o.c)}
-	,it{std::move(o.it)}
-	{
-		o.c = nullptr;
-	}
-
+	unique_iterator &operator=(unique_iterator &&o) noexcept;
 	unique_iterator &operator=(const unique_iterator &) = delete;
-	unique_iterator &operator=(unique_iterator &&o) noexcept
-	{
-		this->~unique_iterator();
-		c = std::move(o.c);
-		it = std::move(o.it);
-		o.c = nullptr;
-		return *this;
-	}
-
-	~unique_iterator() noexcept
-	{
-		if(c)
-			c->erase(it);
-	}
+	~unique_iterator() noexcept;
 };
 
 template<class container>
@@ -76,3 +59,89 @@ struct ircd::util::unique_const_iterator
 	using iterator_type = typename container::const_iterator;
 	using unique_iterator<container, iterator_type>::unique_iterator;
 };
+
+template<class container,
+         class iterator>
+inline
+ircd::util::unique_iterator<container, iterator>::unique_iterator(container &c,
+                                                                  iterator it)
+:c{&c}
+,it{std::move(it)}
+{}
+
+template<class container,
+         class iterator>
+inline
+ircd::util::unique_iterator<container, iterator>::unique_iterator(unique_iterator &&o)
+noexcept
+:c{std::move(o.c)}
+,it{std::move(o.it)}
+{
+	o.c = nullptr;
+}
+
+template<class container,
+         class iterator>
+inline ircd::util::unique_iterator<container, iterator> &
+ircd::util::unique_iterator<container, iterator>::operator=(unique_iterator &&o)
+noexcept
+{
+	this->~unique_iterator();
+	c = std::move(o.c);
+	it = std::move(o.it);
+	o.c = nullptr;
+	return *this;
+}
+
+template<class container,
+         class iterator>
+inline
+ircd::util::unique_iterator<container, iterator>::~unique_iterator()
+noexcept
+{
+	if(c)
+		c->erase(it);
+}
+
+template<class container,
+         class iterator>
+inline decltype(auto)
+ircd::util::unique_iterator<container, iterator>::operator*()
+{
+	return it.operator*();
+}
+
+template<class container,
+         class iterator>
+inline decltype(auto)
+ircd::util::unique_iterator<container, iterator>::operator->()
+{
+	return it.operator->();
+}
+
+template<class container,
+         class iterator>
+inline decltype(auto)
+ircd::util::unique_iterator<container, iterator>::operator*()
+const
+{
+	return it.operator*();
+}
+
+template<class container,
+         class iterator>
+inline decltype(auto)
+ircd::util::unique_iterator<container, iterator>::operator->()
+const
+{
+	return it.operator->();
+}
+
+template<class container,
+         class iterator>
+inline ircd::util::unique_iterator<container, iterator>::operator
+const iterator &()
+const
+{
+	return it;
+}
