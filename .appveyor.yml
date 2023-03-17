@@ -1,8 +1,9 @@
 version: master_{build}
 clone_depth: 1
+skip_tags: true
 
 services:
-- docker
+  - docker
 
 environment:
   COMMAND: if [[ "${APPVEYOR_REPO_COMMIT_MESSAGE@Q}" == *"[ci debug]"* ]]; then export DEBUG_FLAGS="--enable-debug"; fi; if [[ "${APPVEYOR_REPO_COMMIT_MESSAGE@Q}" == *"[ci gdb]"* ]]; then apt-get update && apt-get -y install gdb && export CONSTRUCT="gdb --batch -ex r -ex bt --return-child-result --args construct"; else export CONSTRUCT="construct"; fi && rmdir -v deps/rocksdb && ln -sv /usr/src/rocksdb deps && ./autogen.sh && ./configure --enable-assert ${DEBUG_FLAGS} && make install && ${CONSTRUCT} -smoketest -debug localhost
@@ -18,8 +19,8 @@ environment:
       DOCKER_IMAGE: jevolk/construct:ubuntu-22.04-full-build-clang-15-amd64
 
 for:
--
-  build_script:
+  -
+    build_script:
     - docker run -v `pwd`:/build "${DOCKER_IMAGE}" /bin/bash -c "${COMMAND}"
 
 matrix:
