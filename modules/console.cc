@@ -5004,30 +5004,32 @@ try
 		db::database::get(dbname)
 	};
 
-	const auto _print_totals{[&out]
-	(const auto &vector)
+	size_t totals(0);
+	db::database::sst::info total;
+	total.name = "total"s;
+	const auto _add_totals{[&total, &totals]
+	(const auto &info)
 	{
-		db::database::sst::info total;
-		total.name = "total"s;
-		for(const auto &info : vector)
-		{
-			total.size += info.size;
-			total.data_size += info.data_size;
-			total.index_data_size += info.index_data_size;
-			total.index_root_size += info.index_root_size;
-			total.filter_size += info.filter_size;
-			total.keys_size += info.keys_size;
-			total.values_size += info.values_size;
-			total.index_parts += info.index_parts;
-			total.data_blocks += info.data_blocks;
-			total.entries += info.entries;
-			total.range_deletes += info.range_deletes;
-			total.num_reads += info.num_reads;
-		}
+		total.size += info.size;
+		total.data_size += info.data_size;
+		total.index_data_size += info.index_data_size;
+		total.index_root_size += info.index_root_size;
+		total.filter_size += info.filter_size;
+		total.keys_size += info.keys_size;
+		total.values_size += info.values_size;
+		total.index_parts += info.index_parts;
+		total.data_blocks += info.data_blocks;
+		total.entries += info.entries;
+		total.range_deletes += info.range_deletes;
+		total.num_reads += info.num_reads;
+		totals++;
+	}};
 
+	const auto _print_totals{[&out, &total, &totals]
+	{
 		_print_sst_info_header(out);
 		_print_sst_info(out, total);
-		out << "--- " << vector.size() << " files." << std::endl;
+		out << "--- " << totals << " files." << std::endl;
 	}};
 
 	if(colname == "*")
@@ -5050,10 +5052,11 @@ try
 				continue;
 
 			_print_sst_info(out, fileinfo);
+			_add_totals(fileinfo);
 		}
 
 		out << std::endl;
-		_print_totals(vector);
+		_print_totals();
 		return true;
 	}
 
@@ -5061,6 +5064,7 @@ try
 	{
 		const db::database::sst::info info{database, colname};
 		_print_sst_info_full(out, info);
+		_add_totals(info);
 		return true;
 	}
 
@@ -5087,10 +5091,11 @@ try
 			continue;
 
 		_print_sst_info(out, info);
+		_add_totals(info);
 	}
 
 	out << std::endl;
-	_print_totals(vector);
+	_print_totals();
 	return true;
 }
 catch(const std::out_of_range &e)
