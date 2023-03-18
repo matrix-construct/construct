@@ -4596,6 +4596,7 @@ static void
 _print_sst_info_header(opt &out)
 {
 	out << std::left << std::setfill(' ')
+	    << std::setw(6) << "path"
 	    << std::setw(12) << "name"
 	    << "  " << std::setw(32) << "creation"
 	    << "  " << std::setw(3) << "flt"
@@ -4637,6 +4638,7 @@ _print_sst_info(opt &out,
 
 	char tmbuf[64], pbuf[48];
 	out << std::left << std::setfill(' ')
+	    << std::setw(6) << rsplit(f.path, '/').second
 	    << std::setw(12) << f.name
 	    << "  " << std::setw(32) << std::left << (f.created? timef(tmbuf, f.created, ircd::localtime) : string_view{})
 	    << "  " << std::setw(1) << std::left << (!f.filter.empty()? 'F' : '-')
@@ -6130,6 +6132,21 @@ console_cmd__peer__error__clear(opt &out, const string_view &line)
 bool
 console_cmd__peer__version(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"[expression]"
+	}};
+
+	const bool expr
+	{
+		param["[expression]"] && param["[expression]"] != "*"
+	};
+
+	const globular_imatch match
+	{
+		param["[expression]"]
+	};
+
 	for(const auto &p : server::peers)
 	{
 		using std::setw;
@@ -6137,9 +6154,15 @@ console_cmd__peer__version(opt &out, const string_view &line)
 		using std::right;
 
 		const auto &host{p.first};
+		if(expr)
+		{
+			const auto &[name, proto] (rsplit(host, ':'));
+			if(!match(host) && !match(name))
+				continue;
+		}
+
 		const auto &peer{*p.second};
 		const net::ipport &ipp{peer.remote};
-
 		out << setw(40) << right << host;
 
 		if(ipp)
@@ -6150,9 +6173,10 @@ console_cmd__peer__version(opt &out, const string_view &line)
 		if(!empty(peer.server_version))
 			out << " :" << peer.server_version;
 
-		out << std::endl;
+		out << '\n';
 	}
 
+	out << std::endl;
 	return true;
 }
 
