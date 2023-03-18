@@ -488,6 +488,22 @@ ircd::net::read_one(socket &socket,
 	return socket.read_one(buffers);
 }
 
+/// Bytes available for reading (SSL; w/ fallback).
+/// @returns 0 for socket errors, unsupported, or nothing available.
+size_t
+ircd::net::pending(const socket &socket)
+noexcept
+{
+	if(!socket.ssl)
+		return available(socket);
+
+	#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+		return SSL_pending(mutable_cast(socket).ssl->native_handle());
+	#else
+		return 0;
+	#endif
+}
+
 /// Bytes available for reading (userspace)
 size_t
 ircd::net::available(const socket &socket)
@@ -2240,28 +2256,15 @@ noexcept try
 
 	if constexpr((false)) // manual debug; large nr syscalls
 	{
-		const auto has_pending
-		{
-			#if OPENSSL_VERSION_NUMBER >= 0x1010000L
-				ssl?
-					SSL_has_pending(ssl->native_handle()):
-					0
-			#else
-				0
-			#endif
-		};
-
 		char ecbuf[64];
 		log::debug
 		{
-			log, "%s ready %s %s avail:%zu:%zu:%d:%d",
+			log, "%s ready %s %s avail:%zu:%zu",
 			loghead(*this),
 			reflect(type),
 			string(ecbuf, ec),
 			type == ready::READ? bytes : 0UL,
-			type == ready::READ? available(*this) : 0UL,
-			has_pending,
-			ssl? SSL_pending(ssl->native_handle()): 0,
+			type == ready::READ? pending(*this): 0UL,
 		};
 	}
 

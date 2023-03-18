@@ -16,8 +16,9 @@ namespace ircd::net
 	using mutable_buffers = vector_view<const mutable_buffer>;
 
 	// Observers
-	size_t readable(const socket &);
-	size_t available(const socket &) noexcept;
+	size_t readable(const socket &);             // don't use w/ ssl
+	size_t available(const socket &) noexcept;   // don't use w/ ssl
+	size_t pending(const socket &) noexcept;     // use with either.
 
 	// Non-blocking; read into buffers in a single syscall
 	size_t read_one(socket &, const mutable_buffers &);

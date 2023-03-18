@@ -2902,45 +2902,25 @@ void
 ircd::server::link::discard_read()
 {
 	assert(socket);
-	const size_t available
+	const size_t pending
 	{
-		net::available(*socket)
-	};
-
-	const ssize_t has_pending
-	{
-		#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
-			socket->ssl?
-				SSL_has_pending(socket->ssl->native_handle()):
-				-2L
-		#else
-			-2L
-		#endif
-	};
-
-	const ssize_t pending
-	{
-		socket->ssl?
-			SSL_pending(socket->ssl->native_handle()):
-			0L
+		net::pending(*socket)
 	};
 
 	const size_t discarded
 	{
-		discard_any(*socket, size_t(pending))
+		discard_any(*socket, pending)
 	};
 
 	if(discarded)
 	{
 		log::dwarning
 		{
-			log, "%s q:%zu discarded:%zu pending:%zd has_pending:%zd available:%zd",
+			log, "%s q:%zu pending:%zu discarded:%zu",
 			loghead(*this),
 			queue.size(),
-			discarded,
 			pending,
-			has_pending,
-			available,
+			discarded,
 		};
 
 		assert(peer);
