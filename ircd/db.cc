@@ -3852,9 +3852,16 @@ ircd::db::options::operator rocksdb::PlainTableOptions()
 const
 {
 	rocksdb::PlainTableOptions ret;
+	#ifdef IRCD_DB_HAS_CONFIG_OPTIONS
+	rocksdb::ConfigOptions opts;
+	#endif
 	throw_on_error
 	{
+		#ifdef IRCD_DB_HAS_CONFIG_OPTIONS
+		rocksdb::GetPlainTableOptionsFromString(opts, ret, *this, &ret)
+		#else
 		rocksdb::GetPlainTableOptionsFromString(ret, *this, &ret)
+		#endif
 	};
 
 	return ret;
@@ -3864,9 +3871,16 @@ ircd::db::options::operator rocksdb::BlockBasedTableOptions()
 const
 {
 	rocksdb::BlockBasedTableOptions ret;
+	#ifdef IRCD_DB_HAS_CONFIG_OPTIONS
+	rocksdb::ConfigOptions opts;
+	#endif
 	throw_on_error
 	{
+		#ifdef IRCD_DB_HAS_CONFIG_OPTIONS
+		rocksdb::GetBlockBasedTableOptionsFromString(opts, ret, *this, &ret)
+		#else
 		rocksdb::GetBlockBasedTableOptionsFromString(ret, *this, &ret)
+		#endif
 	};
 
 	return ret;
@@ -3876,9 +3890,16 @@ ircd::db::options::operator rocksdb::ColumnFamilyOptions()
 const
 {
 	rocksdb::ColumnFamilyOptions ret;
+	#ifdef IRCD_DB_HAS_CONFIG_OPTIONS
+	rocksdb::ConfigOptions opts;
+	#endif
 	throw_on_error
 	{
+		#ifdef IRCD_DB_HAS_CONFIG_OPTIONS
+		rocksdb::GetColumnFamilyOptionsFromString(opts, ret, *this, &ret)
+		#else
 		rocksdb::GetColumnFamilyOptionsFromString(ret, *this, &ret)
+		#endif
 	};
 
 	return ret;
@@ -3888,9 +3909,16 @@ ircd::db::options::operator rocksdb::DBOptions()
 const
 {
 	rocksdb::DBOptions ret;
+	#ifdef IRCD_DB_HAS_CONFIG_OPTIONS
+	rocksdb::ConfigOptions opts;
+	#endif
 	throw_on_error
 	{
+		#ifdef IRCD_DB_HAS_CONFIG_OPTIONS
+		rocksdb::GetDBOptionsFromString(opts, ret, *this, &ret)
+		#else
 		rocksdb::GetDBOptionsFromString(ret, *this, &ret)
+		#endif
 	};
 
 	return ret;
@@ -3900,9 +3928,16 @@ ircd::db::options::operator rocksdb::Options()
 const
 {
 	rocksdb::Options ret;
+	#ifdef IRCD_DB_HAS_CONFIG_OPTIONS
+	rocksdb::ConfigOptions opts;
+	#endif
 	throw_on_error
 	{
+		#ifdef IRCD_DB_HAS_CONFIG_OPTIONS
+		rocksdb::GetOptionsFromString(opts, ret, *this, &ret)
+		#else
 		rocksdb::GetOptionsFromString(ret, *this, &ret)
+		#endif
 	};
 
 	return ret;
@@ -3949,52 +3984,88 @@ const
 }
 
 rocksdb::BlockBasedTableOptions
-ircd::db::options::map::merge(const rocksdb::BlockBasedTableOptions &opts)
+ircd::db::options::map::merge(const rocksdb::BlockBasedTableOptions &in)
 const
 {
+	#ifdef IRCD_DB_HAS_CONFIG_OPTIONS
+	rocksdb::ConfigOptions opts;
+	opts.ignore_unknown_options = true;
+	#endif
+
 	rocksdb::BlockBasedTableOptions ret;
 	throw_on_error
 	{
-		rocksdb::GetBlockBasedTableOptionsFromMap(opts, *this, &ret, true, true)
+		#ifdef IRCD_DB_HAS_CONFIG_OPTIONS
+		rocksdb::GetBlockBasedTableOptionsFromMap(opts, in, *this, &ret)
+		#else
+		rocksdb::GetBlockBasedTableOptionsFromMap(in, *this, &ret, true, true)
+		#endif
 	};
 
 	return ret;
 }
 
 rocksdb::PlainTableOptions
-ircd::db::options::map::merge(const rocksdb::PlainTableOptions &opts)
+ircd::db::options::map::merge(const rocksdb::PlainTableOptions &in)
 const
 {
+	#ifdef IRCD_DB_HAS_CONFIG_OPTIONS
+	rocksdb::ConfigOptions opts;
+	opts.ignore_unknown_options = true;
+	#endif
+
 	rocksdb::PlainTableOptions ret;
 	throw_on_error
 	{
-		rocksdb::GetPlainTableOptionsFromMap(opts, *this, &ret, true, true)
+		#ifdef IRCD_DB_HAS_CONFIG_OPTIONS
+		rocksdb::GetPlainTableOptionsFromMap(opts, in, *this, &ret)
+		#else
+		rocksdb::GetPlainTableOptionsFromMap(in, *this, &ret, true, true)
+		#endif
 	};
 
 	return ret;
 }
 
 rocksdb::ColumnFamilyOptions
-ircd::db::options::map::merge(const rocksdb::ColumnFamilyOptions &opts)
+ircd::db::options::map::merge(const rocksdb::ColumnFamilyOptions &in)
 const
 {
+	#ifdef IRCD_DB_HAS_CONFIG_OPTIONS
+	rocksdb::ConfigOptions opts;
+	opts.ignore_unknown_options = true;
+	#endif
+
 	rocksdb::ColumnFamilyOptions ret;
 	throw_on_error
 	{
-		rocksdb::GetColumnFamilyOptionsFromMap(opts, *this, &ret, true, true)
+		#ifdef IRCD_DB_HAS_CONFIG_OPTIONS
+		rocksdb::GetColumnFamilyOptionsFromMap(opts, in, *this, &ret)
+		#else
+		rocksdb::GetColumnFamilyOptionsFromMap(in, *this, &ret, true, true)
+		#endif
 	};
 
 	return ret;
 }
 
 rocksdb::DBOptions
-ircd::db::options::map::merge(const rocksdb::DBOptions &opts)
+ircd::db::options::map::merge(const rocksdb::DBOptions &in)
 const
 {
+	#ifdef IRCD_DB_HAS_CONFIG_OPTIONS
+	rocksdb::ConfigOptions opts;
+	opts.ignore_unknown_options = true;
+	#endif
+
 	rocksdb::DBOptions ret;
 	throw_on_error
 	{
-		rocksdb::GetDBOptionsFromMap(opts, *this, &ret, true, true)
+		#ifdef IRCD_DB_HAS_CONFIG_OPTIONS
+		rocksdb::GetDBOptionsFromMap(opts, in, *this, &ret)
+		#else
+		rocksdb::GetDBOptionsFromMap(in, *this, &ret, true, true)
+		#endif
 	};
 
 	return ret;
