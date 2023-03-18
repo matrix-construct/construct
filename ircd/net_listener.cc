@@ -580,7 +580,7 @@ noexcept try
 	};
 
 	sock->set_timeout(milliseconds(timeout));
-	sock->ssl.async_handshake(handshake_type, ios::handle(handshake_desc, std::move(handshake)));
+	sock->ssl->async_handshake(handshake_type, ios::handle(handshake_desc, std::move(handshake)));
 	assert(!openssl::get_app_data(*sock));
 	openssl::set_app_data(*sock, sock.get());
 }

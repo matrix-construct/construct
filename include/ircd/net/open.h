@@ -65,6 +65,9 @@ struct ircd::net::open_opts
 	/// if given. Defaults to null; no application is made.
 	const sock_opts *sopts { nullptr };
 
+	/// Option to disable SSL. Use false for plaintext socket.
+	bool secure { true };
+
 	/// Option to toggle whether to perform the SSL handshake; you want true.
 	bool handshake { true };
 

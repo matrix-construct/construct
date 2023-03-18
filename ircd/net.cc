@@ -759,7 +759,13 @@ ircd::net::open(const open_opts &opts)
 {
 	ctx::promise<std::shared_ptr<socket>> p;
 	ctx::future<std::shared_ptr<socket>> f(p);
-	auto s{std::make_shared<socket>()};
+	auto s
+	{
+		opts.secure?
+			std::make_shared<socket>(sslv23_client):
+			std::make_shared<socket>()
+	};
+
 	open(*s, opts, [s, p(std::move(p))]
 	(std::exception_ptr eptr)
 	mutable
@@ -779,7 +785,13 @@ std::shared_ptr<ircd::net::socket>
 ircd::net::open(const open_opts &opts,
                 open_callback handler)
 {
-	auto s{std::make_shared<socket>()};
+	auto s
+	{
+		opts.secure?
+			std::make_shared<socket>(sslv23_client):
+			std::make_shared<socket>()
+	};
+
 	open(*s, opts, std::move(handler));
 	return s;
 }
@@ -1475,8 +1487,21 @@ ircd::net::socket::total_calls_out
 };
 
 //
-// socket
+// socket::socket
 //
+
+ircd::net::socket::socket()
+:sd
+{
+	ios::get()
+}
+,timer
+{
+	ios::get()
+}
+{
+	++instances;
+}
 
 ircd::net::socket::socket(asio::ssl::context &ssl)
 :sd
@@ -1485,7 +1510,7 @@ ircd::net::socket::socket(asio::ssl::context &ssl)
 }
 ,ssl
 {
-	this->sd, ssl
+	std::in_place, this->sd, ssl
 }
 ,timer
 {
@@ -1568,6 +1593,7 @@ ircd::net::socket::handshake(const open_opts &opts,
 {
 	assert(!fini);
 	assert(sd.is_open());
+	assert(ssl);
 
 	log::debug
 	{
@@ -1596,8 +1622,8 @@ ircd::net::socket::handshake(const open_opts &opts,
 	if(opts.send_sni && server_name(opts))
 		openssl::server_name(*this, server_name(opts));
 
-	ssl.set_verify_callback(std::move(verify_handler));
-	ssl.async_handshake(handshake_type::client, ios::handle(desc_handshake, std::move(handshake_handler)));
+	ssl->set_verify_callback(std::move(verify_handler));
+	ssl->async_handshake(handshake_type::client, ios::handle(desc_handshake, std::move(handshake_handler)));
 }
 
 void
@@ -1648,13 +1674,21 @@ try
 
 		case dc::SSL_NOTIFY:
 		{
+			if(!ssl)
+			{
+				// Redirect SSL_NOTIFY to another strategy for non-SSL sockets.
+				sd.shutdown(ip::tcp::socket::shutdown_both);
+				sd.close();
+				break;
+			}
+
 			auto disconnect_handler
 			{
 				std::bind(&socket::handle_disconnect, this, shared_from(*this), std::move(callback), ph::_1)
 			};
 
 			set_timeout(opts.timeout);
-			ssl.async_shutdown(ios::handle(desc_disconnect, std::move(disconnect_handler)));
+			ssl->async_shutdown(ios::handle(desc_disconnect, std::move(disconnect_handler)));
 			return;
 		}
 	}
@@ -1796,7 +1830,7 @@ try
 			// real socket wait.
 			static char buf[64];
 			static const ilist<mutable_buffer> bufs{buf};
-			if(SSL_peek(ssl.native_handle(), buf, sizeof(buf)) > 0)
+			if(ssl && SSL_peek(ssl->native_handle(), buf, sizeof(buf)) > 0)
 			{
 				ircd::dispatch{desc_wait[1], ios::defer, [handle(std::move(handle))]
 				{
@@ -1868,7 +1902,7 @@ noexcept
 		return make_error_code(std::errc::not_connected);
 
 	std::error_code ret;
-	if(SSL_peek(ssl.native_handle(), buf, sizeof(buf)) > 0)
+	if(ssl && SSL_peek(ssl->native_handle(), buf, sizeof(buf)) > 0)
 		return ret;
 
 	assert(!blocking(*this));
@@ -1914,7 +1948,9 @@ try
 		continuation::asio_predicate, interruption, [this, &ret, &bufs]
 		(auto &yield)
 		{
-			ret = asio::async_read(ssl, bufs, completion, yield);
+			ret = ssl?
+				asio::async_read(*ssl, bufs, completion, yield):
+				asio::async_read(sd, bufs, completion, yield);
 		}
 	};
 
@@ -1954,7 +1990,9 @@ try
 		continuation::asio_predicate, interruption, [this, &ret, &bufs]
 		(auto &yield)
 		{
-			ret = ssl.async_read_some(bufs, yield);
+			ret = ssl?
+				ssl->async_read_some(bufs, yield):
+				sd.async_read_some(bufs, yield);
 		}
 	};
 
@@ -1990,7 +2028,9 @@ ircd::net::socket::read_any(const mutable_buffers &bufs)
 	boost::system::error_code ec;
 	const size_t ret
 	{
-		asio::read(ssl, bufs, completion, ec)
+		ssl?
+			asio::read(*ssl, bufs, completion, ec):
+			asio::read(sd, bufs, completion, ec)
 	};
 
 	++in.calls;
@@ -2018,7 +2058,9 @@ ircd::net::socket::read_one(const mutable_buffers &bufs)
 	boost::system::error_code ec;
 	const size_t ret
 	{
-		ssl.read_some(bufs, ec)
+		ssl?
+			ssl->read_some(bufs, ec):
+			sd.read_some(bufs, ec)
 	};
 
 	++in.calls;
@@ -2061,7 +2103,9 @@ try
 		continuation::asio_predicate, interruption, [this, &ret, &bufs]
 		(auto &yield)
 		{
-			ret = asio::async_write(ssl, bufs, completion, yield);
+			ret = ssl?
+				asio::async_write(*ssl, bufs, completion, yield):
+				asio::async_write(sd, bufs, completion, yield);
 		}
 	};
 
@@ -2096,7 +2140,9 @@ try
 		continuation::asio_predicate, interruption, [this, &ret, &bufs]
 		(auto &yield)
 		{
-			ret = ssl.async_write_some(bufs, yield);
+			ret = ssl?
+				ssl->async_write_some(bufs, yield):
+				sd.async_write_some(bufs, yield);
 		}
 	};
 
@@ -2126,7 +2172,9 @@ try
 	assert(!blocking(*this));
 	const size_t ret
 	{
-		asio::write(ssl, bufs, completion)
+		ssl?
+			asio::write(*ssl, bufs, completion):
+			asio::write(sd, bufs, completion)
 	};
 
 	++out.calls;
@@ -2150,7 +2198,9 @@ try
 	assert(!blocking(*this));
 	const size_t ret
 	{
-		ssl.write_some(bufs)
+		ssl?
+			ssl->write_some(bufs):
+			sd.write_some(bufs)
 	};
 
 	++out.calls;
@@ -2192,8 +2242,10 @@ noexcept try
 	{
 		const auto has_pending
 		{
-			#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-				SSL_has_pending(ssl.native_handle())
+			#if OPENSSL_VERSION_NUMBER >= 0x1010000L
+				ssl?
+					SSL_has_pending(ssl->native_handle()):
+					0
 			#else
 				0
 			#endif
@@ -2209,7 +2261,7 @@ noexcept try
 			type == ready::READ? bytes : 0UL,
 			type == ready::READ? available(*this) : 0UL,
 			has_pending,
-			SSL_pending(ssl.native_handle()),
+			ssl? SSL_pending(ssl->native_handle()): 0,
 		};
 	}
 
@@ -2385,8 +2437,11 @@ noexcept try
 		set(*this, *opts.sopts);
 
 	// The user can opt out of performing the handshake here.
-	if(!opts.handshake)
+	if(!ssl || !opts.handshake)
+	{
+		blocking(*this, false);
 		return call_user(callback, ec);
+	}
 
 	assert(!fini);
 	handshake(opts, std::move(callback));
@@ -2809,18 +2864,20 @@ ircd::net::socket::set_timeout(const milliseconds &t,
 ircd::net::socket::operator
 SSL &()
 {
-	assert(ssl.native_handle());
-	return *ssl.native_handle();
+	assert(ssl);
+	assert(ssl->native_handle());
+	return *ssl->native_handle();
 }
 
 ircd::net::socket::operator
 const SSL &()
 const
 {
-	using type = typename std::remove_const<decltype(socket::ssl)>::type;
-	auto &ssl(const_cast<type &>(this->ssl));
-	assert(ssl.native_handle());
-	return *ssl.native_handle();
+	auto &ssl(mutable_cast(this)->ssl);
+
+	assert(ssl);
+	assert(ssl->native_handle());
+	return *ssl->native_handle();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

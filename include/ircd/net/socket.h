@@ -28,7 +28,7 @@ namespace ircd::net
 }
 
 /// Internal socket interface
-///
+/// Socket cannot be copied or moved; must be constructed as shared ptr.
 struct [[gnu::visibility("protected")]]
 ircd::net::socket
 :std::enable_shared_from_this<ircd::net::socket>
@@ -40,6 +40,7 @@ ircd::net::socket
 	using endpoint = ip::tcp::endpoint;
 	using wait_type = ip::tcp::socket::wait_type;
 	using message_flags = asio::socket_base::message_flags;
+	using ssl_stream = asio::ssl::stream<ip::tcp::socket &>;
 	using handshake_type = asio::ssl::stream<ip::tcp::socket>::handshake_type;
 	using ec_handler = std::function<void (const error_code &)>;
 	using eptr_handler = std::function<void (std::exception_ptr)>;
@@ -64,7 +65,7 @@ ircd::net::socket
 
 	uint64_t id {++count};
 	ip::tcp::socket sd;
-	asio::ssl::stream<ip::tcp::socket &> ssl;
+	std::optional<ssl_stream> ssl;
 	endpoint local, remote;
 	stat in, out;
 	deadline_timer timer;
@@ -120,9 +121,8 @@ ircd::net::socket
 	void connect(const endpoint &, const open_opts &, eptr_handler);
 	bool cancel() noexcept;
 
-	socket(asio::ssl::context & = sslv23_client);
-
-	// Socket cannot be copied or moved; must be constructed as shared ptr
+	socket(asio::ssl::context &);
+	socket();
 	socket(socket &&) = delete;
 	socket(const socket &) = delete;
 	socket &operator=(socket &&) = delete;
