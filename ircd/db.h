@@ -61,6 +61,9 @@
 #include <rocksdb/compaction_filter.h>
 #include <rocksdb/wal_filter.h>
 #include <rocksdb/rate_limiter.h>
+#if __has_include(<rocksdb/advanced_cache.h>)
+#include <rocksdb/advanced_cache.h>
+#endif
 #pragma clang attribute pop
 
 #include "db_has.h"
@@ -218,8 +221,16 @@ ircd::db::database::cache final
 	std::shared_ptr<rocksdb::Cache> c;
 
 	const char *Name() const noexcept override;
+	#ifdef IRCD_DB_HAS_CACHE_ITEMHELPER
+	Status Insert(const Slice &key, ObjectPtr, const CacheItemHelper *, size_t charge, Handle **, Priority) noexcept override;
+	#else
 	Status Insert(const Slice &key, void *value, size_t charge, deleter, Handle **, Priority) noexcept override;
+	#endif
+	#ifdef IRCD_DB_HAS_CACHE_ITEMHELPER
+	Handle *Lookup(const Slice &key, const CacheItemHelper *, CreateContext *, Priority, bool, Statistics *) noexcept override;
+	#else
 	Handle *Lookup(const Slice &key, Statistics *) noexcept override;
+	#endif
 	bool Ref(Handle *) noexcept override;
 	bool Release(Handle *, bool force_erase) noexcept override;
 	void *Value(Handle *) noexcept override;
@@ -233,18 +244,26 @@ ircd::db::database::cache final
 	size_t GetUsage(Handle *) const noexcept override;
 	size_t GetPinnedUsage() const noexcept override;
 	void DisownData() noexcept override;
+	#ifndef IRCD_DB_HAS_CACHE_ITEMHELPER
 	void ApplyToAllCacheEntries(callback, bool thread_safe) noexcept override;
+	#endif
 	void EraseUnRefEntries() noexcept override;
 	std::string GetPrintableOptions() const noexcept override;
 	#ifdef IRCD_DB_HAS_CACHE_GETCHARGE
 	size_t GetCharge(Handle *) const noexcept override;
 	#endif
-	#ifdef IRCD_DB_HAS_CACHE_GETDELETER
+	#if defined(IRCD_DB_HAS_CACHE_GETDELETER) && !defined(IRCD_DB_HAS_CACHE_ITEMHELPER)
 	DeleterFn GetDeleter(Handle *) const noexcept override;
 	#endif
-	#ifdef IRCD_DB_HAS_CACHE_APPLYTOALL
+	#ifdef IRCD_DB_HAS_CACHE_ITEMHELPER
+	using callbackstd = std::function<void (const Slice &, ObjectPtr, size_t, const CacheItemHelper *)>;
+	void ApplyToAllEntries(const callbackstd &, const ApplyToAllEntriesOptions &) noexcept override;
+	#elif defined(IRCD_DB_HAS_CACHE_APPLYTOALL)
 	using callbackstd = std::function<void (const Slice &, void *, size_t, DeleterFn)>;
 	void ApplyToAllEntries(const callbackstd &, const ApplyToAllEntriesOptions &) noexcept override;
+	#endif
+	#ifdef IRCD_DB_HAS_CACHE_ITEMHELPER
+	const CacheItemHelper *GetCacheItemHelper(Handle *) const noexcept override;
 	#endif
 
 	cache(database *const &,

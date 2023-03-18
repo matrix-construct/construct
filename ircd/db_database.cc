@@ -3182,6 +3182,15 @@ const noexcept
 		c->Name();
 }
 
+#ifdef IRCD_DB_HAS_CACHE_ITEMHELPER
+rocksdb::Status
+ircd::db::database::cache::Insert(const Slice &key,
+                                  ObjectPtr value,
+                                  const CacheItemHelper *const helper,
+                                  size_t charge,
+                                  Handle **const handle,
+                                  Priority priority)
+#else
 rocksdb::Status
 ircd::db::database::cache::Insert(const Slice &key,
                                   void *const value,
@@ -3189,6 +3198,7 @@ ircd::db::database::cache::Insert(const Slice &key,
                                   deleter del,
                                   Handle **const handle,
                                   Priority priority)
+#endif
 noexcept
 {
 	using rocksdb::Tickers;
@@ -3198,7 +3208,11 @@ noexcept
 
 	const rocksdb::Status &ret
 	{
+		#ifdef IRCD_DB_HAS_CACHE_ITEMHELPER
+		c->Insert(key, value, helper, charge, handle, priority)
+		#else
 		c->Insert(key, value, charge, del, handle, priority)
+		#endif
 	};
 
 	stats->recordTick(Tickers::BLOCK_CACHE_ADD, ret.ok());
@@ -3223,9 +3237,19 @@ noexcept
 	return ret;
 }
 
+#ifdef IRCD_DB_HAS_CACHE_ITEMHELPER
+rocksdb::Cache::Handle *
+ircd::db::database::cache::Lookup(const Slice &key,
+                                  const CacheItemHelper *const helper,
+                                  CreateContext *const cc,
+                                  Priority pri,
+                                  bool wait,
+                                  Statistics *const statistics)
+#else
 rocksdb::Cache::Handle *
 ircd::db::database::cache::Lookup(const Slice &key,
                                   Statistics *const statistics)
+#endif
 noexcept
 {
 	using rocksdb::Tickers;
@@ -3247,7 +3271,11 @@ noexcept
 
 	auto *const &ret
 	{
+		#ifdef IRCD_DB_HAS_CACHE_ITEMHELPER
+		c->Lookup(key, helper, cc, pri, wait, statistics)
+		#else
 		c->Lookup(key, s)
+		#endif
 	};
 
 	// Rocksdb's LRUCache stats are broke. The statistics ptr is null and
@@ -3379,6 +3407,7 @@ noexcept
 	return c->DisownData();
 }
 
+#ifndef IRCD_DB_HAS_CACHE_ITEMHELPER
 void
 ircd::db::database::cache::ApplyToAllCacheEntries(callback cb,
                                                   bool thread_safe)
@@ -3387,6 +3416,7 @@ noexcept
 	assert(bool(c));
 	return c->ApplyToAllCacheEntries(cb, thread_safe);
 }
+#endif
 
 void
 ircd::db::database::cache::EraseUnRefEntries()
@@ -3414,7 +3444,7 @@ const noexcept
 }
 #endif
 
-#ifdef IRCD_DB_HAS_CACHE_GETDELETER
+#if defined(IRCD_DB_HAS_CACHE_GETDELETER) && !defined(IRCD_DB_HAS_CACHE_ITEMHELPER)
 rocksdb::Cache::DeleterFn
 ircd::db::database::cache::GetDeleter(Handle *const h)
 const noexcept
@@ -3432,6 +3462,16 @@ noexcept
 {
 	assert(bool(c));
 	return c->ApplyToAllEntries(cb, opts);
+}
+#endif
+
+#ifdef IRCD_DB_HAS_CACHE_ITEMHELPER
+const rocksdb::Cache::CacheItemHelper *
+ircd::db::database::cache::GetCacheItemHelper(Handle *const h)
+const noexcept
+{
+	assert(bool(c));
+	return c->GetCacheItemHelper(h);
 }
 #endif
 

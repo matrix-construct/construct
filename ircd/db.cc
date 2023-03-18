@@ -4124,11 +4124,19 @@ ircd::db::insert(rocksdb::Cache &cache,
 	// the argument execution doesn't throw after release()
 	throw_on_error
 	{
+		#ifdef IRCD_DB_HAS_CACHE_ITEMHELPER
+		cache.Insert(slice(key),
+		             mutable_cast(data(value.release())),
+		             cache.GetCacheItemHelper(nullptr), // ???
+		             value_size,
+		             nullptr)
+		#else
 		cache.Insert(slice(key),
 		             mutable_cast(data(value.release())),
 		             value_size,
 		             deleter,
 		             nullptr)
+		#endif
 	};
 
 	return true;
@@ -4137,6 +4145,24 @@ ircd::db::insert(rocksdb::Cache &cache,
 void
 ircd::db::for_each(const rocksdb::Cache &cache,
                    const cache_closure &closure)
+#ifdef IRCD_DB_HAS_CACHE_ITEMHELPER
+{
+	const auto _closure{[&closure]
+	(const auto &slice, void *const value, size_t size, const auto *const helper)
+	noexcept
+	{
+		const const_buffer buf
+		{
+			reinterpret_cast<const char *>(value), size
+		};
+
+		closure(buf);
+	}};
+
+	rocksdb::Cache::ApplyToAllEntriesOptions opts;
+	mutable_cast(cache).ApplyToAllEntries(_closure, opts);
+}
+#else
 {
 	// Due to the use of the global variables which are required when using a
 	// C-style callback for RocksDB, we have to make use of this function
@@ -4165,6 +4191,7 @@ ircd::db::for_each(const rocksdb::Cache &cache,
 	},
 	true);
 }
+#endif
 
 #ifdef IRCD_DB_HAS_CACHE_GETCHARGE
 size_t
@@ -5895,6 +5922,9 @@ ircd::db::reflect(const rocksdb::CompactionReason &r)
 		#endif
 		#ifdef IRCD_DB_HAS_ROUND_ROBIN_TTL
 		case Reason::kRoundRobinTtl:                return "kRoundRobinTtl";
+		#endif
+		#ifdef IRCD_DB_HAS_REFIT_LEVEL
+		case Reason::kRefitLevel:                   return "RefitLevel";
 		#endif
 
 		case Reason::kNumOfReasons:
