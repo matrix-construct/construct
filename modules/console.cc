@@ -5920,7 +5920,7 @@ try
 	const auto print_head{[&out]
 	{
 		out
-		<< std::setw(4) << std::left << "ID" << ' '
+		<< std::setw(6) << std::left << "ID" << ' '
 		<< std::setw(40) << std::right << "ADDRESS" << ' '
 		<< std::setw(7) << std::right << "TTL" << ' '
 		<< std::setw(50) << std::left << "NAME" << ' '
@@ -5959,7 +5959,7 @@ try
 
 		char pbuf[32];
 		out
-		<< std::setw(4) << std::left << peer.id << ' '
+		<< std::setw(6) << std::left << peer.id << ' '
 		<< std::setw(40) << std::right << net::ipport{peer.remote} << ' '
 		<< std::setw(7) << std::right << std::max(expires, -1L) << ' '
 		<< std::setw(50) << std::left << trunc(host, 50) << ' '
@@ -11673,21 +11673,21 @@ bool
 console_cmd__room__acquire__list(opt &out, const string_view &line)
 {
 	out
-	<< std::right << std::setw(4) << "id"
+	<< std::right << std::setw(5) << "id"
 	<< " "
-	<< std::right << std::setw(4) << "fid"
+	<< std::right << std::setw(6) << "fid"
 	<< " "
 	<< std::left << std::setw(50) << "room"
 	<< " "
-	<< std::right << std::setw(4) << "view"
+	<< std::right << std::setw(5) << "view"
 	<< " ["
-	<< std::right << std::setw(7) << "depth"
+	<< std::right << std::setw(8) << "depth"
 	<< " "
-	<< std::right << std::setw(7) << "depth"
+	<< std::right << std::setw(8) << "depth"
 	<< " | "
-	<< std::right << std::setw(8) << "ref"
+	<< std::right << std::setw(9) << "ref"
 	<< " "
-	<< std::right << std::setw(8) << "ref"
+	<< std::right << std::setw(9) << "ref"
 	<< "] "
 	<< std::left << std::setw(50) << "event"
 	<< " "
@@ -11698,21 +11698,21 @@ console_cmd__room__acquire__list(opt &out, const string_view &line)
 		size_t j(0);
 		for(const auto &result : a->fetching)
 			out
-			<< std::right << std::setw(4) << a->id
+			<< std::right << std::setw(5) << a->id
 			<< " "
-			<< std::right << std::setw(4) << (a->fetches - j++)
+			<< std::right << std::setw(6) << (a->fetches - j++)
 			<< " "
 			<< std::left << std::setw(50) << trunc(a->opts.room.room_id, 40)
 			<< " "
-			<< std::right << std::setw(4) << a->opts.viewport_size
+			<< std::right << std::setw(5) << a->opts.viewport_size
 			<< " ["
-			<< std::right << std::setw(7) << a->opts.depth.first
+			<< std::right << std::setw(8) << a->opts.depth.first
 			<< " "
-			<< std::right << std::setw(7) << a->opts.depth.second
+			<< std::right << std::setw(8) << a->opts.depth.second
 			<< " | "
-			<< std::right << std::setw(8) << a->opts.ref.first
+			<< std::right << std::setw(9) << a->opts.ref.first
 			<< " "
-			<< std::right << std::setw(8) << long(a->opts.ref.second)
+			<< std::right << std::setw(9) << long(a->opts.ref.second)
 			<< "] "
 			<< std::left << std::setw(50) << trunc(result.event_id, 60)
 			<< " "
