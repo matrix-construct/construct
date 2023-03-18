@@ -71,6 +71,7 @@ ircd::net::acceptor
 	void configure_ciphers(const json::object &);
 	void configure_flags(const json::object &);
 	void configure_password(const json::object &);
+	void configure_sni(const json::object &);
 	void configure(const json::object &opts);
 
 	// Handshake stack

@@ -328,13 +328,6 @@ try
 }
 {
 	configure(opts);
-
-	log::debug
-	{
-		log, "%s configured listener SSL",
-		loghead(*this)
-	};
-
 	open();
 }
 catch(const boost::system::system_error &e)
@@ -1081,7 +1074,18 @@ ircd::net::acceptor::configure(const json::object &opts)
 	configure_ciphers(opts);
 	configure_curves(opts);
 	configure_certs(opts);
+	configure_sni(opts);
 
+	log::debug
+	{
+		log, "%s configured listener SSL",
+		loghead(*this)
+	};
+}
+
+void
+ircd::net::acceptor::configure_sni(const json::object &opts)
+{
 	SSL_CTX_set_alpn_select_cb(ssl.native_handle(), ircd_net_acceptor_handle_alpn, this);
 	SSL_CTX_set_tlsext_servername_callback(ssl.native_handle(), ircd_net_acceptor_handle_sni);
 	SSL_CTX_set_tlsext_servername_arg(ssl.native_handle(), this);
