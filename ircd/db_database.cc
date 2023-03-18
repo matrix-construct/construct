@@ -1985,7 +1985,7 @@ ircd::db::database::column::column(database &d,
 	// Setup the cache for compressed assets.
 	const auto &cache_size_comp(this->descriptor->cache_size_comp);
 	if(cache_size_comp != 0)
-		table_opts.block_cache_compressed = std::make_shared<database::cache>(this->d, this->stats, this->allocator, this->name, cache_size_comp);
+		; //table_opts.block_cache_compressed = std::make_shared<database::cache>(this->d, this->stats, this->allocator, this->name, cache_size_comp);
 
 	// Setup the bloom filter.
 	const auto &bloom_bits(this->descriptor->bloom_bits);
@@ -2059,7 +2059,7 @@ ircd::db::database::column::column(database &d,
 		this->cmp.Name(),
 		this->options.prefix_extractor? this->prefix.Name() : "none",
 		table_opts.block_cache? "YES": "NO",
-		table_opts.block_cache_compressed? "YES": "NO",
+		"NO", //table_opts.block_cache_compressed? "YES": "NO",
 		this->descriptor->bloom_bits,
 		int(this->options.compression),
 		this->descriptor->name

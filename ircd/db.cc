@@ -3204,7 +3204,7 @@ rocksdb::Cache *
 ircd::db::cache_compressed(column &column)
 {
 	database::column &c(column);
-	return c.table_opts.block_cache_compressed.get();
+	return nullptr; // c.table_opts.block_cache_compressed.get();
 }
 
 [[gnu::hot]]
@@ -3219,7 +3219,7 @@ const rocksdb::Cache *
 ircd::db::cache_compressed(const column &column)
 {
 	const database::column &c(column);
-	return c.table_opts.block_cache_compressed.get();
+	return nullptr; // c.table_opts.block_cache_compressed.get();
 }
 
 template<>
