@@ -6729,8 +6729,8 @@ console_cmd__net__listen(opt &out, const string_view &line)
 	{
 		{ "host",                        token.at("host", "0.0.0.0"_sv)            },
 		{ "port",                        token.at("port", 8448L)                   },
-		{ "private_key_pem_path",        token.at("private_key_pem_path")          },
-		{ "certificate_pem_path",        token.at("certificate_pem_path")          },
+		{ "private_key_pem_path",        token.at("private_key_pem_path", ""_sv)   },
+		{ "certificate_pem_path",        token.at("certificate_pem_path", ""_sv)   },
 		{ "certificate_chain_path",      token.at("certificate_chain_path", ""_sv) },
 	};
 

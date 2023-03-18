@@ -326,8 +326,11 @@ try
 {
 	ios::get()
 }
+,secure
 {
-	configure(opts);
+	configure(opts)
+}
+{
 	open();
 }
 catch(const boost::system::system_error &e)
@@ -486,7 +489,9 @@ try
 {
 	const auto &sock
 	{
-		std::make_shared<ircd::socket>(ssl)
+		secure?
+			std::make_shared<ircd::socket>(ssl):
+			std::make_shared<ircd::socket>()
 	};
 
 	auto handler
@@ -548,7 +553,7 @@ noexcept try
 		return;
 	}
 
-	if(unlikely(!check_handshake_limit(*sock, remote)))
+	if(unlikely(secure && !check_handshake_limit(*sock, remote)))
 	{
 		allow(*this);
 		net::close(*sock, dc::RST, close_ignore);
@@ -561,6 +566,12 @@ noexcept try
 	if(!pcb(*this, remote))
 	{
 		net::close(*sock, dc::RST, close_ignore);
+		return;
+	}
+
+	if(!secure)
+	{
+		accepted(sock);
 		return;
 	}
 
@@ -743,11 +754,7 @@ noexcept try
 	openssl::set_app_data(*sock, nullptr);
 	check_handshake_error(ec, *sock);
 	sock->cancel_timeout();
-	assert(bool(cb));
-
-	// Toggles the behavior of non-async functions; see func comment
-	blocking(*sock, false);
-	cb(*this, sock);
+	accepted(sock);
 }
 catch(const ctx::interrupted &e)
 {
@@ -1061,6 +1068,17 @@ catch(...)
 }
 
 void
+ircd::net::acceptor::accepted(const std::shared_ptr<socket> &sock)
+{
+	assert(bool(cb));
+	assert(bool(sock));
+
+	// Toggles the behavior of non-async functions; see func comment
+	blocking(*sock, false);
+	cb(*this, sock);
+}
+
+bool
 ircd::net::acceptor::configure(const json::object &opts)
 {
 	log::debug
@@ -1069,18 +1087,21 @@ ircd::net::acceptor::configure(const json::object &opts)
 		loghead(*this)
 	};
 
-	configure_password(opts);
 	configure_flags(opts);
+	if(!configure_certs(opts))
+		return false;
+
+	configure_password(opts);
 	configure_ciphers(opts);
 	configure_curves(opts);
-	configure_certs(opts);
 	configure_sni(opts);
-
 	log::debug
 	{
 		log, "%s configured listener SSL",
 		loghead(*this)
 	};
+
+	return true;
 }
 
 void
@@ -1117,7 +1138,8 @@ ircd::net::acceptor::configure_flags(const json::object &opts)
 	if(opts.get<bool>("ssl_no_tlsv1_2", false))
 		flags |= ssl.no_tlsv1_2;
 
-	ssl.set_options(flags);
+	if(flags)
+		ssl.set_options(flags);
 }
 
 void
@@ -1199,9 +1221,10 @@ ircd::net::acceptor::configure_curves(const json::object &opts)
 	}
 }
 
-void
+bool
 ircd::net::acceptor::configure_certs(const json::object &opts)
 {
+	uint ret(0);
 	if(!empty(unquote(opts["certificate_chain_path"])))
 	{
 		const json::string filename
@@ -1218,6 +1241,7 @@ ircd::net::acceptor::configure_certs(const json::object &opts)
 			};
 
 		ssl.use_certificate_chain_file(filename);
+		ret += 1;
 		log::info
 		{
 			log, "%s using certificate chain file '%s'",
@@ -1242,7 +1266,6 @@ ircd::net::acceptor::configure_certs(const json::object &opts)
 			};
 
 		ssl.use_certificate_file(filename, asio::ssl::context::pem);
-
 		const auto *const x509
 		{
 			SSL_CTX_get0_certificate(ssl.native_handle())
@@ -1256,6 +1279,7 @@ ircd::net::acceptor::configure_certs(const json::object &opts)
 				string_view{};
 		});
 
+		ret += 1;
 		log::info
 		{
 			log, "%s using file '%s' with certificate for '%s'",
@@ -1281,6 +1305,8 @@ ircd::net::acceptor::configure_certs(const json::object &opts)
 			};
 
 		ssl.use_private_key_file(filename, asio::ssl::context::pem);
+
+		ret += 1;
 		log::info
 		{
 			log, "%s using private key file '%s'",
@@ -1288,6 +1314,16 @@ ircd::net::acceptor::configure_certs(const json::object &opts)
 			filename
 		};
 	}
+
+	if(ret != 0 && ret != 3)
+		log::warning
+		{
+			"%s missing some paths to PEM files in its options."
+			" SSL is probably misconfigured.",
+			loghead(*this),
+		};
+
+	return ret;
 }
 
 void
