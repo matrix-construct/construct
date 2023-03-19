@@ -571,7 +571,7 @@ applyargs()
 
 	if(slave)
 	{
-		ircd::db::open_slave.set("true");
+		ircd::slave.set("true");
 		read_only = true; // slave implies read_only
 	}
 

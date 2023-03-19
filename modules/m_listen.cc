@@ -63,6 +63,11 @@ on_load()
 
 	init_conf_listeners();
 	init_room_listeners();
+	if(listeners.empty())
+		log::warning
+		{
+			"No listening sockets configured; can't hear anyone."
+		};
 }
 
 void
@@ -145,7 +150,7 @@ init_conf_listeners()
 			{
 				"Listener '%s' configured for %s:%s by environment",
 				p.first,
-				p.second["host"],
+				unquote(p.second["host"]),
 				p.second["port"],
 			};
 }
@@ -167,12 +172,6 @@ init_room_listeners()
 	{
 		load_listener(event);
 	});
-
-	if(listeners.empty())
-		log::warning
-		{
-			"No listening sockets configured; can't hear anyone."
-		};
 }
 
 //
@@ -265,19 +264,35 @@ load_listener(const m::event &event)
 		json::get<"content"_>(event)
 	};
 
-	if(!load_listener(name, opts))
-		return false;
-
-	log::notice
+	if(ircd::slave)
 	{
-		"Listener '%s' configured for %s:%s by %s",
-		name,
-		opts["host"],
-		opts["port"],
-		string_view{event.event_id},
-	};
+		log::warning
+		{
+			"Listener '%s' configured for %s:%s by %s ignored in slave mode.",
+			name,
+			unquote(opts["host"]),
+			opts["port"],
+			string_view{event.event_id},
+		};
 
-	return true;
+		return false;
+	}
+
+	if(load_listener(name, opts))
+	{
+		log::notice
+		{
+			"Listener '%s' configured for %s:%s by %s",
+			name,
+			unquote(opts["host"]),
+			opts["port"],
+			string_view{event.event_id},
+		};
+
+		return true;
+	}
+
+	return false;
 }
 
 ctx::context

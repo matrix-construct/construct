@@ -18,7 +18,6 @@ namespace ircd::db
 	// Broad conf items
 	extern conf::item<std::string> open_recover;
 	extern conf::item<bool> open_repair;
-	extern conf::item<bool> open_slave;
 	extern conf::item<bool> auto_compact;
 	extern conf::item<bool> auto_deletion;
 	extern conf::item<bool> open_stats;

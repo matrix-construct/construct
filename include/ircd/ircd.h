@@ -129,9 +129,10 @@ namespace ircd
 
 	// Operating Mode Selectors
 	extern conf::item<bool> debugmode;
-	extern conf::item<bool> maintenance;
 	extern conf::item<bool> soft_assert;
-	extern conf::item<bool> read_only;       // implies write_avoid
+	extern conf::item<bool> maintenance;
+	extern conf::item<bool> slave;
+	extern conf::item<bool> read_only;
 	extern conf::item<bool> defaults;
 }
 

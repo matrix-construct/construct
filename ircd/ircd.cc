@@ -107,6 +107,22 @@ ircd::maintenance
 	}
 };
 
+/// Conf item dictates whether databases will be opened in slave mode; this
+/// is a recent feature of RocksDB which may not be available. It allows
+/// multiple processes to open the same database in a single-writer multiple
+/// reader configuration.
+///
+/// Originally this was intended as a maintenance mode to explore another live
+/// running server's database. However it now allows listeners which can serve
+/// as load-balanced mirrors and caches over a database shared at the fs level
+/// locally or with nfs/ceph/intermezzo etc.
+decltype(ircd::slave)
+ircd::slave
+{
+	{ "name",     "ircd.slave"   },
+	{ "default",  false          },
+	{ "persist",  false          },
+};
 
 /// Coarse mode declaration for read-only behavior. All subsystems and feature
 /// modules respect this indicator by preventing any writes and persistence
@@ -123,6 +139,10 @@ ircd::read_only
 	[](conf::item<void> &)
 	{
 		if(!read_only)
+			return;
+
+		// Not implict maintenance mode when slave mode is set.
+		if(slave)
 			return;
 
 		maintenance.set("true");

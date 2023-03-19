@@ -81,17 +81,6 @@ ircd::db::auto_deletion
 	{ "persist",  false                   },
 };
 
-/// Conf item dictates whether databases will be opened in slave mode; this
-/// is a recent feature of RocksDB which may not be available. It allows two
-/// instances of a database, so long as only one is not opened as a slave.
-decltype(ircd::db::open_slave)
-ircd::db::open_slave
-{
-	{ "name",     "ircd.db.open.slave" },
-	{ "default",  false                },
-	{ "persist",  false                },
-};
-
 /// Gather statistics about files on open to inform the compaction algorithm.
 /// This can be disabled to prevent touching a lot of files on open, but it's
 /// unclear when/if that information will be gathered to ever inform compactor.
@@ -940,7 +929,7 @@ try
 }
 ,slave
 {
-	db::open_slave
+	ircd::slave
 }
 ,read_only
 {
