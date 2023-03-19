@@ -92,6 +92,87 @@ ircd::db::open_slave
 	{ "persist",  false                },
 };
 
+/// Gather statistics about files on open to inform the compaction algorithm.
+/// This can be disabled to prevent touching a lot of files on open, but it's
+/// unclear when/if that information will be gathered to ever inform compactor.
+decltype(ircd::db::open_stats)
+ircd::db::open_stats
+{
+	{ "name",     "ircd.db.open.stats" },
+	{ "default",  true                 },
+	{ "persist",  false                },
+};
+
+/// Paranoid suite toggle. This allows coarse control over the rest of the
+/// configuration from here. If this is set to false, all other paranoid confs
+/// will default to false; note that each conf can still be explicitly set.
+decltype(ircd::db::paranoid)
+ircd::db::paranoid
+{
+	{ "name",     "ircd.db.paranoid.enable" },
+	{ "default",  true                      },
+	{ "persist",  false                     },
+};
+
+/// General paranoid checks; enabled by rocksdb by default. Disabling this
+/// might implicitly override some of the other paranoid features configurable
+/// here and disable them within rocksdb.
+decltype(ircd::db::paranoid_checks)
+ircd::db::paranoid_checks
+{
+	{ "name",     "ircd.db.paranoid.checks" },
+	{ "default",  bool(paranoid)            },
+	{ "persist",  false                     },
+};
+
+/// Check file sizes on open. This is expensive because it opens every file
+/// with only mediocre value for finding corruption in practice.
+decltype(ircd::db::paranoid_size)
+ircd::db::paranoid_size
+{
+	{ "name",     "ircd.db.paranoid.size" },
+	{ "default",  false                   },
+	{ "persist",  false                   },
+};
+
+/// Check UUIDs of SST files against the manifest.
+decltype(ircd::db::paranoid_uuid)
+ircd::db::paranoid_uuid
+{
+	{ "name",     "ircd.db.paranoid.uuid" },
+	{ "default",  bool(paranoid)          },
+	{ "persist",  false                   },
+};
+
+/// Check WAL against the manifest for corruption.
+decltype(ircd::db::paranoid_wal)
+ircd::db::paranoid_wal
+{
+	{ "name",     "ircd.db.paranoid.wal"  },
+	{ "default",  bool(paranoid)          },
+	{ "persist",  false                   },
+};
+
+/// Check every SST after writing it. This is expensive and rocksdb doesn't
+/// enable it in their own defaults.
+decltype(ircd::db::paranoid_sst)
+ircd::db::paranoid_sst
+{
+	{ "name",     "ircd.db.paranoid.sst" },
+	{ "default",  false                  },
+	{ "persist",  false                  },
+};
+
+/// Check LSM after changing it. This is claimed to be cheap by rocksdb and
+/// they enable it by default.
+decltype(ircd::db::paranoid_lsm)
+ircd::db::paranoid_lsm
+{
+	{ "name",     "ircd.db.paranoid.lsm" },
+	{ "default",  bool(paranoid)         },
+	{ "persist",  false                  },
+};
+
 void
 ircd::db::sync(database &d)
 {
@@ -968,8 +1049,9 @@ try
 	opts->bytes_per_sync = 0;
 	opts->wal_bytes_per_sync = 0;
 
-	// This prevents the creation of additional SST files and lots of I/O on
-	// either DB open and close.
+	// We need flush during shutdown or data which bypasses the WAL might get
+	// desynchronized from data which doesn't (or simply lost). Flush during
+	// recovery seems to happen anyway but setting to avoid is probably better.
 	opts->avoid_flush_during_recovery = true;
 	opts->avoid_flush_during_shutdown = false;
 
@@ -993,6 +1075,19 @@ try
 
 	// Use the determined direct io value for writes as well.
 	//opts->use_direct_io_for_flush_and_compaction = opts->use_direct_reads;
+
+	// Additional optimizations at the cost of trading some added risk.
+	opts->skip_stats_update_on_db_open = !open_stats;
+	opts->paranoid_checks = bool(paranoid_checks);
+	#ifdef IRCD_DB_HAS_SKIP_CHECKSIZE
+	opts->skip_checking_sst_file_sizes_on_db_open = !paranoid_size;
+	#endif
+	#ifdef IRCD_DB_HAS_MANIFEST_WALS
+	opts->track_and_verify_wals_in_manifest = bool(paranoid_wal);
+	#endif
+	#ifdef IRCD_DB_HAS_MANIFEST_UUIDS
+	opts->verify_sst_unique_id_in_manifest = bool(paranoid_uuid);
+	#endif
 
 	// Default corruption tolerance is zero-tolerance; db fails to open with
 	// error by default to inform the user. The rest of the options are
@@ -1745,6 +1840,11 @@ ircd::db::database::column::column(database &d,
 }
 ,options_preconfiguration{[this]
 {
+	// Setup sundry
+	this->options.report_bg_io_stats = true;
+	this->options.paranoid_file_checks = bool(paranoid_sst);
+	this->options.force_consistency_checks = bool(paranoid_lsm);
+
 	// If possible, deduce comparator based on type given in descriptor
 	if(!this->descriptor->cmp.less)
 	{
@@ -1779,11 +1879,6 @@ ircd::db::database::column::column(database &d,
 
 	// Set the compaction filter
 	this->options.compaction_filter = &this->cfilter;
-
-	//this->options.paranoid_file_checks = true;
-
-	// More stats reported by the rocksdb.stats property.
-	this->options.report_bg_io_stats = true;
 
 	// Set filter reductions for this column. This means we expect a key to exist.
 	this->options.optimize_filters_for_hits = this->descriptor->expect_queries_hit;

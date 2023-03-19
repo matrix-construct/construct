@@ -21,6 +21,14 @@ namespace ircd::db
 	extern conf::item<bool> open_slave;
 	extern conf::item<bool> auto_compact;
 	extern conf::item<bool> auto_deletion;
+	extern conf::item<bool> open_stats;
+	extern conf::item<bool> paranoid;
+	extern conf::item<bool> paranoid_checks;
+	extern conf::item<bool> paranoid_size;
+	extern conf::item<bool> paranoid_uuid;
+	extern conf::item<bool> paranoid_wal;
+	extern conf::item<bool> paranoid_sst;
+	extern conf::item<bool> paranoid_lsm;
 
 	// General information
 	const std::string &name(const database &);
