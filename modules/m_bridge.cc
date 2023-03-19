@@ -52,8 +52,8 @@ IRCD_MODULE
 decltype(ircd::m::bridge::enable)
 ircd::m::bridge::enable
 {
-	{ "name",      "ircd.m.bridge.enable"  },
-	{ "default",   true                    },
+	{ "name",      "ircd.m.bridge.enable"      },
+	{ "default",   true && !ircd::maintenance  },
 };
 
 decltype(ircd::m::bridge::backoff)
@@ -139,7 +139,7 @@ ircd::m::bridge::init()
 			string_view{event.event_id},
 		};
 
-		if(!enable)
+		if(!enable || ircd::read_only)
 			return true;
 
 		start(event, config);
@@ -169,7 +169,7 @@ ircd::m::bridge::handle_config(const m::event &event,
                                vm::eval &eval)
 try
 {
-	if(!enable)
+	if(!enable || ircd::read_only)
 		return;
 
 	const config config

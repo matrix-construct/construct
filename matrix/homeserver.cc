@@ -283,17 +283,17 @@ try
 	if(ircd::mods::autoload)
 		mods::imports.emplace("net_dns_cache"s, "net_dns_cache");
 
-	if(!ircd::write_avoid)
+	if(!ircd::read_only && !ircd::maintenance)
 		if(key && !key->verify_keys.empty())
 			m::keys::cache::set(key->verify_keys);
 
 	if(opts->autoapps)
 		m::app::init();
 
-	if(!ircd::maintenance)
+	if(!ircd::read_only && !ircd::maintenance)
 		signon(*this);
 
-	if(!ircd::maintenance && opts->backfill)
+	if(!ircd::read_only && !ircd::maintenance && opts->backfill)
 		m::init::backfill::init();
 }
 catch(const std::exception &e)
@@ -321,7 +321,7 @@ noexcept try
 	server::wait();
 	m::sync::pool.join();
 
-	if(!ircd::maintenance && _vm)
+	if(!ircd::read_only && !ircd::maintenance && _vm)
 		signoff(*this);
 
 	///TODO: XXX primary
@@ -394,7 +394,7 @@ ircd::m::homeserver::key::key(const struct opts &opts)
 		})
 	};
 
-	if(!fs::exists(sk_file) && !ircd::write_avoid)
+	if(!fs::exists(sk_file) && !ircd::read_only && !ircd::maintenance)
 		log::notice
 		{
 			m::log, "Creating ed25519 secret key @ `%s'", sk_file
@@ -404,7 +404,7 @@ ircd::m::homeserver::key::key(const struct opts &opts)
 }()}
 ,secret_key
 {
-	secret_key_path, &public_key, !ircd::write_avoid
+	secret_key_path, &public_key, !ircd::read_only && !ircd::maintenance
 }
 ,public_key_b64
 {

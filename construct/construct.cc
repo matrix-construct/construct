@@ -38,7 +38,6 @@ bool yes6;
 bool norun;
 bool nomain;
 bool read_only;
-bool write_avoid;
 bool slave;
 std::array<bool, 6> smoketest;
 bool megatest;
@@ -76,7 +75,6 @@ lgetopt opts[]
 	{ "norun",      &norun,         lgetopt::BOOL,    "[debug] Initialize but never run the event loop" },
 	{ "nomain",     &nomain,        lgetopt::BOOL,    "[debug] Initialize and run without entering ircd::main()" },
 	{ "ro",         &read_only,     lgetopt::BOOL,    "Read-only mode. No writes to database allowed" },
-	{ "wa",         &write_avoid,   lgetopt::BOOL,    "Like read-only mode, but writes permitted if triggered" },
 	{ "slave",      &slave,         lgetopt::BOOL,    "Like read-only mode; allows multiple instances of server" },
 	{ "smoketest",  &smoketest[0],  lgetopt::BOOL,    "Starts and stops the daemon to return success" },
 	{ "megatest",   &megatest,      lgetopt::BOOL,    "Trap execution every millionth tick for diagnostic and statistics." },
@@ -558,10 +556,11 @@ applyargs()
 		ircd::db::auto_deletion.set("false");
 	}
 
-	if(single && !bootstrap)
+	if(single)
 	{
-		ircd::write_avoid.set("true");
+		ircd::maintenance.set("true");
 		cmdline = !debugmode;
+		nobackfill = true;
 	}
 
 	if(bootstrap)
@@ -577,16 +576,7 @@ applyargs()
 	}
 
 	if(read_only)
-	{
 		ircd::read_only.set("true");
-		write_avoid = true; // read_only implies write_avoid.
-	}
-
-	if(write_avoid)
-	{
-		ircd::write_avoid.set("true");
-		nobackfill = true;
-	}
 
 	if(debugmode)
 		ircd::debugmode.set("true");

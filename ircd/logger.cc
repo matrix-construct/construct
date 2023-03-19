@@ -138,7 +138,7 @@ ircd::log::init()
 		console_disable(level::DWARNING);
 	}
 
-	if(!ircd::write_avoid)
+	if(!ircd::read_only && !ircd::maintenance)
 	{
 		mkdir();
 		open();

@@ -179,10 +179,10 @@ try
 		fs::base::db
 	};
 
-	if(!fs::is_dir(dbdir) && (ircd::read_only || ircd::write_avoid))
+	if(!fs::is_dir(dbdir) && (ircd::read_only || ircd::maintenance))
 		log::warning
 		{
-			log, "Not creating database directory `%s' in read-only/write-avoid mode.", dbdir
+			log, "Not creating database directory `%s' in read-only/maintenance mode.", dbdir
 		};
 	else if(fs::mkdir(dbdir))
 		log::notice

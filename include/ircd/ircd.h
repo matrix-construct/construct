@@ -131,7 +131,6 @@ namespace ircd
 	extern conf::item<bool> debugmode;
 	extern conf::item<bool> maintenance;
 	extern conf::item<bool> soft_assert;
-	extern conf::item<bool> write_avoid;     // implies maintenance
 	extern conf::item<bool> read_only;       // implies write_avoid
 	extern conf::item<bool> defaults;
 }

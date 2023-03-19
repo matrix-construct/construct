@@ -354,7 +354,7 @@ ircd::m::app::handle_stdout()
 
 	const auto message_id
 	{
-		!ircd::write_avoid?
+		!ircd::read_only && !ircd::maintenance?
 			m::msghtml(room_id, user_id, content, string_view{alt}, "m.notice"):
 			m::event::id::buf{}
 	};

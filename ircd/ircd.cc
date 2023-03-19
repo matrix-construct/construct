@@ -107,26 +107,6 @@ ircd::maintenance
 	}
 };
 
-/// Coarse mode indicator for degraded operation known as "write-avoid" which
-/// is similar to read_only but not hard-enforced. Writes may still occur,
-/// such as those manually triggered by an admin. All subsystems and background
-/// tasks otherwise depart from normal operation to avoid writes.
-decltype(ircd::write_avoid)
-ircd::write_avoid
-{
-	{
-		{ "name",     "ircd.write_avoid"   },
-		{ "default",  false                },
-		{ "persist",  false                },
-	},
-	[](conf::item<void> &)
-	{
-		if(!write_avoid)
-			return;
-
-		maintenance.set("true");
-	}
-};
 
 /// Coarse mode declaration for read-only behavior. All subsystems and feature
 /// modules respect this indicator by preventing any writes and persistence
@@ -145,7 +125,7 @@ ircd::read_only
 		if(!read_only)
 			return;
 
-		write_avoid.set("true");
+		maintenance.set("true");
 	}
 };
 
