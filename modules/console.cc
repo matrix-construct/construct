@@ -4596,8 +4596,8 @@ static void
 _print_sst_info_header(opt &out)
 {
 	out << std::left << std::setfill(' ')
-	    << std::setw(6) << "path"
-	    << std::setw(12) << "name"
+	    << std::setw(3) << "chkp"
+	    << "  " << std::setw(12) << "name"
 	    << "  " << std::setw(32) << "creation"
 	    << "  " << std::setw(3) << "flt"
 	    << std::right
@@ -4638,8 +4638,9 @@ _print_sst_info(opt &out,
 
 	char tmbuf[64], pbuf[48];
 	out << std::left << std::setfill(' ')
-	    << std::setw(6) << rsplit(f.path, '/').second
-	    << std::setw(12) << f.name
+	    << std::setw(3) << std::left << rsplit(f.path, '/').second
+	    << "  "
+	    << std::setw(12) << std::left << f.name
 	    << "  " << std::setw(32) << std::left << (f.created? timef(tmbuf, f.created, ircd::localtime) : string_view{})
 	    << "  " << std::setw(1) << std::left << (!f.filter.empty()? 'F' : '-')
 	    <<         std::setw(1) << std::left << (f.delta_encoding? 'D' : '-')
