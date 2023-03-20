@@ -50,6 +50,7 @@ const char *diagnostic;
 bool nobanner;
 bool silentmode;
 bool noiouct;
+bool noioust;
 
 lgetopt opts[]
 {
@@ -87,6 +88,7 @@ lgetopt opts[]
 	{ "nobanner",   &nobanner,      lgetopt::BOOL,    "Terminal log enabled only in runlevel RUN" },
 	{ "silent",     &silentmode,    lgetopt::BOOL,    "Like quiet mode without console output either" },
 	{ "noiouct",    &noiouct,       lgetopt::BOOL,    "Disable experimental IORING_SETUP_COOP_TASKRUN" },
+	{ "noioust",    &noioust,       lgetopt::BOOL,    "Disable experimental IORING_SETUP_SINGLE_ISSUER" },
 	{ nullptr,      nullptr,        lgetopt::STRING,  nullptr },
 };
 
@@ -683,15 +685,26 @@ __wrap_io_uring_queue_init(unsigned entries,
 {
 	namespace info = ircd::info;
 
+	#if defined(IORING_SETUP_COOP_TASKRUN)
 	const bool have_coop_taskrun
 	{
 		info::kernel_version[0] > 5 ||
 		(info::kernel_version[0] >= 5 && info::kernel_version[1] >= 19)
 	};
 
-	#if defined(IORING_SETUP_COOP_TASKRUN)
 	if(have_coop_taskrun && !noiouct)
 		flags |= IORING_SETUP_COOP_TASKRUN;
+	#endif
+
+	#if defined(IORING_SETUP_SINGLE_ISSUER)
+	const bool have_single_issuer
+	{
+		info::kernel_version[0] > 6 ||
+		(info::kernel_version[0] >= 6 && info::kernel_version[1] >= 0)
+	};
+
+	if(have_single_issuer && !noioust)
+		flags |= IORING_SETUP_SINGLE_ISSUER;
 	#endif
 
 	struct io_uring_params params
