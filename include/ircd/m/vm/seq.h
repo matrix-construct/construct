@@ -13,6 +13,8 @@
 
 namespace ircd::m::vm::sequence
 {
+	struct refresh;
+
 	extern ctx::dock dock;
 	extern uint64_t retired;      // already written; always monotonic
 	extern uint64_t committed;    // pending write; usually monotonic
@@ -25,3 +27,12 @@ namespace ircd::m::vm::sequence
 	uint64_t max();
 	uint64_t min();
 }
+
+struct ircd::m::vm::sequence::refresh
+{
+	uint64_t database[2] {0, 0};
+	uint64_t retired[2] {0, 0};
+	m::event::id::buf event_id;
+
+	refresh();
+};

@@ -20,6 +20,34 @@ ircd::m::vm::sequence::committed;
 decltype(ircd::m::vm::sequence::uncommitted)
 ircd::m::vm::sequence::uncommitted;
 
+//
+// refresh::refresh
+//
+
+ircd::m::vm::sequence::refresh::refresh()
+{
+	auto &database
+	{
+		db::database::get("events")
+	};
+
+	if(!database.slave)
+		return;
+
+	this->database[0] = db::sequence(database);
+	this->retired[0] = sequence::retired;
+
+	db::refresh(database);
+	sequence::retired = sequence::get(this->event_id);
+
+	this->database[1] = db::sequence(database);
+	this->retired[1] = sequence::retired;
+}
+
+//
+// tools
+//
+
 uint64_t
 ircd::m::vm::sequence::min()
 {

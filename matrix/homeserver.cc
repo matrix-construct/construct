@@ -227,6 +227,41 @@ ircd::m::homeserver::rehash(homeserver *const homeserver)
 	return true;
 }
 
+bool
+IRCD_MODULE_EXPORT
+ircd::m::homeserver::refresh(homeserver *const homeserver)
+try
+{
+	if(!homeserver)
+		return false;
+
+	const ctx::uninterruptible::nothrow ui;
+	const vm::sequence::refresh refresh;
+	if(ircd::debugmode)
+		log::logf
+		{
+			log, log::level::DEBUG,
+			"refreshed events[%12lu -> %-12lu] vm[%10lu -> %-10lu] %s",
+			refresh.database[0],
+			refresh.database[1],
+			refresh.retired[0],
+			refresh.retired[1],
+			string_view{refresh.event_id},
+		};
+
+	return true;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "refresh :%s",
+		e.what(),
+	};
+
+	return false;
+}
+
 //
 // homeserver::homeserver::homeserver
 //

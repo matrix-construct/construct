@@ -84,6 +84,7 @@ struct ircd::m::homeserver
 	static homeserver *init(const struct opts *);
 	static void fini(homeserver *) noexcept;
 	static bool rehash(homeserver *);
+	static bool refresh(homeserver *);
 };
 
 struct ircd::m::homeserver::key
