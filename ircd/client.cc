@@ -587,7 +587,13 @@ try
 		loghead(client),
 	};
 
-	client.close(net::dc::SSL_NOTIFY, net::close_ignore);
+	const net::close_opts opts
+	{
+		.type = net::dc::SSL_NOTIFY,
+		.shutdown = net::dc::RST,
+	};
+
+	client.close(opts, net::close_ignore);
 	return false;
 }
 catch(const std::exception &e)

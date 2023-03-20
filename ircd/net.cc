@@ -1775,9 +1775,10 @@ try
 	assert(!fini);
 	log::debug
 	{
-		log, "%s disconnect type:%s user[in:%zu out:%zu]",
+		log, "%s disconnect type:%s shut:%s user[in:%zu out:%zu]",
 		loghead(*this),
 		reflect(opts.type),
+		!ssl? reflect(opts.shutdown): "--"_sv,
 		in.bytes,
 		out.bytes
 	};
@@ -1806,7 +1807,9 @@ try
 			if(!ssl)
 			{
 				// Redirect SSL_NOTIFY to another strategy for non-SSL sockets.
-				sd.shutdown(ip::tcp::socket::shutdown_both);
+				if(opts.shutdown != dc::RST)
+					sd.shutdown(translate(opts.shutdown));
+
 				sd.close();
 				break;
 			}

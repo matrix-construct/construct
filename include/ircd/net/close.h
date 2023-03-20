@@ -57,4 +57,10 @@ struct ircd::net::close_opts
 	/// If specified, these socket options will be applied when conducting
 	/// the disconnect (useful for adding an SO_LINGER time etc).
 	const sock_opts *sopts { nullptr };
+
+	/// For portable clean disconnection shutdown(2) might be called prior to
+	/// close(2). Setting this option to dc::RST skips the shutdown(2) when
+	/// the caller deems it unnecessary. At this time it only affects non-SSL
+	/// sockets and in the future we will have io_uring(7) fuse these calls.
+	net::dc shutdown { dc::FIN };
 };
