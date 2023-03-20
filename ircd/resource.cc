@@ -1101,28 +1101,48 @@ ircd::resource::response::HEAD_BUF_SZ
 
 ircd::resource::response::response(client &client,
                                    const http::code &code)
-:response{client, json::object{json::empty_object}, code}
+:response
+{
+	client,
+	json::object{json::empty_object},
+	code
+}
 {
 }
 
 ircd::resource::response::response(client &client,
                                    const http::code &code,
                                    const json::iov &members)
-:response{client, members, code}
+:response
+{
+	client,
+	members,
+	code
+}
 {
 }
 
 ircd::resource::response::response(client &client,
                                    const json::members &members,
                                    const http::code &code)
-:response{client, code, members}
+:response
+{
+	client,
+	code,
+	members
+}
 {
 }
 
 ircd::resource::response::response(client &client,
                                    const json::value &value,
                                    const http::code &code)
-:response{client, code, value}
+:response
+{
+	client,
+	code,
+	value
+}
 {
 }
 
@@ -1141,27 +1161,45 @@ try
 		size
 	};
 
+	const string_view str
+	{
+		stringify(mutable_buffer{buffer}, value)
+	};
+
 	switch(type(value))
 	{
 		case json::ARRAY:
 		{
-			response(client, json::array{stringify(mutable_buffer{buffer}, value)}, code);
+			response
+			{
+				client,
+				json::array{str},
+				code,
+			};
+
 			return;
 		}
 
 		case json::OBJECT:
 		{
-			response(client, json::object{stringify(mutable_buffer{buffer}, value)}, code);
+			response
+			{
+				client,
+				json::object{str},
+				code,
+			};
+
 			return;
 		}
 
 		[[unlikely]]
-		default: throw http::error
-		{
-			"Cannot send json::%s as response content",
-			http::INTERNAL_SERVER_ERROR,
-			type(value),
-		};
+		default:
+			throw http::error
+			{
+				"Cannot send json::%s as response content",
+				http::INTERNAL_SERVER_ERROR,
+				type(value),
+			};
 	}
 }
 catch(const json::error &e)
@@ -1194,7 +1232,12 @@ try
 		stringify(mutable_buffer{buffer}, members)
 	};
 
-	response(client, object, code);
+	response
+	{
+		client,
+		object,
+		code,
+	};
 }
 catch(const json::error &e)
 {
@@ -1226,7 +1269,12 @@ try
 		stringify(mutable_buffer{buffer}, members)
 	};
 
-	response(client, object, code);
+	response
+	{
+		client,
+		object,
+		code,
+	};
 }
 catch(const json::error &e)
 {
@@ -1248,7 +1296,13 @@ ircd::resource::response::response(client &client,
 	};
 
 	assert(json::valid(object, std::nothrow));
-	response(client, object, content_type, code);
+	response
+	{
+		client,
+		string_view{object},
+		content_type,
+		code,
+	};
 }
 
 ircd::resource::response::response(client &client,
@@ -1261,7 +1315,13 @@ ircd::resource::response::response(client &client,
 	};
 
 	assert(json::valid(array, std::nothrow));
-	response(client, array, content_type, code);
+	response
+	{
+		client,
+		string_view{array},
+		content_type,
+		code,
+	};
 }
 
 ircd::resource::response::response(client &client,
@@ -1283,7 +1343,11 @@ ircd::resource::response::response(client &client,
 
 	response
 	{
-		client, content, content_type, code, string_view{sb.completed()}
+		client,
+		content,
+		content_type,
+		code,
+		string_view{sb.completed()},
 	};
 }
 
@@ -1298,7 +1362,11 @@ ircd::resource::response::response(client &client,
 	// Head gets sent
 	response
 	{
-		client, code, content_type, size(content), headers
+		client,
+		code,
+		content_type,
+		size(content),
+		headers,
 	};
 
 	// All content gets sent
