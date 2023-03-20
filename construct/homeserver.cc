@@ -15,6 +15,9 @@
 namespace fs = ircd::fs;
 using ircd::string_view;
 
+decltype(construct::homeserver::primary)
+construct::homeserver::primary;
+
 construct::homeserver::homeserver(struct ircd::m::homeserver::opts opts)
 try
 :opts
@@ -45,6 +48,8 @@ try
 	}
 }
 {
+	assert(!primary);
+	primary = this;
 }
 catch(const std::exception &e)
 {
@@ -59,4 +64,6 @@ catch(const std::exception &e)
 construct::homeserver::~homeserver()
 noexcept
 {
+	assert(primary);
+	primary = nullptr;
 }

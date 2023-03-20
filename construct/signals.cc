@@ -8,9 +8,10 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <ircd/ircd.h> // must include because asio.h.gch is fPIC
+#include <ircd/matrix.h>
 #include <ircd/asio.h>
 #include "construct.h"
+#include "homeserver.h"
 #include "signals.h"
 #include "console.h"
 
@@ -225,24 +226,29 @@ try
 		return;
 	}
 
+	if(!homeserver::primary || !homeserver::primary->module[0])
+		return;
+
 	// This signal handler (though not a *real* signal handler) is still
 	// running on the main async stack and not an ircd::ctx. The reload
 	// function does a lot of IO so it requires an ircd::ctx.
 	ircd::context{[]
 	{
-		ircd::mods::import<void ()> reload_conf
+		static ircd::mods::import<void (ircd::m::homeserver *)> rehash
 		{
-			"s_conf", "reload_conf"
+			homeserver::primary->module[0], "ircd::m::homeserver::rehash"
 		};
 
-		reload_conf();
+		assert(homeserver::primary->hs);
+		rehash(homeserver::primary->hs.get());
 	}};
 }
 catch(const std::exception &e)
 {
 	ircd::log::error
 	{
-		"SIGUSR1 handler: %s", e.what()
+		"SIGUSR1 handler :%s",
+		e.what()
 	};
 }
 

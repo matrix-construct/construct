@@ -23,4 +23,6 @@ struct construct::homeserver
   public:
 	homeserver(struct ircd::m::homeserver::opts);
 	~homeserver() noexcept;
+
+	static homeserver *primary;
 };

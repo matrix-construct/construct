@@ -83,6 +83,7 @@ struct ircd::m::homeserver
 	/// Factory to create homeserver with single procedure for shlib purposes.
 	static homeserver *init(const struct opts *);
 	static void fini(homeserver *) noexcept;
+	static bool rehash(homeserver *);
 };
 
 struct ircd::m::homeserver::key

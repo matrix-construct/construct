@@ -213,6 +213,20 @@ noexcept
 	delete homeserver;
 }
 
+bool
+IRCD_MODULE_EXPORT
+ircd::m::homeserver::rehash(homeserver *const homeserver)
+{
+	if(!homeserver)
+		return false;
+
+	if(!homeserver->conf)
+		return false;
+
+	homeserver->conf->load();
+	return true;
+}
+
 //
 // homeserver::homeserver::homeserver
 //
