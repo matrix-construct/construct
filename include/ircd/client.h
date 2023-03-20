@@ -56,7 +56,9 @@ struct ircd::client
 	size_t write_all(const net::const_buffers &);
 	size_t write_all(const const_buffer &);
 	void close(const net::close_opts &, net::close_callback);
-	ctx::future<void> close(const net::close_opts & = {});
+	void close(const net::dc, net::close_callback);
+	ctx::future<void> close(const net::close_opts &);
+	ctx::future<void> close(const net::dc);
 
   private:
 	void discard_unconsumed(const http::request::head &);

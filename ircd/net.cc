@@ -680,10 +680,8 @@ ircd::net::close_opts::default_timeout
 };
 
 /// Static instance of default close options.
-ircd::net::close_opts
-const ircd::net::close_opts_default
-{
-};
+decltype(ircd::net::close_opts_default)
+ircd::net::close_opts_default;
 
 /// Static helper callback which may be passed to the callback-based overload
 /// of close(). This callback does nothing.
@@ -693,6 +691,16 @@ const ircd::net::close_ignore{[]
 {
 	return;
 }};
+
+ircd::ctx::future<void>
+ircd::net::close(socket &s,
+                 const dc &type)
+{
+	return close(s, close_opts
+	{
+		.type = type,
+	});
+}
 
 ircd::ctx::future<void>
 ircd::net::close(socket &socket,
@@ -711,6 +719,19 @@ ircd::net::close(socket &socket,
 	});
 
 	return f;
+}
+
+void
+ircd::net::close(socket &s,
+                 const dc &type,
+                 close_callback cb)
+{
+	const close_opts opts
+	{
+		.type = type,
+	};
+
+	return close(s, opts, std::move(cb));
 }
 
 void

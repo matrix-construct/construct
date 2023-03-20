@@ -19,9 +19,11 @@ namespace ircd::net
 
 	// Callback-based closer.
 	void close(socket &, const close_opts &, close_callback);
+	void close(socket &, const dc &, close_callback);
 
 	// Future-based closer.
 	ctx::future<void> close(socket &, const close_opts & = close_opts_default);
+	ctx::future<void> close(socket &, const dc &);
 
 	// Fire-and-forget helper callback for close().
 	extern const close_callback close_ignore;
@@ -44,9 +46,6 @@ struct ircd::net::close_opts
 {
 	static conf::item<milliseconds> default_timeout;
 
-	close_opts() = default;
-	close_opts(const net::dc &);
-
 	/// The type of close() to be conducted is specified here.
 	net::dc type { dc::SSL_NOTIFY };
 
@@ -57,10 +56,3 @@ struct ircd::net::close_opts
 	/// the disconnect (useful for adding an SO_LINGER time etc).
 	const sock_opts *sopts { nullptr };
 };
-
-/// Allows for implicit construction of close_opts in arguments to close()
-/// without requiring brackets for the close_opts& argument.
-inline
-ircd::net::close_opts::close_opts(const net::dc &type)
-:type{type}
-{}

@@ -2425,6 +2425,15 @@ ircd::server::link::handle_open(std::exception_ptr eptr)
 }
 
 bool
+ircd::server::link::close(const net::dc type)
+{
+	return close(net::close_opts
+	{
+		.type = type,
+	});
+}
+
+bool
 ircd::server::link::close(const net::close_opts &close_opts)
 {
 	if(op_fini)

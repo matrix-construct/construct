@@ -1049,11 +1049,32 @@ ircd::client::discard_unconsumed(const http::request::head &head)
 }
 
 ircd::ctx::future<void>
+ircd::client::close(const net::dc type)
+{
+	return close(net::close_opts
+	{
+		.type = type,
+	});
+}
+
+ircd::ctx::future<void>
 ircd::client::close(const net::close_opts &opts)
 {
 	return likely(sock) && !sock->fini?
 		net::close(*sock, opts):
 		ctx::already;
+}
+
+void
+ircd::client::close(const net::dc type,
+                    net::close_callback callback)
+{
+	const net::close_opts opts
+	{
+		.type = type,
+	};
+
+	close(opts, std::move(callback));
 }
 
 void
