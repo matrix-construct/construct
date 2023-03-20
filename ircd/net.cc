@@ -672,6 +672,11 @@ ircd::net::reflect(const ready &type)
 // net/close.h
 //
 
+namespace ircd::net
+{
+	static asio::ip::tcp::socket::shutdown_type translate(const dc &) noexcept;
+}
+
 decltype(ircd::net::close_opts::default_timeout)
 ircd::net::close_opts::default_timeout
 {
@@ -740,6 +745,46 @@ ircd::net::close(socket &socket,
                  close_callback callback)
 {
 	socket.disconnect(opts, std::move(callback));
+}
+
+boost::asio::ip::tcp::socket::shutdown_type
+ircd::net::translate(const dc &val)
+noexcept
+{
+	using type = asio::ip::tcp::socket::shutdown_type;
+
+	switch(val)
+	{
+		case dc::SSL_NOTIFY:  assert(0); [[fallthrough]];
+		case dc::RST:         assert(0); [[fallthrough]];
+		case dc::FIN:
+			return type::shutdown_both;
+
+		case dc::FIN_SEND:
+			return type::shutdown_send;
+
+		case dc::FIN_RECV:
+			return type::shutdown_receive;
+	}
+
+	assert(0);
+	__builtin_unreachable();
+}
+
+ircd::string_view
+ircd::net::reflect(const dc type)
+noexcept
+{
+	switch(type)
+	{
+		case dc::RST:         return "RST";
+		case dc::FIN:         return "FIN";
+		case dc::FIN_SEND:    return "FIN_SEND";
+		case dc::FIN_RECV:    return "FIN_RECV";
+		case dc::SSL_NOTIFY:  return "SSL_NOTIFY";
+	}
+
+	return "????"_sv;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1730,9 +1775,9 @@ try
 	assert(!fini);
 	log::debug
 	{
-		log, "%s disconnect type:%d user: in:%zu out:%zu",
+		log, "%s disconnect type:%s user[in:%zu out:%zu]",
 		loghead(*this),
-		uint(opts.type),
+		reflect(opts.type),
 		in.bytes,
 		out.bytes
 	};
@@ -1751,15 +1796,9 @@ try
 			break;
 
 		case dc::FIN:
-			sd.shutdown(ip::tcp::socket::shutdown_both);
-			break;
-
 		case dc::FIN_SEND:
-			sd.shutdown(ip::tcp::socket::shutdown_send);
-			break;
-
 		case dc::FIN_RECV:
-			sd.shutdown(ip::tcp::socket::shutdown_receive);
+			sd.shutdown(translate(opts.type));
 			break;
 
 		case dc::SSL_NOTIFY:

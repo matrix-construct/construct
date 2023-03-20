@@ -17,6 +17,8 @@ namespace ircd::net
 	struct close_opts extern const close_opts_default;
 	using close_callback = std::function<void (std::exception_ptr)>;
 
+	string_view reflect(const dc) noexcept;
+
 	// Callback-based closer.
 	void close(socket &, const close_opts &, close_callback);
 	void close(socket &, const dc &, close_callback);
