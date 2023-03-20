@@ -1114,8 +1114,11 @@ ircd::net::nopush(socket &socket,
 /// Toggles the behavior of non-async asio calls.
 ///
 /// This option affects very little in practice and only sets a flag in
-/// userspace in asio, not an actual ioctl(). Specifically:
+/// userspace in asio, not an actual ioctl(2) (XXX this is not true anymore,
+/// sd.non_blocking() and sd.native_non_blocking() both seem to ioctl(2)).
+/// See below the deprecated section.
 ///
+/// ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 /// * All sockets are already set by asio to FIONBIO=1 no matter what, thus
 /// nothing really blocks the event loop ever by default unless you try hard.
 ///
@@ -1134,13 +1137,35 @@ ircd::net::nopush(socket &socket,
 /// in this project there is never a reason to ever set this to true,
 /// however, sockets do get constructed by asio in blocking mode by default
 /// so we mostly use this function to set it to non-blocking.
+/// ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 ///
+/// The kern argument has been added to decide between native_non_blocking()
+/// (when kern=true) or non_blocking() (when kern=false). These both set
+/// different flags in asio but they both result in the same ioctl(FIONBIO)
+/// probably due to third-party libraries flipping FIONBIO outside of asio's
+/// knowledge and naive users complaining too much to the maintainer.
+///
+/// To deal with this we have added a query to the sd.non_blocking() getter
+/// which AT LEAST FOR NOW only reads asio's flags without a syscall and
+/// won't call the sd.non_blocking() setter if it's superfluous.
 bool
 ircd::net::blocking(socket &socket,
                     const bool b)
 {
 	ip::tcp::socket &sd(socket);
-	sd.non_blocking(!b);
+	if(likely(sd.non_blocking() == b))
+		sd.non_blocking(!b);
+
+	return true;
+}
+
+bool
+ircd::net::blocking(socket &socket,
+                    const bool b,
+                    system_t)
+{
+	ip::tcp::socket &sd(socket);
+	sd.native_non_blocking(!b);
 	return true;
 }
 
@@ -1290,6 +1315,14 @@ ircd::net::blocking(const socket &socket)
 {
 	const ip::tcp::socket &sd(socket);
 	return !sd.non_blocking();
+}
+
+bool
+ircd::net::blocking(const socket &socket,
+                    system_t)
+{
+	const ip::tcp::socket &sd(socket);
+	return !sd.native_non_blocking();
 }
 
 bool

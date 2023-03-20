@@ -1070,8 +1070,13 @@ ircd::net::acceptor::accepted(const std::shared_ptr<socket> &sock)
 	assert(bool(cb));
 	assert(bool(sock));
 
+	#if !defined(BSD_BASED_OS)
 	// Toggles the behavior of non-async functions; see func comment
+	// This is not needed on BSD because the socket inherits the listener's
+	// non-blocking disposition.
 	blocking(*sock, false);
+	#endif
+
 	cb(*this, sock);
 }
 

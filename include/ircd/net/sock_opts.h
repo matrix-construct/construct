@@ -14,8 +14,10 @@
 namespace ircd::net
 {
 	struct sock_opts;
+	IRCD_OVERLOAD(system);
 
 	bool v6only(const socket &);
+	bool blocking(const socket &, system_t);
 	bool blocking(const socket &);
 	bool nopush(const socket &);
 	bool nodelay(const socket &);
@@ -30,6 +32,7 @@ namespace ircd::net
 
 	// returns true if supported, false if unsupported; failures will throw.
 	bool v6only(socket &, const bool);
+	bool blocking(socket &, const bool, system_t);
 	bool blocking(socket &, const bool);
 	bool nopush(socket &, const bool);
 	bool nodelay(socket &, const bool);
