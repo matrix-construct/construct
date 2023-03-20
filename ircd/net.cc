@@ -910,7 +910,7 @@ ircd::net::set(socket &socket,
 
 bool
 ircd::net::detach(socket &socket,
-                  const int &prog_fd)
+                  const int prog_fd)
 {
 	ip::tcp::socket &sd(socket);
 	const auto &fd
@@ -923,8 +923,8 @@ ircd::net::detach(socket &socket,
 }
 
 bool
-ircd::net::detach(const int &sd,
-                  const int &prog_fd)
+ircd::net::detach(const int sd,
+                  const int prog_fd)
 #if defined(SO_DETACH_BPF) && defined(SOL_SOCKET)
 {
 	const socklen_t len(sizeof(prog_fd));
@@ -940,7 +940,7 @@ ircd::net::detach(const int &sd,
 
 bool
 ircd::net::attach(socket &socket,
-                  const int &prog_fd)
+                  const int prog_fd)
 {
 	ip::tcp::socket &sd(socket);
 	const auto &fd
@@ -953,8 +953,8 @@ ircd::net::attach(socket &socket,
 }
 
 bool
-ircd::net::attach(const int &sd,
-                  const int &prog_fd)
+ircd::net::attach(const int sd,
+                  const int prog_fd)
 #if defined(SO_ATTACH_BPF) && defined(SOL_SOCKET)
 {
 	const socklen_t len(sizeof(prog_fd));
@@ -970,7 +970,7 @@ ircd::net::attach(const int &sd,
 
 bool
 ircd::net::write_lowat(socket &socket,
-                       const size_t &bytes)
+                       const size_t bytes)
 {
 	assert(bytes <= std::numeric_limits<int>::max());
 	const ip::tcp::socket::send_low_watermark option
@@ -985,7 +985,7 @@ ircd::net::write_lowat(socket &socket,
 
 bool
 ircd::net::read_lowat(socket &socket,
-                      const size_t &bytes)
+                      const size_t bytes)
 {
 	assert(bytes <= std::numeric_limits<int>::max());
 	const ip::tcp::socket::receive_low_watermark option
@@ -1000,7 +1000,7 @@ ircd::net::read_lowat(socket &socket,
 
 bool
 ircd::net::write_bufsz(socket &socket,
-                       const size_t &bytes)
+                       const size_t bytes)
 {
 	assert(bytes <= std::numeric_limits<int>::max());
 	const ip::tcp::socket::send_buffer_size option
@@ -1015,7 +1015,7 @@ ircd::net::write_bufsz(socket &socket,
 
 bool
 ircd::net::read_bufsz(socket &socket,
-                      const size_t &bytes)
+                      const size_t bytes)
 {
 	assert(bytes <= std::numeric_limits<int>::max());
 	const ip::tcp::socket::receive_buffer_size option
@@ -1030,7 +1030,7 @@ ircd::net::read_bufsz(socket &socket,
 
 bool
 ircd::net::linger(socket &socket,
-                  const time_t &t)
+                  const time_t t)
 {
 	assert(t >= std::numeric_limits<int>::min());
 	assert(t <= std::numeric_limits<int>::max());
@@ -1047,7 +1047,7 @@ ircd::net::linger(socket &socket,
 
 bool
 ircd::net::keepalive(socket &socket,
-                     const bool &b)
+                     const bool b)
 {
 	const ip::tcp::socket::keep_alive option{b};
 	ip::tcp::socket &sd(socket);
@@ -1057,7 +1057,7 @@ ircd::net::keepalive(socket &socket,
 
 bool
 ircd::net::quickack(socket &socket,
-                    const bool &b)
+                    const bool b)
 #if defined(TCP_QUICKACK) && defined(SOL_SOCKET)
 {
 	ip::tcp::socket &sd(socket);
@@ -1080,7 +1080,7 @@ ircd::net::quickack(socket &socket,
 
 bool
 ircd::net::nodelay(socket &socket,
-                   const bool &b)
+                   const bool b)
 {
 	const ip::tcp::no_delay option{b};
 	ip::tcp::socket &sd(socket);
@@ -1090,7 +1090,7 @@ ircd::net::nodelay(socket &socket,
 
 bool
 ircd::net::nopush(socket &socket,
-                  const bool &b)
+                  const bool b)
 #if defined(TCP_CORK) && defined(SOL_SOCKET)
 {
 	ip::tcp::socket &sd(socket);
@@ -1137,7 +1137,7 @@ ircd::net::nopush(socket &socket,
 ///
 bool
 ircd::net::blocking(socket &socket,
-                    const bool &b)
+                    const bool b)
 {
 	ip::tcp::socket &sd(socket);
 	sd.non_blocking(!b);
@@ -1146,7 +1146,7 @@ ircd::net::blocking(socket &socket,
 
 bool
 ircd::net::v6only(socket &socket,
-                  const bool &b)
+                  const bool b)
 {
 	const ip::v6_only option{b};
 	ip::tcp::socket &sd(socket);
