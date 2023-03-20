@@ -20,6 +20,7 @@ namespace construct
 	namespace ph = std::placeholders;
 
 	static void handle_cont();
+	static void handle_usr2();
 	static void handle_usr1();
 	static void handle_quit();
 	static void handle_interrupt();
@@ -42,6 +43,7 @@ construct::signals::signals(boost::asio::io_context &ios)
 	signal_set->add(SIGQUIT);
 	signal_set->add(SIGTERM);
 	signal_set->add(SIGUSR1);
+	signal_set->add(SIGUSR2);
 	signal_set->add(SIGCONT);
 	set_handle();
 }
@@ -133,6 +135,7 @@ construct::handle_signal(const int &signum)
 		case SIGQUIT:  return handle_quit();
 		case SIGTERM:  return handle_quit();
 		case SIGUSR1:  return handle_usr1();
+		case SIGUSR2:  return handle_usr2();
 		case SIGCONT:  return handle_cont();
 		default:       break;
 	}
@@ -248,6 +251,50 @@ catch(const std::exception &e)
 	ircd::log::error
 	{
 		"SIGUSR1 handler :%s",
+		e.what()
+	};
+}
+
+void
+construct::handle_usr2()
+try
+{
+	if(ircd::run::level != ircd::run::level::RUN)
+	{
+		ircd::log::warning
+		{
+			"Not synchronizing database from SIGUSR2 in runlevel %s",
+			reflect(ircd::run::level)
+		};
+
+		return;
+	}
+
+	if(!ircd::slave)
+		return;
+
+	if(!homeserver::primary || !homeserver::primary->module[0])
+		return;
+
+	ircd::context{[]
+	{
+		static ircd::mods::import<bool (ircd::m::homeserver *)> refresh
+		{
+			homeserver::primary->module[0], "ircd::m::homeserver::refresh"
+		};
+
+		assert(homeserver::primary->hs);
+		const bool refreshed
+		{
+			refresh(homeserver::primary->hs.get())
+		};
+	}};
+}
+catch(const std::exception &e)
+{
+	ircd::log::error
+	{
+		"SIGUSR2 handler :%s",
 		e.what()
 	};
 }
