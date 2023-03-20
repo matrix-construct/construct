@@ -1082,9 +1082,21 @@ bool
 ircd::net::nodelay(socket &socket,
                    const bool b)
 {
+	if(likely(nodelay(socket) != b))
+		nodelay(socket, b, system);
+
+	return true;
+}
+
+bool
+ircd::net::nodelay(socket &socket,
+                   const bool b,
+                   system_t)
+{
 	const ip::tcp::no_delay option{b};
 	ip::tcp::socket &sd(socket);
 	sd.set_option(option);
+	socket._nodelay = b;
 	return true;
 }
 
@@ -1279,12 +1291,20 @@ ircd::net::quickack(const socket &socket)
 #endif
 
 bool
-ircd::net::nodelay(const socket &socket)
+ircd::net::nodelay(const socket &socket,
+                   system_t)
 {
 	const ip::tcp::socket &sd(socket);
 	ip::tcp::no_delay option;
 	sd.get_option(option);
-	return option.value();
+	mutable_cast(socket)._nodelay = option.value();
+	return socket._nodelay;
+}
+
+bool
+ircd::net::nodelay(const socket &socket)
+{
+	return socket._nodelay;
 }
 
 bool

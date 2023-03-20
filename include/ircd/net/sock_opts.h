@@ -20,6 +20,7 @@ namespace ircd::net
 	bool blocking(const socket &, system_t);
 	bool blocking(const socket &);
 	bool nopush(const socket &);
+	bool nodelay(const socket &, system_t);
 	bool nodelay(const socket &);
 	bool quickack(const socket &);
 	bool keepalive(const socket &);
@@ -35,6 +36,7 @@ namespace ircd::net
 	bool blocking(socket &, const bool, system_t);
 	bool blocking(socket &, const bool);
 	bool nopush(socket &, const bool);
+	bool nodelay(socket &, const bool, system_t);
 	bool nodelay(socket &, const bool);
 	bool quickack(socket &, const bool);
 	bool keepalive(socket &, const bool);

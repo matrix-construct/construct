@@ -74,6 +74,7 @@ ircd::net::socket
 	bool timer_set {false};                      // boolean lockout
 	bool timedout {false};
 	bool fini {false};
+	mutable bool _nodelay {false};               // userspace tracking only
 
 	void call_user(const eptr_handler &, const error_code &) noexcept;
 	void call_user(const ec_handler &, const error_code &) noexcept;
