@@ -28,13 +28,13 @@ struct ircd::ios::handler
 	static thread_local handler *current;
 	static thread_local uint64_t epoch;
 
-	static void enqueue(handler *const &) noexcept;
-	static void *allocate(handler *const &, const size_t &);
-	static void deallocate(handler *const &, void *const &, const size_t &) noexcept;
-	static bool continuation(handler *const &) noexcept;
-	static void enter(handler *const &) noexcept;
-	static void leave(handler *const &) noexcept;
-	static bool fault(handler *const &) noexcept;
+	static void enqueue(handler *) noexcept;
+	static void *allocate(handler *, const size_t);
+	static void deallocate(handler *, void *, const size_t) noexcept;
+	static bool continuation(handler *) noexcept;
+	static void enter(handler *) noexcept;
+	static void leave(handler *) noexcept;
+	static bool fault(handler *) noexcept;
 
 	ios::descriptor *descriptor {nullptr};
 	uint64_t ts {0}; // last tsc sample; for profiling each phase
@@ -91,9 +91,9 @@ const
 
 [[gnu::hot]]
 inline void
-ircd::ios::handler::deallocate(handler *const &handler,
-                               void *const &ptr,
-                               const size_t &size)
+ircd::ios::handler::deallocate(handler *const handler,
+                               void *const ptr,
+                               const size_t size)
 noexcept
 {
 	assert(handler && handler->descriptor);
@@ -110,8 +110,8 @@ noexcept
 
 [[gnu::hot]]
 inline void *
-ircd::ios::handler::allocate(handler *const &handler,
-                             const size_t &size)
+ircd::ios::handler::allocate(handler *const handler,
+                             const size_t size)
 {
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
@@ -127,7 +127,7 @@ ircd::ios::handler::allocate(handler *const &handler,
 
 [[gnu::hot]]
 inline void
-ircd::ios::handler::enqueue(handler *const &handler)
+ircd::ios::handler::enqueue(handler *const handler)
 noexcept
 {
 	assert(handler && handler->descriptor);
@@ -152,7 +152,7 @@ noexcept
 
 [[gnu::hot]]
 inline bool
-ircd::ios::handler::continuation(handler *const &handler)
+ircd::ios::handler::continuation(handler *const handler)
 noexcept
 {
 	assert(handler && handler->descriptor);

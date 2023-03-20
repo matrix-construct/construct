@@ -39,6 +39,14 @@ ircd::ios::primary;
 decltype(ircd::ios::main)
 ircd::ios::main;
 
+/// Indicates the user asio::executor is initialized.
+decltype(ircd::ios::user_available)
+ircd::ios::user_available;
+
+/// Indicates the main asio::executor is initialized.
+decltype(ircd::ios::main_available)
+ircd::ios::main_available;
+
 decltype(ircd::boost_version_api)
 ircd::boost_version_api
 {
@@ -71,12 +79,14 @@ ircd::ios::init(asio::executor &&user)
 
 	// Save a reference handle to the user's executor.
 	ios::user = user;
+	ios::user_available = bool(ios::user);
 
 	// Create our strand instance.
 	ios::primary.emplace(static_cast<asio::io_context &>(user.context()));
 
 	// Set the reference handle to our executor.
 	ios::main = *ios::primary;
+	ios::main_available = bool(ios::main);
 }
 
 [[using gnu: cold]]
@@ -178,13 +188,6 @@ ircd::ios::forked_parent()
 	#else
 		get().notify_fork(asio::execution_context::fork_parent);
 	#endif
-}
-
-bool
-ircd::ios::available()
-noexcept
-{
-	return bool(main);
 }
 
 //
@@ -480,13 +483,6 @@ ircd::ios::descriptor::stats::stats(descriptor &d)
 		{ "name", stats_name(d, "free_bytes") },
 	},
 }
-,slice_total
-{
-	value + items++,
-	{
-		{ "name", stats_name(d, "slice_total") },
-	},
-}
 ,slice_last
 {
 	value + items++,
@@ -494,11 +490,11 @@ ircd::ios::descriptor::stats::stats(descriptor &d)
 		{ "name", stats_name(d, "slice_last") },
 	},
 }
-,latency_total
+,slice_total
 {
 	value + items++,
 	{
-		{ "name", stats_name(d, "latency_total") },
+		{ "name", stats_name(d, "slice_total") },
 	},
 }
 ,latency_last
@@ -506,6 +502,13 @@ ircd::ios::descriptor::stats::stats(descriptor &d)
 	value + items++,
 	{
 		{ "name", stats_name(d, "latency_last") },
+	},
+}
+,latency_total
+{
+	value + items++,
+	{
+		{ "name", stats_name(d, "latency_total") },
 	},
 }
 {
@@ -531,7 +534,7 @@ ircd::ios::handler::epoch;
 
 [[gnu::cold]]
 bool
-ircd::ios::handler::fault(handler *const &handler)
+ircd::ios::handler::fault(handler *const handler)
 noexcept
 {
 	assert(handler && handler->descriptor);
@@ -568,7 +571,7 @@ noexcept
 
 [[gnu::hot]]
 void
-ircd::ios::handler::leave(handler *const &handler)
+ircd::ios::handler::leave(handler *const handler)
 noexcept
 {
 	assert(handler && handler->descriptor);
@@ -619,19 +622,14 @@ noexcept
 
 [[gnu::hot]]
 void
-ircd::ios::handler::enter(handler *const &handler)
+ircd::ios::handler::enter(handler *const handler)
 noexcept
 {
-	assert(!handler::current);
-	handler::current = handler;
-	++handler::epoch;
-
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
 
 	assert(descriptor.stats);
 	auto &stats(*descriptor.stats);
-	++stats.calls;
 
 	const auto last_ts
 	{
@@ -640,6 +638,11 @@ noexcept
 
 	stats.latency_last = handler->ts - last_ts;
 	stats.latency_total += stats.latency_last;
+	++stats.calls;
+
+	assert(!handler::current);
+	handler::current = handler;
+	++handler::epoch;
 
 	if constexpr(profile::logging)
 		log::logf
@@ -696,7 +699,6 @@ ircd::ios::dispatch::dispatch(descriptor &descriptor,
 	latch.wait();
 }
 
-[[gnu::hot]]
 ircd::ios::dispatch::dispatch(descriptor &descriptor,
                               defer_t,
                               std::function<void ()> function)
@@ -725,7 +727,6 @@ ircd::ios::dispatch::dispatch(descriptor &descriptor,
 	};
 }
 
-[[gnu::hot]]
 ircd::ios::dispatch::dispatch(descriptor &descriptor,
                               std::function<void ()> function)
 {

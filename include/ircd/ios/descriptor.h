@@ -29,14 +29,14 @@ struct ircd::ios::descriptor
 
 	static uint64_t ids;
 
-	static void *default_allocator(handler &, const size_t &);
-	static void default_deallocator(handler &, void *const &, const size_t &) noexcept;
+	static void *default_allocator(handler &, const size_t);
+	static void default_deallocator(handler &, void *, const size_t) noexcept;
 
 	string_view name;
 	uint64_t id {++ids};
 	std::unique_ptr<struct stats> stats;
-	void *(*allocator)(handler &, const size_t &);
-	void (*deallocator)(handler &, void *const &, const size_t &);
+	void *(*allocator)(handler &, const size_t);
+	void (*deallocator)(handler &, void *, const size_t);
 	std::vector<std::array<uint64_t, 2>> history; // epoch, cycles
 	uint8_t history_pos {0};
 	bool continuation {false};
@@ -72,10 +72,10 @@ struct ircd::ios::descriptor::stats
 	item alloc_bytes;
 	item frees;
 	item free_bytes;
-	item slice_total;
 	item slice_last;
-	item latency_total;
+	item slice_total;
 	item latency_last;
+	item latency_total;
 
 	stats(descriptor &);
 	stats() = delete;
@@ -87,8 +87,8 @@ struct ircd::ios::descriptor::stats
 [[gnu::hot]]
 inline void
 ircd::ios::descriptor::default_deallocator(handler &handler,
-                                           void *const &ptr,
-                                           const size_t &size)
+                                           void *const ptr,
+                                           const size_t size)
 noexcept
 {
 	#ifdef __clang__
@@ -101,7 +101,7 @@ noexcept
 [[gnu::hot]]
 inline void *
 ircd::ios::descriptor::default_allocator(handler &handler,
-                                         const size_t &size)
+                                         const size_t size)
 {
 	return ::operator new(size);
 }

@@ -30,6 +30,7 @@ namespace ircd::ios
 	extern asio::executor user, main;
 	extern std::thread::id main_thread_id;
 	extern thread_local bool is_main_thread;
+	extern bool user_available, main_available;
 
 	bool available() noexcept;
 	const uint64_t &epoch() noexcept;
@@ -63,4 +64,12 @@ ircd::ios::epoch()
 noexcept
 {
 	return handler::epoch;
+}
+
+inline bool
+__attribute__((always_inline))
+ircd::ios::available()
+noexcept
+{
+	return main_available;
 }
