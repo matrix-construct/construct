@@ -1367,17 +1367,8 @@ ircd::resource::response::response(client &client,
 		content_type,
 		size(content),
 		headers,
+		content,
 	};
-
-	// All content gets sent
-	const size_t written
-	{
-		size(content)?
-			client.write_all(content):
-			0
-	};
-
-	assert(written == size(content));
 }
 
 decltype(ircd::resource::response::access_control_allow_origin)
@@ -1392,8 +1383,12 @@ ircd::resource::response::response(client &client,
                                    const http::code &code,
                                    const string_view &content_type,
                                    const size_t &content_length,
-                                   const string_view &headers)
+                                   const string_view &headers,
+                                   const string_view &content)
 {
+	// content may be empty if the caller wants to send it themselves, but
+	// either way the type and length must still be passed by caller.
+	assert(!content || content_length);
 	assert(!content_length || !empty(content_type));
 
 	const auto request_time
@@ -1430,13 +1425,20 @@ ircd::resource::response::response(client &client,
 	if(unlikely(!head.remaining()))
 		throw panic
 		{
-			"HTTP headers too large for buffer of %zu", sizeof(head_buf)
+			"HTTP headers too large for buffer of %zu",
+			sizeof(head_buf),
 		};
 
-	size_t wrote_head {0};
+	const const_buffer iov[]
+	{
+		head.completed(),
+		content,
+	};
+
+	size_t wrote {0};
 	std::exception_ptr eptr; try
 	{
-		wrote_head += client.write_all(head.completed());
+		wrote += client.write_all(iov);
 	}
 	catch(...)
 	{
@@ -1453,17 +1455,17 @@ ircd::resource::response::response(client &client,
 		log::logf
 		{
 			log, level,
-			"%s HTTP %u `%s' %s in %s; %s content-length:%s head-length:%zu %s%s",
+			"%s HTTP %u `%s' %s in %s; %s head:%zu content:%s %s%s",
 			loghead(client),
 			uint(code),
 			client.request.head.path,
 			http::status(code),
 			rtime,
 			content_type,
+			size(iov[0]),
 			ssize_t(content_length) >= 0?
 				lex_cast(content_length):
 				"chunked"_sv,
-			wrote_head,
 			eptr?
 				"error:"_sv:
 				string_view{},
@@ -1474,7 +1476,7 @@ ircd::resource::response::response(client &client,
 	if(unlikely(eptr))
 		std::rethrow_exception(eptr);
 
-	assert(wrote_head == size(head.completed()));
+	assert(wrote == buffers::size(vector_view(iov)));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
