@@ -14,6 +14,8 @@ namespace ircd::server
 	extern log::log log;
 	extern ctx::dock dock;
 	extern conf::item<seconds> close_all_timeout;
+	extern conf::item<seconds> wait_all_timeout;
+	extern conf::item<size_t> wait_all_max;
 	extern peers_allocator_state peers_alloc;
 
 	// Internal util
@@ -59,8 +61,22 @@ ircd::server::enable
 decltype(ircd::server::close_all_timeout)
 ircd::server::close_all_timeout
 {
-	{ "name",     "ircd.server.close_all_timeout" },
+	{ "name",     "ircd.server.close_all.timeout" },
 	{ "default",  2L                              },
+};
+
+decltype(ircd::server::wait_all_timeout)
+ircd::server::wait_all_timeout
+{
+	{ "name",     "ircd.server.wait_all.timeout" },
+	{ "default",  5L                             },
+};
+
+decltype(ircd::server::wait_all_max)
+ircd::server::wait_all_max
+{
+	{ "name",     "ircd.server.wait_all.max" },
+	{ "default",  9L                         },
 };
 
 decltype(ircd::server::peers_alloc)
@@ -115,12 +131,15 @@ ircd::server::wait()
 		[] { return !peer_unfinished(); }
 	};
 
-	while(!dock.wait_for(seconds(5), finished))
+	const size_t max(wait_all_max);
+	const seconds timeout(wait_all_timeout);
+	for(size_t i(0); i < max && !dock.wait_for(timeout, finished); ++i)
 	{
 		for(const auto &[name, peer] : peers)
-			log::dwarning
+			log::logf
 			{
-				log, "Waiting for peer %s tags:%zu links:%zu err:%b op[r:%b f:%b]",
+				log, log::level::DWARNING,
+				"Waiting for peer %s tags:%zu links:%zu err:%b op[r:%b f:%b]",
 				name,
 				peer->tag_count(),
 				peer->link_count(),
