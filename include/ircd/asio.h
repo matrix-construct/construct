@@ -74,7 +74,7 @@ namespace boost
 
 // In boost 1.79+ asio implements some filesystem operations we can use. While
 // these are available in 1.78 they were buggy for our purposes until 1.79.
-#if BOOST_VERSION >= 107900
+#if IRCD_USE_ASIO_IO_URING && BOOST_VERSION >= 107900
 #define IRCD_USE_ASIO_READ 1
 #define IRCD_USE_ASIO_WRITE 1
 #else
