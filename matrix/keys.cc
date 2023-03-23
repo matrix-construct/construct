@@ -186,6 +186,8 @@ ircd::m::expired(const m::keys &keys)
 namespace ircd::m
 {
 	extern conf::item<milliseconds> keys_query_timeout;
+	extern conf::item<size_t> keys_query_buffer_size;
+	extern conf::item<bool> keys_query_buffer_dynamic;
 }
 
 decltype(ircd::m::keys_query_timeout)
@@ -195,22 +197,51 @@ ircd::m::keys_query_timeout
 	{ "default",  20000L                    }
 };
 
+decltype(ircd::m::keys_query_buffer_size)
+ircd::m::keys_query_buffer_size
+{
+	{ "name",     "ircd.keys.query.buffer.size" },
+	{ "default",  long(32_KiB)                  },
+};
+
+decltype(ircd::m::keys_query_buffer_dynamic)
+ircd::m::keys_query_buffer_dynamic
+{
+	{ "name",     "ircd.keys.query.buffer.dynamic" },
+	{ "default",  false                            },
+};
+
 bool
 ircd::m::keys::query(const string_view &query_server,
                      const queries &queries,
                      const closure_bool &closure)
+{
+	const unique_mutable_buffer buf
+	{
+		keys_query_buffer_size
+	};
+
+	const bool dynamic
+	{
+		keys_query_buffer_dynamic
+	};
+
+	return query(query_server, queries, closure, buf, dynamic);
+}
+
+bool
+ircd::m::keys::query(const string_view &query_server,
+                     const queries &queries,
+                     const closure_bool &closure,
+                     const mutable_buffer &buf,
+                     const bool dynamic)
 try
 {
 	assert(!query_server.empty());
 
 	m::fed::key::opts opts;
 	opts.remote = query_server;
-	opts.dynamic = false;
-	const unique_buffer<mutable_buffer> buf
-	{
-		32_KiB
-	};
-
+	opts.dynamic = dynamic;
 	m::fed::key::query request
 	{
 		queries, buf, std::move(opts)

@@ -63,7 +63,8 @@ struct ircd::m::keys
 	static bool get(const queries &, const closure_bool &);
 	static bool get(const string_view &server_name, const closure &);
 	static bool get(const string_view &server_name, const string_view &key_id, const closure &);
-	static bool query(const string_view &query_server, const queries &, const closure_bool &);
+	static bool query(const string_view &remote, const queries &, const closure_bool &, const mutable_buffer &, const bool dynamic = false);
+	static bool query(const string_view &remote, const queries &, const closure_bool &);
 	static size_t fetch(const queries &);
 	static size_t fetch(const pdus &);
 
