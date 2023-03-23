@@ -7211,15 +7211,62 @@ console_cmd__key__get(opt &out, const string_view &line)
 
 	const auto server_name
 	{
-		param.at(0)
+		param.at("server_name")
 	};
 
 	const auto query_server
 	{
-		param[1]
+		param["[query_server]"]
 	};
 
-	if(!query_server)
+	if(m::valid(m::id::ROOM, server_name) || m::valid(m::id::ROOM_ALIAS, server_name))
+	{
+		const auto query_server
+		{
+			param.at("[query_server]")
+		};
+
+		const auto room_id
+		{
+			m::room_id(server_name)
+		};
+
+		const m::room::origins origins
+		{
+			room_id
+		};
+
+		std::vector<std::string> servers;
+		servers.reserve(origins.count());
+		origins.for_each([&servers]
+		(const auto &server)
+		{
+			servers.emplace_back(server);
+		});
+
+		std::vector<m::fed::key::server_key> queries(servers.size());
+		std::transform(begin(servers), end(servers), begin(queries), []
+		(const auto &server) -> m::fed::key::server_key
+		{
+			return { server, {} };
+		});
+
+		const auto closure{[&out]
+		(const m::keys &keys)
+		{
+			pretty_oneline(out, keys) << std::endl;
+			return true;
+		}};
+
+		const bool dynamic_response {true};
+		const unique_mutable_buffer buf
+		{
+			64_KiB
+		};
+
+		m::keys::query(query_server, queries, closure, buf, dynamic_response);
+	}
+	else if(!query_server)
 	{
 		m::keys::get(server_name, [&out]
 		(const m::keys &keys)
