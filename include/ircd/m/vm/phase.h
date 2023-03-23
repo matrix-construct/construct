@@ -16,6 +16,7 @@ namespace ircd::m::vm
 	enum phase :uint;
 
 	string_view reflect(const phase &);
+	phase phase_reflect(const string_view &) noexcept; // default NONE
 }
 
 /// Evaluation phases

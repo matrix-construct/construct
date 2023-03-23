@@ -109,6 +109,25 @@ noexcept
 	assert(retired == sequence::retired || ircd::read_only);
 }
 
+ircd::m::vm::phase
+ircd::m::vm::phase_reflect(const string_view &str)
+noexcept
+{
+	phase ret{phase::NONE};
+	util::for_each<phase>([&ret, &str]
+	(const auto &phase)
+	{
+		if(reflect(phase) == str)
+		{
+			ret = phase;
+			return false;
+		}
+		else return true;
+	});
+
+	return ret;
+}
+
 ircd::string_view
 ircd::m::vm::reflect(const enum phase &code)
 {
