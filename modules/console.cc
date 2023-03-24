@@ -9580,9 +9580,9 @@ console_cmd__room(opt &out, const string_view &line)
 	out << "top index:         " << std::get<m::event::idx>(top) << std::endl;
 	out << std::endl;
 
-	out << "m.room state: " << std::endl;
+	out << "m. state: " << std::endl;
 
-	state.for_each(m::room::state::type_prefix{"m.room."}, [&out, &state]
+	state.for_each(m::room::state::type_prefix{"m."}, [&out, &state]
 	(const string_view &type, const string_view &state_key, const m::event::idx &event_idx)
 	{
 		assert(startswith(type, "m.room."));
