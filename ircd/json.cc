@@ -4138,7 +4138,7 @@ ircd::json::value::value(const json::members &members)
 
 ircd::json::value::value(const value &other)
 :integer{other.integer}
-,len{other.len}
+,len{other.serial? serialized(other): other.len}
 ,type{other.type}
 ,serial{other.serial}
 ,alloc{other.alloc}
