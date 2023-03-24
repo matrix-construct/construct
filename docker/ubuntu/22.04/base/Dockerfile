@@ -108,6 +108,7 @@ LDFLAGS="-Wl,--strip-all" \
 cmake -H. -Bbuild ${rocksdb_cmake} \
 && cmake --build build --target install --parallel `nproc` \
 && rm -rf build \
+&& rm -rf /usr/lib/$(uname -m)-linux-gnu/librocksdb.a \
 && eval ${do_purge} ${packages_rocksdb_dev} \
 && eval ${do_clean} \
 && true
