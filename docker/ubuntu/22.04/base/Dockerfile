@@ -11,11 +11,11 @@ ENV packages="\
 ca-certificates \
 libatomic1 \
 libjemalloc2 \
-libboost-chrono1.74 \
-libboost-context1.74 \
-libboost-coroutine1.74 \
-libboost-system1.74 \
-libboost-thread1.74 \
+libboost-chrono1.74.0 \
+libboost-context1.74.0 \
+libboost-coroutine1.74.0 \
+libboost-system1.74.0 \
+libboost-thread1.74.0 \
 libicu70 \
 libnss-db \
 libsodium23 \
