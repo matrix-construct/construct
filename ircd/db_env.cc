@@ -3265,7 +3265,11 @@ catch(const std::exception &e)
 	return error_to_status{e};
 }
 
-#ifdef IRCD_DB_HAS_ENV_MULTIREAD
+#if defined(IRCD_DB_HAS_ENV_MULTIREAD) && !defined(IRCD_DB_HAS_MULTIREAD_FIX)
+#warning "RocksDB MultiRead is buggy in this version. Please upgrade to 6.12.6+"
+#endif
+
+#if defined(IRCD_DB_HAS_ENV_MULTIREAD)
 rocksdb::Status
 ircd::db::database::env::random_access_file::MultiRead(rocksdb::ReadRequest *const req,
                                                        size_t num)

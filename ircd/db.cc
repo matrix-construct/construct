@@ -4892,7 +4892,7 @@ ircd::db::_read(const vector_view<_read_op> &op,
 
 	const bool parallelize
 	{
-		#ifdef IRCD_DB_HAS_MULTIGET_DIRECT
+		#if defined(IRCD_DB_HAS_MULTIGET_DIRECT) && defined(IRCD_DB_HAS_MULTIREAD_FIX)
 			true && num > 1
 		#else
 			false
