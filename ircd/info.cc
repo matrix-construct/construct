@@ -175,7 +175,7 @@ ircd::info::dump_cpu_info_x86()
 	const auto append{[&support]
 	(const string_view &name, const bool &avail, const int &enable)
 	{
-		strlcat(support, fmt::bsprintf<64>
+		strlcat(support, fmt::bsprintf<32>
 		{
 			" %s:%c%s",
 			name,
@@ -193,7 +193,14 @@ ircd::info::dump_cpu_info_x86()
 	append("avx", hardware::x86::avx, simd::support::avx);
 	append("avx2", hardware::x86::avx2, simd::support::avx2);
 	append("avx512f", hardware::x86::avx512f, simd::support::avx512f);
-	append("constant_tsc", hardware::x86::tsc_constant, -1);
+
+	strlcat(support, fmt::bsprintf<32>
+	{
+		"%s%s%s",
+		hardware::x86::tsc? " tsc": "",
+		hardware::x86::tsc_constant? ":constant": "",
+		hardware::x86::tsc_nonstop?  ":nonstop": "",
+	});
 
 	log::info
 	{
@@ -415,25 +422,31 @@ ircd::info::hardware::x86::avx
 decltype(ircd::info::hardware::x86::avx2)
 ircd::info::hardware::x86::avx2
 {
-	bool(features & (uint128_t(1) << (32 + 5)))
+	bool(extended_features & (uint128_t(1) << (32 + 5)))
 };
 
 decltype(ircd::info::hardware::x86::avx512f)
 ircd::info::hardware::x86::avx512f
 {
-	bool(features & (uint128_t(1) << (32 + 16)))
+	bool(extended_features & (uint128_t(1) << (32 + 16)))
 };
 
 decltype(ircd::info::hardware::x86::tsc)
 ircd::info::hardware::x86::tsc
 {
-	bool(features & (uint128_t(1) << 4))
+	bool(features & (uint128_t(1) << (96 + 4)))
 };
 
 decltype(ircd::info::hardware::x86::tsc_constant)
 ircd::info::hardware::x86::tsc_constant
 {
-	bool(_apmi & (uint128_t(1) << (8)))
+	bool(_apmi & (uint128_t(1) << (96 + 8)))
+};
+
+decltype(ircd::info::hardware::x86::tsc_nonstop)
+ircd::info::hardware::x86::tsc_nonstop
+{
+	bool(_apmi & (uint128_t(1) << (96 + 24)))
 };
 
 #ifdef __x86_64__
