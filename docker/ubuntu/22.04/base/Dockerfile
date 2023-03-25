@@ -28,8 +28,6 @@ libzstd1 \
 ENV packages_rocksdb_dev="\
 build-essential \
 cmake \
-curl \
-git \
 libjemalloc-dev \
 liblz4-dev \
 libzstd-dev \
@@ -83,6 +81,17 @@ ENV do_clean true \
 && rm -rf /var/lib/apt/lists/* \
 && true
 
+ENV do_fetch_rocksdb true \
+&& eval ${do_install} curl \
+&& cd /usr/src \
+&& curl -sL ${rocksdb_url} -o rocksdb-${rocksdb_version}.tar.gz \
+&& tar xfvz rocksdb-${rocksdb_version}.tar.gz \
+&& rm rocksdb-${rocksdb_version}.tar.gz \
+&& mv /usr/src/rocksdb-${rocksdb_version} /usr/src/rocksdb \
+&& cd - \
+&& eval ${do_purge} curl \
+&& true
+
 RUN true \
 && eval ${do_install} ${packages} \
 && update-ca-certificates \
@@ -96,19 +105,15 @@ RUN true \
 	exit 0; \
 fi \
 && eval ${do_install} ${packages_rocksdb_dev} \
-&& cd /usr/src \
-&& curl -sL ${rocksdb_url} -o rocksdb-${rocksdb_version}.tar.gz \
-&& tar xfvz rocksdb-${rocksdb_version}.tar.gz \
-&& rm rocksdb-${rocksdb_version}.tar.gz \
-&& ln -s /usr/src/rocksdb-${rocksdb_version} /usr/src/rocksdb \
-&& cd /usr/src/rocksdb-${rocksdb_version} \
+&& eval ${do_fetch_rocksdb} \
+&& cd /usr/src/rocksdb \
 && \
 CFLAGS="-g0 -ftls-model=initial-exec" \
 LDFLAGS="-Wl,--strip-all" \
 cmake -H. -Bbuild ${rocksdb_cmake} \
 && cmake --build build --target install --parallel `nproc` \
-&& rm -rf build \
 && rm -rf /usr/lib/$(uname -m)-linux-gnu/librocksdb.a \
+&& rm -rf /usr/src/rocksdb \
 && eval ${do_purge} ${packages_rocksdb_dev} \
 && eval ${do_clean} \
 && true

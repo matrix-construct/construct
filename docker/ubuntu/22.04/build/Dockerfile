@@ -22,6 +22,7 @@ autoconf-archive \
 autoconf2.13 \
 automake \
 autotools-dev \
+git \
 libtool \
 shtool \
 ${extra_packages_dev} \
@@ -31,5 +32,6 @@ ${extra_packages_dev2} \
 
 RUN true \
 && eval ${do_install} ${packages_dev} \
+&& eval ${do_fetch_rocksdb} \
 && eval ${do_clean} \
 && true

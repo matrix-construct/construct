@@ -22,6 +22,7 @@ autoconf-archive \
 autoconf2.13 \
 automake \
 autotools-dev \
+git \
 libtool \
 shtool \
 ${extra_packages_dev} \
@@ -31,6 +32,7 @@ ${extra_packages_dev2} \
 
 RUN true \
 && eval ${do_install} ${packages_dev} \
+&& eval ${do_fetch_rocksdb} \
 && git clone ${ctor_url} construct \
 && cd construct \
 && rmdir -v deps/rocksdb \
@@ -41,7 +43,7 @@ RUN true \
 && make install \
 && cd .. \
 && rm -rf construct \
-&& rm -rf /usr/src/rocksdb* \
+&& rm -rf /usr/src/rocksdb \
 && eval ${do_purge} ${packages_dev} \
 && eval ${do_clean} \
 && true
