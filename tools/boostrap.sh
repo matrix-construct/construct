@@ -134,6 +134,7 @@ run git submodule update --init --recursive --checkout libs/container_hash
 run git submodule update --init --recursive --checkout libs/container
 run git submodule update --init --recursive --checkout libs/move
 run git submodule update --init --recursive --checkout libs/math
+run git submodule update --init --recursive --checkout libs/mp11
 
 run git submodule update --init --recursive --checkout libs/tokenizer
 run git submodule update --init --recursive --checkout libs/iterator
