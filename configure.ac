@@ -956,10 +956,13 @@ AM_COND_IF([DEBUG],
 	])
 ], [
 	RB_MAYBE_CWARN([-Wno-unknown-pragmas], charybdis_cv_c_gcc_w_no_unknown_pragmas)
+	RB_MAYBE_CWARN([-Wno-deprecated-declarations], charybdis_cv_c_gcc_w_no_deprecated_declarations)
+	RB_MAYBE_CWARN([-Wno-deprecated], charybdis_cv_c_gcc_w_no_deprecated)
 
 	AM_COND_IF([CLANG],
 	[
 		RB_MAYBE_CWARN([-Wno-unknown-attributes], charybdis_cv_c_gcc_w_no_unknown_attributes)
+		RB_MAYBE_CWARN([-Wno-uninitialized], charybdis_cv_c_gcc_w_no_uninitialized)
 	])
 
 	AM_COND_IF([GCC],
