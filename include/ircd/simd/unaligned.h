@@ -24,23 +24,24 @@ namespace ircd::simd
 /// T = inner aligned type
 template<class T>
 struct
-__attribute__((packed))
-__attribute__((aligned(1)))
-__attribute__((visibility("internal")))
+[[using clang: internal_linkage, nodebug]]
+[[using gnu: packed, aligned(1), visibility("internal")]]
 ircd::simd::unaligned
 {
 	 using value_type = T;
 
 	T val;
 
-	operator T() const
+	[[gnu::always_inline]]
+	operator T() const noexcept
 	{
 		return val;
 	}
 
 	template<class U>
-	unaligned(U&& val)
-	:val(std::forward<U>(val))
+	[[gnu::always_inline]]
+	unaligned(const U val) noexcept
+	:val(val)
 	{}
 };
 
