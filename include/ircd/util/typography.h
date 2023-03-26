@@ -141,6 +141,34 @@ struct is_specialization_of<T<args...>, T>
 {};
 
 //
+// Convenience signedness cast template
+//
+
+template<class T>
+using enable_if_s2u = std::enable_if<std::is_signed<T>::value, typename std::make_unsigned<T>::type>;
+
+template<class T>
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline typename enable_if_s2u<T>::type *
+sign_cast(T *const t)
+{
+	using type = typename std::make_unsigned<T>::type;
+	return reinterpret_cast<type *>(t);
+}
+
+template<class T>
+using enable_if_u2s = std::enable_if<std::is_unsigned<T>::value, typename std::make_signed<T>::type>;
+
+template<class T>
+[[using gnu: always_inline, gnu_inline, artificial]]
+extern inline typename enable_if_u2s<T>::type *
+sign_cast(T *const t)
+{
+	using type = typename std::make_signed<T>::type;
+	return reinterpret_cast<type *>(t);
+}
+
+//
 // Convenience const_cast deduction template
 //
 
