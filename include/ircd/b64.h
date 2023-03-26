@@ -44,8 +44,8 @@ namespace ircd::b64
 	size_t encode_unpadded_size(const const_buffer &in) noexcept;
 
 	const_buffer decode(const mutable_buffer out, const string_view in);
-	string_view encode_unpadded(const mutable_buffer out, const const_buffer in, const dictionary & = dict_rfc1421) noexcept;
-	string_view encode(const mutable_buffer out, const const_buffer in, const dictionary & = dict_rfc1421) noexcept;
+	string_view encode_unpadded(const mutable_buffer out, const const_buffer in, const dictionary = dict_rfc1421) noexcept;
+	string_view encode(const mutable_buffer out, const const_buffer in, const dictionary = dict_rfc1421) noexcept;
 }
 
 inline size_t

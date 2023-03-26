@@ -29,7 +29,7 @@ namespace ircd::b64
 	static u8x64 decode_block(const u8x64 block, i64x8 &__restrict__ err) noexcept;
 
 	[[IRCD_CLONES(IRCD_B64_TARGETS)]]
-	static u8x64 encode_block(const u8x64 block, const dictionary &) noexcept;
+	static u8x64 encode_block(const u8x64 block, const dictionary) noexcept;
 }
 #pragma GCC visibility pop
 
@@ -157,7 +157,7 @@ alignas(64)
 ircd::string_view
 ircd::b64::encode(const mutable_buffer out,
                   const const_buffer in,
-                  const dictionary &dict)
+                  const dictionary dict)
 noexcept
 {
 	const auto pads
@@ -193,19 +193,9 @@ noexcept
 ircd::string_view
 ircd::b64::encode_unpadded(const mutable_buffer out,
                            const const_buffer in,
-                           const dictionary &dict)
+                           const dictionary dict)
 noexcept
 {
-	char *const __restrict__ dst
-	{
-		data(out)
-	};
-
-	const char *const __restrict__ src
-	{
-		data(in)
-	};
-
 	const size_t res_len
 	{
 		encode_unpadded_size(in)
@@ -216,38 +206,49 @@ noexcept
 		std::min(res_len, size(out))
 	};
 
-	u8x64 block {0};
-	size_t i(0), j(0);
-	for(; i < size(in) / 48 && i < out_len / 64; ++i)
+	uint i;
+	for(i = 0; i < size(in) / 48 && i < out_len / 64; ++i)
 	{
 		// Destination is indexed at 64 byte stride
-		const auto di
+		u512x1_u *const __restrict__ dx
 		{
-			reinterpret_cast<u512x1_u *__restrict__>(dst  + (i * 64))
+			reinterpret_cast<u512x1_u *>(data(out))
 		};
 
 		// Source is indexed at 48 byte stride
-		const auto si
+		const auto *const __restrict__ si
 		{
-			reinterpret_cast<const u512x1_u *__restrict__>(src + (i * 48))
+			data(in) + i * 48
 		};
 
-		block = *si;
+		u8x64 block {0};
+		#pragma clang loop vectorize(enable) unroll(full)
+		for(uint j(0); j < 48; ++j)
+			block[j] = si[j];
+
 		block = encode_block(block, dict);
-		*di = block;
+		dx[i] = block;
 	}
 
 	for(; i * 48 < size(in) && i * 64 < out_len; ++i)
 	{
-		#if !defined(__AVX__)
-		#pragma clang loop unroll_count(2)
-		#endif
-		for(j = 0; j < 48 && i * 48 + j < size(in); ++j)
-			block[j] = src[i * 48 + j];
+		auto *const __restrict__ di
+		{
+			data(out) + i * 64
+		};
+
+		const auto *const __restrict__ si
+		{
+			data(in) + i * 48
+		};
+
+		u8x64 block {0};
+		for(uint j(0); j < 48 && i * 48 + j < size(in); ++j)
+			block[j] = si[j];
 
 		block = encode_block(block, dict);
-		for(j = 0; j < 64 && i * 64 + j < out_len; ++j)
-			dst[i * 64 + j] = block[j];
+		for(uint j(0); j < 64 && i * 64 + j < out_len; ++j)
+			di[j] = block[j];
 	}
 
 	return string_view
@@ -270,7 +271,7 @@ noexcept
 [[IRCD_CLONES(IRCD_B64_TARGETS)]]
 ircd::u8x64
 ircd::b64::encode_block(const u8x64 in,
-                        const dictionary &dict)
+                        const dictionary dict)
 noexcept
 {
 	size_t i, j, k;
@@ -319,16 +320,6 @@ ircd::const_buffer
 ircd::b64::decode(const mutable_buffer out,
                   const string_view in)
 {
-	char *const __restrict__ dst
-	{
-		data(out)
-	};
-
-	const char *const __restrict__ src
-	{
-		data(in)
-	};
-
 	const size_t pads
 	{
 		endswith_count(in, '=')
@@ -344,39 +335,51 @@ ircd::b64::decode(const mutable_buffer out,
 		std::min(decode_size(in_len), size(out))
 	};
 
+	uint i;
 	i64x8 err {0};
-	u8x64 block {0};
-	size_t i(0), j(0);
-	for(; i < in_len / 64 && i < out_len / 48; ++i)
+	for(i = 0; i < in_len / 64 && i < out_len / 48; ++i)
 	{
 		// Destination is indexed at 48 byte stride
-		const auto di
+		auto *const __restrict__ di
 		{
-			reinterpret_cast<u512x1_u *__restrict__>(dst + (i * 48))
+			data(out) + i * 48
 		};
 
 		// Source is indexed at 64 byte stride
-		const auto si
+		const u512x1_u *const __restrict__ sx
 		{
-			reinterpret_cast<const u512x1_u *__restrict__>(src + (i * 64))
+			reinterpret_cast<const u512x1_u *>(data(in))
 		};
 
-		block = *si;
+		u8x64 block;
+		block = sx[i];
 		block = decode_block(block, err);
-		*di = block;
+		#pragma clang loop vectorize(enable) unroll(full)
+		for(uint j(0); j < 48; ++j)
+			di[j] = block[j];
 	}
 
 	for(; i * 64 < in_len && i * 48 < out_len; ++i)
 	{
-		u8x64 mask {0};
-		for(j = 0; j < 64 && i * 64 + j < in_len; ++j)
-			block[j] = src[i * 64 + j],
+		auto *const __restrict__ di
+		{
+			data(out) + i * 48
+		};
+
+		const auto *const __restrict__ si
+		{
+			data(in) + i * 64
+		};
+
+		u8x64 block {0}, mask {0};
+		for(uint j(0); j < 64 && i * 64 + j < in_len; ++j)
+			block[j] = si[j],
 			mask[j] = 0xff;
 
 		i64x8 _err {0};
 		block = decode_block(block, _err);
-		for(j = 0; j < 48 && i * 48 + j < out_len; ++j)
-			dst[i * 48 + j] = block[j];
+		for(uint j(0); j < 48 && i * 48 + j < out_len; ++j)
+			di[j] = block[j];
 
 		err |= _err & i64x8(mask);
 	}
@@ -438,7 +441,7 @@ noexcept
 
 	u8x64 c(b), ret;
 	#pragma clang loop vectorize(enable) unroll(full)
-	for(i = 0; i < 64; ++i)
+	for(i = 0; i < 48; ++i)
 		ret[i] = c[decode_permute_tab_le[i]];
 
 	err |= i64x8(_err);
