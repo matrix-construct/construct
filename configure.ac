@@ -1120,7 +1120,7 @@ AC_TYPE_INTPTR_T
 AC_TYPE_UINTPTR_T
 
 dnl C standard type sizes on this platform
-AC_CHECK_SIZEOF([char])
+RB_CHECK_SIZEOF([char], 1)
 AC_CHECK_SIZEOF([short])
 AC_CHECK_SIZEOF([int])
 AC_CHECK_SIZEOF([float])

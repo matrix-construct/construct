@@ -65,3 +65,11 @@ AC_DEFUN([RB_CHK_SYSHEADER],
 		])
 	fi
 ])
+
+AC_DEFUN([RB_CHECK_SIZEOF],
+[
+	AC_CHECK_SIZEOF([$1])
+	if [[ "${ac_cv_sizeof_$1}" != "$2" ]]; then
+		AC_MSG_ERROR([sizeof($1) must be $2 not ${ac_cv_sizeof_$1}. Check config.log for compiler error.])
+	fi
+])
