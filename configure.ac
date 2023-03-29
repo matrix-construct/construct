@@ -983,6 +983,7 @@ AC_MSG_CHECKING(whether to enable warning discovery)
 AC_ARG_ENABLE(every-warning,
 RB_HELP_STRING([--enable-every-warning], [Enable warning discovery (-Weverything)]),
 [
+	AC_MSG_RESULT([yes])
 	RB_MAYBE_CWARN([-Weverything], charybdis_cv_c_gcc_w_everything)
 
 	dnl Ignored a priori
@@ -1020,6 +1021,8 @@ RB_HELP_STRING([--enable-every-warning], [Enable warning discovery (-Weverything
 	dnl Ignored with issue high priority
 	RB_MAYBE_CWARN([-Wno-reserved-identifier], charybdis_cv_c_gcc_w_no_reserved_identifier)
 	RB_MAYBE_CWARN([-Wno-reserved-macro-identifier], charybdis_cv_c_gcc_w_no_reserved_macro_identifier)
+], [
+	AC_MSG_RESULT([no])
 ])
 
 AM_COND_IF_NOT([UNTUNED],
