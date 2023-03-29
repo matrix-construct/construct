@@ -436,7 +436,7 @@ dnl
 dnl Generic Mode compilation
 dnl
 
-AC_MSG_CHECKING(whether to enable generic mode or tune for this host)
+AC_MSG_CHECKING(whether to enable generic mode or emit for this host)
 AC_ARG_ENABLE(generic, RB_HELP_STRING([--enable-generic], [Emit more generic code for pkg binaries]),
 [
 	enable_generic="yes"
@@ -450,21 +450,23 @@ AC_ARG_ENABLE(generic, RB_HELP_STRING([--enable-generic], [Emit more generic cod
 AM_CONDITIONAL([GENERIC], [[[[ "$enable_generic" = "yes" ]]]])
 
 dnl
-dnl Untuned Mode compilation
+dnl Tuned compilation
 dnl
 
-AC_MSG_CHECKING(whether to enable fully untuned mode)
-AC_ARG_ENABLE(untuned, RB_HELP_STRING([--enable-untuned], [Emit no special feature instructions]),
+machine=""
+AC_MSG_CHECKING(whether to emit specific architecture features)
+AC_ARG_WITH(machine, RB_HELP_STRING([--with-machine], [Emit special feature instructions]),
 [
-	enable_untuned="yes"
-	AC_MSG_RESULT([yes])
-	RB_DEFINE([UNTUNED], [1], [Building binary without extended-feature cpu instructions.])
-], [
-	enable_untuned="no"
-	AC_MSG_RESULT([no])
+	if [[ "$withval" != "yes" ]]; then
+		machine="$withval"
+	fi
 ])
 
-AM_CONDITIONAL([UNTUNED], [[[[ "$enable_untuned" = "yes" ]]]])
+if [[ -z "$machine" ]]; then
+	AC_MSG_RESULT([no])
+else
+	AC_MSG_RESULT([yes])
+fi
 
 dnl
 dnl Disable third-party allocators
@@ -760,40 +762,66 @@ dnl
 dnl Machine Tuning
 dnl
 
-TUNE_FLAGS=""
-AM_COND_IF([UNTUNED],
+MACHINE_FLAGS=""
+
+dnl Initial machine
+machine_arch="native"
+machine_tune="native"
+AM_COND_IF([GENERIC],
 [
-	machine_tuning="generic ${host_cpu} and untuned"
-	RB_VAR_PREPEND([TUNE_FLAGS], ["-mno-default"])
-], [
-	AM_COND_IF([GENERIC],
+	machine_tune="generic"
+	AS_CASE([$target_cpu],
+	[x86_64],
 	[
-		machine_tuning="generic ${host_cpu}"
-		RB_VAR_PREPEND([TUNE_FLAGS], ["-mtune=generic"])
-	], [
-		machine_tuning="${host_cpu} native"
-
-		AS_CASE([$host_cpu],
-		[x86_64],
-		[
-			dnl AMD K10's SSE4a doesn't work with valgrind
-			RB_VAR_PREPEND([TUNE_FLAGS], ["-mno-sse4a"])
-
-			dnl Not accepted by clang on aarch64
-			RB_VAR_PREPEND([TUNE_FLAGS], ["-march=native"])
-		])
-
-		RB_VAR_PREPEND([TUNE_FLAGS], ["-mtune=native"])
+		machine_arch="x86-64"
 	])
 ])
 
-RB_VAR_PREPEND([CXXFLAGS], ["$TUNE_FLAGS"])
+dnl Specific extension specification
+machine_feat=""
+for feature in $machine; do
+	if [[ $(echo $feature | cut -d"=" -f1) == "arch" ]]; then
+		machine_arch=$(echo $feature | cut -d"=" -f2)
+	elif [[ $(echo $feature | cut -d"=" -f1) == "tune" ]]; then
+		machine_tune=$(echo $feature | cut -d"=" -f2)
+	else
+		machine_feat="$feature $machine_feat"
+		RB_VAR_PREPEND([MACHINE_FLAGS], ["-m${feature}"])
+	fi
+done
+
+dnl Ensures mtune=generic accompanies one of the generic march= options
+dnl even if --enable-generic wasn't given, otherwise gcc will reject.
+AM_COND_IF_NOT([GENERIC],
+[
+	AS_CASE([$machine_arch],
+	[x86-64*],
+	[
+		machine_tune="generic"
+	], [
+		machine_tune=$machine_arch
+	])
+])
+
+dnl Specific extension underrides
+AS_CASE([$target_cpu],
+[x86_64],
+[
+	dnl AMD K10's SSE4a doesn't work with valgrind
+	RB_VAR_PREPEND([MACHINE_FLAGS], ["-mno-sse4a"])
+])
+
+RB_VAR_PREPEND([MACHINE_FLAGS], ["-mtune=$machine_tune"])
+RB_VAR_PREPEND([MACHINE_FLAGS], ["-march=$machine_arch"])
+
+machine_tuning="${target_cpu} arch=$machine_arch tune=$machine_tune :$machine_feat"
+RB_VAR_PREPEND([CXXFLAGS], ["$MACHINE_FLAGS"])
 
 dnl Get the target features for this build from gcc into a readable string
 AM_COND_IF([GCC],
 [
 	_cxx=$(echo "${CXX}" | cut -d' ' -f1)
-	_cmd="${_cxx} -Q --help=target ${TUNE_FLAGS}"
+	_cmd="${_cxx} -Q --help=target ${MACHINE_FLAGS}"
 	machine_features=$(${_cmd} | grep enabled | grep -v 'mno-')
 	machine_features=$(printf "\n${machine_features}")
 ])
@@ -803,7 +831,7 @@ AM_COND_IF([CLANG],
 [
 	_flag=0
 	_cxx=$(echo "${CXX}" | cut -d' ' -f1)
-	_str=$(${_cxx} -E ${TUNE_FLAGS} - -### 2>&1)
+	_str=$(${_cxx} -E ${MACHINE_FLAGS} - -### 2>&1)
 	machine_features=""
 	for i in $_str; do
 		if [[ $i == '"-target-feature"' ]]; then
@@ -1025,7 +1053,7 @@ RB_HELP_STRING([--enable-every-warning], [Enable warning discovery (-Weverything
 	AC_MSG_RESULT([no])
 ])
 
-AM_COND_IF_NOT([UNTUNED],
+AM_COND_IF_NOT([GENERIC],
 [
 	dnl When tuning for a specific target ignore the ABI compat warnings
 	RB_MAYBE_CWARN([-Wno-psabi], charybdis_cv_c_gcc_w_psabi)
