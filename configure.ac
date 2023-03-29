@@ -151,20 +151,24 @@ dnl Debugging mode
 dnl
 
 AC_MSG_CHECKING(whether to enable debugging)
-AC_ARG_ENABLE(debug, RB_HELP_STRING([--enable-debug], [Enable debugging suite for development]),
+AC_ARG_ENABLE(debug, RB_HELP_STRING([--enable-debug=[[no]]], [Enable debugging suite for development]),
 [
-	debug="yes"
-	AC_MSG_RESULT([yes])
+	debug=$enableval
+], [
+	debug="no"
+])
+
+AC_MSG_RESULT([$debug])
+AM_CONDITIONAL([DEBUG], [[[[ "$debug" = "yes" ]]]])
+
+AM_COND_IF([DEBUG],
+[
 	AC_SUBST(DEBUG, 1)
 	RB_DEFINE_UNQUOTED([DEBUG], [1], [Not configured for release when lit.])
 	RB_DEFINE_UNQUOTED([DEBUG_LEVEL], [1], [Defined to 0 for release; or > 0 otherwise])
 ], [
-	debug="no"
-	AC_MSG_RESULT([no])
-	RB_DEFINE_UNQUOTED([DEBUG_LEVEL], [0], [Defined to 0 for release])
+	RB_DEFINE_UNQUOTED([DEBUG_LEVEL], [0], [Defined to 0 for release; or > 0 otherwise])
 ])
-
-AM_CONDITIONAL([DEBUG], [[[[ "$DEBUG" = "1" ]]]])
 
 dnl
 dnl Compactness
@@ -173,14 +177,19 @@ dnl
 AC_MSG_CHECKING(Optimize for size; strip symbols; force no debugging)
 AC_ARG_ENABLE(compact, RB_HELP_STRING([--enable-compact], [Optimize for size and compactness]),
 [
-	AC_MSG_RESULT([yes])
-	AC_SUBST(COMPACT, 1)
-	RB_DEFINE_UNQUOTED([COMPACT], [1], [Not configured for compactness when lit.])
+	compact=$enableval
 ], [
-	AC_MSG_RESULT([no])
+	compact="no"
 ])
 
-AM_CONDITIONAL([COMPACT], [[[[ "$COMPACT" = "1" ]]]])
+AC_MSG_RESULT([$compact])
+AM_CONDITIONAL([COMPACT], [[[[ "$compact" = "yes" ]]]])
+
+AM_COND_IF([COMPACT],
+[
+	AC_SUBST(COMPACT, 1)
+	RB_DEFINE_UNQUOTED([COMPACT], [1], [Not configured for compactness when lit.])
+])
 
 dnl
 dnl Explicit assert switch for still using assert() without --enable-debug
@@ -189,26 +198,26 @@ dnl
 AC_MSG_CHECKING(whether to explicitly enable assertions)
 AC_ARG_ENABLE(assert, RB_HELP_STRING([--enable-assert], [Enable assertions without --enable-debug]),
 [
-	AC_MSG_RESULT([yes])
-	AC_SUBST(ASSERT, 1)
+	assert=$enableval
+	AC_MSG_RESULT([$assert])
 ], [
 	AM_COND_IF(DEBUG,
 	[
-		AC_MSG_RESULT([no, but assertions are enabled anyway])
-		AC_SUBST(ASSERT, 1)
+		assert="yes"
+		AC_MSG_RESULT([$assert, enabled by default with --enable-debug])
 	], [
-		AC_MSG_RESULT([no])
+		assert="no"
+		AC_MSG_RESULT([$assert])
 	])
 ])
 
-AM_CONDITIONAL([ASSERT], [[[[ "$ASSERT" = "1" ]]]])
+AM_CONDITIONAL([ASSERT], [[[[ "$assert" = "yes" ]]]])
 
 AM_COND_IF(ASSERT,
 [
-	assert="yes"
 	assert_type="abort"
+	AC_SUBST(ASSERT, 1)
 ], [
-	assert="no"
 	CPPDEFINE([NDEBUG])
 ])
 
@@ -216,18 +225,17 @@ dnl
 dnl Switch to control the action of assert()
 dnl
 
-AC_MSG_CHECKING(whether to change the behavior of assertions)
-AC_ARG_WITH(assert, RB_HELP_STRING([--with-assert[[[=abort]]]], [Soften assertion behavior]),
+AC_MSG_CHECKING(what the result of a failed assertion implies)
+AC_ARG_WITH(assert, RB_HELP_STRING([--with-assert[[[=abort]]]], [Change assertion behavior]),
 [
 	assert_type=$withval
-	AC_MSG_RESULT([yes, "$assert_type"])
-	AC_SUBST(ASSERT_TYPE, $assert_type)
-], [
-	AC_MSG_RESULT([no])
 ])
 
 AM_COND_IF(ASSERT,
 [
+	AC_MSG_RESULT([$assert_type])
+	AC_SUBST(ASSERT_TYPE, $assert_type)
+
 	if [[ ! -z "$assert_type" ]]; then
 
 		if [[ "$assert_type" != "abort" ]]; then
@@ -243,6 +251,9 @@ AM_COND_IF(ASSERT,
 		fi
 
 	fi
+], [
+	AC_MSG_RESULT([nothing without assertions enabled])
+	assert_type=""
 ])
 
 dnl
@@ -252,19 +263,25 @@ dnl
 AC_MSG_CHECKING(whether to explicitly enable optimized build)
 AC_ARG_ENABLE(optimize, RB_HELP_STRING([--enable-optimize], [Enable optimization even with --enable-debug]),
 [
-	AC_MSG_RESULT([yes])
-	AC_SUBST(OPTIMIZE, 1)
+	optimize=$enableval
+	AC_MSG_RESULT([$optimize])
 ], [
 	AM_COND_IF(DEBUG,
 	[
-		AC_MSG_RESULT([no])
+		optimize="no"
+		AC_MSG_RESULT([$optimize, disabled by default with --enable-debug])
 	], [
-		AC_MSG_RESULT([no, but optimized build is enabled anyway])
-		AC_SUBST(OPTIMIZE, 1)
+		optimize="yes"
+		AC_MSG_RESULT([$optimize])
 	])
 ])
 
-AM_CONDITIONAL([OPTIMIZE], [[[[ "$OPTIMIZE" = "1" ]]]])
+AM_CONDITIONAL([OPTIMIZE], [[[[ "$optimize" = "yes" ]]]])
+
+AM_COND_IF([OPTIMIZE],
+[
+	AC_SUBST(OPTIMIZE, 1)
+])
 
 dnl
 dnl Enable target clones code generation
@@ -273,16 +290,19 @@ dnl
 AC_MSG_CHECKING(whether to generate code for target clones)
 AC_ARG_ENABLE(clones, RB_HELP_STRING([--enable-clones], [Enable target clones generation]),
 [
-	AC_MSG_RESULT([yes])
-	AC_SUBST(CLONES, 1)
-	RB_DEFINE([CLONES], [1], [Function multi-versioning for different architectures])
 	clones="yes"
 ], [
-	AC_MSG_RESULT([no])
 	clones="no"
 ])
 
-AM_CONDITIONAL([CLONES], [[[[ "$CLONES" = "1" ]]]])
+AC_MSG_RESULT([$clones])
+AM_CONDITIONAL([CLONES], [[[[ "$clones" = "yes" ]]]])
+
+AM_COND_IF([CLONES],
+[
+	AC_SUBST(CLONES, 1)
+	RB_DEFINE([CLONES], [1], [Function multi-versioning for different architectures])
+])
 
 dnl
 dnl Explicit link-time-optimization switch
@@ -309,7 +329,6 @@ if test "$lto" = "yes"; then
 			], [
 				lto="yes"
 				AC_MSG_RESULT([yes])
-				AC_SUBST(LTO, 1)
 			])
 		], [
 			lto="no"
@@ -323,7 +342,12 @@ else
 	AC_MSG_RESULT([no])
 fi
 
-AM_CONDITIONAL([LTO], [[[[ "$LTO" = "1" ]]]])
+AM_CONDITIONAL([LTO], [[[[ "$lto" = "yes" ]]]])
+
+AM_COND_IF([LTO],
+[
+	AC_SUBST(LTO, 1)
+])
 
 dnl
 dnl Explicit optimization level switch
@@ -419,18 +443,21 @@ dnl Precompiled headers
 dnl
 
 AC_MSG_CHECKING(whether to enable precompiled headers)
-AC_ARG_ENABLE(pch, RB_HELP_STRING([--disable-pch], [Disable precompiled header generation]),
+AC_ARG_ENABLE(pch, RB_HELP_STRING([--enable-pch], [Enable precompiled header generation]),
 [
 	build_pch=$enableval
-	AC_MSG_RESULT([$enableval])
 ], [
 	build_pch="yes"
-	CPPDEFINE([PCH])
-	AC_MSG_RESULT([yes])
 ])
 
+AC_MSG_RESULT([$build_pch])
 AM_CONDITIONAL([BUILD_PCH], [[[[ "$build_pch" = "yes" ]]]])
 AM_CONDITIONAL([CLANG_PCH], [[[[ "$build_pch" = "yes" ]] && [[ $CXX = clang* ]]]])
+
+AM_COND_IF([BUILD_PCH],
+[
+	CPPDEFINE([PCH])
+])
 
 dnl
 dnl Generic Mode compilation
@@ -440,14 +467,17 @@ AC_MSG_CHECKING(whether to enable generic mode or emit for this host)
 AC_ARG_ENABLE(generic, RB_HELP_STRING([--enable-generic], [Emit more generic code for pkg binaries]),
 [
 	enable_generic="yes"
-	AC_MSG_RESULT([yes])
-	RB_DEFINE([GENERIC], [1], [Building binary tuned for generic architectures])
 ], [
 	enable_generic="no"
-	AC_MSG_RESULT([no])
 ])
 
+AC_MSG_RESULT([$enable_generic])
 AM_CONDITIONAL([GENERIC], [[[[ "$enable_generic" = "yes" ]]]])
+
+AM_COND_IF([GENERIC],
+[
+	RB_DEFINE([GENERIC], [1], [Building binary tuned for generic architectures])
+])
 
 dnl
 dnl Tuned compilation
@@ -458,14 +488,14 @@ AC_MSG_CHECKING(whether to emit specific architecture features)
 AC_ARG_WITH(machine, RB_HELP_STRING([--with-machine], [Emit special feature instructions]),
 [
 	if [[ "$withval" != "yes" ]]; then
-		machine="$withval"
+		machine=$withval
 	fi
 ])
 
-if [[ -z "$machine" ]]; then
-	AC_MSG_RESULT([no])
-else
+if [[ ! -z "$machine" ]]; then
 	AC_MSG_RESULT([yes])
+else
+	AC_MSG_RESULT([no])
 fi
 
 dnl
@@ -473,15 +503,14 @@ dnl Disable third-party allocators
 dnl
 
 AC_MSG_CHECKING(whether to allow available third-party allocator libraries from being used)
-AC_ARG_ENABLE(malloc-libs, RB_HELP_STRING([--disable-malloc-libs], [Disable third-party dynamic memory libraries (jemalloc/tcmalloc/etc)]),
+AC_ARG_ENABLE(malloc-libs, RB_HELP_STRING([--enable-malloc-libs], [Enable third-party dynamic memory libraries (jemalloc/tcmalloc/etc)]),
 [
 	use_malloc_libs=$enableval
-	AC_MSG_RESULT([$enableval])
 ], [
 	use_malloc_libs="yes"
-	AC_MSG_RESULT([yes])
 ])
 
+AC_MSG_RESULT([$use_malloc_libs])
 AM_CONDITIONAL([MALLOC_LIBS], [[[[ "$use_malloc_libs" = "yes" ]]]])
 
 dnl
@@ -495,6 +524,7 @@ AC_ARG_ENABLE(lowmem-compile, RB_HELP_STRING([--enable-lowmem-compile], [Enable 
 	lowmem_compile="no"
 ])
 
+AC_MSG_RESULT([$lowmem_compile])
 AM_CONDITIONAL([LOWMEM_COMPILE], [[[[ $lowmem_compile = "yes" ]]]])
 
 dnl
@@ -850,22 +880,24 @@ dnl
 dnl Compiler warnings
 dnl
 
-AC_MSG_CHECKING(whether to disable warnings)
+AC_MSG_CHECKING(whether to enable warnings)
 AC_ARG_ENABLE(warnings,
-RB_HELP_STRING([--disable-warnings], [Disable all sorts of warnings like a rockstar]),
+RB_HELP_STRING([--enable-warnings], [Disable all sorts of warnings like a rockstar]),
 [
-	AC_MSG_RESULT([$enableval])
-	warnings="$enableval"
+	warnings=$enableval
 ], [
-	AC_MSG_RESULT([no])
 	warnings="yes"
 ])
 
+AC_MSG_RESULT([$warnings])
+AM_CONDITIONAL([WARNINGS], [[[[ "$warnings" = "yes" ]]]])
+
 AC_DEFUN([RB_MAYBE_CWARN],
 [
-	if test x"$warnings" == x"yes"; then
+	AM_COND_IF([WARNINGS],
+	[
 		RB_MAYBE_CXXFLAG([$1], [$2])
-	fi
+	])
 ])
 
 STACK_USAGE_WARNING=16384
@@ -1377,19 +1409,20 @@ dnl
 dnl ip6
 dnl
 
-AC_ARG_ENABLE(ipv6, RB_HELP_STRING([--disable-ipv6], [Disable IPv6 support]),
+AC_ARG_ENABLE(ipv6, RB_HELP_STRING([--enable-ipv6], [Enable IPv6 support]),
 [
 	ipv6=$enableval
 ], [
 	ipv6="yes"
 ])
 
-AM_CONDITIONAL([HAVE_IPV6], [[[[ "$ipv6" = "yes" ]]]])
+AM_CONDITIONAL([IPV6], [[[[ "$ipv6" = "yes" ]]]])
 
-AM_COND_IF(HAVE_IPV6,
+AM_COND_IF(IPV6,
 [
 	AC_DEFINE([HAVE_IPV6], [1], [IPv6 is supported])
-],[])
+	AC_SUBST(IPV6, 1)
+])
 
 dnl
 dnl netdb / libnss_db
@@ -1448,12 +1481,14 @@ dnl
 
 AM_COND_IF(LINUX,
 [
-	AC_ARG_ENABLE(aio, RB_HELP_STRING([--disable-aio], [Disable kernel AIO support]),
+	AC_ARG_ENABLE(aio, RB_HELP_STRING([--enable-aio], [Enable kernel AIO support]),
 	[
 		aio=$enableval
 	], [
-		aio=yes
+		aio="yes"
 	])
+
+	AC_MSG_RESULT([$aio])
 ])
 
 AM_CONDITIONAL([AIO], [test "x$aio" = "xyes" ])
@@ -1471,12 +1506,14 @@ dnl
 
 AM_COND_IF(LINUX,
 [
-	AC_ARG_ENABLE(iou, RB_HELP_STRING([--disable-iou], [Disable kernel io_uring support]),
+	AC_ARG_ENABLE(iou, RB_HELP_STRING([--enable-iou], [Enable kernel io_uring support]),
 	[
 		iou=$enableval
 	], [
-		iou=yes
+		iou="yes"
 	])
+
+	AC_MSG_RESULT([$iou])
 ])
 
 AM_CONDITIONAL([IOU], [test "x$iou" = "xyes" ])
@@ -2345,20 +2382,15 @@ PKG_CHECK_MODULES(jemalloc, [jemalloc],
 	])
 ])
 
-AC_MSG_CHECKING(whether to disable use of any found jemalloc)
-AC_ARG_ENABLE(jemalloc, RB_HELP_STRING([--disable-jemalloc], [Disable jemalloc as third-party dynamic memory manager]),
+AC_MSG_CHECKING(whether to enable use of any found jemalloc)
+AC_ARG_ENABLE(jemalloc, RB_HELP_STRING([--enable-jemalloc], [Enable jemalloc as dynamic memory manager]),
 [
 	enable_jemalloc=$enableval
-	if test "$enable_jemalloc" = "no"; then
-		AC_MSG_RESULT([yes])
-	else
-		AC_MSG_RESULT([no])
-	fi
 ], [
-	AC_MSG_RESULT([no])
 	enable_jemalloc="yes"
 ])
 
+AC_MSG_RESULT([$enable_jemalloc])
 AM_CONDITIONAL([JEMALLOC], [test "x$have_jemalloc" = "xyes" && test "x$enable_jemalloc" = "xyes" ])
 
 dnl
@@ -2534,16 +2566,15 @@ dnl pop
 CPPFLAGS=$restore_cppflags
 LDFLAGS=$restore_ldflags
 
-AC_MSG_CHECKING(whether to disable use of any found ROCm)
-AC_ARG_ENABLE(rocm, RB_HELP_STRING([--disable-rocm], [Disable ROCm support]),
+AC_MSG_CHECKING(whether to enable use of any found ROCm)
+AC_ARG_ENABLE(rocm, RB_HELP_STRING([--enable-rocm], [Enable ROCm support]),
 [
-	AC_MSG_RESULT([$enableval])
 	enable_rocm=$enableval
 ], [
-	AC_MSG_RESULT([no])
 	enable_rocm="yes"
 ])
 
+AC_MSG_RESULT([$enable_rocm])
 AM_CONDITIONAL([ROCM], [test "x$have_rocm" = "xyes" && test "x$enable_rocm" = "xyes" ])
 
 AM_COND_IF([ROCM],
@@ -2600,16 +2631,15 @@ dnl pop
 CPPFLAGS=$restore_cppflags
 LDFLAGS=$restore_ldflags
 
-AC_MSG_CHECKING(whether to disable use of any found GPA)
-AC_ARG_ENABLE(gpa, RB_HELP_STRING([--disable-gpa], [Disable GPA support]),
+AC_MSG_CHECKING(whether to enable use of any found GPA)
+AC_ARG_ENABLE(gpa, RB_HELP_STRING([--enable-gpa], [Enable GPA support]),
 [
-	AC_MSG_RESULT([$enableval])
 	enable_gpa=$enableval
 ], [
-	AC_MSG_RESULT([no])
 	enable_gpa="yes"
 ])
 
+AC_MSG_RESULT([$enable_gpa])
 AM_CONDITIONAL([GPA], [test "x$have_gpa" = "xyes" && test "x$enable_gpa" = "xyes" ])
 
 AM_COND_IF([GPA],
@@ -2657,22 +2687,19 @@ PKG_CHECK_MODULES(OpenCL, [OpenCL],
 	])
 ])
 
-AC_MSG_CHECKING(whether to disable use of any found OpenCL)
-AC_ARG_ENABLE(opencl, RB_HELP_STRING([--disable-opencl], [Disable OpenCL support]),
+AC_MSG_CHECKING(whether to enable use of any found OpenCL)
+AC_ARG_ENABLE(opencl, RB_HELP_STRING([--enable-opencl], [Enable OpenCL support]),
 [
-	AC_MSG_RESULT([$enableval])
 	enable_opencl=$enableval
 ], [
-	AC_MSG_RESULT([no])
 	enable_opencl="yes"
 ])
 
-AC_MSG_CHECKING(whether to enable use of any found OpenCL)
+AC_MSG_RESULT([$enable_opencl])
 AM_CONDITIONAL([OPENCL], [test "x$have_opencl" = "xyes" && test "x$enable_opencl" = "xyes" ])
 
 AM_COND_IF([OPENCL],
 [
-	AC_MSG_RESULT([yes])
 	IRCD_DEFINE(USE_OPENCL, [1], [OpenCL support is available and enabled])
 	RB_VAR_APPEND([OPENCL_LIBS], ["-lOpenCL"])
 ], [
@@ -2717,15 +2744,14 @@ PKG_CHECK_MODULES(armnn, [armnn],
 ])
 
 AC_MSG_CHECKING(whether to enable use of any found ArmNN)
-AC_ARG_ENABLE(armnn, RB_HELP_STRING([--disable-armnn], [Disable Arm NN support]),
+AC_ARG_ENABLE(armnn, RB_HELP_STRING([--enable-armnn], [Enable Arm NN support]),
 [
-	AC_MSG_RESULT([$enableval])
 	enable_armnn=$enableval
 ], [
-	AC_MSG_RESULT([yes])
 	enable_armnn="yes"
 ])
 
+AC_MSG_RESULT([$enable_armnn])
 AM_CONDITIONAL([ARMNN], [test "x$have_armnn" = "xyes" && test "x$enable_armnn" = "xyes" ])
 
 AM_COND_IF([ARMNN],
