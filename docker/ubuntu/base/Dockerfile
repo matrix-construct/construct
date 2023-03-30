@@ -1,22 +1,33 @@
-FROM ubuntu:22.04
+ARG dist_name ubuntu
+ARG dist_version 22.04
+
+FROM --platform=$TARGETPLATFORM ${dist_name}:${dist_version}
 
 ARG skiprocks
 ARG rocksdb_version 7.4.5
 ARG rocksdb_url
+ARG rocksdb_avx 0
+ARG rocksdb_avx2 0
+ARG boost_version 1.74
+ARG icu_version 70
 
 ENV rocksdb_version ${rocksdb_version}
 ENV rocksdb_url https://codeload.github.com/facebook/rocksdb/tar.gz/refs/tags/v${rocksdb_version}
+ENV rocksdb_avx ${rocksdb_avx}
+ENV rocksdb_avx2 ${rocksdb_avx2}
+ENV boost_version ${boost_version}
+ENV icu_version ${icu_version}
 
 ENV packages="\
 ca-certificates \
 libatomic1 \
 libjemalloc2 \
-libboost-chrono1.74.0 \
-libboost-context1.74.0 \
-libboost-coroutine1.74.0 \
-libboost-system1.74.0 \
-libboost-thread1.74.0 \
-libicu70 \
+libboost-chrono${boost_version}.0 \
+libboost-context${boost_version}.0 \
+libboost-coroutine${boost_version}.0 \
+libboost-system${boost_version}.0 \
+libboost-thread${boost_version}.0 \
+libicu${icu_version} \
 libnss-db \
 libsodium23 \
 libssl3 \
@@ -36,11 +47,11 @@ xz-utils \
 
 ENV packages_dev="\
 ${packages_rocksdb_dev} \
-libboost-chrono1.74-dev \
-libboost-context1.74-dev \
-libboost-coroutine1.74-dev \
-libboost-system1.74-dev \
-libboost-thread1.74-dev \
+libboost-chrono${boost_version}-dev \
+libboost-context${boost_version}-dev \
+libboost-coroutine${boost_version}-dev \
+libboost-system${boost_version}-dev \
+libboost-thread${boost_version}-dev \
 libicu-dev \
 libmagic-dev \
 libsodium-dev \
@@ -50,19 +61,22 @@ libssl-dev \
 ENV rocksdb_cmake="\
 -DCMAKE_RULE_MESSAGES:BOOL=OFF \
 -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+-DCMAKE_BUILD_TYPE=Release \
+-DBUILD_SHARED_LIBS=1 \
+-DFAIL_ON_WARNINGS=0 \
+-DUSE_RTTI=1 \
+-DPORTABLE=1 \
+-DFORCE_AVX=${rocksdb_avx} \
+-DFORCE_AVX2=${rocksdb_avx2} \
 -DWITH_JNI=0 \
 -DWITH_TESTS=0 \
 -DWITH_BENCHMARK_TOOLS=0 \
 -DWITH_CORE_TOOLS=0 \
--DFAIL_ON_WARNINGS=0 \
--DCMAKE_BUILD_TYPE=Release \
 -DWITH_GFLAGS=0 \
 -DWITH_LIBURING=0 \
 -DWITH_JEMALLOC=1 \
 -DWITH_LZ4=1 \
 -DWITH_ZSTD=1 \
--DUSE_RTTI=1 \
--DBUILD_SHARED_LIBS=1 \
 "
 
 ENV do_install true \

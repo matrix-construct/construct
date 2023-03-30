@@ -1,8 +1,11 @@
 ARG acct
 ARG repo
+ARG dist_name
+ARG dist_version
 ARG feature
+ARG machine
 
-FROM ${acct}/${repo}:ubuntu-22.04-${feature}-${TARGETARCH}
+FROM ${acct}/${repo}:${dist_name}-${dist_version}-${feature}-${machine}
 
 ARG cc
 ARG cxx
@@ -10,10 +13,12 @@ ARG extra_packages_dev
 ARG extra_packages_dev1
 ARG extra_packages_dev2
 ARG ctor_url https://github.com/matrix-construct/construct
+ARG machine_spec
 
 ENV CC ${cc}
 ENV CXX ${cxx}
 ENV ctor_url ${ctor_url}
+ENV machine_spec ${machine_spec}
 
 ENV packages_dev="\
 ${packages_dev} \
@@ -38,7 +43,7 @@ RUN true \
 && rmdir -v deps/rocksdb \
 && ln -sv /usr/src/rocksdb deps \
 && ./autogen.sh \
-&& ./configure \
+&& ./configure --enable-generic --with-machine="${machine_spec}" \
 && make -j `nproc` \
 && make install \
 && cd .. \

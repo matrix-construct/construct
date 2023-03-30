@@ -1,4 +1,7 @@
-FROM --platform=$TARGETPLATFORM alpine:3.16.1
+ARG dist_name alpine
+ARG dist_version 3.16
+
+FROM --platform=$TARGETPLATFORM ${dist_name}:${dist_version}
 
 ENV packages="\
 boost-chrono \

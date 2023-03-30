@@ -1,7 +1,10 @@
 ARG acct
 ARG repo
+ARG dist_name
+ARG dist_version
+ARG machine
 
-FROM ${acct}/${repo}:alpine-3.16-base-${TARGETARCH}
+FROM ${acct}/${repo}:${dist_name}-${dist_version}-base-${machine}
 
 ENV packages="\
 freetype \

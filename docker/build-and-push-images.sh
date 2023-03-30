@@ -3,144 +3,195 @@
 BASEDIR=$(dirname "$0")
 ACCT=jevolk
 REPO=construct
-ctor_url="https://github.com/matrix-construct/construct"
-rocksdb_version=7.4.3
-
-ARGS_=""
-ARGS_="$ARGS_ --compress=true"
-ARGS_="$ARGS_ --build-arg acct=$ACCT"
-ARGS_="$ARGS_ --build-arg repo=$REPO"
-ARGS_="$ARGS_ --build-arg ctor_url=$ctor_url"
-ARGS_="$ARGS_ --build-arg rocksdb_version=$rocksdb_version"
+CTOR_URL="https://github.com/matrix-construct/construct"
 
 export DOCKER_BUILDKIT=1
 #export BUILDKIT_PROGRESS=plain
 
-###############################################################################
-#
-# Alpine 3.16
-#
+features="base full"
+distros="ubuntu-22.04 ubuntu-22.10 alpine-3.16 alpine-3.17"
+machines="arm64 amd64 amd64-avx amd64-avx2 amd64-avx512"
+toolchains="gcc-10 gcc-11 gcc-12 clang-14 clang-15"
+stages="built test"
 
-#
-# L0 - Base featured image
-#
+matrix()
+{
+	for feature_ in $features; do
+		for distro_ in $distros; do
+			for machine_ in $machines; do
+				for toolchain_ in $toolchains; do
+					for stage_ in $stages; do
+						build $feature_ $distro_ $machine_ $toolchain_ $stage_
+					done
+				done
+			done
+		done
+	done
+}
 
-ARGS="$ARGS_"
-ARGS="$ARGS --platform linux/amd64"
-docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base-amd64 $BASEDIR/alpine/3.16/base
+build()
+{
+	feature=$1
+	distro=$2
+	machine=$3
+	toolchain=$4
+	stage=$5
 
-#
-# L1 - Fully featured image
-#
+	dist_name=$(echo $distro | cut -d"-" -f1)
+	dist_version=$(echo $distro | cut -d"-" -f2)
 
-ARGS="$ARGS_"
-ARGS="$ARGS --platform linux/amd64"
-docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full-amd64 $BASEDIR/alpine/3.16/full
+	args=""
+	args="$args --compress=true"
+	args="$args --build-arg acct=$ACCT"
+	args="$args --build-arg repo=$REPO"
+	args="$args --build-arg ctor_url=$CTOR_URL"
+	args="$args --build-arg dist_name=${dist_name}"
+	args="$args --build-arg dist_version=${dist_version}"
+	args="$args --build-arg feature=${feature}"
+	args="$args --build-arg machine=${machine}"
 
-#
-# L2/L3 - Built/Test images
-#
+	args_dist $dist_name $dist_version
+	if test $? -ne 0; then return 1; fi
 
-ARGS="$ARGS_"
-ARGS="$ARGS --platform linux/amd64"
-ARGS="$ARGS --build-arg feature=base"
-ARGS="$ARGS --build-arg extra_packages_dev=gcc"
-ARGS="$ARGS --build-arg extra_packages_dev1=g++"
-ARGS="$ARGS --build-arg cc=gcc --build-arg cxx=g++"
-docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base-built-gcc-amd64 $BASEDIR/alpine/3.16/built
-docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base-test-gcc-amd64 $BASEDIR/alpine/3.16/test
-docker push $ACCT/$REPO:alpine-3.16-base-built-gcc-amd64
+	args_toolchain $toolchain $dist_name $dist_version
+	if test $? -ne 0; then return 1; fi
 
-ARGS="$ARGS_"
-ARGS="$ARGS --platform linux/amd64"
-ARGS="$ARGS --build-arg feature=base"
-ARGS="$ARGS --build-arg extra_packages_dev=clang"
-ARGS="$ARGS --build-arg extra_packages_dev1=llvm"
-ARGS="$ARGS --build-arg extra_packages_dev2=llvm-dev"
-ARGS="$ARGS --build-arg cc=clang --build-arg cxx=clang++"
-docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base-built-clang-amd64 $BASEDIR/alpine/3.16/built
-docker build $ARGS -t $ACCT/$REPO:alpine-3.16-base-test-clang-amd64 $BASEDIR/alpine/3.16/test
-docker push $ACCT/$REPO:alpine-3.16-base-built-clang-amd64
+	args_machine $machine
+	if test $? -ne 0; then return 1; fi
 
-ARGS="$ARGS_"
-ARGS="$ARGS --platform linux/amd64"
-ARGS="$ARGS --build-arg feature=full"
-ARGS="$ARGS --build-arg extra_packages_dev=gcc"
-ARGS="$ARGS --build-arg extra_packages_dev1=g++"
-ARGS="$ARGS --build-arg cc=gcc --build-arg cxx=g++"
-docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full-built-gcc-amd64 $BASEDIR/alpine/3.16/built
-docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full-test-gcc-amd64 $BASEDIR/alpine/3.16/test
-docker push $ACCT/$REPO:alpine-3.16-full-built-gcc-amd64
+	args_platform $machine
+	if test $? -ne 0; then return 1; fi
 
-ARGS="$ARGS_"
-ARGS="$ARGS --platform linux/amd64"
-ARGS="$ARGS --build-arg feature=full"
-ARGS="$ARGS --build-arg extra_packages_dev=clang"
-ARGS="$ARGS --build-arg extra_packages_dev1=llvm"
-ARGS="$ARGS --build-arg extra_packages_dev2=llvm-dev"
-ARGS="$ARGS --build-arg cc=clang --build-arg cxx=clang++"
-docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full-built-clang-amd64 $BASEDIR/alpine/3.16/built
-docker build $ARGS -t $ACCT/$REPO:alpine-3.16-full-test-clang-amd64 $BASEDIR/alpine/3.16/test
-docker push $ACCT/$REPO:alpine-3.16-full-built-clang-amd64
+	# Intermediate stage build; usually cached from prior iteration.
+	tag="$ACCT/$REPO:${distro}-${feature}-${machine}"
+	cmd="$args -t $tag $BASEDIR/${dist_name}/${feature}"
+	docker build $cmd
 
-###############################################################################
-#
-# Ubuntu 22.04
-#
+	# Leaf stage build; unique to each iteration.
+	tag="$ACCT/$REPO:${distro}-${feature}-${stage}-${toolchain}-${machine}"
+	cmd="$args -t $tag $BASEDIR/${dist_name}/${stage}"
+	docker build $cmd
+	return 0
+}
 
-#
-# L0 - Base featured image
-#
+args_dist()
+{
+	case $1 in
+	alpine)
+		case $2 in
+		3.16)
+			args="$args --build-arg rocksdb_version=7.2.2"
+			return 0
+			;;
+		3.17)
+			args="$args --build-arg rocksdb_version=7.7.3"
+			return 0
+			;;
+		esac
+		;;
+	ubuntu)
+		case $2 in
+		22.04)
+			args="$args --build-arg rocksdb_version=7.4.3"
+			args="$args --build-arg boost_version=1.74"
+			args="$args --build-arg icu_version=70"
+			return 0
+			;;
+		22.10)
+			args="$args --build-arg rocksdb_version=7.10.2"
+			args="$args --build-arg boost_version=1.74"
+			args="$args --build-arg icu_version=71"
+			return 0
+			;;
+		esac
+		;;
+	esac
+	return 1
+}
 
-ARGS="$ARGS_"
-ARGS="$ARGS --platform linux/amd64"
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-amd64 $BASEDIR/ubuntu/22.04/base
+args_toolchain()
+{
+	_name=$(echo $1 | cut -d"-" -f1)
+	_version=$(echo $1 | cut -d"-" -f2)
 
-#
-# L1 - Fully featured image
-#
+	case $2 in
+	alpine)
+		toolchain=$_name
+		case $1 in
+		gcc*)
+			args="$args --build-arg extra_packages_dev=gcc"
+			args="$args --build-arg extra_packages_dev1=g++"
+			args="$args --build-arg cc=gcc --build-arg cxx=g++"
+			return 0
+			;;
+		clang*)
+			args="$args --build-arg extra_packages_dev=clang"
+			args="$args --build-arg extra_packages_dev1=llvm"
+			args="$args --build-arg extra_packages_dev2=llvm-dev"
+			args="$args --build-arg cc=clang --build-arg cxx=clang++"
+			test $3 != "3.16"
+			return $?
+			;;
+		esac
+		;;
+	ubuntu)
+		case $1 in
+		gcc*)
+			args="$args --build-arg extra_packages_dev=gcc-${_version}"
+			args="$args --build-arg extra_packages_dev1=g++-${_version}"
+			args="$args --build-arg cc=gcc-${_version} --build-arg cxx=g++-${_version}"
+			return 0
+			;;
+		clang*)
+			args="$args --build-arg extra_packages_dev=clang-${_version}"
+			args="$args --build-arg extra_packages_dev1=llvm-${_version}-dev"
+			args="$args --build-arg extra_packages_dev2=llvm-spirv-${_version}"
+			args="$args --build-arg cc=clang-${_version} --build-arg cxx=clang++-${_version}"
+			return 0
+			;;
+		esac
+		;;
+	esac
+	return 1
+}
 
-ARGS="$ARGS_"
-ARGS="$ARGS --platform linux/amd64"
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-amd64 $BASEDIR/ubuntu/22.04/full
+args_machine()
+{
+	case $1 in
+	amd64)
+		args="$args --build-arg machine_spec=arch=amdfam10"
+		;;
+	amd64-avx)
+		args="$args --build-arg machine_spec=arch=sandybridge"
+		args="$args --build-arg rocksdb_avx=1"
+		;;
+	amd64-avx2)
+		args="$args --build-arg machine_spec=arch=haswell"
+		args="$args --build-arg rocksdb_avx2=1"
+		;;
+	amd64-avx512)
+		args="$args --build-arg machine_spec=arch=skylake-avx512"
+		args="$args --build-arg rocksdb_avx2=1"
+		;;
+	esac
+	return 0
+}
 
-#
-# L2/L3 - Build/Built/Test
-#
+args_platform()
+{
+	case $1 in
+	amd64*)
+		args="$args --platform linux/amd64"
+		test $(uname -m) = "x86_64"
+		return $?
+		;;
+	arm64*)
+		args="$args --platform linux/arm64"
+		test $(uname -m) = "aarch64"
+		return $?
+		;;
+	esac
+	return 1
+}
 
-ARGS="$ARGS_"
-ARGS="$ARGS --platform linux/amd64"
-ARGS="$ARGS --build-arg feature=base"
-ARGS="$ARGS --build-arg extra_packages_dev=gcc-10"
-ARGS="$ARGS --build-arg extra_packages_dev1=g++-10"
-ARGS="$ARGS --build-arg cc=gcc-10 --build-arg cxx=g++-10"
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-build-gcc-10-amd64 $BASEDIR/ubuntu/22.04/build
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-built-gcc-10-amd64 $BASEDIR/ubuntu/22.04/built
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-test-gcc-10-amd64 $BASEDIR/ubuntu/22.04/test
-docker push $ACCT/$REPO:ubuntu-22.04-base-build-gcc-10-amd64
-docker push $ACCT/$REPO:ubuntu-22.04-base-built-gcc-10-amd64
-
-ARGS="$ARGS_"
-ARGS="$ARGS --platform linux/amd64"
-ARGS="$ARGS --build-arg feature=base"
-ARGS="$ARGS --build-arg extra_packages_dev=gcc-12"
-ARGS="$ARGS --build-arg extra_packages_dev1=g++-12"
-ARGS="$ARGS --build-arg cc=gcc-12 --build-arg cxx=g++-12"
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-build-gcc-12-amd64 $BASEDIR/ubuntu/22.04/build
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-built-gcc-12-amd64 $BASEDIR/ubuntu/22.04/built
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-base-test-gcc-12-amd64 $BASEDIR/ubuntu/22.04/test
-docker push $ACCT/$REPO:ubuntu-22.04-base-build-gcc-12-amd64
-docker push $ACCT/$REPO:ubuntu-22.04-base-built-gcc-12-amd64
-
-ARGS="$ARGS_"
-ARGS="$ARGS --platform linux/amd64"
-ARGS="$ARGS --build-arg feature=full"
-ARGS="$ARGS --build-arg extra_packages_dev=clang-15"
-ARGS="$ARGS --build-arg extra_packages_dev1=llvm-15-dev"
-ARGS="$ARGS --build-arg extra_packages_dev2=llvm-spirv-15"
-ARGS="$ARGS --build-arg cc=clang-15 --build-arg cxx=clang++-15"
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-build-clang-15-amd64 $BASEDIR/ubuntu/22.04/build
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-built-clang-15-amd64 $BASEDIR/ubuntu/22.04/built
-docker build $ARGS -t $ACCT/$REPO:ubuntu-22.04-full-test-clang-15-amd64 $BASEDIR/ubuntu/22.04/test
-docker push $ACCT/$REPO:ubuntu-22.04-full-build-clang-15-amd64
-docker push $ACCT/$REPO:ubuntu-22.04-full-built-clang-15-amd64
+matrix
