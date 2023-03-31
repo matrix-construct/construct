@@ -1,0 +1,50 @@
+name: Docker Images Prime
+
+on:
+  workflow_call:
+    inputs:
+      id:
+        type: string
+      url:
+        type: string
+      features:
+        type: string
+      distros:
+        type: string
+      machines:
+        type: string
+      test:
+        type: boolean
+        default: false
+        required: false
+
+env:
+  ctor_id: ${{inputs.id}}
+  ctor_url: ${{inputs.url}}
+
+concurrency:
+  group: ${{github.run_id}}
+  cancel-in-progress: true
+
+jobs:
+  prime:
+    runs-on: ${{matrix.machine}}
+    strategy:
+      fail-fast: false
+      matrix:
+        feature: ${{fromJSON(inputs.features)}}
+        distro: ${{fromJSON(inputs.distros)}}
+        machine: ${{fromJSON(inputs.machines)}}
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: build
+      env:
+        ctor_features: ${{matrix.feature}}
+        ctor_distros: ${{matrix.distro}}
+        ctor_machines: ${{matrix.machine}}
+        ctor_toolchains: false
+        ctor_test: ${{inputs.test}}
+
+      run: |
+        docker/build-and-push-images.sh ${{matrix.feature}}

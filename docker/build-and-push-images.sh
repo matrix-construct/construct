@@ -1,32 +1,72 @@
 #!/bin/sh
 
+# Sundry configuration
+
 BASEDIR=$(dirname "$0")
-ACCT=jevolk
-REPO=construct
-CTOR_URL="https://github.com/matrix-construct/construct"
+stage=$1
+mode=$2
 
 export DOCKER_BUILDKIT=1
-#export BUILDKIT_PROGRESS=plain
+if test "$CI" = true; then
+	export BUILDKIT_PROGRESS="plain"
+	echo "plain"
+fi
 
-features="base full"
-distros="ubuntu-22.04 ubuntu-22.10 alpine-3.16 alpine-3.17"
-machines="arm64 amd64 amd64-avx amd64-avx2 amd64-avx512"
-toolchains="gcc-10 gcc-11 gcc-12 clang-14 clang-15"
-stages="built test"
+# The stage argument can be "base" "full" "built" "test" or "push"
+default_stage="push"
+stage=${stage:=$default_stage}
+
+# The mode argument can be "real" or "test"
+default_mode="real"
+mode=${mode:=$default_mode}
+
+if test "$ctor_test" = true; then
+	mode="test"
+fi
+
+# Account configuration environment.
+#
+# Override these for yourself.
+
+default_ctor_url="https://github.com/jevolk/charybdis"
+default_ctor_id="jevolk/construct"
+
+ctor_url=${ctor_url:=$default_ctor_url}
+ctor_id=${ctor_id:=$default_ctor_id}
+ctor_acct=${ctor_acct:=$(echo $ctor_id | cut -d"/" -f1)}
+ctor_repo=${ctor_repo:=$(echo $ctor_id | cut -d"/" -f2)}
+
+# Job matrix configuration environment
+#
+# All combinations of these arrays will be run by this script. Overriding
+# these with one element for each variable allows this script to do one thing
+# at a time.
+
+default_ctor_features="base full"
+default_ctor_distros="ubuntu-22.04 ubuntu-22.10 alpine-3.17"
+default_ctor_machines="amd64 amd64-avx amd64-avx512"
+default_ctor_toolchains="gcc-10 gcc-11 gcc-12 clang-14"
+
+ctor_features=${ctor_features:=$default_ctor_features}
+ctor_distros=${ctor_distros:=$default_ctor_distros}
+ctor_machines=${ctor_machines:=$default_ctor_machines}
+ctor_toolchains=${ctor_toolchains:=$default_ctor_toolchains}
+
+###############################################################################
 
 matrix()
 {
-	for feature_ in $features; do
-		for distro_ in $distros; do
-			for machine_ in $machines; do
-				for toolchain_ in $toolchains; do
-					for stage_ in $stages; do
-						build $feature_ $distro_ $machine_ $toolchain_ $stage_
-					done
+	for ctor_feature in $ctor_features; do
+		for ctor_distro in $ctor_distros; do
+			for ctor_machine in $ctor_machines; do
+				for ctor_toolchain in $ctor_toolchains; do
+					build $ctor_feature $ctor_distro $ctor_machine $ctor_toolchain
+					if test $? -ne 0; then return 1; fi
 				done
 			done
 		done
 	done
+	return 0
 }
 
 build()
@@ -35,25 +75,28 @@ build()
 	distro=$2
 	machine=$3
 	toolchain=$4
-	stage=$5
-
 	dist_name=$(echo $distro | cut -d"-" -f1)
 	dist_version=$(echo $distro | cut -d"-" -f2)
+	runner_name=$(echo $RUNNER_NAME | cut -d"." -f1)
+	runner_num=$(echo $RUNNER_NAME | cut -d"." -f2)
 
-	args=""
+	args="$ctor_docker_build_args"
 	args="$args --compress=true"
-	args="$args --build-arg acct=$ACCT"
-	args="$args --build-arg repo=$REPO"
-	args="$args --build-arg ctor_url=$CTOR_URL"
+
+	if test ! -z "$runner_num"; then
+		cpu_num=$(expr $runner_num % $(nproc))
+		args="$args --cpuset-cpus=${cpu_num}"
+	fi
+
+	args="$args --build-arg acct=${ctor_acct}"
+	args="$args --build-arg repo=${ctor_repo}"
+	args="$args --build-arg ctor_url=${ctor_url}"
 	args="$args --build-arg dist_name=${dist_name}"
 	args="$args --build-arg dist_version=${dist_version}"
-	args="$args --build-arg feature=${feature}"
 	args="$args --build-arg machine=${machine}"
+	args="$args --build-arg feature=${feature}"
 
 	args_dist $dist_name $dist_version
-	if test $? -ne 0; then return 1; fi
-
-	args_toolchain $toolchain $dist_name $dist_version
 	if test $? -ne 0; then return 1; fi
 
 	args_machine $machine
@@ -62,15 +105,42 @@ build()
 	args_platform $machine
 	if test $? -ne 0; then return 1; fi
 
-	# Intermediate stage build; usually cached from prior iteration.
-	tag="$ACCT/$REPO:${distro}-${feature}-${machine}"
-	cmd="$args -t $tag $BASEDIR/${dist_name}/${feature}"
-	docker build $cmd
+	if test $toolchain != "false"; then
+		args_toolchain $toolchain $dist_name $dist_version
+		if test $? -ne 0; then return 1; fi
+	fi
 
-	# Leaf stage build; unique to each iteration.
-	tag="$ACCT/$REPO:${distro}-${feature}-${stage}-${toolchain}-${machine}"
-	cmd="$args -t $tag $BASEDIR/${dist_name}/${stage}"
-	docker build $cmd
+	if test $mode = "test"; then
+		cmd=$(which echo)
+	else
+		cmd=$(which docker)
+	fi
+
+	# Intermediate stage build; usually cached from prior iteration.
+	tag="$ctor_acct/$ctor_repo:${distro}-${feature}-${machine}"
+	arg="$args -t $tag $BASEDIR/${dist_name}/${feature}"
+	eval "$cmd build $arg"
+	if test $? -ne 0; then return 1; fi
+	if test $stage = $feature; then return 0; fi
+	if test $toolchain = "false"; then return 0; fi
+
+	# Leaf build; unique to each iteration.
+	tag="$ctor_acct/$ctor_repo:${distro}-${feature}-built-${toolchain}-${machine}"
+	arg="$args -t $tag $BASEDIR/${dist_name}/built"
+	eval "$cmd build $arg"
+	if test $? -ne 0; then return 1; fi
+	if test $stage = "built"; then return 0; fi
+
+	# Test built;
+	arg="$args $BASEDIR/${dist_name}/test"
+	eval "$cmd build $arg"
+	if test $? -ne 0; then return 1; fi
+	if test $stage = "test"; then return 0; fi
+
+	# Push built
+	eval "$cmd push $tag"
+	if test $? -ne 0; then return 1; fi
+
 	return 0
 }
 
