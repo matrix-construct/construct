@@ -124,6 +124,9 @@ github_find_party(const json::object &content);
 static std::pair<json::string, json::string>
 github_find_repo(const json::object &content);
 
+static ircd::m::event::id::buf
+github_find_push_event_id(const m::room &, const m::user::id &, const string_view &);
+
 static bool
 github_handle__milestone(std::ostream &,
                          const json::object &content);
@@ -1404,68 +1407,15 @@ github_handle__status(std::ostream &out,
 		content["state"]
 	};
 
-	// Find the message resulting from the push and react with the status.
-	m::event::id::buf push_event_id;
+	const json::string &commit_hash
 	{
-		const json::string &commit_hash
-		{
-			content["sha"]
-		};
+		content["sha"]
+	};
 
-		m::room::events it
-		{
-			_webhook_room
-		};
-
-		static const auto type_match
-		{
-			[](const string_view &type) noexcept
-			{
-				return type == "m.room.message";
-			}
-		};
-
-		const auto user_match
-		{
-			[&_webhook_user](const string_view &sender) noexcept
-			{
-				return sender && sender == _webhook_user;
-			}
-		};
-
-		const auto content_match
-		{
-			[&commit_hash](const json::object &content)
-			{
-				const json::string &body
-				{
-					content["body"]
-				};
-
-				return has(body, "push") && has(body, commit_hash);
-			}
-		};
-
-		// Limit the search to a maximum of recent messages from the
-		// webhook user and total messages so we don't run out of control
-		// and scan the whole room history.
-		int lim[2] { 512, 32 };
-		for(; it && lim[0] > 0 && lim[1] > 0; --it, --lim[0])
-		{
-			if(!m::query(std::nothrow, it.event_idx(), "sender", user_match))
-				continue;
-
-			--lim[1];
-			if(!m::query(std::nothrow, it.event_idx(), "type", type_match))
-				continue;
-
-			if(!m::query(std::nothrow, it.event_idx(), "content", content_match))
-				continue;
-
-			push_event_id = m::event_id(std::nothrow, it.event_idx());
-			break;
-		}
-	}
+	const auto push_event_id
+	{
+		github_find_push_event_id(_webhook_room, _webhook_user, commit_hash)
+	};
 
 	if(push_event_id) switch(hash(state))
 	{
@@ -1485,7 +1435,6 @@ github_handle__status(std::ostream &out,
 			m::annotate(_webhook_room, _webhook_user, push_event_id, "🟢");
 			break;
 	}
-
 
 	if(!webhook_status_verbose) switch(hash(state))
 	{
@@ -1663,6 +1612,64 @@ github_handle__ping(std::ostream &out,
 	    << "</code></pre>";
 
 	return true;
+}
+
+// Find the message resulting from the push and react with the status.
+ircd::m::event::id::buf
+github_find_push_event_id(const m::room &room,
+                          const m::user::id &user_id,
+                          const string_view &commit_hash)
+{
+	const auto type_match
+	{
+		[](const string_view &type) noexcept
+		{
+			return type == "m.room.message";
+		}
+	};
+
+	const auto user_match
+	{
+		[&user_id](const string_view &sender) noexcept
+		{
+			return sender && sender == user_id;
+		}
+	};
+
+	const auto content_match
+	{
+		[&commit_hash](const json::object &content)
+		{
+			const json::string &body
+			{
+				content["body"]
+			};
+
+			return has(body, "push") && has(body, commit_hash);
+		}
+	};
+
+	// Limit the search to a maximum of recent messages from the
+	// webhook user and total messages so we don't run out of control
+	// and scan the whole room history.
+	int lim[2] { 512, 32 };
+	m::room::events it{room};
+	for(; it && lim[0] > 0 && lim[1] > 0; --it, --lim[0])
+	{
+		if(!m::query(std::nothrow, it.event_idx(), "sender", user_match))
+			continue;
+
+		--lim[1];
+		if(!m::query(std::nothrow, it.event_idx(), "type", type_match))
+			continue;
+
+		if(!m::query(std::nothrow, it.event_idx(), "content", content_match))
+			continue;
+
+		return m::event_id(std::nothrow, it.event_idx());
+	}
+
+	return {};
 }
 
 std::pair<json::string, json::string>
