@@ -128,6 +128,9 @@ static ircd::m::event::id::buf
 github_find_push_event_id(const m::room &, const m::user::id &, const string_view &);
 
 static bool
+github_handle__dependabot_alert(std::ostream &,
+                                const json::object &content);
+
 github_handle__milestone(std::ostream &,
                          const json::object &content);
 
@@ -276,6 +279,8 @@ github_handle(client &client,
 			github_handle__gollum(out, request.content):
 		type == "milestone"?
 			github_handle__milestone(out, request.content):
+		type == "dependabot_alert"?
+			github_handle__dependabot_alert(out, request.content):
 
 		true // unhandled will just show heading
 	};
@@ -387,6 +392,75 @@ github_heading(std::ostream &out,
 	    << "</a>";
 
 	return out;
+}
+
+bool
+github_handle__dependabot_alert(std::ostream &out,
+                                const json::object &content)
+{
+	const json::string
+	action{content["action"]},
+	url{content["html_url"]};
+
+	const json::object
+	alert{content["alert"]},
+	advise{alert["security_advisory"]},
+	vuln{alert["security_vulnerability"]},
+	dep{alert["dependency"]},
+	pkg{dep["package"]};
+
+	const json::string
+	ghsa{advise["ghsa_id"]},
+	cve{advise["cve_id"]},
+	summary{advise["summary"]},
+	desc{advise["description"]},
+	severity{advise["severity"]},
+	name{pkg["name"]},
+	path{dep["manifest_path"]};
+
+	out
+	<< " <a href=" << alert["html_url"] << ">"
+	<< "<b>"
+	<< summary
+	<< "</b>"
+	<< "</a>"
+	<< "<br>🚨 "
+	<< "<b>"
+	<< cve
+	<< "</b>"
+	<< " "
+	<< "<b>"
+	<< ghsa
+	<< "</b>"
+	<< " severity "
+	<< severity
+	<< " 🚨<br>"
+	;
+
+	out
+	<< "<blockquote>"
+	;
+
+	static const auto delim("\\n");
+	ircd::tokens(desc, delim, [&out]
+	(const string_view &line)
+	{
+		out << line << "<br>";
+	});
+
+	out
+	<< "</blockquote>"
+	;
+
+	if(path)
+		out
+		<< "<pre>"
+		<< path
+		<< "</pre>"
+		<< "<br>"
+		;
+
+	return true;
 }
 
 bool
