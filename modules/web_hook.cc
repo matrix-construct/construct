@@ -131,6 +131,23 @@ static bool
 github_handle__dependabot_alert(std::ostream &,
                                 const json::object &content);
 
+static bool
+github_handle__check_suite(std::ostream &,
+                           const json::object &content);
+
+static bool
+github_handle__check_run(std::ostream &,
+                         const json::object &content);
+
+static bool
+github_handle__workflow_job(std::ostream &,
+                            const json::object &content);
+
+static bool
+github_handle__workflow_run(std::ostream &,
+                            const json::object &content);
+
+static bool
 github_handle__milestone(std::ostream &,
                          const json::object &content);
 
@@ -281,6 +298,14 @@ github_handle(client &client,
 			github_handle__milestone(out, request.content):
 		type == "dependabot_alert"?
 			github_handle__dependabot_alert(out, request.content):
+		type == "workflow_run"?
+			github_handle__workflow_run(out, request.content):
+		type == "workflow_job"?
+			github_handle__workflow_job(out, request.content):
+		type == "check_run"?
+			github_handle__check_run(out, request.content):
+		type == "check_suite"?
+			github_handle__check_suite(out, request.content):
 
 		true // unhandled will just show heading
 	};
@@ -374,8 +399,23 @@ github_heading(std::ostream &out,
 		github_find_issue_number(content)
 	};
 
+	const json::object workflow
+	{
+		content.has("workflow_run")?
+			content["workflow_run"]:
+			content["workflow_job"]
+	};
+
+	const json::string
+	workflow_name{workflow["workflow_name"]},
+	job_name{workflow["name"]};
+
 	if(issue_number)
 		out << " <b>#" << issue_number << "</b>";
+	else if(workflow_name && job_name)
+		out << " job <b>" << workflow_name << "</b>";
+	else if(job_name)
+		out << " job <b>" << job_name << "</b>";
 	else
 		out << " " << type;
 
@@ -461,6 +501,500 @@ github_handle__dependabot_alert(std::ostream &out,
 		;
 
 	return true;
+}
+
+// Find the message resulting from the push and react with the status.
+static ircd::m::event::id::buf
+github_find_push_reaction_id(const m::room &room,
+                             const m::user::id &user_id,
+                             const m::event::id &push_event_id,
+                             const string_view &label)
+{
+	const auto type_match
+	{
+		[](const string_view &type) noexcept
+		{
+			return type == "m.reaction";
+		}
+	};
+
+	const auto user_match
+	{
+		[&user_id](const string_view &sender) noexcept
+		{
+			return sender && sender == user_id;
+		}
+	};
+
+	const auto content_match
+	{
+		[&push_event_id, &label](const json::object &content)
+		{
+			const json::object relates_to
+			{
+				content["m.relates_to"]
+			};
+
+			const json::string event_id
+			{
+				relates_to["event_id"]
+			};
+
+			const json::string key
+			{
+				relates_to["key"]
+			};
+
+			return event_id == push_event_id && endswith(key, label);
+		}
+	};
+
+	// Limit the search to a maximum of recent messages from the
+	// webhook user and total messages so we don't run out of control
+	// and scan the whole room history.
+	int lim[2] { 768, 384 };
+	m::room::events it{room};
+	for(; it && lim[0] > 0 && lim[1] > 0; --it, --lim[0])
+	{
+		if(!m::query(std::nothrow, it.event_idx(), "sender", user_match))
+			continue;
+
+		--lim[1];
+		if(!m::query(std::nothrow, it.event_idx(), "type", type_match))
+			continue;
+
+		if(!m::query(std::nothrow, it.event_idx(), "content", content_match))
+			continue;
+
+		return m::event_id(std::nothrow, it.event_idx());
+	}
+
+	return {};
+}
+
+// Find the message resulting from the push and react with the status.
+static ircd::m::event::id::buf
+github_find_job_table(const m::room &room,
+                      const m::user::id &user_id,
+                      const string_view &str)
+{
+	const auto type_match
+	{
+		[](const string_view &type) noexcept
+		{
+			return type == "m.room.message";
+		}
+	};
+
+	const auto user_match
+	{
+		[&user_id](const string_view &sender) noexcept
+		{
+			return sender && sender == user_id;
+		}
+	};
+
+	const auto content_match
+	{
+		[&str](const json::object &content)
+		{
+			const json::string &body
+			{
+				content["body"]
+			};
+
+			return has(body, str);
+		}
+	};
+
+	// Limit the search to a maximum of recent messages from the
+	// webhook user and total messages so we don't run out of control
+	// and scan the whole room history.
+	int lim[2] { 768, 384 };
+	m::room::events it{room};
+	for(; it && lim[0] > 0 && lim[1] > 0; --it, --lim[0])
+	{
+		if(!m::query(std::nothrow, it.event_idx(), "sender", user_match))
+			continue;
+
+		--lim[1];
+		if(!m::query(std::nothrow, it.event_idx(), "type", type_match))
+			continue;
+
+		if(!m::query(std::nothrow, it.event_idx(), "content", content_match))
+			continue;
+
+		return m::event_id(std::nothrow, it.event_idx());
+	}
+
+	return {};
+}
+
+bool
+github_handle__workflow_run(std::ostream &out,
+                            const json::object &content)
+{
+	const json::object
+	workflow{content["workflow"]},
+	workflow_run{content["workflow_run"]};
+
+	const json::string
+	action{content["action"]},
+	title{workflow_run["display_title"]},
+	status{workflow_run["status"]},
+	conclusion{workflow_run["conclusion"]},
+	url{workflow_run["html_url"]},
+	name{workflow_run["name"]},
+	head_sha{workflow_run["head_sha"]},
+	created_at{workflow_run["created_at"]},
+	updated_at{workflow_run["updated_at"]},
+	run_started_at{workflow_run["run_started_at"]},
+	run_id{workflow_run["id"]};
+
+	const auto _webhook_room_id
+	{
+		m::room_id(string_view(webhook_room))
+	};
+
+	const m::user::id::buf _webhook_user
+	{
+		string_view{webhook_user}, my_host()
+	};
+
+	const m::room _webhook_room
+	{
+		_webhook_room_id
+	};
+
+	const auto push_event_id
+	{
+		github_find_push_event_id(_webhook_room, _webhook_user, head_sha)
+	};
+
+	const auto &stage
+	{
+		workflow_run["conclusion"] == json::literal_null?
+			status: conclusion
+	};
+
+	string_view annote;
+	switch(hash(stage))
+	{
+		case "queued"_:        annote = "🔵"_sv;  break;
+		case "in_progress"_:   annote = "🟡"_sv;  break;
+		case "success"_:       annote = "🟢"_sv;  break;
+		case "failure"_:       annote = "🔴"_sv;  break;
+		case "skipped"_:       annote = "⭕"_sv;  break;
+		case "cancelled"_:     annote = "⭕"_sv;  break;
+		default:               annote = "❓️"_sv;  break;
+	}
+
+	char buf[64] {0};
+	annote = ircd::strlcpy(buf, annote);
+	annote = ircd::strlcat(buf, " "_sv);
+	annote = ircd::strlcat(buf, name);
+
+	const auto reaction_id
+	{
+		push_event_id && action != "requested"? // skip search on first action
+			github_find_push_reaction_id(_webhook_room, _webhook_user, push_event_id, name):
+			m::event::id::buf{}
+	};
+
+	if(reaction_id)
+		m::redact(_webhook_room, _webhook_user, reaction_id, "status change");
+
+	m::annotate(_webhook_room, _webhook_user, push_event_id, annote);
+
+	bool outputs{false};
+	if(action == "requested" && conclusion == "failure")
+	{
+		outputs = true;
+		out
+		<< "<br>"
+		<< "<font data-mx-bg-color=\"#CC0000\" color=\"#FFFFFF\">"
+		<< "&nbsp;"
+		<< "&nbsp;"
+		<< "<b>"
+		<< name
+		<< "</b>"
+		<< "&nbsp;"
+		<< "&nbsp;"
+		<< "</font>"
+		<< " failed "
+		<< "<a href=\""
+		<< url
+		<< "\">"
+		<< "</a>"
+		;
+	}
+
+	return outputs;
+}
+
+bool
+github_handle__workflow_job(std::ostream &out,
+                            const json::object &content)
+{
+	const json::object workflow_job
+	{
+		content["workflow_job"]
+	};
+
+	const json::string
+	action{content["action"]},
+	flow_name{workflow_job["workflow_name"]},
+	job_name{workflow_job["name"]},
+	url{workflow_job["html_url"]},
+	status{workflow_job["status"]},
+	conclusion{workflow_job["conclusion"]},
+	head_sha{workflow_job["head_sha"]},
+	started_at{workflow_job["started_at"]},
+	completed_at{workflow_job["completed_at"]},
+	run_id{workflow_job["run_id"]},
+	job_id{workflow_job["id"]};
+
+	const json::array steps
+	{
+		workflow_job["steps"]
+	};
+
+	const auto _webhook_room_id
+	{
+		m::room_id(string_view(webhook_room))
+	};
+
+	const m::user::id::buf _webhook_user
+	{
+		string_view{webhook_user}, my_host()
+	};
+
+	const m::room _webhook_room
+	{
+		_webhook_room_id
+	};
+
+	const auto &stage
+	{
+		workflow_job["conclusion"] == json::literal_null?
+			status: conclusion
+	};
+
+	string_view annote;
+	switch(hash(stage))
+	{
+		case "queued"_:        annote = "🟦"_sv;  break;
+		case "in_progress"_:   annote = "🟨"_sv;  break;
+		case "success"_:       annote = "🟩"_sv;  break;
+		case "failure"_:       annote = "🟥"_sv;  break;
+		case "skipped"_:       annote = "⬜️"_sv;  break;
+		case "cancelled"_:     annote = "⬛️"_sv;  break;
+		default:               annote = "❓️"_sv;  break;
+	}
+
+	const fmt::bsprintf<96> alt
+	{
+		"job %s status table", run_id
+	};
+
+	const fmt::bsprintf<96> alt_up
+	{
+		"job %s status update", run_id
+	};
+
+	// slow this bird down
+	static ctx::mutex mutex;
+	const std::unique_lock lock
+	{
+		mutex
+	};
+
+	const auto orig_table_id
+	{
+		github_find_job_table(_webhook_room, _webhook_user, alt)
+	};
+
+	const auto last_table_id
+	{
+		github_find_job_table(_webhook_room, _webhook_user, alt_up)
+	};
+
+	const unique_mutable_buffer buf
+	{
+		32_KiB
+	};
+
+	if(orig_table_id)
+	{
+		const auto old_content
+		{
+			m::get(last_table_id?: orig_table_id, "content")
+		};
+
+		const json::string old_tab
+		{
+			json::object(old_content)["formatted_body"]
+		};
+
+		const string_view td
+		{
+			between(old_tab, "<td>", "</td>")
+		};
+
+		char headbuf[512] {0};
+		std::stringstream heading;
+		pubsetbuf(heading, headbuf);
+		github_heading(heading, "push", content);
+
+		string_view tab;
+		tab = ircd::strlcpy(buf, view(heading, headbuf));
+		tab = ircd::strlcat(buf, "<table><tr><td>");
+
+		const fmt::bsprintf<512> expect
+		{
+			"<a href=\\\"%s\\\">", url
+		};
+
+		bool estab(false);
+		tokens(td, "​"_sv, [&]
+		(const string_view &cell)
+		{
+			if(!startswith(cell, expect))
+			{
+				tab = ircd::strlcat(buf, cell);
+				tab = ircd::strlcat(buf, "​"_sv);
+				return;
+			}
+
+			tab = ircd::strlcat(buf, "<a href=\"");
+			tab = ircd::strlcat(buf, url);
+			tab = ircd::strlcat(buf, "\">");
+			tab = ircd::strlcat(buf, annote);
+			tab = ircd::strlcat(buf, "</a>");
+			tab = ircd::strlcat(buf, "​"_sv);
+			estab = true;
+		});
+
+		if(!estab)
+		{
+			tab = ircd::strlcat(buf, "<a href=\"");
+			tab = ircd::strlcat(buf, url);
+			tab = ircd::strlcat(buf, "\">");
+			tab = ircd::strlcat(buf, annote);
+			tab = ircd::strlcat(buf, "</a>");
+			tab = ircd::strlcat(buf, "​"_sv);
+		}
+
+		tab = ircd::strlcat(buf, "</td></tr></table>");
+
+		m::message(_webhook_room, _webhook_user, json::members
+		{
+			{ "body", alt_up },
+			{ "msgtype", "m.notice" },
+			{ "format", "org.matrix.custom.html" },
+			{ "formatted_body", tab },
+			{ "m.new_content", json::members
+			{
+				{ "body", alt_up },
+				{ "msgtype", "m.notice" },
+				{ "format", "org.matrix.custom.html" },
+				{ "formatted_body", tab },
+			}},
+			{ "m.relates_to", json::members
+			{
+				{ "event_id", orig_table_id },
+				{ "rel_type", "m.replace" },
+			}}
+		});
+	} else {
+
+		char headbuf[512] {0};
+		std::stringstream heading;
+		pubsetbuf(heading, headbuf);
+		github_heading(heading, "push", content);
+
+		string_view tab;
+		tab = ircd::strlcpy(buf, view(heading, headbuf));
+		tab = ircd::strlcat(buf, "<table><tr><td>");
+
+		tab = ircd::strlcat(buf, "<a href=\"");
+		tab = ircd::strlcat(buf, url);
+		tab = ircd::strlcat(buf, "\">");
+		tab = ircd::strlcat(buf, annote);
+		tab = ircd::strlcat(buf, "</a>");
+		tab = ircd::strlcat(buf, "​"_sv);
+
+		tab = ircd::strlcat(buf, "</td></tr></table>");
+
+		m::msghtml(_webhook_room, _webhook_user, tab, alt);
+	}
+
+	bool outputs{false};
+	if(conclusion == "failure")
+	{
+		outputs = true;
+		out
+		<< "<br>"
+		<< "<font data-mx-bg-color=\"#CC0000\" color=\"#FFFFFF\">"
+		<< "&nbsp;"
+		<< "&nbsp;"
+		<< "<b>"
+		<< flow_name
+		<< "</b>"
+		<< "&nbsp;"
+		<< "&nbsp;"
+		<< "</font>"
+		<< " failed "
+		<< "<a href=\""
+		<< url
+		<< "\">"
+		<< "<b>"
+		<< job_name
+		<< "</b>"
+		<< "</a>"
+		;
+	}
+
+	return outputs;
+}
+
+bool
+github_handle__check_run(std::ostream &out,
+                         const json::object &content)
+{
+	const json::string action
+	{
+		content["action"]
+	};
+
+	const json::object check_run
+	{
+		content["check_run"]
+	};
+
+	const json::object check_suite
+	{
+		check_run["check_suite"]
+	};
+
+	return false;
+}
+
+bool
+github_handle__check_suite(std::ostream &out,
+                           const json::object &content)
+{
+	const json::string action
+	{
+		content["action"]
+	};
+
+	const json::object check_suite
+	{
+		content["check_suite"]
+	};
+
+	return false;
 }
 
 bool
@@ -1726,7 +2260,7 @@ github_find_push_event_id(const m::room &room,
 	// Limit the search to a maximum of recent messages from the
 	// webhook user and total messages so we don't run out of control
 	// and scan the whole room history.
-	int lim[2] { 512, 32 };
+	int lim[2] { 768, 384 };
 	m::room::events it{room};
 	for(; it && lim[0] > 0 && lim[1] > 0; --it, --lim[0])
 	{
@@ -1846,6 +2380,22 @@ github_find_commit_hash(const json::object &content)
 	const json::object prhead{pr["head"]};
 	if(prhead["sha"])
 		return prhead["sha"];
+
+	const json::object workflow_run{content["workflow_run"]};
+	if(workflow_run["head_sha"])
+		return workflow_run["head_sha"];
+
+	const json::object workflow_job{content["workflow_job"]};
+	if(workflow_job["head_sha"])
+		return workflow_job["head_sha"];
+
+	const json::object check_run{content["check_run"]};
+	if(check_run["head_sha"])
+		return check_run["head_sha"];
+
+	const json::object check_suite{content["check_suite"]};
+	if(check_suite["head_sha"])
+		return check_suite["head_sha"];
 
 	return {};
 }
