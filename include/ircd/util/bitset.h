@@ -107,6 +107,7 @@ constexpr void
 ircd::util::bitset<N>::set(const size_t pos,
                            const bool val)
 {
+	reset(pos);
 	buf[byte(pos)] |= word(val) << bit(pos);
 }
 
