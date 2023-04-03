@@ -24,7 +24,7 @@ namespace ircd::simd
 /// T = inner aligned type
 template<class T>
 struct
-[[using clang: internal_linkage, nodebug]]
+[[using clang: internal_linkage]]
 [[using gnu: packed, aligned(1), visibility("internal")]]
 ircd::simd::unaligned
 {
