@@ -151,7 +151,7 @@ namespace ircd::http::parser
 	const rule<string_view> reason     { str                                             ,"reason" };
 
 	const rule<string_view> head_key   { raw[+(char_ - (illegal | ws | colon))]        ,"head key" };
-	const rule<string_view> head_val   { str                                         ,"head value" };
+	const rule<string_view> head_val   { -str                                        ,"head value" };
 	const rule<http::header> header    { head_key >> *ws >> colon >> *ws >> head_val     ,"header" };
 	const rule<> headers               { header % (*ws >> CRLF)                         ,"headers" };
 
