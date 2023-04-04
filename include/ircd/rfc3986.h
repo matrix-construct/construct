@@ -70,6 +70,7 @@ struct ircd::rfc3986::uri
 	string_view path;
 	string_view query;
 	string_view fragment;
+	string_view resource() const; // path and query string as one
 
 	uri(const string_view &);
 	uri() = default;
@@ -178,4 +179,13 @@ namespace ircd::rfc3986
 	// convenience: parser::remote
 	void valid_remote(const string_view &);
 	bool valid_remote(std::nothrow_t, const string_view &);
+}
+
+inline ircd::string_view
+ircd::rfc3986::uri::resource()
+const
+{
+	return query?
+		string_view(begin(path), end(query)):
+		path;
 }
