@@ -32,6 +32,7 @@ struct ircd::buffer::unique_buffer
 	unique_buffer() = default;
 	unique_buffer(const size_t &size, const size_t &align = 0);
 	explicit unique_buffer(const const_buffer &);
+	template<class T> unique_buffer(unique_buffer<T> &&) noexcept;
 	unique_buffer(unique_buffer &&) noexcept;
 	unique_buffer(const unique_buffer &) = delete;
 	unique_buffer &operator=(unique_buffer &&) & noexcept;
@@ -70,6 +71,19 @@ ircd::buffer::unique_buffer<buffer_type>::unique_buffer(const size_t &size,
 	size
 }
 {}
+
+template<class buffer_type>
+template<class other_type>
+inline
+ircd::buffer::unique_buffer<buffer_type>::unique_buffer(unique_buffer<other_type> &&other)
+noexcept
+:buffer_type
+{
+	other.release()
+}
+{
+	assert(std::get<0>(other) == nullptr);
+}
 
 template<class buffer_type>
 inline
