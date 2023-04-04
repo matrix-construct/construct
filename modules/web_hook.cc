@@ -509,76 +509,156 @@ github_handle__dependabot_alert(std::ostream &out,
 	return true;
 }
 
-// Find the message resulting from the push and react with the status.
-static ircd::m::event::id::buf
-github_find_push_reaction_id(const m::room &room,
-                             const m::user::id &user_id,
-                             const m::event::id &push_event_id,
-                             const string_view &label)
+static size_t
+clear_reactions(const m::room &room,
+                const m::user::id &user_id,
+                const m::event::id &event_id)
 {
-	const auto type_match
+	const m::relates relations
 	{
-		[](const string_view &type) noexcept
-		{
-			return type == "m.reaction";
-		}
+		index(event_id)
 	};
 
 	const auto user_match
 	{
-		[&user_id](const string_view &sender) noexcept
+		[&user_id](const auto &sender)
 		{
-			return sender && sender == user_id;
+			return sender == user_id;
 		}
 	};
 
-	const auto content_match
+	size_t ret(0);
+	relations.for_each("m.annotation", [&]
+	(const auto &ref_idx, const json::object &content, const m::relates_to &relates)
 	{
-		[&push_event_id, &label](const json::object &content)
-		{
-			const json::object relates_to
-			{
-				content["m.relates_to"]
-			};
+		if(!m::query(ref_idx, "sender", user_match))
+			return true;
 
-			const json::string event_id
-			{
-				relates_to["event_id"]
-			};
+		if(m::redacted(ref_idx))
+			return true;
 
-			const json::string key
-			{
-				relates_to["key"]
-			};
+		const auto ref_id(m::event_id(ref_idx));
+		m::redact(room, user_id, ref_id, "cleared");
+		++ret;
+		return true;
+	});
 
-			return event_id == push_event_id && endswith(key, label);
-		}
-	};
-
-	// Limit the search to a maximum of recent messages from the
-	// webhook user and total messages so we don't run out of control
-	// and scan the whole room history.
-	int lim[2] { 768, 384 };
-	m::room::events it{room};
-	for(; it && lim[0] > 0 && lim[1] > 0; --it, --lim[0])
-	{
-		if(!m::query(std::nothrow, it.event_idx(), "sender", user_match))
-			continue;
-
-		--lim[1];
-		if(!m::query(std::nothrow, it.event_idx(), "type", type_match))
-			continue;
-
-		if(!m::query(std::nothrow, it.event_idx(), "content", content_match))
-			continue;
-
-		return m::event_id(std::nothrow, it.event_idx());
-	}
-
-	return {};
+	return ret;
 }
 
-// Find the message resulting from the push and react with the status.
+template<class closure>
+static ircd::m::event::id::buf
+_find_reaction_id(const m::room &room,
+                 const m::user::id &user_id,
+                 const m::event::id &event_id,
+                 closure&& func)
+{
+	const m::relates relations
+	{
+		index(event_id)
+	};
+
+	const auto user_match
+	{
+		[&user_id](const auto &sender)
+		{
+			return sender == user_id;
+		}
+	};
+
+	m::event::id::buf ret;
+	relations.for_each("m.annotation", [&func, &user_match, &ret]
+	(const auto &ref_idx, const json::object &content, const m::relates_to &relates)
+	{
+		if(!m::query(ref_idx, "sender", user_match))
+			return true;
+
+		if(m::redacted(ref_idx))
+			return true;
+
+		if(func(relates.source))
+		{
+			ret = m::event_id(ref_idx);
+			return false;
+		}
+		else return true;
+	});
+
+	return ret;
+}
+
+static ircd::m::event::id::buf
+find_reaction_id(const m::room &room,
+                 const m::user::id &user_id,
+                 const m::event::id &event_id,
+                 const string_view &label)
+{
+	return _find_reaction_id(room, user_id, event_id, [&label]
+	(const auto &relates)
+	{
+		const json::string key
+		{
+			relates["key"]
+		};
+
+		return key == label;
+	});
+}
+
+static ircd::m::event::id::buf
+find_reaction_id_endswith(const m::room &room,
+                          const m::user::id &user_id,
+                          const m::event::id &event_id,
+                          const string_view &label)
+{
+	return _find_reaction_id(room, user_id, event_id, [&]
+	(const auto &relates)
+	{
+		const json::string key
+		{
+			relates["key"]
+		};
+
+		return endswith(key, label);
+	});
+}
+
+static bool
+clear_reaction(const m::room &room,
+               const m::user::id &user_id,
+               const m::event::id &event_id,
+               const string_view &label)
+{
+	const auto reaction_id
+	{
+		find_reaction_id(room, user_id, event_id, label)
+	};
+
+	if(!reaction_id)
+		return false;
+
+	m::redact(room, user_id, reaction_id, "cleared");
+	return true;
+}
+
+static bool
+clear_reaction_endswith(const m::room &room,
+                        const m::user::id &user_id,
+                        const m::event::id &event_id,
+                        const string_view &label)
+{
+	const auto reaction_id
+	{
+		find_reaction_id_endswith(room, user_id, event_id, label)
+	};
+
+	if(!reaction_id)
+		return false;
+
+	m::redact(room, user_id, reaction_id, "cleared");
+	return true;
+}
+
 static ircd::m::event::id::buf
 github_find_job_table(const m::room &room,
                       const m::user::id &user_id,
@@ -736,6 +816,53 @@ github_request(unique_const_buffer &out,
 	return github_request(content, out, method, repo, fmt, std::forward<args>(a)...);
 }
 
+static bool
+github_run_for_each_jobs(const string_view &repo,
+                         const string_view &run_id,
+                         const function_bool<json::object> &closure)
+{
+	unique_const_buffer buf;
+	const json::object response
+	{
+		github_request(buf, "GET", repo, "actions/runs/%s/jobs", run_id)
+	};
+
+	const json::array jobs
+	{
+		response["jobs"]
+	};
+
+	for(const json::object job : jobs)
+		if(!closure(job))
+			return false;
+
+	return true;
+}
+
+static void
+github_run_cancel(const string_view &repo,
+                  const string_view &run_id)
+{
+	unique_const_buffer buf;
+	github_request(buf, "POST", repo, "actions/runs/%s/cancel", run_id);
+}
+
+static void
+github_run_rerun(const string_view &repo,
+                 const string_view &run_id)
+{
+	unique_const_buffer buf;
+	github_request(buf, "POST", repo, "actions/runs/%s/rerun", run_id);
+}
+
+static void
+github_run_rerun_failed(const string_view &repo,
+                        const string_view &run_id)
+{
+	unique_const_buffer buf;
+	github_request(buf, "POST", repo, "actions/runs/%s/rerun-failed-jobs", run_id);
+}
+
 bool
 github_handle__workflow_run(std::ostream &out,
                             const json::object &content)
@@ -755,6 +882,7 @@ github_handle__workflow_run(std::ostream &out,
 	created_at{workflow_run["created_at"]},
 	updated_at{workflow_run["updated_at"]},
 	run_started_at{workflow_run["run_started_at"]},
+	attempt{workflow_run["run_attempt"]},
 	run_id{workflow_run["id"]};
 
 	const auto _webhook_room_id
@@ -803,7 +931,7 @@ github_handle__workflow_run(std::ostream &out,
 	const auto reaction_id
 	{
 		push_event_id && action != "requested"? // skip search on first action
-			github_find_push_reaction_id(_webhook_room, _webhook_user, push_event_id, name):
+			find_reaction_id_endswith(_webhook_room, _webhook_user, push_event_id, name):
 			m::event::id::buf{}
 	};
 
@@ -811,6 +939,35 @@ github_handle__workflow_run(std::ostream &out,
 		m::redact(_webhook_room, _webhook_user, reaction_id, "status change");
 
 	m::annotate(_webhook_room, _webhook_user, push_event_id, annote);
+
+	if(status == "completed")
+	{
+		const fmt::bsprintf<128> alt
+		{
+			"job status table %s %s %s",
+			github_repopath(content),
+			run_id,
+			attempt,
+		};
+
+		const auto job_table_id
+		{
+			github_find_job_table(_webhook_room, _webhook_user, alt)
+		};
+
+		if(job_table_id)
+			switch(hash(conclusion))
+			{
+				case "success"_:
+				case "skipped"_:
+					clear_reactions(_webhook_room, _webhook_user, job_table_id);
+					break;
+
+				default:
+					clear_reaction(_webhook_room, _webhook_user, job_table_id, "⭕"_sv);
+					break;
+			}
+	}
 
 	bool outputs{false};
 	if(action == "requested" && conclusion == "failure")
@@ -857,6 +1014,7 @@ github_handle__workflow_job(std::ostream &out,
 	head_sha{workflow_job["head_sha"]},
 	started_at{workflow_job["started_at"]},
 	completed_at{workflow_job["completed_at"]},
+	attempt{workflow_job["run_attempt"]},
 	run_id{workflow_job["run_id"]},
 	job_id{workflow_job["id"]};
 
@@ -898,14 +1056,20 @@ github_handle__workflow_job(std::ostream &out,
 		default:               annote = "❓️"_sv;  break;
 	}
 
-	const fmt::bsprintf<96> alt
+	const fmt::bsprintf<128> alt
 	{
-		"job %s status table", run_id
+		"job status table %s %s %s",
+		github_repopath(content),
+		run_id,
+		attempt,
 	};
 
-	const fmt::bsprintf<96> alt_up
+	const fmt::bsprintf<128> alt_up
 	{
-		"job %s status update", run_id
+		"job status update %s %s %s",
+		github_repopath(content),
+		run_id,
+		attempt,
 	};
 
 	// slow this bird down
@@ -1013,7 +1177,6 @@ github_handle__workflow_job(std::ostream &out,
 			}}
 		});
 	} else {
-
 		char headbuf[512] {0};
 		std::stringstream heading;
 		pubsetbuf(heading, headbuf);
@@ -1032,7 +1195,36 @@ github_handle__workflow_job(std::ostream &out,
 
 		tab = ircd::strlcat(buf, "</td></tr></table>");
 
-		m::msghtml(_webhook_room, _webhook_user, tab, alt);
+		const auto table_event_id
+		{
+			m::msghtml(_webhook_room, _webhook_user, tab, alt)
+		};
+
+		if(table_event_id)
+		{
+			m::annotate(_webhook_room, _webhook_user, table_event_id, "⭕"_sv);
+			m::annotate(_webhook_room, _webhook_user, table_event_id, "🔄"_sv);
+			m::annotate(_webhook_room, _webhook_user, table_event_id, "↪️"_sv);
+		}
+
+		if(lex_cast<uint>(attempt) > 1)
+		{
+			const fmt::bsprintf<128> prior_alt
+			{
+				"job status table %s %s %u",
+				github_repopath(content),
+				run_id,
+				lex_cast<uint>(attempt) - 1,
+			};
+
+			const auto prior_table_id
+			{
+				github_find_job_table(_webhook_room, _webhook_user, prior_alt)
+			};
+
+			if(prior_table_id)
+				clear_reactions(_webhook_room, _webhook_user, prior_table_id);
+		}
 	}
 
 	bool outputs{false};
@@ -1063,6 +1255,111 @@ github_handle__workflow_job(std::ostream &out,
 
 	return outputs;
 }
+
+static void
+github_react_handle(const m::event &event,
+                    m::vm::eval &)
+try
+{
+	if(!webhook_room)
+		return;
+
+	// XXX alias?
+	if(json::get<"room_id"_>(event) != webhook_room)
+		return;
+
+	const m::room room
+	{
+		at<"room_id"_>(event)
+	};
+
+	const m::room::power power
+	{
+		room
+	};
+
+	// XXX ???
+	if(power.level_user(at<"sender"_>(event)) < 50)
+		return;
+
+	const json::object relates_to
+	{
+		json::get<"content"_>(event).get("m.relates_to")
+	};
+
+	const json::string relates_event_id
+	{
+		relates_to["event_id"]
+	};
+
+	const json::string key
+	{
+		relates_to["key"]
+	};
+
+	const auto relates_content
+	{
+		m::get(relates_event_id, "content")
+	};
+
+	const json::string relates_body
+	{
+		json::object{relates_content}.get("body")
+	};
+
+	if(!startswith(relates_body, "job status table "))
+		return;
+
+	const auto suffix
+	{
+		lstrip(relates_body, "job status table ")
+	};
+
+	string_view token[3];
+	ircd::tokens(suffix, ' ', token);
+	const auto &[repopath, run_id, attempt] {token};
+	assert(repopath);
+	assert(run_id);
+	if(!repopath || !run_id)
+		return;
+
+	switch(hash(key))
+	{
+		case hash("⭕"_sv):
+			github_run_cancel(repopath, run_id);
+			break;
+
+		case hash("🔄"_sv):
+			github_run_rerun_failed(repopath, run_id);
+			break;
+
+		case hash("↪️"_sv):
+			github_run_rerun(repopath, run_id);
+			break;
+	}
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"github react handle hook :%s",
+		e.what(),
+	};
+}
+
+static m::hookfn<m::vm::eval &>
+github_react_hook
+{
+	github_react_handle,
+	{
+		{ "_site",   "vm.effect"   },
+		{ "type",    "m.reaction"  },
+	}
+};
 
 bool
 github_handle__check_run(std::ostream &out,
