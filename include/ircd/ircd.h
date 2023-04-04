@@ -107,6 +107,7 @@
 #include "mods/mods.h"
 #include "net/net.h"
 #include "server/server.h"
+#include "rest.h"
 #include "png.h"
 #include "beep.h"
 #include "magick.h"

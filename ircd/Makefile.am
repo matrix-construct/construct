@@ -237,6 +237,7 @@ endif
 libircd_la_SOURCES += server.cc
 libircd_la_SOURCES += client.cc
 libircd_la_SOURCES += resource.cc
+libircd_la_SOURCES += rest.cc
 if JS
 libircd_la_SOURCES += js.cc
 endif
