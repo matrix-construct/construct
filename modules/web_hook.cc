@@ -48,6 +48,12 @@ webhook_status_verbose
 	{ "default",  true                            },
 };
 
+conf::item<std::string>
+webhook_github_token
+{
+	{ "name", "webhook.github.token" }
+};
+
 resource
 webhook_resource
 {
@@ -628,6 +634,106 @@ github_find_job_table(const m::room &room,
 	}
 
 	return {};
+}
+
+static json::string
+github_repopath(const json::object &content)
+{
+	const json::object repository
+	{
+		content.at("repository")
+	};
+
+	const json::string full_name
+	{
+		repository.at("full_name")
+	};
+
+	return full_name;
+}
+
+static json::object
+_github_request(unique_const_buffer &out,
+                const string_view &method,
+                const string_view &url,
+                const string_view &content)
+{
+	char authorization_buf[128];
+	const string_view authorization
+	{
+		fmt::sprintf
+		{
+			authorization_buf, "Bearer %s",
+			string_view{webhook_github_token},
+		}
+	};
+
+	const http::header headers[]
+	{
+		{ "Accept", "application/json; charset=utf-8"  },
+		{ "X-GitHub-Api-Version", "2022-11-28"         },
+		{ "Authorization", authorization               },
+	};
+
+	const auto num_headers
+	{
+		sizeof(headers) / sizeof(http::header)
+		- empty(webhook_github_token)
+	};
+
+	return string_view
+	{
+		rest::request
+		{
+			url,
+			{
+				.method = method,
+				.content = content,
+				.content_type = "application/json; charset=utf-8",
+				.headers = vector_view(headers, num_headers),
+				.out = &out,
+			}
+		}
+	};
+}
+
+template<class... args>
+static json::object
+github_request(const string_view &content,
+               unique_const_buffer &out,
+               const string_view &method,
+               const string_view &repo,
+               const string_view &fmt,
+               args&&... a)
+{
+	char path_buf[384];
+	const string_view path{fmt::sprintf
+	{
+		path_buf, fmt,
+		std::forward<args>(a)...
+	}};
+
+	char url_buf[512];
+	const string_view url{fmt::sprintf
+	{
+		url_buf, "https://api.github.com/repos/%s/%s",
+		repo,
+		path,
+	}};
+
+	return _github_request(out, method, url, content);
+}
+
+template<class... args>
+static json::object
+github_request(unique_const_buffer &out,
+               const string_view &method,
+               const string_view &repo,
+               const string_view &fmt,
+               args&&... a)
+{
+	const auto &content(json::empty_object);
+	return github_request(content, out, method, repo, fmt, std::forward<args>(a)...);
 }
 
 bool
