@@ -48,6 +48,13 @@ webhook_status_verbose
 	{ "default",  true                            },
 };
 
+conf::item<bool>
+webhook_status_errors
+{
+	{ "name",     "webhook.github.status.errors" },
+	{ "default",  true                           },
+};
+
 conf::item<std::string>
 webhook_github_token
 {
@@ -970,7 +977,7 @@ github_handle__workflow_run(std::ostream &out,
 	}
 
 	bool outputs{false};
-	if(action == "requested" && conclusion == "failure")
+	if(action == "requested" && conclusion == "failure" && webhook_status_errors)
 	{
 		outputs = true;
 		out
@@ -1228,7 +1235,7 @@ github_handle__workflow_job(std::ostream &out,
 	}
 
 	bool outputs{false};
-	if(conclusion == "failure")
+	if(conclusion == "failure" && webhook_status_errors)
 	{
 		outputs = true;
 		out
@@ -2877,7 +2884,7 @@ appveyor_handle(client &client,
 // dockerhub
 //
 
-static void
+static bool
 dockerhub_handle_push(std::ostream &out,
                       std::ostream &alt,
                       client &client,
@@ -2909,8 +2916,9 @@ try
 	pubsetbuf(out, buf[0]);
 	pubsetbuf(alt, buf[1]);
 
+	bool output {true};
 	if(request.has("push_data"))
-		dockerhub_handle_push(out, alt, client, request);
+		output = dockerhub_handle_push(out, alt, client, request);
 
 	const auto room_id
 	{
@@ -2934,7 +2942,9 @@ try
 
 	const auto evid
 	{
-		m::msghtml(room_id, user_id, msg, alt_msg, "m.notice")
+		output?
+			m::msghtml(room_id, user_id, msg, alt_msg, "m.notice"):
+			m::event::id::buf{}
 	};
 
 	log::info
@@ -2956,7 +2966,7 @@ catch(const std::exception &e)
 	throw;
 }
 
-void
+bool
 dockerhub_handle_push(std::ostream &out,
                       std::ostream &alt,
                       client &client,
@@ -3009,4 +3019,6 @@ dockerhub_handle_push(std::ostream &out,
 	<< " to "
 	<< tag
 	;
+
+	return bool(webhook_status_verbose);
 }
