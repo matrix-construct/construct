@@ -801,6 +801,18 @@ MACHINE_FLAGS=""
 dnl Initial machine
 machine_arch="native"
 machine_tune="native"
+
+AM_COND_IF([CLANG],
+[
+	AS_IF([test "$CXX_EPOCH" -lt "15"],
+	[
+		AS_IF([test "$host_cpu" = "aarch64"],
+		[
+			machine_arch=""
+		])
+	])
+])
+
 AM_COND_IF([GENERIC],
 [
 	machine_tune="generic"
