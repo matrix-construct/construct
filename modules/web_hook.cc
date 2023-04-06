@@ -851,6 +851,14 @@ github_run_for_each_jobs(const string_view &repo,
 }
 
 static void
+github_run_delete(const string_view &repo,
+                  const string_view &run_id)
+{
+	unique_const_buffer buf;
+	github_request(buf, "DELETE", repo, "actions/runs/%s", run_id);
+}
+
+static void
 github_run_cancel(const string_view &repo,
                   const string_view &run_id)
 {
@@ -1245,6 +1253,7 @@ github_handle__workflow_job(std::ostream &out,
 			m::annotate(_webhook_room, _webhook_user, table_event_id, "⭕"_sv);
 			m::annotate(_webhook_room, _webhook_user, table_event_id, "🔄"_sv);
 			m::annotate(_webhook_room, _webhook_user, table_event_id, "↪️"_sv);
+			m::annotate(_webhook_room, _webhook_user, table_event_id, "🚮"_sv);
 		}
 
 		if(lex_cast<uint>(attempt) > 1)
@@ -1313,13 +1322,18 @@ try
 		at<"room_id"_>(event)
 	};
 
+	const m::user::id user_id
+	{
+		at<"sender"_>(event)
+	};
+
 	const m::room::power power
 	{
 		room
 	};
 
 	// XXX ???
-	if(power.level_user(at<"sender"_>(event)) < 50)
+	if(power.level_user(user_id) < 50)
 		return;
 
 	const json::object relates_to
@@ -1365,6 +1379,11 @@ try
 
 	switch(hash(key))
 	{
+		case hash("🚮"_sv):
+			github_run_delete(repopath, run_id);
+			m::redact(room, user_id, relates_event_id, "deleted");
+			break;
+
 		case hash("⭕"_sv):
 			github_run_cancel(repopath, run_id);
 			break;
