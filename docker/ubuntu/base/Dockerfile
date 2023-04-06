@@ -99,7 +99,7 @@ ENV do_fetch_rocksdb true \
 && eval ${do_install} curl \
 && cd /usr/src \
 && curl -sL ${rocksdb_url} -o rocksdb-${rocksdb_version}.tar.gz \
-&& tar xfvz rocksdb-${rocksdb_version}.tar.gz \
+&& tar xfz rocksdb-${rocksdb_version}.tar.gz \
 && rm rocksdb-${rocksdb_version}.tar.gz \
 && mv /usr/src/rocksdb-${rocksdb_version} /usr/src/rocksdb \
 && cd - \

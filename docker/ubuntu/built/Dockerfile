@@ -43,7 +43,7 @@ RUN true \
 && rmdir -v deps/rocksdb \
 && ln -sv /usr/src/rocksdb deps \
 && ./autogen.sh \
-&& ./configure --enable-generic --with-machine="${machine_spec}" \
+&& (./configure --enable-generic --with-machine="${machine_spec}" || (cat config.log; exit 1)) \
 && make -j `nproc` \
 && make install \
 && cd .. \
