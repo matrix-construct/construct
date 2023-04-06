@@ -102,3 +102,11 @@ const
 {
 	return &this->operator*();
 }
+
+inline bool
+ircd::db::seek(domain::const_iterator_base &it,
+               const string_view &p)
+{
+	it.opts.prefix = true;
+	return seek(static_cast<column::const_iterator_base &>(it), p);
+}

@@ -2377,14 +2377,6 @@ ircd::db::seek(domain::const_iterator_base &it,
 	return seek(static_cast<column::const_iterator_base &>(it), p);
 }
 
-bool
-ircd::db::seek(domain::const_iterator_base &it,
-               const string_view &p)
-{
-	it.opts.prefix = true;
-	return seek(static_cast<column::const_iterator_base &>(it), p);
-}
-
 ircd::db::domain::const_iterator
 ircd::db::domain::begin(const string_view &key,
                         gopts opts)
