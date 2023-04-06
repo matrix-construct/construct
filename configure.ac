@@ -800,7 +800,7 @@ machine_tune="native"
 AM_COND_IF([GENERIC],
 [
 	machine_tune="generic"
-	AS_CASE([$target_cpu],
+	AS_CASE([$host_cpu],
 	[x86_64],
 	[
 		machine_arch="x86-64"
@@ -816,7 +816,7 @@ for feature in $machine; do
 		machine_tune=$(echo $feature | cut -d"=" -f2)
 	else
 		machine_feat="$feature $machine_feat"
-		RB_VAR_PREPEND([MACHINE_FLAGS], ["-m${feature}"])
+		RB_VAR_PREPEND([MACHINE_FLAGS], [-m${feature}])
 	fi
 done
 
@@ -834,18 +834,23 @@ AM_COND_IF_NOT([GENERIC],
 ])
 
 dnl Specific extension underrides
-AS_CASE([$target_cpu],
+AS_CASE([$host_cpu],
 [x86_64],
 [
 	dnl AMD K10's SSE4a doesn't work with valgrind
-	RB_VAR_PREPEND([MACHINE_FLAGS], ["-mno-sse4a"])
+	RB_VAR_PREPEND([MACHINE_FLAGS], [-mno-sse4a])
 ])
 
-RB_VAR_PREPEND([MACHINE_FLAGS], ["-mtune=$machine_tune"])
-RB_VAR_PREPEND([MACHINE_FLAGS], ["-march=$machine_arch"])
+if [[ ! -z "$machine_tune" ]]; then
+	RB_VAR_PREPEND([MACHINE_FLAGS], [-mtune=$machine_tune])
+fi
 
-machine_tuning="${target_cpu} arch=$machine_arch tune=$machine_tune :$machine_feat"
-RB_VAR_PREPEND([CXXFLAGS], ["$MACHINE_FLAGS"])
+if [[ ! -z "$machine_arch" ]]; then
+	RB_VAR_PREPEND([MACHINE_FLAGS], [-march=$machine_arch])
+fi
+
+machine_tuning="${host_cpu} arch=$machine_arch tune=$machine_tune :$machine_feat"
+RB_VAR_PREPEND([CXXFLAGS], [$MACHINE_FLAGS])
 
 dnl Get the target features for this build from gcc into a readable string
 AM_COND_IF([GCC],
