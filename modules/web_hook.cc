@@ -828,20 +828,24 @@ github_run_for_each_jobs(const string_view &repo,
                          const string_view &run_id,
                          const function_bool<json::object> &closure)
 {
-	unique_const_buffer buf;
-	const json::object response
+	for(size_t page(1), i(50); i >= 50; ++page)
 	{
-		github_request(buf, "GET", repo, "actions/runs/%s/jobs", run_id)
-	};
+		unique_const_buffer buf;
+		const json::object response
+		{
+			github_request
+			(
+				buf, "GET", repo, "actions/runs/%s/jobs?per_page=%zu&page=%zu", run_id, i, page
+			)
+		};
 
-	const json::array jobs
-	{
-		response["jobs"]
-	};
-
-	for(const json::object job : jobs)
-		if(!closure(job))
-			return false;
+		i = 0;
+		for(const json::object job : json::array(response["jobs"]))
+			if(!closure(job))
+				return false;
+			else
+				++i;
+	}
 
 	return true;
 }
@@ -1012,7 +1016,14 @@ github_handle__workflow_job(std::ostream &out,
 	};
 
 	const json::string
-	action{content["action"]},
+	action{content["action"]};
+
+	// Ignore queued actions. Instead on the first in_progress we'll pull
+	// all jobs from github at once.
+	if(action == "queued")
+		return false;
+
+	const json::string
 	flow_name{workflow_job["workflow_name"]},
 	job_name{workflow_job["name"]},
 	url{workflow_job["html_url"]},
@@ -1045,23 +1056,27 @@ github_handle__workflow_job(std::ostream &out,
 		_webhook_room_id
 	};
 
-	const auto &stage
+	static const auto annote{[]
+	(const json::object &workflow_job)
 	{
-		workflow_job["conclusion"] == json::literal_null?
-			status: conclusion
-	};
+		const json::string stage
+		{
+			workflow_job["conclusion"] == json::literal_null?
+				workflow_job["status"]:
+				workflow_job["conclusion"]
+		};
 
-	string_view annote;
-	switch(hash(stage))
-	{
-		case "queued"_:        annote = "🟦"_sv;  break;
-		case "in_progress"_:   annote = "🟨"_sv;  break;
-		case "success"_:       annote = "🟩"_sv;  break;
-		case "failure"_:       annote = "🟥"_sv;  break;
-		case "skipped"_:       annote = "⬜️"_sv;  break;
-		case "cancelled"_:     annote = "⬛️"_sv;  break;
-		default:               annote = "❓️"_sv;  break;
-	}
+		switch(hash(stage))
+		{
+			case "queued"_:        return "🟦"_sv;
+			case "in_progress"_:   return "🟨"_sv;
+			case "success"_:       return "🟩"_sv;
+			case "failure"_:       return "🟥"_sv;
+			case "skipped"_:       return "⬜️"_sv;
+			case "cancelled"_:     return "⬛️"_sv;
+			default:               return "❓️"_sv;
+		}
+	}};
 
 	const fmt::bsprintf<128> alt
 	{
@@ -1101,6 +1116,11 @@ github_handle__workflow_job(std::ostream &out,
 		32_KiB
 	};
 
+	char headbuf[512] {0};
+	std::stringstream heading;
+	pubsetbuf(heading, headbuf);
+	github_heading(heading, "push", content);
+
 	if(orig_table_id)
 	{
 		const auto old_content
@@ -1118,49 +1138,57 @@ github_handle__workflow_job(std::ostream &out,
 			between(old_tab, "<td>", "</td>")
 		};
 
-		char headbuf[512] {0};
-		std::stringstream heading;
-		pubsetbuf(heading, headbuf);
-		github_heading(heading, "push", content);
-
-		string_view tab;
-		tab = ircd::strlcpy(buf, view(heading, headbuf));
-		tab = ircd::strlcat(buf, "<table><tr><td>");
-
 		const fmt::bsprintf<512> expect
 		{
 			"<a href=\\\"%s\\\">", url
 		};
 
-		bool estab(false);
-		tokens(td, "​"_sv, [&]
-		(const string_view &cell)
+		const bool exists
 		{
-			if(!startswith(cell, expect))
+			!tokens(td, "​"_sv, [&]
+			(const string_view &cell)
 			{
-				tab = ircd::strlcat(buf, cell);
+				return !startswith(cell, expect); // return false for found
+			})
+		};
+
+		string_view tab;
+		tab = ircd::strlcpy(buf, view(heading, headbuf));
+		tab = ircd::strlcat(buf, "<table><tr><td>");
+
+		if(exists)
+			tokens(td, "​"_sv, [&]
+			(const string_view &cell)
+			{
+				if(!startswith(cell, expect))
+				{
+					tab = ircd::strlcat(buf, cell);
+					tab = ircd::strlcat(buf, "​"_sv);
+					return;
+				}
+
+				tab = ircd::strlcat(buf, "<a href=\"");
+				tab = ircd::strlcat(buf, url);
+				tab = ircd::strlcat(buf, "\">");
+				tab = ircd::strlcat(buf, annote(workflow_job));
+				tab = ircd::strlcat(buf, "</a>");
 				tab = ircd::strlcat(buf, "​"_sv);
-				return;
-			}
+			});
+		else
+			github_run_for_each_jobs(github_repopath(content), run_id, [&]
+			(const json::object &workflow_job)
+			{
+				const json::string
+				url{workflow_job["html_url"]};
 
-			tab = ircd::strlcat(buf, "<a href=\"");
-			tab = ircd::strlcat(buf, url);
-			tab = ircd::strlcat(buf, "\">");
-			tab = ircd::strlcat(buf, annote);
-			tab = ircd::strlcat(buf, "</a>");
-			tab = ircd::strlcat(buf, "​"_sv);
-			estab = true;
-		});
-
-		if(!estab)
-		{
-			tab = ircd::strlcat(buf, "<a href=\"");
-			tab = ircd::strlcat(buf, url);
-			tab = ircd::strlcat(buf, "\">");
-			tab = ircd::strlcat(buf, annote);
-			tab = ircd::strlcat(buf, "</a>");
-			tab = ircd::strlcat(buf, "​"_sv);
-		}
+				tab = ircd::strlcat(buf, "<a href=");
+				tab = ircd::strlcat(buf, workflow_job["html_url"]);
+				tab = ircd::strlcat(buf, ">");
+				tab = ircd::strlcat(buf, annote(workflow_job));
+				tab = ircd::strlcat(buf, "</a>");
+				tab = ircd::strlcat(buf, "​"_sv);
+				return true;
+			});
 
 		tab = ircd::strlcat(buf, "</td></tr></table>");
 
@@ -1183,22 +1211,27 @@ github_handle__workflow_job(std::ostream &out,
 				{ "rel_type", "m.replace" },
 			}}
 		});
-	} else {
-		char headbuf[512] {0};
-		std::stringstream heading;
-		pubsetbuf(heading, headbuf);
-		github_heading(heading, "push", content);
-
+	}
+	else if(json::string(workflow_job["conclusion"]) != "skipped")
+	{
 		string_view tab;
 		tab = ircd::strlcpy(buf, view(heading, headbuf));
 		tab = ircd::strlcat(buf, "<table><tr><td>");
 
-		tab = ircd::strlcat(buf, "<a href=\"");
-		tab = ircd::strlcat(buf, url);
-		tab = ircd::strlcat(buf, "\">");
-		tab = ircd::strlcat(buf, annote);
-		tab = ircd::strlcat(buf, "</a>");
-		tab = ircd::strlcat(buf, "​"_sv);
+		github_run_for_each_jobs(github_repopath(content), run_id, [&]
+		(const json::object &workflow_job)
+		{
+			const json::string
+			url{workflow_job["html_url"]};
+
+			tab = ircd::strlcat(buf, "<a href=");
+			tab = ircd::strlcat(buf, workflow_job["html_url"]);
+			tab = ircd::strlcat(buf, ">");
+			tab = ircd::strlcat(buf, annote(workflow_job));
+			tab = ircd::strlcat(buf, "</a>");
+			tab = ircd::strlcat(buf, "​"_sv);
+			return true;
+		});
 
 		tab = ircd::strlcat(buf, "</td></tr></table>");
 
