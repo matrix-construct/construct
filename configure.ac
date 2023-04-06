@@ -769,16 +769,20 @@ AM_COND_IF([GCC],
 [
 	RB_VAR_PREPEND([CXXFLAGS], ["-fstack-protector-explicit"])
 
-	dnl These flags should not be used on Intel-CET capable platforms
-	dnl TODO: XXX
-	AS_IF([test "$CXX_EPOCH" -ge "9"],
+	AS_CASE([$host_cpu],
+	[x86_64],
 	[
-		AM_COND_IF([GENERIC],
+		dnl These flags should not be used on Intel-CET capable platforms
+		dnl TODO: XXX
+		AS_IF([test "$CXX_EPOCH" -ge "9"],
 		[
-			RB_VAR_PREPEND([CXXFLAGS], ["-fcf-protection=full"])
-		], [
-			RB_VAR_PREPEND([CXXFLAGS], ["-fcf-protection=none"])
-			RB_VAR_PREPEND([CXXFLAGS], ["-mmanual-endbr"])
+			AM_COND_IF([GENERIC],
+			[
+				RB_VAR_PREPEND([CXXFLAGS], ["-fcf-protection=return"])
+			], [
+				RB_VAR_PREPEND([CXXFLAGS], ["-fcf-protection=none"])
+				RB_VAR_PREPEND([CXXFLAGS], ["-mmanual-endbr"])
+			])
 		])
 	])
 ])
