@@ -4596,7 +4596,7 @@ static void
 _print_sst_info_header(opt &out)
 {
 	out << std::left << std::setfill(' ')
-	    << std::setw(3) << "chkp"
+	    << std::setw(3) << "cp"
 	    << "  " << std::setw(12) << "name"
 	    << "  " << std::setw(32) << "creation"
 	    << "  " << std::setw(3) << "flt"
