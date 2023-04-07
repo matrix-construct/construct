@@ -41,7 +41,7 @@ endif
 endif
 
 if LTO
-if CLANG
+if CLANG15 # trouble with ld.gold <= llvm-14
 AM_CXXFLAGS += -flto=thin
 AM_CXXFLAGS += -fstrict-vtable-pointers
 AM_CXXFLAGS += -fwhole-program-vtables
