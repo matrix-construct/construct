@@ -112,22 +112,24 @@ args_dist()
 args_toolchain()
 {
 	_name=$(echo $1 | cut -d"-" -f1)
-	_version=$(echo $1 | cut -d"-" -f2)
+	_epoch=$(echo $1 | cut -d"-" -f2)
 
 	case $2 in
 	alpine)
 		toolchain=$_name
 		case $1 in
 		gcc*)
-			args="$args --build-arg extra_packages_dev=gcc"
-			args="$args --build-arg extra_packages_dev1=g++"
+			extra_dev="gcc"
+			extra_dev="${extra_dev} g++"
+			args="$args --build-arg extra_packages_dev=\"${extra_dev}\""
 			args="$args --build-arg cc=gcc --build-arg cxx=g++"
 			return 0
 			;;
 		clang*)
-			args="$args --build-arg extra_packages_dev=clang"
-			args="$args --build-arg extra_packages_dev1=llvm"
-			args="$args --build-arg extra_packages_dev2=llvm-dev"
+			extra_dev="clang"
+			extra_dev="${extra_dev} llvm"
+			extra_dev="${extra_dev} llvm-dev"
+			args="$args --build-arg extra_packages_dev=\"${extra_dev}\""
 			args="$args --build-arg cc=clang --build-arg cxx=clang++"
 			test $3 != "3.16"
 			return $?
@@ -137,16 +139,18 @@ args_toolchain()
 	ubuntu)
 		case $1 in
 		gcc*)
-			args="$args --build-arg extra_packages_dev=gcc-${_version}"
-			args="$args --build-arg extra_packages_dev1=g++-${_version}"
-			args="$args --build-arg cc=gcc-${_version} --build-arg cxx=g++-${_version}"
+			extra_dev="gcc-${_epoch}"
+			extra_dev="${extra_dev} g++-${_epoch}"
+			args="$args --build-arg extra_packages_dev=\"${extra_dev}\""
+			args="$args --build-arg cc=gcc-${_epoch} --build-arg cxx=g++-${_epoch}"
 			return 0
 			;;
 		clang*)
-			args="$args --build-arg extra_packages_dev=clang-${_version}"
-			args="$args --build-arg extra_packages_dev1=llvm-${_version}-dev"
-			args="$args --build-arg extra_packages_dev2=llvm-spirv-${_version}"
-			args="$args --build-arg cc=clang-${_version} --build-arg cxx=clang++-${_version}"
+			extra_dev="clang-${_epoch}"
+			extra_dev="${extra_dev} llvm-${_epoch}"
+			extra_dev="${extra_dev} llvm-spirv-${_epoch}"
+			args="$args --build-arg extra_packages_dev=\"${extra_dev}\""
+			args="$args --build-arg cc=clang-${_epoch} --build-arg cxx=clang++-${_epoch}"
 			return 0
 			;;
 		esac

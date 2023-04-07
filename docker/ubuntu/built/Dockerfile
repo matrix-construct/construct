@@ -10,8 +10,6 @@ FROM ${acct}/${repo}:${dist_name}-${dist_version}-${feature}-${machine}
 ARG cc
 ARG cxx
 ARG extra_packages_dev
-ARG extra_packages_dev1
-ARG extra_packages_dev2
 ARG ctor_url https://github.com/matrix-construct/construct
 ARG machine_spec
 
@@ -31,8 +29,6 @@ git \
 libtool \
 shtool \
 ${extra_packages_dev} \
-${extra_packages_dev1} \
-${extra_packages_dev2} \
 "
 
 RUN true \
