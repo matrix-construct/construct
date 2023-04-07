@@ -149,6 +149,7 @@ args_toolchain()
 			extra_dev="clang-${_epoch}"
 			extra_dev="${extra_dev} llvm-${_epoch}"
 			extra_dev="${extra_dev} llvm-spirv-${_epoch}"
+			extra_dev="${extra_dev} libclc-${_epoch}-dev"
 			args="$args --build-arg extra_packages_dev=\"${extra_dev}\""
 			args="$args --build-arg cc=clang-${_epoch} --build-arg cxx=clang++-${_epoch}"
 			return 0
