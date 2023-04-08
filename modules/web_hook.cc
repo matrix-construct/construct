@@ -154,10 +154,12 @@ github_handle__check_run(std::ostream &,
 
 static bool
 github_handle__workflow_job(std::ostream &,
+                            std::ostream &,
                             const json::object &content);
 
 static bool
 github_handle__workflow_run(std::ostream &,
+                            std::ostream &,
                             const json::object &content);
 
 static bool
@@ -265,15 +267,27 @@ github_handle(client &client,
 		headers.at("X-GitHub-Delivery")
 	};
 
-	const unique_buffer<mutable_buffer> buf
+	const unique_buffer<mutable_buffer> buf[2]
 	{
-		48_KiB
+		{ 48_KiB },
+		{ 4_KiB  },
 	};
 
-	std::stringstream out;
-	pubsetbuf(out, buf);
+	std::stringstream out, alt;
+	pubsetbuf(out, buf[0]);
+	pubsetbuf(alt, buf[1]);
 
 	github_heading(out, type, request.content);
+
+	alt
+	<< type
+	<< " by "
+	<< github_find_party(request.content).first
+	<< " to "
+	<< github_find_repo(request.content).first
+	<< " at "
+	<< github_find_commit_hash(request.content)
+	;
 
 	const bool ok
 	{
@@ -312,9 +326,9 @@ github_handle(client &client,
 		type == "dependabot_alert"?
 			github_handle__dependabot_alert(out, request.content):
 		type == "workflow_run"?
-			github_handle__workflow_run(out, request.content):
+			github_handle__workflow_run(out, alt, request.content):
 		type == "workflow_job"?
-			github_handle__workflow_job(out, request.content):
+			github_handle__workflow_job(out, alt, request.content):
 		type == "check_run"?
 			github_handle__check_run(out, request.content):
 		type == "check_suite"?
@@ -336,18 +350,9 @@ github_handle(client &client,
 		string_view(webhook_user), my_host()
 	};
 
-	const fmt::bsprintf<512> alt_msg
-	{
-		"%s by %s to %s at %s",
-		type,
-		github_find_party(request.content).first,
-		github_find_repo(request.content).first,
-		github_find_commit_hash(request.content),
-	};
-
 	const auto evid
 	{
-		m::msghtml(room_id, user_id, view(out, buf), alt_msg, "m.notice")
+		m::msghtml(room_id, user_id, view(out, buf[0]), view(alt, buf[1]), "m.notice")
 	};
 
 	log::info
@@ -884,6 +889,7 @@ github_run_rerun_failed(const string_view &repo,
 
 bool
 github_handle__workflow_run(std::ostream &out,
+                            std::ostream &alt,
                             const json::object &content)
 {
 	const json::object
@@ -1009,6 +1015,13 @@ github_handle__workflow_run(std::ostream &out,
 		<< "\">"
 		<< "</a>"
 		;
+
+		alt
+		<< ' '
+		<< name
+		<< ' '
+		<< "failed"
+		;
 	}
 
 	return outputs;
@@ -1016,6 +1029,7 @@ github_handle__workflow_run(std::ostream &out,
 
 bool
 github_handle__workflow_job(std::ostream &out,
+                            std::ostream &alt,
                             const json::object &content)
 {
 	const json::object workflow_job
@@ -1086,7 +1100,7 @@ github_handle__workflow_job(std::ostream &out,
 		}
 	}};
 
-	const fmt::bsprintf<128> alt
+	const fmt::bsprintf<128> alt_tab
 	{
 		"job status table %s %s %s",
 		github_repopath(content),
@@ -1111,7 +1125,7 @@ github_handle__workflow_job(std::ostream &out,
 
 	const auto orig_table_id
 	{
-		github_find_job_table(_webhook_room, _webhook_user, alt)
+		github_find_job_table(_webhook_room, _webhook_user, alt_tab)
 	};
 
 	const auto last_table_id
@@ -1245,7 +1259,7 @@ github_handle__workflow_job(std::ostream &out,
 
 		const auto table_event_id
 		{
-			m::msghtml(_webhook_room, _webhook_user, tab, alt)
+			m::msghtml(_webhook_room, _webhook_user, tab, alt_tab)
 		};
 
 		if(table_event_id)
@@ -1299,6 +1313,15 @@ github_handle__workflow_job(std::ostream &out,
 		<< job_name
 		<< "</b>"
 		<< "</a>"
+		;
+
+		alt
+		<< ' '
+		<< flow_name
+		<< ':'
+		<< job_name
+		<< ' '
+		<< "failed"
 		;
 	}
 
