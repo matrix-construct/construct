@@ -18067,6 +18067,96 @@ console_cmd__redact(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__redact__last(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "sender", "redactor", "count", "type", "reason"
+	}};
+
+	const m::room::id::buf room_id
+	{
+		m::room_id(param["room_id"])
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const m::user::id sender
+	{
+		param["sender"]
+	};
+
+	const m::user::id redactor
+	{
+		param["redactor"]
+	};
+
+	const auto type
+	{
+		param["type"]
+	};
+
+	auto count
+	{
+		param.at<uint>("count", 1)
+	};
+
+	m::room::iterate events
+	{
+		room, "sender"
+	};
+
+	size_t limit(10000);
+	events.for_each([&]
+	(const auto &_sender, const auto &depth, const auto &event_idx)
+	{
+		if(--limit <= 0)
+			return false;
+
+		if(_sender != sender)
+			return true;
+
+		const auto event_id
+		{
+			m::event_id(std::nothrow, event_idx)
+		};
+
+		if(unlikely(!event_id))
+			return true;
+
+		const auto type_equal{[&type]
+		(const auto &t)
+		{
+			return type == t;
+		}};
+
+		if(type && !m::query(event_idx, "type", type_equal))
+			return true;
+
+		const auto redact_id
+		{
+			m::redact(room, redactor, event_id, param["reason"])
+		};
+
+		out
+		<< std::setw(3) << std::right << count
+		<< ' '
+		<< redact_id
+		<< " redacted "
+		<< event_id
+		;
+
+		return --count > 0;
+
+	});
+
+	return true;
+}
+
 //
 // well-known
 //
