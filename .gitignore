@@ -19,6 +19,7 @@ Makefile
 *.gch
 *.cache
 *.tmp
+*.save
 *.profdata
 .deps
 .dirstamp
