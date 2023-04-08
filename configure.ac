@@ -84,6 +84,16 @@ dnl Platform
 dnl
 
 dnl
+dnl Hardwares
+dnl
+
+AM_CONDITIONAL([AMD64],    [[[[ $host_cpu = *x86_64* ]]]])
+AM_CONDITIONAL([X86_64],   [[[[ $host_cpu = *x86_64* ]]]])
+
+AM_CONDITIONAL([ARM64],    [[[[ $host_cpu = *aarch64* ]]]])
+AM_CONDITIONAL([AARCH64],  [[[[ $host_cpu = *aarch64* ]]]])
+
+dnl
 dnl Compiler brand
 dnl
 
