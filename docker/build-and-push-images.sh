@@ -86,6 +86,11 @@ build()
 	if test ! -z "$runner_num"; then
 		cpu_num=$(expr $runner_num % $(nproc))
 		args="$args --cpuset-cpus=${cpu_num}"
+		args="$args --build-arg nprocs=1"
+		# https://github.com/moby/buildkit/issues/1276
+	else
+		nprocs=$(nproc)
+		args="$args --build-arg nprocs=${nprocs}"
 	fi
 
 	args="$args --build-arg acct=${ctor_acct}"

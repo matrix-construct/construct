@@ -10,6 +10,7 @@ ARG rocksdb_avx 0
 ARG rocksdb_avx2 0
 ARG boost_version 1.74
 ARG icu_version 70
+ARG nprocs 1
 
 ENV rocksdb_version ${rocksdb_version}
 ENV rocksdb_url https://codeload.github.com/facebook/rocksdb/tar.gz/refs/tags/v${rocksdb_version}
@@ -17,6 +18,7 @@ ENV rocksdb_avx ${rocksdb_avx}
 ENV rocksdb_avx2 ${rocksdb_avx2}
 ENV boost_version ${boost_version}
 ENV icu_version ${icu_version}
+ENV nprocs ${nprocs}
 
 ENV packages="\
 ca-certificates \
@@ -125,7 +127,7 @@ fi \
 CFLAGS="-g0 -ftls-model=initial-exec" \
 LDFLAGS="-Wl,--strip-all" \
 cmake -H. -Bbuild ${rocksdb_cmake} \
-&& cmake --build build --target install --parallel `nproc` \
+&& cmake --build build --target install --parallel ${nprocs} \
 && rm -rf /usr/lib/$(uname -m)-linux-gnu/librocksdb.a \
 && rm -rf /usr/src/rocksdb \
 && eval ${do_purge} ${packages_rocksdb_dev} \

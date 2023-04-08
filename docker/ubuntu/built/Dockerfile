@@ -12,11 +12,13 @@ ARG cxx
 ARG extra_packages_dev
 ARG ctor_url https://github.com/matrix-construct/construct
 ARG machine_spec
+ARG nprocs
 
 ENV CC ${cc}
 ENV CXX ${cxx}
 ENV ctor_url ${ctor_url}
 ENV machine_spec ${machine_spec}
+ENV nprocs ${nprocs}
 
 ENV packages_dev="\
 ${packages_dev} \
@@ -40,7 +42,7 @@ RUN true \
 && ln -sv /usr/src/rocksdb deps \
 && ./autogen.sh \
 && (./configure --enable-generic --with-machine="${machine_spec}" || (cat config.log; exit 1)) \
-&& make -j `nproc` \
+&& make -j ${nprocs} \
 && make install \
 && cd .. \
 && rm -rf construct \
