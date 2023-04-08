@@ -436,6 +436,8 @@ gpt_gpu.spv.cc: gpt_gpu.spv
 # GCN-HSA
 #
 
+if AMD64
+
 GCN_HSA_TARGET = amdgcn--amdhsa
 
 GCN_HSA_CPPFLAGS = $(GPU_CPPFLAGS)
@@ -470,9 +472,13 @@ libircd_la_SOURCES += gpt_gpu.gcn_hsa.bc.cc
 gpt_gpu.gcn_hsa.bc.cc: gpt_gpu.gcn_hsa.bc
 	xxd -i $^ $@
 
+endif # AMD64
+
 #
 # R600
 #
+
+if AMD64
 
 R600_TARGET = r600--
 
@@ -510,6 +516,8 @@ CLEANFILES += gpt_gpu.r600_barts.bc.cc
 libircd_la_SOURCES += gpt_gpu.r600_barts.bc.cc
 gpt_gpu.r600_barts.bc.cc: gpt_gpu.r600_barts.bc
 	xxd -i $^ $@
+
+endif # AMD64
 
 #
 #
