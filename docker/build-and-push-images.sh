@@ -221,6 +221,12 @@ args_toolchain()
 			return 0
 			;;
 		clang*)
+			if test "$_epoch" -ge 15; then
+				extra="mesa-opencl-icd"
+				extra="${extra} ocl-icd-opencl-dev"
+				extra="${extra} libclc-${_epoch}-dev"
+				args="$args --build-arg extra_packages=\"${extra}\""
+			fi
 			extra_dev="clang-${_epoch}"
 			extra_dev="${extra_dev} llvm-${_epoch}"
 			extra_dev="${extra_dev} llvm-spirv-${_epoch}"

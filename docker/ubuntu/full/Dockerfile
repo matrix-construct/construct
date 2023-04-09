@@ -6,11 +6,12 @@ ARG machine
 
 FROM ${acct}/${repo}:${dist_name}-${dist_version}-base-${machine}
 
+ARG extra_packages
+
 ENV packages="\
 libgraphicsmagick-q16-3 \
 libpng16-16 \
-mesa-opencl-icd \
-ocl-icd-opencl-dev \
+${extra_packages} \
 "
 
 ENV packages_dev="\
