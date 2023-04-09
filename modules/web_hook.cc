@@ -1174,11 +1174,35 @@ github_handle__workflow_job(std::ostream &out,
 			})
 		};
 
+		const fmt::bsprintf<512> expect_unmodified
+		{
+			"%s%s</a>",
+			string_view{expect},
+			annote(workflow_job),
+		};
+
+		bool modified
+		{
+			!tokens(td, "​"_sv, [&]
+			(const string_view &cell)
+			{
+				if(!startswith(cell, expect))
+					return true;
+
+				return cell == expect_unmodified; // return false for found
+			})
+		};
+
+		const bool cancelled
+		{
+			json::string(workflow_job["conclusion"]) == "cancelled"
+		};
+
 		string_view tab;
 		tab = ircd::strlcpy(buf, view(heading, headbuf));
 		tab = ircd::strlcat(buf, "<table><tr><td>");
 
-		if(exists)
+		if(exists && modified && !cancelled)
 			tokens(td, "​"_sv, [&]
 			(const string_view &cell)
 			{
@@ -1196,7 +1220,8 @@ github_handle__workflow_job(std::ostream &out,
 				tab = ircd::strlcat(buf, "</a>");
 				tab = ircd::strlcat(buf, "​"_sv);
 			});
-		else
+
+		if(!exists || (modified && cancelled))
 			github_run_for_each_jobs(github_repopath(content), run_id, [&]
 			(const json::object &workflow_job)
 			{
@@ -1209,30 +1234,34 @@ github_handle__workflow_job(std::ostream &out,
 				tab = ircd::strlcat(buf, annote(workflow_job));
 				tab = ircd::strlcat(buf, "</a>");
 				tab = ircd::strlcat(buf, "​"_sv);
+				modified = true;
 				return true;
 			});
 
-		tab = ircd::strlcat(buf, "</td></tr></table>");
-
-		m::message(_webhook_room, _webhook_user, json::members
+		if(modified)
 		{
-			{ "body", alt_up },
-			{ "msgtype", "m.notice" },
-			{ "format", "org.matrix.custom.html" },
-			{ "formatted_body", tab },
-			{ "m.new_content", json::members
+			tab = ircd::strlcat(buf, "</td></tr></table>");
+
+			m::message(_webhook_room, _webhook_user, json::members
 			{
 				{ "body", alt_up },
 				{ "msgtype", "m.notice" },
 				{ "format", "org.matrix.custom.html" },
 				{ "formatted_body", tab },
-			}},
-			{ "m.relates_to", json::members
-			{
-				{ "event_id", orig_table_id },
-				{ "rel_type", "m.replace" },
-			}}
-		});
+				{ "m.new_content", json::members
+				{
+					{ "body", alt_up },
+					{ "msgtype", "m.notice" },
+					{ "format", "org.matrix.custom.html" },
+					{ "formatted_body", tab },
+				}},
+				{ "m.relates_to", json::members
+				{
+					{ "event_id", orig_table_id },
+					{ "rel_type", "m.replace" },
+				}}
+			});
+		}
 	}
 	else if(json::string(workflow_job["conclusion"]) != "skipped")
 	{
