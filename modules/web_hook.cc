@@ -452,6 +452,10 @@ github_heading(std::ostream &out,
 	return out;
 }
 
+static string_view
+github_markdown(unique_const_buffer &buf,
+                const string_view &text);
+
 bool
 github_handle__dependabot_alert(std::ostream &out,
                                 const json::object &content)
@@ -495,19 +499,17 @@ github_handle__dependabot_alert(std::ostream &out,
 	<< " 🚨<br>"
 	;
 
-	out
-	<< "<blockquote>"
-	;
-
-	static const auto delim("\\n");
-	ircd::tokens(desc, delim, [&out]
-	(const string_view &line)
+	unique_const_buffer buf;
+	const string_view markup
 	{
-		out << line << "<br>";
-	});
+		github_markdown(buf, desc)
+	};
 
 	out
-	<< "</blockquote>"
+	//<< "<blockquote>"
+	<< markup
+	//<< "</blockquote>"
+	<< "<br>"
 	;
 
 	if(path)
@@ -826,6 +828,24 @@ github_request(unique_const_buffer &out,
 {
 	const auto &content(json::empty_object);
 	return github_request(content, out, method, repo, fmt, std::forward<args>(a)...);
+}
+
+static string_view
+github_markdown(unique_const_buffer &buf,
+                const string_view &text)
+{
+	const json::strung content
+	{
+		json::members
+		{
+			{ "text", text }
+		}
+	};
+
+	return _github_request
+	(
+		buf, "POST", "https://api.github.com/markdown", content
+	);
 }
 
 static bool
