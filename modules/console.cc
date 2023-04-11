@@ -15058,7 +15058,7 @@ console_cmd__feds__head(opt &out, const string_view &line)
 			if(prev_event.valid)
 				out << pretty_oneline(prev_event);
 			else
-				out << string_view{prev_event_id};
+				out << result.request->room_id << ' ' << prev_event_id;
 
 			out << std::endl;
 		}
