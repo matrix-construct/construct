@@ -355,6 +355,7 @@ ircd::cl::init::fini_libs()
 
 size_t
 ircd::cl::init::init_platforms()
+try
 {
 	// OpenCL sez platform=null is implementation defined.
 	constexpr auto ignore(CL_INVALID_PLATFORM);
@@ -365,9 +366,21 @@ ircd::cl::init::init_platforms()
 
 	return platforms;
 }
+catch(const std::exception &e)
+{
+	log::logf
+	{
+		log, log::level::DERROR,
+		"OpenCL platforms initialization :%s",
+		e.what(),
+	};
+
+	return 0;
+}
 
 size_t
 ircd::cl::init::init_devices()
+try
 {
 	// Get the devices.
 	size_t devices_total(0);
@@ -413,6 +426,16 @@ ircd::cl::init::init_devices()
 		}
 
 	return devices_total;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "OpenCL devices initialization :%s",
+		e.what(),
+	};
+
+	return 0;
 }
 
 size_t
