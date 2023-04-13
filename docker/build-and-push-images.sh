@@ -131,7 +131,7 @@ build()
 
 	# Leaf build; unique to each iteration.
 	tag="$ctor_acct/$ctor_repo:${distro}-${feature}-built-${toolchain}-${machine}"
-	arg="$args -t $tag $BASEDIR/${dist_name}/built"
+	arg="$args --no-cache -t $tag $BASEDIR/${dist_name}/built"
 	eval "$cmd build $arg"
 	if test $? -ne 0; then return 1; fi
 	if test $stage = "built"; then return 0; fi
