@@ -13312,9 +13312,9 @@ console_cmd__user__read(opt &out, const string_view &line)
 		"user_id", "room_id", "limit"
 	}};
 
-	const m::user::id user_id
+	const auto user_id
 	{
-		param.at("user_id")
+		param.at("user_id", "*"_sv)
 	};
 
 	const auto room_id
@@ -13322,6 +13322,11 @@ console_cmd__user__read(opt &out, const string_view &line)
 		param["room_id"] && !startswith(param["room_id"], '*')?
 			m::room_id(param["room_id"]):
 			m::room::id::buf{}
+	};
+
+	const bool all_users
+	{
+		param["user_id"] == "*"
 	};
 
 	const bool all_rooms
@@ -13340,14 +13345,9 @@ console_cmd__user__read(opt &out, const string_view &line)
 		param["room_id"] == "***"
 	};
 
-	size_t limit
+	ssize_t limit
 	{
-		param.at("limit", 32UL)
-	};
-
-	const m::user::room user_room
-	{
-		user_id
+		param.at("limit", 32L)
 	};
 
 	const m::event::closure each_event{[&out]
@@ -13411,19 +13411,35 @@ console_cmd__user__read(opt &out, const string_view &line)
 		out << std::endl;
 	}};
 
-	if(all_rooms)
+	if(all_rooms && !all_users)
 	{
+		const m::user::room user_room
+		{
+			user_id
+		};
+
 		const m::room::state state
 		{
 			user_room
 		};
 
-		state.for_each("ircd.read", each_event);
+		state.for_each("ircd.read", m::event::closure_bool{[&each_event, &limit]
+		(const m::event &event)
+		{
+			each_event(event);
+			return --limit > 0;
+		}});
+
 		return true;
 	}
 
-	if(eye_track)
+	if(eye_track && !all_users)
 	{
+		const m::user::room user_room
+		{
+			user_id
+		};
+
 		const m::room::type type
 		{
 			user_room, "ircd.read"
@@ -13440,14 +13456,19 @@ console_cmd__user__read(opt &out, const string_view &line)
 			if(likely(event.valid))
 				each_event(event);
 
-			return --limit;
+			return --limit > 0;
 		});
 
 		return true;
 	}
 
-	if(fully_read)
+	if(fully_read && !all_users)
 	{
+		const m::user::room user_room
+		{
+			user_id
+		};
+
 		const m::room::type type
 		{
 			user_room, "ircd.account_data!", { -1UL, -1UL }, true
@@ -13468,29 +13489,55 @@ console_cmd__user__read(opt &out, const string_view &line)
 				return true;
 
 			each_event(event);
-			return --limit;
+			return --limit > 0;
 		});
 
 		return true;
 	}
 
-	const m::room::state::space space
+	if(!all_users)
 	{
-		user_room
-	};
-
-	space.for_each("ircd.read", room_id, [&each_event, &limit]
-	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx) -> bool
-	{
-		const m::event::fetch event
+		const m::user::room user_room
 		{
-			std::nothrow, event_idx
+			user_id
 		};
 
-		if(likely(event.valid))
-			each_event(event);
+		const m::room::state::space space
+		{
+			user_room
+		};
 
-		return --limit;
+		space.for_each("ircd.read", room_id, [&each_event, &limit]
+		(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx) -> bool
+		{
+			const m::event::fetch event
+			{
+				std::nothrow, event_idx
+			};
+
+			if(likely(event.valid))
+				each_event(event);
+
+			return --limit > 0;
+		});
+	}
+
+	const m::events::range range
+	{
+		-1UL, 0UL
+	};
+
+	m::events::for_each(range, [&each_event, &limit]
+	(const m::event::idx &seq, const m::event &event)
+	{
+		if(json::get<"type"_>(event) != "ircd.read")
+			return true;
+
+		if(!my(event))
+			return true;
+
+		each_event(event);
+		return --limit > 0;
 	});
 
 	return true;
