@@ -40,7 +40,21 @@ struct command_result
 	string_view msgtype {"m.notice"};
 };
 
-conf::item<bool>
+static conf::item<size_t>
+watch_limit
+{
+	{ "name",     "ircd.m.command.watch.limit" },
+	{ "default",  256                          },
+};
+
+static conf::item<bool>
+watch_opers
+{
+	{ "name",     "ircd.m.command.watch.opers" },
+	{ "default",  true                         },
+};
+
+static conf::item<bool>
 command_typing
 {
 	{ "name",     "ircd.m.command.typing" },
@@ -54,6 +68,30 @@ execute_command(const mutable_buffer &buf,
                 const string_view &cmd,
                 const m::event::id &reply_to,
                 const bool public_response);
+
+static void
+watch_command(const m::user::id &user_id,
+              const m::room::id &room_id,
+              const m::event::id &reply_id,
+              const m::event::id &response_id,
+              const m::room::id &response_room,
+              const m::user::id &response_sender,
+              const string_view &response_type,
+              const string_view &cmd,
+              const bool &public_response,
+              const milliseconds &watch_delay);
+
+static const json::value
+undef_val
+{
+	string_view{nullptr}, json::STRING
+};
+
+static const json::value
+html_format
+{
+	"org.matrix.custom.html", json::STRING
+};
 
 void
 handle_command(const m::event &event,
@@ -105,6 +143,18 @@ try
 	if(!is_command)
 		return;
 
+	const json::string reply_to
+	{
+		content["reply_id"]
+	};
+
+	const auto reply_id
+	{
+		reply_to?
+			m::event::id::buf{reply_to}:
+			m::event::id::buf{}
+	};
+
 	// View of the command string without prefix
 	string_view input
 	{
@@ -120,29 +170,43 @@ try
 		startswith(input, '!')
 	};
 
+	if(public_response)
+		input = lstrip(input, '!');
+
+	const bool command_watch
+	{
+		startswith(input, "watch ")
+		&& (!watch_opers || is_oper(user))
+	};
+
+	milliseconds watch_delay {0ms};
+	if(command_watch)
+	{
+		const auto delay
+		{
+			lex_cast<float>(token(input, ' ', 1))
+		};
+
+		watch_delay = milliseconds
+		{
+			long(delay * 1000.0)
+		};
+
+		input = tokens_after(input, ' ', 1);
+	}
+
 	const string_view cmd
 	{
-		lstrip(input, '!')
-	};
-
-	const json::string reply_to
-	{
-		content["reply_id"]
-	};
-
-	const auto reply_id
-	{
-		reply_to?
-			m::event::id{reply_to}:
-			m::event::id{}
+		input
 	};
 
 	log::debug
 	{
-		m::log, "Server command from %s in %s public:%b replying:%s :%s",
+		m::log, "Server command from %s in %s public:%b watch:%ld replying:%s :%s",
 		string_view{room_id},
 		string_view{user.user_id},
 		public_response,
+		watch_delay.count(),
 		string_view{reply_id}?: "false"_sv,
 		cmd
 	};
@@ -175,7 +239,7 @@ try
 		public_response? "m.room.message" : "ircd.cmd.result"
 	};
 
-	const auto &response_event_id
+	const auto &command_event_id
 	{
 		public_response?
 			string_view{event_id}:
@@ -190,16 +254,6 @@ try
 	const json::value content_body
 	{
 		alt?: "no alt text"_sv, json::STRING
-	};
-
-	static const json::value undef_val
-	{
-		string_view{nullptr}, json::STRING
-	};
-
-	static const json::value html_format
-	{
-		"org.matrix.custom.html", json::STRING
 	};
 
 	char relates_buf[576], reply_buf[288];
@@ -219,16 +273,52 @@ try
 		});
 	}
 
-	m::send(response_room, response_sender, response_type,
+	const auto response_id
 	{
-		{ "msgtype",         msgtype?: "m.notice"              },
-		{ "format",          html? html_format: undef_val      },
-		{ "body",            content_body                      },
-		{ "formatted_body",  html? html_val: undef_val         },
-		{ "room_id",         room_id                           },
-		{ "input",           input                             },
-		{ "m.relates_to",    relates_to                        },
-	});
+		m::send(response_room, response_sender, response_type,
+		{
+			{ "msgtype",         msgtype?: "m.notice"              },
+			{ "format",          html? html_format: undef_val      },
+			{ "body",            content_body                      },
+			{ "formatted_body",  html? html_val: undef_val         },
+			{ "room_id",         room_id                           },
+			{ "input",           cmd                               },
+			{ "m.relates_to",    relates_to                        },
+		})
+	};
+
+	if(command_watch)
+		ctx::context
+		{
+			"watch", ctx::context::POST | ctx::context::DETACH,
+			[
+				user_id(m::user::id::buf(user.user_id)),
+				room_id(m::room::id::buf(room_id)),
+				reply_id(m::event::id::buf(reply_id)),
+				response_id(m::event::id::buf(response_id)),
+				response_room(m::room::id::buf(response_room)),
+				response_sender(m::user::id::buf(response_sender)),
+				response_type(std::string(response_type)),
+				cmd(std::string(cmd)),
+				public_response,
+				watch_delay
+			]
+			{
+				watch_command
+				(
+					user_id,
+					room_id,
+					reply_id,
+					response_id,
+					response_room,
+					response_sender,
+					response_type,
+					cmd,
+					public_response,
+					watch_delay
+				);
+			}
+		};
 }
 catch(const std::exception &e)
 {
@@ -256,6 +346,90 @@ catch(const std::exception &e)
 		input,
 		e.what(),
 	};
+}
+
+void
+watch_command(const m::user::id &user_id,
+              const m::room::id &room_id,
+              const m::event::id &reply_id,
+              const m::event::id &response_id,
+              const m::room::id &response_room,
+              const m::user::id &response_sender,
+              const string_view &response_type,
+              const string_view &cmd,
+              const bool &public_response,
+              const milliseconds &watch_delay)
+{
+	const auto annotation_id
+	{
+		public_response?
+			m::annotate(response_room, response_sender, response_id, "▶️"_sv):
+			m::event::id::buf{}
+	};
+
+	const unwind deannotate{[&]
+	{
+		if(annotation_id && !m::redacted(annotation_id))
+			m::redact(response_room, response_sender, annotation_id, "cleared");
+	}};
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		56_KiB
+	};
+
+	for(size_t i(0); i < size_t(watch_limit); ++i)
+	{
+		sleep(watch_delay);
+
+		if(m::redacted(response_id))
+			break;
+
+		if(annotation_id && m::redacted(annotation_id))
+			break;
+
+		const auto &[html, alt, msgtype]
+		{
+			execute_command(buf, user_id, room_id, cmd, reply_id, public_response)
+		};
+
+		if(!html && !alt)
+			break;
+
+		const json::value html_val
+		{
+			html, json::STRING
+		};
+
+		const json::value content_body
+		{
+			alt?: "no alt text"_sv, json::STRING
+		};
+
+		m::send(response_room, response_sender, response_type,
+		{
+			{ "body",            content_body                      },
+			{ "format",          html? html_format: undef_val      },
+			{ "formatted_body",  html? html_val: undef_val         },
+			{ "input",           cmd                               },
+			{ "msgtype",         msgtype?: "m.notice"              },
+			{ "room_id",         room_id                           },
+			{ "m.new_content",   json::members
+			{
+				{ "body",            content_body                      },
+				{ "format",          html? html_format: undef_val      },
+				{ "formatted_body",  html? html_val: undef_val         },
+				{ "input",           cmd                               },
+				{ "msgtype",         msgtype?: "m.notice"              },
+				{ "room_id",         room_id                           },
+			}},
+			{ "m.relates_to",    json::members
+			{
+				{ "event_id", response_id },
+				{ "rel_type", "m.replace" },
+			}}
+		});
+	}
 }
 
 static command_result
