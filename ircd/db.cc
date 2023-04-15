@@ -5179,11 +5179,24 @@ ircd::db::_seek_(rocksdb::Iterator &it,
 
 	switch(p)
 	{
-		case pos::NEXT:     it.Next();           break;
-		case pos::PREV:     it.Prev();           break;
-		case pos::FRONT:    it.SeekToFirst();    break;
-		case pos::BACK:     it.SeekToLast();     break;
-		default:
+		case pos::NEXT:
+			assert(valid(it));
+			it.Next();
+			break;
+
+		case pos::PREV:
+			assert(valid(it));
+			it.Prev();
+			break;
+
+		case pos::FRONT:
+			it.SeekToFirst();
+			break;
+
+		case pos::BACK:
+			it.SeekToLast();
+			break;
+
 		case pos::END:
 		{
 			it.SeekToLast();
@@ -5192,6 +5205,10 @@ ircd::db::_seek_(rocksdb::Iterator &it,
 
 			break;
 		}
+
+		default:
+			assert(false);
+			break;
 	}
 
 	return it;
