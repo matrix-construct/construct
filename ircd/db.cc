@@ -2358,15 +2358,20 @@ ircd::db::seek(domain::const_iterator_base &it,
 {
 	switch(p)
 	{
+		// This is inefficient as per RocksDB's prefix impl.
 		case pos::BACK:
 		{
-			// This is inefficient as per RocksDB's prefix impl. unknown why
-			// a seek to NEXT is still needed after walking back one.
+			char buf[512];
+			string_view key;
+			assert(bool(it)); do
+			{
+				assert(size(it.it->key()) <= sizeof(buf));
+				key = string_view(buf, copy(buf, slice(it.it->key())));
+			}
 			while(seek(it, pos::NEXT));
-			if(seek(it, pos::PREV))
-				seek(it, pos::NEXT);
 
-			return bool(it);
+			assert(key);
+			return seek(it, key);
 		}
 
 		default:
