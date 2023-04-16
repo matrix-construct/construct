@@ -5008,24 +5008,23 @@ ircd::db::_seek(const vector_view<_read_op> &op,
 namespace ircd::db
 {
 	static rocksdb::Iterator &_seek_(rocksdb::Iterator &, const pos &);
-	static rocksdb::Iterator &_seek_(rocksdb::Iterator &, const string_view &);
-	static rocksdb::Iterator &_seek_lower_(rocksdb::Iterator &, const string_view &);
-	static rocksdb::Iterator &_seek_upper_(rocksdb::Iterator &, const string_view &);
-	static bool _seek(database::column &, const pos &, const rocksdb::ReadOptions &, rocksdb::Iterator &it);
-	static bool _seek(database::column &, const string_view &, const rocksdb::ReadOptions &, rocksdb::Iterator &it);
+	static rocksdb::Iterator &_seek_(rocksdb::Iterator &, const string_view &, const bool lte);
+	static bool _seek(database::column &, const pos &, const rocksdb::ReadOptions &, rocksdb::Iterator &it, const bool lte);
+	static bool _seek(database::column &, const string_view &, const rocksdb::ReadOptions &, rocksdb::Iterator &it, const bool lte);
 }
 
 std::unique_ptr<rocksdb::Iterator>
 ircd::db::seek(column &column,
                const string_view &key,
-               const gopts &opts)
+               const gopts &opts,
+               const bool lte)
 {
 	database &d(column);
 	database::column &c(column);
 
 	std::unique_ptr<rocksdb::Iterator> ret;
 	const auto ropts(make_opts(opts));
-	seek(c, key, ropts, ret);
+	seek(c, key, ropts, ret, lte);
 	return ret;
 }
 
@@ -5034,7 +5033,8 @@ bool
 ircd::db::seek(database::column &c,
                const pos &p,
                const rocksdb::ReadOptions &opts,
-               std::unique_ptr<rocksdb::Iterator> &it)
+               std::unique_ptr<rocksdb::Iterator> &it,
+               const bool lte)
 {
 	const ctx::uninterruptible ui;
 	const ctx::stack_usage_assertion sua;
@@ -5046,31 +5046,33 @@ ircd::db::seek(database::column &c,
 		it.reset(d.d->NewIterator(opts, cf));
 	}
 
-	return _seek(c, p, opts, *it);
+	return _seek(c, p, opts, *it, lte);
 }
 
 bool
 ircd::db::_seek(database::column &c,
                 const string_view &p,
                 const rocksdb::ReadOptions &opts,
-                rocksdb::Iterator &it)
+                rocksdb::Iterator &it,
+                const bool lte)
 try
 {
 	util::timer timer{util::timer::nostart};
 	if constexpr(RB_DEBUG_DB_SEEK)
 		timer = util::timer{};
 
-	_seek_(it, p);
+	_seek_(it, p, lte);
 
 	database &d(*c.d);
 	if constexpr(RB_DEBUG_DB_SEEK)
 		log::debug
 		{
-			log, "[%s] %lu:%lu SEEK %s %s in %ld$us '%s'",
+			log, "[%s] %lu:%lu SEEK[%s] %s %s in %ld$us '%s'",
 			name(d),
 			sequence(d),
 			sequence(opts.snapshot),
-			valid(it)? "VALID" : "INVALID",
+			lte? "LTE"_sv: "GTE"_sv,
+			valid(it)? "VALID"_sv: "INVALID"_sv,
 			it.status().ok()? "OK"s: it.status().ToString(),
 			timer.at<microseconds>().count(),
 			name(c)
@@ -5083,11 +5085,12 @@ catch(const error &e)
 	const database &d(*c.d);
 	log::critical
 	{
-		log, "[%s][%s] %lu:%lu SEEK key :%s",
+		log, "[%s][%s] %lu:%lu SEEK[%s] key :%s",
 		name(d),
 		name(c),
 		sequence(d),
 		sequence(opts.snapshot),
+		lte? "LTE"_sv: "GTE"_sv,
 		e.what(),
 	};
 
@@ -5098,7 +5101,8 @@ bool
 ircd::db::_seek(database::column &c,
                 const pos &p,
                 const rocksdb::ReadOptions &opts,
-                rocksdb::Iterator &it)
+                rocksdb::Iterator &it,
+                const bool)
 try
 {
 	bool valid_it;
@@ -5120,7 +5124,7 @@ try
 			sequence(d),
 			sequence(opts.snapshot),
 			reflect(p),
-			valid_it? "VALID" : "INVALID",
+			valid_it? "VALID"_sv: "INVALID"_sv,
 			it.status().ok()? "OK"s: it.status().ToString(),
 			timer.at<microseconds>().count(),
 			name(c)
@@ -5139,41 +5143,27 @@ catch(const error &e)
 		sequence(d),
 		sequence(opts.snapshot),
 		reflect(p),
-		it.Valid()? "VALID" : "INVALID",
+		it.Valid()? "VALID"_sv: "INVALID"_sv,
 		e.what(),
 	};
 
 	throw;
 }
 
-/// Seek to entry NOT GREATER THAN key. That is, equal to or less than key
-rocksdb::Iterator &
-ircd::db::_seek_lower_(rocksdb::Iterator &it,
-                       const string_view &sv)
-{
-	assert(!ctx::interruptible());
-
-	it.SeekForPrev(slice(sv));
-	return it;
-}
-
-/// Seek to entry NOT LESS THAN key. That is, equal to or greater than key
-rocksdb::Iterator &
-ircd::db::_seek_upper_(rocksdb::Iterator &it,
-                       const string_view &sv)
-{
-	assert(!ctx::interruptible());
-
-	it.Seek(slice(sv));
-	return it;
-}
-
 /// Defaults to _seek_upper_ because it has better support from RocksDB.
 rocksdb::Iterator &
 ircd::db::_seek_(rocksdb::Iterator &it,
-                 const string_view &sv)
+                 const string_view &sv,
+                 const bool lte)
 {
-	return _seek_upper_(it, sv);
+	assert(!ctx::interruptible());
+
+	if(lte)
+		it.SeekForPrev(slice(sv));
+	else
+		it.Seek(slice(sv));
+
+	return it;
 }
 
 rocksdb::Iterator &
