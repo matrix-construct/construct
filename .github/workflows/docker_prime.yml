@@ -1,3 +1,9 @@
+#
+# Build intermediate images
+#
+# Called to build lower-layer images which other images depend on. These are
+# cached for use by the next layer but not shipped to users.
+#
 name: Docker Images Prime
 
 on:
@@ -5,32 +11,38 @@ on:
     inputs:
       id:
         type: string
+        description: Dockerhub acct/repo identity.
       url:
         type: string
+        description: Git repository for checkout.
       features:
         type: string
+        description: JSON array of feature-set names to build images for.
       distros:
         type: string
+        description: JSON array of operating system distros to build for.
       machines:
         type: string
+        description: JSON array of machines to build for.
       test:
         type: boolean
         default: false
         required: false
+        description: Echo all docker commands rather than invoking them.
+
+concurrency:
+  group: ${{github.workflow}}-${{inputs.features}}
+  cancel-in-progress: false
 
 env:
   ctor_id: ${{inputs.id}}
   ctor_url: ${{inputs.url}}
 
-concurrency:
-  group: ${{github.run_id}}
-  cancel-in-progress: true
-
 jobs:
   prime:
     runs-on: ${{matrix.machine}}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         feature: ${{fromJSON(inputs.features)}}
         distro: ${{fromJSON(inputs.distros)}}

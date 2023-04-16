@@ -1,8 +1,7 @@
+#
+# Build docker images
+#
 name: Docker Images
-
-env:
-  ctor_id: ${{ vars.DOCKER_ID }}
-  ctor_url: https://github.com/${{github.repository}}
 
 on:
   push:
@@ -15,7 +14,12 @@ concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  ctor_id: ${{ vars.DOCKER_ID }}
+  ctor_url: https://github.com/${{github.repository}}
+
 jobs:
+  # Build the base-feature intermediate images (cached and not shipped).
   base:
     uses: ./.github/workflows/docker_prime.yml
     with:
@@ -26,6 +30,7 @@ jobs:
       machines: ${{vars.DOCKER_MACHINES}}
       test: ${{contains(github.events.push.commits[0].message, '[ci test]')}}
 
+  # Build the full-feature intermediate images (cached and not shipped).
   full:
     uses: ./.github/workflows/docker_prime.yml
     needs: [base]
@@ -37,6 +42,7 @@ jobs:
       machines: ${{vars.DOCKER_MACHINES}}
       test: ${{contains(github.events.push.commits[0].message, '[ci test]')}}
 
+  # Build the leaf images (shipped and not cached)
   built:
     needs: [base, full]
     runs-on: ${{matrix.machine}}
