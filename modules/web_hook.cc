@@ -849,6 +849,91 @@ github_markdown(unique_const_buffer &buf,
 }
 
 static bool
+github_hook_for_each(const string_view &repo,
+                     const function_bool<json::object> &closure)
+{
+	unique_const_buffer buf;
+	const json::array response
+	{
+		github_request
+		(
+			buf, "GET", repo, "hooks"
+		)
+	};
+
+	for(const json::object hook : response)
+		if(!closure(hook))
+			return false;
+
+	return true;
+}
+
+static void
+github_hook_ping(const string_view &repo,
+                 const string_view &hook)
+{
+	unique_const_buffer buf;
+	github_request
+	(
+		buf, "POST", repo, "hooks/%s/pings",
+		hook
+	);
+}
+
+static void
+github_hook_ping(const string_view &repo)
+{
+	github_hook_for_each(repo, [&repo]
+	(const json::object &hook)
+	{
+		const json::string id
+		{
+			hook["id"]
+		};
+
+		github_hook_ping(repo, id);
+	});
+}
+
+static bool
+github_hook_shot_for_each(const string_view &repo,
+                          const string_view &hook,
+                          const bool &redelivery,
+                          const function_bool<json::object> &closure)
+{
+	unique_const_buffer buf;
+	const json::array response
+	{
+		github_request
+		(
+			//TODO: pagination token
+			buf, "GET", repo, "hooks/%s/deliveries?per_page=100",
+			hook
+		)
+	};
+
+	for(const json::object shot : response)
+		if(!closure(shot))
+			return false;
+
+	return true;
+}
+
+static void
+github_hook_shot_retry(const string_view &repo,
+                       const string_view &hook,
+                       const string_view &id)
+{
+	unique_const_buffer buf;
+	github_request
+	(
+		buf, "POST", repo, "hooks/%s/deliveries/%s/attempts",
+		hook,
+		id
+	);
+}
+
+static bool
 github_run_for_each_jobs(const string_view &repo,
                          const string_view &run_id,
                          const function_bool<json::object> &closure)
