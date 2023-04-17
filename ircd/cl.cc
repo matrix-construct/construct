@@ -192,8 +192,8 @@ ircd::cl::envs
 		{ "default",   "true"                 },
 	},
 	{
-		{ "name",      "MESA_GLSL_CACHE_DISABLE" },
-		{ "default",   "true"                    },
+		{ "name",      "MESA_SHADER_CACHE_DISABLE" },
+		{ "default",   "true"                      },
 	},
 	{
 		{ "name",      "AMD_DEBUG"           },
