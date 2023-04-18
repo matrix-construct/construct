@@ -14,13 +14,25 @@ ircd::rest::request::request(const rfc3986::uri &uri,
 	if(!opts.remote)
 		opts.remote = net::hostport{uri};
 
-	const unique_mutable_buffer buf
+	const bool need_alloc
 	{
-		empty(opts.sout.head) || empty(opts.sin.head)?
-			16_KiB: 0_KiB
+		empty(opts.buf)
+		&& (empty(opts.sout.head) || empty(opts.sin.head))
 	};
 
-	window_buffer window{buf};
+	const unique_mutable_buffer _buf
+	{
+		need_alloc? 16_KiB: 0_KiB
+	};
+
+	if(!empty(_buf))
+		opts.buf = _buf;
+
+	window_buffer window
+	{
+		opts.buf
+	};
+
 	if(empty(opts.sout.head))
 	{
 		assert(opts.remote);
@@ -80,13 +92,25 @@ ircd::rest::request::request(const mutable_buffer &out,
 	if(!opts.remote)
 		opts.remote = net::hostport{uri};
 
-	const unique_mutable_buffer buf
+	const bool need_alloc
 	{
-		empty(opts.sout.head) || empty(opts.sin.head)?
-			16_KiB: 0_KiB
+		empty(opts.buf)
+		&& (empty(opts.sout.head) || empty(opts.sin.head))
 	};
 
-	window_buffer window{buf};
+	const unique_mutable_buffer _buf
+	{
+		need_alloc? 16_KiB: 0_KiB
+	};
+
+	if(!empty(_buf))
+		opts.buf = _buf;
+
+	window_buffer window
+	{
+		opts.buf
+	};
+
 	if(empty(opts.sout.head))
 	{
 		assert(opts.remote);

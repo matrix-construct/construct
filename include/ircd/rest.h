@@ -100,6 +100,10 @@ struct ircd::rest::opts
 	/// receiving dynamic content. Supply an empty unique_buffer instance.
 	unique_const_buffer *out {nullptr};
 
+	/// Optionally supply the temporary buffer for headers in/out in lieu of
+	/// any internally allocated.
+	mutable_buffer buf;
+
 	/// Timeout for the yielding/synchronous calls of this interface.
 	seconds timeout {20s};
 
