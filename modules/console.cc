@@ -14382,6 +14382,47 @@ console_cmd__user__devices(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__user__devices__delete(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "device_id"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
+	};
+
+	const string_view &device_id
+	{
+		param.at("device_id", string_view{})
+	};
+
+	const m::user::devices devices
+	{
+		user_id
+	};
+
+	if(device_id)
+	{
+		devices.del(device_id);
+		out << device_id << std::endl;
+		return true;
+	}
+
+	devices.for_each([&out, &devices]
+	(const auto &event_idx, const string_view &device_id)
+	{
+		devices.del(device_id);
+		out << device_id << std::endl;
+		return true;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__user__devices__update(opt &out, const string_view &line)
 {
 	const params param{line, " ",
