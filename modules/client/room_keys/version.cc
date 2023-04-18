@@ -209,11 +209,6 @@ ircd::m::put_room_keys_version(client &client,
 			event_idx,
 		};
 
-	const auto event_id
-	{
-		m::event_id(event_idx)
-	};
-
 	const json::string &algorithm
 	{
 		request["algorithm"]
@@ -224,13 +219,36 @@ ircd::m::put_room_keys_version(client &client,
 		request["auth_data"]
 	};
 
-	//
-	// TODO: XXX
-	//
+	const auto event_id
+	{
+		m::event_id(event_idx)
+	};
+
+	const json::member relates[]
+	{
+		{ "event_id", event_id    },
+		{ "rel_type", "m.replace" },
+	};
+
+	const json::strung content
+	{
+		json::insert(request, json::members
+		{
+			{ "m.relates_to", relates }
+		})
+	};
+
+	const auto update_id
+	{
+		m::send(user_room, request.user_id, "ircd.room_keys.version", json::object
+		{
+			content
+		})
+	};
 
 	return resource::response
 	{
-		client, http::NOT_IMPLEMENTED
+		client, http::OK
 	};
 }
 
@@ -301,7 +319,19 @@ ircd::m::get_room_keys_version(client &client,
 			"No version found.",
 		};
 
-	m::get(event_idx, "content", [&client, &event_idx]
+	const m::replaced latest_idx
+	{
+		event_idx, m::replaced::latest
+	};
+
+	const event::idx version_idx
+	{
+		latest_idx?
+			event::idx{latest_idx}:
+			event_idx
+	};
+
+	m::get(version_idx, "content", [&client, &event_idx]
 	(const json::object &content)
 	{
 		const json::value version
@@ -313,9 +343,9 @@ ircd::m::get_room_keys_version(client &client,
 		{
 			client, json::members
 			{
-				{ "version",    version              },
 				{ "algorithm",  content["algorithm"] },
 				{ "auth_data",  content["auth_data"] },
+				{ "version",    version              },
 			}
 		};
 	});
