@@ -13941,7 +13941,7 @@ console_cmd__user__tokens(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"user_id", "clear"
+		"user_id"
 	}};
 
 	const m::user user
@@ -13949,26 +13949,10 @@ console_cmd__user__tokens(opt &out, const string_view &line)
 		param.at("user_id")
 	};
 
-	const bool clear
-	{
-		param["clear"] == "clear"
-	};
-
 	const m::user::tokens tokens
 	{
 		user
 	};
-
-	if(clear)
-	{
-		const size_t count
-		{
-			tokens.del("Invalidated by administrator console.")
-		};
-
-		out << "Invalidated " << count << std::endl;
-		return true;
-	}
 
 	tokens.for_each([&out]
 	(const m::event::idx &event_idx, const string_view &token)
@@ -14007,6 +13991,33 @@ console_cmd__user__tokens(opt &out, const string_view &line)
 		return true;
 	});
 
+	return true;
+}
+
+bool
+console_cmd__user__tokens__clear(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id"
+	}};
+
+	const m::user user
+	{
+		param.at("user_id")
+	};
+
+	const m::user::tokens tokens
+	{
+		user
+	};
+
+	const size_t count
+	{
+		tokens.del("Invalidated by administrator console.")
+	};
+
+	out << "Invalidated " << count << std::endl;
 	return true;
 }
 
