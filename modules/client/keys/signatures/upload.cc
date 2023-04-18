@@ -88,22 +88,6 @@ ircd::m::post_keys_signatures_upload(client &client,
 				device_keys_
 			};
 
-			if(json::get<"device_id"_>(device_keys) != _device_id)
-				throw m::BAD_REQUEST
-				{
-					"device_id '%s' does not match object property name '%s'",
-					json::get<"device_id"_>(device_keys),
-					_device_id,
-				};
-
-			if((false) && _device_id != device_id) // is this the "cross-sign?" gotta find out!
-				throw m::ACCESS_DENIED
-				{
-					"device_id '%s' does not match your current device_id '%s'",
-					_device_id,
-					string_view{device_id},
-				};
-
 			const bool set
 			{
 				devices.set(_device_id, "signatures", device_keys_)
