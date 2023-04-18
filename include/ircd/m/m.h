@@ -89,6 +89,7 @@ namespace ircd::m
 #include "direct_to_device.h"
 #include "visible.h"
 #include "redacted.h"
+#include "replaced.h"
 #include "feds.h"
 #include "app.h"
 #include "bridge.h"

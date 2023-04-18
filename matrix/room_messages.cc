@@ -54,15 +54,14 @@ ircd::m::replace(room::message &msg,
                  const event::idx &event_idx)
 {
 	// Find the latest edit of this; otherwise stick with the original.
-	const m::relates relates
+	const m::replaced replaced
 	{
-		.refs = event_idx,
-		.match_sender = true,
+		event_idx, m::replaced::latest
 	};
 
-	const event::idx replace_idx
+	const event::idx &replace_idx
 	{
-		relates.latest("m.replace")
+		replaced
 	};
 
 	if(!replace_idx)
