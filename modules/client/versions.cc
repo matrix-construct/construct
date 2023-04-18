@@ -85,6 +85,7 @@ ircd::m::client_versions::versions_default
 	" v1.3"
 	" v1.4"
 	" v1.5"
+	" v1.6"
 };
 
 /// Note this conf item doesn't persist to and from the database, which means
