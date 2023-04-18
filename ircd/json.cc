@@ -4754,7 +4754,8 @@ namespace ircd::json::parser
 
 bool
 ircd::json::type(const string_view &buf,
-                 const enum type &type)
+                 const enum type type)
+noexcept
 {
 	const bool ret
 	{
@@ -4780,6 +4781,7 @@ ircd::json::type(const string_view &buf)
 enum ircd::json::type
 ircd::json::type(const string_view &buf,
                  std::nothrow_t)
+noexcept
 {
 	enum type ret;
 	if(!parser::parse(begin(buf), end(buf), parser::type_parse, ret))
@@ -4842,8 +4844,9 @@ namespace ircd::json::parser
 
 bool
 ircd::json::type(const string_view &buf,
-                 const enum type &type,
+                 const enum type type,
                  strict_t)
+noexcept
 {
 	const bool ret
 	{
@@ -4871,6 +4874,7 @@ enum ircd::json::type
 ircd::json::type(const string_view &buf,
                  strict_t,
                  std::nothrow_t)
+noexcept
 {
 	enum type ret;
 	if(!parser::parse(begin(buf), end(buf), parser::type_parse_strict, ret))
@@ -4880,7 +4884,8 @@ ircd::json::type(const string_view &buf,
 }
 
 ircd::string_view
-ircd::json::reflect(const enum type &type)
+ircd::json::reflect(const enum type type)
+noexcept
 {
 	switch(type)
 	{
@@ -4891,8 +4896,6 @@ ircd::json::reflect(const enum type &type)
 		case STRING:   return "STRING";
 	}
 
-	throw type_error
-	{
-		"Unknown type %x", uint(type)
-	};
+	assert(false);
+	return "STRING";
 }

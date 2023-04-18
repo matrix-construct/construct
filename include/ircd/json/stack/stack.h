@@ -105,28 +105,28 @@ template<>
 inline ircd::json::stack::array &
 ircd::json::stack::stack::top<ircd::json::stack::array>(stack &s)
 {
-    return array::top(s);
+	return array::top(s);
 }
 
 template<>
 inline const ircd::json::stack::array &
 ircd::json::stack::stack::top<ircd::json::stack::array>(const stack &s)
 {
-    return array::top(s);
+	return array::top(s);
 }
 
 template<>
 inline ircd::json::stack::object &
 ircd::json::stack::stack::top<ircd::json::stack::object>(stack &s)
 {
-    return object::top(s);
+	return object::top(s);
 }
 
 template<>
 inline const ircd::json::stack::object &
 ircd::json::stack::stack::top<ircd::json::stack::object>(const stack &s)
 {
-    return object::top(s);
+	return object::top(s);
 }
 
 template<>

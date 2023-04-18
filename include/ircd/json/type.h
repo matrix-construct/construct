@@ -29,26 +29,18 @@ namespace ircd::json
 	/// not use the strict overload.
 	IRCD_OVERLOAD(strict)
 
-	// Determine the type
-	enum type type(const string_view &);
-	enum type type(const string_view &, std::nothrow_t);
-	enum type type(const string_view &, strict_t);
-	enum type type(const string_view &, strict_t, std::nothrow_t);
-
-	// Query if type
-	bool type(const string_view &, const enum type &, strict_t);
-	bool type(const string_view &, const enum type &);
-
 	// Utils
-	string_view reflect(const enum type &);
+	[[gnu::pure]] string_view reflect(const enum type) noexcept;
 
-	extern const string_view literal_null;
-	extern const string_view literal_true;
-	extern const string_view literal_false;
-	extern const string_view empty_string;
-	extern const string_view empty_object;
-	extern const string_view empty_array;
-	extern const int64_t undefined_number;
+	// Determine the type w/ strict correctness (full scan)
+	[[gnu::pure]] bool type(const string_view &, const enum type, strict_t) noexcept;
+	[[gnu::pure]] enum type type(const string_view &, strict_t, std::nothrow_t) noexcept;
+	enum type type(const string_view &, strict_t);
+
+	// Determine the type quickly
+	[[gnu::pure]] bool type(const string_view &, const enum type) noexcept;
+	[[gnu::pure]] enum type type(const string_view &, std::nothrow_t) noexcept;
+	enum type type(const string_view &);
 }
 
 enum ircd::json::type

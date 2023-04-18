@@ -36,7 +36,15 @@ namespace ircd::json
 	void valid(const string_view &);
 	std::string why(const string_view &);
 
-	struct stats extern stats;
+	extern const string_view literal_null;
+	extern const string_view literal_true;
+	extern const string_view literal_false;
+	extern const string_view empty_string;
+	extern const string_view empty_object;
+	extern const string_view empty_array;
+	extern const int64_t undefined_number;
+
+	extern struct stats stats;
 }
 
 /// Statistics counter access; unfortunately these cannot participate as
