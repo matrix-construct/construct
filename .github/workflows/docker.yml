@@ -4,18 +4,27 @@
 name: Docker Images
 
 on:
-  push:
-    branches: [master]
-
   workflow_dispatch:
     inputs:
+      features:
+        type: string
+        description: JSON array of feature-set names to build images for.
+      distros:
+        type: string
+        description: JSON array of operating system distros to build for.
+      machines:
+        type: string
+        description: JSON array of machines to build for.
+      toolchains:
+        type: string
+        description: JSON array of compiler toolchains to build for.
 
 concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  ctor_id: ${{ vars.DOCKER_ID }}
+  ctor_id: ${{vars.DOCKER_ID}}
   ctor_url: https://github.com/${{github.repository}}
 
 jobs:
@@ -26,8 +35,8 @@ jobs:
       id: ${{github.env.ctor_id}}
       url: ${{github.env.ctor_url}}
       features: '["base"]'
-      distros: ${{vars.DOCKER_DISTROS}}
-      machines: ${{vars.DOCKER_MACHINES}}
+      distros: ${{github.event.inputs.distros || vars.DOCKER_DISTROS}}
+      machines: ${{github.event.inputs.machines || vars.DOCKER_MACHINES}}
       test: ${{contains(github.events.push.commits[0].message, '[ci test]')}}
 
   # Build the full-feature intermediate images (cached and not shipped).
@@ -38,8 +47,8 @@ jobs:
       id: ${{github.env.ctor_id}}
       url: ${{github.env.ctor_url}}
       features: '["full"]'
-      distros: ${{vars.DOCKER_DISTROS}}
-      machines: ${{vars.DOCKER_MACHINES}}
+      distros: ${{github.event.inputs.distros || vars.DOCKER_DISTROS}}
+      machines: ${{github.event.inputs.machines || vars.DOCKER_MACHINES}}
       test: ${{contains(github.events.push.commits[0].message, '[ci test]')}}
 
   # Build the leaf images (shipped and not cached)
@@ -49,10 +58,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        feature: ${{fromJSON(vars.DOCKER_FEATURES)}}
-        distro: ${{fromJSON(vars.DOCKER_DISTROS)}}
-        machine: ${{fromJSON(vars.DOCKER_MACHINES)}}
-        toolchain: ${{fromJSON(vars.DOCKER_TOOLCHAINS)}}
+        feature: ${{fromJSON(github.event.inputs.features || vars.DOCKER_FEATURES)}}
+        distro: ${{fromJSON(github.event.inputs.distros || vars.DOCKER_DISTROS)}}
+        machine: ${{fromJSON(github.event.inputs.machines || vars.DOCKER_MACHINES)}}
+        toolchain: ${{fromJSON(github.event.inputs.toolchains || vars.DOCKER_TOOLCHAINS)}}
         exclude:
           - distro: alpine-3.17
             toolchain: gcc-10      # n/a on distro version
