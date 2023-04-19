@@ -30,6 +30,13 @@ namespace ircd::json
 }
 
 inline ircd::json::strung
+ircd::json::replace(const object &s,
+                    const json::member &m)
+{
+	return replace(s, json::members{m});
+}
+
+inline ircd::json::strung
 ircd::json::insert(const object &s,
                    const json::member &m)
 {

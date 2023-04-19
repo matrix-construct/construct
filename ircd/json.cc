@@ -604,11 +604,11 @@ ircd::json::replace(const object &s,
 	{
 		[](const json::members &r, const object::member &m)
 		{
-			return std::any_of(begin(r), end(r), [&m]
-			(const json::member &r)
-			{
-				return string_view{r.first} == m.first;
-			});
+			for(const auto &[k, v] : r)
+				if(string_view{k} == m.first)
+					return true;
+
+			return false;
 		}
 	};
 
@@ -628,30 +628,6 @@ ircd::json::replace(const object &s,
 	for(const json::member &m : r)
 		mb.at(mctr++) = m;
 
-	return strung
-	{
-		mb.data(), mb.data() + mctr
-	};
-}
-
-ircd::json::strung
-ircd::json::replace(const object &s,
-                    const json::member &m_)
-{
-	if(unlikely(!empty(s) && type(s) != type::OBJECT))
-		throw type_error
-		{
-			"Cannot replace member into JSON of type %s",
-			reflect(type(s))
-		};
-
-	size_t mctr {0};
-	auto &mb(member_buffer);
-	for(const object::member &m : object{s})
-		if(m.first != string_view{m_.first})
-			mb.at(mctr++) = member{m};
-
-	mb.at(mctr++) = m_;
 	return strung
 	{
 		mb.data(), mb.data() + mctr
