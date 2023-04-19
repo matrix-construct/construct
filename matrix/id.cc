@@ -132,6 +132,13 @@ ircd::m::id::parser
 		,"event_id version 4"
 	};
 
+	// de-facto device id
+	const rule<> device_id
+	{
+		device_sigil >> localpart
+		,"device_id (de facto)"
+	};
+
 	/// (Appendix 4.1) Server Name
 	/// A homeserver is uniquely identified by its server name. This value
 	/// is used in a number of identifiers, as described below. The server
@@ -159,6 +166,7 @@ ircd::m::id::parser
 		(prefix >> ':' >> server_name)
 		| event_id_v4
 		| event_id_v3
+		| device_id
 		,"mxid"
 	};
 
@@ -584,7 +592,12 @@ ircd::m::id::id(const enum sigil &sigil,
 			static const auto &dict{rand::dict::alnum};
 			const mutable_buffer dst{tmp_buf[0], 10};
 			name = rand::string(dst, dict);
-			break;
+			return fmt::sprintf
+			{
+				buf, "%c%s",
+				char(sigil),
+				name,
+			};
 		}
 
 		default:

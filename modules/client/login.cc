@@ -121,12 +121,6 @@ post__login_password(client &client,
 			m::id::device::buf{m::id::generate, my_host()}
 	};
 
-	if(!my(device_id))
-		throw m::UNSUPPORTED
-		{
-			"Device ID's with foreign hostparts are not supported."
-		};
-
 	char access_token_buf[32];
 	const string_view access_token
 	{
