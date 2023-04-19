@@ -39,20 +39,7 @@ namespace ircd::json
 #include "strung.h"
 #include "tuple/tuple.h"
 #include "stack/stack.h"
-
-// Convenience toolset for higher level operations.
-namespace ircd::json
-{
-	strung append(const array &, const string_view &val);
-	strung prepend(const array &, const string_view &val);
-
-	void merge(stack::object &out, const vector &);
-	strung remove(const object &, const string_view &key);
-	strung remove(const object &, const size_t &index);
-	strung insert(const object &, const member &);
-	strung replace(const object &, const member &);
-	strung replace(const object &,  const members &);
-}
+#include "tool.h"
 
 // Exports to ircd::
 namespace ircd
