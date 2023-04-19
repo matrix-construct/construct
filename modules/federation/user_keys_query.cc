@@ -33,6 +33,11 @@ _query_user_device(client &,
                    json::stack::object &out);
 
 static void
+_query_user_keys(client &,
+                 const m::resource::request &,
+                 json::stack &);
+
+static void
 _query_self_keys(client &,
                  const m::resource::request &,
                  json::stack &);
@@ -72,6 +77,9 @@ post__user_keys_query(client &client,
 	_query_device_keys(client, request, response);
 	_query_master_keys(client, request, response);
 	_query_self_keys(client, request, response);
+	if(my_host(request.node_id))
+		_query_user_keys(client, request, response);
+
 	return response;
 }
 
@@ -198,6 +206,49 @@ _query_self_keys(client &client,
 		const auto event_idx
 		{
 			room.get(std::nothrow, "ircd.device.signing.self", "")
+		};
+
+		m::get(std::nothrow, event_idx, "content", [&response_keys, &user_id]
+		(const json::object &content)
+		{
+			json::stack::member
+			{
+				response_keys, user_id, content
+			};
+		});
+	}
+}
+
+void
+_query_user_keys(client &client,
+                 const m::resource::request &request,
+                 json::stack &out)
+{
+	const json::object request_keys
+	{
+		request.at("device_keys")
+	};
+
+	json::stack::object response_keys
+	{
+		out, "user_signing_keys"
+	};
+
+	for(const auto &[user_id_, device_ids_] : request_keys)
+	{
+		const m::user::id &user_id
+		{
+			user_id_
+		};
+
+		const m::user::room room
+		{
+			user_id
+		};
+
+		const auto event_idx
+		{
+			room.get(std::nothrow, "ircd.device.signing.user", "")
 		};
 
 		m::get(std::nothrow, event_idx, "content", [&response_keys, &user_id]
