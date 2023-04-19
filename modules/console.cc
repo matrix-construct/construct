@@ -11455,31 +11455,47 @@ console_cmd__room__count(opt &out, const string_view &line)
 bool
 console_cmd__room__events(opt &out, const string_view &line)
 {
-	const params param{line, " ",
+	const params param_any{line, " ",
 	{
 		"room_id", "depth|-limit", "order", "limit"
 	}};
 
+	const params param_type{line, " ",
+	{
+		"room_id", "type", "depth|-limit", "order", "limit"
+	}};
+
+	const bool use_type
+	{
+		param_type["type"] && !lex_castable<int64_t>(param_type["type"])
+	};
+
+	// decide which argument overload to use
+	const params &param
+	{
+		use_type? param_type : param_any
+	};
+
 	const auto &room_id
 	{
-		m::room_id(param.at(0))
+		m::room_id(param.at("room_id"))
 	};
 
 	const int64_t depth
 	{
-		param.at<int64_t>(1, std::numeric_limits<int64_t>::max())
+		param.at<int64_t>("depth|-limit", std::numeric_limits<int64_t>::max())
 	};
 
 	const char order
 	{
-		param.at(2, "b"_sv).at(0)
+		param.at("order", "b"_sv).at(0)
 	};
 
 	ssize_t limit
 	{
 		depth < 0?
 			std::abs(depth):
-			param.at(3, ssize_t(32))
+			param.at("depth|-limit", ssize_t(32))
 	};
 
 	const m::room room
@@ -11493,15 +11509,21 @@ console_cmd__room__events(opt &out, const string_view &line)
 	};
 
 	m::event::fetch event;
-	for(; it && limit > 0; order == 'b'? --it : ++it, --limit)
+	for(; it && limit > 0; order == 'b'? --it : ++it)
 	{
 		if(!seek(std::nothrow, event, it.event_idx()))
 			continue;
+
+		if(use_type)
+			if(!globular_imatch(param["type"])(json::get<"type"_>(event)))
+				continue;
 
 		out
 		<< std::left << std::setw(10) << it.event_idx() << " "
 		<< pretty_oneline(event)
 		<< std::endl;
+
+		--limit;
 	}
 
 	return true;
