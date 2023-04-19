@@ -22,8 +22,16 @@ namespace ircd::json
 	strung remove(const object &, const string_view &key);
 	strung remove(const object &, const size_t &index);
 
+	strung insert(const object &, const members &);
 	strung insert(const object &, const member &);
 
 	strung replace(const object &,  const members &);
 	strung replace(const object &, const member &);
+}
+
+inline ircd::json::strung
+ircd::json::insert(const object &s,
+                   const json::member &m)
+{
+	return insert(s, json::members{m});
 }

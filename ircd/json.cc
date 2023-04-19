@@ -660,7 +660,7 @@ ircd::json::replace(const object &s,
 
 ircd::json::strung
 ircd::json::insert(const object &s,
-                   const json::member &m)
+                   const json::members &m)
 {
 	if(unlikely(!empty(s) && type(s) != type::OBJECT))
 		throw type_error
@@ -674,7 +674,9 @@ ircd::json::insert(const object &s,
 	for(const object::member &m : object{s})
 		mb.at(mctr++) = member{m};
 
-	mb.at(mctr++) = m;
+	for(const auto &_m : m)
+		mb.at(mctr++) = _m;
+
 	return strung
 	{
 		mb.data(), mb.data() + mctr
