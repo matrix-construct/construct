@@ -43,32 +43,19 @@ ircd::m::resource::response
 ircd::m::post_keys_signatures_upload(client &client,
                                      const resource::request &request)
 {
-	const m::device::id::buf device_id
-	{
-		m::user::tokens::device(request.access_token)
-	};
-
-	const m::user::room user_room
-	{
-		request.user_id
-	};
-
 	for(const auto &[_user_id, devices_keys_] : request)
 	{
 		if(!valid(m::id::USER, _user_id))
 			continue;
 
-		if(_user_id != request.user_id)
-			throw m::ACCESS_DENIED
-			{
-				"Uploading for user %s by %s not allowed or supported",
-				_user_id,
-				string_view{request.user_id},
-			};
-
 		const m::user::id user_id
 		{
 			_user_id
+		};
+
+		const m::user::room user_room
+		{
+			user_id
 		};
 
 		const m::user::devices devices
