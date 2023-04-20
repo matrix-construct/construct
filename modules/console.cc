@@ -18269,10 +18269,97 @@ console_cmd__redact__last(opt &out, const string_view &line)
 		<< redact_id
 		<< " redacted "
 		<< event_id
-		;
+		<< std::endl;
 
 		return --count > 0;
 
+	});
+
+	return true;
+}
+
+bool
+console_cmd__redact__state(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "redactor", "type", "state_key"
+	}};
+
+	const m::room::id::buf room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const m::user::id redactor
+	{
+		param.at("redactor")
+	};
+
+	const auto type
+	{
+		param["type"]
+	};
+
+	const auto state_key
+	{
+		param["state_key"]
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	if(state_key)
+	{
+		const auto event_idx
+		{
+			room.get(type, state_key)
+		};
+
+		const auto event_id
+		{
+			m::event_id(std::nothrow, event_idx)
+		};
+
+		const auto redact_id
+		{
+			m::redact(room, redactor, event_id, "console")
+		};
+
+		out
+		<< redact_id
+		<< " redacted "
+		<< event_id
+		<< std::endl;
+		return true;
+	}
+
+	const m::room::state state
+	{
+		room
+	};
+
+	state.for_each(type, [&out, &room, &redactor]
+	(const auto &, const auto &state_key, const m::event::idx &event_idx)
+	{
+		const auto event_id
+		{
+			m::event_id(std::nothrow, event_idx)
+		};
+
+		const auto redact_id
+		{
+			m::redact(room, redactor, event_id, "console")
+		};
+
+		out
+		<< redact_id
+		<< " redacted "
+		<< event_id
+		<< std::endl;
+		return true;
 	});
 
 	return true;
