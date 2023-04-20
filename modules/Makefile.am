@@ -506,12 +506,14 @@ client_module_LTLIBRARIES += \
 # client/room_keys/
 #
 
-client_client_room_keys_version_la_SOURCES = client/room_keys/version.cc
-client_client_room_keys_keys_la_SOURCES = client/room_keys/keys.cc
+client_client_room_keys_la_SOURCES = \
+	client/room_keys/keys.cc \
+	client/room_keys/version.cc \
+	client/room_keys/room_keys.cc \
+	###
 
 client_module_LTLIBRARIES += \
-	client/client_room_keys_version.la \
-	client/client_room_keys_keys.la \
+	client/client_room_keys.la \
 	###
 
 #

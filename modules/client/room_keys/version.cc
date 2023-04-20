@@ -8,6 +8,8 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include "room_keys.h"
+
 namespace ircd::m
 {
 	static resource::response get_room_keys_version(client &, const resource::request &);
@@ -24,12 +26,6 @@ namespace ircd::m
 
 	extern resource room_keys_version;
 }
-
-ircd::mapi::header
-IRCD_MODULE
-{
-	"Client (undocumented) :e2e Room Keys Version"
-};
 
 decltype(ircd::m::room_keys_version)
 ircd::m::room_keys_version
