@@ -22,6 +22,8 @@ namespace ircd::m
 	static resource::response put_room_keys_keys(client &, const resource::request &);
 	extern resource::method room_keys_keys_put;
 
+	static event::id::buf delete_room_keys_key(client &, const resource::request &, const room &, const event::idx &);
+	static event::id::buf delete_room_keys_key(client &, const resource::request &, const room &, const room::id &, const string_view &, const event::idx &);
 	static resource::response delete_room_keys_keys(client &, const resource::request &);
 	extern resource::method room_keys_keys_delete;
 
@@ -80,7 +82,7 @@ ircd::m::delete_room_keys_keys(client &client,
 
 	const event::idx version
 	{
-		request.query.at<event::idx>("version")
+		request.query.get<event::idx>("version", 0)
 	};
 
 	const m::user::room user_room
@@ -93,15 +95,90 @@ ircd::m::delete_room_keys_keys(client &client,
 		user_room
 	};
 
+	if(!room_id && !session_id)
+	{
+		state.for_each("ircd.room_keys.key", [&client, &request, &user_room, &version]
+		(const string_view &, const string_view &state_key, const event::idx &event_idx)
+		{
+			const auto &[room_id, session_id, _version]
+			{
+				unmake_state_key(state_key)
+			};
+
+			if(version && _version != lex_cast(version))
+				return true;
+
+			delete_room_keys_key(client, request, user_room, event_idx);
+			return true;
+		});
+	}
+	else if(!session_id)
+	{
+		state.for_each("ircd.room_keys.key", [&client, &request, &user_room, &version, &room_id]
+		(const string_view &, const string_view &state_key, const event::idx &event_idx)
+		{
+			const auto &[_room_id, session_id, _version]
+			{
+				unmake_state_key(state_key)
+			};
+
+			if(version && _version != lex_cast(version))
+				return true;
+
+			if(_room_id != room_id)
+				return true;
+
+			delete_room_keys_key(client, request, user_room, event_idx);
+			return true;
+		});
+	}
+	else delete_room_keys_key(client, request, user_room, room_id, session_id, version);
+
+	return resource::response
+	{
+		client, http::OK
+	};
+}
+
+ircd::m::event::id::buf
+ircd::m::delete_room_keys_key(client &client,
+                              const resource::request &request,
+                              const room &user_room,
+                              const room::id &room_id,
+                              const string_view &session_id,
+                              const event::idx &version)
+{
 	char state_key_buf[event::STATE_KEY_MAX_SIZE];
 	const string_view state_key
 	{
 		make_state_key(state_key_buf, room_id, session_id, version)
 	};
 
+	const room::state state
+	{
+		user_room
+	};
+
+	const auto event_idx
+	{
+		state.get(std::nothrow, "ircd.room_keys.key", state_key)
+	};
+
+	if(!event_idx)
+		return {};
+
+	return delete_room_keys_key(client, request, user_room, event_idx);
+}
+
+ircd::m::event::id::buf
+ircd::m::delete_room_keys_key(client &client,
+                              const resource::request &request,
+                              const room &user_room,
+                              const event::idx &event_idx)
+{
 	const auto event_id
 	{
-		m::event_id(state.get("ircd.room_keys.key", state_key))
+		m::event_id(event_idx)
 	};
 
 	const auto redact_id
@@ -109,10 +186,7 @@ ircd::m::delete_room_keys_keys(client &client,
 		m::redact(user_room, request.user_id, event_id, "deleted by client")
 	};
 
-	return resource::response
-	{
-		client, http::OK
-	};
+	return redact_id;
 }
 
 //
