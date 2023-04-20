@@ -327,9 +327,24 @@ ircd::m::get_room_keys_version(client &client,
 			event_idx
 	};
 
-	m::get(version_idx, "content", [&client, &event_idx]
+	const m::room::state state
+	{
+		user_room
+	};
+
+	m::get(version_idx, "content", [&client, &event_idx, &state]
 	(const json::object &content)
 	{
+		const auto &[count, etag]
+		{
+			count_etag(state, event_idx)
+		};
+
+		const json::value _etag
+		{
+			lex_cast(etag), json::STRING
+		};
+
 		const json::value version
 		{
 			lex_cast(event_idx), json::STRING
@@ -341,6 +356,8 @@ ircd::m::get_room_keys_version(client &client,
 			{
 				{ "algorithm",  content["algorithm"] },
 				{ "auth_data",  content["auth_data"] },
+				{ "count",      count                },
+				{ "etag",       _etag                },
 				{ "version",    version              },
 			}
 		};

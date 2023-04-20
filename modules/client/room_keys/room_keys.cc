@@ -16,6 +16,40 @@ IRCD_MODULE
 	"Client :e2e Room Keys"
 };
 
+std::tuple<int64_t, int64_t>
+ircd::m::count_etag(const room::state &state,
+                    const event::idx &version)
+{
+	char version_buf[64];
+	const auto version_str
+	{
+		lex_cast(version, version_buf)
+	};
+
+	uint64_t count(0), etag(0);
+	state.for_each("ircd.room_keys.key", [&]
+	(const string_view &type, const string_view &state_key, const event::idx &event_idx)
+	{
+		const auto &[room_id, session_id, _version_str]
+		{
+			unmake_state_key(state_key)
+		};
+
+		if(_version_str != version_str)
+			return true;
+
+		etag += event_idx;
+		count += 1;
+		return true;
+	});
+
+	return
+	{
+		int64_t(count),
+		int64_t(etag),
+	};
+}
+
 std::tuple<ircd::string_view, ircd::string_view, ircd::string_view>
 ircd::m::unmake_state_key(const string_view &state_key)
 {

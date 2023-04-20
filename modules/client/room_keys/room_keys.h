@@ -13,5 +13,6 @@ namespace ircd::m
 {
 	string_view make_state_key(const mutable_buffer &, const string_view &, const string_view &, const event::idx &);
 	std::tuple<string_view, string_view, string_view> unmake_state_key(const string_view &);
+	std::tuple<int64_t, int64_t> count_etag(const room::state &, const event::idx &version);
 }
 #pragma GCC visibility pop
