@@ -168,9 +168,16 @@ ircd::m::put_room_keys_keys(client &client,
 			request["rooms"]
 		};
 
-		for(const auto &[room_id, sessions] : rooms)
-			for(const auto &[session_id, session] : json::object(sessions))
+		for(const auto &[room_id, room_data] : rooms)
+		{
+			const json::object sessions
+			{
+				json::object(room_data)["sessions"]
+			};
+
+			for(const auto &[session_id, session] : sessions)
 				put_room_keys_keys_key(client, request, room_id, session_id, version, session);
+		}
 	}
 	else if(!session_id)
 	{
@@ -371,12 +378,17 @@ ircd::m::_get_room_keys_keys(client &client,
 		if(_version != lex_cast(version))
 			return true;
 
-		m::get(std::nothrow, event_idx, "content", [&sessions, &_session_id]
+		const string_view &session_id
+		{
+			_session_id
+		};
+
+		m::get(std::nothrow, event_idx, "content", [&sessions, &session_id]
 		(const json::object &session)
 		{
 			json::stack::member
 			{
-				sessions, _session_id, session
+				sessions, session_id, session
 			};
 		});
 
