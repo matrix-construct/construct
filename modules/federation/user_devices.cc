@@ -106,9 +106,26 @@ get__user_devices(client &client,
 	{
 		json::stack::member
 		{
-			response, "self_signing_keys", content
+			response, "self_signing_key", content
 		};
 	});
+
+	if(my_host(request.node_id))
+	{
+		const auto user_event_idx
+		{
+			user_room.get(std::nothrow, "ircd.device.signing.user", "")
+		};
+
+		m::get(std::nothrow, user_event_idx, "content", [&response]
+		(const json::object &content)
+		{
+			json::stack::member
+			{
+				response, "user_signing_key", content
+			};
+		});
+	}
 
 	json::stack::array devices
 	{
