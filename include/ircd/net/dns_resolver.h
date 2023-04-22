@@ -132,11 +132,11 @@ ircd::net::dns::tag::tag(const hostport &hp,
 {
 	this->hp.host =
 	{
-		hostbuf, copy(hostbuf, hp.host)
+		tolower(hostbuf, hp.host)
 	};
 
 	this->hp.service =
 	{
-		servicebuf, copy(servicebuf, hp.service)
+		tolower(servicebuf, hp.service)
 	};
 }
