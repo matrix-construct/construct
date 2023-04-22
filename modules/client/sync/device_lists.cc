@@ -41,6 +41,12 @@ ircd::m::sync::device_lists_linear(data &data)
 	if(!startswith(json::get<"type"_>(event), "ircd.device"))
 		return false;
 
+	if(startswith(json::get<"type"_>(event), "ircd.device.signing"))
+		return false;
+
+	if(startswith(json::get<"type"_>(event), "ircd.device.one_time_key"))
+		return false;
+
 	const m::user sender
 	{
 		m::user::id(json::get<"sender"_>(event))
@@ -56,7 +62,9 @@ ircd::m::sync::device_lists_linear(data &data)
 
 	const bool changed
 	{
-		mitsein.has(data.user, "join")
+		false
+		|| sender == data.user.user_id
+		|| mitsein.has(data.user, "join")
 	};
 
 	const bool left
@@ -66,6 +74,11 @@ ircd::m::sync::device_lists_linear(data &data)
 
 	if(!changed && !left)
 		return false;
+
+	json::stack::object device_lists
+	{
+		*data.out, "device_lists"
+	};
 
 	json::stack::array array
 	{
