@@ -31,7 +31,7 @@ decltype(ircd::m::createroom::version_default)
 ircd::m::createroom::version_default
 {
 	{ "name",     "ircd.m.createroom.version_default"  },
-	{ "default",  "5"                                  },
+	{ "default",  "6"                                  },
 };
 
 decltype(ircd::m::createroom::spec_presets)
