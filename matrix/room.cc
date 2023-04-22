@@ -893,6 +893,32 @@ ircd::m::join_rule(const room &room,
 }
 
 bool
+ircd::m::type(const room::id &room_id,
+              const string_view &type_)
+{
+	const m::room room
+	{
+		room_id
+	};
+
+	const auto event_idx
+	{
+		room.get(std::nothrow, "m.room.create", "")
+	};
+
+	return m::query(std::nothrow, event_idx, "content", false, [&type_]
+	(const json::object &content)
+	{
+		const json::string &type
+		{
+			content.get("type")
+		};
+
+		return type == type_;
+	});
+}
+
+bool
 ircd::m::creator(const room::id &room_id,
                  const user::id &user_id)
 {

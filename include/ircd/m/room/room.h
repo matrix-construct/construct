@@ -31,6 +31,7 @@ namespace ircd::m
 	bool exists(const id::room_alias &, const bool &remote = false);
 	bool internal(const id::room &);
 	bool federated(const id::room &);
+	bool type(const id::room &, const string_view &);
 	bool creator(const id::room &, const id::user &);
 	bool contains(const id::room &, const event::idx &);
 	bool membership(const room &, const id::user &, const string_view & = "join");
