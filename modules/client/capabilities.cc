@@ -51,6 +51,16 @@ ircd::m::client_capabilities::get(client &client,
 		mods::loaded("client_account")
 	};
 
+	const bool m_set_displayname__enabled
+	{
+		mods::loaded("client_profile")
+	};
+
+	const bool m_set_avatar_url__enabled
+	{
+		mods::loaded("client_profile")
+	};
+
 	const json::value default_room_version
 	{
 		string_view{m::createroom::version_default}, json::STRING
@@ -65,6 +75,14 @@ ircd::m::client_capabilities::get(client &client,
 				{ "m.change_password", json::members
 				{
 					{ "enabled", m_change_password__enabled },
+				}},
+				{ "m.set_displayname", json::members
+				{
+					{ "enabled", m_set_displayname__enabled },
+				}},
+				{ "m.set_avatar_url", json::members
+				{
+					{ "enabled", m_set_avatar_url__enabled },
 				}},
 				{ "m.room_versions", json::members
 				{
