@@ -443,6 +443,7 @@ client_client_sync_groups_la_SOURCES = client/sync/groups.cc
 client_client_sync_to_device_la_SOURCES = client/sync/to_device.cc
 client_client_sync_device_lists_la_SOURCES = client/sync/device_lists.cc
 client_client_sync_device_one_time_keys_count_la_SOURCES = client/sync/device_one_time_keys_count.cc
+client_client_sync_device_unused_fallback_key_types_la_SOURCES = client/sync/device_unused_fallback_key_types.cc
 
 client_module_LTLIBRARIES += \
 	client/client_sync_account_data.la \
@@ -452,6 +453,7 @@ client_module_LTLIBRARIES += \
 	client/client_sync_to_device.la \
 	client/client_sync_device_lists.la \
 	client/client_sync_device_one_time_keys_count.la \
+	client/client_sync_device_unused_fallback_key_types.la \
 	###
 
 # client/sync/rooms/
