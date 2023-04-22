@@ -274,6 +274,11 @@ _get_device(json::stack::object &obj,
 		obj, "device_id", device_id
 	};
 
+	json::stack::member
+	{
+		obj, "user_id", devices.user.user_id
+	};
+
 	devices.get(std::nothrow, device_id, "display_name", [&obj]
 	(const auto &, const string_view &value)
 	{
