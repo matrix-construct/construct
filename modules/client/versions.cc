@@ -241,4 +241,13 @@ ircd::m::client_versions::append_unstable_features(client &client,
 			bool(e2ee_forced_trusted_private)
 		}
 	};
+
+	// Supports filtering of /publicRooms by room type as per MSC3827
+	json::stack::member
+	{
+		out, "org.matrix.msc3827.stable", json::value
+		{
+			true
+		}
+	};
 }

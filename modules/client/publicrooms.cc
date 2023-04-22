@@ -134,6 +134,7 @@ get__publicrooms(client &client,
 	opts.lower_bound = true;
 	opts.room_id = since;
 	opts.request_user_id = request.user_id;
+	opts.room_type = json::string{filter["room_type"]};
 	if(m::valid(m::id::USER, search_term))
 		opts.user_id = search_term;
 

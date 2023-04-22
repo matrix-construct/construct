@@ -48,6 +48,9 @@ struct ircd::m::rooms::opts
 	/// Room alias prefix search
 	string_view room_alias;
 
+	/// Room type search
+	string_view room_type;
+
 	/// user::rooms convenience
 	id::user user_id;
 

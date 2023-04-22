@@ -114,6 +114,7 @@ handle_get(client &client,
 	opts.room_id = since;
 	opts.search_term = search_term;
 	opts.request_node_id = request.node_id;
+	opts.room_type = json::string(filter["room_type"]);
 
 	size_t count{0};
 	m::room::id::buf prev_batch_buf;
