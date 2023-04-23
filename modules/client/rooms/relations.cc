@@ -60,9 +60,11 @@ get__relations(client &client,
 			"relation rel_type path parameter required"
 		};
 
-	const string_view &rel_type
+	const string_view rel_type
 	{
-		url::decode(rel_type_buf, request.parv[3])
+		request.parv.size() > 3?
+			url::decode(rel_type_buf, request.parv[3]):
+			string_view{}
 	};
 
 	// Get the alleged type path parameter.
@@ -75,9 +77,11 @@ get__relations(client &client,
 			"relation ?type? path parameter required"
 		};
 
-	const string_view &type
+	const string_view type
 	{
-		url::decode(type_buf, request.parv[4])
+		request.parv.size() > 4?
+			url::decode(type_buf, request.parv[4]):
+			string_view{}
 	};
 
 	const auto event_idx
