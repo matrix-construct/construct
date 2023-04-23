@@ -277,14 +277,66 @@ _query_user_device(client &client,
 		out, device_id
 	};
 
-	devices.get(std::nothrow, device_id, "keys", [&device_id, &object]
+	devices.get(std::nothrow, device_id, "keys", [&devices, &device_id, &object]
 	(const auto &event_idx, const json::object &device_keys)
 	{
+		const auto &user_id
+		{
+			devices.user.user_id
+		};
+
 		for(const auto &member : device_keys)
+			if(member.first != "signatures")
+				json::stack::member
+				{
+					object, member
+				};
+
+		json::stack::object sigs
+		{
+			object, "signatures"
+		};
+
+		json::stack::object user_sigs
+		{
+			sigs, user_id
+		};
+
+		const json::object device_keys_sigs
+		{
+			device_keys["signatures"]
+		};
+
+		const json::object device_keys_user_sigs
+		{
+			device_keys_sigs[user_id]
+		};
+
+		for(const auto &member : device_keys_user_sigs)
 			json::stack::member
 			{
-				object, member.first, member.second
+				user_sigs, member
 			};
+
+		devices.get(std::nothrow, device_id, "signatures", [&user_id, &user_sigs]
+		(const auto &event_idx, const json::object &device_sigs)
+		{
+			const json::object device_sigs_sigs
+			{
+				device_sigs["signatures"]
+			};
+
+			const json::object device_sigs_user_sigs
+			{
+				device_sigs_sigs[user_id]
+			};
+
+			for(const auto &member : device_sigs_user_sigs)
+				json::stack::member
+				{
+					user_sigs, member
+				};
+		});
 	});
 
 	devices.get(std::nothrow, device_id, "display_name", [&device_id, &object]
