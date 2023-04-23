@@ -1713,6 +1713,42 @@ ircd::json::stack::member::member(object &po,
 }
 
 ircd::json::stack::member::member(stack &s,
+                                  const json::member &m)
+:member
+{
+	stack::top<object>(s), m
+}
+{
+}
+
+ircd::json::stack::member::member(object &po,
+                                  const json::member &m)
+:member
+{
+	po, string_view{m.first}, m.second
+}
+{
+}
+
+ircd::json::stack::member::member(stack &s,
+                                  const json::object::member &om)
+:member
+{
+	stack::top<object>(s), om
+}
+{
+}
+
+ircd::json::stack::member::member(object &po,
+                                  const json::object::member &om)
+:member
+{
+	po, om.first, om.second
+}
+{
+}
+
+ircd::json::stack::member::member(stack &s,
                                   const string_view &name,
                                   const json::value &value)
 :member

@@ -41,6 +41,10 @@ struct ircd::json::stack::member
 	member(stack &s, const string_view &name, const json::value &);
 	template<class... T> member(object &po, const string_view &name, const json::tuple<T...> &t);
 	template<class... T> member(stack &s, const string_view &name, const json::tuple<T...> &t);
+	explicit member(object &, const json::object::member &);
+	explicit member(stack &, const json::object::member &);
+	explicit member(object &, const json::member &);
+	explicit member(stack &, const json::member &);
 	member() = default;
 	member(const member &) = delete;
 	member(member &&) noexcept;
