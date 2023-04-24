@@ -122,7 +122,7 @@ post__filter(client &client,
 
 	return m::resource::response
 	{
-		client, http::CREATED,
+               client, http::OK,
 		{
 			{ "filter_id", filter_id }
 		}
