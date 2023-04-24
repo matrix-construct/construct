@@ -43,6 +43,11 @@ ircd::m::resource::response
 ircd::m::post_keys_signatures_upload(client &client,
                                      const resource::request &request)
 {
+	const auto src_device
+	{
+		m::user::tokens::device(std::nothrow, request.access_token)
+	};
+
 	for(const auto &[_user_id, devices_keys_] : request)
 	{
 		if(!valid(m::id::USER, _user_id))
@@ -58,27 +63,22 @@ ircd::m::post_keys_signatures_upload(client &client,
 			user_id
 		};
 
-		const m::user::devices devices
+		for(const auto &[target_id, device_keys] : json::object(devices_keys_))
 		{
-			user_id
-		};
-
-		const json::object &devices_keys
-		{
-			devices_keys_
-		};
-
-		for(const auto &[_device_id, device_keys_] : devices_keys)
-		{
-			const m::device_keys device_keys
+			char buf[512];
+			const string_view state_key{fmt::sprintf
 			{
-				device_keys_
-			};
+				buf, "%s%s",
+				string_view{target_id},
+				target_id != src_device && src_device?
+					string_view{src_device}:
+					string_view{},
+			}};
 
-			const bool set
+			send(user_room, user_id, "ircd.keys.signatures", state_key, json::object
 			{
-				devices.set(_device_id, "signatures", device_keys_)
-			};
+				device_keys
+			});
 		}
 	}
 

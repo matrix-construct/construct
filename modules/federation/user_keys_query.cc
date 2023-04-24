@@ -272,17 +272,22 @@ _query_user_device(client &client,
 	if(!devices.has(device_id, "keys"))
 		return;
 
+	const m::user::room user_room
+	{
+		devices.user.user_id
+	};
+
 	json::stack::object object
 	{
 		out, device_id
 	};
 
-	devices.get(std::nothrow, device_id, "keys", [&devices, &device_id, &object]
-	(const auto &event_idx, const json::object &device_keys)
+	devices.get(std::nothrow, device_id, "keys", [&user_room, &device_id, &object]
+	(const auto &, const json::object &device_keys)
 	{
 		const auto &user_id
 		{
-			devices.user.user_id
+			user_room.user.user_id
 		};
 
 		for(const auto &member : device_keys)
@@ -318,24 +323,43 @@ _query_user_device(client &client,
 				user_sigs, member
 			};
 
-		devices.get(std::nothrow, device_id, "signatures", [&user_id, &user_sigs]
-		(const auto &event_idx, const json::object &device_sigs)
+		const m::room::state state
 		{
-			const json::object device_sigs_sigs
+			user_room
+		};
+
+		state.for_each("ircd.keys.signatures", [&user_id, &user_sigs, &device_id]
+		(const string_view &, const string_view &state_key, const auto &event_idx)
+		{
+			const auto &[target, source]
 			{
-				device_sigs["signatures"]
+				rsplit(state_key, '%')
 			};
 
-			const json::object device_sigs_user_sigs
-			{
-				device_sigs_sigs[user_id]
-			};
+			if(target && target != device_id)
+				return true;
 
-			for(const auto &member : device_sigs_user_sigs)
-				json::stack::member
+			m::get(std::nothrow, event_idx, "content", [&user_id, &user_sigs]
+			(const json::object &device_sigs)
+			{
+				const json::object device_sigs_sigs
 				{
-					user_sigs, member
+					device_sigs["signatures"]
 				};
+
+				const json::object device_sigs_user_sigs
+				{
+					device_sigs_sigs[user_id]
+				};
+
+				for(const auto &member : device_sigs_user_sigs)
+					json::stack::member
+					{
+						user_sigs, member
+					};
+			});
+
+			return true;
 		});
 	});
 

@@ -38,13 +38,21 @@ ircd::m::sync::device_lists_linear(data &data)
 
 	assert(data.event);
 	const m::event &event{*data.event};
-	if(!startswith(json::get<"type"_>(event), "ircd.device"))
-		return false;
 
-	if(startswith(json::get<"type"_>(event), "ircd.device.signing"))
-		return false;
+	const bool including
+	{
+		false
+		|| startswith(json::get<"type"_>(event), "ircd.device")
+		|| startswith(json::get<"type"_>(event), "ircd.keys.signatures")
+	};
 
-	if(startswith(json::get<"type"_>(event), "ircd.device.one_time_key"))
+	const bool excluding
+	{
+		false
+		|| startswith(json::get<"type"_>(event), "ircd.device.one_time_key")
+	};
+
+	if(!including || excluding)
 		return false;
 
 	const m::user sender
