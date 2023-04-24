@@ -162,7 +162,7 @@ _query_master_keys(client &client,
 
 		const auto event_idx
 		{
-			room.get(std::nothrow, "ircd.device.signing.master", "")
+			room.get(std::nothrow, "ircd.cross_signing.master", "")
 		};
 
 		m::get(std::nothrow, event_idx, "content", [&response_keys, &user_id]
@@ -205,7 +205,7 @@ _query_self_keys(client &client,
 
 		const auto event_idx
 		{
-			room.get(std::nothrow, "ircd.device.signing.self", "")
+			room.get(std::nothrow, "ircd.cross_signing.self", "")
 		};
 
 		m::get(std::nothrow, event_idx, "content", [&response_keys, &user_id]
@@ -248,7 +248,7 @@ _query_user_keys(client &client,
 
 		const auto event_idx
 		{
-			room.get(std::nothrow, "ircd.device.signing.user", "")
+			room.get(std::nothrow, "ircd.cross_signing.user", "")
 		};
 
 		m::get(std::nothrow, event_idx, "content", [&response_keys, &user_id]

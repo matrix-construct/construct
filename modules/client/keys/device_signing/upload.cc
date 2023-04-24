@@ -85,7 +85,7 @@ ircd::m::post_keys_device_signing_upload(client &client,
 	const auto master_id
 	{
 		msk?
-			send(room, request.user_id, "ircd.device.signing.master", "", msk):
+			send(room, request.user_id, "ircd.cross_signing.master", "", msk):
 			event::id::buf{}
 	};
 
@@ -97,7 +97,7 @@ ircd::m::post_keys_device_signing_upload(client &client,
 	const auto self_signing_id
 	{
 		ssk?
-			send(room, request.user_id, "ircd.device.signing.self", "", ssk):
+			send(room, request.user_id, "ircd.cross_signing.self", "", ssk):
 			event::id::buf{}
 	};
 
@@ -109,7 +109,7 @@ ircd::m::post_keys_device_signing_upload(client &client,
 	const auto user_signing_id
 	{
 		usk?
-			send(room, request.user_id, "ircd.device.signing.user", "", usk):
+			send(room, request.user_id, "ircd.cross_signing.user", "", usk):
 			event::id::buf{}
 	};
 

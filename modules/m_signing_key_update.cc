@@ -80,7 +80,7 @@ try
 	const auto master_id
 	{
 		msk?
-			send(room, user_id, "ircd.device.signing.master", "", msk):
+			send(room, user_id, "ircd.cross_signing.master", "", msk):
 			m::event::id::buf{}
 	};
 
@@ -92,7 +92,7 @@ try
 	const auto self_id
 	{
 		ssk?
-			send(room, user_id, "ircd.device.signing.self", "", ssk):
+			send(room, user_id, "ircd.cross_signing.self", "", ssk):
 			m::event::id::buf{}
 	};
 

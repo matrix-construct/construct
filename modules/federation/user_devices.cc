@@ -84,7 +84,7 @@ get__user_devices(client &client,
 
 	const auto master_event_idx
 	{
-		user_room.get(std::nothrow, "ircd.device.signing.master", "")
+		user_room.get(std::nothrow, "ircd.cross_signing.master", "")
 	};
 
 	m::get(std::nothrow, master_event_idx, "content", [&response]
@@ -98,7 +98,7 @@ get__user_devices(client &client,
 
 	const auto self_event_idx
 	{
-		user_room.get(std::nothrow, "ircd.device.signing.self", "")
+		user_room.get(std::nothrow, "ircd.cross_signing.self", "")
 	};
 
 	m::get(std::nothrow, self_event_idx, "content", [&response]
@@ -114,7 +114,7 @@ get__user_devices(client &client,
 	{
 		const auto user_event_idx
 		{
-			user_room.get(std::nothrow, "ircd.device.signing.user", "")
+			user_room.get(std::nothrow, "ircd.cross_signing.user", "")
 		};
 
 		m::get(std::nothrow, user_event_idx, "content", [&response]
