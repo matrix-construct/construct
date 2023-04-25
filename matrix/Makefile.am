@@ -137,6 +137,7 @@ libircd_matrix_la_SOURCES += user_devices.cc
 libircd_matrix_la_SOURCES += user_events.cc
 libircd_matrix_la_SOURCES += user_filter.cc
 libircd_matrix_la_SOURCES += user_ignores.cc
+libircd_matrix_la_SOURCES += user_keys.cc
 libircd_matrix_la_SOURCES += user_mitsein.cc
 libircd_matrix_la_SOURCES += user_notifications.cc
 libircd_matrix_la_SOURCES += user_profile.cc

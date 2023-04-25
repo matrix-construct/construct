@@ -43,42 +43,35 @@ ircd::m::resource::response
 ircd::m::post_keys_signatures_upload(client &client,
                                      const resource::request &request)
 {
-	const auto src_device
+	const auto src_dev
 	{
-		m::user::tokens::device(std::nothrow, request.access_token)
+		user::tokens::device(std::nothrow, request.access_token)
 	};
 
-	for(const auto &[_user_id, devices_keys_] : request)
+	for(const auto &[user_id, device_keys_] : request)
 	{
-		if(!valid(m::id::USER, _user_id))
+		if(!valid(m::id::USER, user_id))
 			continue;
 
-		const m::user::id user_id
+		const json::object device_keys
 		{
-			_user_id
+			device_keys_
 		};
 
-		const m::user::room user_room
+		const user::room user_room
 		{
-			user_id
+			user::id{user_id}
 		};
 
-		for(const auto &[target_id, device_keys] : json::object(devices_keys_))
+		for(const auto &[tgt_id, keys] : device_keys)
 		{
-			char buf[512];
-			const string_view state_key{fmt::sprintf
+			char state_key_buf[512];
+			const string_view state_key
 			{
-				buf, "%s%s",
-				string_view{target_id},
-				target_id != src_device && src_device?
-					string_view{src_device}:
-					string_view{},
-			}};
+				user::keys::make_sigs_state_key(state_key_buf, tgt_id, src_dev)
+			};
 
-			send(user_room, user_id, "ircd.keys.signatures", state_key, json::object
-			{
-				device_keys
-			});
+			send(user_room, user_id, "ircd.keys.signatures", state_key, keys);
 		}
 	}
 

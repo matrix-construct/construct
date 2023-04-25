@@ -52,6 +52,7 @@ struct ircd::m::user
 	struct tokens;
 	struct devices;
 	struct reading;
+	struct keys;
 
 	using id = m::id::user;
 	using closure = std::function<void (const user &)>;
@@ -105,3 +106,4 @@ const
 #include "tokens.h"
 #include "devices.h"
 #include "reading.h"
+#include "keys.h"

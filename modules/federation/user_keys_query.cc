@@ -155,105 +155,12 @@ _query_master_keys(client &client,
 			user_id_
 		};
 
-		const m::user::room user_room
+		const m::user::keys keys
 		{
 			user_id
 		};
 
-		const auto event_idx
-		{
-			user_room.get(std::nothrow, "ircd.cross_signing.master", "")
-		};
-
-		m::get(std::nothrow, event_idx, "content", [&user_room, &user_id, &response_keys]
-		(const json::object &device_keys)
-		{
-			json::stack::object object
-			{
-				response_keys, user_id
-			};
-
-			for(const auto &member : device_keys)
-				if(member.first != "signatures")
-					json::stack::member
-					{
-						object, member
-					};
-
-			const json::object device_keys_sigs
-			{
-				device_keys["signatures"]
-			};
-
-			json::stack::object sigs
-			{
-				object, "signatures"
-			};
-
-			json::stack::object user_sigs
-			{
-				sigs, user_id
-			};
-
-			const json::object device_keys_user_sigs
-			{
-				device_keys_sigs[user_id]
-			};
-
-			for(const auto &member : device_keys_user_sigs)
-				json::stack::member
-				{
-					user_sigs, member
-				};
-
-			const m::room::state state
-			{
-				user_room
-			};
-
-			for(const auto &[key_id__, key] : json::object(device_keys["keys"]))
-			{
-				const auto &[algo, key_id_]
-				{
-					split(key_id__, ':')
-				};
-
-				const auto key_id(key_id_);
-				state.for_each("ircd.keys.signatures", [&user_id, &user_sigs, &key_id]
-				(const string_view &, const string_view &state_key, const auto &event_idx)
-				{
-					const auto &[target, source]
-					{
-						rsplit(state_key, '%')
-					};
-
-					if(target != key_id)
-						return true;
-
-					m::get(std::nothrow, event_idx, "content", [&user_id, &user_sigs]
-					(const json::object &device_sigs)
-					{
-						const json::object device_sigs_sigs
-						{
-							device_sigs["signatures"]
-						};
-
-						const json::object device_sigs_user_sigs
-						{
-							device_sigs_sigs[user_id]
-						};
-
-						for(const auto &member : device_sigs_user_sigs)
-							json::stack::member
-							{
-								user_sigs, member
-							};
-					});
-
-					return true;
-				});
-			}
-		});
+		keys.cross_master(response_keys);
 	}
 }
 
@@ -279,24 +186,12 @@ _query_self_keys(client &client,
 			user_id_
 		};
 
-		const m::user::room room
+		const m::user::keys keys
 		{
 			user_id
 		};
 
-		const auto event_idx
-		{
-			room.get(std::nothrow, "ircd.cross_signing.self", "")
-		};
-
-		m::get(std::nothrow, event_idx, "content", [&response_keys, &user_id]
-		(const json::object &content)
-		{
-			json::stack::member
-			{
-				response_keys, user_id, content
-			};
-		});
+		keys.cross_self(response_keys);
 	}
 }
 
@@ -322,24 +217,12 @@ _query_user_keys(client &client,
 			user_id_
 		};
 
-		const m::user::room room
+		const m::user::keys keys
 		{
 			user_id
 		};
 
-		const auto event_idx
-		{
-			room.get(std::nothrow, "ircd.cross_signing.user", "")
-		};
-
-		m::get(std::nothrow, event_idx, "content", [&response_keys, &user_id]
-		(const json::object &content)
-		{
-			json::stack::member
-			{
-				response_keys, user_id, content
-			};
-		});
+		keys.cross_user(response_keys);
 	}
 }
 
@@ -353,96 +236,17 @@ _query_user_device(client &client,
 	if(!devices.has(device_id, "keys"))
 		return;
 
-	const m::user::room user_room
-	{
-		devices.user.user_id
-	};
-
 	json::stack::object object
 	{
 		out, device_id
 	};
 
-	devices.get(std::nothrow, device_id, "keys", [&user_room, &device_id, &object]
-	(const auto &, const json::object &device_keys)
+	const m::user::keys keys
 	{
-		const auto &user_id
-		{
-			user_room.user.user_id
-		};
+		devices.user
+	};
 
-		for(const auto &member : device_keys)
-			if(member.first != "signatures")
-				json::stack::member
-				{
-					object, member
-				};
-
-		json::stack::object sigs
-		{
-			object, "signatures"
-		};
-
-		json::stack::object user_sigs
-		{
-			sigs, user_id
-		};
-
-		const json::object device_keys_sigs
-		{
-			device_keys["signatures"]
-		};
-
-		const json::object device_keys_user_sigs
-		{
-			device_keys_sigs[user_id]
-		};
-
-		for(const auto &member : device_keys_user_sigs)
-			json::stack::member
-			{
-				user_sigs, member
-			};
-
-		const m::room::state state
-		{
-			user_room
-		};
-
-		state.for_each("ircd.keys.signatures", [&user_id, &user_sigs, &device_id]
-		(const string_view &, const string_view &state_key, const auto &event_idx)
-		{
-			const auto &[target, source]
-			{
-				rsplit(state_key, '%')
-			};
-
-			if(target && target != device_id)
-				return true;
-
-			m::get(std::nothrow, event_idx, "content", [&user_id, &user_sigs]
-			(const json::object &device_sigs)
-			{
-				const json::object device_sigs_sigs
-				{
-					device_sigs["signatures"]
-				};
-
-				const json::object device_sigs_user_sigs
-				{
-					device_sigs_sigs[user_id]
-				};
-
-				for(const auto &member : device_sigs_user_sigs)
-					json::stack::member
-					{
-						user_sigs, member
-					};
-			});
-
-			return true;
-		});
-	});
+	keys.device(object, device_id);
 
 	devices.get(std::nothrow, device_id, "display_name", [&device_id, &object]
 	(const auto &event_idx, const string_view &display_name)
