@@ -160,7 +160,15 @@ _query_master_keys(client &client,
 			user_id
 		};
 
-		keys.cross_master(response_keys);
+		if(!keys.has_cross_master())
+			continue;
+
+		json::stack::object object
+		{
+			response_keys, user_id
+		};
+
+		keys.cross_master(object);
 	}
 }
 
@@ -191,7 +199,15 @@ _query_self_keys(client &client,
 			user_id
 		};
 
-		keys.cross_self(response_keys);
+		if(!keys.has_cross_self())
+			continue;
+
+		json::stack::object object
+		{
+			response_keys, user_id
+		};
+
+		keys.cross_self(object);
 	}
 }
 
@@ -222,7 +238,15 @@ _query_user_keys(client &client,
 			user_id
 		};
 
-		keys.cross_user(response_keys);
+		if(!keys.has_cross_user())
+			continue;
+
+		json::stack::object object
+		{
+			response_keys, user_id
+		};
+
+		keys.cross_user(object);
 	}
 }
 
@@ -233,17 +257,17 @@ _query_user_device(client &client,
                    const string_view &device_id,
                    json::stack::object &out)
 {
-	if(!devices.has(device_id, "keys"))
+	const m::user::keys keys
+	{
+		devices.user
+	};
+
+	if(!keys.has_device(device_id))
 		return;
 
 	json::stack::object object
 	{
 		out, device_id
-	};
-
-	const m::user::keys keys
-	{
-		devices.user
 	};
 
 	keys.device(object, device_id);
