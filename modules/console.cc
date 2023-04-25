@@ -17205,7 +17205,7 @@ console_cmd__fed__user__devices(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"user_id", "remote"
+		"user_id", "remote", "op"
 	}};
 
 	const m::user::id &user_id
@@ -17216,6 +17216,11 @@ console_cmd__fed__user__devices(opt &out, const string_view &line)
 	const string_view remote
 	{
 		param.at("remote", user_id.host())
+	};
+
+	const bool raw
+	{
+		has(param["op"], "raw")
 	};
 
 	m::fed::user::devices::opts opts;
@@ -17241,6 +17246,14 @@ console_cmd__fed__user__devices(opt &out, const string_view &line)
 	{
 		request
 	};
+
+	if(raw)
+	{
+		out
+		<< string_view{response}
+		<< std::endl;
+		return true;
+	}
 
 	const string_view stream_id
 	{
@@ -17272,14 +17285,21 @@ console_cmd__fed__user__keys__query(opt &out, const string_view &line)
 		param.at("user_id")
 	};
 
-	const string_view &device_id
-	{
-		param.at("device_id", string_view{})
-	};
-
 	const string_view remote
 	{
 		param.at("remote", user_id.host())
+	};
+
+	const bool raw
+	{
+		param["device_id"] == "raw"
+	};
+
+	const string_view device_id
+	{
+		!raw?
+			param.at("device_id", string_view{}):
+			string_view{}
 	};
 
 	m::fed::user::opts opts;
@@ -17305,6 +17325,14 @@ console_cmd__fed__user__keys__query(opt &out, const string_view &line)
 	{
 		request
 	};
+
+	if(raw)
+	{
+		out
+		<< string_view{response}
+		<< std::endl;
+		return true;
+	}
 
 	const json::object &device_keys
 	{
