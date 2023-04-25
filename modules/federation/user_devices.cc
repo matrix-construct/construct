@@ -64,6 +64,11 @@ get__user_devices(client &client,
 		user_id
 	};
 
+	const m::user::keys user_keys
+	{
+		user_id
+	};
+
 	m::resource::response::chunked::json response
 	{
 		client, http::OK
@@ -82,49 +87,34 @@ get__user_devices(client &client,
 		}
 	};
 
-	const auto master_event_idx
+	if(user_keys.has_cross_master())
 	{
-		user_room.get(std::nothrow, "ircd.cross_signing.master", "")
-	};
-
-	m::get(std::nothrow, master_event_idx, "content", [&response]
-	(const json::object &content)
-	{
-		json::stack::member
+		json::stack::object object
 		{
-			response, "master_key", content
-		};
-	});
-
-	const auto self_event_idx
-	{
-		user_room.get(std::nothrow, "ircd.cross_signing.self", "")
-	};
-
-	m::get(std::nothrow, self_event_idx, "content", [&response]
-	(const json::object &content)
-	{
-		json::stack::member
-		{
-			response, "self_signing_key", content
-		};
-	});
-
-	if(my_host(request.node_id))
-	{
-		const auto user_event_idx
-		{
-			user_room.get(std::nothrow, "ircd.cross_signing.user", "")
+			response, "master_key"
 		};
 
-		m::get(std::nothrow, user_event_idx, "content", [&response]
-		(const json::object &content)
+		user_keys.cross_master(object);
+	}
+
+	if(user_keys.has_cross_self())
+	{
+		json::stack::object object
 		{
-			json::stack::member
-			{
-				response, "user_signing_key", content
-			};
-		});
+			response, "self_signing_key"
+		};
+
+		user_keys.cross_self(object);
+	}
+
+	if(my_host(request.node_id) && user_keys.has_cross_user())
+	{
+		json::stack::object object
+		{
+			response, "user_signing_key"
+		};
+
+		user_keys.cross_user(object);
 	}
 
 	json::stack::array devices
@@ -132,7 +122,7 @@ get__user_devices(client &client,
 		response, "devices"
 	};
 
-	user_devices.for_each([&user_devices, &devices]
+	user_devices.for_each([&user_devices, &devices, &user_keys]
 	(const auto &, const string_view &device_id)
 	{
 		json::stack::object device
@@ -145,6 +135,16 @@ get__user_devices(client &client,
 			device, "device_id", device_id
 		};
 
+		if(user_keys.has_device(device_id))
+		{
+			json::stack::object keys
+			{
+				device, "keys"
+			};
+
+			user_keys.device(keys, device_id);
+		}
+
 		// The property name difference here is on purpose, probably one of
 		// those so-called spec "thinkos"
 		user_devices.get(std::nothrow, device_id, "display_name", [&device]
@@ -153,15 +153,6 @@ get__user_devices(client &client,
 			json::stack::member
 			{
 				device, "device_display_name", value
-			};
-		});
-
-		user_devices.get(std::nothrow, device_id, "keys", [&device]
-		(const auto &, const json::object &value)
-		{
-			json::stack::member
-			{
-				device, "keys", value
 			};
 		});
 
