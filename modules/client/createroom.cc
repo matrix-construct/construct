@@ -103,7 +103,7 @@ post__createroom(client &client,
 	top.~object();
 	return m::resource::response
 	{
-		client, http::CREATED, json::object
+		client, http::OK, json::object
 		{
 			out.completed()
 		}

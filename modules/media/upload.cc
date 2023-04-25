@@ -96,7 +96,7 @@ post__upload(client &client,
 
 	return m::resource::response
 	{
-		client, http::CREATED, json::members
+		client, http::OK, json::members
 		{
 			{ "content_uri", content_uri }
 		}

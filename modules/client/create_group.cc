@@ -60,7 +60,7 @@ ircd::m::groups::handle_post(client &client,
 
 	return resource::response
 	{
-		client, http::CREATED, json::members
+		client, http::OK, json::members
 		{
 			{ "group_id", group_id }
 		},

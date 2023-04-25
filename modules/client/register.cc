@@ -148,7 +148,7 @@ try
 	// Send response to user
 	return m::resource::response
 	{
-		client, http::CREATED, response
+		client, http::OK, response
 	};
 }
 catch(const m::INVALID_MXID &e)
@@ -191,7 +191,7 @@ post__register_guest(client &client,
 
 	return m::resource::response
 	{
-		client, http::CREATED,
+		client, http::OK,
 		{
 			{ "user_id",         user_id        },
 			{ "home_server",     my_host()      },
@@ -243,7 +243,7 @@ try
 	// Send response to user
 	return m::resource::response
 	{
-		client, http::CREATED, response
+		client, http::OK, response
 	};
 }
 catch(const m::INVALID_MXID &e)
