@@ -40,6 +40,7 @@ struct ircd::rest::get
 :request
 {
 	get(const mutable_buffer &out, const rfc3986::uri &, opts);
+	get(const mutable_buffer &out, const rfc3986::uri &);
 	get(const rfc3986::uri &, opts);
 };
 
@@ -178,6 +179,15 @@ ircd::rest::get::get(const rfc3986::uri &uri,
 :request
 {
 	uri, opts.set("GET")
+}
+{}
+
+inline
+ircd::rest::get::get(const mutable_buffer &out,
+                     const rfc3986::uri &uri)
+:get
+{
+	out, uri, opts{}
 }
 {}
 
