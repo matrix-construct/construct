@@ -365,8 +365,8 @@ ircd::m::pretty_stateline(std::ostream &out,
 		<< std::right << " [ "
 		<< std::setw(30) << type
 		<< std::left << " | "
-		<< std::setw(50) << state_key
-		<< std::left << " ]" << flags << " "
+		<< std::setw(50) << trunc(state_key, 50)
+		<< std::left << "]" << flags << " "
 		<< std::setw(10) << event_idx
 		<< std::left << "  "
 		<< std::setw(72) << string_view{event.event_id}
@@ -382,10 +382,10 @@ ircd::m::pretty_stateline(std::ostream &out,
 		<< std::right << " "
 		<< std::setw(9) << json::get<"depth"_>(event)
 		<< std::right << " [ "
-		<< std::setw(40) << type
+		<< std::setw(50) << type
 		<< std::left << " | "
-		<< std::setw(56) << state_key
-		<< std::left << " ]" << flags << " "
+		<< std::setw(60) << trunc(state_key, 60)
+		<< std::left << "]" << flags << " "
 		<< std::setw(10) << event_idx
 		<< ' '
 		<< std::left << trunc(content, 80)
