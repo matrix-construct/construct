@@ -18476,6 +18476,35 @@ console_cmd__well_known__matrix__server(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__well_known__matrix__client(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"remote"
+	}};
+
+	const fmt::bsprintf<512> url
+	{
+		"https://%s/.well-known/matrix/client",
+		param.at("remote"),
+	};
+
+	char buf[1024];
+	const json::object response
+	{
+		rest::get
+		{
+			buf, string_view{url}
+		}
+	};
+
+	out
+	<< string_view{response}
+	<< std::endl;
+	return true;
+}
+
 //
 // bridge
 //
