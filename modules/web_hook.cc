@@ -620,7 +620,7 @@ find_reaction_id(const m::room &room,
 }
 
 static ircd::m::event::id::buf
-find_reaction_id_endswith(const m::room &room,
+find_reaction_id_contains(const m::room &room,
                           const m::user::id &user_id,
                           const m::event::id &event_id,
                           const string_view &label)
@@ -633,7 +633,7 @@ find_reaction_id_endswith(const m::room &room,
 			relates["key"]
 		};
 
-		return endswith(key, label);
+		return has(key, label);
 	});
 }
 
@@ -656,14 +656,14 @@ clear_reaction(const m::room &room,
 }
 
 static bool
-clear_reaction_endswith(const m::room &room,
+clear_reaction_contains(const m::room &room,
                         const m::user::id &user_id,
                         const m::event::id &event_id,
                         const string_view &label)
 {
 	const auto reaction_id
 	{
-		find_reaction_id_endswith(room, user_id, event_id, label)
+		find_reaction_id_contains(room, user_id, event_id, label)
 	};
 
 	if(!reaction_id)
@@ -1058,15 +1058,8 @@ github_handle__workflow_run(std::ostream &out,
 	annote = ircd::strlcat(buf, " "_sv);
 	annote = ircd::strlcat(buf, name);
 
-	const auto reaction_id
-	{
-		push_event_id && action != "requested"? // skip search on first action
-			find_reaction_id_endswith(_webhook_room, _webhook_user, push_event_id, name):
-			m::event::id::buf{}
-	};
-
-	if(reaction_id)
-		m::redact(_webhook_room, _webhook_user, reaction_id, "status change");
+	if(push_event_id && action != "requested") // skip search on first action
+		while(clear_reaction_contains(_webhook_room, _webhook_user, push_event_id, name));
 
 	m::annotate(_webhook_room, _webhook_user, push_event_id, annote);
 
