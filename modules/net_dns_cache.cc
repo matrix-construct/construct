@@ -89,7 +89,7 @@ ircd::net::dns::cache::put(const hostport &hp,
 	{
 		opts.qtype == 33?
 			make_SRV_key(state_key_buf, hp, opts):
-			host(hp)
+			tolower(state_key_buf, host(hp))
 	};
 
 	return put(type, state_key, code, msg);
@@ -117,7 +117,7 @@ ircd::net::dns::cache::put(const hostport &hp,
 	{
 		opts.qtype == 33?
 			make_SRV_key(state_key_buf, hp, opts):
-			host(hp)
+			tolower(state_key_buf, host(hp))
 	};
 
 	return put(type, state_key, rrs);
@@ -369,7 +369,7 @@ ircd::net::dns::cache::get(const hostport &hp,
 	{
 		opts.qtype == 33?
 			make_SRV_key(state_key_buf, hp, opts):
-			host(hp)
+			tolower(state_key_buf, host(hp))
 	};
 
 	const m::room::state state
@@ -431,7 +431,7 @@ ircd::net::dns::cache::for_each(const hostport &hp,
 	{
 		opts.qtype == 33?
 			make_SRV_key(state_key_buf, hp, opts):
-			host(hp)
+			tolower(state_key_buf, host(hp))
 	};
 
 	const m::room::state state

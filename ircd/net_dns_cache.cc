@@ -191,10 +191,10 @@ bool
 ircd::net::dns::cache::operator==(const waiter &a, const waiter &b)
 noexcept
 {
-	return
-	a.opts.qtype == b.opts.qtype &&
-	a.key && b.key &&
-	a.key == b.key;
+	return true
+	&& a.opts.qtype == b.opts.qtype
+	&& a.key && b.key
+	&& a.key == b.key;
 }
 
 bool
@@ -227,7 +227,7 @@ ircd::net::dns::cache::waiter::waiter(const hostport &hp,
 {
 	opts.qtype == 33?
 		make_SRV_key(keybuf, hp, opts):
-		strlcpy(keybuf, host(hp))
+		tolower(keybuf, host(hp))
 }
 {
 	this->opts.srv = {};
