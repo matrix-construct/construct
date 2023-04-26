@@ -14457,9 +14457,9 @@ console_cmd__user__devices__update(opt &out, const string_view &line)
 		param.at("user_id")
 	};
 
-	const string_view &device_id
+	const string_view &device_id_
 	{
-		param.at("device_id")
+		param.at("device_id", "*"_sv)
 	};
 
 	const bool deleted
@@ -14472,20 +14472,46 @@ console_cmd__user__devices__update(opt &out, const string_view &line)
 		user_id
 	};
 
-	json::iov content;
-	const json::iov::push push[]
+	const auto update{[&out, &user_id, &deleted]
+	(const auto &device_id)
 	{
-		{ content,  { "user_id",    user_id       } },
-		{ content,  { "device_id",  device_id     } },
-		{ content,  { "deleted",    deleted       } },
+		json::iov content;
+		const json::iov::push push[]
+		{
+			{ content,  { "user_id",    user_id       } },
+			{ content,  { "device_id",  device_id     } },
+			{ content,  { "deleted",    deleted       } },
+		};
+
+		const bool broadcasted
+		{
+			m::user::devices::send(content)
+		};
+
+		out
+		<< "broadcast:"
+		<< broadcasted
+		<< ' '
+		<< device_id
+		<< std::endl;
+	}};
+
+	const bool found
+	{
+		!devices.for_each([&update, &device_id_]
+		(const auto &, const string_view &device_id)
+		{
+			if(device_id_ != "*" && device_id != device_id_)
+				return true;
+
+			update(device_id);
+			return device_id != device_id_; // false to break
+		})
 	};
 
-	const bool broadcasted
-	{
-		m::user::devices::send(content)
-	};
+	if(!found && deleted)
+		update(device_id_);
 
-	out << "done" << std::endl;
 	return true;
 }
 
