@@ -46,6 +46,8 @@ struct ircd::ctx::future
 
 	bool valid() const                           { return !is(state(), future_state::INVALID);     }
 	bool operator!() const                       { return !valid();                                }
+	std::exception_ptr eptr() const              { return state().eptr;                            }
+	string_view what() const                     { return util::what(eptr());                      }
 	explicit operator T()                        { return get();                                   }
 
 	template<class U, class time_point> friend bool wait_until(const future<U> &, const time_point &, std::nothrow_t);
@@ -75,6 +77,8 @@ struct ircd::ctx::future<void>
 
 	bool valid() const                           { return !is(state(), future_state::INVALID);     }
 	bool operator!() const                       { return !valid();                                }
+	std::exception_ptr eptr() const              { return state().eptr;                            }
+	string_view what() const                     { return util::what(eptr());                      }
 
 	template<class U, class time_point> friend bool wait_until(const future<U> &, const time_point &, std::nothrow_t);
 	template<class U, class time_point> friend void wait_until(const future<U> &, const time_point &);
