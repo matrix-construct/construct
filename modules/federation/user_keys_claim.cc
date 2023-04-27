@@ -47,28 +47,26 @@ post__user_keys_claim(client &client,
 		request["one_time_keys"]
 	};
 
-	m::resource::response::chunked response
+	m::resource::response::chunked::json response
 	{
 		client, http::OK
 	};
 
-	json::stack out
-	{
-		response.buf, response.flusher()
-	};
-
-	json::stack::object top
-	{
-		out
-	};
-
 	json::stack::object response_keys
 	{
-		top, "one_time_keys"
+		response, "one_time_keys"
 	};
 
-	for(const auto &[user_id, devices] : one_time_keys)
+	for(const auto &[user_id_, devices] : one_time_keys)
 	{
+		const m::user::id user_id
+		{
+			user_id_
+		};
+
+		if(!m::exists(user_id))
+			continue;
+
 		const m::user::room user_room
 		{
 			user_id
@@ -81,20 +79,13 @@ post__user_keys_claim(client &client,
 
 		for(const auto &[device_id_, algorithm_] : json::object(devices))
 		{
+			const auto &device_id{device_id_};
 			const json::string &algorithm{algorithm_};
-			const json::string &device_id{device_id_};
-			const auto match{[&device_id]
-			(const string_view &state_key) noexcept
+			const fmt::bsprintf<m::event::TYPE_MAX_SIZE> type
 			{
-				return state_key == device_id;
-			}};
-
-			char buf[m::event::TYPE_MAX_SIZE];
-			const string_view type{fmt::sprintf
-			{
-				buf, "ircd.device.one_time_key|%s",
+				"ircd.device.one_time_key|%s",
 				algorithm
-			}};
+			};
 
 			const m::room::type events
 			{
@@ -106,33 +97,56 @@ post__user_keys_claim(client &client,
 				response_user, device_id
 			};
 
-			events.for_each([&response_device, &match]
+			events.for_each([&user_room, &response_device, &device_id, &algorithm]
 			(const string_view &type, const auto &, const m::event::idx &event_idx)
 			{
-				if(!m::query(std::nothrow, event_idx, "state_key", match))
+				if(m::redacted(event_idx))
 					return true;
 
-				m::get(std::nothrow, event_idx, "content", [&response_device, type]
-				(const json::object &content)
+				const bool match
 				{
-					const auto algorithm
+					m::query(std::nothrow, event_idx, "state_key", [&device_id]
+					(const string_view &state_key) noexcept
 					{
-						split(type, '|').second
-					};
+						return state_key == device_id;
+					})
+				};
 
-					json::stack::member
+				if(!match)
+					return true;
+
+				const bool fetched
+				{
+					m::get(std::nothrow, event_idx, "content", [&response_device, &algorithm]
+					(const json::object &content)
 					{
-						response_device, algorithm, json::object
+						json::stack::member
 						{
-							content[""] // device quirk
-						}
-					};
-				});
+							response_device, algorithm, json::object
+							{
+								content[""] // ircd.device.* quirk
+							}
+						};
+					})
+				};
+
+				if(!fetched)
+					return true;
+
+				const auto event_id
+				{
+					m::event_id(event_idx)
+				};
+
+				const auto redact_id
+				{
+					m::redact(user_room, user_room.user, event_id, "claimed")
+				};
 
 				return false;
 			});
 		}
 	}
 
-	return {};
+	return response;
 }
