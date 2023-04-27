@@ -200,3 +200,4 @@ constexpr const char *const ircd::m::name::m_in_reply_to;
 constexpr const char *const ircd::m::name::usage;
 constexpr const char *const ircd::m::name::master_key;
 constexpr const char *const ircd::m::name::self_signing_key;
+constexpr const char *const ircd::m::name::user_signing_key;

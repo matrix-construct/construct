@@ -53,11 +53,14 @@ struct ircd::m::signing_key_update
 	/// Required. The user ID whose cross-signing keys have changed.
 	json::property<name::user_id, json::string>,
 
-	/// Cross signing key
+	/// Master signing key
 	json::property<name::master_key, json::object>,
 
-	/// Cross signing key
-	json::property<name::self_signing_key, json::object>
+	/// Self signing key
+	json::property<name::self_signing_key, json::object>,
+
+	/// User signing key (local only)
+	json::property<name::user_signing_key, json::object>
 >
 {
 	using super_type::tuple;
