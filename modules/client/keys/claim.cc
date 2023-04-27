@@ -154,7 +154,7 @@ post__keys_claim(client &client,
 
 	recv_responses(queries, failures, top, timeout);
 	handle_failures(failures, top);
-	return {};
+	return response;
 }
 
 void
@@ -223,14 +223,22 @@ try
 	};
 
 	for(const auto &[user_id, keys] : one_time_keys)
+	{
+		if(m::user::id(user_id).host() != remote)
+			continue;
+
 		json::stack::member
 		{
-			object, user_id, json::object{keys}
+			object, user_id, json::object
+			{
+				keys
+			}
 		};
+	}
 }
 catch(const std::exception &e)
 {
-	log::error
+	log::derror
 	{
 		m::log, "user keys claim from %s :%s",
 		remote,
@@ -292,7 +300,7 @@ try
 }
 catch(const std::exception &e)
 {
-	log::error
+	log::derror
 	{
 		m::log, "user keys claim to %s for %zu users :%s",
 		remote,
