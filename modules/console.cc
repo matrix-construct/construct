@@ -14449,7 +14449,7 @@ console_cmd__user__devices__update(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"user_id", "device_id", "deleted"
+		"user_id", "device_id", "room_id"
 	}};
 
 	const m::user::id &user_id
@@ -14457,14 +14457,16 @@ console_cmd__user__devices__update(opt &out, const string_view &line)
 		param.at("user_id")
 	};
 
-	const string_view &device_id_
+	const string_view &device_id
 	{
 		param.at("device_id", "*"_sv)
 	};
 
-	const bool deleted
+	const m::room::id::buf room_id
 	{
-		param["deleted"] == "deleted"
+		m::valid(m::id::ROOM, param["room_id"])?
+			m::room_id(param["room_id"]):
+			m::room::id::buf{}
 	};
 
 	const m::user::devices devices
@@ -14472,45 +14474,35 @@ console_cmd__user__devices__update(opt &out, const string_view &line)
 		user_id
 	};
 
-	const auto update{[&out, &user_id, &deleted]
+	const auto update{[&out, &devices, &user_id, &room_id]
 	(const auto &device_id)
 	{
-		json::iov content;
-		const json::iov::push push[]
+		m::user::devices::send
 		{
-			{ content,  { "user_id",    user_id       } },
-			{ content,  { "device_id",  device_id     } },
-			{ content,  { "deleted",    deleted       } },
-		};
-
-		const bool broadcasted
-		{
-			m::user::devices::send(content)
+			devices, device_id, room_id
 		};
 
 		out
-		<< "broadcast:"
-		<< broadcasted
-		<< ' '
+		<< "broadcast: "
 		<< device_id
 		<< std::endl;
 	}};
 
 	const bool found
 	{
-		!devices.for_each([&update, &device_id_]
-		(const auto &, const string_view &device_id)
+		!devices.for_each([&update, &device_id]
+		(const auto &, const string_view &_device_id)
 		{
-			if(device_id_ != "*" && device_id != device_id_)
+			if(device_id != "*" && _device_id != device_id)
 				return true;
 
-			update(device_id);
-			return device_id != device_id_; // false to break
+			update(_device_id);
+			return _device_id != device_id; // false to break
 		})
 	};
 
-	if(!found && deleted)
-		update(device_id_);
+	if(device_id != "*" && !found)
+		update(device_id);
 
 	return true;
 }

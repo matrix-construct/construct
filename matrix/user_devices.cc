@@ -8,26 +8,81 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-bool
-ircd::m::user::devices::send(json::iov &content)
+ircd::m::user::devices::send::send(const m::user::devices &devices,
+                                   const m::id::device &device_id,
+                                   const string_view room_id)
 try
 {
-	assert(content.has("user_id"));
-	assert(content.has("device_id"));
+	assert(device_id);
+
+	const auto &user_id
+	{
+		devices.user.user_id
+	};
+
+	const bool deleted
+	{
+		devices.has(device_id)
+	};
+
+	const m::user::keys user_keys
+	{
+		user_id
+	};
+
+	const bool has_keys
+	{
+		!deleted && user_keys.has_device(device_id)
+	};
+
+	const unique_mutable_buffer keys_buf
+	{
+		has_keys? 4_KiB: 0_KiB
+	};
+
+	json::stack keys{keys_buf};
+	if(has_keys)
+	{
+		json::stack::object top{keys};
+		user_keys.device(top, device_id);
+	}
 
 	// Triggers a devices request from the remote; also see
 	// modules/federation/user_devices.cc
-	const long &stream_id
-	{
-		1L
-	};
+	static const auto stream_id{1L};
 
-	json::iov event;
+	json::iov event, content;
 	const json::iov::push push[]
 	{
 		{ event,    { "type",       "m.device_list_update"  } },
-		{ event,    { "sender",     content.at("user_id")   } },
+		{ event,    { "sender",     user_id                 } },
+		{ content,  { "deleted",    deleted                 } },
+		{ content,  { "device_id",  device_id               } },
 		{ content,  { "stream_id",  stream_id               } },
+		{ content,  { "user_id",    user_id                 } },
+	};
+
+	const json::iov::push push_keys
+	{
+		content, has_keys,
+		{
+			"keys", [&keys]
+			{
+				return keys.completed();
+			}
+		}
+	};
+
+	// For diagnostic purposes; usually not defined.
+	const json::iov::push push_room_id
+	{
+		event, m::valid(m::id::ROOM, room_id),
+		{
+			"room_id", [&room_id]
+			{
+				return room_id;
+			}
+		}
 	};
 
 	m::vm::copts opts;
@@ -39,8 +94,6 @@ try
 	{
 		event, content, opts
 	};
-
-	return true;
 }
 catch(const ctx::interrupted &)
 {
@@ -51,12 +104,10 @@ catch(const std::exception &e)
 	log::error
 	{
 		m::log, "Send m.device_list_update for '%s' belonging to %s :%s",
-		content.at("device_id"),
-		content.at("user_id"),
+		string_view{device_id},
+		string_view{devices.user.user_id},
 		e.what(),
 	};
-
-	return false;
 }
 
 bool
@@ -185,21 +236,11 @@ const
 		m::redact(user_room, user_room.user, event_id, "deleted")
 	};
 
-	if(!my(user))
-		return true;
-
-	json::iov content;
-	const json::iov::push push[]
-	{
-		{ content,  { "user_id",    user.user_id  } },
-		{ content,  { "device_id",  id            } },
-		{ content,  { "deleted",    true          } },
-	};
-
-	const bool broadcasted
-	{
-		user::devices::send(content)
-	};
+	if(my(user))
+		user::devices::send
+		{
+			*this, id
+		};
 
 	return true;
 }

@@ -13,6 +13,8 @@
 
 struct ircd::m::user::devices
 {
+	struct send;
+
 	using closure = std::function<void (const event::idx &, const string_view &)>;
 	using closure_bool = std::function<bool (const event::idx &, const string_view &)>;
 
@@ -36,9 +38,17 @@ struct ircd::m::user::devices
 	///TODO: XXX junk
 	static std::map<std::string, long> count_one_time_keys(const m::user &, const string_view &);
 	static bool update(const device_list_update &);
-	static bool send(json::iov &content);
 
 	devices(const m::user &user)
 	:user{user}
 	{}
+};
+
+/// Broadcast m.device_list_update.
+///
+struct ircd::m::user::devices::send
+{
+	send(const m::user::devices &,
+	     const m::id::device &,
+	     const string_view = {});
 };
