@@ -8,6 +8,85 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+ircd::m::user::keys::send::send(const m::user::keys &user_keys,
+                                const string_view room_id)
+try
+{
+	const auto &user_id
+	{
+		user_keys.user_room.user.user_id
+	};
+
+	const unique_mutable_buffer keys_buf[2]
+	{
+		{ 4_KiB },
+		{ 4_KiB },
+	};
+
+	json::stack keys[2]
+	{
+		{ keys_buf[0] },
+		{ keys_buf[1] },
+	};
+
+	// master
+	{
+		json::stack::object object{keys[0]};
+		user_keys.cross_master(object);
+	}
+
+	// self
+	{
+		json::stack::object object{keys[1]};
+		user_keys.cross_self(object);
+	}
+
+	json::iov event, content;
+	const json::iov::push push[]
+	{
+		{ event,    { "type",             "m.signing_key_update"  } },
+		{ event,    { "sender",            user_id                } },
+		{ content,  { "master_key",        keys[0].completed()    } },
+		{ content,  { "self_signing_key",  keys[1].completed()    } },
+		{ content,  { "user_id",           user_id                } },
+	};
+
+	// For diagnostic purposes; usually not defined.
+	const json::iov::push push_room_id
+	{
+		event, m::valid(m::id::ROOM, room_id),
+		{
+			"room_id", [&room_id]
+			{
+				return room_id;
+			}
+		}
+	};
+
+	m::vm::copts opts;
+	opts.edu = true;
+	opts.prop_mask.reset();
+	opts.prop_mask.set("origin");
+	opts.notify_clients = false;
+	m::vm::eval
+	{
+		event, content, opts
+	};
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		m::log, "Sending m.signing_key_update for %s :%s",
+		string_view{user_keys.user_room.user.user_id},
+		e.what(),
+	};
+}
+
 void
 ircd::m::user::keys::device(json::stack::object &out,
                             const string_view &device_id)

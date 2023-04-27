@@ -14516,6 +14516,43 @@ console_id__device(opt &out,
 }
 
 bool
+console_cmd__user__keys__update(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "room_id"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
+	};
+
+	const m::room::id::buf room_id
+	{
+		m::valid(m::id::ROOM, param["room_id"])?
+			m::room_id(param["room_id"]):
+			m::room::id::buf{}
+	};
+
+	const m::user::keys keys
+	{
+		user_id
+	};
+
+	m::user::keys::send
+	{
+		keys, room_id
+	};
+
+	out
+	<< "broadcast: "
+	<< user_id
+	<< std::endl;
+	return true;
+}
+
+bool
 console_cmd__user__ignores(opt &out, const string_view &line)
 {
 	const params param{line, " ",

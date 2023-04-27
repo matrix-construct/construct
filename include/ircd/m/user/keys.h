@@ -13,6 +13,8 @@
 
 struct ircd::m::user::keys
 {
+	struct send;
+
 	static string_view make_sigs_state_key(const mutable_buffer &, const string_view &tgt, const string_view &src);
 	static std::tuple<string_view, string_view> unmake_sigs_state_key(const string_view &) noexcept;
 
@@ -37,6 +39,12 @@ struct ircd::m::user::keys
 	keys(const m::user &user)
 	:user_room{user}
 	{}
+};
+
+struct ircd::m::user::keys::send
+{
+	send(const m::user::keys &,
+	     const string_view = {});
 };
 
 inline void
