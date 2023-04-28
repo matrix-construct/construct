@@ -42,10 +42,11 @@ recv_response(const string_view &,
               const system_point &);
 
 static void
-recv_responses(query_map &,
+recv_responses(const host_users_map &,
+               query_map &,
                failure_map &,
                json::stack::object &,
-               const milliseconds &);
+               const system_point &);
 
 static void
 handle_failures(const failure_map &,
@@ -137,6 +138,11 @@ post__keys_claim(client &client,
 		send_requests(map, buffers, failures)
 	};
 
+	const system_point timedout
+	{
+		ircd::now<system_point>() + timeout
+	};
+
 	m::resource::response::chunked response
 	{
 		client, http::OK
@@ -152,7 +158,7 @@ post__keys_claim(client &client,
 		out
 	};
 
-	recv_responses(queries, failures, top, timeout);
+	recv_responses(map, queries, failures, top, timedout);
 	handle_failures(failures, top);
 	return response;
 }
@@ -174,14 +180,22 @@ handle_failures(const failure_map &failures,
 }
 
 void
-recv_responses(query_map &queries,
+recv_responses(const host_users_map &map,
+               query_map &queries,
                failure_map &failures,
                json::stack::object &out,
-               const milliseconds &timeout)
+               const system_point &timeout)
 {
-	const system_point timedout
+	static const user_devices_map empty;
+
+	const auto it
 	{
-		ircd::now<system_point>() + timeout
+		map.find(origin(m::my()))
+	};
+
+	const user_devices_map &self
+	{
+		it != end(map)? it->second: empty
 	};
 
 	json::stack::object one_time_keys
@@ -189,13 +203,35 @@ recv_responses(query_map &queries,
 		out, "one_time_keys"
 	};
 
+	// local handle
+	for(const auto &[user_id, reqs] : self)
+	{
+		const m::user::keys keys
+		{
+			user_id
+		};
+
+		json::stack::object user_object
+		{
+			one_time_keys, user_id
+		};
+
+		for(const auto &[device_id, algorithm] : json::object(reqs))
+		{
+			json::stack::object device_object
+			{
+				user_object, device_id
+			};
+
+			keys.claim(device_object, device_id, json::string(algorithm));
+		}
+	}
+
+	// remote handle
 	for(auto &[remote, request] : queries)
 	{
 		assert(!failures.count(remote));
-		if(failures.count(remote))
-			continue;
-
-		recv_response(remote, request, failures, one_time_keys, timedout);
+		recv_response(remote, request, failures, one_time_keys, timeout);
 	}
 }
 
@@ -255,7 +291,8 @@ send_requests(const host_users_map &hosts,
 {
 	query_map ret;
 	for(const auto &[remote, user_devices] : hosts)
-		send_request(remote, user_devices, failures, buffers, ret);
+		if(likely(!my_host(remote)))
+			send_request(remote, user_devices, failures, buffers, ret);
 
 	return ret;
 }
