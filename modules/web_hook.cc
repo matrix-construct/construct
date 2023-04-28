@@ -175,6 +175,10 @@ github_handle__push(std::ostream &,
                     const json::object &content);
 
 static bool
+github_post_handle__push(const m::event::id &,
+                         const json::object &content);
+
+static bool
 github_handle__pull_request(std::ostream &,
                             const json::object &content);
 
@@ -354,6 +358,9 @@ github_handle(client &client,
 	{
 		m::msghtml(room_id, user_id, view(out, buf[0]), view(alt, buf[1]), "m.notice")
 	};
+
+	if(type == "push")
+		github_post_handle__push(evid, request.content);
 
 	log::info
 	{
@@ -1591,40 +1598,77 @@ try
 		json::object{relates_content}.get("body")
 	};
 
-	if(!startswith(relates_body, "job status table "))
-		return;
-
-	const auto suffix
+	if(startswith(relates_body, "job status table "))
 	{
-		lstrip(relates_body, "job status table ")
-	};
+		const auto suffix
+		{
+			lstrip(relates_body, "job status table ")
+		};
 
-	string_view token[3];
-	ircd::tokens(suffix, ' ', token);
-	const auto &[repopath, run_id, attempt] {token};
-	assert(repopath);
-	assert(run_id);
-	if(!repopath || !run_id)
-		return;
+		string_view token[3];
+		ircd::tokens(suffix, ' ', token);
+		const auto &[repopath, run_id, attempt] {token};
+		assert(repopath);
+		assert(run_id);
+		if(!repopath || !run_id)
+			return;
 
-	switch(hash(key))
+		switch(hash(key))
+		{
+			case hash("🚮"_sv):
+				github_run_delete(repopath, run_id);
+				m::redact(room, user_id, relates_event_id, "deleted");
+				break;
+
+			case hash("⭕"_sv):
+				github_run_cancel(repopath, run_id);
+				break;
+
+			case hash("🔄"_sv):
+				github_run_rerun_failed(repopath, run_id);
+				break;
+
+			case hash("↪️"_sv):
+				github_run_rerun(repopath, run_id);
+				break;
+		}
+	}
+	else if(startswith(relates_body, "push by "))
 	{
-		case hash("🚮"_sv):
-			github_run_delete(repopath, run_id);
-			m::redact(room, user_id, relates_event_id, "deleted");
-			break;
+		const auto suffix
+		{
+			lstrip(relates_body, "push by ")
+		};
 
-		case hash("⭕"_sv):
-			github_run_cancel(repopath, run_id);
-			break;
+		string_view token[5];
+		ircd::tokens(suffix, ' ', token);
+		const auto &[pusher, _by_, repo, _at_, commit] {token};
+		assert(pusher);
+		assert(repo);
+		assert(commit);
+		if(!repo)
+			return;
 
-		case hash("🔄"_sv):
-			github_run_rerun_failed(repopath, run_id);
-			break;
+		if(startswith(key, "▶️"))
+		{
+			const auto id
+			{
+				between(key, '(', ')')
+			};
 
-		case hash("↪️"_sv):
-			github_run_rerun(repopath, run_id);
-			break;
+			const auto ref
+			{
+				// commit // hash not supported by github
+				"master"
+			};
+
+			github_run_dispatch(repo, id, ref, json::members
+			{
+
+			});
+
+			return;
+		}
 	}
 }
 catch(const ctx::interrupted &)
@@ -1941,6 +1985,54 @@ github_handle__push(std::ostream &out,
 	}
 
 	out << "</pre>";
+	return true;
+}
+
+static bool
+github_post_handle__push(const m::event::id &push_event_id,
+                         const json::object &content)
+{
+	const m::user::id::buf _webhook_user
+	{
+		string_view{webhook_user}, my_host()
+	};
+
+	const auto _webhook_room
+	{
+		m::room_id(string_view(webhook_room))
+	};
+
+	const auto repo
+	{
+		github_repopath(content)
+	};
+
+	github_flow_for_each(repo, [&]
+	(const json::object &flow)
+	{
+		const json::string name
+		{
+			flow["name"]
+		};
+
+		const json::string id
+		{
+			flow["id"]
+		};
+
+		const fmt::bsprintf<128> key
+		{
+			"▶️ %s (%s)", name, id
+		};
+
+		const auto annote_id
+		{
+			m::annotate(_webhook_room, _webhook_user, push_event_id, string_view(key))
+		};
+
+		return true;
+	});
+
 	return true;
 }
 
