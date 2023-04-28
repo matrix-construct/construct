@@ -934,6 +934,33 @@ github_hook_shot_retry(const string_view &repo,
 }
 
 static bool
+github_hook_shot_for_each_fail(const string_view &repo,
+                               const string_view &hook,
+                               const function_bool<json::object> &closure)
+{
+	bool ret {true};
+	github_hook_shot_for_each(repo, hook, true, [&ret, &closure]
+	(const json::object &object)
+	{
+		if(object.at<bool>("redelivery"))
+			return true;
+
+		const json::string status
+		{
+			object["status"]
+		};
+
+		if(status == "OK")
+			return false;
+
+		ret = closure(object);
+		return ret;
+	});
+
+	return ret;
+}
+
+static bool
 github_run_for_each_jobs(const string_view &repo,
                          const string_view &run_id,
                          const function_bool<json::object> &closure)
@@ -990,6 +1017,59 @@ github_run_rerun_failed(const string_view &repo,
 {
 	unique_const_buffer buf;
 	github_request(buf, "POST", repo, "actions/runs/%s/rerun-failed-jobs", run_id);
+}
+
+static void
+github_run_dispatch(const string_view &repo,
+                    const string_view &name,
+                    const string_view &ref = "master",
+                    const json::members inputs = {})
+{
+	const json::strung content{json::members
+	{
+		{ "ref",    ref    },
+		{ "inputs", inputs },
+	}};
+
+	unique_const_buffer buf;
+	github_request(content, buf, "POST", repo, "actions/workflows/%s/dispatches", name);
+}
+
+static bool
+github_flow_for_each(const string_view &repo,
+                     const function_bool<json::object> &closure,
+                     const bool active_only = true)
+{
+	unique_const_buffer buf;
+	const json::object response
+	{
+		github_request
+		(
+			//TODO: pagination token
+			buf, "GET", repo, "actions/workflows?per_page=100&page=1"
+		)
+	};
+
+	const json::array workflows
+	{
+		response["workflows"]
+	};
+
+	for(const json::object flow : workflows)
+	{
+		const json::string state
+		{
+			flow["state"]
+		};
+
+		if(active_only && state != "active")
+			continue;
+
+		if(!closure(flow))
+			return false;
+	}
+
+	return true;
 }
 
 bool
