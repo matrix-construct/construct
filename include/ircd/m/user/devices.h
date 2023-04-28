@@ -16,7 +16,7 @@ struct ircd::m::user::devices
 	struct send;
 
 	using closure = std::function<void (const event::idx &, const string_view &)>;
-	using closure_bool = std::function<bool (const event::idx &, const string_view &)>;
+	using closure_bool = util::function_bool<const event::idx &, const string_view &>;
 
 	m::user user;
 
