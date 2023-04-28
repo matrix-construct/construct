@@ -88,6 +88,57 @@ catch(const std::exception &e)
 }
 
 void
+ircd::m::user::keys::update(const m::signing_key_update &sku)
+const
+{
+	const m::user::id &user_id
+	{
+		json::get<"user_id"_>(sku)
+	};
+
+	const m::user::room room
+	{
+		user_id
+	};
+
+	const json::object &msk
+	{
+		json::get<"master_key"_>(sku)
+	};
+
+	const auto cross_master_id
+	{
+		json::get<"master_key"_>(sku)?
+			m::send(room, user_id, "ircd.cross_signing.master", "", msk):
+			m::event::id::buf{}
+	};
+
+	const json::object &ssk
+	{
+		json::get<"self_signing_key"_>(sku)
+	};
+
+	const auto cross_self_id
+	{
+		ssk?
+			m::send(room, user_id, "ircd.cross_signing.self", "", ssk):
+			m::event::id::buf{}
+	};
+
+	const json::object &usk
+	{
+		json::get<"user_signing_key"_>(sku)
+	};
+
+	const auto cross_user_id
+	{
+		usk && my(user_id)?
+			m::send(room, user_id, "ircd.cross_signing.user", "", usk):
+			m::event::id::buf{}
+	};
+}
+
+void
 ircd::m::user::keys::device(json::stack::object &out,
                             const string_view &device_id)
 const

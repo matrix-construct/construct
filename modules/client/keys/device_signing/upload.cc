@@ -66,52 +66,26 @@ ircd::m::post_keys_device_signing_upload(client &client,
 		auth["password"]
 	};
 
-	const m::user::room room
+	const m::user user
 	{
 		request.user_id
 	};
 
-	if(!room.user.is_password(password))
+	if(!user.is_password(password))
 		throw m::ACCESS_DENIED
 		{
 			"Incorrect password."
 		};
 
-	const json::object &msk
+	const m::user::keys keys
 	{
-		request["master_key"]
+		user
 	};
 
-	const auto master_id
-	{
-		msk?
-			send(room, request.user_id, "ircd.cross_signing.master", "", msk):
-			event::id::buf{}
-	};
+	m::signing_key_update sku{request};
+	json::get<"user_id"_>(sku) = request.user_id;
 
-	const json::object &ssk
-	{
-		request["self_signing_key"]
-	};
-
-	const auto self_signing_id
-	{
-		ssk?
-			send(room, request.user_id, "ircd.cross_signing.self", "", ssk):
-			event::id::buf{}
-	};
-
-	const json::object &usk
-	{
-		request["user_signing_key"]
-	};
-
-	const auto user_signing_id
-	{
-		usk?
-			send(room, request.user_id, "ircd.cross_signing.user", "", usk):
-			event::id::buf{}
-	};
+	keys.update(sku);
 
 	return resource::response
 	{

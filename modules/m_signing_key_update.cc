@@ -56,53 +56,29 @@ try
 	if(user_id.host() != at<"origin"_>(event))
 		return;
 
-	const json::object &msk
-	{
-		json::get<"master_key"_>(update)
-	};
-
-	const m::user::room room
-	{
-		user_id
-	};
-
-	if(!exists(room))
+	if(!exists(user_id))
 	{
 		log::derror
 		{
 			m::log, "Refusing signing key update for unknown %s",
-			json::get<"user_id"_>(update),
+			string_view{user_id},
 		};
 
 		return;
 	}
 
-	const auto master_id
+	const m::user::keys keys
 	{
-		msk?
-			send(room, user_id, "ircd.cross_signing.master", "", msk):
-			m::event::id::buf{}
+		user_id
 	};
 
-	const json::object &ssk
-	{
-		json::get<"self_signing_key"_>(update)
-	};
-
-	const auto self_id
-	{
-		ssk?
-			send(room, user_id, "ircd.cross_signing.self", "", ssk):
-			m::event::id::buf{}
-	};
+	keys.update(update);
 
 	log::info
 	{
-		m::log, "Signing key update from :%s by %s master:%s self:%s",
+		m::log, "Signing key update from '%s' for %s",
 		json::get<"origin"_>(event),
 		json::get<"user_id"_>(update),
-		string_view{master_id},
-		string_view{self_id},
 	};
 }
 catch(const ctx::interrupted &e)
@@ -113,7 +89,7 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		m::log, "m.signing_key_update from %s :%s",
+		m::log, "m.signing_key_update from '%s' :%s",
 		json::get<"origin"_>(event),
 		e.what(),
 	};
