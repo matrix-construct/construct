@@ -46,8 +46,32 @@ get__event(client &client,
 		event_id, fopts
 	};
 
+	const unique_mutable_buffer buf
+	{
+		m::event::MAX_SIZE
+	};
+
+	json::stack out{buf};
+	{
+		json::stack::object top{out};
+		m::event::append
+		{
+			top, event,
+			{
+				.event_idx = &event.event_idx,
+				.user_id = &request.user_id,
+				.query_prev_state = false,
+				.query_redacted = false,
+				.query_visible = false,
+			}
+		};
+	};
+
 	return m::resource::response
 	{
-		client, event.source
+		client, json::object
+		{
+			out.completed()
+		}
 	};
 }
