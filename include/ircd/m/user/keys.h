@@ -38,6 +38,7 @@ struct ircd::m::user::keys
 	void cross_self(json::stack::object &) const;
 	void cross_user(json::stack::object &) const;
 
+	bool claim(json::stack::object &, const string_view &device_id, const string_view &algo) const;
 	void update(const m::signing_key_update &) const;
 
 	keys(const m::user &user)

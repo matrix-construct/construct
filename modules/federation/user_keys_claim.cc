@@ -67,7 +67,7 @@ post__user_keys_claim(client &client,
 		if(!m::exists(user_id))
 			continue;
 
-		const m::user::room user_room
+		const m::user::keys keys
 		{
 			user_id
 		};
@@ -77,19 +77,11 @@ post__user_keys_claim(client &client,
 			response_keys, user_id
 		};
 
-		for(const auto &[device_id_, algorithm_] : json::object(devices))
+		for(const auto &[device_id, algorithm_] : json::object(devices))
 		{
-			const auto &device_id{device_id_};
-			const json::string &algorithm{algorithm_};
-			const fmt::bsprintf<m::event::TYPE_MAX_SIZE> type
+			const json::string algorithm
 			{
-				"ircd.device.one_time_key|%s",
-				algorithm
-			};
-
-			const m::room::type events
-			{
-				user_room, type, { -1UL, -1L }, true
+				algorithm_
 			};
 
 			json::stack::object response_device
@@ -97,54 +89,7 @@ post__user_keys_claim(client &client,
 				response_user, device_id
 			};
 
-			events.for_each([&user_room, &response_device, &device_id, &algorithm]
-			(const string_view &type, const auto &, const m::event::idx &event_idx)
-			{
-				if(m::redacted(event_idx))
-					return true;
-
-				const bool match
-				{
-					m::query(std::nothrow, event_idx, "state_key", [&device_id]
-					(const string_view &state_key) noexcept
-					{
-						return state_key == device_id;
-					})
-				};
-
-				if(!match)
-					return true;
-
-				const bool fetched
-				{
-					m::get(std::nothrow, event_idx, "content", [&response_device, &algorithm]
-					(const json::object &content)
-					{
-						json::stack::member
-						{
-							response_device, algorithm, json::object
-							{
-								content[""] // ircd.device.* quirk
-							}
-						};
-					})
-				};
-
-				if(!fetched)
-					return true;
-
-				const auto event_id
-				{
-					m::event_id(event_idx)
-				};
-
-				const auto redact_id
-				{
-					m::redact(user_room, user_room.user, event_id, "claimed")
-				};
-
-				return false;
-			});
+			keys.claim(response_device, device_id, algorithm);
 		}
 	}
 

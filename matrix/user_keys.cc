@@ -138,6 +138,78 @@ const
 	};
 }
 
+bool
+ircd::m::user::keys::claim(json::stack::object &object,
+                           const string_view &device_id,
+                           const string_view &algorithm)
+const
+{
+	const fmt::bsprintf<m::event::TYPE_MAX_SIZE> type
+	{
+		"ircd.device.one_time_key|%s",
+		algorithm
+	};
+
+	const m::room::type events
+	{
+		user_room, type, { -1UL, -1L }, true
+	};
+
+	return !events.for_each([this, &object, &device_id]
+	(const string_view &type, const auto &, const m::event::idx &event_idx)
+	{
+		if(m::redacted(event_idx))
+			return true;
+
+		const bool match
+		{
+			m::query(std::nothrow, event_idx, "state_key", [&device_id]
+			(const string_view &state_key) noexcept
+			{
+				return state_key == device_id;
+			})
+		};
+
+		if(!match)
+			return true;
+
+		const auto algorithm
+		{
+			split(type, '|').second
+		};
+
+		const bool fetched
+		{
+			m::get(std::nothrow, event_idx, "content", [&object, &algorithm]
+			(const json::object &content)
+			{
+				json::stack::member
+				{
+					object, algorithm, json::object
+					{
+						content[""] // ircd.device.* quirk
+					}
+				};
+			})
+		};
+
+		if(!fetched)
+			return true;
+
+		const auto event_id
+		{
+			m::event_id(event_idx)
+		};
+
+		const auto redact_id
+		{
+			m::redact(user_room, user_room.user, event_id, "claimed")
+		};
+
+		return false;
+	});
+}
+
 void
 ircd::m::user::keys::device(json::stack::object &out,
                             const string_view &device_id)
