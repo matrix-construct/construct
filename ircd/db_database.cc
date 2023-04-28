@@ -3321,7 +3321,14 @@ noexcept
 	return ret;
 }
 
-#ifdef IRCD_DB_HAS_CACHE_ITEMHELPER
+#if defined(IRCD_DB_HAS_CACHE_ASYNC)
+rocksdb::Cache::Handle *
+ircd::db::database::cache::Lookup(const Slice &key,
+                                  const CacheItemHelper *const helper,
+                                  CreateContext *const cc,
+                                  Priority pri,
+                                  Statistics *const statistics)
+#elif defined(IRCD_DB_HAS_CACHE_ITEMHELPER)
 rocksdb::Cache::Handle *
 ircd::db::database::cache::Lookup(const Slice &key,
                                   const CacheItemHelper *const helper,
@@ -3355,7 +3362,9 @@ noexcept
 
 	auto *const &ret
 	{
-		#ifdef IRCD_DB_HAS_CACHE_ITEMHELPER
+		#if defined(IRCD_DB_HAS_CACHE_ASYNC)
+		c->Lookup(key, helper, cc, pri, statistics)
+		#elif defined(IRCD_DB_HAS_CACHE_ITEMHELPER)
 		c->Lookup(key, helper, cc, pri, wait, statistics)
 		#else
 		c->Lookup(key, s)
@@ -3556,6 +3565,20 @@ const noexcept
 {
 	assert(bool(c));
 	return c->GetCacheItemHelper(h);
+}
+#endif
+
+#if defined(IRCD_DB_HAS_CACHE_ASYNC)
+rocksdb::Cache::Handle *
+ircd::db::database::cache::CreateStandalone(const Slice &key,
+                                            ObjectPtr ptr,
+                                            const CacheItemHelper *const helper,
+                                            size_t charge,
+                                            bool allow_uncharged)
+noexcept
+{
+	assert(bool(c));
+	return c->CreateStandalone(key, ptr, helper, charge, allow_uncharged);
 }
 #endif
 

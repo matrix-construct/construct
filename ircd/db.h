@@ -224,7 +224,9 @@ ircd::db::database::cache final
 	#else
 	Status Insert(const Slice &key, void *value, size_t charge, deleter, Handle **, Priority) noexcept override;
 	#endif
-	#ifdef IRCD_DB_HAS_CACHE_ITEMHELPER
+	#if defined(IRCD_DB_HAS_CACHE_ASYNC)
+	Handle *Lookup(const Slice &key, const CacheItemHelper *, CreateContext *, Priority, Statistics *) noexcept override;
+	#elif defined(IRCD_DB_HAS_CACHE_ITEMHELPER)
 	Handle *Lookup(const Slice &key, const CacheItemHelper *, CreateContext *, Priority, bool, Statistics *) noexcept override;
 	#else
 	Handle *Lookup(const Slice &key, Statistics *) noexcept override;
@@ -262,6 +264,9 @@ ircd::db::database::cache final
 	#endif
 	#ifdef IRCD_DB_HAS_CACHE_ITEMHELPER
 	const CacheItemHelper *GetCacheItemHelper(Handle *) const noexcept override;
+	#endif
+	#ifdef IRCD_DB_HAS_CACHE_ASYNC
+	Handle *CreateStandalone(const Slice &, ObjectPtr, const CacheItemHelper *, size_t, bool) noexcept override;
 	#endif
 
 	cache(database *const &,
