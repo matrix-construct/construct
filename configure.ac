@@ -988,6 +988,7 @@ dnl Compiler specific
 AM_COND_IF([CLANG],
 [
 	RB_MAYBE_CWARN([-Werror=return-stack-address], charybdis_cv_c_gcc_w_error_return_stack_address)
+	RB_MAYBE_CWARN([-Werror=abstract-final-class], charybdis_cv_c_gcc_w_error_abstract_final_class)
 
 	RB_MAYBE_CWARN([-Wundefined-reinterpret-cast], charybdis_cv_c_gcc_w_undefined_reinterpret_cast)
 	RB_MAYBE_CWARN([-Wconditional-uninitialized], charybdis_cv_c_gcc_w_conditional_uninitialized)
