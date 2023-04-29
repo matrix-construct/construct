@@ -8,31 +8,25 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-namespace ircd::m
-{
-	extern const event::keys::exclude event_append_exclude_keys;
-	extern const event::keys event_append_default_keys;
-	extern conf::item<std::string> event_append_exclude_types;
-	extern conf::item<bool> event_append_info;
-	extern log::log event_append_log;
-}
-
-decltype(ircd::m::event_append_log)
-ircd::m::event_append_log
+[[gnu::visibility("hidden")]]
+decltype(ircd::m::event::append::log)
+ircd::m::event::append::log
 {
 	"m.event.append"
 };
 
-decltype(ircd::m::event_append_info)
-ircd::m::event_append_info
+[[gnu::visibility("hidden")]]
+decltype(ircd::m::event::append::info)
+ircd::m::event::append::info
 {
 	{ "name",     "ircd.m.event.append.info" },
 	{ "default",  false                      },
 	{ "persist",  false                      },
 };
 
-decltype(ircd::m::event_append_exclude_types)
-ircd::m::event_append_exclude_types
+[[gnu::visibility("hidden")]]
+decltype(ircd::m::event::append::exclude_types)
+ircd::m::event::append::exclude_types
 {
 	{ "name",     "ircd.m.event.append.exclude.types" },
 	{ "default",  "org.matrix.dummy_event"            },
@@ -42,8 +36,9 @@ ircd::m::event_append_exclude_types
 /// to the client. This mask is applied only if the caller of event::append{}
 /// did not supply their mask to apply. It is also inferior to the user's
 /// filter if supplied.
-decltype(ircd::m::event_append_exclude_keys)
-ircd::m::event_append_exclude_keys
+[[gnu::visibility("hidden")]]
+decltype(ircd::m::event::append::exclude_keys)
+ircd::m::event::append::exclude_keys
 {
 	"auth_events",
 	"hashes",
@@ -53,10 +48,11 @@ ircd::m::event_append_exclude_keys
 	"signatures",
 };
 
-decltype(ircd::m::event_append_default_keys)
-ircd::m::event_append_default_keys
+[[gnu::visibility("hidden")]]
+decltype(ircd::m::event::append::default_keys)
+ircd::m::event::append::default_keys
 {
-	event_append_exclude_keys
+	event::append::exclude_keys
 };
 
 ircd::m::event::append::append(json::stack::array &array,
@@ -114,7 +110,7 @@ ircd::m::event::append::append(json::stack::object &object,
 
 	const auto &not_types
 	{
-		event_append_exclude_types
+		exclude_types
 	};
 
 	if(!opts.event_filter && token_exists(not_types, ' ', json::get<"type"_>(event)))
@@ -254,7 +250,7 @@ ircd::m::event::append::append(json::stack::object &object,
 	{
 		opts.keys?
 			*opts.keys:
-			event_append_default_keys
+			default_keys
 	};
 
 	// Append the event members
@@ -357,10 +353,10 @@ ircd::m::event::append::append(json::stack::object &object,
 		};
 	}
 
-	if(unlikely(event_append_info))
+	if(unlikely(info))
 		log::info
 		{
-			event_append_log, "%s %s idx:%lu in %s depth:%ld txnid:%s idx:%lu age:%ld %s,%s",
+			log, "%s %s idx:%lu in %s depth:%ld txnid:%s idx:%lu age:%ld %s,%s",
 			opts.user_id? string_view{*opts.user_id} : string_view{},
 			string_view{event.event_id},
 			opts.event_idx? *opts.event_idx : 0UL,

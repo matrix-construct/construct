@@ -29,6 +29,14 @@ struct ircd::m::event::append
 {
 	struct opts;
 
+  private:
+	static const event::keys::exclude exclude_keys;
+	static const event::keys default_keys;
+	static conf::item<std::string> exclude_types;
+	static conf::item<bool> info;
+	static log::log log;
+
+  public:
 	append(json::stack::object &, const event &, const opts &);
 	append(json::stack::object &, const event &);
 	append(json::stack::array &, const event &, const opts &);
