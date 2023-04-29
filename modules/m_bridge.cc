@@ -677,14 +677,15 @@ ircd::m::bridge::append(const config &config,
                         const event::idx &event_idx,
                         const event &event)
 {
-	event::append::opts opts;
-	opts.event_idx = &event_idx;
-	opts.query_txnid = false;
-	opts.query_prev_state = true;
-	opts.query_redacted = false;
 	event::append
 	{
-		events, event, opts
+		events, event, event::append::opts
+		{
+			.event_idx = event_idx,
+			.query_txnid = false,
+			.query_prev_state = true,
+			.query_redacted = false,
+		},
 	};
 
 	log::debug

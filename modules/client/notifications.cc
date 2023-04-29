@@ -206,7 +206,7 @@ ircd::m::get_notifications(client &client,
 			{
 				event_object, event,
 				{
-					.event_idx = &event_idx,
+					.event_idx = event_idx,
 					.keys = &notification_event_keys,
 					//.query_txnid = false,
 					//.query_prev_state = false,

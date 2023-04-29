@@ -221,10 +221,10 @@ ircd::m::sync::room_state_linear_events(data &data)
 			{
 				array, event,
 				{
-					.event_idx = &event_idx,
-					.user_id = &data.user.user_id,
-					.user_room = &data.user_room,
-					.room_depth = &data.room_depth,
+					.event_idx = event_idx,
+					.user_id = data.user.user_id,
+					.user_room_id = data.user_room.room_id,
+					.room_depth = data.room_depth,
 					.query_txnid = false,
 					.query_prev_state = true,
 				}
@@ -265,10 +265,10 @@ ircd::m::sync::room_state_linear_events(data &data)
 	{
 		array, *data.event,
 		{
-			.event_idx = &data.event_idx,
-			.user_id = &data.user.user_id,
-			.user_room = &data.user_room,
-			.room_depth = &data.room_depth,
+			.event_idx = data.event_idx,
+			.user_id = data.user.user_id,
+			.user_room_id = data.user_room.room_id,
+			.room_depth = data.room_depth,
 			.query_txnid = false,
 			.query_prev_state = true,
 		}
@@ -377,10 +377,10 @@ ircd::m::sync::room_state_polylog_events(data &data)
 			{
 				array, event,
 				{
-					.event_idx = &event_idx,
-					.user_id = &data.user.user_id,
-					.user_room = &data.user_room,
-					.room_depth = &data.room_depth,
+					.event_idx = event_idx,
+					.user_id = data.user.user_id,
+					.user_room_id = data.user_room.room_id,
+					.room_depth = data.room_depth,
 					.query_txnid = false,
 					.query_prev_state = false,
 				}
@@ -517,10 +517,10 @@ ircd::m::sync::room_state_phased_events(data &data)
 			{
 				array, event,
 				{
-					.event_idx = &event_idx,
-					.user_id = &data.user.user_id,
-					.user_room = &data.user_room,
-					.room_depth = &data.room_depth,
+					.event_idx = event_idx,
+					.user_id = data.user.user_id,
+					.user_room_id = data.user_room.room_id,
+					.room_depth = data.room_depth,
 					.query_txnid = false,
 					.query_prev_state = true,
 				}
@@ -664,10 +664,10 @@ ircd::m::sync::room_state_phased_member_events(data &data,
 		{
 			array, event,
 			{
-				.event_idx = &sender_idx,
-				.user_id = &data.user.user_id,
-				.user_room = &data.user_room,
-				.room_depth = &data.room_depth,
+				.event_idx = sender_idx,
+				.user_id = data.user.user_id,
+				.user_room_id = data.user_room.room_id,
+				.room_depth = data.room_depth,
 				.query_txnid = false,
 				.query_prev_state = false,
 			}

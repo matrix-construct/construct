@@ -212,11 +212,11 @@ ircd::m::sync::room_timeline_linear(data &data)
 	{
 		array, *data.event,
 		{
-			.event_idx = &data.event_idx,
-			.client_txnid = &data.client_txnid,
-			.user_id = &data.user.user_id,
-			.user_room = &data.user_room,
-			.room_depth = &data.room_depth,
+			.event_idx = data.event_idx,
+			.client_txnid = data.client_txnid,
+			.user_id = data.user.user_id,
+			.user_room_id = data.user_room.room_id,
+			.room_depth = data.room_depth,
 		}
 	};
 }
@@ -289,11 +289,11 @@ ircd::m::sync::_room_timeline_linear_command(data &data)
 	{
 		array, *data.event,
 		{
-			.event_idx = &data.event_idx,
-			.client_txnid = &data.client_txnid,
-			.user_id = &data.user.user_id,
-			.user_room = &data.user_room,
-			.room_depth = &data.room_depth,
+			.event_idx = data.event_idx,
+			.client_txnid = data.client_txnid,
+			.user_id = data.user.user_id,
+			.user_room_id = data.user_room.room_id,
+			.room_depth = data.room_depth,
 		}
 	};
 }
@@ -400,11 +400,11 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 		{
 			array, event,
 			{
-				.event_idx = &event_idx,
-				.client_txnid = &data.client_txnid,
-				.user_id = &data.user.user_id,
-				.user_room = &data.user_room,
-				.room_depth = &data.room_depth,
+				.event_idx = event_idx,
+				.client_txnid = data.client_txnid,
+				.user_id = data.user.user_id,
+				.user_room_id = data.user_room.room_id,
+				.room_depth = data.room_depth,
 			}
 		};
 	}

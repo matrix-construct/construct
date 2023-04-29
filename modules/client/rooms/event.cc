@@ -58,8 +58,8 @@ get__event(client &client,
 		{
 			top, event,
 			{
-				.event_idx = &event.event_idx,
-				.user_id = &request.user_id,
+				.event_idx = event.event_idx,
+				.user_id = request.user_id,
 				.query_prev_state = false,
 				.query_redacted = false,
 				.query_visible = false,

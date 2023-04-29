@@ -132,10 +132,10 @@ get__context(client &client,
 		{
 			_event, event,
 			{
-				.event_idx = &event.event_idx,
-				.user_id = &user_room.user.user_id,
-				.user_room = &user_room,
-				.room_depth = &room_depth,
+				.event_idx = event.event_idx,
+				.user_id = user_room.user.user_id,
+				.user_room_id = user_room.room_id,
+				.room_depth = room_depth,
 			}
 		};
 	}
@@ -179,10 +179,10 @@ get__context(client &client,
 			{
 				array, event,
 				{
-					.event_idx = &event_idx,
-					.user_id = &user_room.user.user_id,
-					.user_room = &user_room,
-					.room_depth = &room_depth,
+					.event_idx = event_idx,
+					.user_id = user_room.user.user_id,
+					.user_room_id = user_room.room_id,
+					.room_depth = room_depth,
 					.query_txnid = true,
 				}
 			};
@@ -233,10 +233,10 @@ get__context(client &client,
 			{
 				array, event,
 				{
-					.event_idx = &event_idx,
-					.user_id = &user_room.user.user_id,
-					.user_room = &user_room,
-					.room_depth = &room_depth,
+					.event_idx = event_idx,
+					.user_id = user_room.user.user_id,
+					.user_room_id = user_room.room_id,
+					.room_depth = room_depth,
 					.query_txnid = true,
 				}
 			};
@@ -301,10 +301,10 @@ get__context(client &client,
 			{
 				array, event,
 				{
-					.event_idx = &event_idx,
-					.user_id = &user_room.user.user_id,
-					.user_room = &user_room,
-					.room_depth = &room_depth,
+					.event_idx = event_idx,
+					.user_id = user_room.user.user_id,
+					.user_room_id = user_room.room_id,
+					.room_depth = room_depth,
 					.query_txnid = false,
 				}
 			};

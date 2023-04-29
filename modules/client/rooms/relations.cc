@@ -174,8 +174,8 @@ relations_chunk_append(client &client,
 	{
 		chunk, event,
 		{
-			.event_idx = &event_idx,
-			.user_id = &request.user_id,
+			.event_idx = event_idx,
+			.user_id = request.user_id,
 			.query_txnid = false,
 		}
 	};

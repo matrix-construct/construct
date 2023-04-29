@@ -36,6 +36,19 @@ struct ircd::m::event::append
 	static conf::item<bool> info;
 	static log::log log;
 
+	bool is_ignored(const event &, const opts &) const;
+	bool is_redacted(const event &, const opts &) const;
+	bool is_invisible(const event &, const opts &) const;
+	bool is_excluded(const event &, const opts &) const;
+
+	void _age(json::stack::object &, const event &, const opts &);
+	void _txnid(json::stack::object &, const event &, const opts &);
+	void _prev_state(json::stack::object &, const event &, const opts &);
+	void _unsigned(json::stack::object &, const event &, const opts &);
+
+	bool members(json::stack::object &, const event &, const opts &);
+	bool object(json::stack::array &, const event &, const opts &);
+
   public:
 	append(json::stack::object &, const event &, const opts &);
 	append(json::stack::object &, const event &);
@@ -47,11 +60,11 @@ struct ircd::m::event::append
 /// can provide the best result.
 struct ircd::m::event::append::opts
 {
-	const event::idx *event_idx {nullptr};
-	const string_view *client_txnid {nullptr};
-	const id::user *user_id {nullptr};
-	const room *user_room {nullptr};
-	const int64_t *room_depth {nullptr};
+	event::idx event_idx {0};
+	string_view client_txnid;
+	id::user user_id;
+	id::room user_room_id;
+	int64_t room_depth {-1L};
 	const event::keys *keys {nullptr};
 	const m::event_filter *event_filter {nullptr};
 	long age {std::numeric_limits<long>::min()};
@@ -71,4 +84,24 @@ inline
 ircd::m::event::append::append(json::stack::object &o,
                                const event &e)
 :append{o, e, {}}
+{}
+
+inline
+ircd::m::event::append::append(json::stack::array &array,
+                               const event &event,
+                               const opts &opts)
+:returns<bool>{[this, &array, &event, &opts]
+{
+	return object(array, event, opts);
+}}
+{}
+
+inline
+ircd::m::event::append::append(json::stack::object &object,
+                               const event &event,
+                               const opts &opts)
+:returns<bool>{[this, &object, &event, &opts]
+{
+	return members(object, event, opts);
+}}
 {}

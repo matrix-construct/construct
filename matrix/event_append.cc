@@ -55,10 +55,10 @@ ircd::m::event::append::default_keys
 	event::append::exclude_keys
 };
 
-ircd::m::event::append::append(json::stack::array &array,
-                               const event &event_,
+bool
+ircd::m::event::append::object(json::stack::array &array,
+                               const event &event,
                                const opts &opts)
-:returns<bool>{[&]
 {
 	assert(array.s);
 	json::stack::checkpoint cp
@@ -66,29 +66,24 @@ ircd::m::event::append::append(json::stack::array &array,
 		*array.s
 	};
 
-	json::stack::object object
+	json::stack::object _object
 	{
 		array
 	};
 
 	const bool ret
 	{
-		append
-		{
-			object, event_, opts
-		}
+		members(_object, event, opts)
 	};
 
 	cp.committing(ret);
 	return ret;
-}}
-{
 }
 
-ircd::m::event::append::append(json::stack::object &object,
-                               const event &event,
-                               const opts &opts)
-:returns<bool>{[&]
+bool
+ircd::m::event::append::members(json::stack::object &out,
+                                const event &event,
+                                const opts &opts)
 {
 	// Assertions that the event being appended has some required fields. This
 	// is a central butt-end test of data coming through the system to here.
@@ -97,150 +92,35 @@ ircd::m::event::append::append(json::stack::object &object,
 	assert(defined(json::get<"sender"_>(event)));
 	//assert(json::get<"origin_server_ts"_>(event));
 	//assert(json::get<"origin_server_ts"_>(event) != json::undefined_number);
-	#if defined(RB_DEBUG)
-	if(unlikely(!defined(json::get<"type"_>(event))))
-		return false;
+	if constexpr(RB_DEBUG_LEVEL)
+	{
+		if(unlikely(!defined(json::get<"type"_>(event))))
+			return false;
 
-	if(unlikely(!defined(json::get<"sender"_>(event))))
-		return false;
-	#endif
+		if(unlikely(!defined(json::get<"sender"_>(event))))
+			return false;
+	}
 
 	if(opts.event_filter && !m::match(*opts.event_filter, event))
 		return false;
 
-	const auto &not_types
-	{
-		exclude_types
-	};
-
-	if(!opts.event_filter && token_exists(not_types, ' ', json::get<"type"_>(event)))
-	{
-		log::debug
-		{
-			log, "Not sending event %s because type '%s' excluded by configuration.",
-			string_view{event.event_id},
-			json::get<"type"_>(event),
-		};
-
+	if(is_excluded(event, opts))
 		return false;
-	}
 
-	if(opts.query_visible && opts.user_id && !visible(event, *opts.user_id))
-	{
-		log::debug
-		{
-			log, "Not sending event %s because not visible to %s.",
-			string_view{event.event_id},
-			string_view{*opts.user_id},
-		};
-
+	if(is_invisible(event, opts))
 		return false;
-	}
 
-	const bool has_event_idx
-	{
-		opts.event_idx && *opts.event_idx
-	};
-
-	const bool is_state
-	{
-		defined(json::get<"state_key"_>(event))
-	};
-
-	const bool query_redacted
-	{
-		has_event_idx &&
-		opts.query_redacted &&
-		!is_state &&
-		(!opts.room_depth || *opts.room_depth > json::get<"depth"_>(event))
-	};
-
-	if(query_redacted && m::redacted(*opts.event_idx))
-	{
-		log::debug
-		{
-			log, "Not sending event %s because redacted.",
-			string_view{event.event_id},
-		};
-
+	if(is_redacted(event, opts))
 		return false;
-	}
 
-	const bool has_user
-	{
-		opts.user_id && opts.user_room
-	};
+	if(is_ignored(event, opts))
+		return false;
 
-	const bool check_ignores
-	{
-		has_user && !is_state
-	};
-
-	if(check_ignores && *opts.user_id != json::get<"sender"_>(event))
-	{
-		const m::user::ignores ignores
-		{
-			*opts.user_id
-		};
-
-		if(ignores.enforce("events") && ignores.has(json::get<"sender"_>(event)))
-		{
-			log::debug
-			{
-				log, "Not sending event %s because %s is ignored by %s",
-				string_view{event.event_id},
-				json::get<"sender"_>(event),
-				string_view{*opts.user_id}
-			};
-
-			return false;
-		}
-	}
-
-	const bool sender_is_user
-	{
-		has_user && json::get<"sender"_>(event) == *opts.user_id
-	};
-
-	const bool has_client_txnid
-	{
-		opts.client_txnid && *opts.client_txnid
-	};
-
-	const auto txnid_idx
-	{
-		!has_client_txnid && sender_is_user && opts.query_txnid?
-			opts.user_room->get(std::nothrow, "ircd.client.txnid", event.event_id):
-			0UL
-	};
-
-	const bool query_prev_state
-	{
-		opts.query_prev_state && has_event_idx && is_state
-	};
-
-	const auto prev_state_idx
-	{
-		query_prev_state?
-			room::state::prev(*opts.event_idx):
-			0UL
-	};
-
-	#if defined(RB_DEBUG) && 0
-	if(!has_client_txnid && !txnid_idx && sender_is_user && opts.query_txnid)
-		log::dwarning
-		{
-			log, "Could not find transaction_id for %s from %s in %s",
-			string_view{event.event_id},
-			json::get<"sender"_>(event),
-			json::get<"room_id"_>(event)
-		};
-	#endif
-
+	// For v3+ events
 	if(!json::get<"event_id"_>(event))
 		json::stack::member
 		{
-			object, "event_id", event.event_id
+			out, "event_id", event.event_id
 		};
 
 	// Get the list of properties to send to the client so we can strip
@@ -254,7 +134,7 @@ ircd::m::event::append::append(json::stack::object &object,
 	};
 
 	// Append the event members
-	for_each(event, [&keys, &object]
+	for_each(event, [&keys, &out]
 	(const auto &key, const auto &val_)
 	{
 		if(!keys.has(key) && key != "redacts"_sv)
@@ -270,70 +150,77 @@ ircd::m::event::append::append(json::stack::object &object,
 
 		json::stack::member
 		{
-			object, key, val
+			out, key, val
 		};
 
 		return true;
 	});
 
-	json::stack::object unsigned_
-	{
-		object, "unsigned"
-	};
+	_unsigned(out, event, opts);
 
-	const json::value age
-	{
-		// When the opts give an explicit age, use it.
-		opts.age != std::numeric_limits<long>::min()?
-			opts.age:
-
-		// If we have depth information, craft a value based on the
-		// distance to the head depth; if this is 0 in riot the event will
-		// "stick" at the bottom of the timeline. This may be advantageous
-		// in the future but for now we make sure the result is non-zero.
-		json::get<"depth"_>(event) >= 0 && opts.room_depth && *opts.room_depth >= 0L?
-			(*opts.room_depth + 1 - json::get<"depth"_>(event)) + 1:
-
-		// We don't have depth information, so we use the origin_server_ts.
-		// It is bad if it conflicts with other appends in the room which
-		// did have depth information.
-		!opts.room_depth && json::get<"origin_server_ts"_>(event)?
-			ircd::time<milliseconds>() - json::get<"origin_server_ts"_>(event):
-
-		// Finally, this special value will eliminate the age altogether
-		// during serialization.
-		json::undefined_number
-	};
-
-	json::stack::member
-	{
-		unsigned_, "age", age
-	};
-
-	if(has_client_txnid)
-		json::stack::member
+	if(unlikely(info))
+		log::info
 		{
-			unsigned_, "transaction_id", *opts.client_txnid
+			log, "%s %s idx:%lu in %s depth:%ld txnid:%s %s,%s",
+			string_view{opts.user_id},
+			string_view{event.event_id},
+			opts.event_idx,
+			json::get<"room_id"_>(event),
+			json::get<"depth"_>(event),
+			opts.client_txnid,
+			json::get<"type"_>(event),
+			json::get<"state_key"_>(event),
 		};
 
-	if(txnid_idx)
-		m::get(std::nothrow, txnid_idx, "content", [&unsigned_]
-		(const json::object &content)
-		{
-			json::stack::member
-			{
-				unsigned_, "transaction_id", unquote(content.get("transaction_id"))
-			};
-		});
+	return true;
+}
+
+void
+ircd::m::event::append::_unsigned(json::stack::object &out,
+                                  const event &event,
+                                  const opts &opts)
+{
+	json::stack::object object
+	{
+		out, "unsigned"
+	};
+
+	_age(object, event, opts);
+	_txnid(object, event, opts);
+
+	if(defined(json::get<"state_key"_>(event)))
+		_prev_state(object, event, opts);
+}
+
+void
+ircd::m::event::append::_prev_state(json::stack::object &out,
+                                    const event &event,
+                                    const opts &opts)
+{
+	assert(defined(json::get<"state_key"_>(event)))
+
+	const bool query_prev_state
+	{
+		true
+		&& opts.event_idx
+		&& opts.query_prev_state
+	};
+
+	const auto prev_state_idx
+	{
+		query_prev_state?
+			room::state::prev(opts.event_idx):
+			0UL
+	};
 
 	if(prev_state_idx)
 	{
-		m::get(std::nothrow, prev_state_idx, "content", [&unsigned_]
+		m::get(std::nothrow, prev_state_idx, "content", [&out]
 		(const json::object &content)
 		{
 			json::stack::member
 			{
-				unsigned_, "prev_content", content
+				out, "prev_content", content
 			};
 		});
 
@@ -344,7 +231,7 @@ ircd::m::event::append::append(json::stack::object &object,
 
 		json::stack::member
 		{
-			unsigned_, "replaces_state", json::value
+			out, "replaces_state", json::value
 			{
 				replaces_state_id?
 					string_view{replaces_state_id}:
@@ -352,24 +239,217 @@ ircd::m::event::append::append(json::stack::object &object,
 			}
 		};
 	}
+}
 
-	if(unlikely(info))
-		log::info
+void
+ircd::m::event::append::_txnid(json::stack::object &out,
+                               const event &event,
+                               const opts &opts)
+{
+	const bool sender_is_user
+	{
+		json::get<"sender"_>(event) == opts.user_id
+	};
+
+	const bool query_txnid
+	{
+		true
+		&& !opts.client_txnid
+		&& opts.query_txnid
+		&& opts.user_room_id
+		&& sender_is_user
+	};
+
+	const auto txnid_idx
+	{
+		query_txnid?
+			m::room(opts.user_room_id).get(std::nothrow, "ircd.client.txnid", event.event_id):
+			0UL
+	};
+
+	if constexpr(RB_DEBUG_LEVEL)
+	{
+		const bool missing_txnid
 		{
-			log, "%s %s idx:%lu in %s depth:%ld txnid:%s idx:%lu age:%ld %s,%s",
-			opts.user_id? string_view{*opts.user_id} : string_view{},
-			string_view{event.event_id},
-			opts.event_idx? *opts.event_idx : 0UL,
-			json::get<"room_id"_>(event),
-			json::get<"depth"_>(event),
-			has_client_txnid? *opts.client_txnid : string_view{},
-			txnid_idx,
-			int64_t(age),
-			json::get<"type"_>(event),
-			json::get<"state_key"_>(event),
+			true
+			&& !opts.client_txnid
+			&& !txnid_idx
+			&& sender_is_user
+			&& opts.query_txnid
 		};
 
-	return true;
-}}
+		if(unlikely(missing_txnid))
+			log::dwarning
+			{
+				log, "Could not find transaction_id for %s from %s in %s",
+				string_view{event.event_id},
+				json::get<"sender"_>(event),
+				json::get<"room_id"_>(event)
+			};
+	}
+
+	if(opts.client_txnid)
+		json::stack::member
+		{
+			out, "transaction_id", opts.client_txnid
+		};
+	else if(txnid_idx)
+		m::get(std::nothrow, txnid_idx, "content", [&out]
+		(const json::object &content)
+		{
+			json::stack::member
+			{
+				out, "transaction_id", content.get("transaction_id")
+			};
+		});
+}
+
+void
+ircd::m::event::append::_age(json::stack::object &out,
+                             const event &event,
+                             const opts &opts)
 {
+	const json::value age
+	{
+		// When the opts give an explicit age, use it.
+		opts.age != std::numeric_limits<long>::min()?
+			opts.age:
+
+		// If we have depth information, craft a value based on the
+		// distance to the head depth; if this is 0 in riot the event will
+		// "stick" at the bottom of the timeline. This may be advantageous
+		// in the future but for now we make sure the result is non-zero.
+		json::get<"depth"_>(event) >= 0 && opts.room_depth >= 0L?
+			(opts.room_depth + 1 - json::get<"depth"_>(event)) + 1:
+
+		// We don't have depth information, so we use the origin_server_ts.
+		// It is bad if it conflicts with other appends in the room which
+		// did have depth information.
+		opts.room_depth < 0 && json::get<"origin_server_ts"_>(event)?
+			ircd::time<milliseconds>() - json::get<"origin_server_ts"_>(event):
+
+		// Finally, this special value will eliminate the age altogether
+		// during serialization.
+		json::undefined_number
+	};
+
+	json::stack::member
+	{
+		out, "age", age
+	};
+}
+
+bool
+ircd::m::event::append::is_excluded(const event &event,
+                                    const opts &opts)
+const
+{
+	const auto &not_types
+	{
+		exclude_types
+	};
+
+	const bool ret
+	{
+		true
+		&& !opts.event_filter
+		&& token_exists(not_types, ' ', json::get<"type"_>(event))
+	};
+
+	if(ret)
+		log::debug
+		{
+			log, "Not sending event %s because type '%s' excluded by configuration.",
+			string_view{event.event_id},
+			json::get<"type"_>(event),
+		};
+
+	return ret;
+}
+
+bool
+ircd::m::event::append::is_invisible(const event &event,
+                                     const opts &opts)
+const
+{
+	const bool ret
+	{
+		true
+		&& opts.query_visible
+		&& opts.user_id
+		&& !visible(event, opts.user_id)
+	};
+
+	if(ret)
+		log::debug
+		{
+			log, "Not sending event %s because not visible to %s.",
+			string_view{event.event_id},
+			string_view{opts.user_id},
+		};
+
+	return ret;
+}
+
+bool
+ircd::m::event::append::is_redacted(const event &event,
+                                    const opts &opts)
+const
+{
+	const bool ret
+	{
+		true
+		&& opts.event_idx
+		&& opts.query_redacted
+		&& !defined(json::get<"state_key"_>(event))
+		&& opts.room_depth > json::get<"depth"_>(event)
+		&& m::redacted(opts.event_idx)
+	};
+
+	if(ret)
+		log::debug
+		{
+			log, "Not sending event %s because redacted.",
+			string_view{event.event_id},
+		};
+
+	return ret;
+}
+
+bool
+ircd::m::event::append::is_ignored(const event &event,
+                                   const opts &opts)
+const
+{
+	const bool check_ignores
+	{
+		true
+		&& !defined(json::get<"state_key"_>(event))
+		&& opts.user_id
+		&& opts.user_room_id
+		&& opts.user_id != json::get<"sender"_>(event)
+	};
+
+	if(!check_ignores)
+		return false;
+
+	const m::user::ignores ignores
+	{
+		opts.user_id
+	};
+
+	if(ignores.enforce("events") && ignores.has(json::get<"sender"_>(event)))
+	{
+		log::debug
+		{
+			log, "Not sending event %s because %s is ignored by %s",
+			string_view{event.event_id},
+			json::get<"sender"_>(event),
+			string_view{opts.user_id}
+		};
+
+		return true;
+	}
+
+	return false;
 }

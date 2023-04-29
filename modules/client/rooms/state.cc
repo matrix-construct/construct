@@ -206,8 +206,8 @@ append_event(const m::resource::request &request,
 	{
 		array, event,
 		{
-			.event_idx = &event_idx,
-			.user_id = &request.user_id,
+			.event_idx = event_idx,
+			.user_id = request.user_id,
 			.query_txnid = false,
 			.query_prev_state = false,
 			.query_redacted = false,

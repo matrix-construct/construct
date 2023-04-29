@@ -550,8 +550,8 @@ try
 		{
 			result_event, event,
 			{
-				.event_idx = &result.event_idx,
-				.user_id = &query.user_id,
+				.event_idx = result.event_idx,
+				.user_id = query.user_id,
 				.event_filter = &event_filter,
 				.query_prev_state = false,
 				.query_visible = true,
@@ -599,8 +599,8 @@ try
 			{
 				events_before, event,
 				{
-					.event_idx = &event_idx,
-					.user_id = &query.user_id,
+					.event_idx = event_idx,
+					.user_id = query.user_id,
 					.event_filter = &event_filter,
 					.query_prev_state = false,
 					.query_visible = true,
@@ -628,8 +628,8 @@ try
 			{
 				events_after, event,
 				{
-					.event_idx = &event_idx,
-					.user_id = &query.user_id,
+					.event_idx = event_idx,
+					.user_id = query.user_id,
 					.event_filter = &event_filter,
 					.query_prev_state = false,
 					.query_visible = true,

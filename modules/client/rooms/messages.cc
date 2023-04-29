@@ -152,10 +152,10 @@ get__messages(client &client,
 			{
 				chunk, event,
 				{
-					.event_idx = &event_idx,
-					.user_id = &user_room.user.user_id,
-					.user_room = &user_room,
-					.room_depth = &room_depth,
+					.event_idx = event_idx,
+					.user_id = user_room.user.user_id,
+					.user_room_id = user_room.room_id,
+					.room_depth = room_depth,
 				}
 			}
 		};
