@@ -43,16 +43,16 @@ get_user(client &client,
 		url::decode(user_id, request.parv[0])
 	};
 
-	if(request.user_id != user_id)
-		throw m::UNSUPPORTED
-		{
-			"Getting user data as someone else is not yet supported"
-		};
-
 	const string_view &cmd
 	{
 		request.parv[1]
 	};
+
+	if(request.user_id != user_id && !request.bridge_id)
+		throw m::UNSUPPORTED
+		{
+			"Getting user data as someone else is only for bridges."
+		};
 
 	if(cmd == "filter")
 		return get__filter(client, request, user_id);
@@ -93,10 +93,10 @@ post_user(client &client,
 		url::decode(user_id, request.parv[0])
 	};
 
-	if(request.user_id != user_id)
+	if(request.user_id != user_id && !request.bridge_id)
 		throw m::UNSUPPORTED
 		{
-			"Posting user data as someone else is not yet supported"
+			"Posting user data as someone else is only for bridges."
 		};
 
 	const string_view &cmd
@@ -140,10 +140,10 @@ put_user(client &client,
 		url::decode(user_id, request.parv[0])
 	};
 
-	if(request.user_id != user_id)
+	if(request.user_id != user_id && !request.bridge_id)
 		throw m::UNSUPPORTED
 		{
-			"Putting user data as someone else is not yet supported"
+			"Putting user data as someone else is only for bridges."
 		};
 
 	if(request.parv.size() < 2)
@@ -193,10 +193,10 @@ delete_user(client &client,
 		url::decode(user_id, request.parv[0])
 	};
 
-	if(request.user_id != user_id)
+	if(request.user_id != user_id && !request.bridge_id)
 		throw m::UNSUPPORTED
 		{
-			"Deleting user data as someone else is not yet supported"
+			"Deleting user data as someone else is only for bridges."
 		};
 
 	if(request.parv.size() < 2)
