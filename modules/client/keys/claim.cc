@@ -228,9 +228,29 @@ recv_responses(const host_users_map &map,
 	}
 
 	// remote handle
-	for(auto &[remote, request] : queries)
+	while(!queries.empty())
 	{
-		assert(!failures.count(remote));
+		auto next
+		{
+			ctx::when_any(begin(queries), end(queries), []
+			(auto &it) -> m::fed::user::keys::claim &
+			{
+				return it->second;
+			})
+		};
+
+		const bool ok
+		{
+			next.wait_until(timeout, std::nothrow)
+		};
+
+		const auto it(next.get());
+		const unwind remove{[&queries, &it]
+		{
+			queries.erase(it);
+		}};
+
+		auto &[remote, request] {*it};
 		recv_response(remote, request, failures, one_time_keys, timeout);
 	}
 }
