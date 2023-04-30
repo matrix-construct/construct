@@ -8,6 +8,13 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+decltype(ircd::m::relates::latest_column)
+ircd::m::relates::latest_column
+{
+	{ "name",     "ircd.m.relates.latest_column" },
+	{ "default",  "origin_server_ts"             },
+};
+
 bool
 ircd::m::relates::prefetch(const string_view &type)
 const
@@ -21,8 +28,8 @@ const
 	refs.for_each(dbs::ref::M_RELATES, [this, &ret]
 	(const auto &event_idx, const auto &)
 	{
-		if(this->prefetch_depth)
-			ret |= m::prefetch(event_idx, "depth");
+		if(this->prefetch_latest)
+			ret |= m::prefetch(event_idx, string_view{latest_column});
 
 		if(this->prefetch_sender || this->match_sender)
 			ret |= m::prefetch(event_idx, "sender");
@@ -87,6 +94,11 @@ ircd::m::relates::latest(const string_view &type,
                          uint *const at)
 const
 {
+	const string_view &column
+	{
+		latest_column
+	};
+
 	if(at)
 		*at = -1;
 
@@ -97,10 +109,10 @@ const
 	(const event::idx &event_idx, const json::object &, const m::relates_to &)
 	noexcept
 	{
-		int64_t depth{0};
-		if((depth = m::get(std::nothrow, event_idx, "depth", depth)) > best)
+		int64_t val{0};
+		if((val = m::get(std::nothrow, event_idx, column, val)) > best)
 		{
-			best = depth;
+			best = val;
 			ret = event_idx;
 
 			if(at)

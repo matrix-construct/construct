@@ -44,9 +44,11 @@ struct ircd::m::relates
 		const event::idx &, const json::object &, const m::relates_to &
 	>;
 
+	static conf::item<std::string> latest_column;
+
 	event::refs refs;
 	bool match_sender {false};
-	bool prefetch_depth {false};
+	bool prefetch_latest {false};
 	bool prefetch_sender {false};
 
   private:
