@@ -187,8 +187,10 @@ struct ircd::m::room
 	     const vm::copts *const &copts,
 	     const event::fetch::opts *const &fopts = nullptr) noexcept;
 
-	room(const id &room_id = {},
+	room(const id &room_id,
 	     const event::fetch::opts *const &fopts = nullptr) noexcept;
+
+	room() = default;
 
 	// Index of create event
 	static event::idx index(const id &, std::nothrow_t);
@@ -229,7 +231,9 @@ ircd::m::room::room(const id &room_id,
 ,event_id{event_id? event::id{event_id} : event::id{}}
 ,copts{copts}
 ,fopts{fopts}
-{}
+{
+	assert(room_id);
+}
 
 inline
 ircd::m::room::room(const id &room_id,
@@ -239,7 +243,9 @@ noexcept
 :room_id{room_id}
 ,copts{copts}
 ,fopts{fopts}
-{}
+{
+	assert(room_id);
+}
 
 inline
 ircd::m::room::room(const id &room_id,
@@ -247,7 +253,9 @@ ircd::m::room::room(const id &room_id,
 noexcept
 :room_id{room_id}
 ,fopts{fopts}
-{}
+{
+	assert(room_id);
+}
 
 inline ircd::m::room::operator
 const ircd::m::room::id &()

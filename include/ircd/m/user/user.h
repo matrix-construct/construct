@@ -74,12 +74,16 @@ struct ircd::m::user
 	event::id::buf deoper();
 	event::id::buf oper();
 
-	user(const id &user_id)
-	:user_id{user_id}
-	{}
-
+	user(const id &user_id);
 	user() = default;
 };
+
+inline
+ircd::m::user::user(const id &user_id)
+:user_id{user_id}
+{
+	assert(user_id);
+}
 
 inline ircd::m::user::operator
 const ircd::m::user::id &()
