@@ -246,6 +246,7 @@ const
 		};
 
 		attach_sigs(user_sigs, device_keys, user_id);
+
 		const m::room::state state
 		{
 			user_room
@@ -299,12 +300,29 @@ const
 		out, "signatures"
 	};
 
+	// signatures of the key's owner
+	assert(user_room.user.user_id);
+	append_sigs(sigs, device_keys, user_room.user.user_id);
+
+	// signatures of a cross-signer
+	assert(user_id);
+	if(user_id != user_room.user.user_id)
+		append_sigs(sigs, device_keys, user_id);
+}
+
+void
+ircd::m::user::keys::append_sigs(json::stack::object &out,
+                                 const json::object &device_keys,
+                                 const user::id &user_id)
+const
+{
 	json::stack::object user_sigs
 	{
-		sigs, user_id
+		out, user_id
 	};
 
 	attach_sigs(user_sigs, device_keys, user_id);
+
 	const json::object device_keys_keys
 	{
 		device_keys["keys"]
@@ -318,16 +336,16 @@ const
 	state.for_each("ircd.keys.signatures", [this, &user_sigs, &user_id, &device_keys_keys]
 	(const string_view &, const string_view &state_key, const auto &event_idx)
 	{
+		const auto &[target, source]
+		{
+			unmake_sigs_state_key(state_key)
+		};
+
 		for(const auto &[key_id_, key] : device_keys_keys)
 		{
 			const auto &key_id
 			{
 				split(key_id_, ':').second
-			};
-
-			const auto &[target, source]
-			{
-				unmake_sigs_state_key(state_key)
 			};
 
 			if(target != key_id)

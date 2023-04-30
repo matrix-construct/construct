@@ -22,6 +22,7 @@ struct ircd::m::user::keys
 
 	void attach_sigs(json::stack::object &, const json::object &, const user::id &) const;
 	bool attach_sigs(json::stack::object &, const event::idx &, const user::id &) const;
+	void append_sigs(json::stack::object &, const json::object &, const user::id &) const;
 	void append_keys(json::stack::object &, const json::object &, const user::id &) const;
 	bool append_keys(json::stack::object &, const event::idx &, const user::id &) const;
 
