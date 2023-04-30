@@ -187,7 +187,7 @@ ircd::m::event::append::_unsigned(json::stack::object &out,
 
 	_age(object, event, opts);
 	_txnid(object, event, opts);
-
+	_relations(object, event, opts);
 	if(defined(json::get<"state_key"_>(event)))
 		_prev_state(object, event, opts);
 }
@@ -197,7 +197,7 @@ ircd::m::event::append::_prev_state(json::stack::object &out,
                                     const event &event,
                                     const opts &opts)
 {
-	assert(defined(json::get<"state_key"_>(event)))
+	assert(defined(json::get<"state_key"_>(event)));
 
 	const bool query_prev_state
 	{
@@ -337,6 +337,68 @@ ircd::m::event::append::_age(json::stack::object &out,
 	{
 		out, "age", age
 	};
+}
+
+void
+ircd::m::event::append::_relations(json::stack::object &out,
+                                   const event &event,
+                                   const opts &opts)
+{
+	assert(out.s);
+	json::stack::checkpoint cp
+	{
+		*out.s, false
+	};
+
+	json::stack::object object
+	{
+		out, "m.relations"
+	};
+
+	bool commit
+	{
+		cp.committing()
+	};
+
+	if(opts.bundle_all || opts.bundle_replace)
+		commit |= bundle_replace(object, event, opts);
+
+	cp.committing(commit);
+}
+
+bool
+ircd::m::event::append::bundle_replace(json::stack::object &out,
+                                       const event &event,
+                                       const opts &opts)
+{
+	const m::replaced replaced
+	{
+		opts.event_idx, m::replaced::latest
+	};
+
+	const event::idx &replace_idx
+	{
+		replaced
+	};
+
+	if(likely(!replace_idx))
+		return false;
+
+	const m::event::fetch replace
+	{
+		std::nothrow, replace_idx
+	};
+
+	if(unlikely(!replace.valid))
+		return false;
+
+	json::stack::object object
+	{
+		out, "m.replace"
+	};
+
+	object.append(replace);
+	return true;
 }
 
 bool

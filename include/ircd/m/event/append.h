@@ -41,6 +41,8 @@ struct ircd::m::event::append
 	bool is_invisible(const event &, const opts &) const;
 	bool is_excluded(const event &, const opts &) const;
 
+	bool bundle_replace(json::stack::object &, const event &, const opts &);
+	void _relations(json::stack::object &, const event &, const opts &);
 	void _age(json::stack::object &, const event &, const opts &);
 	void _txnid(json::stack::object &, const event &, const opts &);
 	void _prev_state(json::stack::object &, const event &, const opts &);
@@ -72,6 +74,8 @@ struct ircd::m::event::append::opts
 	bool query_prev_state {true};
 	bool query_redacted {true};
 	bool query_visible {false};
+	bool bundle_all {false};
+	bool bundle_replace {false};
 };
 
 inline
