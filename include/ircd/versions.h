@@ -73,16 +73,9 @@ struct ircd::versions
 	~versions() noexcept;
 };
 
-namespace ircd
-{
-	template<>
-	decltype(versions::allocator)
-	instance_list<versions>::allocator;
-
-	template<>
-	decltype(versions::list)
-	instance_list<versions>::list;
-}
+template<>
+decltype(ircd::versions::list)
+ircd::instance_list<ircd::versions>::list;
 
 inline ircd::versions::operator
 const long &()

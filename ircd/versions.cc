@@ -13,12 +13,12 @@
 //
 
 template<>
-decltype(ircd::util::instance_list<ircd::versions>::allocator)
+decltype(ircd::versions::allocator)
 ircd::util::instance_list<ircd::versions>::allocator
 {};
 
 template<>
-decltype(ircd::util::instance_list<ircd::versions>::list)
+decltype(ircd::versions::list)
 ircd::util::instance_list<ircd::versions>::list
 {
 	allocator
